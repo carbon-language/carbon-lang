@@ -346,16 +346,16 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: <error> = binding_pattern f
-// CHECK:STDOUT:     %.loc17_1: <error> = var_pattern %f.patt
+// CHECK:STDOUT:     %.loc6_1: <error> = var_pattern %f.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref <error> = var f
-// CHECK:STDOUT:   %.loc17_16.1: type = splice_block %.loc17_16.3 [concrete = <error>] {
+// CHECK:STDOUT:   %.loc6_16.1: type = splice_block %.loc6_16.3 [concrete = <error>] {
 // CHECK:STDOUT:     %Float.ref: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %.loc17_14: %i32 = converted %int_64, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc6_14: %i32 = converted %int_64, <error> [concrete = <error>]
 // CHECK:STDOUT:     %float.make_type: init type = call %Float.ref(<error>) [concrete = <error>]
-// CHECK:STDOUT:     %.loc17_16.2: type = value_of_initializer %float.make_type [concrete = <error>]
-// CHECK:STDOUT:     %.loc17_16.3: type = converted %float.make_type, %.loc17_16.2 [concrete = <error>]
+// CHECK:STDOUT:     %.loc6_16.2: type = value_of_initializer %float.make_type [concrete = <error>]
+// CHECK:STDOUT:     %.loc6_16.3: type = converted %float.make_type, %.loc6_16.2 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: <error> = bind_name f, <error>
 // CHECK:STDOUT:   %GetFloat.decl: %GetFloat.type = fn_decl @GetFloat [concrete = constants.%GetFloat] {
@@ -365,7 +365,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %dyn_size.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc19: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc8: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -382,9 +382,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: %i32 = name_ref dyn_size, %dyn_size
 // CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%dyn_size.ref)
-// CHECK:STDOUT:   %.loc20_25.1: type = value_of_initializer %float.make_type
-// CHECK:STDOUT:   %.loc20_25.2: type = converted %float.make_type, %.loc20_25.1
-// CHECK:STDOUT:   return %.loc20_25.2
+// CHECK:STDOUT:   %.loc9_25.1: type = value_of_initializer %float.make_type
+// CHECK:STDOUT:   %.loc9_25.2: type = converted %float.make_type, %.loc9_25.1
+// CHECK:STDOUT:   return %.loc9_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -426,40 +426,40 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %invalid_float.patt: <error> = binding_pattern invalid_float
-// CHECK:STDOUT:     %.loc17_1: <error> = var_pattern %invalid_float.patt
+// CHECK:STDOUT:     %.loc10_1: <error> = var_pattern %invalid_float.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %invalid_float.var: ref <error> = var invalid_float
-// CHECK:STDOUT:   %.loc17_28.1: type = splice_block %.loc17_28.3 [concrete = <error>] {
-// CHECK:STDOUT:     %Float.ref.loc17: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
-// CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %.loc17_26: %i32 = converted %int_32.loc17, <error> [concrete = <error>]
-// CHECK:STDOUT:     %float.make_type.loc17: init type = call %Float.ref.loc17(<error>) [concrete = <error>]
-// CHECK:STDOUT:     %.loc17_28.2: type = value_of_initializer %float.make_type.loc17 [concrete = <error>]
-// CHECK:STDOUT:     %.loc17_28.3: type = converted %float.make_type.loc17, %.loc17_28.2 [concrete = <error>]
+// CHECK:STDOUT:   %.loc10_28.1: type = splice_block %.loc10_28.3 [concrete = <error>] {
+// CHECK:STDOUT:     %Float.ref.loc10: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
+// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %.loc10_26: %i32 = converted %int_32.loc10, <error> [concrete = <error>]
+// CHECK:STDOUT:     %float.make_type.loc10: init type = call %Float.ref.loc10(<error>) [concrete = <error>]
+// CHECK:STDOUT:     %.loc10_28.2: type = value_of_initializer %float.make_type.loc10 [concrete = <error>]
+// CHECK:STDOUT:     %.loc10_28.3: type = converted %float.make_type.loc10, %.loc10_28.2 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %invalid_float: <error> = bind_name invalid_float, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %dyn_size.patt: %i32 = binding_pattern dyn_size
-// CHECK:STDOUT:     %.loc26_1: %i32 = var_pattern %dyn_size.patt
+// CHECK:STDOUT:     %.loc12_1: %i32 = var_pattern %dyn_size.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %dyn_size.var: ref %i32 = var dyn_size
-// CHECK:STDOUT:   %.loc26_15: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %.loc12_15: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %dyn_size: ref %i32 = bind_name dyn_size, %dyn_size.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %dyn.patt: <error> = binding_pattern dyn
-// CHECK:STDOUT:     %.loc31_1: <error> = var_pattern %dyn.patt
+// CHECK:STDOUT:     %.loc17_1: <error> = var_pattern %dyn.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %dyn.var: ref <error> = var dyn
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %Float.ref.loc31: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
+// CHECK:STDOUT:     %Float.ref.loc17: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:     %dyn_size.ref: ref %i32 = name_ref dyn_size, %dyn_size
-// CHECK:STDOUT:     %.loc31_16: %i32 = bind_value %dyn_size.ref
-// CHECK:STDOUT:     %float.make_type.loc31: init type = call %Float.ref.loc31(%.loc31_16)
-// CHECK:STDOUT:     %.loc31_24.1: type = value_of_initializer %float.make_type.loc31
-// CHECK:STDOUT:     %.loc31_24.2: type = converted %float.make_type.loc31, %.loc31_24.1
+// CHECK:STDOUT:     %.loc17_16: %i32 = bind_value %dyn_size.ref
+// CHECK:STDOUT:     %float.make_type.loc17: init type = call %Float.ref.loc17(%.loc17_16)
+// CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %float.make_type.loc17
+// CHECK:STDOUT:     %.loc17_24.2: type = converted %float.make_type.loc17, %.loc17_24.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %dyn: <error> = bind_name dyn, <error>
 // CHECK:STDOUT: }
@@ -469,7 +469,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:   %.loc26: %i32 = converted %int_64, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12: %i32 = converted %int_64, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%dyn_size.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

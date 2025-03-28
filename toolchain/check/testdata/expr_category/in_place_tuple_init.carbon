@@ -256,12 +256,12 @@ fn H() -> i32 {
 // CHECK:STDOUT:     %return.patt: %tuple.type.d07 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc211_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc211_12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc211_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc211_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc211_20.1: %tuple.type.24b = tuple_literal (%i32.loc211_12, %i32.loc211_17)
-// CHECK:STDOUT:     %.loc211_20.2: type = converted %.loc211_20.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:     %int_32.loc11_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc11_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_20.1: %tuple.type.24b = tuple_literal (%i32.loc11_12, %i32.loc11_17)
+// CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %return.param: ref %tuple.type.d07 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.d07 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -269,12 +269,12 @@ fn H() -> i32 {
 // CHECK:STDOUT:     %return.patt: %tuple.type.d07 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc213_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc213_12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc213_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc213_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc213_20.1: %tuple.type.24b = tuple_literal (%i32.loc213_12, %i32.loc213_17)
-// CHECK:STDOUT:     %.loc213_20.2: type = converted %.loc213_20.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:     %int_32.loc13_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13_12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc13_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc13_20.1: %tuple.type.24b = tuple_literal (%i32.loc13_12, %i32.loc13_17)
+// CHECK:STDOUT:     %.loc13_20.2: type = converted %.loc13_20.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %return.param: ref %tuple.type.d07 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.d07 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -295,42 +295,42 @@ fn H() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %tuple.type.d07 = binding_pattern v
-// CHECK:STDOUT:     %.loc214_3.1: %tuple.type.d07 = var_pattern %v.patt
+// CHECK:STDOUT:     %.loc14_3.1: %tuple.type.d07 = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %tuple.type.d07 = var v
-// CHECK:STDOUT:   %F.ref.loc214: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc214_3.2: ref %tuple.type.d07 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call.loc214: init %tuple.type.d07 = call %F.ref.loc214() to %.loc214_3.2
-// CHECK:STDOUT:   assign %v.var, %F.call.loc214
-// CHECK:STDOUT:   %.loc214_19.1: type = splice_block %.loc214_19.3 [concrete = constants.%tuple.type.d07] {
-// CHECK:STDOUT:     %int_32.loc214_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc214_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc214_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc214_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc214_19.2: %tuple.type.24b = tuple_literal (%i32.loc214_11, %i32.loc214_16)
-// CHECK:STDOUT:     %.loc214_19.3: type = converted %.loc214_19.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:   %F.ref.loc14: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc14_3.2: ref %tuple.type.d07 = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call.loc14: init %tuple.type.d07 = call %F.ref.loc14() to %.loc14_3.2
+// CHECK:STDOUT:   assign %v.var, %F.call.loc14
+// CHECK:STDOUT:   %.loc14_19.1: type = splice_block %.loc14_19.3 [concrete = constants.%tuple.type.d07] {
+// CHECK:STDOUT:     %int_32.loc14_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc14_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc14_19.2: %tuple.type.24b = tuple_literal (%i32.loc14_11, %i32.loc14_16)
+// CHECK:STDOUT:     %.loc14_19.3: type = converted %.loc14_19.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %tuple.type.d07 = bind_name v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.d07 = name_ref v, %v
-// CHECK:STDOUT:   %F.ref.loc215: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc215: ref %tuple.type.d07 = splice_block %v.ref {}
-// CHECK:STDOUT:   %F.call.loc215: init %tuple.type.d07 = call %F.ref.loc215() to %.loc215
-// CHECK:STDOUT:   assign %v.ref, %F.call.loc215
-// CHECK:STDOUT:   %F.ref.loc216: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc213_8: ref %tuple.type.d07 = splice_block %return {}
-// CHECK:STDOUT:   %F.call.loc216: init %tuple.type.d07 = call %F.ref.loc216() to %.loc213_8
-// CHECK:STDOUT:   return %F.call.loc216 to %return
+// CHECK:STDOUT:   %F.ref.loc15: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc15: ref %tuple.type.d07 = splice_block %v.ref {}
+// CHECK:STDOUT:   %F.call.loc15: init %tuple.type.d07 = call %F.ref.loc15() to %.loc15
+// CHECK:STDOUT:   assign %v.ref, %F.call.loc15
+// CHECK:STDOUT:   %F.ref.loc16: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc13_8: ref %tuple.type.d07 = splice_block %return {}
+// CHECK:STDOUT:   %F.call.loc16: init %tuple.type.d07 = call %F.ref.loc16() to %.loc13_8
+// CHECK:STDOUT:   return %F.call.loc16 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %.loc220_12.1: ref %tuple.type.d07 = temporary_storage
-// CHECK:STDOUT:   %G.call: init %tuple.type.d07 = call %G.ref() to %.loc220_12.1
+// CHECK:STDOUT:   %.loc20_12.1: ref %tuple.type.d07 = temporary_storage
+// CHECK:STDOUT:   %G.call: init %tuple.type.d07 = call %G.ref() to %.loc20_12.1
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc220_12.2: ref %tuple.type.d07 = temporary %.loc220_12.1, %G.call
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc220_12.2, element0
-// CHECK:STDOUT:   %.loc220_13: %i32 = bind_value %tuple.elem0
-// CHECK:STDOUT:   return %.loc220_13
+// CHECK:STDOUT:   %.loc20_12.2: ref %tuple.type.d07 = temporary %.loc20_12.1, %G.call
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc20_12.2, element0
+// CHECK:STDOUT:   %.loc20_13: %i32 = bind_value %tuple.elem0
+// CHECK:STDOUT:   return %.loc20_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

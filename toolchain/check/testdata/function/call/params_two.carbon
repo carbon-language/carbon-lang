@@ -271,15 +271,15 @@ fn Main() {
 // CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc211_11: type = splice_block %i32.loc211_11 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc211_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_11: type = splice_block %i32.loc11_11 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc211_19: type = splice_block %i32.loc211_19 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc211_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_19: type = splice_block %i32.loc11_19 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
@@ -296,8 +296,8 @@ fn Main() {
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc234_7: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc234_10: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_7: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_10: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Foo.call: init %empty_tuple.type = call %Foo.ref(<error>, <error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

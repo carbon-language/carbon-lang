@@ -269,35 +269,35 @@ fn F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc212_8: %Class.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc212_3: %Class.elem = var_pattern %.loc212_8
+// CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc212: ref %Class.elem = var <none>
-// CHECK:STDOUT:   %.loc213_8: %Class.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %.var.loc12: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %.loc13_8: %Class.elem = field_decl b, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc213_3: %Class.elem = var_pattern %.loc213_8
+// CHECK:STDOUT:     %.loc13_3: %Class.elem = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc213: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %.var.loc13: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.501 [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .a = %.loc212_8
-// CHECK:STDOUT:   .b = %.loc213_8
+// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc224_26.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc17_26.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc224_26.2: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc224_26.3: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc224_26.4: ref %Class = temporary %.loc224_26.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc224_28: ref %Class = converted %.loc224_26.1, %.loc224_26.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_26.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_26.3: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc17_26.4: ref %Class = temporary %.loc17_26.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_28: ref %Class = converted %.loc17_26.1, %.loc17_26.4 [concrete = <error>]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

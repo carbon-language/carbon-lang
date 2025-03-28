@@ -353,22 +353,22 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc20: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc20_27.1: %i32 = converted @__global_init.%int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_27.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc20_27.3: ref %C = temporary %.loc20_27.2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_27.4: ref %C = converted @__global_init.%.loc20, %.loc20_27.3 [concrete = <error>]
-// CHECK:STDOUT:   %a: ref %C = bind_name a, %.loc20_27.4
+// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc13_27.1: %i32 = converted @__global_init.%int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_27.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc13_27.3: ref %C = temporary %.loc13_27.2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_27.4: ref %C = converted @__global_init.%.loc13, %.loc13_27.3 [concrete = <error>]
+// CHECK:STDOUT:   %a: ref %C = bind_name a, %.loc13_27.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %AdaptC = binding_pattern b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AdaptC.ref.loc22: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %b: ref %AdaptC = bind_name b, @__global_init.%.loc22_19.2
+// CHECK:STDOUT:   %AdaptC.ref.loc15: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
+// CHECK:STDOUT:   %b: ref %AdaptC = bind_name b, @__global_init.%.loc15_19.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, @__global_init.%.loc24_14.2
+// CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %c: ref %C = bind_name c, @__global_init.%.loc17_14.2
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param0
@@ -387,17 +387,17 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %AdaptC = binding_pattern d
-// CHECK:STDOUT:     %.loc30: %AdaptC = var_pattern %d.patt
+// CHECK:STDOUT:     %.loc23: %AdaptC = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var d
-// CHECK:STDOUT:   %AdaptC.ref.loc30: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
+// CHECK:STDOUT:   %AdaptC.ref.loc23: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %d: ref %AdaptC = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %C = binding_pattern e
-// CHECK:STDOUT:     %.loc32: %C = var_pattern %e.patt
+// CHECK:STDOUT:     %.loc25: %C = var_pattern %e.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %C = var e
-// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -440,29 +440,29 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc20: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc13: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, file.%a
-// CHECK:STDOUT:   %AdaptC.ref.loc22: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %.loc22_19.1: ref %AdaptC = as_compatible %a.ref
-// CHECK:STDOUT:   %.loc22_19.2: ref %AdaptC = converted %a.ref, %.loc22_19.1
+// CHECK:STDOUT:   %AdaptC.ref.loc15: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
+// CHECK:STDOUT:   %.loc15_19.1: ref %AdaptC = as_compatible %a.ref
+// CHECK:STDOUT:   %.loc15_19.2: ref %AdaptC = converted %a.ref, %.loc15_19.1
 // CHECK:STDOUT:   %b.ref: ref %AdaptC = name_ref b, file.%b
-// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc24_14.1: ref %C = as_compatible %b.ref
-// CHECK:STDOUT:   %.loc24_14.2: ref %C = converted %b.ref, %.loc24_14.1
+// CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc17_14.1: ref %C = as_compatible %b.ref
+// CHECK:STDOUT:   %.loc17_14.2: ref %C = converted %b.ref, %.loc17_14.1
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [concrete = constants.%MakeC]
-// CHECK:STDOUT:   %.loc30_1: ref %AdaptC = splice_block file.%d.var {}
-// CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc30_1
-// CHECK:STDOUT:   %AdaptC.ref.loc30: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %.loc30_25.1: init %AdaptC = as_compatible %MakeC.call
-// CHECK:STDOUT:   %.loc30_25.2: init %AdaptC = converted %MakeC.call, %.loc30_25.1
-// CHECK:STDOUT:   assign file.%d.var, %.loc30_25.2
+// CHECK:STDOUT:   %.loc23_1: ref %AdaptC = splice_block file.%d.var {}
+// CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc23_1
+// CHECK:STDOUT:   %AdaptC.ref.loc23: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
+// CHECK:STDOUT:   %.loc23_25.1: init %AdaptC = as_compatible %MakeC.call
+// CHECK:STDOUT:   %.loc23_25.2: init %AdaptC = converted %MakeC.call, %.loc23_25.1
+// CHECK:STDOUT:   assign file.%d.var, %.loc23_25.2
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [concrete = constants.%MakeAdaptC]
-// CHECK:STDOUT:   %.loc32_1: ref %C = splice_block file.%e.var {}
-// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc32_1
-// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc32_25.1: init %C = as_compatible %MakeAdaptC.call
-// CHECK:STDOUT:   %.loc32_25.2: init %C = converted %MakeAdaptC.call, %.loc32_25.1
-// CHECK:STDOUT:   assign file.%e.var, %.loc32_25.2
+// CHECK:STDOUT:   %.loc25_1: ref %C = splice_block file.%e.var {}
+// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc25_1
+// CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc25_25.1: init %C = as_compatible %MakeAdaptC.call
+// CHECK:STDOUT:   %.loc25_25.2: init %C = converted %MakeAdaptC.call, %.loc25_25.1
+// CHECK:STDOUT:   assign file.%e.var, %.loc25_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -513,23 +513,23 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc20: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc20_27.1: %i32 = converted @__global_init.%int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_27.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc20_27.3: ref %C = temporary %.loc20_27.2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_27.4: ref %C = converted @__global_init.%.loc20, %.loc20_27.3 [concrete = <error>]
-// CHECK:STDOUT:   %a: ref %C = bind_name a, %.loc20_27.4
+// CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc13_27.1: %i32 = converted @__global_init.%int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_27.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc13_27.3: ref %C = temporary %.loc13_27.2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_27.4: ref %C = converted @__global_init.%.loc13, %.loc13_27.3 [concrete = <error>]
+// CHECK:STDOUT:   %a: ref %C = bind_name a, %.loc13_27.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %AdaptC = binding_pattern b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AdaptC.ref.loc31: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %.loc31: %AdaptC = converted @__global_init.%a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %AdaptC.ref.loc24: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
+// CHECK:STDOUT:   %.loc24: %AdaptC = converted @__global_init.%a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc40: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc40: %C = converted @__global_init.%b.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %C.ref.loc33: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc33: %C = converted @__global_init.%b.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %c: %C = bind_name c, <error>
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
@@ -549,17 +549,17 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %AdaptC = binding_pattern d
-// CHECK:STDOUT:     %.loc53: %AdaptC = var_pattern %d.patt
+// CHECK:STDOUT:     %.loc46: %AdaptC = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var d
-// CHECK:STDOUT:   %AdaptC.ref.loc53: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
+// CHECK:STDOUT:   %AdaptC.ref.loc46: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %d: ref %AdaptC = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %C = binding_pattern e
-// CHECK:STDOUT:     %.loc62: %C = var_pattern %e.patt
+// CHECK:STDOUT:     %.loc55: %C = var_pattern %e.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %C = var e
-// CHECK:STDOUT:   %C.ref.loc62: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc55: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -602,18 +602,18 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc20: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc13: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, file.%a
 // CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, file.%b
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [concrete = constants.%MakeC]
-// CHECK:STDOUT:   %.loc53_23: ref %C = temporary_storage
-// CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc53_23
-// CHECK:STDOUT:   %.loc53_1: %AdaptC = converted %MakeC.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc46_23: ref %C = temporary_storage
+// CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc46_23
+// CHECK:STDOUT:   %.loc46_1: %AdaptC = converted %MakeC.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [concrete = constants.%MakeAdaptC]
-// CHECK:STDOUT:   %.loc62_23: ref %AdaptC = temporary_storage
-// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc62_23
-// CHECK:STDOUT:   %.loc62_1: %C = converted %MakeAdaptC.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc55_23: ref %AdaptC = temporary_storage
+// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc55_23
+// CHECK:STDOUT:   %.loc55_1: %C = converted %MakeAdaptC.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

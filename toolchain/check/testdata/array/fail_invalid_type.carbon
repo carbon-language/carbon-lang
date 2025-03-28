@@ -239,14 +239,14 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc218_1: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %.loc218_18: type = splice_block %array_type [concrete = <error>] {
-// CHECK:STDOUT:     %int_1.loc218_14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %int_1.loc218_17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %.loc218_14: type = converted %int_1.loc218_14, <error> [concrete = <error>]
-// CHECK:STDOUT:     %array_type: type = array_type %int_1.loc218_17, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc18_18: type = splice_block %array_type [concrete = <error>] {
+// CHECK:STDOUT:     %int_1.loc18_14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:     %int_1.loc18_17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:     %.loc18_14: type = converted %int_1.loc18_14, <error> [concrete = <error>]
+// CHECK:STDOUT:     %array_type: type = array_type %int_1.loc18_17, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT: }

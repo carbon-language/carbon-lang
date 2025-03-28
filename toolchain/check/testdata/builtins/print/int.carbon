@@ -278,7 +278,7 @@ fn Main() {
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc21: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc13: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -291,15 +291,15 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Print.ref.loc24: %Print.type.980 = name_ref Print, file.%Print.decl [concrete = constants.%Print.b7c]
+// CHECK:STDOUT:   %Print.ref.loc16: %Print.type.980 = name_ref Print, file.%Print.decl [concrete = constants.%Print.b7c]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc24: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %print.int.loc24: init %empty_tuple.type = call %Print.ref.loc24(<error>) [concrete = <error>]
+// CHECK:STDOUT:   %.loc16: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %print.int.loc16: init %empty_tuple.type = call %Print.ref.loc16(<error>) [concrete = <error>]
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %Print.ref.loc26: %Print.type.6ed = name_ref Print, imports.%Core.Print [concrete = constants.%Print.723]
+// CHECK:STDOUT:   %Print.ref.loc18: %Print.type.6ed = name_ref Print, imports.%Core.Print [concrete = constants.%Print.723]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc26: %i32 = converted %int_2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %print.int.loc26: init %empty_tuple.type = call %Print.ref.loc26(<error>) [concrete = <error>]
+// CHECK:STDOUT:   %.loc18: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %print.int.loc18: init %empty_tuple.type = call %Print.ref.loc18(<error>) [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -252,10 +252,10 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
-// CHECK:STDOUT:     %.loc218_1: %array_type = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc11_1: %array_type = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
-// CHECK:STDOUT:   %.loc218_20: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc11_20: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9]
@@ -275,8 +275,8 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9]
-// CHECK:STDOUT:   %.loc218_50.1: %tuple.type = tuple_literal (%int_1, %int_2, %int_3, %int_4, %int_5, %int_6, %int_7, %int_8, %int_9)
-// CHECK:STDOUT:   %.loc218_50.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc11_50.1: %tuple.type = tuple_literal (%int_1, %int_2, %int_3, %int_4, %int_5, %int_6, %int_7, %int_8, %int_9)
+// CHECK:STDOUT:   %.loc11_50.2: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

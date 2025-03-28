@@ -299,19 +299,19 @@ fn H() { G(3); }
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: <error> = binding_pattern arr
-// CHECK:STDOUT:       %.loc12_3: <error> = var_pattern %arr.patt
+// CHECK:STDOUT:       %.loc9_3: <error> = var_pattern %arr.patt
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref <error> = var arr
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %.loc12_36: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
+// CHECK:STDOUT:     %.loc9_36: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
 // CHECK:STDOUT:     assign %arr.var, <error>
-// CHECK:STDOUT:     %.loc12_24: type = splice_block %array_type [concrete = <error>] {
-// CHECK:STDOUT:       %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc9_24: type = splice_block %array_type [concrete = <error>] {
+// CHECK:STDOUT:       %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N.51e)]
-// CHECK:STDOUT:       %.loc12_23: Core.IntLiteral = converted %N.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:       %.loc9_23: Core.IntLiteral = converted %N.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:       %array_type: type = array_type <error>, %i32 [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: <error> = bind_name arr, <error>
@@ -404,7 +404,7 @@ fn H() { G(3); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc23: %i32 = converted %int_3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13: %i32 = converted %int_3, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

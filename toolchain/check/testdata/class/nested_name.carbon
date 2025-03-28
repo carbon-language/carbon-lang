@@ -266,7 +266,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %oi.param: %Inner = value_param call_param0
-// CHECK:STDOUT:     %.loc217: type = splice_block %Inner.ref [concrete = constants.%Inner] {
+// CHECK:STDOUT:     %.loc17: type = splice_block %Inner.ref [concrete = constants.%Inner] {
 // CHECK:STDOUT:       %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:       %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:     }
@@ -295,9 +295,9 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc213_10: %Inner.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc13_10: %Inner.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc213_5: %Inner.elem = var_pattern %.loc213_10
+// CHECK:STDOUT:     %.loc13_5: %Inner.elem = var_pattern %.loc13_10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Inner.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
@@ -305,26 +305,26 @@ fn G(o: Outer) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .n = %.loc213_10
+// CHECK:STDOUT:   .n = %.loc13_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%oi.param_patt: %Inner) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
-// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc213_10 [concrete = @Inner.%.loc213_10]
-// CHECK:STDOUT:   %.loc218_12.1: ref %i32 = class_element_access %oi.ref, element0
-// CHECK:STDOUT:   %.loc218_12.2: %i32 = bind_value %.loc218_12.1
-// CHECK:STDOUT:   return %.loc218_12.2
+// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13_10 [concrete = @Inner.%.loc13_10]
+// CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %oi.ref, element0
+// CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
+// CHECK:STDOUT:   return %.loc18_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%o.param_patt: %Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %Inner = binding_pattern i
-// CHECK:STDOUT:     %.loc222_3: %Inner = var_pattern %i.patt
+// CHECK:STDOUT:     %.loc22_3: %Inner = var_pattern %i.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var i
-// CHECK:STDOUT:   %.loc222_11: type = splice_block %Inner.ref [concrete = constants.%Inner] {
+// CHECK:STDOUT:   %.loc22_11: type = splice_block %Inner.ref [concrete = constants.%Inner] {
 // CHECK:STDOUT:     %o.ref: %Outer = name_ref o, %o
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   }

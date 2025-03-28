@@ -297,14 +297,14 @@ class C {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc234: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc27: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: %i32 = bind_name x, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
-// CHECK:STDOUT:     %.loc244: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:     %.loc37: %i32 = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
@@ -319,9 +319,9 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc261_8: %C.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc54_8: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc261_3: %C.elem = var_pattern %.loc261_8
+// CHECK:STDOUT:     %.loc54_3: %C.elem = var_pattern %.loc54_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
@@ -329,7 +329,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc261_8
+// CHECK:STDOUT:   .n = %.loc54_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %i32);

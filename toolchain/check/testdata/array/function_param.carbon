@@ -276,20 +276,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc211_37: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc211_37: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc11_37: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_37: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %arr.param: %array_type = value_param call_param0
-// CHECK:STDOUT:     %.loc211_23: type = splice_block %array_type [concrete = constants.%array_type] {
-// CHECK:STDOUT:       %int_32.loc211_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_23: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:       %int_32.loc11_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:       %array_type: type = array_type %int_3, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: %array_type = bind_name arr, %arr.param
 // CHECK:STDOUT:     %i.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc211_29: type = splice_block %i32.loc211_29 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc211_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_29: type = splice_block %i32.loc11_29 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %i: %i32 = bind_name i, %i.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
@@ -310,27 +310,27 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: %array_type = name_ref arr, %arr
 // CHECK:STDOUT:   %i.ref: %i32 = name_ref i, %i
-// CHECK:STDOUT:   %int_32.loc212: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc212: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc212_15.1: ref %array_type = value_as_ref %arr.ref
-// CHECK:STDOUT:   %.loc212_15.2: ref %i32 = array_index %.loc212_15.1, %i.ref
-// CHECK:STDOUT:   %.loc212_15.3: %i32 = bind_value %.loc212_15.2
-// CHECK:STDOUT:   return %.loc212_15.3
+// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc12_15.1: ref %array_type = value_as_ref %arr.ref
+// CHECK:STDOUT:   %.loc12_15.2: ref %i32 = array_index %.loc12_15.1, %i.ref
+// CHECK:STDOUT:   %.loc12_15.3: %i32 = bind_value %.loc12_15.2
+// CHECK:STDOUT:   return %.loc12_15.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %int_1.loc236_13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc16_13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc236_20.1: %tuple.type = tuple_literal (%int_1.loc236_13, %int_2, %int_3)
-// CHECK:STDOUT:   %int_1.loc236_23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc236_20.2: %i32 = converted %int_1.loc236_13, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc236_23: %i32 = converted %int_1.loc236_23, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_20.1: %tuple.type = tuple_literal (%int_1.loc16_13, %int_2, %int_3)
+// CHECK:STDOUT:   %int_1.loc16_23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc16_20.2: %i32 = converted %int_1.loc16_13, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_23: %i32 = converted %int_1.loc16_23, <error> [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref(<error>, <error>)
-// CHECK:STDOUT:   %.loc236_25.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc236_25.2: %i32 = converted %F.call, %.loc236_25.1
-// CHECK:STDOUT:   return %.loc236_25.2
+// CHECK:STDOUT:   %.loc16_25.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc16_25.2: %i32 = converted %F.call, %.loc16_25.1
+// CHECK:STDOUT:   return %.loc16_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -260,25 +260,25 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %f: %ForwardDeclared.type = bind_name f, %f.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Basic.ref.loc18: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
-// CHECK:STDOUT:   %T.ref.loc18: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Basic.ref.loc10: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
+// CHECK:STDOUT:   %T.ref.loc10: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:   %UseBasicT: <error> = bind_alias UseBasicT, <error> [concrete = <error>]
-// CHECK:STDOUT:   %Basic.ref.loc27: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
-// CHECK:STDOUT:   %F.ref.loc27: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Basic.ref.loc11: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
+// CHECK:STDOUT:   %F.ref.loc11: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   %UseBasicF: <error> = bind_alias UseBasicF, <error> [concrete = <error>]
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc37: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %T.ref.loc37: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc13: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
+// CHECK:STDOUT:   %T.ref.loc13: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:   %UseForwardDeclaredT: <error> = bind_alias UseForwardDeclaredT, <error> [concrete = <error>]
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc46: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %F.ref.loc46: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %ForwardDeclared.ref.loc14: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
+// CHECK:STDOUT:   %F.ref.loc14: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   %UseForwardDeclaredF: <error> = bind_alias UseForwardDeclaredF, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %ptr = binding_pattern f
-// CHECK:STDOUT:     %.loc48_1: %ptr = var_pattern %f.patt
+// CHECK:STDOUT:     %.loc16_1: %ptr = var_pattern %f.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %ptr = var f
-// CHECK:STDOUT:   %.loc48_23: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %ForwardDeclared.ref.loc48: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
+// CHECK:STDOUT:   %.loc16_23: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.type [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var
@@ -324,8 +324,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f.2f5 = name_ref f_ref, imports.%Main.f_ref
-// CHECK:STDOUT:   %.loc48: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc48
+// CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc16
 // CHECK:STDOUT:   assign file.%f.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

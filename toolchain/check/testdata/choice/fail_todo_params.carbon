@@ -293,18 +293,18 @@ choice C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:   %.loc16_11: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc9_11: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:   %b.param: %i64 = value_param call_param1
-// CHECK:STDOUT:   %.loc16_19: type = splice_block %i64 [concrete = constants.%i64] {
+// CHECK:STDOUT:   %.loc9_19: type = splice_block %i64 [concrete = constants.%i64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %i64 = bind_name b, %b.param
-// CHECK:STDOUT:   %int_1.loc25: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %u1: type = class_type @UInt, @UInt(constants.%int_1) [concrete = constants.%u1]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type.df6]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
@@ -315,14 +315,14 @@ choice C {
 // CHECK:STDOUT:   %.loc4_7.5: ref %C = converted %.loc4_7.2, %.loc4_7.4 [concrete = <error>]
 // CHECK:STDOUT:   %.loc4_7.6: %C = bind_value %.loc4_7.5 [concrete = <error>]
 // CHECK:STDOUT:   %Alt1: %C = bind_name Alt1, %.loc4_7.6
-// CHECK:STDOUT:   %int_1.loc24: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc24_7.1: %u1 = converted %int_1.loc24, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc24_7.2: %struct_type.discriminant = struct_literal (<error>)
-// CHECK:STDOUT:   %.loc24_7.3: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc24_7.4: ref %C = temporary %.loc24_7.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc24_7.5: ref %C = converted %.loc24_7.2, %.loc24_7.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc24_7.6: %C = bind_value %.loc24_7.5 [concrete = <error>]
-// CHECK:STDOUT:   %Alt3: %C = bind_name Alt3, %.loc24_7.6
+// CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc10_7.1: %u1 = converted %int_1.loc10, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc10_7.2: %struct_type.discriminant = struct_literal (<error>)
+// CHECK:STDOUT:   %.loc10_7.3: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc10_7.4: ref %C = temporary %.loc10_7.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc10_7.5: ref %C = converted %.loc10_7.2, %.loc10_7.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc10_7.6: %C = bind_value %.loc10_7.5 [concrete = <error>]
+// CHECK:STDOUT:   %Alt3: %C = bind_name Alt3, %.loc10_7.6
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

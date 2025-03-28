@@ -284,7 +284,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
-// CHECK:STDOUT:     %.loc216: %Class = var_pattern %c.patt
+// CHECK:STDOUT:     %.loc16: %Class = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
@@ -292,8 +292,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc217_15.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc217_15.2: %i32 = converted %F.call, %.loc217_15.1
-// CHECK:STDOUT:   return %.loc217_15.2
+// CHECK:STDOUT:   %.loc17_15.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc17_15.2: %i32 = converted %F.call, %.loc17_15.1
+// CHECK:STDOUT:   return %.loc17_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

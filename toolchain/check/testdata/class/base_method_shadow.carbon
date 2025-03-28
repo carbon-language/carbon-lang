@@ -296,27 +296,27 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:     %d.param_patt: %ptr.19c = value_param_pattern %d.patt, call_param3
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.6db = value_param call_param0
-// CHECK:STDOUT:     %.loc229_13: type = splice_block %ptr.loc229_13 [concrete = constants.%ptr.6db] {
+// CHECK:STDOUT:     %.loc29_13: type = splice_block %ptr.loc29_13 [concrete = constants.%ptr.6db] {
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:       %ptr.loc229_13: type = ptr_type %A [concrete = constants.%ptr.6db]
+// CHECK:STDOUT:       %ptr.loc29_13: type = ptr_type %A [concrete = constants.%ptr.6db]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %ptr.6db = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %ptr.e79 = value_param call_param1
-// CHECK:STDOUT:     %.loc229_20: type = splice_block %ptr.loc229_20 [concrete = constants.%ptr.e79] {
+// CHECK:STDOUT:     %.loc29_20: type = splice_block %ptr.loc29_20 [concrete = constants.%ptr.e79] {
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:       %ptr.loc229_20: type = ptr_type %B [concrete = constants.%ptr.e79]
+// CHECK:STDOUT:       %ptr.loc29_20: type = ptr_type %B [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %ptr.e79 = bind_name b, %b.param
 // CHECK:STDOUT:     %c.param: %ptr.019 = value_param call_param2
-// CHECK:STDOUT:     %.loc229_27: type = splice_block %ptr.loc229_27 [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:     %.loc29_27: type = splice_block %ptr.loc29_27 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr.loc229_27: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:       %ptr.loc29_27: type = ptr_type %C [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %ptr.019 = bind_name c, %c.param
 // CHECK:STDOUT:     %d.param: %ptr.19c = value_param call_param3
-// CHECK:STDOUT:     %.loc229_34: type = splice_block %ptr.loc229_34 [concrete = constants.%ptr.19c] {
+// CHECK:STDOUT:     %.loc29_34: type = splice_block %ptr.loc29_34 [concrete = constants.%ptr.19c] {
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:       %ptr.loc229_34: type = ptr_type %D [concrete = constants.%ptr.19c]
+// CHECK:STDOUT:       %ptr.loc29_34: type = ptr_type %D [concrete = constants.%ptr.19c]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %d: %ptr.19c = bind_name d, %d.param
 // CHECK:STDOUT:   }
@@ -326,10 +326,10 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %F.decl: %F.type.649 = fn_decl @F.1 [concrete = constants.%F.485] {
 // CHECK:STDOUT:     %self.patt: %ptr.6db = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.6db = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc212_8: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.6db = value_param call_param0
-// CHECK:STDOUT:     %.loc212_23: type = splice_block %ptr [concrete = constants.%ptr.6db] {
+// CHECK:STDOUT:     %.loc12_23: type = splice_block %ptr [concrete = constants.%ptr.6db] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%A [concrete = constants.%A]
 // CHECK:STDOUT:       %ptr: type = ptr_type %A [concrete = constants.%ptr.6db]
 // CHECK:STDOUT:     }
@@ -345,14 +345,14 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc216: %B.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc16: %B.elem = base_decl %A.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.8c6 = fn_decl @F.2 [concrete = constants.%F.92a] {
 // CHECK:STDOUT:     %self.patt: %ptr.e79 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.e79 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc217_8: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc17_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.e79 = value_param call_param0
-// CHECK:STDOUT:     %.loc217_23: type = splice_block %ptr [concrete = constants.%ptr.e79] {
+// CHECK:STDOUT:     %.loc17_23: type = splice_block %ptr [concrete = constants.%ptr.e79] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:       %ptr: type = ptr_type %B [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:     }
@@ -364,21 +364,21 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   .base = %.loc216
+// CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc221: %C.elem = base_decl %B.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc21: %C.elem = base_decl %B.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.3 [concrete = constants.%F.437] {
 // CHECK:STDOUT:     %self.patt: %ptr.019 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc222_8: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc22_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
-// CHECK:STDOUT:     %.loc222_23: type = splice_block %ptr [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:     %.loc22_23: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
@@ -390,21 +390,21 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .B = <poisoned>
-// CHECK:STDOUT:   .base = %.loc221
+// CHECK:STDOUT:   .base = %.loc21
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc226: %D.elem = base_decl %B.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc26: %D.elem = base_decl %B.ref, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.0ff [concrete = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .B = <poisoned>
-// CHECK:STDOUT:   .base = %.loc226
+// CHECK:STDOUT:   .base = %.loc26
 // CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
@@ -418,33 +418,33 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: fn @Call(%a.param_patt: %ptr.6db, %b.param_patt: %ptr.e79, %c.param_patt: %ptr.019, %d.param_patt: %ptr.19c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.6db = name_ref a, %a
-// CHECK:STDOUT:   %.loc230: ref %A = deref %a.ref
-// CHECK:STDOUT:   %F.ref.loc230: %F.type.649 = name_ref F, @A.%F.decl [concrete = constants.%F.485]
-// CHECK:STDOUT:   %F.bound.loc230: <bound method> = bound_method %.loc230, %F.ref.loc230
-// CHECK:STDOUT:   %addr.loc230: %ptr.6db = addr_of %.loc230
-// CHECK:STDOUT:   %F.call.loc230: init %empty_tuple.type = call %F.bound.loc230(%addr.loc230)
+// CHECK:STDOUT:   %.loc30: ref %A = deref %a.ref
+// CHECK:STDOUT:   %F.ref.loc30: %F.type.649 = name_ref F, @A.%F.decl [concrete = constants.%F.485]
+// CHECK:STDOUT:   %F.bound.loc30: <bound method> = bound_method %.loc30, %F.ref.loc30
+// CHECK:STDOUT:   %addr.loc30: %ptr.6db = addr_of %.loc30
+// CHECK:STDOUT:   %F.call.loc30: init %empty_tuple.type = call %F.bound.loc30(%addr.loc30)
 // CHECK:STDOUT:   %b.ref: %ptr.e79 = name_ref b, %b
-// CHECK:STDOUT:   %.loc231: ref %B = deref %b.ref
-// CHECK:STDOUT:   %F.ref.loc231: %F.type.8c6 = name_ref F, @B.%F.decl [concrete = constants.%F.92a]
-// CHECK:STDOUT:   %F.bound.loc231: <bound method> = bound_method %.loc231, %F.ref.loc231
-// CHECK:STDOUT:   %addr.loc231: %ptr.e79 = addr_of %.loc231
-// CHECK:STDOUT:   %F.call.loc231: init %empty_tuple.type = call %F.bound.loc231(%addr.loc231)
+// CHECK:STDOUT:   %.loc31: ref %B = deref %b.ref
+// CHECK:STDOUT:   %F.ref.loc31: %F.type.8c6 = name_ref F, @B.%F.decl [concrete = constants.%F.92a]
+// CHECK:STDOUT:   %F.bound.loc31: <bound method> = bound_method %.loc31, %F.ref.loc31
+// CHECK:STDOUT:   %addr.loc31: %ptr.e79 = addr_of %.loc31
+// CHECK:STDOUT:   %F.call.loc31: init %empty_tuple.type = call %F.bound.loc31(%addr.loc31)
 // CHECK:STDOUT:   %c.ref: %ptr.019 = name_ref c, %c
-// CHECK:STDOUT:   %.loc232: ref %C = deref %c.ref
-// CHECK:STDOUT:   %F.ref.loc232: %F.type.c29 = name_ref F, @C.%F.decl [concrete = constants.%F.437]
-// CHECK:STDOUT:   %F.bound.loc232: <bound method> = bound_method %.loc232, %F.ref.loc232
-// CHECK:STDOUT:   %addr.loc232: %ptr.019 = addr_of %.loc232
-// CHECK:STDOUT:   %F.call.loc232: init %empty_tuple.type = call %F.bound.loc232(%addr.loc232)
+// CHECK:STDOUT:   %.loc32: ref %C = deref %c.ref
+// CHECK:STDOUT:   %F.ref.loc32: %F.type.c29 = name_ref F, @C.%F.decl [concrete = constants.%F.437]
+// CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
+// CHECK:STDOUT:   %addr.loc32: %ptr.019 = addr_of %.loc32
+// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr.loc32)
 // CHECK:STDOUT:   %d.ref: %ptr.19c = name_ref d, %d
-// CHECK:STDOUT:   %.loc233_4.1: ref %D = deref %d.ref
-// CHECK:STDOUT:   %F.ref.loc233: %F.type.8c6 = name_ref F, @B.%F.decl [concrete = constants.%F.92a]
-// CHECK:STDOUT:   %F.bound.loc233: <bound method> = bound_method %.loc233_4.1, %F.ref.loc233
-// CHECK:STDOUT:   %addr.loc233_4.1: %ptr.19c = addr_of %.loc233_4.1
-// CHECK:STDOUT:   %.loc233_4.2: ref %D = deref %addr.loc233_4.1
-// CHECK:STDOUT:   %.loc233_4.3: ref %B = class_element_access %.loc233_4.2, element0
-// CHECK:STDOUT:   %addr.loc233_4.2: %ptr.e79 = addr_of %.loc233_4.3
-// CHECK:STDOUT:   %.loc233_4.4: %ptr.e79 = converted %addr.loc233_4.1, %addr.loc233_4.2
-// CHECK:STDOUT:   %F.call.loc233: init %empty_tuple.type = call %F.bound.loc233(%.loc233_4.4)
+// CHECK:STDOUT:   %.loc33_4.1: ref %D = deref %d.ref
+// CHECK:STDOUT:   %F.ref.loc33: %F.type.8c6 = name_ref F, @B.%F.decl [concrete = constants.%F.92a]
+// CHECK:STDOUT:   %F.bound.loc33: <bound method> = bound_method %.loc33_4.1, %F.ref.loc33
+// CHECK:STDOUT:   %addr.loc33_4.1: %ptr.19c = addr_of %.loc33_4.1
+// CHECK:STDOUT:   %.loc33_4.2: ref %D = deref %addr.loc33_4.1
+// CHECK:STDOUT:   %.loc33_4.3: ref %B = class_element_access %.loc33_4.2, element0
+// CHECK:STDOUT:   %addr.loc33_4.2: %ptr.e79 = addr_of %.loc33_4.3
+// CHECK:STDOUT:   %.loc33_4.4: %ptr.e79 = converted %addr.loc33_4.1, %addr.loc33_4.2
+// CHECK:STDOUT:   %F.call.loc33: init %empty_tuple.type = call %F.bound.loc33(%.loc33_4.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

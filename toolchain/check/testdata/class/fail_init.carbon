@@ -274,49 +274,49 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc212_8: %Class.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc212_3: %Class.elem = var_pattern %.loc212_8
+// CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc212: ref %Class.elem = var <none>
-// CHECK:STDOUT:   %.loc213_8: %Class.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %.var.loc12: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %.loc13_8: %Class.elem = field_decl b, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc213_3: %Class.elem = var_pattern %.loc213_8
+// CHECK:STDOUT:     %.loc13_3: %Class.elem = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc213: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %.var.loc13: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .a = %.loc212_8
-// CHECK:STDOUT:   .b = %.loc213_8
+// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1.loc221: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc221_10.1: %struct_type.a = struct_literal (%int_1.loc221)
-// CHECK:STDOUT:   %Class.ref.loc221: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc221_10.2: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc221_10.3: ref %Class = temporary %.loc221_10.2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc221_12: ref %Class = converted %.loc221_10.1, %.loc221_10.3 [concrete = <error>]
-// CHECK:STDOUT:   %int_1.loc229: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_2.loc229: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc229_18.1: %struct_type.a.c = struct_literal (%int_1.loc229, %int_2.loc229)
-// CHECK:STDOUT:   %Class.ref.loc229: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc229_18.2: %i32 = converted %int_1.loc229, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc229_18.3: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc229_18.4: ref %Class = temporary %.loc229_18.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc229_20: ref %Class = converted %.loc229_18.1, %.loc229_18.4 [concrete = <error>]
-// CHECK:STDOUT:   %int_1.loc234: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_2.loc234: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc21_10.1: %struct_type.a = struct_literal (%int_1.loc21)
+// CHECK:STDOUT:   %Class.ref.loc21: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc21_10.2: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc21_10.3: ref %Class = temporary %.loc21_10.2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21_12: ref %Class = converted %.loc21_10.1, %.loc21_10.3 [concrete = <error>]
+// CHECK:STDOUT:   %int_1.loc26: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_2.loc26: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %.loc26_18.1: %struct_type.a.c = struct_literal (%int_1.loc26, %int_2.loc26)
+// CHECK:STDOUT:   %Class.ref.loc26: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc26_18.2: %i32 = converted %int_1.loc26, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_18.3: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc26_18.4: ref %Class = temporary %.loc26_18.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_20: ref %Class = converted %.loc26_18.1, %.loc26_18.4 [concrete = <error>]
+// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_2.loc31: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc234_26.1: %struct_type.a.b.c = struct_literal (%int_1.loc234, %int_2.loc234, %int_3)
-// CHECK:STDOUT:   %Class.ref.loc234: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc234_26.2: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc234_26.3: ref %Class = temporary %.loc234_26.2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc234_28: ref %Class = converted %.loc234_26.1, %.loc234_26.3 [concrete = <error>]
+// CHECK:STDOUT:   %.loc31_26.1: %struct_type.a.b.c = struct_literal (%int_1.loc31, %int_2.loc31, %int_3)
+// CHECK:STDOUT:   %Class.ref.loc31: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc31_26.2: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc31_26.3: ref %Class = temporary %.loc31_26.2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc31_28: ref %Class = converted %.loc31_26.1, %.loc31_26.3 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

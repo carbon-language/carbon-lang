@@ -267,9 +267,9 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc212_8: %Class.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc212_3: %Class.elem = var_pattern %.loc212_8
+// CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
@@ -277,7 +277,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc212_8
+// CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT:   .something = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

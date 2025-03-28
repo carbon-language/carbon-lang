@@ -267,28 +267,28 @@ fn Main() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReadChar.ref.loc24: %ReadChar.type.fa8 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.7f4]
-// CHECK:STDOUT:   %read.char.loc24: init %i32 = call %ReadChar.ref.loc24()
-// CHECK:STDOUT:   %.loc24_10: type = splice_block %i32.loc24 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %ReadChar.ref.loc16: %ReadChar.type.fa8 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.7f4]
+// CHECK:STDOUT:   %read.char.loc16: init %i32 = call %ReadChar.ref.loc16()
+// CHECK:STDOUT:   %.loc16_10: type = splice_block %i32.loc16 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc24_25.1: ref %i32 = temporary_storage
-// CHECK:STDOUT:   %.loc24_25.2: ref %i32 = temporary %.loc24_25.1, %read.char.loc24
-// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %.loc24_25.2
+// CHECK:STDOUT:   %.loc16_25.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc16_25.2: ref %i32 = temporary %.loc16_25.1, %read.char.loc16
+// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %.loc16_25.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %ReadChar.ref.loc25: %ReadChar.type.9f3 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.01f]
-// CHECK:STDOUT:   %read.char.loc25: init %i32 = call %ReadChar.ref.loc25()
-// CHECK:STDOUT:   %.loc25_10: type = splice_block %i32.loc25 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %ReadChar.ref.loc17: %ReadChar.type.9f3 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.01f]
+// CHECK:STDOUT:   %read.char.loc17: init %i32 = call %ReadChar.ref.loc17()
+// CHECK:STDOUT:   %.loc17_10: type = splice_block %i32.loc17 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc25_30.1: ref %i32 = temporary_storage
-// CHECK:STDOUT:   %.loc25_30.2: ref %i32 = temporary %.loc25_30.1, %read.char.loc25
-// CHECK:STDOUT:   %m: ref %i32 = bind_name m, %.loc25_30.2
+// CHECK:STDOUT:   %.loc17_30.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc17_30.2: ref %i32 = temporary %.loc17_30.1, %read.char.loc17
+// CHECK:STDOUT:   %m: ref %i32 = bind_name m, %.loc17_30.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

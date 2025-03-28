@@ -322,7 +322,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc27: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -418,8 +418,8 @@ class X(U:! type) {
 // CHECK:STDOUT: fn @F.2() -> %return.param_patt: %Param {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc22_21.1: %struct_type.x.c96 = struct_literal (%int_2)
-// CHECK:STDOUT:   %.loc22_21.2: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_21.1: %struct_type.x.c96 = struct_literal (%int_2)
+// CHECK:STDOUT:   %.loc15_21.2: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -428,39 +428,39 @@ class X(U:! type) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc28: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc28_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [concrete = constants.%assoc0.a6b]
-// CHECK:STDOUT:   %F.ref.loc28: %HasF.assoc_type.dc4 = name_ref F, %.loc28_17 [concrete = constants.%assoc0.a6b]
-// CHECK:STDOUT:   %impl.elem0.loc28: %.75e = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.901]
-// CHECK:STDOUT:   %.loc28_20.1: ref %Param = temporary_storage
-// CHECK:STDOUT:   %F.call.loc28: init %Param = call %impl.elem0.loc28() to %.loc28_20.1
-// CHECK:STDOUT:   %.loc28_20.2: ref %Param = temporary %.loc28_20.1, %F.call.loc28
-// CHECK:STDOUT:   %x.ref.loc28: %Param.elem = name_ref x, @Param.%.loc9_8 [concrete = @Param.%.loc9_8]
-// CHECK:STDOUT:   %.loc28_21: ref %i32 = class_element_access %.loc28_20.2, element0
-// CHECK:STDOUT:   %.loc28_10: type = splice_block %i32.loc28 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc28: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc21_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [concrete = constants.%assoc0.a6b]
+// CHECK:STDOUT:   %F.ref.loc21: %HasF.assoc_type.dc4 = name_ref F, %.loc21_17 [concrete = constants.%assoc0.a6b]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.75e = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.901]
+// CHECK:STDOUT:   %.loc21_20.1: ref %Param = temporary_storage
+// CHECK:STDOUT:   %F.call.loc21: init %Param = call %impl.elem0.loc21() to %.loc21_20.1
+// CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %F.call.loc21
+// CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9_8 [concrete = @Param.%.loc9_8]
+// CHECK:STDOUT:   %.loc21_21: ref %i32 = class_element_access %.loc21_20.2, element0
+// CHECK:STDOUT:   %.loc21_10: type = splice_block %i32.loc21 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %.loc28_21
+// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %.loc21_21
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc29_3: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc22_3: %i32 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %.loc29_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [concrete = constants.%assoc0.a6b]
-// CHECK:STDOUT:   %F.ref.loc29: %HasF.assoc_type.dc4 = name_ref F, %.loc29_17 [concrete = constants.%assoc0.a6b]
-// CHECK:STDOUT:   %impl.elem0.loc29: %.75e = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.901]
-// CHECK:STDOUT:   %.loc29_20.1: ref %Param = temporary_storage
-// CHECK:STDOUT:   %F.call.loc29: init %Param = call %impl.elem0.loc29() to %.loc29_20.1
-// CHECK:STDOUT:   %.loc29_20.2: ref %Param = temporary %.loc29_20.1, %F.call.loc29
-// CHECK:STDOUT:   %x.ref.loc29: %Param.elem = name_ref x, @Param.%.loc9_8 [concrete = @Param.%.loc9_8]
-// CHECK:STDOUT:   %.loc29_21.1: ref %i32 = class_element_access %.loc29_20.2, element0
-// CHECK:STDOUT:   %.loc29_21.2: %i32 = bind_value %.loc29_21.1
-// CHECK:STDOUT:   assign %b.var, %.loc29_21.2
-// CHECK:STDOUT:   %.loc29_10: type = splice_block %i32.loc29 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc22_17: %HasF.assoc_type.dc4 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [concrete = constants.%assoc0.a6b]
+// CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type.dc4 = name_ref F, %.loc22_17 [concrete = constants.%assoc0.a6b]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.75e = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.901]
+// CHECK:STDOUT:   %.loc22_20.1: ref %Param = temporary_storage
+// CHECK:STDOUT:   %F.call.loc22: init %Param = call %impl.elem0.loc22() to %.loc22_20.1
+// CHECK:STDOUT:   %.loc22_20.2: ref %Param = temporary %.loc22_20.1, %F.call.loc22
+// CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9_8 [concrete = @Param.%.loc9_8]
+// CHECK:STDOUT:   %.loc22_21.1: ref %i32 = class_element_access %.loc22_20.2, element0
+// CHECK:STDOUT:   %.loc22_21.2: %i32 = bind_value %.loc22_21.1
+// CHECK:STDOUT:   assign %b.var, %.loc22_21.2
+// CHECK:STDOUT:   %.loc22_10: type = splice_block %i32.loc22 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   return

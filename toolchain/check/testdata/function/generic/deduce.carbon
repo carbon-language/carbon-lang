@@ -1107,9 +1107,9 @@ fn F() {
 // CHECK:STDOUT:   %TupleParam.ref: %TupleParam.type = name_ref TupleParam, file.%TupleParam.decl [concrete = constants.%TupleParam]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc17_19.1: %tuple.type.f94 = tuple_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc7_19.1: %tuple.type.f94 = tuple_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %TupleParam.specific_fn: <specific function> = specific_function %TupleParam.ref, @TupleParam(Core.IntLiteral) [concrete = constants.%TupleParam.specific_fn]
-// CHECK:STDOUT:   %.loc17_19.2: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc7_19.2: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TupleParam.call: init %empty_tuple.type = call %TupleParam.specific_fn(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -1204,9 +1204,9 @@ fn F() {
 // CHECK:STDOUT:   %StructParam.ref: %StructParam.type = name_ref StructParam, file.%StructParam.decl [concrete = constants.%StructParam]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc17_30.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc7_30.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %StructParam.specific_fn: <specific function> = specific_function %StructParam.ref, @StructParam(Core.IntLiteral) [concrete = constants.%StructParam.specific_fn]
-// CHECK:STDOUT:   %.loc17_30.2: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc7_30.2: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:   %StructParam.call: init %empty_tuple.type = call %StructParam.specific_fn(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -2028,7 +2028,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl.8e4 [concrete] {
-// CHECK:STDOUT:     %E.patt.loc26_14.1: <error> = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc26_14.2 (constants.%E.patt)]
+// CHECK:STDOUT:     %E.patt.loc19_14.1: <error> = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc19_14.2 (constants.%E.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CC.ref: %CC.type = name_ref CC, file.%CC.decl [concrete = constants.%CC.generic]
 // CHECK:STDOUT:     %E.ref: <error> = name_ref E, %E [concrete = <error>]
@@ -2077,7 +2077,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.8e4(%E: <error>) {
-// CHECK:STDOUT:   %E.patt.loc26_14.2: <error> = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc26_14.2 (constants.%E.patt)]
+// CHECK:STDOUT:   %E.patt.loc19_14.2: <error> = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc19_14.2 (constants.%E.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -2115,10 +2115,10 @@ fn F() {
 // CHECK:STDOUT:   %CC.ref: %CC.type = name_ref CC, file.%CC.decl [concrete = constants.%CC.generic]
 // CHECK:STDOUT:   %DD.ref: type = name_ref DD, file.%DD.decl [concrete = constants.%DD]
 // CHECK:STDOUT:   %Y.facet: %Y.type = facet_value constants.%DD, (constants.%impl_witness) [concrete = constants.%Y.facet]
-// CHECK:STDOUT:   %.loc36_9: %Y.type = converted %DD.ref, %Y.facet [concrete = constants.%Y.facet]
+// CHECK:STDOUT:   %.loc22_9: %Y.type = converted %DD.ref, %Y.facet [concrete = constants.%Y.facet]
 // CHECK:STDOUT:   %CC: type = class_type @CC, @CC(constants.%Y.facet) [concrete = constants.%CC.49f]
 // CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %.loc36_12: %Z.type = converted %CC, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_12: %Z.type = converted %CC, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2128,7 +2128,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.8e4(<error>) {
-// CHECK:STDOUT:   %E.patt.loc26_14.2 => <error>
+// CHECK:STDOUT:   %E.patt.loc19_14.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Y.facet) {

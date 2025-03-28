@@ -258,7 +258,7 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT: fn @Run() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc218: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc11: %i32 = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

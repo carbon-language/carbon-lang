@@ -239,7 +239,7 @@ var x: type = 42;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: type = binding_pattern x
-// CHECK:STDOUT:     %.loc218: type = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc18: type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
@@ -248,7 +248,7 @@ var x: type = 42;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:   %.loc218: type = converted %int_42, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc18: type = converted %int_42, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

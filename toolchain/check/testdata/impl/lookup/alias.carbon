@@ -274,7 +274,7 @@ fn G(c: C) {
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc223: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -322,14 +322,14 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc224: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %G.ref.loc224: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc224: %.be1 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.dc7]
-// CHECK:STDOUT:   %F.call.loc224: init %empty_tuple.type = call %impl.elem0.loc224()
+// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %G.ref.loc24: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0.loc24: %.be1 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.dc7]
+// CHECK:STDOUT:   %F.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc225: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc225: %.be1 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.dc7]
-// CHECK:STDOUT:   %F.call.loc225: init %empty_tuple.type = call %impl.elem0.loc225()
+// CHECK:STDOUT:   %G.ref.loc25: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0.loc25: %.be1 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.dc7]
+// CHECK:STDOUT:   %F.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

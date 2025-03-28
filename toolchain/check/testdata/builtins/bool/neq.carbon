@@ -571,46 +571,46 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc16: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc9: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %C.ref.loc16: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:     %true.loc16_10: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %true.loc16_18: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:     %C.ref.loc9: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:     %true.loc9_10: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:     %true.loc9_18: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
-// CHECK:STDOUT:     %.loc24: <error> = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %C.ref.loc24: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:     %true.loc24: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %false.loc24: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:     %true.loc10: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:     %false.loc10: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %.loc32: <error> = var_pattern %c.patt
+// CHECK:STDOUT:     %.loc11: <error> = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %.3: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %C.ref.loc32: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:     %false.loc32: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %true.loc32: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:     %C.ref.loc11: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:     %false.loc11: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:     %true.loc11: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: <error> = binding_pattern d
-// CHECK:STDOUT:     %.loc40: <error> = var_pattern %d.patt
+// CHECK:STDOUT:     %.loc12: <error> = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref <error> = var d
 // CHECK:STDOUT:   %.4: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %C.ref.loc40: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:     %false.loc40_10: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %false.loc40_19: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:     %false.loc12_10: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:     %false.loc12_19: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: <error> = bind_name d, <error>
 // CHECK:STDOUT: }
@@ -636,21 +636,21 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %False.ref.loc16: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
-// CHECK:STDOUT:   %.loc16: ref %C.2ba = temporary_storage
-// CHECK:STDOUT:   %False.call.loc16: init %C.2ba = call %False.ref.loc16() to %.loc16
+// CHECK:STDOUT:   %False.ref.loc9: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
+// CHECK:STDOUT:   %.loc9: ref %C.2ba = temporary_storage
+// CHECK:STDOUT:   %False.call.loc9: init %C.2ba = call %False.ref.loc9() to %.loc9
 // CHECK:STDOUT:   assign file.%a.var, <error>
-// CHECK:STDOUT:   %True.ref.loc24: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc24: ref %C.a14 = temporary_storage
-// CHECK:STDOUT:   %True.call.loc24: init %C.a14 = call %True.ref.loc24() to %.loc24
+// CHECK:STDOUT:   %True.ref.loc10: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
+// CHECK:STDOUT:   %.loc10: ref %C.a14 = temporary_storage
+// CHECK:STDOUT:   %True.call.loc10: init %C.a14 = call %True.ref.loc10() to %.loc10
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %True.ref.loc32: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc32: ref %C.a14 = temporary_storage
-// CHECK:STDOUT:   %True.call.loc32: init %C.a14 = call %True.ref.loc32() to %.loc32
+// CHECK:STDOUT:   %True.ref.loc11: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
+// CHECK:STDOUT:   %.loc11: ref %C.a14 = temporary_storage
+// CHECK:STDOUT:   %True.call.loc11: init %C.a14 = call %True.ref.loc11() to %.loc11
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %False.ref.loc40: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
-// CHECK:STDOUT:   %.loc40: ref %C.2ba = temporary_storage
-// CHECK:STDOUT:   %False.call.loc40: init %C.2ba = call %False.ref.loc40() to %.loc40
+// CHECK:STDOUT:   %False.ref.loc12: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
+// CHECK:STDOUT:   %.loc12: ref %C.2ba = temporary_storage
+// CHECK:STDOUT:   %False.call.loc12: init %C.2ba = call %False.ref.loc12() to %.loc12
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

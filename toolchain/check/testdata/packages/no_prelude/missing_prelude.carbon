@@ -189,8 +189,8 @@ var n: {} = i32;
 // CHECK:STDOUT: generic fn @Int(%T.loc4_8.1: type, %N.loc4_18.1: @Int.%T.loc4_8.2 (%T)) {
 // CHECK:STDOUT:   %T.loc4_8.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_8.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc4_8.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %N.loc4_18.2: %T = bind_symbolic_name N, 1 [symbolic = %N.loc4_18.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc4_18.2: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
+// CHECK:STDOUT:   %N.loc4_18.2: @Int.%T.loc4_8.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc4_18.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt.loc4_18.2: @Int.%T.loc4_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -218,9 +218,9 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt: @Int.%T (%T) = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
-// CHECK:STDOUT:   %N.patt.51ccc0.2: %T = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -254,8 +254,8 @@ var n: {} = i32;
 // CHECK:STDOUT: generic fn @Int(imports.%Core.import_ref.5ab: type, imports.%Core.import_ref.34c: @Int.%T (%T)) [from "prelude_fake_int.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %N.patt.2: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt.2 (constants.%N.patt.51ccc0.2)]
+// CHECK:STDOUT:   %N: @Int.%T (%T) = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
+// CHECK:STDOUT:   %N.patt.2: @Int.%T (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -336,8 +336,8 @@ var n: {} = i32;
 // CHECK:STDOUT: generic fn @Int(%T.loc8_8.1: type, %N.loc8_18.1: @Int.%T.loc8_8.2 (%T)) {
 // CHECK:STDOUT:   %T.loc8_8.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc8_8.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %N.loc8_18.2: %T = bind_symbolic_name N, 1 [symbolic = %N.loc8_18.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc8_18.2: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc8_18.2 (constants.%N.patt)]
+// CHECK:STDOUT:   %N.loc8_18.2: @Int.%T.loc8_8.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc8_18.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt.loc8_18.2: @Int.%T.loc8_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc8_18.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:

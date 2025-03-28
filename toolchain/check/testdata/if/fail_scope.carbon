@@ -262,13 +262,13 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc211: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc211: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc211_16.1: type = splice_block %.loc211_16.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc11_16.1: type = splice_block %.loc11_16.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc211_16.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc211_16.3: type = converted %bool.make_type, %.loc211_16.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc11_16.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc11_16.3: type = converted %bool.make_type, %.loc11_16.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -284,23 +284,23 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
-// CHECK:STDOUT:     %.loc220_5.1: %i32 = var_pattern %n.patt
+// CHECK:STDOUT:     %.loc13_5.1: %i32 = var_pattern %n.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i32 = var n
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc220_5.2: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_5.2: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %n.var, <error>
-// CHECK:STDOUT:   %.loc220_12: type = splice_block %i32.loc220 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc220: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc220: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc13_12: type = splice_block %i32.loc13 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
-// CHECK:STDOUT:   %n.ref.loc221: ref %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc221: %i32 = bind_value %n.ref.loc221
-// CHECK:STDOUT:   return %.loc221
+// CHECK:STDOUT:   %n.ref.loc14: ref %i32 = name_ref n, %n
+// CHECK:STDOUT:   %.loc14: %i32 = bind_value %n.ref.loc14
+// CHECK:STDOUT:   return %.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %n.ref.loc227: <error> = name_ref n, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n.ref.loc20: <error> = name_ref n, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

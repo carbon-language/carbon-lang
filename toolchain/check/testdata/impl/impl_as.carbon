@@ -301,13 +301,13 @@ class C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %.loc219_7.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:     %.loc19_7.1: %C = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %.loc219_19.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc219_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc219_7.2: init %C = converted %.loc219_19.1, %.loc219_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc219_7.2
+// CHECK:STDOUT:   %.loc19_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc19_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc19_7.2: init %C = converted %.loc19_19.1, %.loc19_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc19_7.2
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   return

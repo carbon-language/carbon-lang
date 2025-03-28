@@ -276,11 +276,11 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %F.loc20_10: type = bind_symbolic_name F, 0 [symbolic = @Class.%F.loc5_13.2 (constants.%F.8b3)]
-// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %return.param.loc20: ref %i32 = out_param call_param0
-// CHECK:STDOUT:     %return.loc20: ref %i32 = return_slot %return.param.loc20
+// CHECK:STDOUT:     %F.loc13_10: type = bind_symbolic_name F, 0 [symbolic = @Class.%F.loc5_13.2 (constants.%F.8b3)]
+// CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param call_param0
+// CHECK:STDOUT:     %return.loc13: ref %i32 = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -303,14 +303,14 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Inner(@Class.%F.loc5_13.1: type) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.loc15_19.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc15_19.1 (constants.%F.8b3)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.loc15_19.1) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F.loc15_19.2: @Inner.%F.type (%F.type) = struct_value () [symbolic = %F.loc15_19.2 (constants.%F.3fa)]
-// CHECK:STDOUT:   %G.type: type = fn_type @G, @Inner(%F.loc15_19.1) [symbolic = %G.type (constants.%G.type)]
+// CHECK:STDOUT:   %F.loc8_19.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc8_19.1 (constants.%F.8b3)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.loc8_19.1) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F.loc8_19.2: @Inner.%F.type (%F.type) = struct_value () [symbolic = %F.loc8_19.2 (constants.%F.3fa)]
+// CHECK:STDOUT:   %G.type: type = fn_type @G, @Inner(%F.loc8_19.1) [symbolic = %G.type (constants.%G.type)]
 // CHECK:STDOUT:   %G: @Inner.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %F.decl: @Inner.%F.type (%F.type) = fn_decl @F [symbolic = @Inner.%F.loc15_19.2 (constants.%F.3fa)] {
+// CHECK:STDOUT:     %F.decl: @Inner.%F.type (%F.type) = fn_decl @F [symbolic = @Inner.%F.loc8_19.2 (constants.%F.3fa)] {
 // CHECK:STDOUT:       %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
@@ -323,10 +323,10 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:       %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %return.param.loc16: ref %i32 = out_param call_param0
-// CHECK:STDOUT:       %return.loc16: ref %i32 = return_slot %return.param.loc16
+// CHECK:STDOUT:       %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %return.param.loc9: ref %i32 = out_param call_param0
+// CHECK:STDOUT:       %return.loc9: ref %i32 = return_slot %return.param.loc9
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -344,27 +344,27 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:     %.loc15: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc8: %i32 = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@Class.%F.loc5_13.1: type) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.loc20_46.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc20_46.1 (constants.%F.8b3)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.loc20_46.1) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F.loc20_46.2: @G.%F.type (%F.type) = struct_value () [symbolic = %F.loc20_46.2 (constants.%F.3fa)]
-// CHECK:STDOUT:   %F.specific_fn.loc20_46.2: <specific function> = specific_function %F.loc20_46.2, @F(%F.loc20_46.1) [symbolic = %F.specific_fn.loc20_46.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:   %F.loc13_46.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc13_46.1 (constants.%F.8b3)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.loc13_46.1) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F.loc13_46.2: @G.%F.type (%F.type) = struct_value () [symbolic = %F.loc13_46.2 (constants.%F.3fa)]
+// CHECK:STDOUT:   %F.specific_fn.loc13_46.2: <specific function> = specific_function %F.loc13_46.2, @F(%F.loc13_46.1) [symbolic = %F.specific_fn.loc13_46.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc20_46: @G.%F.type (%F.type) = specific_constant @Inner.%F.decl, @Inner(constants.%F.8b3) [symbolic = %F.loc20_46.2 (constants.%F.3fa)]
-// CHECK:STDOUT:     %F.ref: @G.%F.type (%F.type) = name_ref F, %.loc20_46 [symbolic = %F.loc20_46.2 (constants.%F.3fa)]
-// CHECK:STDOUT:     %F.specific_fn.loc20_46.1: <specific function> = specific_function %F.ref, @F(constants.%F.8b3) [symbolic = %F.specific_fn.loc20_46.2 (constants.%F.specific_fn)]
-// CHECK:STDOUT:     %F.call: init %i32 = call %F.specific_fn.loc20_46.1()
-// CHECK:STDOUT:     %.loc20_49.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:     %.loc20_49.2: %i32 = converted %F.call, %.loc20_49.1
-// CHECK:STDOUT:     return %.loc20_49.2
+// CHECK:STDOUT:     %.loc13_46: @G.%F.type (%F.type) = specific_constant @Inner.%F.decl, @Inner(constants.%F.8b3) [symbolic = %F.loc13_46.2 (constants.%F.3fa)]
+// CHECK:STDOUT:     %F.ref: @G.%F.type (%F.type) = name_ref F, %.loc13_46 [symbolic = %F.loc13_46.2 (constants.%F.3fa)]
+// CHECK:STDOUT:     %F.specific_fn.loc13_46.1: <specific function> = specific_function %F.ref, @F(constants.%F.8b3) [symbolic = %F.specific_fn.loc13_46.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %F.call: init %i32 = call %F.specific_fn.loc13_46.1()
+// CHECK:STDOUT:     %.loc13_49.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:     %.loc13_49.2: %i32 = converted %F.call, %.loc13_49.1
+// CHECK:STDOUT:     return %.loc13_49.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -377,9 +377,9 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%F.8b3) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.loc15_19.1 => constants.%F.8b3
+// CHECK:STDOUT:   %F.loc8_19.1 => constants.%F.8b3
 // CHECK:STDOUT:   %F.type => constants.%F.type
-// CHECK:STDOUT:   %F.loc15_19.2 => constants.%F.3fa
+// CHECK:STDOUT:   %F.loc8_19.2 => constants.%F.3fa
 // CHECK:STDOUT:   %G.type => constants.%G.type
 // CHECK:STDOUT:   %G => constants.%G
 // CHECK:STDOUT: }
@@ -390,9 +390,9 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%F.8b3) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%F.loc15_19.1) {}
+// CHECK:STDOUT: specific @Inner(%F.loc8_19.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@G.%F.loc20_46.1) {}
+// CHECK:STDOUT: specific @Inner(@G.%F.loc13_46.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@G.%F.loc20_46.1) {}
+// CHECK:STDOUT: specific @F(@G.%F.loc13_46.1) {}
 // CHECK:STDOUT:

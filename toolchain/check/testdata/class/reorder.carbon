@@ -292,15 +292,15 @@ class Class {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc213_21.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc213_21.2: %i32 = converted %F.call, %.loc213_21.1
-// CHECK:STDOUT:   return %.loc213_21.2
+// CHECK:STDOUT:   %.loc13_21.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc13_21.2: %i32 = converted %F.call, %.loc13_21.1
+// CHECK:STDOUT:   return %.loc13_21.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc224: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -136,18 +136,18 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc28: <witness> = impl_witness (@impl.c94.%BB.decl) [concrete = constants.%impl_witness.fe4]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt.loc46_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc46_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc32_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc32_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %t.patt: <error> = binding_pattern t
 // CHECK:STDOUT:     %t.param_patt: <error> = value_param_pattern %t.patt, call_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:       %A.ref.loc46: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:       %A.ref.loc32: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:       %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
-// CHECK:STDOUT:       %B.ref.loc46: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
+// CHECK:STDOUT:       %B.ref.loc32: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = bind_symbolic_name T, 0 [concrete = <error>]
 // CHECK:STDOUT:     %t.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %T.ref.loc46: <error> = name_ref T, %T [concrete = <error>]
+// CHECK:STDOUT:     %T.ref.loc32: <error> = name_ref T, %T [concrete = <error>]
 // CHECK:STDOUT:     %t: <error> = bind_name t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
@@ -238,26 +238,26 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T: <error>) {
-// CHECK:STDOUT:   %T.patt.loc46_6.2: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc46_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc32_6.2: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc32_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc46_6.1: <error>](%t.param_patt: <error>) {
+// CHECK:STDOUT:   fn[%T.patt.loc32_6.1: <error>](%t.param_patt: <error>) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %t.ref.loc47: <error> = name_ref t, %t [concrete = <error>]
-// CHECK:STDOUT:     %AA.ref.loc47: <error> = name_ref AA, <error> [concrete = <error>]
-// CHECK:STDOUT:     %t.ref.loc48: <error> = name_ref t, %t [concrete = <error>]
-// CHECK:STDOUT:     %BB.ref.loc48: <error> = name_ref BB, <error> [concrete = <error>]
-// CHECK:STDOUT:     %T.ref.loc50: <error> = name_ref T, %T [concrete = <error>]
-// CHECK:STDOUT:     %AA.ref.loc50: <error> = name_ref AA, <error> [concrete = <error>]
-// CHECK:STDOUT:     %T.ref.loc51: <error> = name_ref T, %T [concrete = <error>]
-// CHECK:STDOUT:     %BB.ref.loc51: <error> = name_ref BB, <error> [concrete = <error>]
-// CHECK:STDOUT:     %T.ref.loc53: <error> = name_ref T, %T [concrete = <error>]
-// CHECK:STDOUT:     %A.ref.loc53: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:     %AA.ref.loc53: %A.assoc_type = name_ref AA, @A.%assoc0 [concrete = constants.%assoc0.f33]
-// CHECK:STDOUT:     %T.ref.loc54: <error> = name_ref T, %T [concrete = <error>]
-// CHECK:STDOUT:     %B.ref.loc54: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
-// CHECK:STDOUT:     %BB.ref.loc54: %B.assoc_type = name_ref BB, @B.%assoc0 [concrete = constants.%assoc0.019]
+// CHECK:STDOUT:     %t.ref.loc33: <error> = name_ref t, %t [concrete = <error>]
+// CHECK:STDOUT:     %AA.ref.loc33: <error> = name_ref AA, <error> [concrete = <error>]
+// CHECK:STDOUT:     %t.ref.loc34: <error> = name_ref t, %t [concrete = <error>]
+// CHECK:STDOUT:     %BB.ref.loc34: <error> = name_ref BB, <error> [concrete = <error>]
+// CHECK:STDOUT:     %T.ref.loc36: <error> = name_ref T, %T [concrete = <error>]
+// CHECK:STDOUT:     %AA.ref.loc36: <error> = name_ref AA, <error> [concrete = <error>]
+// CHECK:STDOUT:     %T.ref.loc37: <error> = name_ref T, %T [concrete = <error>]
+// CHECK:STDOUT:     %BB.ref.loc37: <error> = name_ref BB, <error> [concrete = <error>]
+// CHECK:STDOUT:     %T.ref.loc39: <error> = name_ref T, %T [concrete = <error>]
+// CHECK:STDOUT:     %A.ref.loc39: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:     %AA.ref.loc39: %A.assoc_type = name_ref AA, @A.%assoc0 [concrete = constants.%assoc0.f33]
+// CHECK:STDOUT:     %T.ref.loc40: <error> = name_ref T, %T [concrete = <error>]
+// CHECK:STDOUT:     %B.ref.loc40: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
+// CHECK:STDOUT:     %BB.ref.loc40: %B.assoc_type = name_ref BB, @B.%assoc0 [concrete = constants.%assoc0.019]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -265,12 +265,12 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %.loc58_6.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc44_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc58_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc58_6.3: init %C = class_init (), %.loc58_6.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc58_6.4: ref %C = temporary %.loc58_6.2, %.loc58_6.3
-// CHECK:STDOUT:   %.loc58_8: ref %C = converted %.loc58_6.1, %.loc58_6.4
+// CHECK:STDOUT:   %.loc44_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc44_6.3: init %C = class_init (), %.loc44_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc44_6.4: ref %C = temporary %.loc44_6.2, %.loc44_6.3
+// CHECK:STDOUT:   %.loc44_8: ref %C = converted %.loc44_6.1, %.loc44_6.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -283,7 +283,7 @@ fn F() {
 // CHECK:STDOUT: specific @BB.1(constants.%B.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(<error>) {
-// CHECK:STDOUT:   %T.patt.loc46_6.2 => <error>
+// CHECK:STDOUT:   %T.patt.loc32_6.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/facet_types.carbon

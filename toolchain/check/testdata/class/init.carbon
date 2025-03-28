@@ -264,16 +264,16 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc216_34: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc216_12: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc16_12: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %next.param: %ptr.e71 = value_param call_param1
-// CHECK:STDOUT:     %.loc216_28: type = splice_block %ptr [concrete = constants.%ptr.e71] {
-// CHECK:STDOUT:       %Class.ref.loc216_23: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %.loc16_28: type = splice_block %ptr [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:       %Class.ref.loc16_23: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %next: %ptr.e71 = bind_name next, %next.param
@@ -288,16 +288,16 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc220_41: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc220_19: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc20_19: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %next.param: %ptr.e71 = value_param call_param1
-// CHECK:STDOUT:     %.loc220_35: type = splice_block %ptr [concrete = constants.%ptr.e71] {
-// CHECK:STDOUT:       %Class.ref.loc220_30: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %.loc20_35: type = splice_block %ptr [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:       %Class.ref.loc20_30: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %next: %ptr.e71 = bind_name next, %next.param
@@ -307,51 +307,51 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc212_8: %Class.elem.c91 = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem.c91 = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc212_3: %Class.elem.c91 = var_pattern %.loc212_8
+// CHECK:STDOUT:     %.loc12_3: %Class.elem.c91 = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc212: ref %Class.elem.c91 = var <none>
-// CHECK:STDOUT:   %.loc213_11: %Class.elem.0c0 = field_decl next, element1 [concrete]
+// CHECK:STDOUT:   %.var.loc12: ref %Class.elem.c91 = var <none>
+// CHECK:STDOUT:   %.loc13_11: %Class.elem.0c0 = field_decl next, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc213_3: %Class.elem.0c0 = var_pattern %.loc213_11
+// CHECK:STDOUT:     %.loc13_3: %Class.elem.0c0 = var_pattern %.loc13_11
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc213: ref %Class.elem.0c0 = var <none>
+// CHECK:STDOUT:   %.var.loc13: ref %Class.elem.0c0 = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [concrete = constants.%complete_type.78f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc212_8
+// CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT:   .Class = <poisoned>
-// CHECK:STDOUT:   .next = %.loc213_11
+// CHECK:STDOUT:   .next = %.loc13_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %ptr.e71) -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %next.ref: %ptr.e71 = name_ref next, %next
-// CHECK:STDOUT:   %.loc217_31.1: %struct_type.n.next = struct_literal (%n.ref, %next.ref)
-// CHECK:STDOUT:   %.loc217_31.2: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc217_31.3: init %i32 = initialize_from %n.ref to %.loc217_31.2
-// CHECK:STDOUT:   %.loc217_31.4: ref %ptr.e71 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc217_31.5: init %ptr.e71 = initialize_from %next.ref to %.loc217_31.4
-// CHECK:STDOUT:   %.loc217_31.6: init %Class = class_init (%.loc217_31.3, %.loc217_31.5), %return
-// CHECK:STDOUT:   %.loc217_32: init %Class = converted %.loc217_31.1, %.loc217_31.6
-// CHECK:STDOUT:   return %.loc217_32 to %return
+// CHECK:STDOUT:   %.loc17_31.1: %struct_type.n.next = struct_literal (%n.ref, %next.ref)
+// CHECK:STDOUT:   %.loc17_31.2: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc17_31.3: init %i32 = initialize_from %n.ref to %.loc17_31.2
+// CHECK:STDOUT:   %.loc17_31.4: ref %ptr.e71 = class_element_access %return, element1
+// CHECK:STDOUT:   %.loc17_31.5: init %ptr.e71 = initialize_from %next.ref to %.loc17_31.4
+// CHECK:STDOUT:   %.loc17_31.6: init %Class = class_init (%.loc17_31.3, %.loc17_31.5), %return
+// CHECK:STDOUT:   %.loc17_32: init %Class = converted %.loc17_31.1, %.loc17_31.6
+// CHECK:STDOUT:   return %.loc17_32 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeReorder(%n.param_patt: %i32, %next.param_patt: %ptr.e71) -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %next.ref: %ptr.e71 = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc221_31.1: %struct_type.next.n = struct_literal (%next.ref, %n.ref)
-// CHECK:STDOUT:   %.loc221_31.2: ref %i32 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc221_31.3: init %i32 = initialize_from %n.ref to %.loc221_31.2
-// CHECK:STDOUT:   %.loc221_31.4: ref %ptr.e71 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc221_31.5: init %ptr.e71 = initialize_from %next.ref to %.loc221_31.4
-// CHECK:STDOUT:   %.loc221_31.6: init %Class = class_init (%.loc221_31.3, %.loc221_31.5), %return
-// CHECK:STDOUT:   %.loc221_32: init %Class = converted %.loc221_31.1, %.loc221_31.6
-// CHECK:STDOUT:   return %.loc221_32 to %return
+// CHECK:STDOUT:   %.loc21_31.1: %struct_type.next.n = struct_literal (%next.ref, %n.ref)
+// CHECK:STDOUT:   %.loc21_31.2: ref %i32 = class_element_access %return, element1
+// CHECK:STDOUT:   %.loc21_31.3: init %i32 = initialize_from %n.ref to %.loc21_31.2
+// CHECK:STDOUT:   %.loc21_31.4: ref %ptr.e71 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc21_31.5: init %ptr.e71 = initialize_from %next.ref to %.loc21_31.4
+// CHECK:STDOUT:   %.loc21_31.6: init %Class = class_init (%.loc21_31.3, %.loc21_31.5), %return
+// CHECK:STDOUT:   %.loc21_32: init %Class = converted %.loc21_31.1, %.loc21_31.6
+// CHECK:STDOUT:   return %.loc21_32 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

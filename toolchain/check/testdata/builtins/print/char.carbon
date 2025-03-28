@@ -277,12 +277,12 @@ fn Main() {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc213_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc213_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc13_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc213: type = splice_block %i32.loc213_17 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc213_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc213_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc13: type = splice_block %i32.loc13_17 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc13_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc13_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -295,15 +295,15 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %PrintChar.ref.loc226: %PrintChar.type.c95 = name_ref PrintChar, file.%PrintChar.decl [concrete = constants.%PrintChar.843]
+// CHECK:STDOUT:   %PrintChar.ref.loc16: %PrintChar.type.c95 = name_ref PrintChar, file.%PrintChar.decl [concrete = constants.%PrintChar.843]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc226: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %print.char.loc226: init %i32 = call %PrintChar.ref.loc226(<error>) [concrete = <error>]
+// CHECK:STDOUT:   %.loc16: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %print.char.loc16: init %i32 = call %PrintChar.ref.loc16(<error>) [concrete = <error>]
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %PrintChar.ref.loc237: %PrintChar.type.089 = name_ref PrintChar, imports.%Core.PrintChar [concrete = constants.%PrintChar.d75]
+// CHECK:STDOUT:   %PrintChar.ref.loc17: %PrintChar.type.089 = name_ref PrintChar, imports.%Core.PrintChar [concrete = constants.%PrintChar.d75]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc237: %i32 = converted %int_2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %print.char.loc237: init %i32 = call %PrintChar.ref.loc237(<error>) [concrete = <error>]
+// CHECK:STDOUT:   %.loc17: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %print.char.loc17: init %i32 = call %PrintChar.ref.loc17(<error>) [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

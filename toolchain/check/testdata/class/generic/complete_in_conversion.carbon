@@ -321,11 +321,11 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc32_13: type = splice_block %ptr.loc32 [concrete = <error>] {
+// CHECK:STDOUT:     %.loc15_13: type = splice_block %ptr.loc15 [concrete = <error>] {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:       %.loc32_12: %i32 = converted %int_0, <error> [concrete = <error>]
-// CHECK:STDOUT:       %ptr.loc32: type = ptr_type <error> [concrete = <error>]
+// CHECK:STDOUT:       %.loc15_12: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:       %ptr.loc15: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -352,9 +352,9 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %.loc7: @A.%A.elem (%A.elem) = base_decl %B.ref, element0 [concrete]
-// CHECK:STDOUT:     %.loc19_8: <error> = field_decl n, element1 [concrete]
+// CHECK:STDOUT:     %.loc12_8: <error> = field_decl n, element1 [concrete]
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc19_3: <error> = var_pattern %.loc19_8
+// CHECK:STDOUT:       %.loc12_3: <error> = var_pattern %.loc12_8
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref <error> = var <none>
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
@@ -366,7 +366,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     .base = %.loc7
 // CHECK:STDOUT:     .Int = <poisoned>
 // CHECK:STDOUT:     .N = <poisoned>
-// CHECK:STDOUT:     .n = %.loc19_8
+// CHECK:STDOUT:     .n = %.loc12_8
 // CHECK:STDOUT:     extend %B.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -379,9 +379,9 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %b.patt: %ptr.e79 = binding_pattern b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, %a [concrete = <error>]
-// CHECK:STDOUT:   %.loc33: type = splice_block %ptr.loc33 [concrete = constants.%ptr.e79] {
+// CHECK:STDOUT:   %.loc20: type = splice_block %ptr.loc20 [concrete = constants.%ptr.e79] {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr.loc33: type = ptr_type %B [concrete = constants.%ptr.e79]
+// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.e79 = bind_name b, <error>
 // CHECK:STDOUT:   return

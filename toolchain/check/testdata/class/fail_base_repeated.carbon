@@ -293,7 +293,7 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
-// CHECK:STDOUT:   %.loc215: %C.elem = base_decl %B1.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc15: %C.elem = base_decl %B1.ref, element0 [concrete]
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.5ac]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -301,22 +301,22 @@ class D {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .B1 = <poisoned>
-// CHECK:STDOUT:   .base = %.loc215
+// CHECK:STDOUT:   .base = %.loc15
 // CHECK:STDOUT:   .B2 = <poisoned>
 // CHECK:STDOUT:   extend %B1.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %B1.ref.loc228: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
-// CHECK:STDOUT:   %.loc228: %D.elem = base_decl %B1.ref.loc228, element0 [concrete]
-// CHECK:STDOUT:   %B1.ref.loc236: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
+// CHECK:STDOUT:   %B1.ref.loc28: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
+// CHECK:STDOUT:   %.loc28: %D.elem = base_decl %B1.ref.loc28, element0 [concrete]
+// CHECK:STDOUT:   %B1.ref.loc36: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.5ac]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .B1 = <poisoned>
-// CHECK:STDOUT:   .base = %.loc228
-// CHECK:STDOUT:   extend %B1.ref.loc228
+// CHECK:STDOUT:   .base = %.loc28
+// CHECK:STDOUT:   extend %B1.ref.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

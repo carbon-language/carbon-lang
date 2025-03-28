@@ -322,7 +322,7 @@ fn Run() {
 // CHECK:STDOUT: fn @F.1() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc220: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -330,15 +330,15 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc224_15.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc224_15.2: %i32 = converted %F.call, %.loc224_15.1
-// CHECK:STDOUT:   return %.loc224_15.2
+// CHECK:STDOUT:   %.loc17_15.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc17_15.2: %i32 = converted %F.call, %.loc17_15.1
+// CHECK:STDOUT:   return %.loc17_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc236: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -346,29 +346,29 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc240_3: %i32 = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc26_3: %i32 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
-// CHECK:STDOUT:   %F.ref.loc240: %F.type.b25 = name_ref F, file.%F.decl [concrete = constants.%F.c41]
-// CHECK:STDOUT:   %F.call.loc240: init %i32 = call %F.ref.loc240()
-// CHECK:STDOUT:   assign %a.var, %F.call.loc240
-// CHECK:STDOUT:   %.loc240_10: type = splice_block %i32.loc240 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc240: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc240: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %F.ref.loc26: %F.type.b25 = name_ref F, file.%F.decl [concrete = constants.%F.c41]
+// CHECK:STDOUT:   %F.call.loc26: init %i32 = call %F.ref.loc26()
+// CHECK:STDOUT:   assign %a.var, %F.call.loc26
+// CHECK:STDOUT:   %.loc26_10: type = splice_block %i32.loc26 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc241_3: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc27_3: %i32 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %F.ref.loc241: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
-// CHECK:STDOUT:   %F.call.loc241: init %i32 = call %F.ref.loc241()
-// CHECK:STDOUT:   assign %b.var, %F.call.loc241
-// CHECK:STDOUT:   %.loc241_10: type = splice_block %i32.loc241 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc241: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc241: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %F.ref.loc27: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
+// CHECK:STDOUT:   %F.call.loc27: init %i32 = call %F.ref.loc27()
+// CHECK:STDOUT:   assign %b.var, %F.call.loc27
+// CHECK:STDOUT:   %.loc27_10: type = splice_block %i32.loc27 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   return

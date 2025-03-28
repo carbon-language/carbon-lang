@@ -350,12 +350,12 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc14_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc14_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc8_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc8_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc14: type = splice_block %i32.loc14_13 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc14_13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc14_13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc8: type = splice_block %i32.loc8_13 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc8_13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc8_13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -400,9 +400,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc19_8: %C.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc13_8: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc19_3: %C.elem = var_pattern %.loc19_8
+// CHECK:STDOUT:     %.loc13_3: %C.elem = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
@@ -419,7 +419,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc19_8
+// CHECK:STDOUT:   .n = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
@@ -428,15 +428,15 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc4_15.2 (%T) [template]
-// CHECK:STDOUT:   %.loc11_11.4: <instruction> = convert_to_value_action %.loc11_11.1, %i32 [template]
+// CHECK:STDOUT:   %.loc5_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc4_15.2 (%T) [template]
+// CHECK:STDOUT:   %.loc5_11.4: <instruction> = convert_to_value_action %.loc5_11.1, %i32 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc11_11.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc11_11.3
-// CHECK:STDOUT:     %.loc11_11.2: %i32 = splice_inst %.loc11_11.4
-// CHECK:STDOUT:     return %.loc11_11.2
+// CHECK:STDOUT:     %.loc5_11.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc5_11.3
+// CHECK:STDOUT:     %.loc5_11.2: %i32 = splice_inst %.loc5_11.4
+// CHECK:STDOUT:     return %.loc5_11.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -446,18 +446,18 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%i32) [concrete = constants.%F.specific_fn.501]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%n.ref)
-// CHECK:STDOUT:   %.loc15_14.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc15_14.2: %i32 = converted %F.call, %.loc15_14.1
-// CHECK:STDOUT:   return %.loc15_14.2
+// CHECK:STDOUT:   %.loc9_14.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc9_14.2: %i32 = converted %F.call, %.loc9_14.1
+// CHECK:STDOUT:   return %.loc9_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: %C]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
-// CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc19_8 [concrete = @C.%.loc19_8]
-// CHECK:STDOUT:   %.loc21_50.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc21_50.2: %i32 = bind_value %.loc21_50.1
-// CHECK:STDOUT:   return %.loc21_50.2
+// CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc13_8 [concrete = @C.%.loc13_8]
+// CHECK:STDOUT:   %.loc15_50.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc15_50.2: %i32 = bind_value %.loc15_50.1
+// CHECK:STDOUT:   return %.loc15_50.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test2(%c.param_patt: %C) -> %i32 {
@@ -466,9 +466,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.04a]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%c.ref)
-// CHECK:STDOUT:   %.loc30_14.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc30_14.2: %i32 = converted %F.call, %.loc30_14.1
-// CHECK:STDOUT:   return %.loc30_14.2
+// CHECK:STDOUT:   %.loc20_14.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc20_14.2: %i32 = converted %F.call, %.loc20_14.1
+// CHECK:STDOUT:   return %.loc20_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -482,8 +482,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %.loc11_11.3 => constants.%inst.as_compatible.d73
-// CHECK:STDOUT:   %.loc11_11.4 => constants.%inst.splice_block.c18
+// CHECK:STDOUT:   %.loc5_11.3 => constants.%inst.as_compatible.d73
+// CHECK:STDOUT:   %.loc5_11.4 => constants.%inst.splice_block.c18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
@@ -492,8 +492,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.54b
-// CHECK:STDOUT:   %.loc11_11.3 => constants.%inst.as_compatible.c0a
-// CHECK:STDOUT:   %.loc11_11.4 => constants.%inst.splice_block.e90
+// CHECK:STDOUT:   %.loc5_11.3 => constants.%inst.as_compatible.c0a
+// CHECK:STDOUT:   %.loc5_11.4 => constants.%inst.splice_block.e90
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_cannot_convert.carbon

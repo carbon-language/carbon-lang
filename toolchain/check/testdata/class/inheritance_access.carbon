@@ -749,11 +749,11 @@ class B {
 // CHECK:STDOUT:     %SOME_CONSTANT.patt: %i32 = binding_pattern SOME_CONSTANT
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %.loc12_32: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc5_32: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_38: %i32 = converted %int_5, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc5_38: %i32 = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SOME_CONSTANT: %i32 = bind_name SOME_CONSTANT, <error>
 // CHECK:STDOUT:   %SomeProtectedFunction.decl: %SomeProtectedFunction.type = fn_decl @SomeProtectedFunction [concrete = constants.%SomeProtectedFunction] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -776,7 +776,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc26: %B.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc12: %B.elem = base_decl %A.ref, element0 [concrete]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
@@ -801,7 +801,7 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   .base = %.loc26
+// CHECK:STDOUT:   .base = %.loc12
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   extend %A.ref
@@ -810,7 +810,7 @@ class B {
 // CHECK:STDOUT: fn @SomeProtectedFunction() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %.loc21: %i32 = converted %int_5, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc7: %i32 = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -826,9 +826,9 @@ class B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SomeProtectedFunction.ref: %SomeProtectedFunction.type = name_ref SomeProtectedFunction, @A.%SomeProtectedFunction.decl [concrete = constants.%SomeProtectedFunction]
 // CHECK:STDOUT:   %SomeProtectedFunction.call: init %i32 = call %SomeProtectedFunction.ref()
-// CHECK:STDOUT:   %.loc33_37.1: %i32 = value_of_initializer %SomeProtectedFunction.call
-// CHECK:STDOUT:   %.loc33_37.2: %i32 = converted %SomeProtectedFunction.call, %.loc33_37.1
-// CHECK:STDOUT:   return %.loc33_37.2
+// CHECK:STDOUT:   %.loc19_37.1: %i32 = value_of_initializer %SomeProtectedFunction.call
+// CHECK:STDOUT:   %.loc19_37.2: %i32 = converted %SomeProtectedFunction.call, %.loc19_37.1
+// CHECK:STDOUT:   return %.loc19_37.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inherited_private_field_access.carbon
@@ -1217,22 +1217,22 @@ class B {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SOME_PROTECTED_CONSTANT.patt: %i32 = binding_pattern SOME_PROTECTED_CONSTANT
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_5.loc12: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %.loc12_42: type = splice_block %i32.loc12 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %int_5.loc5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
+// CHECK:STDOUT:   %.loc5_42: type = splice_block %i32.loc5 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_48: %i32 = converted %int_5.loc12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc5_48: %i32 = converted %int_5.loc5, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT: %i32 = bind_name SOME_PROTECTED_CONSTANT, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SOME_PRIVATE_CONSTANT.patt: %i32 = binding_pattern SOME_PRIVATE_CONSTANT
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_5.loc20: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %.loc20_38: type = splice_block %i32.loc20 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %int_5.loc6: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
+// CHECK:STDOUT:   %.loc6_38: type = splice_block %i32.loc6 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20_44: %i32 = converted %int_5.loc20, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc6_44: %i32 = converted %int_5.loc6, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = bind_name SOME_PRIVATE_CONSTANT, <error>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1248,11 +1248,11 @@ class B {
 // CHECK:STDOUT:     %INTERNAL_CONSTANT.patt: %i32 = binding_pattern INTERNAL_CONSTANT
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %.loc31_36: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc10_36: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc31_42: %i32 = converted %int_5, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc10_42: %i32 = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   %INTERNAL_CONSTANT: %i32 = bind_name INTERNAL_CONSTANT, <error>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1263,9 +1263,9 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc35_23: %B.elem = field_decl internal, element0 [concrete]
+// CHECK:STDOUT:   %.loc14_23: %B.elem = field_decl internal, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc35_11: %B.elem = var_pattern %.loc35_23
+// CHECK:STDOUT:     %.loc14_11: %B.elem = var_pattern %.loc14_23
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %B.elem = var <none>
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
@@ -1297,7 +1297,7 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .Internal = <poisoned>
-// CHECK:STDOUT:   .internal [private] = %.loc35_23
+// CHECK:STDOUT:   .internal [private] = %.loc14_23
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .SomeFunc = %SomeFunc.decl
 // CHECK:STDOUT:   .A = <poisoned>
@@ -1305,9 +1305,9 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc45: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT.ref: <error> = name_ref SOME_PRIVATE_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc54: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc33: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT.ref: <error> = name_ref SOME_PROTECTED_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -1315,9 +1315,9 @@ class B {
 // CHECK:STDOUT: fn @SomeFunc[%self.param_patt: %B]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
-// CHECK:STDOUT:   %internal.ref: %B.elem = name_ref internal, @B.%.loc35_23 [concrete = @B.%.loc35_23]
-// CHECK:STDOUT:   %.loc65_16.1: ref %Internal = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc65_16.2: %Internal = bind_value %.loc65_16.1
+// CHECK:STDOUT:   %internal.ref: %B.elem = name_ref internal, @B.%.loc14_23 [concrete = @B.%.loc14_23]
+// CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc44_16.2: %Internal = bind_value %.loc44_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

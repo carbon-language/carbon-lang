@@ -305,10 +305,10 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc211_11.1: type = splice_block %.loc211_11.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc11_11.1: type = splice_block %.loc11_11.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc211_11.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc211_11.3: type = converted %bool.make_type, %.loc211_11.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc11_11.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc11_11.3: type = converted %bool.make_type, %.loc11_11.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -323,10 +323,10 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc229_11.1: type = splice_block %.loc229_11.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc22_11.1: type = splice_block %.loc22_11.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc229_11.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc229_11.3: type = converted %bool.make_type, %.loc229_11.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc22_11.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc22_11.3: type = converted %bool.make_type, %.loc22_11.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -341,10 +341,10 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc247_11.1: type = splice_block %.loc247_11.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc33_11.1: type = splice_block %.loc33_11.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc247_11.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc247_11.3: type = converted %bool.make_type, %.loc247_11.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc33_11.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc33_11.3: type = converted %bool.make_type, %.loc33_11.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -359,7 +359,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc220: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -378,7 +378,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc239: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
@@ -391,7 +391,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc256: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc35: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:

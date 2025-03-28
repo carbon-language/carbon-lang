@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/array/assign_var.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/generic/dependent_param.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/assign_var.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/dependent_param.carbon
 // CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/io.carbon:18:26: error: member access into undefined facet type `Negate` [QualifiedExprInUndefinedFacetTypeScope]
 // CHECK:STDERR: fn EOF() -> i32 { return -1; }
 // CHECK:STDERR:                          ^~
@@ -208,29 +208,52 @@
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 
-// CHECK:STDERR: assign_var.carbon:[[@LINE+7]]:26: error: member access into undefined facet type `Core.ImplicitAs(i32)` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: var a: (i32, i32, i32) = (1, 2, 3);
-// CHECK:STDERR:                          ^~~~~~~~~
+// --- nested_class.carbon
+
+library "[[@TEST_NAME]]";
+
+class Outer(T:! type) {
+  class Inner(U:! T) {
+    fn Get() -> T { return U; }
+  }
+}
+
+// CHECK:STDERR: nested_class.carbon:[[@LINE+10]]:14: error: member access into undefined facet type `Core.ImplicitAs(i32)` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: var n: i32 = Outer(i32).Inner(42).Get();
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:11:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: nested_class.carbon:[[@LINE-11]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:   class Inner(U:! T) {
+// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var a: (i32, i32, i32) = (1, 2, 3);
-var b: array(i32, 3) = a;
+var n: i32 = Outer(i32).Inner(42).Get();
 
-// CHECK:STDOUT: --- assign_var.carbon
+// CHECK:STDOUT: --- nested_class.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
+// CHECK:STDOUT:   %Outer.generic: %Outer.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Outer.9d6: type = class_type @Outer, @Outer(%T) [symbolic]
+// CHECK:STDOUT:   %U: %T = bind_symbolic_name U, 1 [symbolic]
+// CHECK:STDOUT:   %U.patt: %T = symbolic_binding_pattern U, 1 [symbolic]
+// CHECK:STDOUT:   %Inner.type.eae: type = generic_class_type @Inner, @Outer(%T) [symbolic]
+// CHECK:STDOUT:   %Inner.generic.137: %Inner.type.eae = struct_value () [symbolic]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%T, %U) [symbolic]
+// CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Inner(%T, %U) [symbolic]
+// CHECK:STDOUT:   %Get: %Get.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
-// CHECK:STDOUT:   %tuple.type.189: type = tuple_type (%i32, %i32, %i32) [concrete]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
-// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
-// CHECK:STDOUT:   %tuple.type.37f: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_3, %i32 [concrete]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %Outer.545: type = class_type @Outer, @Outer(%i32) [concrete]
+// CHECK:STDOUT:   %Inner.type.bac: type = generic_class_type @Inner, @Outer(%i32) [concrete]
+// CHECK:STDOUT:   %Inner.generic.ba0: %Inner.type.bac = struct_value () [concrete]
+// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -245,67 +268,150 @@ var b: array(i32, 3) = a;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .Outer = %Outer.decl
+// CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [concrete = constants.%Outer.generic] {
+// CHECK:STDOUT:     %T.patt.loc4_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %tuple.type.189 = binding_pattern a
-// CHECK:STDOUT:     %.loc11_1: %tuple.type.189 = var_pattern %a.patt
+// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc10_1: %i32 = var_pattern %n.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %tuple.type.189 = var a
-// CHECK:STDOUT:   %.loc11_22.1: type = splice_block %.loc11_22.3 [concrete = constants.%tuple.type.189] {
-// CHECK:STDOUT:     %int_32.loc11_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc11_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc11_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc11_22.2: %tuple.type.ff9 = tuple_literal (%i32.loc11_9, %i32.loc11_14, %i32.loc11_19)
-// CHECK:STDOUT:     %.loc11_22.3: type = converted %.loc11_22.2, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
+// CHECK:STDOUT:   %n.var: ref %i32 = var n
+// CHECK:STDOUT:   %.loc10_8: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %tuple.type.189 = bind_name a, %a.var
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %array_type = binding_pattern b
-// CHECK:STDOUT:     %.loc12_1: %array_type = var_pattern %b.patt
+// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @Outer(%T.loc4_13.1: type) {
+// CHECK:STDOUT:   %T.loc4_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Inner.type: type = generic_class_type @Inner, @Outer(%T.loc4_13.2) [symbolic = %Inner.type (constants.%Inner.type.eae)]
+// CHECK:STDOUT:   %Inner.generic: @Outer.%Inner.type (%Inner.type.eae) = struct_value () [symbolic = %Inner.generic (constants.%Inner.generic.137)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Inner.decl: @Outer.%Inner.type (%Inner.type.eae) = class_decl @Inner [symbolic = @Outer.%Inner.generic (constants.%Inner.generic.137)] {
+// CHECK:STDOUT:       %U.patt.loc5_15.1: @Inner.%T (%T) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc5_15.2 (constants.%U.patt)]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc4_13.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %U.loc5_15.1: @Inner.%T (%T) = bind_symbolic_name U, 1 [symbolic = %U.loc5_15.2 (constants.%U)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Outer.9d6
+// CHECK:STDOUT:     .T = <poisoned>
+// CHECK:STDOUT:     .Inner = %Inner.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %array_type = var b
-// CHECK:STDOUT:   %.loc12_20: type = splice_block %array_type [concrete = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %array_type: type = array_type %int_3, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @Inner(@Outer.%T.loc4_13.1: type, %U.loc5_15.1: @Inner.%T (%T)) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %U.loc5_15.2: %T = bind_symbolic_name U, 1 [symbolic = %U.loc5_15.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc5_15.2: %T = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc5_15.2 (constants.%U.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Inner(%T, %U.loc5_15.2) [symbolic = %Get.type (constants.%Get.type)]
+// CHECK:STDOUT:   %Get: @Inner.%Get.type (%Get.type) = struct_value () [symbolic = %Get (constants.%Get)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Get.decl: @Inner.%Get.type (%Get.type) = fn_decl @Get [symbolic = @Inner.%Get (constants.%Get)] {
+// CHECK:STDOUT:       %return.patt: @Get.%T (%T) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @Get.%T (%T) = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc4_13.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %return.param: ref @Get.%T (%T) = out_param call_param0
+// CHECK:STDOUT:       %return: ref @Get.%T (%T) = return_slot %return.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Inner
+// CHECK:STDOUT:     .T = <poisoned>
+// CHECK:STDOUT:     .Get = %Get.decl
+// CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %array_type = bind_name b, %b.var
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Get(@Outer.%T.loc4_13.1: type, @Inner.%U.loc5_15.1: @Inner.%T (%T)) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Get.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %U: %T = bind_symbolic_name U, 1 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() -> @Get.%T (%T) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %U.ref: @Get.%T (%T) = name_ref U, @Inner.%U.loc5_15.1 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:     return %U.ref
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_2.loc11: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc11_34.1: %tuple.type.37f = tuple_literal (%int_1.loc11, %int_2.loc11, %int_3)
-// CHECK:STDOUT:   %.loc11_34.2: %i32 = converted %int_1.loc11, <error> [concrete = <error>]
-// CHECK:STDOUT:   assign file.%a.var, <error>
-// CHECK:STDOUT:   %a.ref: ref %tuple.type.189 = name_ref a, file.%a
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %a.ref, element0
-// CHECK:STDOUT:   %.loc12_24.1: %i32 = bind_value %tuple.elem0
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc12_24.2: ref %i32 = array_index file.%b.var, %int_0
-// CHECK:STDOUT:   %.loc12_24.3: init %i32 = initialize_from %.loc12_24.1 to %.loc12_24.2
-// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %a.ref, element1
-// CHECK:STDOUT:   %.loc12_24.4: %i32 = bind_value %tuple.elem1
-// CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc12_24.5: ref %i32 = array_index file.%b.var, %int_1.loc12
-// CHECK:STDOUT:   %.loc12_24.6: init %i32 = initialize_from %.loc12_24.4 to %.loc12_24.5
-// CHECK:STDOUT:   %tuple.elem2: ref %i32 = tuple_access %a.ref, element2
-// CHECK:STDOUT:   %.loc12_24.7: %i32 = bind_value %tuple.elem2
-// CHECK:STDOUT:   %int_2.loc12: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc12_24.8: ref %i32 = array_index file.%b.var, %int_2.loc12
-// CHECK:STDOUT:   %.loc12_24.9: init %i32 = initialize_from %.loc12_24.7 to %.loc12_24.8
-// CHECK:STDOUT:   %.loc12_24.10: init %array_type = array_init (%.loc12_24.3, %.loc12_24.6, %.loc12_24.9) to file.%b.var
-// CHECK:STDOUT:   %.loc12_1: init %array_type = converted %a.ref, %.loc12_24.10
-// CHECK:STDOUT:   assign file.%b.var, %.loc12_1
+// CHECK:STDOUT:   %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(constants.%i32) [concrete = constants.%Outer.545]
+// CHECK:STDOUT:   %.loc10_24: %Inner.type.bac = specific_constant @Outer.%Inner.decl, @Outer(constants.%i32) [concrete = constants.%Inner.generic.ba0]
+// CHECK:STDOUT:   %Inner.ref: %Inner.type.bac = name_ref Inner, %.loc10_24 [concrete = constants.%Inner.generic.ba0]
+// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
+// CHECK:STDOUT:   %.loc10_33: %i32 = converted constants.%int_42, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%i32, <error>) [concrete = <error>]
+// CHECK:STDOUT:   %Get.ref: <error> = name_ref Get, <error> [concrete = <error>]
+// CHECK:STDOUT:   assign file.%n.var, <error>
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(constants.%T) {
+// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Inner.type => constants.%Inner.type.eae
+// CHECK:STDOUT:   %Inner.generic => constants.%Inner.generic.137
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %U.loc5_15.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Get.type => constants.%Get.type
+// CHECK:STDOUT:   %Get => constants.%Get
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Get(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(%T, %U.loc5_15.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(constants.%i32) {
+// CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%i32
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Inner.type => constants.%Inner.type.bac
+// CHECK:STDOUT:   %Inner.generic => constants.%Inner.generic.ba0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(constants.%i32, <error>) {
+// CHECK:STDOUT:   %T => constants.%i32
+// CHECK:STDOUT:   %U.loc5_15.2 => <error>
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

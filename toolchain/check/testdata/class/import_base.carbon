@@ -425,32 +425,32 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %Child = binding_pattern a
-// CHECK:STDOUT:     %.loc14_3: %Child = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc7_3: %Child = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Child = var a
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc14_47.1: %struct_type.x.unused.c45 = struct_literal (%int_0, %int_1)
-// CHECK:STDOUT:   %.loc14_48: %struct_type.base.6c7 = struct_literal (%.loc14_47.1)
-// CHECK:STDOUT:   %.loc14_47.2: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc7_47.1: %struct_type.x.unused.c45 = struct_literal (%int_0, %int_1)
+// CHECK:STDOUT:   %.loc7_48: %struct_type.base.6c7 = struct_literal (%.loc7_47.1)
+// CHECK:STDOUT:   %.loc7_47.2: %i32 = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %a.var, <error>
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%Main.Child [concrete = constants.%Child]
 // CHECK:STDOUT:   %a: ref %Child = bind_name a, %a.var
-// CHECK:STDOUT:   %a.ref.loc22: ref %Child = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.e67 [concrete = imports.%.720]
-// CHECK:STDOUT:   %.loc22_4.1: ref %Base = class_element_access %a.ref.loc22, element0
-// CHECK:STDOUT:   %.loc22_4.2: ref %Base = converted %a.ref.loc22, %.loc22_4.1
-// CHECK:STDOUT:   %.loc22_4.3: ref %i32 = class_element_access %.loc22_4.2, element0
+// CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
+// CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
+// CHECK:STDOUT:   %.loc8_4.3: ref %i32 = class_element_access %.loc8_4.2, element0
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc22_7: %i32 = converted %int_2, <error> [concrete = <error>]
-// CHECK:STDOUT:   assign %.loc22_4.3, <error>
-// CHECK:STDOUT:   %a.ref.loc23: ref %Child = name_ref a, %a
+// CHECK:STDOUT:   %.loc8_7: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   assign %.loc8_4.3, <error>
+// CHECK:STDOUT:   %a.ref.loc9: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.import_ref.e8f [concrete = constants.%F]
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref.loc23, %F.ref
-// CHECK:STDOUT:   %.loc23_3.1: ref %Base = class_element_access %a.ref.loc23, element0
-// CHECK:STDOUT:   %.loc23_3.2: ref %Base = converted %a.ref.loc23, %.loc23_3.1
-// CHECK:STDOUT:   %.loc23_3.3: %Base = bind_value %.loc23_3.2
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(%.loc23_3.3)
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref.loc9, %F.ref
+// CHECK:STDOUT:   %.loc9_3.1: ref %Base = class_element_access %a.ref.loc9, element0
+// CHECK:STDOUT:   %.loc9_3.2: ref %Base = converted %a.ref.loc9, %.loc9_3.1
+// CHECK:STDOUT:   %.loc9_3.3: %Base = bind_value %.loc9_3.2
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(%.loc9_3.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

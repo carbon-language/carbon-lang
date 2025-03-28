@@ -236,17 +236,17 @@ abstract class C {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .A = %A.decl.loc211
-// CHECK:STDOUT:     .B = %B.decl.loc212
-// CHECK:STDOUT:     .C = %C.decl.loc213
+// CHECK:STDOUT:     .A = %A.decl.loc11
+// CHECK:STDOUT:     .B = %B.decl.loc12
+// CHECK:STDOUT:     .C = %C.decl.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc211: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %B.decl.loc212: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   %C.decl.loc213: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %A.decl.loc215: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %B.decl.loc216: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   %C.decl.loc217: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %B.decl.loc12: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %C.decl.loc13: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %A.decl.loc15: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %B.decl.loc16: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {

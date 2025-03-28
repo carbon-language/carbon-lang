@@ -1220,7 +1220,7 @@ interface J {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc17: %I.type = converted @J.%Self, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc16: %I.type = converted @J.%Self, <error> [concrete = <error>]
 // CHECK:STDOUT:     %V.ref: <error> = name_ref V, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param

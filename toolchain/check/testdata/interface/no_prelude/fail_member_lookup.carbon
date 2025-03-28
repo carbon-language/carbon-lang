@@ -206,16 +206,16 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {} {}
 // CHECK:STDOUT:   %Different.decl: type = interface_decl @Different [concrete = constants.%Different.type] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %U.patt.loc39_6.1: %Different.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc39_6.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc37_6.1: %Different.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc37_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc39_6.1 [symbolic = %U.loc39_6.2 (constants.%U)]
+// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc37_6.1 [symbolic = %U.loc37_6.2 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %.loc39: %Interface.type = converted %U.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc37: %Interface.type = converted %U.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
-// CHECK:STDOUT:     %U.loc39_6.1: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc39_6.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc37_6.1: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc37_6.2 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -278,13 +278,13 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %F.ref: %Interface.assoc_type = name_ref F, @Interface.%assoc0 [concrete = constants.%assoc0.42d]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
-// CHECK:STDOUT:     %.loc26_3: <error> = var_pattern %v.patt
+// CHECK:STDOUT:     %.loc25_3: <error> = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %Interface.ref.loc26: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
+// CHECK:STDOUT:     %Interface.ref.loc25: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %.loc26_19: type = converted %T.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc25_19: type = converted %T.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   return
@@ -299,11 +299,11 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%U.loc39_6.1: %Different.type) {
-// CHECK:STDOUT:   %U.loc39_6.2: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc39_6.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc39_6.2: %Different.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc39_6.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @G(%U.loc37_6.1: %Different.type) {
+// CHECK:STDOUT:   %U.loc37_6.2: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc37_6.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc37_6.2: %Different.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc37_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.patt.loc39_6.1: %Different.type) -> <error>;
+// CHECK:STDOUT:   fn(%U.patt.loc37_6.1: %Different.type) -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.719) {}
@@ -337,7 +337,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
-// CHECK:STDOUT:   %U.loc39_6.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc39_6.2 => constants.%U
+// CHECK:STDOUT:   %U.loc37_6.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc37_6.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

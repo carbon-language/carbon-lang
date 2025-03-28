@@ -441,35 +441,35 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ref.patt: %A = binding_pattern a_ref
-// CHECK:STDOUT:     %.loc31: %A = var_pattern %a_ref.patt
+// CHECK:STDOUT:     %.loc17: %A = var_pattern %a_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %A = var a_ref
-// CHECK:STDOUT:   %A.ref.loc31: type = name_ref A, %A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc17: type = name_ref A, %A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a_ref: ref %A = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_val.patt: %A = binding_pattern a_val
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.ref.loc32: type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a_val: ref %A = bind_name a_val, @__global_init.%a_ref.ref.loc32
+// CHECK:STDOUT:   %A.ref.loc18: type = name_ref A, %A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %a_val: ref %A = bind_name a_val, @__global_init.%a_ref.ref.loc18
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_val.patt: %B = binding_pattern b_val
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.ref.loc35: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_val: ref %B = bind_name b_val, @__global_init.%.loc35_22.2
+// CHECK:STDOUT:   %B.ref.loc21: type = name_ref B, %B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %b_val: ref %B = bind_name b_val, @__global_init.%.loc21_22.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_ptr.patt: %ptr.e79 = binding_pattern b_ptr
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc36: type = splice_block %ptr [concrete = constants.%ptr.e79] {
-// CHECK:STDOUT:     %B.ref.loc36: type = name_ref B, %B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %.loc22: type = splice_block %ptr [concrete = constants.%ptr.e79] {
+// CHECK:STDOUT:     %B.ref.loc22: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr: type = ptr_type %B [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ptr: %ptr.e79 = bind_name b_ptr, @__global_init.%addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_factory.patt: %B = binding_pattern b_factory
-// CHECK:STDOUT:     %.loc38: %B = var_pattern %b_factory.patt
+// CHECK:STDOUT:     %.loc24: %B = var_pattern %b_factory.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_factory.var: ref %B = var b_factory
-// CHECK:STDOUT:   %B.ref.loc38: type = name_ref B, %B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b_factory: ref %B = bind_name b_factory, %b_factory.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -518,8 +518,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc16_27.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
-// CHECK:STDOUT:   %.loc16_27.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc9_27.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc9_27.2: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,27 +527,27 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc31_31.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
-// CHECK:STDOUT:   %.loc31_31.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_31.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc17_31.2: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%a_ref.var, <error>
-// CHECK:STDOUT:   %a_ref.ref.loc32: ref %A = name_ref a_ref, file.%a_ref
+// CHECK:STDOUT:   %a_ref.ref.loc18: ref %A = name_ref a_ref, file.%a_ref
 // CHECK:STDOUT:   %a_val.ref: ref %A = name_ref a_val, file.%a_val
-// CHECK:STDOUT:   %B.ref.loc35: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc35_22.1: ref %B = as_compatible %a_val.ref
-// CHECK:STDOUT:   %.loc35_22.2: ref %B = converted %a_val.ref, %.loc35_22.1
-// CHECK:STDOUT:   %a_ref.ref.loc36: ref %A = name_ref a_ref, file.%a_ref
-// CHECK:STDOUT:   %B.ref.loc36: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc36_25.1: ref %B = as_compatible %a_ref.ref.loc36
-// CHECK:STDOUT:   %.loc36_25.2: ref %B = converted %a_ref.ref.loc36, %.loc36_25.1
-// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc36_25.2
+// CHECK:STDOUT:   %B.ref.loc21: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %.loc21_22.1: ref %B = as_compatible %a_val.ref
+// CHECK:STDOUT:   %.loc21_22.2: ref %B = converted %a_val.ref, %.loc21_22.1
+// CHECK:STDOUT:   %a_ref.ref.loc22: ref %A = name_ref a_ref, file.%a_ref
+// CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %.loc22_25.1: ref %B = as_compatible %a_ref.ref.loc22
+// CHECK:STDOUT:   %.loc22_25.2: ref %B = converted %a_ref.ref.loc22, %.loc22_25.1
+// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc22_25.2
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, @A.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc38_1: ref %B = splice_block file.%b_factory.var {}
-// CHECK:STDOUT:   %Make.call: init %A = call %Make.ref() to %.loc38_1
-// CHECK:STDOUT:   %B.ref.loc38: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc38_29.1: init %B = as_compatible %Make.call
-// CHECK:STDOUT:   %.loc38_29.2: init %B = converted %Make.call, %.loc38_29.1
-// CHECK:STDOUT:   assign file.%b_factory.var, %.loc38_29.2
+// CHECK:STDOUT:   %.loc24_1: ref %B = splice_block file.%b_factory.var {}
+// CHECK:STDOUT:   %Make.call: init %A = call %Make.ref() to %.loc24_1
+// CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %.loc24_29.1: init %B = as_compatible %Make.call
+// CHECK:STDOUT:   %.loc24_29.2: init %B = converted %Make.call, %.loc24_29.1
+// CHECK:STDOUT:   assign file.%b_factory.var, %.loc24_29.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -588,7 +588,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc9: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -609,17 +609,17 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc15_15: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc8_15: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc15_23.1: %A = as_compatible %.loc15_15 [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_23.2: %A = converted %.loc15_15, %.loc15_23.1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc8_23.1: %A = as_compatible %.loc8_15 [concrete = <error>]
+// CHECK:STDOUT:   %.loc8_23.2: %A = converted %.loc8_15, %.loc8_23.1 [concrete = <error>]
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, file.%a
-// CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc16_16.1: %i32 = as_compatible %a.ref
-// CHECK:STDOUT:   %.loc16_16.2: %i32 = converted %a.ref, %.loc16_16.1
+// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc9_16.1: %i32 = as_compatible %a.ref
+// CHECK:STDOUT:   %.loc9_16.2: %i32 = converted %a.ref, %.loc9_16.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -756,7 +756,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:     %b_value.patt: %B = binding_pattern b_value
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_value: ref %B = bind_name b_value, @__global_init.%.loc20_42.2
+// CHECK:STDOUT:   %b_value: ref %B = bind_name b_value, @__global_init.%.loc13_42.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -794,15 +794,15 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc20_34.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc13_34.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc20_34.2: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_34.3: ref %A = temporary_storage
-// CHECK:STDOUT:   %.loc20_34.4: ref %A = temporary %.loc20_34.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_36: ref %A = converted %.loc20_34.1, %.loc20_34.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_34.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_34.3: ref %A = temporary_storage
+// CHECK:STDOUT:   %.loc13_34.4: ref %A = temporary %.loc13_34.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_36: ref %A = converted %.loc13_34.1, %.loc13_34.4 [concrete = <error>]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc20_42.1: ref %B = as_compatible %.loc20_36 [concrete = <error>]
-// CHECK:STDOUT:   %.loc20_42.2: ref %B = converted %.loc20_36, %.loc20_42.1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_42.1: ref %B = as_compatible %.loc13_36 [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_42.2: ref %B = converted %.loc13_36, %.loc13_42.1 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -842,7 +842,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_init.patt: %B = binding_pattern b_init
-// CHECK:STDOUT:     %.loc29: %B = var_pattern %b_init.patt
+// CHECK:STDOUT:     %.loc22: %B = var_pattern %b_init.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_init.var: ref %B = var b_init
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
@@ -884,16 +884,16 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc29_33.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc22_33.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc29_33.2: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc29_33.3: ref %A = temporary_storage
-// CHECK:STDOUT:   %.loc29_33.4: ref %A = temporary %.loc29_33.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc29_35: ref %A = converted %.loc29_33.1, %.loc29_33.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_33.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_33.3: ref %A = temporary_storage
+// CHECK:STDOUT:   %.loc22_33.4: ref %A = temporary %.loc22_33.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_35: ref %A = converted %.loc22_33.1, %.loc22_33.4 [concrete = <error>]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc29_41.1: ref %B = as_compatible %.loc29_35 [concrete = <error>]
-// CHECK:STDOUT:   %.loc29_41.2: ref %B = converted %.loc29_35, %.loc29_41.1 [concrete = <error>]
-// CHECK:STDOUT:   %.loc29_41.3: %B = bind_value %.loc29_41.2 [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_41.1: ref %B = as_compatible %.loc22_35 [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_41.2: ref %B = converted %.loc22_35, %.loc22_41.1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_41.3: %B = bind_value %.loc22_41.2 [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b_init.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

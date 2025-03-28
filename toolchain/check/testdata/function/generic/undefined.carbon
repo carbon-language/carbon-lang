@@ -350,14 +350,14 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Defined.ref: %Defined.type = name_ref Defined, file.%Defined.decl [concrete = constants.%Defined]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc16_20: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc9_20: %i32 = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Defined.specific_fn: <specific function> = specific_function %Defined.ref, @Defined(constants.%i32) [concrete = constants.%Defined.specific_fn]
 // CHECK:STDOUT:   %Defined.call: init %i32 = call %Defined.specific_fn(<error>)
-// CHECK:STDOUT:   %.loc16_27.1: %i32 = value_of_initializer %Defined.call
-// CHECK:STDOUT:   %.loc16_27.2: %i32 = converted %Defined.call, %.loc16_27.1
-// CHECK:STDOUT:   return %.loc16_27.2
+// CHECK:STDOUT:   %.loc9_27.1: %i32 = value_of_initializer %Defined.call
+// CHECK:STDOUT:   %.loc9_27.2: %i32 = converted %Defined.call, %.loc9_27.1
+// CHECK:STDOUT:   return %.loc9_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%T) {
@@ -408,7 +408,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Defined.decl.loc4: %Defined.type = fn_decl @Defined [concrete = constants.%Defined] {
-// CHECK:STDOUT:     %T.patt.loc17: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc10: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Defined.%T.loc4_12.2 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Defined.%T.loc4_12.2 (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Defined.%T.loc4_12.2 (%T) = return_slot_pattern
@@ -431,20 +431,20 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Defined.decl.loc17: %Defined.type = fn_decl @Defined [concrete = constants.%Defined] {
-// CHECK:STDOUT:     %T.patt.loc17: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
+// CHECK:STDOUT:   %Defined.decl.loc10: %Defined.type = fn_decl @Defined [concrete = constants.%Defined] {
+// CHECK:STDOUT:     %T.patt.loc10: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Defined.%T.loc4_12.2 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Defined.%T.loc4_12.2 (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Defined.%T.loc4_12.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Defined.%T.loc4_12.2 (%T) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc17_31: type = name_ref T, %T.loc17 [symbolic = %T.loc4_12.2 (constants.%T)]
-// CHECK:STDOUT:     %T.loc17: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_12.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param.loc17: @Defined.%T.loc4_12.2 (%T) = value_param call_param0
-// CHECK:STDOUT:     %T.ref.loc17_25: type = name_ref T, %T.loc17 [symbolic = %T.loc4_12.2 (constants.%T)]
-// CHECK:STDOUT:     %x.loc17: @Defined.%T.loc4_12.2 (%T) = bind_name x, %x.param.loc17
-// CHECK:STDOUT:     %return.param.loc17: ref @Defined.%T.loc4_12.2 (%T) = out_param call_param1
-// CHECK:STDOUT:     %return.loc17: ref @Defined.%T.loc4_12.2 (%T) = return_slot %return.param.loc17
+// CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10 [symbolic = %T.loc4_12.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_12.2 (constants.%T)]
+// CHECK:STDOUT:     %x.param.loc10: @Defined.%T.loc4_12.2 (%T) = value_param call_param0
+// CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10 [symbolic = %T.loc4_12.2 (constants.%T)]
+// CHECK:STDOUT:     %x.loc10: @Defined.%T.loc4_12.2 (%T) = bind_name x, %x.param.loc10
+// CHECK:STDOUT:     %return.param.loc10: ref @Defined.%T.loc4_12.2 (%T) = out_param call_param1
+// CHECK:STDOUT:     %return.loc10: ref @Defined.%T.loc4_12.2 (%T) = return_slot %return.param.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -455,9 +455,9 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc17: type](%x.param_patt: @Defined.%T.loc4_12.2 (%T)) -> @Defined.%T.loc4_12.2 (%T) {
+// CHECK:STDOUT:   fn[%T.patt.loc10: type](%x.param_patt: @Defined.%T.loc4_12.2 (%T)) -> @Defined.%T.loc4_12.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @Defined.%T.loc4_12.2 (%T) = name_ref x, %x.loc17
+// CHECK:STDOUT:     %x.ref: @Defined.%T.loc4_12.2 (%T) = name_ref x, %x.loc10
 // CHECK:STDOUT:     return %x.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -466,14 +466,14 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Defined.ref: %Defined.type = name_ref Defined, file.%Defined.decl.loc4 [concrete = constants.%Defined]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc14_20: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc7_20: %i32 = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Defined.specific_fn: <specific function> = specific_function %Defined.ref, @Defined(constants.%i32) [concrete = constants.%Defined.specific_fn]
 // CHECK:STDOUT:   %Defined.call: init %i32 = call %Defined.specific_fn(<error>)
-// CHECK:STDOUT:   %.loc14_27.1: %i32 = value_of_initializer %Defined.call
-// CHECK:STDOUT:   %.loc14_27.2: %i32 = converted %Defined.call, %.loc14_27.1
-// CHECK:STDOUT:   return %.loc14_27.2
+// CHECK:STDOUT:   %.loc7_27.1: %i32 = value_of_initializer %Defined.call
+// CHECK:STDOUT:   %.loc7_27.2: %i32 = converted %Defined.call, %.loc7_27.1
+// CHECK:STDOUT:   return %.loc7_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%T) {
@@ -557,14 +557,14 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Undefined.ref: %Undefined.type = name_ref Undefined, file.%Undefined.decl [concrete = constants.%Undefined]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc21_22: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc14_22: %i32 = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Undefined.specific_fn: <specific function> = specific_function %Undefined.ref, @Undefined(constants.%i32) [concrete = constants.%Undefined.specific_fn]
 // CHECK:STDOUT:   %Undefined.call: init %i32 = call %Undefined.specific_fn(<error>)
-// CHECK:STDOUT:   %.loc21_29.1: %i32 = value_of_initializer %Undefined.call
-// CHECK:STDOUT:   %.loc21_29.2: %i32 = converted %Undefined.call, %.loc21_29.1
-// CHECK:STDOUT:   return %.loc21_29.2
+// CHECK:STDOUT:   %.loc14_29.1: %i32 = value_of_initializer %Undefined.call
+// CHECK:STDOUT:   %.loc14_29.2: %i32 = converted %Undefined.call, %.loc14_29.1
+// CHECK:STDOUT:   return %.loc14_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Undefined(constants.%T) {

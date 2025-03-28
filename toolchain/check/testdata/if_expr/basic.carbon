@@ -261,25 +261,25 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param3
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc211_34: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc211_34: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc11_34: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_34: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc211_9.1: type = splice_block %.loc211_9.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc11_9.1: type = splice_block %.loc11_9.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc211_9.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc211_9.3: type = converted %bool.make_type, %.loc211_9.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc11_9.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc11_9.3: type = converted %bool.make_type, %.loc11_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc211_18: type = splice_block %i32.loc211_18 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc211_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_18: type = splice_block %i32.loc11_18 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param2
-// CHECK:STDOUT:     %.loc211_26: type = splice_block %i32.loc211_26 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc211_26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_26: type = splice_block %i32.loc11_26 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %m: %i32 = bind_name m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
@@ -291,16 +291,16 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %array_type = binding_pattern x
-// CHECK:STDOUT:     %.loc219_3: %array_type = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc12_3: %array_type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %array_type = var x
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc219_29.1: %tuple.type = tuple_literal (%int_0)
-// CHECK:STDOUT:   %.loc219_29.2: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12_29.1: %tuple.type = tuple_literal (%int_0)
+// CHECK:STDOUT:   %.loc12_29.2: %i32 = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc219_22: type = splice_block %array_type [concrete = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc219: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc219: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc12_22: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
@@ -309,25 +309,25 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %x.ref.loc220_20: ref %array_type = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc13_20: ref %array_type = name_ref x, %x
 // CHECK:STDOUT:   %m.ref: %i32 = name_ref m, %m
-// CHECK:STDOUT:   %int_32.loc220_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc220_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc220_23.1: ref %i32 = array_index %x.ref.loc220_20, %m.ref
-// CHECK:STDOUT:   %.loc220_23.2: %i32 = bind_value %.loc220_23.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc220_23.2)
+// CHECK:STDOUT:   %int_32.loc13_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc13_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc13_23.1: ref %i32 = array_index %x.ref.loc13_20, %m.ref
+// CHECK:STDOUT:   %.loc13_23.2: %i32 = bind_value %.loc13_23.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc13_23.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %x.ref.loc220_30: ref %array_type = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc13_30: ref %array_type = name_ref x, %x
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %int_32.loc220_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc220_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc220_33.1: ref %i32 = array_index %x.ref.loc220_30, %n.ref
-// CHECK:STDOUT:   %.loc220_33.2: %i32 = bind_value %.loc220_33.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc220_33.2)
+// CHECK:STDOUT:   %int_32.loc13_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc13_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc13_33.1: ref %i32 = array_index %x.ref.loc13_30, %n.ref
+// CHECK:STDOUT:   %.loc13_33.2: %i32 = bind_value %.loc13_33.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc13_33.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc220_10: %i32 = block_arg !if.expr.result
-// CHECK:STDOUT:   return %.loc220_10
+// CHECK:STDOUT:   %.loc13_10: %i32 = block_arg !if.expr.result
+// CHECK:STDOUT:   return %.loc13_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

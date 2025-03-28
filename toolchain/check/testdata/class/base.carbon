@@ -312,12 +312,12 @@ class Derived {
 // CHECK:STDOUT:     %return.patt: %tuple.type.d07 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc24_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc24_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc24_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc24_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc24_35.1: %tuple.type.24b = tuple_literal (%i32.loc24_27, %i32.loc24_32)
-// CHECK:STDOUT:     %.loc24_35.2: type = converted %.loc24_35.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:     %int_32.loc17_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc17_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc17_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc17_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc17_35.1: %tuple.type.24b = tuple_literal (%i32.loc17_27, %i32.loc17_32)
+// CHECK:STDOUT:     %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
@@ -362,34 +362,34 @@ class Derived {
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:   %.loc21_26.1: %struct_type.b.a15 = struct_literal (%int_4)
+// CHECK:STDOUT:   %.loc14_26.1: %struct_type.b.a15 = struct_literal (%int_4)
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
-// CHECK:STDOUT:   %.loc21_35: %struct_type.base.d.a20 = struct_literal (%.loc21_26.1, %int_7)
-// CHECK:STDOUT:   %.loc21_26.2: %i32 = converted %int_4, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_35: %struct_type.base.d.a20 = struct_literal (%.loc14_26.1, %int_7)
+// CHECK:STDOUT:   %.loc14_26.2: %i32 = converted %int_4, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %return.param_patt: %tuple.type.d07 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %d.ref.loc25_11: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %d.ref.loc25_12: %Derived.elem.344 = name_ref d, @Derived.%.loc10_8 [concrete = @Derived.%.loc10_8]
-// CHECK:STDOUT:   %.loc25_12.1: ref %i32 = class_element_access %d.ref.loc25_11, element1
-// CHECK:STDOUT:   %.loc25_12.2: %i32 = bind_value %.loc25_12.1
-// CHECK:STDOUT:   %d.ref.loc25_16: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc18_11: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %d.ref.loc18_12: %Derived.elem.344 = name_ref d, @Derived.%.loc10_8 [concrete = @Derived.%.loc10_8]
+// CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %d.ref.loc18_11, element1
+// CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
+// CHECK:STDOUT:   %d.ref.loc18_16: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %Derived.elem.69e = name_ref base, @Derived.%.loc8 [concrete = @Derived.%.loc8]
-// CHECK:STDOUT:   %.loc25_17.1: ref %Base = class_element_access %d.ref.loc25_16, element0
-// CHECK:STDOUT:   %.loc25_17.2: %Base = bind_value %.loc25_17.1
+// CHECK:STDOUT:   %.loc18_17.1: ref %Base = class_element_access %d.ref.loc18_16, element0
+// CHECK:STDOUT:   %.loc18_17.2: %Base = bind_value %.loc18_17.1
 // CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.loc4_8 [concrete = @Base.%.loc4_8]
-// CHECK:STDOUT:   %.loc25_22.1: ref %i32 = class_element_access %.loc25_17.2, element0
-// CHECK:STDOUT:   %.loc25_22.2: %i32 = bind_value %.loc25_22.1
-// CHECK:STDOUT:   %.loc25_24.1: %tuple.type.d07 = tuple_literal (%.loc25_12.2, %.loc25_22.2)
+// CHECK:STDOUT:   %.loc18_22.1: ref %i32 = class_element_access %.loc18_17.2, element0
+// CHECK:STDOUT:   %.loc18_22.2: %i32 = bind_value %.loc18_22.1
+// CHECK:STDOUT:   %.loc18_24.1: %tuple.type.d07 = tuple_literal (%.loc18_12.2, %.loc18_22.2)
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc25_24.2: init %i32 = initialize_from %.loc25_12.2 to %tuple.elem0
+// CHECK:STDOUT:   %.loc18_24.2: init %i32 = initialize_from %.loc18_12.2 to %tuple.elem0
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc25_24.3: init %i32 = initialize_from %.loc25_22.2 to %tuple.elem1
-// CHECK:STDOUT:   %.loc25_24.4: init %tuple.type.d07 = tuple_init (%.loc25_24.2, %.loc25_24.3) to %return
-// CHECK:STDOUT:   %.loc25_25: init %tuple.type.d07 = converted %.loc25_24.1, %.loc25_24.4
-// CHECK:STDOUT:   return %.loc25_25 to %return
+// CHECK:STDOUT:   %.loc18_24.3: init %i32 = initialize_from %.loc18_22.2 to %tuple.elem1
+// CHECK:STDOUT:   %.loc18_24.4: init %tuple.type.d07 = tuple_init (%.loc18_24.2, %.loc18_24.3) to %return
+// CHECK:STDOUT:   %.loc18_25: init %tuple.type.d07 = converted %.loc18_24.1, %.loc18_24.4
+// CHECK:STDOUT:   return %.loc18_25 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_base_after_field.carbon

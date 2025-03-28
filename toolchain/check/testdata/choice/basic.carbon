@@ -418,41 +418,41 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Ordering {
-// CHECK:STDOUT:   %int_2.loc36: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %int_2.loc8: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %u2: type = class_type @UInt, @UInt(constants.%int_2) [concrete = constants.%u2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type.de2]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc11_7.1: %u2 = converted %int_0, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc11_7.2: %struct_type.discriminant = struct_literal (<error>)
-// CHECK:STDOUT:   %.loc11_7.3: ref %Ordering = temporary_storage
-// CHECK:STDOUT:   %.loc11_7.4: ref %Ordering = temporary %.loc11_7.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc11_7.5: ref %Ordering = converted %.loc11_7.2, %.loc11_7.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc11_7.6: %Ordering = bind_value %.loc11_7.5 [concrete = <error>]
-// CHECK:STDOUT:   %Less: %Ordering = bind_name Less, %.loc11_7.6
+// CHECK:STDOUT:   %.loc4_7.1: %u2 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc4_7.2: %struct_type.discriminant = struct_literal (<error>)
+// CHECK:STDOUT:   %.loc4_7.3: ref %Ordering = temporary_storage
+// CHECK:STDOUT:   %.loc4_7.4: ref %Ordering = temporary %.loc4_7.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc4_7.5: ref %Ordering = converted %.loc4_7.2, %.loc4_7.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc4_7.6: %Ordering = bind_value %.loc4_7.5 [concrete = <error>]
+// CHECK:STDOUT:   %Less: %Ordering = bind_name Less, %.loc4_7.6
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc19_13.1: %u2 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_13.2: %struct_type.discriminant = struct_literal (<error>)
-// CHECK:STDOUT:   %.loc19_13.3: ref %Ordering = temporary_storage
-// CHECK:STDOUT:   %.loc19_13.4: ref %Ordering = temporary %.loc19_13.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_13.5: ref %Ordering = converted %.loc19_13.2, %.loc19_13.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_13.6: %Ordering = bind_value %.loc19_13.5 [concrete = <error>]
-// CHECK:STDOUT:   %Equivalent: %Ordering = bind_name Equivalent, %.loc19_13.6
-// CHECK:STDOUT:   %int_2.loc34: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc34_10.1: %u2 = converted %int_2.loc34, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc34_10.2: %struct_type.discriminant = struct_literal (<error>)
-// CHECK:STDOUT:   %.loc34_10.3: ref %Ordering = temporary_storage
-// CHECK:STDOUT:   %.loc34_10.4: ref %Ordering = temporary %.loc34_10.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc34_10.5: ref %Ordering = converted %.loc34_10.2, %.loc34_10.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc34_10.6: %Ordering = bind_value %.loc34_10.5 [concrete = <error>]
-// CHECK:STDOUT:   %Greater: %Ordering = bind_name Greater, %.loc34_10.6
+// CHECK:STDOUT:   %.loc5_13.1: %u2 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc5_13.2: %struct_type.discriminant = struct_literal (<error>)
+// CHECK:STDOUT:   %.loc5_13.3: ref %Ordering = temporary_storage
+// CHECK:STDOUT:   %.loc5_13.4: ref %Ordering = temporary %.loc5_13.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc5_13.5: ref %Ordering = converted %.loc5_13.2, %.loc5_13.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc5_13.6: %Ordering = bind_value %.loc5_13.5 [concrete = <error>]
+// CHECK:STDOUT:   %Equivalent: %Ordering = bind_name Equivalent, %.loc5_13.6
+// CHECK:STDOUT:   %int_2.loc6: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %.loc6_10.1: %u2 = converted %int_2.loc6, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc6_10.2: %struct_type.discriminant = struct_literal (<error>)
+// CHECK:STDOUT:   %.loc6_10.3: ref %Ordering = temporary_storage
+// CHECK:STDOUT:   %.loc6_10.4: ref %Ordering = temporary %.loc6_10.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc6_10.5: ref %Ordering = converted %.loc6_10.2, %.loc6_10.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc6_10.6: %Ordering = bind_value %.loc6_10.5 [concrete = <error>]
+// CHECK:STDOUT:   %Greater: %Ordering = bind_name Greater, %.loc6_10.6
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc36_1.1: %u2 = converted %int_3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc36_1.2: %struct_type.discriminant = struct_literal (<error>)
-// CHECK:STDOUT:   %.loc36_1.3: ref %Ordering = temporary_storage
-// CHECK:STDOUT:   %.loc36_1.4: ref %Ordering = temporary %.loc36_1.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc36_1.5: ref %Ordering = converted %.loc36_1.2, %.loc36_1.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc36_1.6: %Ordering = bind_value %.loc36_1.5 [concrete = <error>]
-// CHECK:STDOUT:   %Incomparable: %Ordering = bind_name Incomparable, %.loc36_1.6
+// CHECK:STDOUT:   %.loc8_1.1: %u2 = converted %int_3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc8_1.2: %struct_type.discriminant = struct_literal (<error>)
+// CHECK:STDOUT:   %.loc8_1.3: ref %Ordering = temporary_storage
+// CHECK:STDOUT:   %.loc8_1.4: ref %Ordering = temporary %.loc8_1.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc8_1.5: ref %Ordering = converted %.loc8_1.2, %.loc8_1.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc8_1.6: %Ordering = bind_value %.loc8_1.5 [concrete = <error>]
+// CHECK:STDOUT:   %Incomparable: %Ordering = bind_name Incomparable, %.loc8_1.6
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -468,30 +468,30 @@ fn G() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less.patt: %Ordering = binding_pattern less
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Ordering.ref.loc39_24: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
+// CHECK:STDOUT:   %Ordering.ref.loc11_24: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %Less.ref: %Ordering = name_ref Less, @Ordering.%Less
-// CHECK:STDOUT:   %Ordering.ref.loc39_13: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
+// CHECK:STDOUT:   %Ordering.ref.loc11_13: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %less: %Ordering = bind_name less, %Less.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %equiv.patt: %Ordering = binding_pattern equiv
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Ordering.ref.loc40_25: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
+// CHECK:STDOUT:   %Ordering.ref.loc12_25: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %Equivalent.ref: %Ordering = name_ref Equivalent, @Ordering.%Equivalent
-// CHECK:STDOUT:   %Ordering.ref.loc40_14: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
+// CHECK:STDOUT:   %Ordering.ref.loc12_14: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %equiv: %Ordering = bind_name equiv, %Equivalent.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater.patt: %Ordering = binding_pattern greater
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Ordering.ref.loc41_27: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
+// CHECK:STDOUT:   %Ordering.ref.loc13_27: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %Greater.ref: %Ordering = name_ref Greater, @Ordering.%Greater
-// CHECK:STDOUT:   %Ordering.ref.loc41_16: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
+// CHECK:STDOUT:   %Ordering.ref.loc13_16: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %greater: %Ordering = bind_name greater, %Greater.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inc.patt: %Ordering = binding_pattern inc
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Ordering.ref.loc42_23: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
+// CHECK:STDOUT:   %Ordering.ref.loc14_23: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %Incomparable.ref: %Ordering = name_ref Incomparable, @Ordering.%Incomparable
-// CHECK:STDOUT:   %Ordering.ref.loc42_12: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
+// CHECK:STDOUT:   %Ordering.ref.loc14_12: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %inc: %Ordering = bind_name inc, %Incomparable.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

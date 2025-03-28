@@ -256,14 +256,14 @@ base class A {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .A = %A.decl.loc211
+// CHECK:STDOUT:     .A = %A.decl.loc11
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc211: type = class_decl @A.1 [concrete = constants.%A.466950.1] {} {}
+// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [concrete = constants.%A.466950.1] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   %A.decl.loc226: type = class_decl @A.2 [concrete = constants.%A.466950.2] {} {}
+// CHECK:STDOUT:   %A.decl.loc26: type = class_decl @A.2 [concrete = constants.%A.466950.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
@@ -276,24 +276,24 @@ base class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc211 [concrete = constants.%A.466950.1]
-// CHECK:STDOUT:   %.loc216: %B.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
+// CHECK:STDOUT:   %.loc16: %B.elem = base_decl %A.ref, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.020]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   .base = %.loc216
+// CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc211 [concrete = constants.%A.466950.1]
-// CHECK:STDOUT:   %.loc227: %A.elem = base_decl %A.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc232_8: <error> = field_decl c, element1 [concrete]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
+// CHECK:STDOUT:   %.loc27: %A.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc32_8: <error> = field_decl c, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc232_3: <error> = var_pattern %.loc232_8
+// CHECK:STDOUT:     %.loc32_3: <error> = var_pattern %.loc32_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref <error> = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
@@ -302,9 +302,9 @@ base class A {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.466950.2
 // CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   .base = %.loc227
+// CHECK:STDOUT:   .base = %.loc27
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .c = %.loc232_8
+// CHECK:STDOUT:   .c = %.loc32_8
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

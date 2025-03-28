@@ -294,7 +294,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc220: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

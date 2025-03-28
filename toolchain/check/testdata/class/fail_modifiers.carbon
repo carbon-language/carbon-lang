@@ -355,9 +355,9 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:     %self.patt: %AbstractWithDefinition = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %AbstractWithDefinition = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc297: %AbstractWithDefinition = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc297: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
-// CHECK:STDOUT:     %self.loc297: %AbstractWithDefinition = bind_name self, %self.param.loc297
+// CHECK:STDOUT:     %self.param.loc97: %AbstractWithDefinition = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc97: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
+// CHECK:STDOUT:     %self.loc97: %AbstractWithDefinition = bind_name self, %self.param.loc97
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -414,11 +414,11 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:     %self.patt: %AbstractWithDefinition = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %AbstractWithDefinition = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc291: %AbstractWithDefinition = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc291: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
-// CHECK:STDOUT:     %self.loc291: %AbstractWithDefinition = bind_name self, %self.param.loc291
+// CHECK:STDOUT:     %self.param.loc91: %AbstractWithDefinition = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc91: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
+// CHECK:STDOUT:     %self.loc91: %AbstractWithDefinition = bind_name self, %self.param.loc91
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc292: <vtable> = vtable (%F.decl, %G.decl) [concrete = constants.%.9a5]
+// CHECK:STDOUT:   %.loc92: <vtable> = vtable (%F.decl, %G.decl) [concrete = constants.%.9a5]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

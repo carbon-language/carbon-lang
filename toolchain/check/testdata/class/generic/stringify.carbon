@@ -567,13 +567,13 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
-// CHECK:STDOUT:     %.loc16_1: <error> = var_pattern %v.patt
+// CHECK:STDOUT:     %.loc13_1: <error> = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123]
-// CHECK:STDOUT:     %.loc16_13: %i32 = converted %int_123, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc13_13: %i32 = converted %int_123, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT: }
@@ -595,7 +595,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc13: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   assign file.%v.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -654,19 +654,19 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %g.patt: <error> = binding_pattern g
-// CHECK:STDOUT:     %.loc28_1: <error> = var_pattern %g.patt
+// CHECK:STDOUT:     %.loc25_1: <error> = var_pattern %g.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %g.var: ref <error> = var g
-// CHECK:STDOUT:   %.loc28_26.1: type = splice_block %E [concrete = <error>] {
+// CHECK:STDOUT:   %.loc25_26.1: type = splice_block %E [concrete = <error>] {
 // CHECK:STDOUT:     %E.ref: %E.type = name_ref E, %E.decl [concrete = constants.%E.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:     %.loc28_25.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
-// CHECK:STDOUT:     %.loc28_25.2: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc28_25.3: ref %D = temporary_storage
-// CHECK:STDOUT:     %.loc28_25.4: ref %D = temporary %.loc28_25.3, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc28_26.2: ref %D = converted %.loc28_25.1, %.loc28_25.4 [concrete = <error>]
-// CHECK:STDOUT:     %.loc28_26.3: %D = bind_value %.loc28_26.2 [concrete = <error>]
+// CHECK:STDOUT:     %.loc25_25.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:     %.loc25_25.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc25_25.3: ref %D = temporary_storage
+// CHECK:STDOUT:     %.loc25_25.4: ref %D = temporary %.loc25_25.3, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc25_26.2: ref %D = converted %.loc25_25.1, %.loc25_25.4 [concrete = <error>]
+// CHECK:STDOUT:     %.loc25_26.3: %D = bind_value %.loc25_26.2 [concrete = <error>]
 // CHECK:STDOUT:     %E: type = class_type @E, @E(<error>) [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %g: <error> = bind_name g, <error>
@@ -709,17 +709,17 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc28_31: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc25_31: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %E.ref: %E.type = name_ref E, file.%E.decl [concrete = constants.%E.generic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:   %.loc28_53.1: %struct_type.a.b.cfd = struct_literal (%int_3, %int_4)
+// CHECK:STDOUT:   %.loc25_53.1: %struct_type.a.b.cfd = struct_literal (%int_3, %int_4)
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %.loc28_53.2: %i32 = converted %int_3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc28_53.3: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc28_53.4: ref %D = temporary %.loc28_53.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc28_55.1: ref %D = converted %.loc28_53.1, %.loc28_53.4 [concrete = <error>]
-// CHECK:STDOUT:   %.loc28_55.2: %D = bind_value %.loc28_55.1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc25_53.2: %i32 = converted %int_3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25_53.3: ref %D = temporary_storage
+// CHECK:STDOUT:   %.loc25_53.4: ref %D = temporary %.loc25_53.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25_55.1: ref %D = converted %.loc25_53.1, %.loc25_53.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc25_55.2: %D = bind_value %.loc25_55.1 [concrete = <error>]
 // CHECK:STDOUT:   %E: type = class_type @E, @E(<error>) [concrete = <error>]
 // CHECK:STDOUT:   assign file.%g.var, <error>
 // CHECK:STDOUT:   return

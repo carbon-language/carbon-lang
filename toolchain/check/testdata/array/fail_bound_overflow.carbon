@@ -250,26 +250,26 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc215_1: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc15_1: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %.loc215_39: type = splice_block %array_type.loc215 [concrete = <error>] {
+// CHECK:STDOUT:   %.loc15_39: type = splice_block %array_type.loc15 [concrete = <error>] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_39999999999999999993.loc215: Core.IntLiteral = int_value 39999999999999999993 [concrete = constants.%int_39999999999999999993]
-// CHECK:STDOUT:     %array_type.loc215: type = array_type %int_39999999999999999993.loc215, %i32 [concrete = <error>]
+// CHECK:STDOUT:     %int_39999999999999999993.loc15: Core.IntLiteral = int_value 39999999999999999993 [concrete = constants.%int_39999999999999999993]
+// CHECK:STDOUT:     %array_type.loc15: type = array_type %int_39999999999999999993.loc15, %i32 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
-// CHECK:STDOUT:     %.loc224_1: <error> = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc24_1: <error> = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
-// CHECK:STDOUT:   %.loc224_37: type = splice_block %array_type.loc224 [concrete = <error>] {
+// CHECK:STDOUT:   %.loc24_37: type = splice_block %array_type.loc24 [concrete = <error>] {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %int_39999999999999999993.loc224: Core.IntLiteral = int_value 39999999999999999993 [concrete = constants.%int_39999999999999999993]
-// CHECK:STDOUT:     %.loc224_14: type = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:     %array_type.loc224: type = array_type %int_39999999999999999993.loc224, <error> [concrete = <error>]
+// CHECK:STDOUT:     %int_39999999999999999993.loc24: Core.IntLiteral = int_value 39999999999999999993 [concrete = constants.%int_39999999999999999993]
+// CHECK:STDOUT:     %.loc24_14: type = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %array_type.loc24: type = array_type %int_39999999999999999993.loc24, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT: }

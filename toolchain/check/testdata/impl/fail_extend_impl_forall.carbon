@@ -260,24 +260,24 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type.c92 = interface_decl @GenericInterface [concrete = constants.%GenericInterface.generic] {
-// CHECK:STDOUT:     %T.patt.loc211_28.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc211_28.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc11_28.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc211_28.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc211_28.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc11_28.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_28.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @GenericInterface(%T.loc211_28.1: type) {
-// CHECK:STDOUT:   %T.loc211_28.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc211_28.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc211_28.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc211_28.2 (constants.%T.patt)]
+// CHECK:STDOUT: generic interface @GenericInterface(%T.loc11_28.1: type) {
+// CHECK:STDOUT:   %T.loc11_28.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_28.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc11_28.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericInterface.type: type = facet_type <@GenericInterface, @GenericInterface(%T.loc211_28.2)> [symbolic = %GenericInterface.type (constants.%GenericInterface.type.3fe)]
+// CHECK:STDOUT:   %GenericInterface.type: type = facet_type <@GenericInterface, @GenericInterface(%T.loc11_28.2)> [symbolic = %GenericInterface.type (constants.%GenericInterface.type.3fe)]
 // CHECK:STDOUT:   %Self.2: %GenericInterface.type.3fe = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @GenericInterface(%T.loc211_28.2) [symbolic = %F.type (constants.%F.type.a4b)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @GenericInterface(%T.loc11_28.2) [symbolic = %F.type (constants.%F.type.a4b)]
 // CHECK:STDOUT:   %F: @GenericInterface.%F.type (%F.type.a4b) = struct_value () [symbolic = %F (constants.%F.3d9)]
 // CHECK:STDOUT:   %GenericInterface.assoc_type: type = assoc_entity_type @GenericInterface.%GenericInterface.type (%GenericInterface.type.3fe) [symbolic = %GenericInterface.assoc_type (constants.%GenericInterface.assoc_type)]
-// CHECK:STDOUT:   %assoc0.loc212_13.2: @GenericInterface.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc212_13.2 (constants.%assoc0)]
+// CHECK:STDOUT:   %assoc0.loc12_13.2: @GenericInterface.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc12_13.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.3fe) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
@@ -286,37 +286,37 @@ class C {
 // CHECK:STDOUT:       %x.param_patt: @F.1.%T (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @F.1.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc211_28.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc11_28.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x: @F.1.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc212_13.1: @GenericInterface.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc212_13.2 (constants.%assoc0)]
+// CHECK:STDOUT:     %assoc0.loc12_13.1: @GenericInterface.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc12_13.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .F = %assoc0.loc212_13.1
+// CHECK:STDOUT:     .F = %assoc0.loc12_13.1
 // CHECK:STDOUT:     witness = (%F.decl)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%T.loc220_23.1: type) {
-// CHECK:STDOUT:   %T.loc220_23.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc220_23.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc220_23.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc220_23.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %GenericInterface.type.loc220_54.2: type = facet_type <@GenericInterface, @GenericInterface(%T.loc220_23.2)> [symbolic = %GenericInterface.type.loc220_54.2 (constants.%GenericInterface.type.3fe)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%GenericInterface.type.loc220_54.2 (%GenericInterface.type.3fe) [symbolic = %require_complete (constants.%require_complete.70f)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (invalid), @impl(%T.loc220_23.2) [symbolic = %impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT: generic impl @impl(%T.loc20_23.1: type) {
+// CHECK:STDOUT:   %T.loc20_23.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc20_23.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc20_23.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_23.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %GenericInterface.type.loc20_54.2: type = facet_type <@GenericInterface, @GenericInterface(%T.loc20_23.2)> [symbolic = %GenericInterface.type.loc20_54.2 (constants.%GenericInterface.type.3fe)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%GenericInterface.type.loc20_54.2 (%GenericInterface.type.3fe) [symbolic = %require_complete (constants.%require_complete.70f)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (invalid), @impl(%T.loc20_23.2) [symbolic = %impl_witness (constants.%impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc220_23.2) [symbolic = %F.type (constants.%F.type.2cb)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc20_23.2) [symbolic = %F.type (constants.%F.type.2cb)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2cb) = struct_value () [symbolic = %F (constants.%F.4b1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %Self.ref as %GenericInterface.type.loc220_54.1 {
+// CHECK:STDOUT:   impl: %Self.ref as %GenericInterface.type.loc20_54.1 {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2cb) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.4b1)] {
 // CHECK:STDOUT:       %x.patt: @F.2.%T (%T) = binding_pattern x
 // CHECK:STDOUT:       %x.param_patt: @F.2.%T (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @F.2.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc220_23.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc20_23.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x: @F.2.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
@@ -329,16 +329,16 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   impl_decl @impl [concrete] {
-// CHECK:STDOUT:     %T.patt.loc220_23.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc220_23.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc20_23.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_23.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.c92 = name_ref GenericInterface, file.%GenericInterface.decl [concrete = constants.%GenericInterface.generic]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc220_23.1 [symbolic = %T.loc220_23.2 (constants.%T)]
-// CHECK:STDOUT:     %GenericInterface.type.loc220_54.1: type = facet_type <@GenericInterface, @GenericInterface(constants.%T)> [symbolic = %GenericInterface.type.loc220_54.2 (constants.%GenericInterface.type.3fe)]
-// CHECK:STDOUT:     %T.loc220_23.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc220_23.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc20_23.1 [symbolic = %T.loc20_23.2 (constants.%T)]
+// CHECK:STDOUT:     %GenericInterface.type.loc20_54.1: type = facet_type <@GenericInterface, @GenericInterface(constants.%T)> [symbolic = %GenericInterface.type.loc20_54.2 (constants.%GenericInterface.type.3fe)]
+// CHECK:STDOUT:     %T.loc20_23.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc20_23.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (invalid), @impl(constants.%T) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
-// CHECK:STDOUT:   %.loc220: type = specific_constant @impl.%GenericInterface.type.loc220_54.1, @impl(constants.%T) [symbolic = constants.%GenericInterface.type.3fe]
+// CHECK:STDOUT:   %.loc20: type = specific_constant @impl.%GenericInterface.type.loc20_54.1, @impl(constants.%T) [symbolic = constants.%GenericInterface.type.3fe]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -348,13 +348,13 @@ class C {
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@GenericInterface.%T.loc211_28.1: type, @GenericInterface.%Self.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.3fe)) {
+// CHECK:STDOUT: generic fn @F.1(@GenericInterface.%T.loc11_28.1: type, @GenericInterface.%Self.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.3fe)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param_patt: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc220_23.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc20_23.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -367,8 +367,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(constants.%T) {
-// CHECK:STDOUT:   %T.loc211_28.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc211_28.2 => constants.%T
+// CHECK:STDOUT:   %T.loc11_28.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_28.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericInterface.type => constants.%GenericInterface.type.3fe
@@ -376,19 +376,19 @@ class C {
 // CHECK:STDOUT:   %F.type => constants.%F.type.a4b
 // CHECK:STDOUT:   %F => constants.%F.3d9
 // CHECK:STDOUT:   %GenericInterface.assoc_type => constants.%GenericInterface.assoc_type
-// CHECK:STDOUT:   %assoc0.loc212_13.2 => constants.%assoc0
+// CHECK:STDOUT:   %assoc0.loc12_13.2 => constants.%assoc0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(%T.loc211_28.2) {}
+// CHECK:STDOUT: specific @GenericInterface(%T.loc11_28.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
-// CHECK:STDOUT:   %T.loc220_23.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc220_23.2 => constants.%T
-// CHECK:STDOUT:   %GenericInterface.type.loc220_54.2 => constants.%GenericInterface.type.3fe
+// CHECK:STDOUT:   %T.loc20_23.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc20_23.2 => constants.%T
+// CHECK:STDOUT:   %GenericInterface.type.loc20_54.2 => constants.%GenericInterface.type.3fe
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.70f
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness
 // CHECK:STDOUT:
@@ -397,9 +397,9 @@ class C {
 // CHECK:STDOUT:   %F => constants.%F.4b1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(@impl.%T.loc220_23.2) {}
+// CHECK:STDOUT: specific @GenericInterface(@impl.%T.loc20_23.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc220_23.2) {}
+// CHECK:STDOUT: specific @impl(%T.loc20_23.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

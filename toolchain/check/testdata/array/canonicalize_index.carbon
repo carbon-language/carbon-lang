@@ -305,18 +305,18 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc211_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc211_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc11_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc211_11: type = splice_block %i32.loc211_11 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc211_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_11: type = splice_block %i32.loc11_11 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc211_19: type = splice_block %i32.loc211_19 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc211_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_19: type = splice_block %i32.loc11_19 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
@@ -328,11 +328,11 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:     %return.patt: %u32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc212_28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %int_32.loc12_28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc212: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc212_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %.loc12: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc12_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
@@ -341,46 +341,46 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc241_1: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc14_1: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %.loc241_28: type = splice_block %array_type.loc241 [concrete = <error>] {
-// CHECK:STDOUT:     %int_32.loc241: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc241: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc14_28: type = splice_block %array_type.loc14 [concrete = <error>] {
+// CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Add.ref: %Add.type = name_ref Add, %Add.decl [concrete = constants.%Add]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:     %.loc241_23: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc241_26: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc14_23: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc14_26: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:     %int.sadd: init %i32 = call %Add.ref(<error>, <error>) [concrete = <error>]
-// CHECK:STDOUT:     %.loc241_27: Core.IntLiteral = converted %int.sadd, <error> [concrete = <error>]
-// CHECK:STDOUT:     %array_type.loc241: type = array_type <error>, %i32 [concrete = <error>]
+// CHECK:STDOUT:     %.loc14_27: Core.IntLiteral = converted %int.sadd, <error> [concrete = <error>]
+// CHECK:STDOUT:     %array_type.loc14: type = array_type <error>, %i32 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %ptr = binding_pattern b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc242: type = splice_block %ptr.loc242 [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %int_32.loc242: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc242: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_3.loc242: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc242: type = array_type %int_3.loc242, %i32 [concrete = constants.%array_type]
-// CHECK:STDOUT:     %ptr.loc242: type = ptr_type %array_type [concrete = constants.%ptr]
+// CHECK:STDOUT:   %.loc15: type = splice_block %ptr.loc15 [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_3.loc15: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:     %array_type.loc15: type = array_type %int_3.loc15, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %ptr.loc15: type = ptr_type %array_type [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr = bind_name b, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc260_35: type = splice_block %ptr.loc260 [concrete = <error>] {
-// CHECK:STDOUT:     %int_32.loc260: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc260: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc16_35: type = splice_block %ptr.loc16 [concrete = <error>] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ConvertToU32.ref: %ConvertToU32.type = name_ref ConvertToU32, %ConvertToU32.decl [concrete = constants.%ConvertToU32]
-// CHECK:STDOUT:     %int_3.loc260: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %.loc260_32: %i32 = converted %int_3.loc260, <error> [concrete = <error>]
+// CHECK:STDOUT:     %int_3.loc16: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:     %.loc16_32: %i32 = converted %int_3.loc16, <error> [concrete = <error>]
 // CHECK:STDOUT:     %int.convert_checked: init %u32 = call %ConvertToU32.ref(<error>) [concrete = <error>]
-// CHECK:STDOUT:     %.loc260_33: Core.IntLiteral = converted %int.convert_checked, <error> [concrete = <error>]
-// CHECK:STDOUT:     %array_type.loc260: type = array_type <error>, %i32 [concrete = <error>]
-// CHECK:STDOUT:     %ptr.loc260: type = ptr_type <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc16_33: Core.IntLiteral = converted %int.convert_checked, <error> [concrete = <error>]
+// CHECK:STDOUT:     %array_type.loc16: type = array_type <error>, %i32 [concrete = <error>]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT: }
@@ -394,12 +394,12 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc241: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
+// CHECK:STDOUT:   %.loc14: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
 // CHECK:STDOUT:   assign file.%a.var, <error>
-// CHECK:STDOUT:   %a.ref.loc242: <error> = name_ref a, file.%a [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc242: <error> = addr_of %a.ref.loc242 [concrete = <error>]
-// CHECK:STDOUT:   %a.ref.loc260: <error> = name_ref a, file.%a [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc260: <error> = addr_of %a.ref.loc260 [concrete = <error>]
+// CHECK:STDOUT:   %a.ref.loc15: <error> = name_ref a, file.%a [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc15: <error> = addr_of %a.ref.loc15 [concrete = <error>]
+// CHECK:STDOUT:   %a.ref.loc16: <error> = name_ref a, file.%a [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc16: <error> = addr_of %a.ref.loc16 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

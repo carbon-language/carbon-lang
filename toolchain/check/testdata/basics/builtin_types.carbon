@@ -254,24 +254,24 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i32.patt: %i32 = binding_pattern test_i32
-// CHECK:STDOUT:     %.loc218_1: %i32 = var_pattern %test_i32.patt
+// CHECK:STDOUT:     %.loc11_1: %i32 = var_pattern %test_i32.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i32.var: ref %i32 = var test_i32
-// CHECK:STDOUT:   %.loc218_15: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc11_15: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i32: ref %i32 = bind_name test_i32, %test_i32.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f64.patt: f64 = binding_pattern test_f64
-// CHECK:STDOUT:     %.loc219_1: f64 = var_pattern %test_f64.patt
+// CHECK:STDOUT:     %.loc12_1: f64 = var_pattern %test_f64.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64.var: ref f64 = var test_f64
-// CHECK:STDOUT:   %.loc219_15.1: type = splice_block %.loc219_15.3 [concrete = f64] {
+// CHECK:STDOUT:   %.loc12_15.1: type = splice_block %.loc12_15.3 [concrete = f64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc219_15.2: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc219_15.3: type = converted %float.make_type, %.loc219_15.2 [concrete = f64]
+// CHECK:STDOUT:     %.loc12_15.2: type = value_of_initializer %float.make_type [concrete = f64]
+// CHECK:STDOUT:     %.loc12_15.3: type = converted %float.make_type, %.loc12_15.2 [concrete = f64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64: ref f64 = bind_name test_f64, %test_f64.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -280,7 +280,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %test_str: String = bind_name test_str, @__global_init.%str
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_type.patt: type = binding_pattern test_type
-// CHECK:STDOUT:     %.loc221: type = var_pattern %test_type.patt
+// CHECK:STDOUT:     %.loc14: type = var_pattern %test_type.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_type.var: ref type = var test_type
 // CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var
@@ -289,7 +289,7 @@ var test_type: type = i32;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc218: %i32 = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc11: %i32 = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%test_i32.var, <error>
 // CHECK:STDOUT:   %float: f64 = float_literal 0.10000000000000001 [concrete = constants.%float]
 // CHECK:STDOUT:   assign file.%test_f64.var, %float

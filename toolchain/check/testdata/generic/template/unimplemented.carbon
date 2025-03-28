@@ -324,15 +324,15 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc6_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc14_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc6_15.2 (%T) [template]
-// CHECK:STDOUT:   %.loc14_11.4: <instruction> = access_member_action %.loc14_11.1, n [template]
-// CHECK:STDOUT:   %.loc14_11.5: type = type_of_inst %.loc14_11.4 [template]
+// CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc6_15.2 (%T) [template]
+// CHECK:STDOUT:   %.loc11_11.4: <instruction> = access_member_action %.loc11_11.1, n [template]
+// CHECK:STDOUT:   %.loc11_11.5: type = type_of_inst %.loc11_11.4 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc6_15.1: type](%x.param_patt: @F.%T.loc6_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc6_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc14_11.1: @F.%T.loc6_15.2 (%T) = splice_inst %.loc14_11.3
-// CHECK:STDOUT:     %.loc14_11.2: @F.%.loc14_11.5 (@F.%.loc14_11.5) = splice_inst %.loc14_11.4
+// CHECK:STDOUT:     %.loc11_11.1: @F.%T.loc6_15.2 (%T) = splice_inst %.loc11_11.3
+// CHECK:STDOUT:     %.loc11_11.2: @F.%.loc11_11.5 (@F.%.loc11_11.5) = splice_inst %.loc11_11.4
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
@@ -409,13 +409,13 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %c.patt.loc11_15.2: %C = symbolic_binding_pattern c, 0, template [template = %c.patt.loc11_15.2 (constants.%c.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc19_11.2: <instruction> = access_member_action %c.ref, n [template]
-// CHECK:STDOUT:   %.loc19_11.3: type = type_of_inst %.loc19_11.2 [template]
+// CHECK:STDOUT:   %.loc16_11.2: <instruction> = access_member_action %c.ref, n [template]
+// CHECK:STDOUT:   %.loc16_11.3: type = type_of_inst %.loc16_11.2 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%c.patt.loc11_15.1: %C) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: %C = name_ref c, %c.loc11_15.1 [template = %c.loc11_15.2 (constants.%c)]
-// CHECK:STDOUT:     %.loc19_11.1: @F.%.loc19_11.3 (@F.%.loc19_11.3) = splice_inst %.loc19_11.2
+// CHECK:STDOUT:     %.loc16_11.1: @F.%.loc16_11.3 (@F.%.loc16_11.3) = splice_inst %.loc16_11.2
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }

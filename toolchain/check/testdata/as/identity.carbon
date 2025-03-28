@@ -268,7 +268,7 @@ fn Initializing() {
 // CHECK:STDOUT:     %n.param_patt: %X = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %X = value_param call_param0
-// CHECK:STDOUT:     %X.ref.loc217: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %n: %X = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [concrete = constants.%Reference] {
@@ -276,9 +276,9 @@ fn Initializing() {
 // CHECK:STDOUT:     %p.param_patt: %ptr.d17 = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.d17 = value_param call_param0
-// CHECK:STDOUT:     %.loc221: type = splice_block %ptr.loc221 [concrete = constants.%ptr.d17] {
-// CHECK:STDOUT:       %X.ref.loc221: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:       %ptr.loc221: type = ptr_type %X [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:     %.loc21: type = splice_block %ptr.loc21 [concrete = constants.%ptr.d17] {
+// CHECK:STDOUT:       %X.ref.loc21: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:       %ptr.loc21: type = ptr_type %X [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.d17 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -307,8 +307,8 @@ fn Initializing() {
 // CHECK:STDOUT:     %m.patt: %X = binding_pattern m
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
-// CHECK:STDOUT:   %X.ref.loc218_19: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %X.ref.loc218_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc18_19: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc18_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %m: %X = bind_name m, %n.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -319,12 +319,12 @@ fn Initializing() {
 // CHECK:STDOUT:     %q.patt: %ptr.d17 = binding_pattern q
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %ptr.d17 = name_ref p, %p
-// CHECK:STDOUT:   %.loc222_17: ref %X = deref %p.ref
-// CHECK:STDOUT:   %X.ref.loc222_23: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc222_17
-// CHECK:STDOUT:   %.loc222_11: type = splice_block %ptr.loc222 [concrete = constants.%ptr.d17] {
-// CHECK:STDOUT:     %X.ref.loc222_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc222: type = ptr_type %X [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:   %.loc22_17: ref %X = deref %p.ref
+// CHECK:STDOUT:   %X.ref.loc22_23: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc22_17
+// CHECK:STDOUT:   %.loc22_11: type = splice_block %ptr.loc22 [concrete = constants.%ptr.d17] {
+// CHECK:STDOUT:     %X.ref.loc22_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %ptr.loc22: type = ptr_type %X [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q: %ptr.d17 = bind_name q, %addr
 // CHECK:STDOUT:   return
@@ -336,15 +336,15 @@ fn Initializing() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %X = binding_pattern x
-// CHECK:STDOUT:     %.loc228_3.1: %X = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc28_3.1: %X = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var x
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc228_3.2: ref %X = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %X = call %Make.ref() to %.loc228_3.2
-// CHECK:STDOUT:   %X.ref.loc228_25: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc28_3.2: ref %X = splice_block %x.var {}
+// CHECK:STDOUT:   %Make.call: init %X = call %Make.ref() to %.loc28_3.2
+// CHECK:STDOUT:   %X.ref.loc28_25: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %X.ref.loc228_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc28_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %x: ref %X = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

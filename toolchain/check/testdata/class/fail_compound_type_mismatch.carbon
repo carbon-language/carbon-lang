@@ -280,9 +280,9 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc212_8: %A.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc12_8: %A.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc212_3: %A.elem = var_pattern %.loc212_8
+// CHECK:STDOUT:     %.loc12_3: %A.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %A.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
@@ -290,13 +290,13 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .a = %.loc212_8
+// CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc216_8: %B.elem = field_decl b, element0 [concrete]
+// CHECK:STDOUT:   %.loc16_8: %B.elem = field_decl b, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc216_3: %B.elem = var_pattern %.loc216_8
+// CHECK:STDOUT:     %.loc16_3: %B.elem = var_pattern %.loc16_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %B.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [concrete = constants.%complete_type.ba8]
@@ -304,16 +304,16 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .b = %.loc216_8
+// CHECK:STDOUT:   .b = %.loc16_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBInA(%a.param_patt: %A) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc216_8 [concrete = @B.%.loc216_8]
-// CHECK:STDOUT:   %.loc227_11.1: %B = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc227_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
+// CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16_8 [concrete = @B.%.loc16_8]
+// CHECK:STDOUT:   %.loc27_11.1: %B = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc27_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

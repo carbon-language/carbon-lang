@@ -291,7 +291,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%X)> [concrete = constants.%As.type.602]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc215: <witness> = impl_witness (@impl.d8c.%Convert.decl) [concrete = constants.%impl_witness.491]
+// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.d8c.%Convert.decl) [concrete = constants.%impl_witness.491]
 // CHECK:STDOUT:   impl_decl @impl.18a [concrete] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -300,11 +300,11 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%i32)> [concrete = constants.%As.type.fd4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc219: <witness> = impl_witness (@impl.18a.%Convert.decl) [concrete = constants.%impl_witness.662]
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (@impl.18a.%Convert.decl) [concrete = constants.%impl_witness.662]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc244: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc23: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -320,7 +320,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc216_20: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc16_20: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -332,7 +332,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc215
+// CHECK:STDOUT:   witness = file.%impl_witness.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.18a: %X.ref as %As.type {
@@ -354,13 +354,13 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc219
+// CHECK:STDOUT:   witness = file.%impl_witness.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %.loc212_8: %X.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc12_8: %X.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc212_3: %X.elem = var_pattern %.loc212_8
+// CHECK:STDOUT:     %.loc12_3: %X.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %X.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
@@ -368,40 +368,40 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   .n = %.loc212_8
+// CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: %i32]() -> %return.param_patt: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self
-// CHECK:STDOUT:   %.loc216_51.1: %struct_type.n = struct_literal (%self.ref)
-// CHECK:STDOUT:   %.loc216_51.2: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc216_51.3: init %i32 = initialize_from %self.ref to %.loc216_51.2
-// CHECK:STDOUT:   %.loc216_51.4: init %X = class_init (%.loc216_51.3), %return
-// CHECK:STDOUT:   %.loc216_52: init %X = converted %.loc216_51.1, %.loc216_51.4
-// CHECK:STDOUT:   return %.loc216_52 to %return
+// CHECK:STDOUT:   %.loc16_51.1: %struct_type.n = struct_literal (%self.ref)
+// CHECK:STDOUT:   %.loc16_51.2: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc16_51.3: init %i32 = initialize_from %self.ref to %.loc16_51.2
+// CHECK:STDOUT:   %.loc16_51.4: init %X = class_init (%.loc16_51.3), %return
+// CHECK:STDOUT:   %.loc16_52: init %X = converted %.loc16_51.1, %.loc16_51.4
+// CHECK:STDOUT:   return %.loc16_52 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.3[%self.param_patt: %X]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
-// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc212_8 [concrete = @X.%.loc212_8]
-// CHECK:STDOUT:   %.loc220_45.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc220_45.2: %i32 = bind_value %.loc220_45.1
-// CHECK:STDOUT:   return %.loc220_45.2
+// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12_8 [concrete = @X.%.loc12_8]
+// CHECK:STDOUT:   %.loc20_45.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc20_45.2: %i32 = bind_value %.loc20_45.1
+// CHECK:STDOUT:   return %.loc20_45.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:   %int_32.loc244_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc244_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc244_18: %i32 = converted %int_4, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_32.loc23_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc23_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc23_18: %i32 = converted %int_4, <error> [concrete = <error>]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc244_26: %X = converted %.loc244_18, <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_32.loc244_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc244_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc244_32: %i32 = converted %.loc244_26, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_26: %X = converted %.loc23_18, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_32.loc23_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc23_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc23_32: %i32 = converted %.loc23_26, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

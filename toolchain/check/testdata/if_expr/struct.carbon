@@ -262,11 +262,11 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %s.param_patt: %struct_type.a.b.501 = value_param_pattern %s.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %struct_type.a.b.501 = value_param call_param0
-// CHECK:STDOUT:     %.loc211: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
-// CHECK:STDOUT:       %int_32.loc211_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.loc211_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
+// CHECK:STDOUT:       %int_32.loc11_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %int_32.loc11_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %struct_type.a.b.501 = bind_name s, %s.param
@@ -276,10 +276,10 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %cond.param_patt: bool = value_param_pattern %cond.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %cond.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc213_12.1: type = splice_block %.loc213_12.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc13_12.1: type = splice_block %.loc13_12.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc213_12.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc213_12.3: type = converted %bool.make_type, %.loc213_12.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc13_12.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc13_12.3: type = converted %bool.make_type, %.loc13_12.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %cond: bool = bind_name cond, %cond.param
 // CHECK:STDOUT:   }
@@ -291,19 +291,19 @@ fn F(cond: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %struct_type.a.b.501 = binding_pattern a
-// CHECK:STDOUT:     %.loc221_3: %struct_type.a.b.501 = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc14_3: %struct_type.a.b.501 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.a.b.501 = var a
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc221_46.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
-// CHECK:STDOUT:   %.loc221_46.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_46.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc14_46.2: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %a.var, <error>
-// CHECK:STDOUT:   %.loc221_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
-// CHECK:STDOUT:     %int_32.loc221_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc221_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc221_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc221_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc14_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
+// CHECK:STDOUT:     %int_32.loc14_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc14_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %struct_type.a.b.501 = bind_name a, %a.var
@@ -312,28 +312,28 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %a.ref.loc222_18: ref %struct_type.a.b.501 = name_ref a, %a
-// CHECK:STDOUT:   %.loc222_18.1: ref %i32 = struct_access %a.ref.loc222_18, element0
-// CHECK:STDOUT:   %.loc222_18.2: %i32 = bind_value %.loc222_18.1
-// CHECK:STDOUT:   %.loc222_18.3: ref %i32 = struct_access %a.ref.loc222_18, element1
-// CHECK:STDOUT:   %.loc222_18.4: %i32 = bind_value %.loc222_18.3
-// CHECK:STDOUT:   %struct.loc222_18: %struct_type.a.b.501 = struct_value (%.loc222_18.2, %.loc222_18.4)
-// CHECK:STDOUT:   %.loc222_18.5: %struct_type.a.b.501 = converted %a.ref.loc222_18, %struct.loc222_18
-// CHECK:STDOUT:   br !if.expr.result(%.loc222_18.5)
+// CHECK:STDOUT:   %a.ref.loc15_18: ref %struct_type.a.b.501 = name_ref a, %a
+// CHECK:STDOUT:   %.loc15_18.1: ref %i32 = struct_access %a.ref.loc15_18, element0
+// CHECK:STDOUT:   %.loc15_18.2: %i32 = bind_value %.loc15_18.1
+// CHECK:STDOUT:   %.loc15_18.3: ref %i32 = struct_access %a.ref.loc15_18, element1
+// CHECK:STDOUT:   %.loc15_18.4: %i32 = bind_value %.loc15_18.3
+// CHECK:STDOUT:   %struct.loc15_18: %struct_type.a.b.501 = struct_value (%.loc15_18.2, %.loc15_18.4)
+// CHECK:STDOUT:   %.loc15_18.5: %struct_type.a.b.501 = converted %a.ref.loc15_18, %struct.loc15_18
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_18.5)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %a.ref.loc222_25: ref %struct_type.a.b.501 = name_ref a, %a
-// CHECK:STDOUT:   %.loc222_25.1: ref %i32 = struct_access %a.ref.loc222_25, element0
-// CHECK:STDOUT:   %.loc222_25.2: %i32 = bind_value %.loc222_25.1
-// CHECK:STDOUT:   %.loc222_25.3: ref %i32 = struct_access %a.ref.loc222_25, element1
-// CHECK:STDOUT:   %.loc222_25.4: %i32 = bind_value %.loc222_25.3
-// CHECK:STDOUT:   %struct.loc222_25: %struct_type.a.b.501 = struct_value (%.loc222_25.2, %.loc222_25.4)
-// CHECK:STDOUT:   %.loc222_20: %struct_type.a.b.501 = converted %a.ref.loc222_25, %struct.loc222_25
-// CHECK:STDOUT:   br !if.expr.result(%.loc222_20)
+// CHECK:STDOUT:   %a.ref.loc15_25: ref %struct_type.a.b.501 = name_ref a, %a
+// CHECK:STDOUT:   %.loc15_25.1: ref %i32 = struct_access %a.ref.loc15_25, element0
+// CHECK:STDOUT:   %.loc15_25.2: %i32 = bind_value %.loc15_25.1
+// CHECK:STDOUT:   %.loc15_25.3: ref %i32 = struct_access %a.ref.loc15_25, element1
+// CHECK:STDOUT:   %.loc15_25.4: %i32 = bind_value %.loc15_25.3
+// CHECK:STDOUT:   %struct.loc15_25: %struct_type.a.b.501 = struct_value (%.loc15_25.2, %.loc15_25.4)
+// CHECK:STDOUT:   %.loc15_20: %struct_type.a.b.501 = converted %a.ref.loc15_25, %struct.loc15_25
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_20)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc222_5: %struct_type.a.b.501 = block_arg !if.expr.result
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(%.loc222_5)
+// CHECK:STDOUT:   %.loc15_5: %struct_type.a.b.501 = block_arg !if.expr.result
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(%.loc15_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

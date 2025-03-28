@@ -535,8 +535,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc13_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc5_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -549,7 +549,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C1.ref as %.loc13_14 {
+// CHECK:STDOUT: impl @impl: %C1.ref as %.loc5_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -591,25 +591,25 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [concrete = constants.%C2] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
-// CHECK:STDOUT:     %C2.ref.loc13: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
-// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
+// CHECK:STDOUT:     %C2.ref.loc5: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
+// CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.1: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc13: %I.type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc13: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc13_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self.1 [concrete = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc13, <error>
+// CHECK:STDOUT:     %.Self.ref.loc5: %I.type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc5: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc5_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self.1 [concrete = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc5, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
-// CHECK:STDOUT:     %C2.ref.loc22: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
-// CHECK:STDOUT:     %I.ref.loc22: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
+// CHECK:STDOUT:     %C2.ref.loc6: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
+// CHECK:STDOUT:     %I.ref.loc6: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.2: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc22: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc22: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc22_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc22_14: type = where_expr %.Self.2 [concrete = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc22, <error>
+// CHECK:STDOUT:     %.Self.ref.loc6: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc6: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc6_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_14: type = where_expr %.Self.2 [concrete = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc6, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -621,7 +621,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C2.ref.loc13 as %.loc13_14 {
+// CHECK:STDOUT: impl @impl: %C2.ref.loc5 as %.loc5_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -674,8 +674,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc18_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc18_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc10_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -690,7 +690,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.16e: %C3.ref as %I.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.da7: %C3.ref as %.loc18_14 {
+// CHECK:STDOUT: impl @impl.da7: %C3.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -738,8 +738,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc13_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc9_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc9_14: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -749,8 +749,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc26_26: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc26_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc10_26: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -763,9 +763,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.6d23bc.1: %C4.ref as %.loc13_14;
+// CHECK:STDOUT: impl @impl.6d23bc.1: %C4.ref as %.loc9_14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.6d23bc.2: %C4.ref as %.loc26_14 {
+// CHECK:STDOUT: impl @impl.6d23bc.2: %C4.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -820,18 +820,18 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %C5.ref: type = name_ref C5, file.%C5.decl [concrete = constants.%C5]
 // CHECK:STDOUT:     %I3.ref: type = name_ref I3, imports.%Main.I3 [concrete = constants.%I3.type]
 // CHECK:STDOUT:     %.Self: %I3.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc42_21: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc18_21: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T1.ref: <error> = name_ref T1, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD1.ref: <error> = name_ref BAD1, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.Self.ref.loc42_36: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc18_36: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T2.ref: <error> = name_ref T2, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc42_48.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc42_48.2: type = converted %.loc42_48.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc18_48.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc18_48.2: type = converted %.loc18_48.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_struct_type} [concrete = constants.%struct_type.a]
-// CHECK:STDOUT:     %.Self.ref.loc42_55: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc18_55: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T3.ref: <error> = name_ref T3, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD2.ref: <error> = name_ref BAD2, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc42_15: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc18_15: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %T1.ref, <error>
 // CHECK:STDOUT:       requirement_rewrite %T2.ref, <error>
 // CHECK:STDOUT:       requirement_rewrite %T3.ref, <error>
@@ -841,18 +841,18 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %C5.ref: type = name_ref C5, file.%C5.decl [concrete = constants.%C5]
 // CHECK:STDOUT:     %I3.ref: type = name_ref I3, imports.%Main.I3 [concrete = constants.%I3.type]
 // CHECK:STDOUT:     %.Self: %I3.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc80_21: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc32_21: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T1.ref: <error> = name_ref T1, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc80_33.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc80_33.2: type = converted %.loc80_33.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc32_33.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc32_33.2: type = converted %.loc32_33.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %empty_struct_type} [concrete = constants.%struct_type.b]
-// CHECK:STDOUT:     %.Self.ref.loc80_40: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc32_40: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T2.ref: <error> = name_ref T2, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD3.ref: <error> = name_ref BAD3, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.Self.ref.loc80_55: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc32_55: %I3.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T3.ref: <error> = name_ref T3, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD4.ref: <error> = name_ref BAD4, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc80_15: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc32_15: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %T1.ref, <error>
 // CHECK:STDOUT:       requirement_rewrite %T2.ref, <error>
 // CHECK:STDOUT:       requirement_rewrite %T3.ref, <error>
@@ -869,9 +869,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T1, imports.%Main.T2, imports.%Main.T3)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.eaa268.1: %C5.ref as %.loc42_15;
+// CHECK:STDOUT: impl @impl.eaa268.1: %C5.ref as %.loc18_15;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.eaa268.2: %C5.ref as %.loc80_15 {
+// CHECK:STDOUT: impl @impl.eaa268.2: %C5.ref as %.loc32_15 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -921,8 +921,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc13_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc5_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %T.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -944,7 +944,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3d3: %C6.ref as %.loc13_14;
+// CHECK:STDOUT: impl @impl.3d3: %C6.ref as %.loc5_14;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.482: %C6.ref as %I.ref {
 // CHECK:STDOUT: !members:
@@ -994,15 +994,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %C7.ref: type = name_ref C7, file.%C7.decl [concrete = constants.%C7]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc22_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc22_20: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc22_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.Self.ref.loc22_32: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc22_32: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc22_38: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc22_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc22_20, <error>
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc22_32, <error>
+// CHECK:STDOUT:     %.Self.ref.loc10_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc10_20: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc10_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.Self.ref.loc10_32: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc10_32: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc10_38: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc10_20, <error>
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc10_32, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1014,7 +1014,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C7.ref as %.loc22_14 {
+// CHECK:STDOUT: impl @impl: %C7.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1061,15 +1061,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %C8.ref: type = name_ref C8, file.%C8.decl [concrete = constants.%C8]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc26_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc26_20: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.Self.ref.loc10_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc10_20: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD5.ref: <error> = name_ref BAD5, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.Self.ref.loc26_34: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc26_34: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc26_40: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc26_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc26_20, <error>
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc26_34, <error>
+// CHECK:STDOUT:     %.Self.ref.loc10_34: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc10_34: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc10_40: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc10_20, <error>
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc10_34, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1081,7 +1081,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C8.ref as %.loc26_14 {
+// CHECK:STDOUT: impl @impl: %C8.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1127,15 +1127,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %C9.ref: type = name_ref C9, file.%C9.decl [concrete = constants.%C9]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc26_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc26_20: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc26_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.Self.ref.loc26_32: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc26_32: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.Self.ref.loc10_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc10_20: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc10_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.Self.ref.loc10_32: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc10_32: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD6.ref: <error> = name_ref BAD6, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc26_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc26_20, <error>
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc26_32, <error>
+// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc10_20, <error>
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc10_32, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1147,7 +1147,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C9.ref as %.loc26_14 {
+// CHECK:STDOUT: impl @impl: %C9.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1194,15 +1194,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %CA.ref: type = name_ref CA, file.%CA.decl [concrete = constants.%CA]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc30_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc30_20: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.Self.ref.loc14_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc14_20: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD7.ref: <error> = name_ref BAD7, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.Self.ref.loc30_34: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc30_34: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.Self.ref.loc14_34: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc14_34: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:     %BAD8.ref: <error> = name_ref BAD8, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc30: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc30_20, <error>
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc30_34, <error>
+// CHECK:STDOUT:     %.loc14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc14_20, <error>
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc14_34, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1214,7 +1214,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %CA.ref as %.loc30 {
+// CHECK:STDOUT: impl @impl: %CA.ref as %.loc14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1259,15 +1259,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %CB.ref: type = name_ref CB, file.%CB.decl [concrete = constants.%CB]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc22_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc22_20: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc22_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.Self.ref.loc22_32: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.ref.loc22_32: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc22_38: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc22_14: type = where_expr %.Self [concrete = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc22_20, <error>
-// CHECK:STDOUT:       requirement_rewrite %T.ref.loc22_32, <error>
+// CHECK:STDOUT:     %.Self.ref.loc6_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc6_20: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc6_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.Self.ref.loc6_32: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.ref.loc6_32: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc6_38: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc6_20, <error>
+// CHECK:STDOUT:       requirement_rewrite %T.ref.loc6_32, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1279,7 +1279,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %CB.ref as %.loc22_14 {
+// CHECK:STDOUT: impl @impl: %CB.ref as %.loc6_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1327,9 +1327,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.Self: %NonType.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %NonType.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %Y.ref: <error> = name_ref Y, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc14_38: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc14_39: %struct_type.a = struct_literal (%.loc14_38)
-// CHECK:STDOUT:     %.loc14_20: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc6_38: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_39: %struct_type.a = struct_literal (%.loc6_38)
+// CHECK:STDOUT:     %.loc6_20: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %Y.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -1342,7 +1342,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.Y)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %CC.ref as %.loc14_20 {
+// CHECK:STDOUT: impl @impl: %CC.ref as %.loc6_20 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -1424,7 +1424,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.Self.ref: %IF.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %F.ref: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:     %.loc14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:     %.loc10: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %F.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -1437,7 +1437,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %CD.ref as %.loc14 {
+// CHECK:STDOUT: impl @impl: %CD.ref as %.loc10 {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

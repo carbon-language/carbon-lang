@@ -252,7 +252,7 @@ var a: A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %.loc216: %A = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc16: %A = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
@@ -269,18 +269,18 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ret_a() -> %return.param_patt: %A {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc213_11.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc213_11.2: init %A = class_init (), %return [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc213_12: init %A = converted %.loc213_11.1, %.loc213_11.2 [concrete = constants.%A.val]
-// CHECK:STDOUT:   return %.loc213_12 to %return
+// CHECK:STDOUT:   %.loc13_11.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc13_11.2: init %A = class_init (), %return [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc13_12: init %A = converted %.loc13_11.1, %.loc13_11.2 [concrete = constants.%A.val]
+// CHECK:STDOUT:   return %.loc13_12 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc216_13.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc216_13.2: init %A = class_init (), file.%a.var [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc216_1: init %A = converted %.loc216_13.1, %.loc216_13.2 [concrete = constants.%A.val]
-// CHECK:STDOUT:   assign file.%a.var, %.loc216_1
+// CHECK:STDOUT:   %.loc16_13.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc16_13.2: init %A = class_init (), file.%a.var [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc16_1: init %A = converted %.loc16_13.1, %.loc16_13.2 [concrete = constants.%A.val]
+// CHECK:STDOUT:   assign file.%a.var, %.loc16_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

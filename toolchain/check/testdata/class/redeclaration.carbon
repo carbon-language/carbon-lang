@@ -239,27 +239,27 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Class = %Class.decl.loc211
+// CHECK:STDOUT:     .Class = %Class.decl.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl.loc211: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   %Class.decl.loc213: type = class_decl @Class [concrete = constants.%Class] {} {}
+// CHECK:STDOUT:   %Class.decl.loc11: type = class_decl @Class [concrete = constants.%Class] {} {}
+// CHECK:STDOUT:   %Class.decl.loc13: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc217: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc217: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc217: %Class = bind_name self, %self.param.loc217
-// CHECK:STDOUT:     %b.param.loc217: bool = value_param call_param1
-// CHECK:STDOUT:     %.loc217_27.1: type = splice_block %.loc217_27.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type.loc217: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc217_27.2: type = value_of_initializer %bool.make_type.loc217 [concrete = bool]
-// CHECK:STDOUT:       %.loc217_27.3: type = converted %bool.make_type.loc217, %.loc217_27.2 [concrete = bool]
+// CHECK:STDOUT:     %self.param.loc17: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc17: %Class = bind_name self, %self.param.loc17
+// CHECK:STDOUT:     %b.param.loc17: bool = value_param call_param1
+// CHECK:STDOUT:     %.loc17_27.1: type = splice_block %.loc17_27.3 [concrete = bool] {
+// CHECK:STDOUT:       %bool.make_type.loc17: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc17_27.2: type = value_of_initializer %bool.make_type.loc17 [concrete = bool]
+// CHECK:STDOUT:       %.loc17_27.3: type = converted %bool.make_type.loc17, %.loc17_27.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc217: bool = bind_name b, %b.param.loc217
+// CHECK:STDOUT:     %b.loc17: bool = bind_name b, %b.param.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -270,16 +270,16 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc214: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc214: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc214: %Class = bind_name self, %self.param.loc214
-// CHECK:STDOUT:     %b.param.loc214: bool = value_param call_param1
-// CHECK:STDOUT:     %.loc214_23.1: type = splice_block %.loc214_23.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type.loc214: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc214_23.2: type = value_of_initializer %bool.make_type.loc214 [concrete = bool]
-// CHECK:STDOUT:       %.loc214_23.3: type = converted %bool.make_type.loc214, %.loc214_23.2 [concrete = bool]
+// CHECK:STDOUT:     %self.param.loc14: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc14: %Class = bind_name self, %self.param.loc14
+// CHECK:STDOUT:     %b.param.loc14: bool = value_param call_param1
+// CHECK:STDOUT:     %.loc14_23.1: type = splice_block %.loc14_23.3 [concrete = bool] {
+// CHECK:STDOUT:       %bool.make_type.loc14: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc14_23.2: type = value_of_initializer %bool.make_type.loc14 [concrete = bool]
+// CHECK:STDOUT:       %.loc14_23.3: type = converted %bool.make_type.loc14, %.loc14_23.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc214: bool = bind_name b, %b.param.loc214
+// CHECK:STDOUT:     %b.loc14: bool = bind_name b, %b.param.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

@@ -291,10 +291,10 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc228_9.1: type = splice_block %.loc228_9.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc14_9.1: type = splice_block %.loc14_9.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc228_9.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc228_9.3: type = converted %bool.make_type, %.loc228_9.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc14_9.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc14_9.3: type = converted %bool.make_type, %.loc14_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -305,14 +305,14 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: fn @A() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc218: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc11: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc226: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12: %i32 = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,19 +324,19 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc229_22.1: %i32 = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc229_22.2: %i32 = converted %A.call, %.loc229_22.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc229_22.2)
+// CHECK:STDOUT:   %.loc15_22.1: %i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc15_22.2: %i32 = converted %A.call, %.loc15_22.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_22.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref()
-// CHECK:STDOUT:   %.loc229_24.1: %i32 = value_of_initializer %B.call
-// CHECK:STDOUT:   %.loc229_24.2: %i32 = converted %B.call, %.loc229_24.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc229_24.2)
+// CHECK:STDOUT:   %.loc15_24.1: %i32 = value_of_initializer %B.call
+// CHECK:STDOUT:   %.loc15_24.2: %i32 = converted %B.call, %.loc15_24.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc229_10: %i32 = block_arg !if.expr.result
-// CHECK:STDOUT:   return %.loc229_10
+// CHECK:STDOUT:   %.loc15_10: %i32 = block_arg !if.expr.result
+// CHECK:STDOUT:   return %.loc15_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

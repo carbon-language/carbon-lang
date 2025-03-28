@@ -282,48 +282,48 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc218_8: type = splice_block %i32.loc218 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc218: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc218: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc15_8: type = splice_block %i32.loc15 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc218_14: %i32 = converted @__global_init.%int_39999999999999999993, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_14: %i32 = converted @__global_init.%int_39999999999999999993, <error> [concrete = <error>]
 // CHECK:STDOUT:   %a: %i32 = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc227_8: type = splice_block %i32.loc227 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc227: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc227: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc21_8: type = splice_block %i32.loc21 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc227_14: %i32 = converted @__global_init.%int_2147483648.loc227, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21_14: %i32 = converted @__global_init.%int_2147483648.loc21, <error> [concrete = <error>]
 // CHECK:STDOUT:   %b: %i32 = bind_name b, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %i32 = binding_pattern c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc236_8: type = splice_block %i32.loc236 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc236: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc236: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc27_8: type = splice_block %i32.loc27 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc236_14: %i32 = converted @__global_init.%int_2147483648.loc236, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc27_14: %i32 = converted @__global_init.%int_2147483648.loc27, <error> [concrete = <error>]
 // CHECK:STDOUT:   %c: %i32 = bind_name c, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: f64 = binding_pattern d
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc242_8.1: type = splice_block %.loc242_8.3 [concrete = f64] {
-// CHECK:STDOUT:     %int_64.loc242: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc242: init type = call constants.%Float(%int_64.loc242) [concrete = f64]
-// CHECK:STDOUT:     %.loc242_8.2: type = value_of_initializer %float.make_type.loc242 [concrete = f64]
-// CHECK:STDOUT:     %.loc242_8.3: type = converted %float.make_type.loc242, %.loc242_8.2 [concrete = f64]
+// CHECK:STDOUT:   %.loc33_8.1: type = splice_block %.loc33_8.3 [concrete = f64] {
+// CHECK:STDOUT:     %int_64.loc33: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc33: init type = call constants.%Float(%int_64.loc33) [concrete = f64]
+// CHECK:STDOUT:     %.loc33_8.2: type = value_of_initializer %float.make_type.loc33 [concrete = f64]
+// CHECK:STDOUT:     %.loc33_8.3: type = converted %float.make_type.loc33, %.loc33_8.2 [concrete = f64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: f64 = bind_name d, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: f64 = binding_pattern e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc248_8.1: type = splice_block %.loc248_8.3 [concrete = f64] {
-// CHECK:STDOUT:     %int_64.loc248: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc248: init type = call constants.%Float(%int_64.loc248) [concrete = f64]
-// CHECK:STDOUT:     %.loc248_8.2: type = value_of_initializer %float.make_type.loc248 [concrete = f64]
-// CHECK:STDOUT:     %.loc248_8.3: type = converted %float.make_type.loc248, %.loc248_8.2 [concrete = f64]
+// CHECK:STDOUT:   %.loc39_8.1: type = splice_block %.loc39_8.3 [concrete = f64] {
+// CHECK:STDOUT:     %int_64.loc39: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc39: init type = call constants.%Float(%int_64.loc39) [concrete = f64]
+// CHECK:STDOUT:     %.loc39_8.2: type = value_of_initializer %float.make_type.loc39 [concrete = f64]
+// CHECK:STDOUT:     %.loc39_8.3: type = converted %float.make_type.loc39, %.loc39_8.2 [concrete = f64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: f64 = bind_name e, <error>
 // CHECK:STDOUT: }
@@ -331,8 +331,8 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_39999999999999999993: Core.IntLiteral = int_value 39999999999999999993 [concrete = constants.%int_39999999999999999993]
-// CHECK:STDOUT:   %int_2147483648.loc227: Core.IntLiteral = int_value 2147483648 [concrete = constants.%int_2147483648]
-// CHECK:STDOUT:   %int_2147483648.loc236: Core.IntLiteral = int_value 2147483648 [concrete = constants.%int_2147483648]
+// CHECK:STDOUT:   %int_2147483648.loc21: Core.IntLiteral = int_value 2147483648 [concrete = constants.%int_2147483648]
+// CHECK:STDOUT:   %int_2147483648.loc27: Core.IntLiteral = int_value 2147483648 [concrete = constants.%int_2147483648]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

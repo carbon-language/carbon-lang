@@ -237,7 +237,7 @@ var a: A = {};
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %.loc212: %A = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc12: %A = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
@@ -254,10 +254,10 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc212_13.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc212_13.2: init %A = class_init (), file.%a.var [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc212_1: init %A = converted %.loc212_13.1, %.loc212_13.2 [concrete = constants.%A.val]
-// CHECK:STDOUT:   assign file.%a.var, %.loc212_1
+// CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc12_13.2: init %A = class_init (), file.%a.var [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc12_1: init %A = converted %.loc12_13.1, %.loc12_13.2 [concrete = constants.%A.val]
+// CHECK:STDOUT:   assign file.%a.var, %.loc12_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

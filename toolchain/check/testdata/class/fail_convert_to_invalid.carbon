@@ -257,9 +257,9 @@ fn Make() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc216_8: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc16_8: <error> = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc216_3: <error> = var_pattern %.loc216_8
+// CHECK:STDOUT:     %.loc16_3: <error> = var_pattern %.loc16_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref <error> = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
@@ -268,13 +268,13 @@ fn Make() -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .NoSuchType = <poisoned>
-// CHECK:STDOUT:   .a = %.loc216_8
+// CHECK:STDOUT:   .a = %.loc16_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123]
-// CHECK:STDOUT:   %.loc220: %struct_type.a = struct_literal (%int_123)
+// CHECK:STDOUT:   %.loc20: %struct_type.a = struct_literal (%int_123)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

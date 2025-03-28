@@ -244,21 +244,21 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc218_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc218_6.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT:     %N.patt.loc11_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param0 [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc218_10: type = splice_block %i32.loc218_10 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc218_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc218_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11_10: type = splice_block %i32.loc11_10 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc218_6.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc218_6.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc11_6.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc11_6.2 (constants.%N.51e)]
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc218_31: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:       %int_32.loc218_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc218_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc218_6.1 [symbolic = %N.loc218_6.2 (constants.%N.51e)]
-// CHECK:STDOUT:       %.loc218_29: Core.IntLiteral = converted %N.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc11_31: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:       %int_32.loc11_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc11_6.1 [symbolic = %N.loc11_6.2 (constants.%N.51e)]
+// CHECK:STDOUT:       %.loc11_29: Core.IntLiteral = converted %N.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:       %array_type: type = array_type <error>, %i32 [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
@@ -266,15 +266,15 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc218_6.1: %i32) {
-// CHECK:STDOUT:   %N.loc218_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc218_6.2 (constants.%N.51e)]
-// CHECK:STDOUT:   %N.patt.loc218_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc218_6.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT: generic fn @F(%N.loc11_6.1: %i32) {
+// CHECK:STDOUT:   %N.loc11_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc11_6.2 (constants.%N.51e)]
+// CHECK:STDOUT:   %N.patt.loc11_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc218_6.1: %i32, %a.param_patt: <error>);
+// CHECK:STDOUT:   fn(%N.patt.loc11_6.1: %i32, %a.param_patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
-// CHECK:STDOUT:   %N.loc218_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc218_6.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.loc11_6.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc11_6.2 => constants.%N.51e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

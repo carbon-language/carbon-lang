@@ -295,17 +295,17 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc225: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc225: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc225: %Class = bind_name self, %self.param.loc225
+// CHECK:STDOUT:     %self.param.loc25: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc25: %Class = bind_name self, %self.param.loc25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc228: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %return.param.loc228: ref %Class = out_param call_param0
-// CHECK:STDOUT:     %return.loc228: ref %Class = return_slot %return.param.loc228
+// CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %return.param.loc28: ref %Class = out_param call_param0
+// CHECK:STDOUT:     %return.loc28: ref %Class = return_slot %return.param.loc28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [concrete = constants.%WrongSelf] {} {}
 // CHECK:STDOUT:   %CallWrongSelf.decl: %CallWrongSelf.type = fn_decl @CallWrongSelf [concrete = constants.%CallWrongSelf] {
@@ -323,17 +323,17 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc216: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc216: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc216: %Class = bind_name self, %self.param.loc216
+// CHECK:STDOUT:     %self.param.loc16: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc16: %Class = bind_name self, %self.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc218: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %return.param.loc218: ref %Class = out_param call_param0
-// CHECK:STDOUT:     %return.loc218: ref %Class = return_slot %return.param.loc218
+// CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %return.param.loc18: ref %Class = out_param call_param0
+// CHECK:STDOUT:     %return.loc18: ref %Class = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -371,14 +371,14 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %.loc233: %Class = var_pattern %self.patt
+// CHECK:STDOUT:     %.loc33: %Class = var_pattern %self.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.var: ref %Class = var self
-// CHECK:STDOUT:   %Self.ref.loc233: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:   %Self.ref.loc33: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   %self: ref %Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref %Class = name_ref self, %self
-// CHECK:STDOUT:   %.loc238: %Class = bind_value %self.ref
-// CHECK:STDOUT:   return <error> to %return.loc228
+// CHECK:STDOUT:   %.loc38: %Class = bind_value %self.ref
+// CHECK:STDOUT:   return <error> to %return.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[%self.param_patt: %Class]();
@@ -388,7 +388,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.25f = name_ref F, @WrongSelf.%F.decl [concrete = constants.%F.3a3]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc256: %Class = converted %ws.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc56: %Class = converted %ws.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

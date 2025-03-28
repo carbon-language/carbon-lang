@@ -297,7 +297,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .D = %D.decl.loc15
+// CHECK:STDOUT:     .D = %D.decl.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
@@ -309,23 +309,23 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc15: %D.type.bbd080.1 = class_decl @D.1 [concrete = constants.%D.generic.4e2319.1] {
-// CHECK:STDOUT:     %b.patt.loc15_9.1: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc15_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %D.decl.loc5: %D.type.bbd080.1 = class_decl @D.1 [concrete = constants.%D.generic.4e2319.1] {
+// CHECK:STDOUT:     %b.patt.loc5_9.1: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000]
-// CHECK:STDOUT:       %.loc15: %i32 = converted %int_1000, <error> [concrete = <error>]
+// CHECK:STDOUT:       %.loc5: %i32 = converted %int_1000, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: <error> = bind_symbolic_name b, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc26: %D.type.bbd080.2 = class_decl @D.2 [concrete = constants.%D.generic.4e2319.2] {
-// CHECK:STDOUT:     %b.patt.loc26_9.1: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc26_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %D.decl.loc6: %D.type.bbd080.2 = class_decl @D.2 [concrete = constants.%D.generic.4e2319.2] {
+// CHECK:STDOUT:     %b.patt.loc6_9.1: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc6_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000]
-// CHECK:STDOUT:       %.loc26: %i32 = converted %int_1000, <error> [concrete = <error>]
+// CHECK:STDOUT:       %.loc6: %i32 = converted %int_1000, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: <error> = bind_symbolic_name b, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
@@ -347,13 +347,13 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @D.1(%b: <error>) {
-// CHECK:STDOUT:   %b.patt.loc15_9.2: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc15_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.patt.loc5_9.2: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @D.2(%b: <error>) {
-// CHECK:STDOUT:   %b.patt.loc26_9.2: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc26_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.patt.loc6_9.2: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc6_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -372,11 +372,11 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.1(<error>) {
-// CHECK:STDOUT:   %b.patt.loc15_9.2 => <error>
+// CHECK:STDOUT:   %b.patt.loc5_9.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.2(<error>) {
-// CHECK:STDOUT:   %b.patt.loc26_9.2 => <error>
+// CHECK:STDOUT:   %b.patt.loc6_9.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_mismatch.carbon
@@ -412,7 +412,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .D = %D.decl.loc15
+// CHECK:STDOUT:     .D = %D.decl.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
@@ -424,23 +424,23 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc15: %D.type.bbd080.1 = class_decl @D.1 [concrete = constants.%D.generic.4e2319.1] {
-// CHECK:STDOUT:     %b.patt.loc15_9.1: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc15_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %D.decl.loc5: %D.type.bbd080.1 = class_decl @D.1 [concrete = constants.%D.generic.4e2319.1] {
+// CHECK:STDOUT:     %b.patt.loc5_9.1: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000]
-// CHECK:STDOUT:       %.loc15: %i32 = converted %int_1000, <error> [concrete = <error>]
+// CHECK:STDOUT:       %.loc5: %i32 = converted %int_1000, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: <error> = bind_symbolic_name b, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc26: %D.type.bbd080.2 = class_decl @D.2 [concrete = constants.%D.generic.4e2319.2] {
-// CHECK:STDOUT:     %b.patt.loc26_9.1: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc26_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %D.decl.loc13: %D.type.bbd080.2 = class_decl @D.2 [concrete = constants.%D.generic.4e2319.2] {
+// CHECK:STDOUT:     %b.patt.loc13_9.1: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc13_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000]
-// CHECK:STDOUT:       %.loc26: %i32 = converted %int_1000, <error> [concrete = <error>]
+// CHECK:STDOUT:       %.loc13: %i32 = converted %int_1000, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: <error> = bind_symbolic_name b, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
@@ -462,13 +462,13 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @D.1(%b: <error>) {
-// CHECK:STDOUT:   %b.patt.loc15_9.2: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc15_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.patt.loc5_9.2: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @D.2(%b: <error>) {
-// CHECK:STDOUT:   %b.patt.loc26_9.2: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc26_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.patt.loc13_9.2: <error> = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc13_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -487,10 +487,10 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.1(<error>) {
-// CHECK:STDOUT:   %b.patt.loc15_9.2 => <error>
+// CHECK:STDOUT:   %b.patt.loc5_9.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.2(<error>) {
-// CHECK:STDOUT:   %b.patt.loc26_9.2 => <error>
+// CHECK:STDOUT:   %b.patt.loc13_9.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

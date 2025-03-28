@@ -253,18 +253,18 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %return.patt: %ptr.3bc = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %ptr.3bc = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc211_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc211_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc211_25: type = const_type %i32 [concrete = constants.%const.20a]
-// CHECK:STDOUT:     %ptr.loc211_34: type = ptr_type %const.20a [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:     %ptr.loc211_35: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
+// CHECK:STDOUT:     %int_32.loc11_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %const.loc11_25: type = const_type %i32 [concrete = constants.%const.20a]
+// CHECK:STDOUT:     %ptr.loc11_34: type = ptr_type %const.20a [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:     %ptr.loc11_35: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
 // CHECK:STDOUT:     %p.param: %ptr.3bc = value_param call_param0
-// CHECK:STDOUT:     %.loc211: type = splice_block %ptr.loc211_19 [concrete = constants.%ptr.3bc] {
-// CHECK:STDOUT:       %int_32.loc211_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc211_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc211_9: type = const_type %i32 [concrete = constants.%const.20a]
-// CHECK:STDOUT:       %ptr.loc211_18: type = ptr_type %const.20a [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:       %ptr.loc211_19: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
+// CHECK:STDOUT:     %.loc11: type = splice_block %ptr.loc11_19 [concrete = constants.%ptr.3bc] {
+// CHECK:STDOUT:       %int_32.loc11_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %const.loc11_9: type = const_type %i32 [concrete = constants.%const.20a]
+// CHECK:STDOUT:       %ptr.loc11_18: type = ptr_type %const.20a [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:       %ptr.loc11_19: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.3bc = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.3bc = out_param call_param1
@@ -276,16 +276,16 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %return.patt: %const.12f = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %const.12f = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc215_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc215_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc215_36: type = ptr_type %i32 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %const.loc215_26: type = const_type %ptr.235 [concrete = constants.%const.12f]
+// CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %const.loc15_26: type = const_type %ptr.235 [concrete = constants.%const.12f]
 // CHECK:STDOUT:     %p.param: %const.12f = value_param call_param0
-// CHECK:STDOUT:     %.loc215: type = splice_block %const.loc215_9 [concrete = constants.%const.12f] {
-// CHECK:STDOUT:       %int_32.loc215_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc215_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %ptr.loc215_19: type = ptr_type %i32 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:       %const.loc215_9: type = const_type %ptr.235 [concrete = constants.%const.12f]
+// CHECK:STDOUT:     %.loc15: type = splice_block %const.loc15_9 [concrete = constants.%const.12f] {
+// CHECK:STDOUT:       %int_32.loc15_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc15_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %ptr.loc15_19: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:       %const.loc15_9: type = const_type %ptr.235 [concrete = constants.%const.12f]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %const.12f = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.12f = out_param call_param1

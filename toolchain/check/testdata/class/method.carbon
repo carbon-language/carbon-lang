@@ -332,13 +332,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc220: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc220: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.param.loc220: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc220: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc220: %Class = bind_name self, %self.param.loc220
-// CHECK:STDOUT:     %return.param.loc220: ref %i32 = out_param call_param1
-// CHECK:STDOUT:     %return.loc220: ref %i32 = return_slot %return.param.loc220
+// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %self.param.loc20: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc20: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc20: %Class = bind_name self, %self.param.loc20
+// CHECK:STDOUT:     %return.param.loc20: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return.loc20: ref %i32 = return_slot %return.param.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
@@ -395,7 +395,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %p.param: %ptr.e71 = value_param call_param0
-// CHECK:STDOUT:     %.loc250: type = splice_block %ptr [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:     %.loc43: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
@@ -412,7 +412,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %p.param: %ptr.e71 = value_param call_param0
-// CHECK:STDOUT:     %.loc254: type = splice_block %ptr [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:     %.loc47: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
@@ -455,25 +455,25 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc212: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc212: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.param.loc212: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc212: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc212: %Class = bind_name self, %self.param.loc212
-// CHECK:STDOUT:     %return.param.loc212: ref %i32 = out_param call_param1
-// CHECK:STDOUT:     %return.loc212: ref %i32 = return_slot %return.param.loc212
+// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %self.param.loc12: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %self.param.loc12
+// CHECK:STDOUT:     %return.param.loc12: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return.loc12: ref %i32 = return_slot %return.param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %ptr.e71 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.e71 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc213_8: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc13_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %ptr.e71 = value_param call_param0
-// CHECK:STDOUT:     %.loc213_23: type = splice_block %ptr [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:     %.loc13_23: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
@@ -483,9 +483,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, %F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %A: %F.type = bind_alias A, %F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc217_8: %Class.elem = field_decl k, element0 [concrete]
+// CHECK:STDOUT:   %.loc17_8: %Class.elem = field_decl k, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc217_3: %Class.elem = var_pattern %.loc217_8
+// CHECK:STDOUT:     %.loc17_3: %Class.elem = var_pattern %.loc17_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.0bf [concrete = constants.%complete_type.954]
@@ -496,16 +496,16 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .A = %A
-// CHECK:STDOUT:   .k = %.loc217_8
+// CHECK:STDOUT:   .k = %.loc17_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc220
-// CHECK:STDOUT:   %k.ref: %Class.elem = name_ref k, @Class.%.loc217_8 [concrete = @Class.%.loc217_8]
-// CHECK:STDOUT:   %.loc221_14.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc221_14.2: %i32 = bind_value %.loc221_14.1
-// CHECK:STDOUT:   return %.loc221_14.2
+// CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc20
+// CHECK:STDOUT:   %k.ref: %Class.elem = name_ref k, @Class.%.loc17_8 [concrete = @Class.%.loc17_8]
+// CHECK:STDOUT:   %.loc21_14.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc21_14.2: %i32 = bind_value %.loc21_14.1
+// CHECK:STDOUT:   return %.loc21_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.e71]() -> %i32;
@@ -516,9 +516,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %F.ref
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
-// CHECK:STDOUT:   %.loc227_15.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc227_15.2: %i32 = converted %F.call, %.loc227_15.1
-// CHECK:STDOUT:   return %.loc227_15.2
+// CHECK:STDOUT:   %.loc27_15.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc27_15.2: %i32 = converted %F.call, %.loc27_15.1
+// CHECK:STDOUT:   return %.loc27_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallAlias(%c.param_patt: %Class) -> %i32 {
@@ -527,20 +527,20 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %A.ref: %F.type = name_ref A, @Class.%A [concrete = constants.%F]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %A.ref
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
-// CHECK:STDOUT:   %.loc231_15.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc231_15.2: %i32 = converted %F.call, %.loc231_15.1
-// CHECK:STDOUT:   return %.loc231_15.2
+// CHECK:STDOUT:   %.loc31_15.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc31_15.2: %i32 = converted %F.call, %.loc31_15.1
+// CHECK:STDOUT:   return %.loc31_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallOnConstBoundMethod() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc242_18.1: %struct_type.k.240 = struct_literal (%int_1)
+// CHECK:STDOUT:   %.loc35_18.1: %struct_type.k.240 = struct_literal (%int_1)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc242_18.2: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc242_18.3: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc242_18.4: ref %Class = temporary %.loc242_18.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc242_20: ref %Class = converted %.loc242_18.1, %.loc242_18.4 [concrete = <error>]
+// CHECK:STDOUT:   %.loc35_18.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc35_18.3: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc35_18.4: ref %Class = temporary %.loc35_18.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc35_20: ref %Class = converted %.loc35_18.1, %.loc35_18.4 [concrete = <error>]
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -549,7 +549,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
-// CHECK:STDOUT:     %.loc246: %Class = var_pattern %c.patt
+// CHECK:STDOUT:     %.loc39: %Class = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
@@ -559,35 +559,35 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %c.ref, %G.ref
 // CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %c.ref
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr)
-// CHECK:STDOUT:   %.loc247_15.1: %i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc247_15.2: %i32 = converted %G.call, %.loc247_15.1
-// CHECK:STDOUT:   return %.loc247_15.2
+// CHECK:STDOUT:   %.loc40_15.1: %i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc40_15.2: %i32 = converted %G.call, %.loc40_15.1
+// CHECK:STDOUT:   return %.loc40_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFThroughPointer(%p.param_patt: %ptr.e71) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
-// CHECK:STDOUT:   %.loc251_11.1: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %.loc44_11.1: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc251_11.1, %F.ref
-// CHECK:STDOUT:   %.loc251_11.2: %Class = bind_value %.loc251_11.1
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc251_11.2)
-// CHECK:STDOUT:   %.loc251_18.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc251_18.2: %i32 = converted %F.call, %.loc251_18.1
-// CHECK:STDOUT:   return %.loc251_18.2
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc44_11.1, %F.ref
+// CHECK:STDOUT:   %.loc44_11.2: %Class = bind_value %.loc44_11.1
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc44_11.2)
+// CHECK:STDOUT:   %.loc44_18.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc44_18.2: %i32 = converted %F.call, %.loc44_18.1
+// CHECK:STDOUT:   return %.loc44_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGThroughPointer(%p.param_patt: %ptr.e71) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
-// CHECK:STDOUT:   %.loc255_11: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %.loc48_11: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc255_11, %G.ref
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc255_11
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc48_11, %G.ref
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc48_11
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr)
-// CHECK:STDOUT:   %.loc255_18.1: %i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc255_18.2: %i32 = converted %G.call, %.loc255_18.1
-// CHECK:STDOUT:   return %.loc255_18.2
+// CHECK:STDOUT:   %.loc48_18.1: %i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc48_18.2: %i32 = converted %G.call, %.loc48_18.1
+// CHECK:STDOUT:   return %.loc48_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %Class;
@@ -595,30 +595,30 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @CallFOnInitializingExpr() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc261_15.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc261_15.1
-// CHECK:STDOUT:   %.loc261_15.2: ref %Class = temporary %.loc261_15.1, %Make.call
+// CHECK:STDOUT:   %.loc54_15.1: ref %Class = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc54_15.1
+// CHECK:STDOUT:   %.loc54_15.2: ref %Class = temporary %.loc54_15.1, %Make.call
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc261_15.2, %F.ref
-// CHECK:STDOUT:   %.loc261_15.3: %Class = bind_value %.loc261_15.2
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc261_15.3)
-// CHECK:STDOUT:   %.loc261_20.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc261_20.2: %i32 = converted %F.call, %.loc261_20.1
-// CHECK:STDOUT:   return %.loc261_20.2
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc54_15.2, %F.ref
+// CHECK:STDOUT:   %.loc54_15.3: %Class = bind_value %.loc54_15.2
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc54_15.3)
+// CHECK:STDOUT:   %.loc54_20.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc54_20.2: %i32 = converted %F.call, %.loc54_20.1
+// CHECK:STDOUT:   return %.loc54_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGOnInitializingExpr() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc265_15.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc265_15.1
-// CHECK:STDOUT:   %.loc265_15.2: ref %Class = temporary %.loc265_15.1, %Make.call
+// CHECK:STDOUT:   %.loc58_15.1: ref %Class = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc58_15.1
+// CHECK:STDOUT:   %.loc58_15.2: ref %Class = temporary %.loc58_15.1, %Make.call
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc265_15.2, %G.ref
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc265_15.2
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc58_15.2, %G.ref
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc58_15.2
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr)
-// CHECK:STDOUT:   %.loc265_20.1: %i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc265_20.2: %i32 = converted %G.call, %.loc265_20.1
-// CHECK:STDOUT:   return %.loc265_20.2
+// CHECK:STDOUT:   %.loc58_20.1: %i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc58_20.2: %i32 = converted %G.call, %.loc58_20.1
+// CHECK:STDOUT:   return %.loc58_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

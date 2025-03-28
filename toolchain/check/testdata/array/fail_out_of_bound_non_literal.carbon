@@ -257,24 +257,24 @@ var b: i32 = a[{.index = 3}.index];
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
-// CHECK:STDOUT:     %.loc218_1: %array_type = var_pattern %a.patt
+// CHECK:STDOUT:     %.loc11_1: %array_type = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
-// CHECK:STDOUT:   %.loc218_20: type = splice_block %array_type [concrete = constants.%array_type] {
-// CHECK:STDOUT:     %int_32.loc218: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc218: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc11_20: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc226_1: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
-// CHECK:STDOUT:   %.loc226_8: type = splice_block %i32.loc226 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc226: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc226: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc16_8: type = splice_block %i32.loc16 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -283,22 +283,22 @@ var b: i32 = a[{.index = 3}.index];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %int_3.loc218: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc218_32.1: %tuple.type = tuple_literal (%int_1, %int_2, %int_3.loc218)
-// CHECK:STDOUT:   %.loc218_32.2: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_3.loc11: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:   %.loc11_32.1: %tuple.type = tuple_literal (%int_1, %int_2, %int_3.loc11)
+// CHECK:STDOUT:   %.loc11_32.2: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, file.%a
-// CHECK:STDOUT:   %int_3.loc226: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %.loc226_27.1: %struct_type.index = struct_literal (%int_3.loc226)
-// CHECK:STDOUT:   %struct: %struct_type.index = struct_value (%int_3.loc226) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc226_27.2: %struct_type.index = converted %.loc226_27.1, %struct [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc226_28.1: Core.IntLiteral = struct_access %.loc226_27.2, element0 [concrete = constants.%int_3]
+// CHECK:STDOUT:   %int_3.loc16: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT:   %.loc16_27.1: %struct_type.index = struct_literal (%int_3.loc16)
+// CHECK:STDOUT:   %struct: %struct_type.index = struct_value (%int_3.loc16) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc16_27.2: %struct_type.index = converted %.loc16_27.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc16_28.1: Core.IntLiteral = struct_access %.loc16_27.2, element0 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc226_28.2: %i32 = converted %.loc226_28.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc226_34.1: ref %i32 = array_index %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc226_34.2: %i32 = bind_value %.loc226_34.1 [concrete = <error>]
-// CHECK:STDOUT:   assign file.%b.var, %.loc226_34.2
+// CHECK:STDOUT:   %.loc16_28.2: %i32 = converted %.loc16_28.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_34.1: ref %i32 = array_index %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_34.2: %i32 = bind_value %.loc16_34.1 [concrete = <error>]
+// CHECK:STDOUT:   assign file.%b.var, %.loc16_34.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

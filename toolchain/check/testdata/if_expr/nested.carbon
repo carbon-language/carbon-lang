@@ -267,27 +267,27 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param3
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc211: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc211: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc211_9.1: type = splice_block %.loc211_9.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type.loc211_9: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc211_9.2: type = value_of_initializer %bool.make_type.loc211_9 [concrete = bool]
-// CHECK:STDOUT:       %.loc211_9.3: type = converted %bool.make_type.loc211_9, %.loc211_9.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc11_9.1: type = splice_block %.loc11_9.3 [concrete = bool] {
+// CHECK:STDOUT:       %bool.make_type.loc11_9: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc11_9.2: type = value_of_initializer %bool.make_type.loc11_9 [concrete = bool]
+// CHECK:STDOUT:       %.loc11_9.3: type = converted %bool.make_type.loc11_9, %.loc11_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: bool = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %.loc211_18.1: type = splice_block %.loc211_18.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type.loc211_18: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc211_18.2: type = value_of_initializer %bool.make_type.loc211_18 [concrete = bool]
-// CHECK:STDOUT:       %.loc211_18.3: type = converted %bool.make_type.loc211_18, %.loc211_18.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc11_18.1: type = splice_block %.loc11_18.3 [concrete = bool] {
+// CHECK:STDOUT:       %bool.make_type.loc11_18: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc11_18.2: type = value_of_initializer %bool.make_type.loc11_18 [concrete = bool]
+// CHECK:STDOUT:       %.loc11_18.3: type = converted %bool.make_type.loc11_18, %.loc11_18.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %c.param: bool = value_param call_param2
-// CHECK:STDOUT:     %.loc211_27.1: type = splice_block %.loc211_27.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type.loc211_27: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc211_27.2: type = value_of_initializer %bool.make_type.loc211_27 [concrete = bool]
-// CHECK:STDOUT:       %.loc211_27.3: type = converted %bool.make_type.loc211_27, %.loc211_27.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc11_27.1: type = splice_block %.loc11_27.3 [concrete = bool] {
+// CHECK:STDOUT:       %bool.make_type.loc11_27: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc11_27.2: type = value_of_initializer %bool.make_type.loc11_27 [concrete = bool]
+// CHECK:STDOUT:       %.loc11_27.3: type = converted %bool.make_type.loc11_27, %.loc11_27.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: bool = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
@@ -298,48 +298,48 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT: fn @F(%a.param_patt: bool, %b.param_patt: bool, %c.param_patt: bool) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
-// CHECK:STDOUT:   if %a.ref br !if.expr.then.loc226_10 else br !if.expr.else.loc226_10
+// CHECK:STDOUT:   if %a.ref br !if.expr.then.loc12_10 else br !if.expr.else.loc12_10
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc226_10:
+// CHECK:STDOUT: !if.expr.then.loc12_10:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
-// CHECK:STDOUT:   if %b.ref br !if.expr.then.loc226_20 else br !if.expr.else.loc226_20
+// CHECK:STDOUT:   if %b.ref br !if.expr.then.loc12_20 else br !if.expr.else.loc12_20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc226_20:
+// CHECK:STDOUT: !if.expr.then.loc12_20:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_32.loc226_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc226_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc226_25: %i32 = converted %int_1, <error> [concrete = <error>]
-// CHECK:STDOUT:   br !if.expr.result.loc226_20(<error>)
+// CHECK:STDOUT:   %int_32.loc12_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc12_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc12_25: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:   br !if.expr.result.loc12_20(<error>)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc226_20:
+// CHECK:STDOUT: !if.expr.else.loc12_20:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   br !if.expr.result.loc226_20(<error>)
+// CHECK:STDOUT:   br !if.expr.result.loc12_20(<error>)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc226_20:
-// CHECK:STDOUT:   %.loc226_20: <error> = block_arg !if.expr.result.loc226_20
-// CHECK:STDOUT:   br !if.expr.result.loc226_10(<error>)
+// CHECK:STDOUT: !if.expr.result.loc12_20:
+// CHECK:STDOUT:   %.loc12_20: <error> = block_arg !if.expr.result.loc12_20
+// CHECK:STDOUT:   br !if.expr.result.loc12_10(<error>)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc226_10:
+// CHECK:STDOUT: !if.expr.else.loc12_10:
 // CHECK:STDOUT:   %c.ref: bool = name_ref c, %c
-// CHECK:STDOUT:   if %c.ref br !if.expr.then.loc226_44 else br !if.expr.else.loc226_44
+// CHECK:STDOUT:   if %c.ref br !if.expr.then.loc12_44 else br !if.expr.else.loc12_44
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc226_44:
+// CHECK:STDOUT: !if.expr.then.loc12_44:
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:   %int_32.loc226_49: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc226_49: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc226_49: %i32 = converted %int_3, <error> [concrete = <error>]
-// CHECK:STDOUT:   br !if.expr.result.loc226_44(<error>)
+// CHECK:STDOUT:   %int_32.loc12_49: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc12_49: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc12_49: %i32 = converted %int_3, <error> [concrete = <error>]
+// CHECK:STDOUT:   br !if.expr.result.loc12_44(<error>)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc226_44:
+// CHECK:STDOUT: !if.expr.else.loc12_44:
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:   br !if.expr.result.loc226_44(<error>)
+// CHECK:STDOUT:   br !if.expr.result.loc12_44(<error>)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc226_44:
-// CHECK:STDOUT:   %.loc226_44: <error> = block_arg !if.expr.result.loc226_44
-// CHECK:STDOUT:   br !if.expr.result.loc226_10(<error>)
+// CHECK:STDOUT: !if.expr.result.loc12_44:
+// CHECK:STDOUT:   %.loc12_44: <error> = block_arg !if.expr.result.loc12_44
+// CHECK:STDOUT:   br !if.expr.result.loc12_10(<error>)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc226_10:
-// CHECK:STDOUT:   %.loc226_10: <error> = block_arg !if.expr.result.loc226_10
+// CHECK:STDOUT: !if.expr.result.loc12_10:
+// CHECK:STDOUT:   %.loc12_10: <error> = block_arg !if.expr.result.loc12_10
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

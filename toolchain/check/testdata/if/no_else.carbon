@@ -255,10 +255,10 @@ fn If(b: bool) {
 // CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc214_10.1: type = splice_block %.loc214_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc14_10.1: type = splice_block %.loc14_10.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc214_10.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc214_10.3: type = converted %bool.make_type, %.loc214_10.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc14_10.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc14_10.3: type = converted %bool.make_type, %.loc14_10.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:   }
