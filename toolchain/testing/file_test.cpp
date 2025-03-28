@@ -235,7 +235,8 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // The path to the core package appears in some check diagnostics, and will
     // differ between testing environments, so don't test it.
     // TODO: Consider adding a content keyword to name the core package, and
-    // replace with that instead.
+    // replace with that instead. Alternatively, consider adding the core
+    // package to the VFS with a fixed name.
     absl::StrReplaceAll({{installation_.core_package(), "{{.*}}"}},
                         &check_line);
   } else {
