@@ -132,10 +132,9 @@ pattern_. Otherwise, it is a _value binding pattern_.
 The _identifier_ specifies the name of the _binding_. The type of the binding is
 specified by the _expression_. The scrutinee is implicitly converted to that
 type if necessary. If the pattern is a variable binding pattern, the scrutinee
-is then converted to an initializing expression, and used to initialize a
-complete object allocated by the `var` pattern, and the name is _bound_ to that
-object. Otherwise, the scrutinee is converted to a value expression, and the
-name is bound to that expression.
+is used to initialize a complete object allocated by the pattern, and the name
+is _bound_ to that object. Otherwise, the scrutinee is converted to a value
+expression, and the name is bound to that expression.
 
 ```carbon
 fn F() -> i32 {

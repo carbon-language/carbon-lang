@@ -541,22 +541,11 @@ var x: MyType = CreateMyObject();
 ```
 
 The `<return-expression>` in the `return` statement actually initializes the
-storage provided for `x`. There is no "copy" or other step. Note that this only
-applies when the function call is used to initialize a single binding pattern:
+storage provided for `x`. There is no "copy" or other step.
 
-```carbon
-fn CreateTuple() -> (i32, i32) {
-  return <return-expression>;
-}
-
-// Materializes the result of `CreateTuple()`, and then copy-initializes `x`
-// and `y` from its elements.
-var (x: i32, y: i32) = CreateTuple();
-```
-
-> **Open question:** Can this limitation be removed? This would require ending
-> the lifetime of the materialized tuple without ending the lifetime of its
-> elements.
+> **Future work:** Extend this to also apply when a variable binding pattern is
+> initialized from a tuple/struct literal, or a tuple/struct pattern is
+> initialized from a single function call.
 
 All `return` statement expressions are required to be initializing expressions
 and in fact initialize the storage provided to the function's call expression.
