@@ -26,12 +26,12 @@ fn F(V:! I) -> V.T {
   // lookup would find an impl with more specific values for associated
   // constants that we should merge.
 
-  // CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+7]]:3: error: member access into undefined facet type `Core.ImplicitAs(V.(I.T))` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `()` to `V.(I.T)` [ConversionFailure]
   // CHECK:STDERR:   return ();
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: include_files/convert.carbon:12:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+4]]:3: note: type `()` does not implement interface `Core.ImplicitAs(V.(I.T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return ();
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   return ();
 }

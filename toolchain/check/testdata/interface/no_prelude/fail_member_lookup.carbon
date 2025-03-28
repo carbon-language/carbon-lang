@@ -33,26 +33,24 @@ fn F() {
   // CHECK:STDERR:
   Interface.F();
 
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+8]]:10: error: member access into undefined facet type `Core.ImplicitAs(type)` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:10: error: cannot implicitly convert non-type value of type `<associated entity in Interface>` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   var v: Interface.T;
   // CHECK:STDERR:          ^~~~~~~~~~~
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE-18]]:1: in import [InImport]
-  // CHECK:STDERR: core.carbon:3:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:10: note: type `<associated entity in Interface>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   var v: Interface.T;
+  // CHECK:STDERR:          ^~~~~~~~~~~
   // CHECK:STDERR:
   var v: Interface.T;
 }
 
 interface Different {}
 
-// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+8]]:24: error: member access into undefined facet type `Core.ImplicitAs(Interface)` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:24: error: cannot implicitly convert type `U` that implements `Different` into type implementing `Interface` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE-31]]:1: in import [InImport]
-// CHECK:STDERR: core.carbon:3:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface ImplicitAs(Dest:! type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:24: note: type `Different` does not implement interface `Core.ImplicitAs(Interface)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fn G(U:! Different) -> U.(Interface.T);
+// CHECK:STDERR:                        ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(U:! Different) -> U.(Interface.T);
 
@@ -89,7 +87,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest.loc3_22.2)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.07f)]
-// CHECK:STDOUT:   %Self.2: %ImplicitAs.type.07f = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest.loc3_22.2) [symbolic = %Convert.type (constants.%Convert.type)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type) = struct_value () [symbolic = %Convert (constants.%Convert)]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type)]
@@ -128,7 +126,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: generic fn @Convert(@ImplicitAs.%Dest.loc3_22.1: type, @ImplicitAs.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.07f)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.07f = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc4_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type)]() -> @Convert.%Dest (%Dest);
@@ -166,15 +164,28 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.519 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
-// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
+// CHECK:STDOUT:   %assoc0.02f: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.dc8: type = facet_type <@ImplicitAs, @ImplicitAs(type)> [concrete]
+// CHECK:STDOUT:   %Self.94d: %ImplicitAs.type.dc8 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.30b: type = fn_type @Convert, @ImplicitAs(type) [concrete]
+// CHECK:STDOUT:   %Convert.732: %Convert.type.30b = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.372: type = assoc_entity_type %ImplicitAs.type.dc8 [concrete]
+// CHECK:STDOUT:   %assoc0.6e4: %ImplicitAs.assoc_type.372 = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
+// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT:   %Different.type: type = facet_type <@Different> [concrete]
 // CHECK:STDOUT:   %Self.e7f: %Different.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %U: %Different.type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %Different.type = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.55e: type = facet_type <@ImplicitAs, @ImplicitAs(%Interface.type)> [concrete]
+// CHECK:STDOUT:   %Self.57e: %ImplicitAs.type.55e = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.2bc: type = fn_type @Convert, @ImplicitAs(%Interface.type) [concrete]
+// CHECK:STDOUT:   %Convert.6b1: %Convert.type.2bc = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.62c: type = assoc_entity_type %ImplicitAs.type.55e [concrete]
+// CHECK:STDOUT:   %assoc0.6f1: %ImplicitAs.assoc_type.62c = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -186,11 +197,11 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst25 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.31f = import_ref Core//default, loc4_35, unloaded
+// CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst25 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//default, loc4_35, unloaded
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -242,16 +253,16 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type)]
-// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type) = struct_value () [symbolic = %Convert (constants.%Convert)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, imports.%Core.import_ref.207 [symbolic = %assoc0 (constants.%assoc0.43d)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.275)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.837)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.02f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.31f
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.630
 // CHECK:STDOUT:     witness = (imports.%Core.Convert)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -293,7 +304,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Self: @Convert.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
@@ -329,11 +340,27 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: specific @ImplicitAs(type) {
 // CHECK:STDOUT:   %Dest => type
 // CHECK:STDOUT:   %Dest.patt => type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.dc8
+// CHECK:STDOUT:   %Self => constants.%Self.94d
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.30b
+// CHECK:STDOUT:   %Convert => constants.%Convert.732
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.372
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.6e4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Interface.type) {
 // CHECK:STDOUT:   %Dest => constants.%Interface.type
 // CHECK:STDOUT:   %Dest.patt => constants.%Interface.type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.55e
+// CHECK:STDOUT:   %Self => constants.%Self.57e
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2bc
+// CHECK:STDOUT:   %Convert => constants.%Convert.6b1
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.62c
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.6f1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {

@@ -32,12 +32,9 @@ impl C as B {
 fn F() {
   // TODO: This error message is wrong here, we are not using `extend`.
 
-  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE+7]]:15: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_name_collision.carbon:[[@LINE+4]]:14: error: ambiguous use of name `G` found in multiple extended scopes [NameAmbiguousDueToExtend]
   // CHECK:STDERR:   ({} as C).((A & B).G)();
-  // CHECK:STDERR:               ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:              ^~~~~~~~~
   // CHECK:STDERR:
   ({} as C).((A & B).G)();
 }
@@ -56,47 +53,12 @@ impl C as B {
   fn BB[self: Self]() {}
 }
 
-// CHECK:STDERR: combine.carbon:[[@LINE+7]]:10: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: fn G[T:! A & B](t: T) {}
-// CHECK:STDERR:          ^~~~~
-// CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn G[T:! A & B](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: combine.carbon:[[@LINE+7]]:15: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   ({} as C).((A & B).BB)();
-  // CHECK:STDERR:               ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   ({} as C).((A & B).BB)();
 
-  // CHECK:STDERR: combine.carbon:[[@LINE+14]]:24: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).BB)();
-  // CHECK:STDERR:                        ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: combine.carbon:[[@LINE+7]]:35: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).((A & B).BB)();
-  // CHECK:STDERR:                                   ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (({} as C) as (C as (A & B))).((A & B).BB)();
-  // CHECK:STDERR: combine.carbon:[[@LINE+7]]:24: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).(B.BB)();
-  // CHECK:STDERR:                        ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (({} as C) as (C as (A & B))).(B.BB)();
 
   G({} as C);
@@ -115,13 +77,6 @@ class C {}
 impl C as A(P1) {}
 impl C as B {}
 
-// CHECK:STDERR: generic_interface.carbon:[[@LINE+7]]:10: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: fn G[T:! A(P1) & B](t: T) {}
-// CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn G[T:! A(P1) & B](t: T) {}
 
 fn F() {
@@ -141,16 +96,19 @@ class C {}
 impl C as A(P1) {}
 impl C as B {}
 
-// CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:10: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: fn G[T:! A(P2) & B](t: T) {}
-// CHECK:STDERR:          ^~~~~~~~~
-// CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn G[T:! A(P2) & B](t: T) {}
 
 fn F() {
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `A(P2) & B` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A(P2) & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn G[T:! A(P2) & B](t: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   G({} as C);
 }
 
@@ -170,13 +128,6 @@ impl C as Iface {}
 
 impl forall [IfaceType:! Iface] C as GenericIface(GenericClass(IfaceType)) {}
 
-// CHECK:STDERR: generic_forall_impl.carbon:[[@LINE+7]]:10: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: fn G[T:! Iface & GenericIface(GenericClass(ImplIface))](t: T) {}
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn G[T:! Iface & GenericIface(GenericClass(ImplIface))](t: T) {}
 
 fn F() {

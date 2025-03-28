@@ -38,9 +38,16 @@ library "[[@TEST_NAME]]";
 interface Z {
   fn Zero();
 
-  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+4]]:15: error: `impl as` can only be used in a class [ImplAsOutsideClass]
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+11]]:15: error: `impl as` can only be used in a class [ImplAsOutsideClass]
   // CHECK:STDERR:   extend impl as Z {
   // CHECK:STDERR:               ^~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+7]]:3: error: impl as incomplete facet type `Z` [ImplAsIncompleteFacetType]
+  // CHECK:STDERR:   extend impl as Z {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE-10]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
+  // CHECK:STDERR: interface Z {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
   extend impl as Z {
     fn Zero() {}

@@ -22,6 +22,10 @@ let T: type.not_found = {};
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: member name `missing` not found [MemberNameNotFound]
+// CHECK:STDERR: let U: (type where .Self impls type).missing = {};
+// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let U: (type where .Self impls type).missing = {};
 
 // CHECK:STDOUT: --- fail_lookup_in_type.carbon

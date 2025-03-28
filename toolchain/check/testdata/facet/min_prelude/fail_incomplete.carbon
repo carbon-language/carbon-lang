@@ -16,45 +16,48 @@ interface B {}
 class C {}
 
 fn G[T:! A](t: T) {}
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:10: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: fn H[T:! A & B](t: T) {}
-// CHECK:STDERR:          ^~~~~
-// CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn H[T:! A & B](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: member access into undefined facet type `Core.As(A)` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: cannot convert type `C` into type implementing `A` with `as` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   ({} as C) as (C as A);
   // CHECK:STDERR:                 ^~~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:9:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface As(Dest:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.As(A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   ({} as C) as (C as A);
+  // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR:
   ({} as C) as (C as A);
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:23: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:17: error: cannot convert type `C` into type implementing `A & B` with `as` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   ({} as C) as (C as (A & B));
-  // CHECK:STDERR:                       ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                 ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.As(A & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   ({} as C) as (C as (A & B));
+  // CHECK:STDERR:                 ^~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as C) as (C as (A & B));
 
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: member access into undefined facet type `Core.ImplicitAs(A)` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `A` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   G({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-28]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn G[T:! A](t: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   G({} as C);
 
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `A & B` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   H({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A & B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   H({} as C);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-39]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn H[T:! A & B](t: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   H({} as C);
 }

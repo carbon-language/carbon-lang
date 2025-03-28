@@ -46,9 +46,16 @@ interface Z {
   fn Zero();
   fn Method[self: Self]();
 
-   // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+4]]:9: error: `impl as` can only be used in a class [ImplAsOutsideClass]
+   // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+11]]:9: error: `impl as` can only be used in a class [ImplAsOutsideClass]
    // CHECK:STDERR:    impl as Z {
    // CHECK:STDERR:         ^~
+   // CHECK:STDERR:
+   // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE+7]]:4: error: impl as incomplete facet type `Z` [ImplAsIncompleteFacetType]
+   // CHECK:STDERR:    impl as Z {
+   // CHECK:STDERR:    ^~~~~~~~~~~
+   // CHECK:STDERR: fail_impl_as_self_interface.carbon:[[@LINE-11]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
+   // CHECK:STDERR: interface Z {
+   // CHECK:STDERR: ^~~~~~~~~~~~~
    // CHECK:STDERR:
    impl as Z {
     fn Zero() {}

@@ -84,7 +84,7 @@ interface Outer {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self.2: %Outer.type = bind_symbolic_name Self, 0 [symbolic = %Self.2 (constants.%Self.277)]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%Self.2)> [symbolic = %Inner.type (constants.%Inner.type.3d8)]
-// CHECK:STDOUT:   %Self.3: %Inner.type.3d8 = bind_symbolic_name Self, 1 [symbolic = %Self.3 (constants.%Self.b60)]
+// CHECK:STDOUT:   %Self.3: @Inner.%Inner.type (%Inner.type.3d8) = bind_symbolic_name Self, 1 [symbolic = %Self.3 (constants.%Self.b60)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @Inner(%Self.2) [symbolic = %F.type (constants.%F.type.82c77c.1)]
 // CHECK:STDOUT:   %F: @Inner.%F.type (%F.type.82c77c.1) = struct_value () [symbolic = %F (constants.%F.9789e2.1)]
 // CHECK:STDOUT:

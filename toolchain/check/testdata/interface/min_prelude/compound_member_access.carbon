@@ -56,12 +56,12 @@ fn Simple3(T:! K2, x: T) {
 // Compound member access does not. It tries to convert `y` to `K2`, but only
 // its type `V` can.
 fn Compound3(V:! K2, y: V) {
-  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+7]]:3: error: member access into undefined facet type `Core.ImplicitAs(K2)` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `V` into type implementing `K2` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   y.(K2.Q2)();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:13:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_caller_instance_interface_not.carbon:[[@LINE+4]]:3: note: type `V` does not implement interface `Core.ImplicitAs(K2)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   y.(K2.Q2)();
+  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   y.(K2.Q2)();
 }
@@ -146,35 +146,28 @@ impl C as A {
 // Since `A.G` is a non-instance method, compound member access may only be
 // used with a type, not an instance.
 fn Fails() {
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:15: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   ({} as C).((A & A).G)();
-  // CHECK:STDERR:               ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   ({} as C).((A & A).G)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as C).((A & A).G)();
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+14]]:24: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR:                        ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:35: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR:                                   ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).((A & A).G)();
-  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:24: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `A` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
-  // CHECK:STDERR:                        ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_combine_non_instance.carbon:[[@LINE+4]]:3: note: type `C` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   (({} as C) as (C as (A & A))).(A.G)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).(A.G)();
 }
@@ -192,36 +185,8 @@ impl C as A {
 }
 
 fn Works() {
-  // CHECK:STDERR: allowed_combine_non_instance.carbon:[[@LINE+7]]:7: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   C.((A & A).G)();
-  // CHECK:STDERR:       ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   C.((A & A).G)();
-  // CHECK:STDERR: allowed_combine_non_instance.carbon:[[@LINE+14]]:10: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   (C as (A & A)).((A & A).G)();
-  // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: allowed_combine_non_instance.carbon:[[@LINE+7]]:20: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   (C as (A & A)).((A & A).G)();
-  // CHECK:STDERR:                    ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (C as (A & A)).((A & A).G)();
-  // CHECK:STDERR: allowed_combine_non_instance.carbon:[[@LINE+7]]:10: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   (C as (A & A)).(A.G)();
-  // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface BitAnd {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (C as (A & A)).(A.G)();
 }
 
@@ -324,8 +289,8 @@ fn Works() {
 // CHECK:STDOUT:   %T.as_type.loc8_24.2: type = facet_access_type %T.loc8_12.2 [symbolic = %T.as_type.loc8_24.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %T.as_wit.iface0.loc8_24.2: <witness> = facet_access_witness %T.loc8_12.2, element0 [symbolic = %T.as_wit.iface0.loc8_24.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:   %impl.elem0.loc8_24.2: type = impl_witness_access %T.as_wit.iface0.loc8_24.2, element0 [symbolic = %impl.elem0.loc8_24.2 (constants.%impl.elem0.d9c3a6.1)]
-// CHECK:STDOUT:   %S.loc8_19.2: %impl.elem0.d9c3a6.1 = bind_symbolic_name S, 1 [symbolic = %S.loc8_19.2 (constants.%S)]
-// CHECK:STDOUT:   %S.patt.loc8_19.2: %impl.elem0.d9c3a6.1 = symbolic_binding_pattern S, 1 [symbolic = %S.patt.loc8_19.2 (constants.%S.patt)]
+// CHECK:STDOUT:   %S.loc8_19.2: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0.d9c3a6.1) = bind_symbolic_name S, 1 [symbolic = %S.loc8_19.2 (constants.%S)]
+// CHECK:STDOUT:   %S.patt.loc8_19.2: @Simple1.%impl.elem0.loc8_24.2 (%impl.elem0.d9c3a6.1) = symbolic_binding_pattern S, 1 [symbolic = %S.patt.loc8_19.2 (constants.%S.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -340,8 +305,8 @@ fn Works() {
 // CHECK:STDOUT:   %V.patt.loc11_14.2: %J.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc11_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:   %V.as_wit.iface0.loc11_26.2: <witness> = facet_access_witness %V.loc11_14.2, element0 [symbolic = %V.as_wit.iface0.loc11_26.2 (constants.%V.as_wit.iface0)]
 // CHECK:STDOUT:   %impl.elem0.loc11_26.2: type = impl_witness_access %V.as_wit.iface0.loc11_26.2, element0 [symbolic = %impl.elem0.loc11_26.2 (constants.%impl.elem0.d9c3a6.2)]
-// CHECK:STDOUT:   %W.loc11_21.2: %impl.elem0.d9c3a6.2 = bind_symbolic_name W, 1 [symbolic = %W.loc11_21.2 (constants.%W)]
-// CHECK:STDOUT:   %W.patt.loc11_21.2: %impl.elem0.d9c3a6.2 = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc11_21.2 (constants.%W.patt)]
+// CHECK:STDOUT:   %W.loc11_21.2: @Compound1.%impl.elem0.loc11_26.2 (%impl.elem0.d9c3a6.2) = bind_symbolic_name W, 1 [symbolic = %W.loc11_21.2 (constants.%W)]
+// CHECK:STDOUT:   %W.patt.loc11_21.2: @Compound1.%impl.elem0.loc11_26.2 (%impl.elem0.d9c3a6.2) = symbolic_binding_pattern W, 1 [symbolic = %W.patt.loc11_21.2 (constants.%W.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -533,13 +498,13 @@ fn Works() {
 // CHECK:STDOUT:   %Q2: %Q2.type = struct_value () [concrete]
 // CHECK:STDOUT:   %K2.assoc_type: type = assoc_entity_type %K2.type [concrete]
 // CHECK:STDOUT:   %assoc0.358: %K2.assoc_type = assoc_entity element0, @K2.%Q2.decl [concrete]
-// CHECK:STDOUT:   %T: %K2.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %K2.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
+// CHECK:STDOUT:   %T.0ce: %K2.type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.6d1: %K2.type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.0ce [symbolic]
 // CHECK:STDOUT:   %Simple3.type: type = fn_type @Simple3 [concrete]
 // CHECK:STDOUT:   %Simple3: %Simple3.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.022e81.1: <witness> = require_complete_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %T.as_wit.iface0: <witness> = facet_access_witness %T, element0 [symbolic]
+// CHECK:STDOUT:   %T.as_wit.iface0: <witness> = facet_access_witness %T.0ce, element0 [symbolic]
 // CHECK:STDOUT:   %K2.facet: %K2.type = facet_value %T.as_type, (%T.as_wit.iface0) [symbolic]
 // CHECK:STDOUT:   %.75b: type = fn_type_with_self_type %Q2.type, %K2.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.75b = impl_witness_access %T.as_wit.iface0, element0 [symbolic]
@@ -554,11 +519,25 @@ fn Works() {
 // CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
 // CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.519 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
-// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
+// CHECK:STDOUT:   %assoc0.02f: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.014: type = facet_type <@ImplicitAs, @ImplicitAs(%K2.type)> [concrete]
+// CHECK:STDOUT:   %Self.5a9: %ImplicitAs.type.014 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.a72: type = fn_type @Convert, @ImplicitAs(%K2.type) [concrete]
+// CHECK:STDOUT:   %Convert.2ea: %Convert.type.a72 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.053: type = assoc_entity_type %ImplicitAs.type.014 [concrete]
+// CHECK:STDOUT:   %assoc0.63c: %ImplicitAs.assoc_type.053 = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
+// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %BitAnd.type: type = facet_type <@BitAnd> [concrete]
+// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.e01: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.bd4), @impl(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op, @impl(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %Op: %Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T.8b3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -568,11 +547,20 @@ fn Works() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//prelude, loc13_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//prelude, inst66 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.31f = import_ref Core//prelude, loc14_35, unloaded
+// CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//prelude, Convert, unloaded
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//prelude, loc13_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//prelude, inst66 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude, loc14_35, unloaded
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
+// CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//prelude, inst101 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.3bf = import_ref Core//prelude, loc18_41, unloaded
+// CHECK:STDOUT:   %Core.Op = import_ref Core//prelude, Op, unloaded
+// CHECK:STDOUT:   %Core.import_ref.f80 = import_ref Core//prelude, loc21_36, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.3: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.%T (constants.%T.8b3)]
+// CHECK:STDOUT:   %Core.import_ref.583: type = import_ref Core//prelude, loc21_24, loaded [symbolic = @impl.%T (constants.%T.8b3)]
+// CHECK:STDOUT:   %Core.import_ref.9c1: type = import_ref Core//prelude, loc21_29, loaded [concrete = constants.%BitAnd.type]
+// CHECK:STDOUT:   %Core.import_ref.bd4 = import_ref Core//prelude, loc22_42, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.4: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.%T (constants.%T.8b3)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -585,15 +573,15 @@ fn Works() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %K2.decl: type = interface_decl @K2 [concrete = constants.%K2.type] {} {}
 // CHECK:STDOUT:   %Simple3.decl: %Simple3.type = fn_decl @Simple3 [concrete = constants.%Simple3] {
-// CHECK:STDOUT:     %T.patt.loc8_12.1: %K2.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_12.1: %K2.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_12.2 (constants.%T.patt.6d1)]
 // CHECK:STDOUT:     %x.patt: @Simple3.%T.as_type.loc8_23.2 (%T.as_type) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Simple3.%T.as_type.loc8_23.2 (%T.as_type) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %K2.ref: type = name_ref K2, file.%K2.decl [concrete = constants.%K2.type]
-// CHECK:STDOUT:     %T.loc8_12.1: %K2.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_12.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_12.1: %K2.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_12.2 (constants.%T.0ce)]
 // CHECK:STDOUT:     %x.param: @Simple3.%T.as_type.loc8_23.2 (%T.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_23.1: type = splice_block %.loc8_23.2 [symbolic = %T.as_type.loc8_23.2 (constants.%T.as_type)] {
-// CHECK:STDOUT:       %T.ref: %K2.type = name_ref T, %T.loc8_12.1 [symbolic = %T.loc8_12.2 (constants.%T)]
+// CHECK:STDOUT:       %T.ref: %K2.type = name_ref T, %T.loc8_12.1 [symbolic = %T.loc8_12.2 (constants.%T.0ce)]
 // CHECK:STDOUT:       %T.as_type.loc8_23.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc8_23.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc8_23.2: type = converted %T.ref, %T.as_type.loc8_23.1 [symbolic = %T.as_type.loc8_23.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
@@ -633,17 +621,40 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type)]
-// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type) = struct_value () [symbolic = %Convert (constants.%Convert)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, imports.%Core.import_ref.207 [symbolic = %assoc0 (constants.%assoc0.43d)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.275)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.837)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.02f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.31f
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.630
 // CHECK:STDOUT:     witness = (imports.%Core.Convert)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @BitAnd [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Core.import_ref.ad0
+// CHECK:STDOUT:   .Op = imports.%Core.import_ref.3bf
+// CHECK:STDOUT:   witness = (imports.%Core.Op)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @impl(imports.%Core.import_ref.5ab3ec.3: type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.e01)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.bd4), @impl(%T) [symbolic = %impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op, @impl(%T) [symbolic = %Op.type (constants.%Op.type)]
+// CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type) = struct_value () [symbolic = %Op (constants.%Op)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%T (%T.8b3) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     witness = imports.%Core.import_ref.f80
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -652,8 +663,8 @@ fn Works() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Simple3(%T.loc8_12.1: %K2.type) {
-// CHECK:STDOUT:   %T.loc8_12.2: %K2.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_12.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc8_12.2: %K2.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc8_12.2: %K2.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_12.2 (constants.%T.0ce)]
+// CHECK:STDOUT:   %T.patt.loc8_12.2: %K2.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_12.2 (constants.%T.patt.6d1)]
 // CHECK:STDOUT:   %T.as_type.loc8_23.2: type = facet_access_type %T.loc8_12.2 [symbolic = %T.as_type.loc8_23.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -668,9 +679,9 @@ fn Works() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Simple3.%T.as_type.loc8_23.2 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %Q2.ref: %K2.assoc_type = name_ref Q2, @K2.%assoc0 [concrete = constants.%assoc0.358]
-// CHECK:STDOUT:     %T.as_type.loc9: type = facet_access_type constants.%T [symbolic = %T.as_type.loc8_23.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc9_4.1: type = converted constants.%T, %T.as_type.loc9 [symbolic = %T.as_type.loc8_23.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %T.as_wit.iface0.loc9_4.1: <witness> = facet_access_witness constants.%T, element0 [symbolic = %T.as_wit.iface0.loc9_4.2 (constants.%T.as_wit.iface0)]
+// CHECK:STDOUT:     %T.as_type.loc9: type = facet_access_type constants.%T.0ce [symbolic = %T.as_type.loc8_23.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc9_4.1: type = converted constants.%T.0ce, %T.as_type.loc9 [symbolic = %T.as_type.loc8_23.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.as_wit.iface0.loc9_4.1: <witness> = facet_access_witness constants.%T.0ce, element0 [symbolic = %T.as_wit.iface0.loc9_4.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:     %impl.elem0.loc9_4.1: @Simple3.%.loc9_4.2 (%.75b) = impl_witness_access %T.as_wit.iface0.loc9_4.1, element0 [symbolic = %impl.elem0.loc9_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_impl_fn.loc9_4.1: <specific function> = specific_impl_function %impl.elem0.loc9_4.1, @Q2(constants.%K2.facet) [symbolic = %specific_impl_fn.loc9_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %.loc9_8: init %empty_tuple.type = call %specific_impl_fn.loc9_4.1()
@@ -699,17 +710,25 @@ fn Works() {
 // CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "include_files/facet_types.carbon"] {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Self: @Convert.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op(imports.%Core.import_ref.5ab3ec.4: type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.%T (%T.8b3)](%other.param_patt: @Op.%T (%T.8b3)) -> @Op.%T (%T.8b3) = "type.and";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Q2(constants.%Self.0ce) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple3(constants.%T) {
-// CHECK:STDOUT:   %T.loc8_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T
+// CHECK:STDOUT: specific @Simple3(constants.%T.0ce) {
+// CHECK:STDOUT:   %T.loc8_12.2 => constants.%T.0ce
+// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T.0ce
 // CHECK:STDOUT:   %T.as_type.loc8_23.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -742,6 +761,26 @@ fn Works() {
 // CHECK:STDOUT: specific @ImplicitAs(constants.%K2.type) {
 // CHECK:STDOUT:   %Dest => constants.%K2.type
 // CHECK:STDOUT:   %Dest.patt => constants.%K2.type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.014
+// CHECK:STDOUT:   %Self => constants.%Self.5a9
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.a72
+// CHECK:STDOUT:   %Convert => constants.%Convert.2ea
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.053
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.63c
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%T.8b3) {
+// CHECK:STDOUT:   %T => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt => constants.%T.8b3
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op(constants.%T.8b3) {
+// CHECK:STDOUT:   %T => constants.%T.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- instance.carbon
@@ -1277,27 +1316,80 @@ fn Works() {
 // CHECK:STDOUT:   %G.type.c3a: type = fn_type @G.1 [concrete]
 // CHECK:STDOUT:   %G.11a: %G.type.c3a = struct_value () [concrete]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [concrete]
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%G.decl [concrete]
+// CHECK:STDOUT:   %assoc0.773: %A.assoc_type = assoc_entity element0, @A.%G.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%G.decl) [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %impl_witness.a7a: <witness> = impl_witness (@impl.77d.%G.decl) [concrete]
 // CHECK:STDOUT:   %G.type.486: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.001: %G.type.486 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.facet: %A.type = facet_value %C, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %A.facet: %A.type = facet_value %C, (%impl_witness.a7a) [concrete]
 // CHECK:STDOUT:   %Fails.type: type = fn_type @Fails [concrete]
 // CHECK:STDOUT:   %Fails: %Fails.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %BitAnd.type: type = facet_type <@BitAnd> [concrete]
+// CHECK:STDOUT:   %Self.25f: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %BitAnd.assoc_type: type = assoc_entity_type %BitAnd.type [concrete]
+// CHECK:STDOUT:   %assoc0.a63: %BitAnd.assoc_type = assoc_entity element0, imports.%Core.import_ref.a93 [concrete]
+// CHECK:STDOUT:   %Op.type.27a: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Self.as_type.19f: type = facet_access_type %Self.25f [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %impl_witness.db8: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.f99: type = fn_type @Op.2, @impl.f92(%T) [symbolic]
+// CHECK:STDOUT:   %Op.05a: %Op.type.f99 = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %impl_witness.3ea: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(type) [concrete]
+// CHECK:STDOUT:   %impl_witness.b81: <witness> = impl_witness (imports.%Core.import_ref.bd4), @impl.f92(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.eb8: type = fn_type @Op.2, @impl.f92(type) [concrete]
+// CHECK:STDOUT:   %Op.444: %Op.type.eb8 = struct_value () [concrete]
+// CHECK:STDOUT:   %complete_type.473: <witness> = complete_type_witness type [concrete]
+// CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value type, (%impl_witness.3ea) [concrete]
+// CHECK:STDOUT:   %.2ac: type = fn_type_with_self_type %Op.type.27a, %BitAnd.facet [concrete]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %A.type, %Op.444 [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.444, @Op.2(type) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %A.type, %Op.specific_fn [concrete]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
+// CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Self.as_type.40a: type = facet_access_type %Self.519 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
+// CHECK:STDOUT:   %assoc0.02f: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2d2: type = facet_type <@ImplicitAs, @ImplicitAs(%A.type)> [concrete]
+// CHECK:STDOUT:   %Self.56d: %ImplicitAs.type.2d2 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Convert.type.597: type = fn_type @Convert, @ImplicitAs(%A.type) [concrete]
+// CHECK:STDOUT:   %Convert.d1e: %Convert.type.597 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.568: type = assoc_entity_type %ImplicitAs.type.2d2 [concrete]
+// CHECK:STDOUT:   %assoc0.e1d: %ImplicitAs.assoc_type.568 = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
+// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .BitAnd = %Core.BitAnd
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//prelude, inst101 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.3bf = import_ref Core//prelude, loc18_41, unloaded
+// CHECK:STDOUT:   %Core.import_ref.08d: %BitAnd.assoc_type = import_ref Core//prelude, loc18_41, loaded [concrete = constants.%assoc0.a63]
 // CHECK:STDOUT:   %Core.Op = import_ref Core//prelude, Op, unloaded
+// CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//prelude, inst101 [no loc], loaded [symbolic = constants.%Self.25f]
+// CHECK:STDOUT:   %Core.import_ref.51c: <witness> = import_ref Core//prelude, loc21_36, loaded [symbolic = @impl.f92.%impl_witness (constants.%impl_witness.b81)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.583: type = import_ref Core//prelude, loc21_24, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.9c1: type = import_ref Core//prelude, loc21_29, loaded [concrete = constants.%BitAnd.type]
+// CHECK:STDOUT:   %Core.import_ref.1e6: @impl.f92.%Op.type (%Op.type.f99) = import_ref Core//prelude, loc22_42, loaded [symbolic = @impl.f92.%Op (constants.%Op.05a)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.3: type = import_ref Core//prelude, loc13_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//prelude, inst66 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
+// CHECK:STDOUT:   %Core.Convert = import_ref Core//prelude, Convert, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.4: type = import_ref Core//prelude, loc13_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//prelude, inst66 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1310,18 +1402,18 @@ fn Works() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [concrete = constants.%A.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.77d [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%G.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.77d.%G.decl) [concrete = constants.%impl_witness.a7a]
 // CHECK:STDOUT:   %Fails.decl: %Fails.type = fn_decl @Fails [concrete = constants.%Fails] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.31d]
 // CHECK:STDOUT:   %G.decl: %G.type.c3a = fn_decl @G.1 [concrete = constants.%G.11a] {} {}
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0.773]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -1332,11 +1424,31 @@ fn Works() {
 // CHECK:STDOUT: interface @BitAnd [from "include_files/facet_types.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Core.import_ref.ad0
-// CHECK:STDOUT:   .Op = imports.%Core.import_ref.3bf
+// CHECK:STDOUT:   .Op = imports.%Core.import_ref.08d
 // CHECK:STDOUT:   witness = (imports.%Core.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C.ref as %A.ref {
+// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.3: type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.275)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.837)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.02f)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.630
+// CHECK:STDOUT:     witness = (imports.%Core.Convert)
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl.77d: %C.ref as %A.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.486 = fn_decl @G.2 [concrete = constants.%G.001] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1344,8 +1456,24 @@ fn Works() {
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @impl.f92(imports.%Core.import_ref.5ab3ec.1: type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(%T) [symbolic = %impl_witness (constants.%impl_witness.db8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl.f92(%T) [symbolic = %Op.type (constants.%Op.type.f99)]
+// CHECK:STDOUT:   %Op: @impl.f92.%Op.type (%Op.type.f99) = struct_value () [symbolic = %Op (constants.%Op.05a)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.f92.%T (%T) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     witness = imports.%Core.import_ref.51c
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1371,7 +1499,13 @@ fn Works() {
 // CHECK:STDOUT:   %.loc22_7: ref %C = converted %.loc22_5.1, %.loc22_5.4
 // CHECK:STDOUT:   %A.ref.loc22_15: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.ref.loc22_19: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %G.ref.loc22: <error> = name_ref G, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc22_17.1: <bound method> = bound_method %A.ref.loc22_15, %impl.elem0.loc22 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc22_17.2: <bound method> = bound_method %A.ref.loc22_15, %specific_fn.loc22 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and.loc22: init type = call %bound_method.loc22_17.2(%A.ref.loc22_15, %A.ref.loc22_19) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %G.ref.loc22: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0.773]
+// CHECK:STDOUT:   %.loc22_12: %A.type = converted %.loc22_7, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc30_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %C.ref.loc30_11: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc30_6.2: ref %C = temporary_storage
@@ -1381,9 +1515,26 @@ fn Works() {
 // CHECK:STDOUT:   %C.ref.loc30_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %A.ref.loc30_24: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.ref.loc30_28: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %impl.elem0.loc30_26: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc30_26.1: <bound method> = bound_method %A.ref.loc30_24, %impl.elem0.loc30_26 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc30_26: <specific function> = specific_function %impl.elem0.loc30_26, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc30_26.2: <bound method> = bound_method %A.ref.loc30_24, %specific_fn.loc30_26 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and.loc30_26: init type = call %bound_method.loc30_26.2(%A.ref.loc30_24, %A.ref.loc30_28) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc30_29.1: type = value_of_initializer %type.and.loc30_26 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc30_29.2: type = converted %type.and.loc30_26, %.loc30_29.1 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.facet.loc30: %A.type = facet_value constants.%C, (constants.%impl_witness.a7a) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %.loc30_20: %A.type = converted %C.ref.loc30_18, %A.facet.loc30 [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %as_type.loc30: type = facet_access_type %.loc30_20 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc30_30: type = converted %.loc30_20, %as_type.loc30 [concrete = constants.%C]
 // CHECK:STDOUT:   %A.ref.loc30_35: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.ref.loc30_39: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %G.ref.loc30: <error> = name_ref G, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0.loc30_37: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc30_37.1: <bound method> = bound_method %A.ref.loc30_35, %impl.elem0.loc30_37 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc30_37: <specific function> = specific_function %impl.elem0.loc30_37, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc30_37.2: <bound method> = bound_method %A.ref.loc30_35, %specific_fn.loc30_37 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and.loc30_37: init type = call %bound_method.loc30_37.2(%A.ref.loc30_35, %A.ref.loc30_39) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %G.ref.loc30: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0.773]
+// CHECK:STDOUT:   %.loc30_32: %A.type = converted %.loc30_8, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc38_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %C.ref.loc38_11: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc38_6.2: ref %C = temporary_storage
@@ -1393,14 +1544,113 @@ fn Works() {
 // CHECK:STDOUT:   %C.ref.loc38_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %A.ref.loc38_24: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.ref.loc38_28: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %impl.elem0.loc38: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc38_26.1: <bound method> = bound_method %A.ref.loc38_24, %impl.elem0.loc38 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc38: <specific function> = specific_function %impl.elem0.loc38, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc38_26.2: <bound method> = bound_method %A.ref.loc38_24, %specific_fn.loc38 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and.loc38: init type = call %bound_method.loc38_26.2(%A.ref.loc38_24, %A.ref.loc38_28) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc38_29.1: type = value_of_initializer %type.and.loc38 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc38_29.2: type = converted %type.and.loc38, %.loc38_29.1 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.facet.loc38: %A.type = facet_value constants.%C, (constants.%impl_witness.a7a) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %.loc38_20: %A.type = converted %C.ref.loc38_18, %A.facet.loc38 [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %as_type.loc38: type = facet_access_type %.loc38_20 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc38_30: type = converted %.loc38_20, %as_type.loc38 [concrete = constants.%C]
 // CHECK:STDOUT:   %A.ref.loc38_34: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %G.ref.loc38: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %G.ref.loc38: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0.773]
+// CHECK:STDOUT:   %.loc38_32: %A.type = converted %.loc38_8, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.1(imports.%Core.import_ref.040: %BitAnd.type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %Self: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.25f)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.19f)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type.19f)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type.19f)) -> @Op.1.%Self.as_type (%Self.as_type.19f);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.2(imports.%Core.import_ref.5ab3ec.2: type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%T (%T)](%other.param_patt: @Op.2.%T (%T)) -> @Op.2.%T (%T) = "type.and";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.4: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
+// CHECK:STDOUT:   %Self: @Convert.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.40a)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type.40a)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.31d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%A.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.1(constants.%Self.25f) {
+// CHECK:STDOUT:   %Self => constants.%Self.25f
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.19f
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.f92(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.db8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.f92(%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.f92(type) {
+// CHECK:STDOUT:   %T => type
+// CHECK:STDOUT:   %T.patt => type
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.3ea
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type => constants.%Op.type.eb8
+// CHECK:STDOUT:   %Op => constants.%Op.444
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.473
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(type) {
+// CHECK:STDOUT:   %T => type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
+// CHECK:STDOUT:   %Self => constants.%Self.519
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.40a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%A.type) {
+// CHECK:STDOUT:   %Dest => constants.%A.type
+// CHECK:STDOUT:   %Dest.patt => constants.%A.type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2d2
+// CHECK:STDOUT:   %Self => constants.%Self.56d
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.597
+// CHECK:STDOUT:   %Convert => constants.%Convert.d1e
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.568
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.e1d
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- allowed_combine_non_instance.carbon
 // CHECK:STDOUT:
@@ -1408,18 +1658,42 @@ fn Works() {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self.31d: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %G.type.c3a: type = fn_type @G.1 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G.11a: %G.type.c3a = struct_value () [concrete]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [concrete]
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%G.decl [concrete]
+// CHECK:STDOUT:   %assoc0.773: %A.assoc_type = assoc_entity element0, @A.%G.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%G.decl) [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %impl_witness.a7a: <witness> = impl_witness (@impl.77d.%G.decl) [concrete]
 // CHECK:STDOUT:   %G.type.486: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.001: %G.type.486 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.facet: %A.type = facet_value %C, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %A.facet: %A.type = facet_value %C, (%impl_witness.a7a) [concrete]
 // CHECK:STDOUT:   %Works.type: type = fn_type @Works [concrete]
 // CHECK:STDOUT:   %Works: %Works.type = struct_value () [concrete]
+// CHECK:STDOUT:   %BitAnd.type: type = facet_type <@BitAnd> [concrete]
+// CHECK:STDOUT:   %Self.25f: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %BitAnd.assoc_type: type = assoc_entity_type %BitAnd.type [concrete]
+// CHECK:STDOUT:   %assoc0.a63: %BitAnd.assoc_type = assoc_entity element0, imports.%Core.import_ref.a93 [concrete]
+// CHECK:STDOUT:   %Op.type.27a: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.25f [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %impl_witness.db8: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.f99: type = fn_type @Op.2, @impl.f92(%T) [symbolic]
+// CHECK:STDOUT:   %Op.05a: %Op.type.f99 = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %impl_witness.3ea: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(type) [concrete]
+// CHECK:STDOUT:   %impl_witness.b81: <witness> = impl_witness (imports.%Core.import_ref.bd4), @impl.f92(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.eb8: type = fn_type @Op.2, @impl.f92(type) [concrete]
+// CHECK:STDOUT:   %Op.444: %Op.type.eb8 = struct_value () [concrete]
+// CHECK:STDOUT:   %complete_type.473: <witness> = complete_type_witness type [concrete]
+// CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value type, (%impl_witness.3ea) [concrete]
+// CHECK:STDOUT:   %.2ac: type = fn_type_with_self_type %Op.type.27a, %BitAnd.facet [concrete]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %A.type, %Op.444 [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.444, @Op.2(type) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %A.type, %Op.specific_fn [concrete]
+// CHECK:STDOUT:   %.db5: type = fn_type_with_self_type %G.type.c3a, %A.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1428,8 +1702,15 @@ fn Works() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//prelude, inst101 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.3bf = import_ref Core//prelude, loc18_41, unloaded
+// CHECK:STDOUT:   %Core.import_ref.08d: %BitAnd.assoc_type = import_ref Core//prelude, loc18_41, loaded [concrete = constants.%assoc0.a63]
 // CHECK:STDOUT:   %Core.Op = import_ref Core//prelude, Op, unloaded
+// CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//prelude, inst101 [no loc], loaded [symbolic = constants.%Self.25f]
+// CHECK:STDOUT:   %Core.import_ref.51c: <witness> = import_ref Core//prelude, loc21_36, loaded [symbolic = @impl.f92.%impl_witness (constants.%impl_witness.b81)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.583: type = import_ref Core//prelude, loc21_24, loaded [symbolic = @impl.f92.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.9c1: type = import_ref Core//prelude, loc21_29, loaded [concrete = constants.%BitAnd.type]
+// CHECK:STDOUT:   %Core.import_ref.1e6: @impl.f92.%Op.type (%Op.type.f99) = import_ref Core//prelude, loc22_42, loaded [symbolic = @impl.f92.%Op (constants.%Op.05a)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.f92.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1442,18 +1723,18 @@ fn Works() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [concrete = constants.%A.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.77d [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%G.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.77d.%G.decl) [concrete = constants.%impl_witness.a7a]
 // CHECK:STDOUT:   %Works.decl: %Works.type = fn_decl @Works [concrete = constants.%Works] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.31d]
 // CHECK:STDOUT:   %G.decl: %G.type.c3a = fn_decl @G.1 [concrete = constants.%G.11a] {} {}
-// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0.773]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -1464,11 +1745,11 @@ fn Works() {
 // CHECK:STDOUT: interface @BitAnd [from "include_files/facet_types.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Core.import_ref.ad0
-// CHECK:STDOUT:   .Op = imports.%Core.import_ref.3bf
+// CHECK:STDOUT:   .Op = imports.%Core.import_ref.08d
 // CHECK:STDOUT:   witness = (imports.%Core.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C.ref as %A.ref {
+// CHECK:STDOUT: impl @impl.77d: %C.ref as %A.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.486 = fn_decl @G.2 [concrete = constants.%G.001] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1476,8 +1757,24 @@ fn Works() {
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @impl.f92(imports.%Core.import_ref.5ab3ec.1: type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl.f92(%T) [symbolic = %impl_witness (constants.%impl_witness.db8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl.f92(%T) [symbolic = %Op.type (constants.%Op.type.f99)]
+// CHECK:STDOUT:   %Op: @impl.f92.%Op.type (%Op.type.f99) = struct_value () [symbolic = %Op (constants.%Op.05a)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.f92.%T (%T) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     witness = imports.%Core.import_ref.51c
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1498,24 +1795,112 @@ fn Works() {
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %A.ref.loc13_7: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.ref.loc13_11: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %G.ref.loc13: <error> = name_ref G, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0.loc13_9: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc13_9.1: <bound method> = bound_method %A.ref.loc13_7, %impl.elem0.loc13_9 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13_9, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_9.2: <bound method> = bound_method %A.ref.loc13_7, %specific_fn.loc13 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and.loc13: init type = call %bound_method.loc13_9.2(%A.ref.loc13_7, %A.ref.loc13_11) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %G.ref.loc13: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0.773]
+// CHECK:STDOUT:   %A.facet.loc13: %A.type = facet_value constants.%C, (constants.%impl_witness.a7a) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %.loc13: %A.type = converted %C.ref.loc13, %A.facet.loc13 [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %as_wit.iface0.loc13: <witness> = facet_access_witness %.loc13, element0 [concrete = constants.%impl_witness.a7a]
+// CHECK:STDOUT:   %impl.elem0.loc13_4: %.db5 = impl_witness_access %as_wit.iface0.loc13, element0 [concrete = constants.%G.001]
+// CHECK:STDOUT:   %G.call.loc13: init %empty_tuple.type = call %impl.elem0.loc13_4()
 // CHECK:STDOUT:   %C.ref.loc14: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %A.ref.loc14_10: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.ref.loc14_14: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %impl.elem0.loc14_12: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc14_12.1: <bound method> = bound_method %A.ref.loc14_10, %impl.elem0.loc14_12 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc14_12: <specific function> = specific_function %impl.elem0.loc14_12, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14_12.2: <bound method> = bound_method %A.ref.loc14_10, %specific_fn.loc14_12 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and.loc14_12: init type = call %bound_method.loc14_12.2(%A.ref.loc14_10, %A.ref.loc14_14) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc14_15.1: type = value_of_initializer %type.and.loc14_12 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc14_15.2: type = converted %type.and.loc14_12, %.loc14_15.1 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.facet.loc14: %A.type = facet_value constants.%C, (constants.%impl_witness.a7a) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %.loc14_6: %A.type = converted %C.ref.loc14, %A.facet.loc14 [concrete = constants.%A.facet]
 // CHECK:STDOUT:   %A.ref.loc14_20: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.ref.loc14_24: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %G.ref.loc14: <error> = name_ref G, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0.loc14_22: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc14_22.1: <bound method> = bound_method %A.ref.loc14_20, %impl.elem0.loc14_22 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc14_22: <specific function> = specific_function %impl.elem0.loc14_22, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14_22.2: <bound method> = bound_method %A.ref.loc14_20, %specific_fn.loc14_22 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and.loc14_22: init type = call %bound_method.loc14_22.2(%A.ref.loc14_20, %A.ref.loc14_24) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %G.ref.loc14: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0.773]
+// CHECK:STDOUT:   %as_wit.iface0.loc14: <witness> = facet_access_witness %.loc14_6, element0 [concrete = constants.%impl_witness.a7a]
+// CHECK:STDOUT:   %impl.elem0.loc14_17: %.db5 = impl_witness_access %as_wit.iface0.loc14, element0 [concrete = constants.%G.001]
+// CHECK:STDOUT:   %G.call.loc14: init %empty_tuple.type = call %impl.elem0.loc14_17()
 // CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %A.ref.loc15_10: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %A.ref.loc15_14: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   %impl.elem0.loc15_12: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc15_12.1: <bound method> = bound_method %A.ref.loc15_10, %impl.elem0.loc15_12 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem0.loc15_12, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc15_12.2: <bound method> = bound_method %A.ref.loc15_10, %specific_fn.loc15 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and.loc15: init type = call %bound_method.loc15_12.2(%A.ref.loc15_10, %A.ref.loc15_14) [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc15_15.1: type = value_of_initializer %type.and.loc15 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %.loc15_15.2: type = converted %type.and.loc15, %.loc15_15.1 [concrete = constants.%A.type]
+// CHECK:STDOUT:   %A.facet.loc15: %A.type = facet_value constants.%C, (constants.%impl_witness.a7a) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %.loc15_6: %A.type = converted %C.ref.loc15, %A.facet.loc15 [concrete = constants.%A.facet]
 // CHECK:STDOUT:   %A.ref.loc15_19: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   %G.ref.loc15: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %G.ref.loc15: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0.773]
+// CHECK:STDOUT:   %as_wit.iface0.loc15: <witness> = facet_access_witness %.loc15_6, element0 [concrete = constants.%impl_witness.a7a]
+// CHECK:STDOUT:   %impl.elem0.loc15_17: %.db5 = impl_witness_access %as_wit.iface0.loc15, element0 [concrete = constants.%G.001]
+// CHECK:STDOUT:   %G.call.loc15: init %empty_tuple.type = call %impl.elem0.loc15_17()
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.1(imports.%Core.import_ref.040: %BitAnd.type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %Self: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.25f)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type)) -> @Op.1.%Self.as_type (%Self.as_type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.2(imports.%Core.import_ref.5ab3ec.2: type) [from "include_files/facet_types.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%T (%T)](%other.param_patt: @Op.2.%T (%T)) -> @Op.2.%T (%T) = "type.and";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.31d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%A.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.1(constants.%Self.25f) {
+// CHECK:STDOUT:   %Self => constants.%Self.25f
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.f92(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.db8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.f92(%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.f92(type) {
+// CHECK:STDOUT:   %T => type
+// CHECK:STDOUT:   %T.patt => type
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.3ea
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type => constants.%Op.type.eb8
+// CHECK:STDOUT:   %Op => constants.%Op.444
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.473
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(type) {
+// CHECK:STDOUT:   %T => type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/facet_types.carbon
 // CHECK:STDOUT:
@@ -1589,7 +1974,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%Dest.loc9_14.2)> [symbolic = %As.type (constants.%As.type.8ba)]
-// CHECK:STDOUT:   %Self.2: %As.type.8ba = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b4e)]
+// CHECK:STDOUT:   %Self.2: @As.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b4e)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.1, @As(%Dest.loc9_14.2) [symbolic = %Convert.type (constants.%Convert.type.ad1)]
 // CHECK:STDOUT:   %Convert: @As.%Convert.type (%Convert.type.ad1) = struct_value () [symbolic = %Convert (constants.%Convert.0ed)]
 // CHECK:STDOUT:   %As.assoc_type: type = assoc_entity_type @As.%As.type (%As.type.8ba) [symbolic = %As.assoc_type (constants.%As.assoc_type)]
@@ -1631,7 +2016,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest.loc13_22.2)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.07f)]
-// CHECK:STDOUT:   %Self.2: %ImplicitAs.type.07f = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.0f3)]
+// CHECK:STDOUT:   %Self.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.0f3)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.2, @ImplicitAs(%Dest.loc13_22.2) [symbolic = %Convert.type (constants.%Convert.type.4cf)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.4cf) = struct_value () [symbolic = %Convert (constants.%Convert.147)]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type)]
@@ -1744,7 +2129,7 @@ fn Works() {
 // CHECK:STDOUT: generic fn @Convert.1(@As.%Dest.loc9_14.1: type, @As.%Self.1: @As.%As.type (%As.type.8ba)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%Dest)> [symbolic = %As.type (constants.%As.type.8ba)]
-// CHECK:STDOUT:   %Self: %As.type.8ba = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.b4e)]
+// CHECK:STDOUT:   %Self: @Convert.1.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.b4e)]
 // CHECK:STDOUT:   %Self.as_type.loc10_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc10_20.1 (constants.%Self.as_type.7f0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type.loc10_20.1 (%Self.as_type.7f0)]() -> @Convert.1.%Dest (%Dest);
@@ -1753,7 +2138,7 @@ fn Works() {
 // CHECK:STDOUT: generic fn @Convert.2(@ImplicitAs.%Dest.loc13_22.1: type, @ImplicitAs.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f)) {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.07f)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.07f = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.0f3)]
+// CHECK:STDOUT:   %Self: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.0f3)]
 // CHECK:STDOUT:   %Self.as_type.loc14_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_20.1 (constants.%Self.as_type.419)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.2.%Self.as_type.loc14_20.1 (%Self.as_type.419)]() -> @Convert.2.%Dest (%Dest);

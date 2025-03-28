@@ -7,206 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/deduce.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/deduce.carbon
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/io.carbon:18:26: error: member access into undefined facet type `Negate` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: fn EOF() -> i32 { return -1; }
-// CHECK:STDERR:                          ^~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/io.carbon:9:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Negate {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:115:13: error: member access into undefined facet type `Add` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self + other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:10:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Add {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:122:13: error: member access into undefined facet type `BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self & other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:129:13: error: member access into undefined facet type `BitOr` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self | other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitOr {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:136:13: error: member access into undefined facet type `BitXor` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self ^ other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitXor {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:143:13: error: member access into undefined facet type `Div` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self / other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Div {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:150:13: error: member access into undefined facet type `LeftShift` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self << other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface LeftShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:157:13: error: member access into undefined facet type `Mod` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self % other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:65:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Mod {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:164:13: error: member access into undefined facet type `Mul` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self * other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Mul {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:171:13: error: member access into undefined facet type `RightShift` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self >> other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface RightShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:178:13: error: member access into undefined facet type `Sub` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self - other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:30:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Sub {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:187:5: error: member access into undefined facet type `SubAssign` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self -= 1;
-// CHECK:STDERR:     ^~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface SubAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:194:5: error: member access into undefined facet type `AddAssign` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self += 1;
-// CHECK:STDERR:     ^~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface AddAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:126:13: error: member access into undefined facet type `Add` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self + other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:10:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Add {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:133:13: error: member access into undefined facet type `BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self & other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:140:13: error: member access into undefined facet type `BitOr` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self | other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitOr {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:147:13: error: member access into undefined facet type `BitXor` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self ^ other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitXor {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:154:13: error: member access into undefined facet type `Div` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self / other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Div {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:161:13: error: member access into undefined facet type `LeftShift` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self << other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface LeftShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:168:13: error: member access into undefined facet type `Mod` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self % other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:65:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Mod {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:175:13: error: member access into undefined facet type `Mul` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self * other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Mul {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:182:13: error: member access into undefined facet type `RightShift` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self >> other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface RightShift {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:189:13: error: member access into undefined facet type `Sub` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self = *self - other;
-// CHECK:STDERR:             ^~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:30:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Sub {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:198:5: error: member access into undefined facet type `SubAssign` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self -= 1;
-// CHECK:STDERR:     ^~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface SubAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:205:5: error: member access into undefined facet type `AddAssign` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR:     *self += 1;
-// CHECK:STDERR:     ^~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface AddAssign {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 
 // --- deduce_explicit.carbon
 
@@ -274,16 +74,6 @@ library "[[@TEST_NAME]]";
 fn TupleParam[T:! type](x: (T, i32)) {}
 
 fn CallTupleParam() {
-  // CHECK:STDERR: deduce_nested_tuple.carbon:[[@LINE+10]]:14: error: member access into undefined facet type `Core.ImplicitAs(i32)` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   TupleParam((1, 2));
-  // CHECK:STDERR:              ^~~~~~
-  // CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:11:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: deduce_nested_tuple.carbon:[[@LINE-9]]:25: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn TupleParam[T:! type](x: (T, i32)) {}
-  // CHECK:STDERR:                         ^~~~~~~~~~~
-  // CHECK:STDERR:
   TupleParam((1, 2));
 }
 
@@ -294,16 +84,6 @@ library "[[@TEST_NAME]]";
 fn StructParam[T:! type](x: {.a: T, .b: i32}) {}
 
 fn CallStructParam() {
-  // CHECK:STDERR: deduce_nested_struct.carbon:[[@LINE+10]]:15: error: member access into undefined facet type `Core.ImplicitAs(i32)` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   StructParam({.a = 1, .b = 2});
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:11:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: deduce_nested_struct.carbon:[[@LINE-9]]:26: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn StructParam[T:! type](x: {.a: T, .b: i32}) {}
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   StructParam({.a = 1, .b = 2});
 }
 
@@ -448,23 +228,9 @@ interface Z {}
 // The `D` interface provides `Y` but not `W`, so we need to see that the
 // parameter to `CC` is `DD` which provides `Y & W`, not just a FacetValue
 // abstractly providing `Y.
-// CHECK:STDERR: deduce_nested_facet_value.carbon:[[@LINE+7]]:18: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: impl forall [E:! Y & W] CC(E) as Z {}
-// CHECK:STDERR:                  ^~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface BitAnd {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [E:! Y & W] CC(E) as Z {}
 
 fn F() {
-  // CHECK:STDERR: deduce_nested_facet_value.carbon:[[@LINE+7]]:3: error: member access into undefined facet type `Core.As(Z)` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   (CC(DD)) as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:7:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface As(Dest:! type) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   (CC(DD)) as Z;
 }
 
@@ -1046,10 +812,22 @@ fn F() {
 // CHECK:STDOUT:   %CallTupleParam.type: type = fn_type @CallTupleParam [concrete]
 // CHECK:STDOUT:   %CallTupleParam: %CallTupleParam.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
+// CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %tuple.type.4c8: type = tuple_type (Core.IntLiteral, %i32) [concrete]
 // CHECK:STDOUT:   %TupleParam.specific_fn: <specific function> = specific_function %TupleParam, @TupleParam(Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
+// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2.ecc, %Convert.956 [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_2.ecc, %Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.4c8 = tuple_value (%int_1, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %complete_type.c49: <witness> = complete_type_witness %tuple.type.4c8 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1106,11 +884,19 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TupleParam.ref: %TupleParam.type = name_ref TupleParam, file.%TupleParam.decl [concrete = constants.%TupleParam]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc7_19.1: %tuple.type.f94 = tuple_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %TupleParam.specific_fn: <specific function> = specific_function %TupleParam.ref, @TupleParam(Core.IntLiteral) [concrete = constants.%TupleParam.specific_fn]
-// CHECK:STDOUT:   %.loc7_19.2: %i32 = converted %int_2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %TupleParam.call: init %empty_tuple.type = call %TupleParam.specific_fn(<error>)
+// CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc7_19.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc7_19.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc7_19.2(%int_2) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc7_19.2: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc7_19.3: %i32 = converted %int_2, %.loc7_19.2 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %tuple: %tuple.type.4c8 = tuple_value (%int_1, %.loc7_19.3) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc7_19.4: %tuple.type.4c8 = converted %.loc7_19.1, %tuple [concrete = constants.%tuple]
+// CHECK:STDOUT:   %TupleParam.call: init %empty_tuple.type = call %TupleParam.specific_fn(%.loc7_19.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1144,10 +930,22 @@ fn F() {
 // CHECK:STDOUT:   %CallStructParam.type: type = fn_type @CallStructParam [concrete]
 // CHECK:STDOUT:   %CallStructParam: %CallStructParam.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
+// CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.a13: type = struct_type {.a: Core.IntLiteral, .b: %i32} [concrete]
 // CHECK:STDOUT:   %StructParam.specific_fn: <specific function> = specific_function %StructParam, @StructParam(Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
+// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2.ecc, %Convert.956 [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_2.ecc, %Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.a.b.a13 = struct_value (%int_1, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %complete_type.a4a: <witness> = complete_type_witness %struct_type.a.b.a13 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1203,11 +1001,19 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %StructParam.ref: %StructParam.type = name_ref StructParam, file.%StructParam.decl [concrete = constants.%StructParam]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc7_30.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %StructParam.specific_fn: <specific function> = specific_function %StructParam.ref, @StructParam(Core.IntLiteral) [concrete = constants.%StructParam.specific_fn]
-// CHECK:STDOUT:   %.loc7_30.2: %i32 = converted %int_2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %StructParam.call: init %empty_tuple.type = call %StructParam.specific_fn(<error>)
+// CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc7_30.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc7_30.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc7_30.2(%int_2) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc7_30.2: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc7_30.3: %i32 = converted %int_2, %.loc7_30.2 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %struct: %struct_type.a.b.a13 = struct_value (%int_1, %.loc7_30.3) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc7_30.4: %struct_type.a.b.a13 = converted %.loc7_30.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   %StructParam.call: init %empty_tuple.type = call %StructParam.specific_fn(%.loc7_30.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1713,17 +1519,18 @@ fn F() {
 // CHECK:STDOUT:   %CC.type: type = generic_class_type @CC [concrete]
 // CHECK:STDOUT:   %CC.generic: %CC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CC.a2f: type = class_type @CC, @CC(%D) [symbolic]
-// CHECK:STDOUT:   %Z.facet.42e: %Z.type = facet_value %DD.296, (%impl_witness.d1b) [symbolic]
-// CHECK:STDOUT:   %CC.379: type = class_type @CC, @CC(%Z.facet.42e) [symbolic]
-// CHECK:STDOUT:   %impl_witness.b93: <witness> = impl_witness (), @impl.c35(%E) [symbolic]
+// CHECK:STDOUT:   %Z.impl_symbolic_witness: <witness> = impl_symbolic_witness %DD.296, @Z [symbolic]
+// CHECK:STDOUT:   %Z.facet.f61: %Z.type = facet_value %DD.296, (%Z.impl_symbolic_witness) [symbolic]
+// CHECK:STDOUT:   %CC.43f: type = class_type @CC, @CC(%Z.facet.f61) [symbolic]
+// CHECK:STDOUT:   %impl_witness.dd1: <witness> = impl_witness (), @impl.5bc(%E) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DD.689: type = class_type @DD, @DD(%EE) [concrete]
 // CHECK:STDOUT:   %impl_witness.f62: <witness> = impl_witness (), @impl.266(%EE) [concrete]
 // CHECK:STDOUT:   %Z.facet.85b: %Z.type = facet_value %DD.689, (%impl_witness.f62) [concrete]
 // CHECK:STDOUT:   %CC.4de: type = class_type @CC, @CC(%Z.facet.85b) [concrete]
-// CHECK:STDOUT:   %impl_witness.baa: <witness> = impl_witness (), @impl.c35(%EE) [concrete]
-// CHECK:STDOUT:   %Z.facet.fb6: %Z.type = facet_value %CC.4de, (%impl_witness.baa) [concrete]
+// CHECK:STDOUT:   %impl_witness.6b1: <witness> = impl_witness (), @impl.5bc(%EE) [concrete]
+// CHECK:STDOUT:   %Z.facet.a6a: %Z.type = facet_value %CC.4de, (%impl_witness.6b1) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1771,20 +1578,20 @@ fn F() {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     %D.loc11_10.1: %Z.type = bind_symbolic_name D, 0 [symbolic = %D.loc11_10.2 (constants.%D)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.c35 [concrete] {
+// CHECK:STDOUT:   impl_decl @impl.5bc [concrete] {
 // CHECK:STDOUT:     %E.patt.loc12_14.1: type = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc12_14.2 (constants.%E.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CC.ref: %CC.type = name_ref CC, file.%CC.decl [concrete = constants.%CC.generic]
 // CHECK:STDOUT:     %DD.ref: %DD.type = name_ref DD, file.%DD.decl [concrete = constants.%DD.generic]
 // CHECK:STDOUT:     %E.ref: type = name_ref E, %E.loc12_14.1 [symbolic = %E.loc12_14.2 (constants.%E)]
 // CHECK:STDOUT:     %DD.loc12_31.1: type = class_type @DD, @DD(constants.%E) [symbolic = %DD.loc12_31.2 (constants.%DD.296)]
-// CHECK:STDOUT:     %Z.facet.loc12_32.1: %Z.type = facet_value constants.%DD.296, (constants.%impl_witness.d1b) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.42e)]
-// CHECK:STDOUT:     %.loc12: %Z.type = converted %DD.loc12_31.1, %Z.facet.loc12_32.1 [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.42e)]
-// CHECK:STDOUT:     %CC.loc12_32.1: type = class_type @CC, @CC(constants.%Z.facet.42e) [symbolic = %CC.loc12_32.2 (constants.%CC.379)]
+// CHECK:STDOUT:     %Z.facet.loc12_32.1: %Z.type = facet_value constants.%DD.296, (constants.%Z.impl_symbolic_witness) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.f61)]
+// CHECK:STDOUT:     %.loc12: %Z.type = converted %DD.loc12_31.1, %Z.facet.loc12_32.1 [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.f61)]
+// CHECK:STDOUT:     %CC.loc12_32.1: type = class_type @CC, @CC(constants.%Z.facet.f61) [symbolic = %CC.loc12_32.2 (constants.%CC.43f)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     %E.loc12_14.1: type = bind_symbolic_name E, 0 [symbolic = %E.loc12_14.2 (constants.%E)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness (), @impl.c35(constants.%E) [symbolic = @impl.c35.%impl_witness.loc12_39 (constants.%impl_witness.b93)]
+// CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness (), @impl.5bc(constants.%E) [symbolic = @impl.5bc.%impl_witness (constants.%impl_witness.dd1)]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1815,14 +1622,14 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.c35(%E.loc12_14.1: type) {
+// CHECK:STDOUT: generic impl @impl.5bc(%E.loc12_14.1: type) {
 // CHECK:STDOUT:   %E.loc12_14.2: type = bind_symbolic_name E, 0 [symbolic = %E.loc12_14.2 (constants.%E)]
 // CHECK:STDOUT:   %E.patt.loc12_14.2: type = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc12_14.2 (constants.%E.patt)]
 // CHECK:STDOUT:   %DD.loc12_31.2: type = class_type @DD, @DD(%E.loc12_14.2) [symbolic = %DD.loc12_31.2 (constants.%DD.296)]
-// CHECK:STDOUT:   %impl_witness.loc12_32: <witness> = impl_witness (), @impl.266(%E.loc12_14.2) [symbolic = %impl_witness.loc12_32 (constants.%impl_witness.d1b)]
-// CHECK:STDOUT:   %Z.facet.loc12_32.2: %Z.type = facet_value %DD.loc12_31.2, (%impl_witness.loc12_32) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.42e)]
-// CHECK:STDOUT:   %CC.loc12_32.2: type = class_type @CC, @CC(%Z.facet.loc12_32.2) [symbolic = %CC.loc12_32.2 (constants.%CC.379)]
-// CHECK:STDOUT:   %impl_witness.loc12_39: <witness> = impl_witness (), @impl.c35(%E.loc12_14.2) [symbolic = %impl_witness.loc12_39 (constants.%impl_witness.b93)]
+// CHECK:STDOUT:   %Z.impl_symbolic_witness: <witness> = impl_symbolic_witness %DD.loc12_31.2, @Z [symbolic = %Z.impl_symbolic_witness (constants.%Z.impl_symbolic_witness)]
+// CHECK:STDOUT:   %Z.facet.loc12_32.2: %Z.type = facet_value %DD.loc12_31.2, (%Z.impl_symbolic_witness) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.f61)]
+// CHECK:STDOUT:   %CC.loc12_32.2: type = class_type @CC, @CC(%Z.facet.loc12_32.2) [symbolic = %CC.loc12_32.2 (constants.%CC.43f)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.5bc(%E.loc12_14.2) [symbolic = %impl_witness (constants.%impl_witness.dd1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -1880,8 +1687,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_12: %Z.type = converted %DD, %Z.facet.loc15_12 [concrete = constants.%Z.facet.85b]
 // CHECK:STDOUT:   %CC: type = class_type @CC, @CC(constants.%Z.facet.85b) [concrete = constants.%CC.4de]
 // CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Z.facet.loc15_14: %Z.type = facet_value constants.%CC.4de, (constants.%impl_witness.baa) [concrete = constants.%Z.facet.fb6]
-// CHECK:STDOUT:   %.loc15_14: %Z.type = converted %CC, %Z.facet.loc15_14 [concrete = constants.%Z.facet.fb6]
+// CHECK:STDOUT:   %Z.facet.loc15_14: %Z.type = facet_value constants.%CC.4de, (constants.%impl_witness.6b1) [concrete = constants.%Z.facet.a6a]
+// CHECK:STDOUT:   %.loc15_14: %Z.type = converted %CC, %Z.facet.loc15_14 [concrete = constants.%Z.facet.a6a]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1908,28 +1715,26 @@ fn F() {
 // CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CC(constants.%Z.facet.42e) {
-// CHECK:STDOUT:   %D.loc11_10.2 => constants.%Z.facet.42e
-// CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%Z.facet.42e
+// CHECK:STDOUT: specific @CC(constants.%Z.facet.f61) {
+// CHECK:STDOUT:   %D.loc11_10.2 => constants.%Z.facet.f61
+// CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%Z.facet.f61
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.c35(constants.%E) {
+// CHECK:STDOUT: specific @impl.5bc(constants.%E) {
 // CHECK:STDOUT:   %E.loc12_14.2 => constants.%E
 // CHECK:STDOUT:   %E.patt.loc12_14.2 => constants.%E
 // CHECK:STDOUT:   %DD.loc12_31.2 => constants.%DD.296
-// CHECK:STDOUT:   %impl_witness.loc12_32 => constants.%impl_witness.d1b
-// CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.42e
-// CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.379
-// CHECK:STDOUT:   %impl_witness.loc12_39 => constants.%impl_witness.b93
+// CHECK:STDOUT:   %Z.impl_symbolic_witness => constants.%Z.impl_symbolic_witness
+// CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.f61
+// CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.43f
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.dd1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DD(@impl.c35.%E.loc12_14.2) {}
+// CHECK:STDOUT: specific @DD(@impl.5bc.%E.loc12_14.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.266(@impl.c35.%E.loc12_14.2) {}
+// CHECK:STDOUT: specific @CC(@impl.5bc.%Z.facet.loc12_32.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CC(@impl.c35.%Z.facet.loc12_32.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.c35(%E.loc12_14.2) {}
+// CHECK:STDOUT: specific @impl.5bc(%E.loc12_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DD(constants.%EE) {
 // CHECK:STDOUT:   %E.loc8_10.2 => constants.%EE
@@ -1950,14 +1755,14 @@ fn F() {
 // CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%Z.facet.85b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.c35(constants.%EE) {
+// CHECK:STDOUT: specific @impl.5bc(constants.%EE) {
 // CHECK:STDOUT:   %E.loc12_14.2 => constants.%EE
 // CHECK:STDOUT:   %E.patt.loc12_14.2 => constants.%EE
 // CHECK:STDOUT:   %DD.loc12_31.2 => constants.%DD.689
-// CHECK:STDOUT:   %impl_witness.loc12_32 => constants.%impl_witness.f62
+// CHECK:STDOUT:   %Z.impl_symbolic_witness => constants.%impl_witness.f62
 // CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.85b
 // CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.4de
-// CHECK:STDOUT:   %impl_witness.loc12_39 => constants.%impl_witness.baa
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.6b1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -1972,7 +1777,7 @@ fn F() {
 // CHECK:STDOUT:   %DD: type = class_type @DD [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %impl_witness.1bc: <witness> = impl_witness () [concrete]
 // CHECK:STDOUT:   %D: %Y.type = bind_symbolic_name D, 0 [symbolic]
 // CHECK:STDOUT:   %D.patt: %Y.type = symbolic_binding_pattern D, 0 [symbolic]
 // CHECK:STDOUT:   %CC.type: type = generic_class_type @CC [concrete]
@@ -1980,17 +1785,34 @@ fn F() {
 // CHECK:STDOUT:   %CC.3ba: type = class_type @CC, @CC(%D) [symbolic]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.6e6: %Z.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %E.patt: <error> = symbolic_binding_pattern E, 0 [symbolic]
+// CHECK:STDOUT:   %BitAnd.type: type = facet_type <@BitAnd> [concrete]
+// CHECK:STDOUT:   %Op.type.27a: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %impl_witness.ec2: <witness> = impl_witness (imports.%Core.import_ref.d90) [concrete]
+// CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value type, (%impl_witness.ec2) [concrete]
+// CHECK:STDOUT:   %.3a2: type = fn_type_with_self_type %Op.type.27a, %BitAnd.facet [concrete]
+// CHECK:STDOUT:   %Op.type.c1b: type = fn_type @Op.2 [concrete]
+// CHECK:STDOUT:   %Op.0a6: %Op.type.c1b = struct_value () [concrete]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %Y.type, %Op.0a6 [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <@Y & @W> [concrete]
+// CHECK:STDOUT:   %E: %facet_type = bind_symbolic_name E, 0 [symbolic]
+// CHECK:STDOUT:   %E.patt: %facet_type = symbolic_binding_pattern E, 0 [symbolic]
+// CHECK:STDOUT:   %E.as_wit.iface0: <witness> = facet_access_witness %E, element0 [symbolic]
+// CHECK:STDOUT:   %E.as_type: type = facet_access_type %E [symbolic]
+// CHECK:STDOUT:   %Y.facet.15a: %Y.type = facet_value %E.as_type, (%E.as_wit.iface0) [symbolic]
+// CHECK:STDOUT:   %CC.ed1: type = class_type @CC, @CC(%Y.facet.15a) [symbolic]
+// CHECK:STDOUT:   %impl_witness.b63: <witness> = impl_witness (), @impl.0ce(%E) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %DD, (%impl_witness) [concrete]
-// CHECK:STDOUT:   %CC.49f: type = class_type @CC, @CC(%Y.facet) [concrete]
+// CHECK:STDOUT:   %Y.facet.885: %Y.type = facet_value %DD, (%impl_witness.1bc) [concrete]
+// CHECK:STDOUT:   %CC.49f: type = class_type @CC, @CC(%Y.facet.885) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %DD, (%impl_witness.1bc, %impl_witness.1bc) [concrete]
+// CHECK:STDOUT:   %impl_witness.454: <witness> = impl_witness (), @impl.0ce(%facet_value) [concrete]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %CC.49f, (%impl_witness.454) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .BitAnd = %Core.BitAnd
-// CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -2014,12 +1836,12 @@ fn F() {
 // CHECK:STDOUT:     %DD.ref: type = name_ref DD, file.%DD.decl [concrete = constants.%DD]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc8: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness.loc8: <witness> = impl_witness () [concrete = constants.%impl_witness.1bc]
 // CHECK:STDOUT:   impl_decl @impl.e11 [concrete] {} {
 // CHECK:STDOUT:     %DD.ref: type = name_ref DD, file.%DD.decl [concrete = constants.%DD]
 // CHECK:STDOUT:     %W.ref: type = name_ref W, file.%W.decl [concrete = constants.%W.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc9: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness.loc9: <witness> = impl_witness () [concrete = constants.%impl_witness.1bc]
 // CHECK:STDOUT:   %CC.decl: %CC.type = class_decl @CC [concrete = constants.%CC.generic] {
 // CHECK:STDOUT:     %D.patt.loc12_10.1: %Y.type = symbolic_binding_pattern D, 0 [symbolic = %D.patt.loc12_10.2 (constants.%D.patt)]
 // CHECK:STDOUT:   } {
@@ -2027,18 +1849,29 @@ fn F() {
 // CHECK:STDOUT:     %D.loc12_10.1: %Y.type = bind_symbolic_name D, 0 [symbolic = %D.loc12_10.2 (constants.%D)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.8e4 [concrete] {
-// CHECK:STDOUT:     %E.patt.loc19_14.1: <error> = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc19_14.2 (constants.%E.patt)]
+// CHECK:STDOUT:   impl_decl @impl.0ce [concrete] {
+// CHECK:STDOUT:     %E.patt.loc19_14.1: %facet_type = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc19_14.2 (constants.%E.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CC.ref: %CC.type = name_ref CC, file.%CC.decl [concrete = constants.%CC.generic]
-// CHECK:STDOUT:     %E.ref: <error> = name_ref E, %E [concrete = <error>]
+// CHECK:STDOUT:     %E.ref: %facet_type = name_ref E, %E.loc19_14.1 [symbolic = %E.loc19_14.2 (constants.%E)]
+// CHECK:STDOUT:     %E.as_wit.iface0.loc19_29.1: <witness> = facet_access_witness constants.%E, element0 [symbolic = %E.as_wit.iface0.loc19_29.2 (constants.%E.as_wit.iface0)]
+// CHECK:STDOUT:     %E.as_type.loc19_29.1: type = facet_access_type constants.%E [symbolic = %E.as_type.loc19_29.2 (constants.%E.as_type)]
+// CHECK:STDOUT:     %Y.facet.loc19_29.1: %Y.type = facet_value %E.as_type.loc19_29.1, (%E.as_wit.iface0.loc19_29.1) [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.15a)]
+// CHECK:STDOUT:     %.loc19_29: %Y.type = converted %E.ref, %Y.facet.loc19_29.1 [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.15a)]
+// CHECK:STDOUT:     %CC.loc19_29.1: type = class_type @CC, @CC(constants.%Y.facet.15a) [symbolic = %CC.loc19_29.2 (constants.%CC.ed1)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:     %.loc19_20.1: type = splice_block %.loc19_20.3 [concrete = constants.%facet_type] {
 // CHECK:STDOUT:       %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:       %W.ref: type = name_ref W, file.%W.decl [concrete = constants.%W.type]
+// CHECK:STDOUT:       %impl.elem0: %.3a2 = impl_witness_access constants.%impl_witness.ec2, element0 [concrete = constants.%Op.0a6]
+// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %Y.ref, %impl.elem0 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:       %type.and: init type = call %bound_method(%Y.ref, %W.ref) [concrete = constants.%facet_type]
+// CHECK:STDOUT:       %.loc19_20.2: type = value_of_initializer %type.and [concrete = constants.%facet_type]
+// CHECK:STDOUT:       %.loc19_20.3: type = converted %type.and, %.loc19_20.2 [concrete = constants.%facet_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %E: <error> = bind_symbolic_name E, 0 [concrete = <error>]
+// CHECK:STDOUT:     %E.loc19_14.1: %facet_type = bind_symbolic_name E, 0 [symbolic = %E.loc19_14.2 (constants.%E)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (), @impl.0ce(constants.%E) [symbolic = @impl.0ce.%impl_witness (constants.%impl_witness.b63)]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2076,14 +1909,20 @@ fn F() {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.8e4(%E: <error>) {
-// CHECK:STDOUT:   %E.patt.loc19_14.2: <error> = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc19_14.2 (constants.%E.patt)]
+// CHECK:STDOUT: generic impl @impl.0ce(%E.loc19_14.1: %facet_type) {
+// CHECK:STDOUT:   %E.loc19_14.2: %facet_type = bind_symbolic_name E, 0 [symbolic = %E.loc19_14.2 (constants.%E)]
+// CHECK:STDOUT:   %E.patt.loc19_14.2: %facet_type = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc19_14.2 (constants.%E.patt)]
+// CHECK:STDOUT:   %E.as_wit.iface0.loc19_29.2: <witness> = facet_access_witness %E.loc19_14.2, element0 [symbolic = %E.as_wit.iface0.loc19_29.2 (constants.%E.as_wit.iface0)]
+// CHECK:STDOUT:   %E.as_type.loc19_29.2: type = facet_access_type %E.loc19_14.2 [symbolic = %E.as_type.loc19_29.2 (constants.%E.as_type)]
+// CHECK:STDOUT:   %Y.facet.loc19_29.2: %Y.type = facet_value %E.as_type.loc19_29.2, (%E.as_wit.iface0.loc19_29.2) [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.15a)]
+// CHECK:STDOUT:   %CC.loc19_29.2: type = class_type @CC, @CC(%Y.facet.loc19_29.2) [symbolic = %CC.loc19_29.2 (constants.%CC.ed1)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl.0ce(%E.loc19_14.2) [symbolic = %impl_witness (constants.%impl_witness.b63)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: <error> as %Z.ref {
+// CHECK:STDOUT:   impl: %CC.loc19_29.1 as %Z.ref {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = <error>
+// CHECK:STDOUT:     witness = file.%impl_witness.loc19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2114,11 +1953,14 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CC.ref: %CC.type = name_ref CC, file.%CC.decl [concrete = constants.%CC.generic]
 // CHECK:STDOUT:   %DD.ref: type = name_ref DD, file.%DD.decl [concrete = constants.%DD]
-// CHECK:STDOUT:   %Y.facet: %Y.type = facet_value constants.%DD, (constants.%impl_witness) [concrete = constants.%Y.facet]
-// CHECK:STDOUT:   %.loc22_9: %Y.type = converted %DD.ref, %Y.facet [concrete = constants.%Y.facet]
-// CHECK:STDOUT:   %CC: type = class_type @CC, @CC(constants.%Y.facet) [concrete = constants.%CC.49f]
+// CHECK:STDOUT:   %Y.facet: %Y.type = facet_value constants.%DD, (constants.%impl_witness.1bc) [concrete = constants.%Y.facet.885]
+// CHECK:STDOUT:   %.loc22_9: %Y.type = converted %DD.ref, %Y.facet [concrete = constants.%Y.facet.885]
+// CHECK:STDOUT:   %CC: type = class_type @CC, @CC(constants.%Y.facet.885) [concrete = constants.%CC.49f]
 // CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %.loc22_12: %Z.type = converted %CC, <error> [concrete = <error>]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value constants.%DD, (constants.%impl_witness.1bc, constants.%impl_witness.1bc) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc22_12.1: %facet_type = converted constants.%DD, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%CC.49f, (constants.%impl_witness.454) [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %.loc22_12.2: %Z.type = converted %CC, %Z.facet [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2127,12 +1969,39 @@ fn F() {
 // CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.8e4(<error>) {
-// CHECK:STDOUT:   %E.patt.loc19_14.2 => <error>
+// CHECK:STDOUT: specific @CC(constants.%Y.facet.15a) {
+// CHECK:STDOUT:   %D.loc12_10.2 => constants.%Y.facet.15a
+// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%Y.facet.15a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CC(constants.%Y.facet) {
-// CHECK:STDOUT:   %D.loc12_10.2 => constants.%Y.facet
-// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%Y.facet
+// CHECK:STDOUT: specific @impl.0ce(constants.%E) {
+// CHECK:STDOUT:   %E.loc19_14.2 => constants.%E
+// CHECK:STDOUT:   %E.patt.loc19_14.2 => constants.%E
+// CHECK:STDOUT:   %E.as_wit.iface0.loc19_29.2 => constants.%E.as_wit.iface0
+// CHECK:STDOUT:   %E.as_type.loc19_29.2 => constants.%E.as_type
+// CHECK:STDOUT:   %Y.facet.loc19_29.2 => constants.%Y.facet.15a
+// CHECK:STDOUT:   %CC.loc19_29.2 => constants.%CC.ed1
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.b63
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @CC(@impl.0ce.%Y.facet.loc19_29.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.0ce(%E.loc19_14.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @CC(constants.%Y.facet.885) {
+// CHECK:STDOUT:   %D.loc12_10.2 => constants.%Y.facet.885
+// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%Y.facet.885
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.0ce(constants.%facet_value) {
+// CHECK:STDOUT:   %E.loc19_14.2 => constants.%facet_value
+// CHECK:STDOUT:   %E.patt.loc19_14.2 => constants.%facet_value
+// CHECK:STDOUT:   %E.as_wit.iface0.loc19_29.2 => constants.%impl_witness.1bc
+// CHECK:STDOUT:   %E.as_type.loc19_29.2 => constants.%DD
+// CHECK:STDOUT:   %Y.facet.loc19_29.2 => constants.%Y.facet.885
+// CHECK:STDOUT:   %CC.loc19_29.2 => constants.%CC.49f
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.454
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

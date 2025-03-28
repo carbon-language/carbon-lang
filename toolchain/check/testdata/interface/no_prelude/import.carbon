@@ -40,42 +40,10 @@ fn UseEmpty(e: Empty) {}
 fn UseBasic(e: Basic) {}
 fn UseForwardDeclared(f: ForwardDeclared) {}
 
-// CHECK:STDERR: b.carbon:[[@LINE+8]]:19: error: member access into undefined facet type `Basic` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: alias UseBasicT = Basic.T;
-// CHECK:STDERR:                   ^~~~~~~
-// CHECK:STDERR: b.carbon:[[@LINE-9]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:7:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Basic {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 alias UseBasicT = Basic.T;
-// CHECK:STDERR: b.carbon:[[@LINE+8]]:19: error: member access into undefined facet type `Basic` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: alias UseBasicF = Basic.F;
-// CHECK:STDERR:                   ^~~~~~~
-// CHECK:STDERR: b.carbon:[[@LINE-18]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:7:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Basic {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 alias UseBasicF = Basic.F;
 
-// CHECK:STDERR: b.carbon:[[@LINE+8]]:29: error: member access into undefined facet type `ForwardDeclared` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: alias UseForwardDeclaredT = ForwardDeclared.T;
-// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: b.carbon:[[@LINE-28]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface ForwardDeclared {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 alias UseForwardDeclaredT = ForwardDeclared.T;
-// CHECK:STDERR: b.carbon:[[@LINE+8]]:29: error: member access into undefined facet type `ForwardDeclared` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: alias UseForwardDeclaredF = ForwardDeclared.F;
-// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: b.carbon:[[@LINE-37]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface ForwardDeclared {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 alias UseForwardDeclaredF = ForwardDeclared.F;
 
 var f: ForwardDeclared* = &f_ref.f;
@@ -198,6 +166,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
 // CHECK:STDOUT:   %UseForwardDeclared.type: type = fn_type @UseForwardDeclared [concrete]
 // CHECK:STDOUT:   %UseForwardDeclared: %UseForwardDeclared.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Basic.assoc_type: type = assoc_entity_type %Basic.type [concrete]
+// CHECK:STDOUT:   %assoc0.b26: %Basic.assoc_type = assoc_entity element0, imports.%Main.import_ref.a4a [concrete]
+// CHECK:STDOUT:   %assoc1.0bf: %Basic.assoc_type = assoc_entity element1, imports.%Main.import_ref.0be [concrete]
+// CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type %ForwardDeclared.type [concrete]
+// CHECK:STDOUT:   %assoc0.c94: %ForwardDeclared.assoc_type = assoc_entity element0, imports.%Main.import_ref.69a [concrete]
+// CHECK:STDOUT:   %assoc1.660: %ForwardDeclared.assoc_type = assoc_entity element1, imports.%Main.import_ref.1cc [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared.type [concrete]
 // CHECK:STDOUT:   %struct_type.f.2f5: type = struct_type {.f: %ForwardDeclared.type} [concrete]
 // CHECK:STDOUT: }
@@ -209,13 +183,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f.2f5 = import_ref Main//a, f_ref, loaded
 // CHECK:STDOUT:   %Main.import_ref.cc0 = import_ref Main//a, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst20 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.dcb = import_ref Main//a, loc8_8, unloaded
-// CHECK:STDOUT:   %Main.import_ref.c32 = import_ref Main//a, loc9_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.152: %Basic.assoc_type = import_ref Main//a, loc8_8, loaded [concrete = constants.%assoc0.b26]
+// CHECK:STDOUT:   %Main.import_ref.30b: %Basic.assoc_type = import_ref Main//a, loc9_9, loaded [concrete = constants.%assoc1.0bf]
 // CHECK:STDOUT:   %Main.T.44f = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.eea = import_ref Main//a, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.52b = import_ref Main//a, inst34 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.d49 = import_ref Main//a, loc16_8, unloaded
-// CHECK:STDOUT:   %Main.import_ref.59d = import_ref Main//a, loc17_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.de0: %ForwardDeclared.assoc_type = import_ref Main//a, loc16_8, loaded [concrete = constants.%assoc0.c94]
+// CHECK:STDOUT:   %Main.import_ref.c9c: %ForwardDeclared.assoc_type = import_ref Main//a, loc17_9, loaded [concrete = constants.%assoc1.660]
 // CHECK:STDOUT:   %Main.T.6ee = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.5d0 = import_ref Main//a, F, unloaded
 // CHECK:STDOUT: }
@@ -261,17 +235,17 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %f: %ForwardDeclared.type = bind_name f, %f.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Basic.ref.loc10: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
-// CHECK:STDOUT:   %T.ref.loc10: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:   %UseBasicT: <error> = bind_alias UseBasicT, <error> [concrete = <error>]
+// CHECK:STDOUT:   %T.ref.loc10: %Basic.assoc_type = name_ref T, imports.%Main.import_ref.152 [concrete = constants.%assoc0.b26]
+// CHECK:STDOUT:   %UseBasicT: %Basic.assoc_type = bind_alias UseBasicT, imports.%Main.import_ref.152 [concrete = constants.%assoc0.b26]
 // CHECK:STDOUT:   %Basic.ref.loc11: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
-// CHECK:STDOUT:   %F.ref.loc11: <error> = name_ref F, <error> [concrete = <error>]
-// CHECK:STDOUT:   %UseBasicF: <error> = bind_alias UseBasicF, <error> [concrete = <error>]
+// CHECK:STDOUT:   %F.ref.loc11: %Basic.assoc_type = name_ref F, imports.%Main.import_ref.30b [concrete = constants.%assoc1.0bf]
+// CHECK:STDOUT:   %UseBasicF: %Basic.assoc_type = bind_alias UseBasicF, imports.%Main.import_ref.30b [concrete = constants.%assoc1.0bf]
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc13: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %T.ref.loc13: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:   %UseForwardDeclaredT: <error> = bind_alias UseForwardDeclaredT, <error> [concrete = <error>]
+// CHECK:STDOUT:   %T.ref.loc13: %ForwardDeclared.assoc_type = name_ref T, imports.%Main.import_ref.de0 [concrete = constants.%assoc0.c94]
+// CHECK:STDOUT:   %UseForwardDeclaredT: %ForwardDeclared.assoc_type = bind_alias UseForwardDeclaredT, imports.%Main.import_ref.de0 [concrete = constants.%assoc0.c94]
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc14: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %F.ref.loc14: <error> = name_ref F, <error> [concrete = <error>]
-// CHECK:STDOUT:   %UseForwardDeclaredF: <error> = bind_alias UseForwardDeclaredF, <error> [concrete = <error>]
+// CHECK:STDOUT:   %F.ref.loc14: %ForwardDeclared.assoc_type = name_ref F, imports.%Main.import_ref.c9c [concrete = constants.%assoc1.660]
+// CHECK:STDOUT:   %UseForwardDeclaredF: %ForwardDeclared.assoc_type = bind_alias UseForwardDeclaredF, imports.%Main.import_ref.c9c [concrete = constants.%assoc1.660]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %ptr = binding_pattern f
 // CHECK:STDOUT:     %.loc16_1: %ptr = var_pattern %f.patt
@@ -293,16 +267,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: interface @Basic [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.37f
-// CHECK:STDOUT:   .T = imports.%Main.import_ref.dcb
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.c32
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.152
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.30b
 // CHECK:STDOUT:   witness = (imports.%Main.T.44f, imports.%Main.F.eea)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.52b
-// CHECK:STDOUT:   .T = imports.%Main.import_ref.d49
-// CHECK:STDOUT:   .F = imports.%Main.import_ref.59d
+// CHECK:STDOUT:   .T = imports.%Main.import_ref.de0
+// CHECK:STDOUT:   .F = imports.%Main.import_ref.c9c
 // CHECK:STDOUT:   witness = (imports.%Main.T.6ee, imports.%Main.F.5d0)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
