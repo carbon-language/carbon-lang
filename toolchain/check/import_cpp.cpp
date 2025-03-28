@@ -91,10 +91,14 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
       case clang::DiagnosticsEngine::Warning:
       case clang::DiagnosticsEngine::Error:
       case clang::DiagnosticsEngine::Fatal: {
+        // TODO: Adjust diagnostics to drop the Carbon file here, and then
+        // remove the "C++:\n" prefix.
         CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "C++:\n{0}",
                           std::string);
         CARBON_DIAGNOSTIC(CppInteropParseError, Error, "C++:\n{0}",
                           std::string);
+        // TODO: This should be part of the location, instead of added as a note
+        // here.
         CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
 
         // TODO: Use a more specific location.
