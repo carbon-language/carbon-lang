@@ -204,14 +204,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %C.loc7_22.2 => constants.%C.f2e
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -226,14 +226,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%D) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%D
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%D
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%D) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%D
-// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%D
+// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %C.loc7_22.2 => constants.%C.131
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -378,14 +378,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %I.loc7_22.2 => constants.%I.ff1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -399,14 +399,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %I.loc7_22.2 => constants.%I.ed8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -637,7 +637,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.eae
@@ -646,7 +646,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc5_15.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -655,9 +655,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc13_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc13_16.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc13_16.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc13_16.2 => constants.%U.patt
 // CHECK:STDOUT:   %Outer.loc13_36.2 => constants.%Outer.9d6
 // CHECK:STDOUT:   %require_complete.loc13_37 => constants.%require_complete.127
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.eae
@@ -681,7 +681,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.181
@@ -690,16 +690,16 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%C, constants.%D) {
 // CHECK:STDOUT:   %U.loc5_15.2 => constants.%D
-// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%D
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C, constants.%D) {
 // CHECK:STDOUT:   %T.loc13_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc13_16.2 => constants.%D
-// CHECK:STDOUT:   %U.patt.loc13_16.2 => constants.%D
+// CHECK:STDOUT:   %U.patt.loc13_16.2 => constants.%U.patt
 // CHECK:STDOUT:   %Outer.loc13_36.2 => constants.%Outer.7c4
 // CHECK:STDOUT:   %require_complete.loc13_37 => constants.%complete_type.357
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.181
@@ -868,14 +868,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithNontype(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:   %WithNontype.loc6_31.2 => constants.%WithNontype.8a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -883,14 +883,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithNontype(constants.%int_0.6a9) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%int_0.6a9
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%int_0.6a9
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_0.6a9) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%int_0.6a9
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%int_0.6a9
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:   %WithNontype.loc6_31.2 => constants.%WithNontype.b82
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

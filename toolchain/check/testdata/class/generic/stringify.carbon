@@ -292,19 +292,19 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc5_15.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%ptr.c28) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.c28
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%ptr.c28
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.5d2
@@ -313,7 +313,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%ptr.c28, constants.%ptr.1bb) {
 // CHECK:STDOUT:   %U.loc5_15.2 => constants.%ptr.1bb
-// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%ptr.1bb
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -416,12 +416,12 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc4_9.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc4_9.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc4_9.2 => constants.%N.patt.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_123.f7f) {
 // CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_123.f7f
-// CHECK:STDOUT:   %N.patt.loc4_9.2 => constants.%int_123.f7f
+// CHECK:STDOUT:   %N.patt.loc4_9.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -600,6 +600,6 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%F) {
 // CHECK:STDOUT:   %F.loc9_9.2 => constants.%F
-// CHECK:STDOUT:   %F.patt.loc9_9.2 => constants.%F
+// CHECK:STDOUT:   %F.patt.loc9_9.2 => constants.%F.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

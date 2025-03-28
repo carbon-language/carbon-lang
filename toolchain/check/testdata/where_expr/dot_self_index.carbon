@@ -222,7 +222,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%W) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%W, constants.%Self.8c5170.1) {}
@@ -231,7 +231,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%T) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%T
-// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%T
+// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type => constants.%Empty.type.3e5fde.2
@@ -244,7 +244,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%T, constants.%V) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.3e5fde.2
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.c95
 // CHECK:STDOUT:   %require_complete.loc18_34 => constants.%require_complete.22f
@@ -256,14 +256,14 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %ptr.loc18_40.2 => constants.%ptr.79f
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.5a8
 // CHECK:STDOUT:   %V.loc18_43.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc18_43.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc18_43.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(@H.%T.loc18_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%i32) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%i32
-// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%i32
+// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type => constants.%Empty.type.f0b
@@ -276,7 +276,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%i32, bool) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.f0b
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.e6e
 // CHECK:STDOUT:   %require_complete.loc18_34 => constants.%complete_type.091
@@ -288,7 +288,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %ptr.loc18_40.2 => constants.%ptr.235
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.52c
 // CHECK:STDOUT:   %V.loc18_43.2 => bool
-// CHECK:STDOUT:   %V.patt.loc18_43.2 => bool
+// CHECK:STDOUT:   %V.patt.loc18_43.2 => constants.%V.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc18_17 => constants.%complete_type.6bd

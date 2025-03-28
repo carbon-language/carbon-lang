@@ -272,12 +272,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc7 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc7 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
 // CHECK:STDOUT:   %a.loc10_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc10 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc10 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- spacing.carbon
@@ -338,7 +338,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
 // CHECK:STDOUT:   %a.loc6_17.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc6 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc6 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_parens.carbon
@@ -408,12 +408,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.1(constants.%a) {
 // CHECK:STDOUT:   %a.loc6_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc6_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc6_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.2(constants.%a) {
 // CHECK:STDOUT:   %a.loc14_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc14_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc14_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
@@ -474,7 +474,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
 // CHECK:STDOUT:   %a.loc6_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc6 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc6 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
@@ -539,12 +539,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc7_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc7_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
 // CHECK:STDOUT:   %a.loc8_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc8_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc8_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.impl.carbon
@@ -634,12 +634,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
 // CHECK:STDOUT:   %a.1 => constants.%a
-// CHECK:STDOUT:   %a.patt.1 => constants.%a
+// CHECK:STDOUT:   %a.patt.1 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
 // CHECK:STDOUT:   %a.1 => constants.%a
-// CHECK:STDOUT:   %a.patt.1 => constants.%a
+// CHECK:STDOUT:   %a.patt.1 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_mismatch.carbon
@@ -714,12 +714,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.1(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc7_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc7_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.2(constants.%b) {
 // CHECK:STDOUT:   %b.loc15_11.2 => constants.%b
-// CHECK:STDOUT:   %b.patt.loc15_11.2 => constants.%b
+// CHECK:STDOUT:   %b.patt.loc15_11.2 => constants.%b.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
@@ -792,12 +792,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.1(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc7_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc7_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.2(constants.%a) {
 // CHECK:STDOUT:   %a.loc15_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc15_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc15_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduced_alias.carbon
@@ -870,12 +870,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.1(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc7_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc7_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.2(constants.%a) {
 // CHECK:STDOUT:   %a.loc15_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc15_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc15_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
@@ -921,7 +921,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
 // CHECK:STDOUT:   %a.loc6_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc6_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc6_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon
@@ -986,7 +986,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
 // CHECK:STDOUT:   %a.1 => constants.%a
-// CHECK:STDOUT:   %a.patt.1 => constants.%a
+// CHECK:STDOUT:   %a.patt.1 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeat_const.carbon
@@ -1064,12 +1064,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.1(constants.%a) {
 // CHECK:STDOUT:   %a.loc6_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc6_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc6_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.2(constants.%a) {
 // CHECK:STDOUT:   %a.loc18_11.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc18_11.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc18_11.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_self_type.carbon

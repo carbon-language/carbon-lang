@@ -92,7 +92,7 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc11_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc11_6.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc11_6.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:   %Convert.bound => constants.%Convert.bound
 // CHECK:STDOUT:   %bound_method.loc11_29.3 => constants.%bound_method
 // CHECK:STDOUT:   %int.convert_checked.loc11_29.2 => constants.%int.convert_checked

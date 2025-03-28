@@ -372,7 +372,7 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
-          .constant_kind = InstConstantKind::SymbolicOnly,
+          .constant_kind = InstConstantKind::Always,
           .is_lowered = false,
       });
 

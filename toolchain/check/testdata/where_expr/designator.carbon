@@ -223,19 +223,19 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
 // CHECK:STDOUT:   %U.loc10_17.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc10_17.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc10_17.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
 // CHECK:STDOUT:   %V.loc12_18.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc12_18.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc12_18.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_wrong_member.carbon

@@ -374,7 +374,7 @@ fn C.destroy.Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @destroy(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_26.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc9_26.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_26.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extra_implicit_params_first.carbon
@@ -424,7 +424,7 @@ fn C.destroy.Foo() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @destroy(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_14.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc9_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_14.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_positional_params.carbon

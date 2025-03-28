@@ -251,19 +251,19 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%B) {
 // CHECK:STDOUT:   %B.loc6_9.2 => constants.%B
-// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%B
+// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%B.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%true) {
 // CHECK:STDOUT:   %B.loc6_9.2 => constants.%true
-// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%true
+// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%B.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%false) {
 // CHECK:STDOUT:   %B.loc6_9.2 => constants.%false
-// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%false
+// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%B.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -462,19 +462,19 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%B) {
 // CHECK:STDOUT:   %B.loc4_9.2 => constants.%B
-// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%B
+// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%B.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%true) {
 // CHECK:STDOUT:   %B.loc4_9.2 => constants.%true
-// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%true
+// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%B.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%false) {
 // CHECK:STDOUT:   %B.loc4_9.2 => constants.%false
-// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%false
+// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%B.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

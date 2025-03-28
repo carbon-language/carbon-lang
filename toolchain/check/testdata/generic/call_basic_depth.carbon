@@ -303,7 +303,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Cfn(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_22.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_22.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_22.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
@@ -311,7 +311,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc16_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc16_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc16_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
@@ -319,7 +319,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%T) {
 // CHECK:STDOUT:   %T.loc19_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc19_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc19_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
@@ -330,7 +330,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc25_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc25_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc25_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(@G.%T.loc25_6.2) {}
@@ -341,7 +341,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%i32) {
 // CHECK:STDOUT:   %T.loc16_6.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc16_6.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc16_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -349,7 +349,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%i32) {
 // CHECK:STDOUT:   %T.loc25_6.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc25_6.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc25_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -360,11 +360,11 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%i32) {
 // CHECK:STDOUT:   %T.loc19_6.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc19_6.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc19_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Cfn(constants.%i32) {
 // CHECK:STDOUT:   %T.loc12_22.1 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc12_22.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc12_22.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

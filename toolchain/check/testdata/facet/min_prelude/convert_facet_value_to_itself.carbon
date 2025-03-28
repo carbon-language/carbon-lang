@@ -149,21 +149,21 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%T) {
 // CHECK:STDOUT:   %T.loc16_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc16_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc16_15.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T) {
 // CHECK:STDOUT:   %T.loc18_17.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc18_17.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc18_17.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(@HandleAnimal.%T.loc18_17.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%Animal.facet) {
 // CHECK:STDOUT:   %T.loc18_17.2 => constants.%Animal.facet
-// CHECK:STDOUT:   %T.patt.loc18_17.2 => constants.%Animal.facet
+// CHECK:STDOUT:   %T.patt.loc18_17.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %FeedAnimal.specific_fn.loc18_31.2 => constants.%FeedAnimal.specific_fn.5d0
@@ -171,7 +171,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {
 // CHECK:STDOUT:   %T.loc16_15.2 => constants.%Animal.facet
-// CHECK:STDOUT:   %T.patt.loc16_15.2 => constants.%Animal.facet
+// CHECK:STDOUT:   %T.patt.loc16_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/convert.carbon
@@ -320,7 +320,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc8_14.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc8_14.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc8_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
@@ -336,7 +336,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc12_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc12_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {

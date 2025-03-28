@@ -322,23 +322,23 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple1(constants.%T, constants.%S) {
 // CHECK:STDOUT:   %T.loc8_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc8_24.2 => constants.%T.as_type
 // CHECK:STDOUT:   %T.as_wit.iface0.loc8_24.2 => constants.%T.as_wit.iface0
 // CHECK:STDOUT:   %impl.elem0.loc8_24.2 => constants.%impl.elem0.d9c3a6.1
 // CHECK:STDOUT:   %S.loc8_19.2 => constants.%S
-// CHECK:STDOUT:   %S.patt.loc8_19.2 => constants.%S
+// CHECK:STDOUT:   %S.patt.loc8_19.2 => constants.%S.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%J.facet.085e97.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound1(constants.%V, constants.%W) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_wit.iface0.loc11_26.2 => constants.%V.as_wit.iface0
 // CHECK:STDOUT:   %impl.elem0.loc11_26.2 => constants.%impl.elem0.d9c3a6.2
 // CHECK:STDOUT:   %W.loc11_21.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc11_21.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc11_21.2 => constants.%W.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- non_instance.carbon
@@ -472,7 +472,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple2(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Q1(constants.%K1.facet.07e9b4.1) {}
@@ -481,7 +481,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound2(constants.%V) {
 // CHECK:STDOUT:   %V.loc13_14.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc13_14.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc13_14.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Q1(constants.%K1.facet.07e9b4.2) {}
@@ -728,7 +728,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple3(constants.%T.0ce) {
 // CHECK:STDOUT:   %T.loc8_12.2 => constants.%T.0ce
-// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T.0ce
+// CHECK:STDOUT:   %T.patt.loc8_12.2 => constants.%T.patt.6d1
 // CHECK:STDOUT:   %T.as_type.loc8_23.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -738,13 +738,13 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound3(constants.%V) {
 // CHECK:STDOUT:   %V.loc14_14.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc14_14.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc14_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc14_25.2 => constants.%V.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
@@ -760,7 +760,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%K2.type) {
 // CHECK:STDOUT:   %Dest => constants.%K2.type
-// CHECK:STDOUT:   %Dest.patt => constants.%K2.type
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.014
@@ -773,7 +773,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T.8b3) {
 // CHECK:STDOUT:   %T => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.e01
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1059,7 +1059,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple4(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc9_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_12.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc9_23.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1080,7 +1080,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound4(constants.%V) {
 // CHECK:STDOUT:   %V.loc16_14.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc16_14.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc16_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc16_25.2 => constants.%V.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1285,7 +1285,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple5(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc10_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc10_12.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @R2(constants.%L2.facet) {
@@ -1305,7 +1305,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound5(constants.%V) {
 // CHECK:STDOUT:   %V.loc30_14.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc30_14.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc30_14.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_combine_non_instance.carbon
@@ -1596,7 +1596,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.f92(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.db8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1608,7 +1608,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.f92(type) {
 // CHECK:STDOUT:   %T => type
-// CHECK:STDOUT:   %T.patt => type
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.3ea
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1625,7 +1625,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
@@ -1641,7 +1641,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%A.type) {
 // CHECK:STDOUT:   %Dest => constants.%A.type
-// CHECK:STDOUT:   %Dest.patt => constants.%A.type
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2d2
@@ -1875,7 +1875,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.f92(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.db8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1887,7 +1887,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.f92(type) {
 // CHECK:STDOUT:   %T => type
-// CHECK:STDOUT:   %T.patt => type
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.3ea
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -2161,7 +2161,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc9_14.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc9_14.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc9_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
@@ -2177,7 +2177,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc13_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc13_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc13_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {
@@ -2198,7 +2198,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc21_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc21_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

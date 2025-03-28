@@ -295,12 +295,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X.loc7_9.2 => constants.%X
-// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%X
+// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.21c) {
 // CHECK:STDOUT:   %X.loc7_9.2 => constants.%tuple.21c
-// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%tuple.21c
+// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -506,12 +506,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X => constants.%X
-// CHECK:STDOUT:   %X.patt => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple) {
 // CHECK:STDOUT:   %X => constants.%tuple
-// CHECK:STDOUT:   %X.patt => constants.%tuple
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -608,12 +608,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X => constants.%X
-// CHECK:STDOUT:   %X.patt => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple) {
 // CHECK:STDOUT:   %X => constants.%tuple
-// CHECK:STDOUT:   %X.patt => constants.%tuple
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -743,19 +743,19 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X => constants.%X
-// CHECK:STDOUT:   %X.patt => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.5de) {
 // CHECK:STDOUT:   %X => constants.%tuple.5de
-// CHECK:STDOUT:   %X.patt => constants.%tuple.5de
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.56c) {
 // CHECK:STDOUT:   %X => constants.%tuple.56c
-// CHECK:STDOUT:   %X.patt => constants.%tuple.56c
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

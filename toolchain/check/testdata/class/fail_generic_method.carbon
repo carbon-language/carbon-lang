@@ -161,7 +161,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {
@@ -175,6 +175,6 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc33_10.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt => constants.%N.51e
+// CHECK:STDOUT:   %N.patt => constants.%N.patt.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

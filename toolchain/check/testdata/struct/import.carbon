@@ -267,12 +267,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%S) {
 // CHECK:STDOUT:   %S.loc8_9.2 => constants.%S
-// CHECK:STDOUT:   %S.patt.loc8_9.2 => constants.%S
+// CHECK:STDOUT:   %S.patt.loc8_9.2 => constants.%S.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.ed5) {
 // CHECK:STDOUT:   %S.loc8_9.2 => constants.%struct.ed5
-// CHECK:STDOUT:   %S.patt.loc8_9.2 => constants.%struct.ed5
+// CHECK:STDOUT:   %S.patt.loc8_9.2 => constants.%S.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -461,12 +461,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%S) {
 // CHECK:STDOUT:   %S => constants.%S
-// CHECK:STDOUT:   %S.patt => constants.%S
+// CHECK:STDOUT:   %S.patt => constants.%S.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct) {
 // CHECK:STDOUT:   %S => constants.%struct
-// CHECK:STDOUT:   %S.patt => constants.%struct
+// CHECK:STDOUT:   %S.patt => constants.%S.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -561,12 +561,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%S) {
 // CHECK:STDOUT:   %S => constants.%S
-// CHECK:STDOUT:   %S.patt => constants.%S
+// CHECK:STDOUT:   %S.patt => constants.%S.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct) {
 // CHECK:STDOUT:   %S => constants.%struct
-// CHECK:STDOUT:   %S.patt => constants.%struct
+// CHECK:STDOUT:   %S.patt => constants.%S.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -696,19 +696,19 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%S) {
 // CHECK:STDOUT:   %S => constants.%S
-// CHECK:STDOUT:   %S.patt => constants.%S
+// CHECK:STDOUT:   %S.patt => constants.%S.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.8e6) {
 // CHECK:STDOUT:   %S => constants.%struct.8e6
-// CHECK:STDOUT:   %S.patt => constants.%struct.8e6
+// CHECK:STDOUT:   %S.patt => constants.%S.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.cd9) {
 // CHECK:STDOUT:   %S => constants.%struct.cd9
-// CHECK:STDOUT:   %S.patt => constants.%struct.cd9
+// CHECK:STDOUT:   %S.patt => constants.%S.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

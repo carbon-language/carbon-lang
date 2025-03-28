@@ -1743,32 +1743,6 @@ auto TryEvalTypedInst<SemIR::ImportRefLoaded>(EvalContext& /*eval_context*/,
   return SemIR::ConstantId::NotConstant;
 }
 
-// TODO: Disable constant evaluation of SymbolicBindingPattern once
-// DeduceGenericCallArguments no longer needs implicit params to have constant
-// values.
-template <>
-auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
-                                                     SemIR::InstId /*inst_id*/,
-                                                     SemIR::Inst inst)
-    -> SemIR::ConstantId {
-  // If we know which specific we're evaluating within and this is an argument
-  // of that specific, its constant value is the corresponding argument value.
-  // TODO: This seems incorrect: patterns don't typically evaluate to the value
-  // matched by the pattern.
-  const auto& bind_name = eval_context.entity_names().Get(
-      inst.As<SemIR::SymbolicBindingPattern>().entity_name_id);
-  if (auto value = eval_context.GetCompileTimeBindValue(bind_name.bind_index());
-      value.has_value()) {
-    return value;
-  }
-
-  Phase phase = Phase::Concrete;
-  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-    return MakeNonConstantResult(phase);
-  }
-  return MakeConstantResult(eval_context.context(), inst, phase);
-}
-
 // Symbolic bindings are a special case because they can reach into the eval
 // context and produce a context-specific value.
 template <>
