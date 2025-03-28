@@ -23,10 +23,10 @@ namespace {
 // methods to add and pop pending deductions from the list. Deductions are
 // popped in order from most- to least-recently pushed, with the intent that
 // they are visited in depth-first order, although the order is not expected to
-// matter except when it influences which error is diagnosed. `context` must not
-// be null.
+// matter except when it influences which error is diagnosed.
 class DeductionWorklist {
  public:
+  // `context` must not be null.
   explicit DeductionWorklist(Context* context) : context_(context) {}
 
   struct PendingDeduction {
