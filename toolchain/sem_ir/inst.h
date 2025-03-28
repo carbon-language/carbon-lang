@@ -134,7 +134,7 @@ class Inst : public Printable<Inst> {
     template <typename IdT>
     auto As() const -> IdT {
       CARBON_DCHECK(kind == SemIR::IdKind::For<IdT>);
-      return IdT(kind);
+      return IdT(value);
     }
 
     IdKind kind;

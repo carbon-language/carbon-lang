@@ -76,8 +76,12 @@ static auto PushOperand(Context& context, Worklist& worklist,
 
   switch (arg.kind) {
     case SemIR::IdKind::For<SemIR::InstId>:
-    case SemIR::IdKind::For<SemIR::MetaInstId>:
       if (auto inst_id = arg.As<SemIR::InstId>(); inst_id.has_value()) {
+        worklist.Push(inst_id);
+      }
+      break;
+    case SemIR::IdKind::For<SemIR::MetaInstId>:
+      if (auto inst_id = arg.As<SemIR::MetaInstId>(); inst_id.has_value()) {
         worklist.Push(inst_id);
       }
       break;
@@ -166,9 +170,15 @@ static auto PopOperand(Context& context, Worklist& worklist,
   };
 
   switch (arg.kind) {
-    case SemIR::IdKind::For<SemIR::InstId>:
-    case SemIR::IdKind::For<SemIR::MetaInstId>: {
+    case SemIR::IdKind::For<SemIR::InstId>: {
       auto inst_id = arg.As<SemIR::InstId>();
+      if (!inst_id.has_value()) {
+        return arg.value;
+      }
+      return worklist.Pop().index;
+    }
+    case SemIR::IdKind::For<SemIR::MetaInstId>: {
+      auto inst_id = arg.As<SemIR::MetaInstId>();
       if (!inst_id.has_value()) {
         return arg.value;
       }
