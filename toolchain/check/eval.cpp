@@ -35,10 +35,11 @@ struct SpecificEvalInfo {
 };
 
 // Information about the context within which we are performing evaluation.
+// `context` must not be null.
 class EvalContext {
  public:
   explicit EvalContext(
-      Context& context, SemIRLoc fallback_loc,
+      Context* context, SemIRLoc fallback_loc,
       SemIR::SpecificId specific_id = SemIR::SpecificId::None,
       std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
       : context_(context),
@@ -58,7 +59,7 @@ class EvalContext {
   auto GetDiagnosticLoc(llvm::ArrayRef<SemIR::InstId> inst_ids) -> SemIRLoc {
     for (auto inst_id : inst_ids) {
       if (inst_id.has_value() &&
-          context_.insts().GetLocId(inst_id).has_value()) {
+          context_->insts().GetLocId(inst_id).has_value()) {
         return inst_id;
       }
     }
@@ -183,7 +184,7 @@ class EvalContext {
   // caution.
   auto types() -> const SemIR::TypeStore& { return sem_ir().types(); }
 
-  auto context() -> Context& { return context_; }
+  auto context() -> Context& { return *context_; }
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
@@ -191,7 +192,7 @@ class EvalContext {
 
  private:
   // The type-checking context in which we're performing evaluation.
-  Context& context_;
+  Context* context_;
   // The location to use for diagnostics when a better location isn't available.
   SemIRLoc fallback_loc_;
   // The specific that we are evaluating within.
@@ -1596,7 +1597,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
 
 // Given an instruction, compute its phase based on its operands.
 static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
-  EvalContext eval_context(context, SemIR::InstId::None);
+  EvalContext eval_context(&context, SemIR::InstId::None);
 
   auto phase = GetPhase(context.constant_values(),
                         context.types().GetConstantId(inst.type_id()));
@@ -1861,13 +1862,13 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
 auto TryEvalInst(Context& context, SemIR::LocId loc_id, SemIR::InstId inst_id,
                  SemIR::Inst inst) -> SemIR::ConstantId {
-  EvalContext eval_context(context, loc_id);
+  EvalContext eval_context(&context, loc_id);
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  EvalContext eval_context(context, inst_id);
+  EvalContext eval_context(&context, inst_id);
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
@@ -1882,7 +1883,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
   llvm::SmallVector<SemIR::InstId> result;
   result.resize(eval_block.size(), SemIR::InstId::None);
 
-  EvalContext eval_context(context, loc, specific_id,
+  EvalContext eval_context(&context, loc, specific_id,
                            SpecificEvalInfo{
                                .region = region,
                                .values = result,
