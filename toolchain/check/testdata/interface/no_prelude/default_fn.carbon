@@ -14,13 +14,6 @@ class C {
     fn F[self: Self]() {
       // I and F are both complete here, and the impl below is in scope.
       var c: C = {};
-      // CHECK:STDERR: default_fn.carbon:[[@LINE+7]]:10: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
-      // CHECK:STDERR:       c.(I.F)();
-      // CHECK:STDERR:          ^~~
-      // CHECK:STDERR: default_fn.carbon:[[@LINE-8]]:3: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-      // CHECK:STDERR:   interface I {
-      // CHECK:STDERR:   ^~~~~~~~~~~~~
-      // CHECK:STDERR:
       c.(I.F)();
     }
   }
@@ -38,6 +31,7 @@ class C {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type.0b5: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.20c: %F.type.0b5 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
@@ -49,6 +43,7 @@ class C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %.56c: type = fn_type_with_self_type %F.type.0b5, %I.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -135,7 +130,11 @@ class C {
 // CHECK:STDOUT:     %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %impl.elem0: %.56c = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%F.eb2]
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
+// CHECK:STDOUT:     %.loc17: %C = bind_value %c.ref
+// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %bound_method(%.loc17)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

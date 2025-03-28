@@ -31,13 +31,6 @@ impl A as Action(B) {
   fn Op[self: Self]() {}
 }
 
-// CHECK:STDERR: action.carbon:[[@LINE+7]]:17: error: member access into undefined facet type `Action(B)` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: fn F(a: A) { a.(Action(B).Op)(); }
-// CHECK:STDERR:                 ^~~~~~~~~~~~
-// CHECK:STDERR: action.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Action(T:! type) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(a: A) { a.(Action(B).Op)(); }
 
 // --- action.impl.carbon
@@ -246,6 +239,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Action.type.29c: type = generic_interface_type @Action [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Action.generic: %Action.type.29c = struct_value () [concrete]
 // CHECK:STDOUT:   %Action.type.cca: type = facet_type <@Action, @Action(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %Action.type.cca = bind_symbolic_name Self, 1 [symbolic]
@@ -270,6 +264,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Action.facet: %Action.type.cb0 = facet_value %A, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.dde: type = fn_type_with_self_type %Op.type.54d, %Action.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -400,7 +395,11 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Action.ref: %Action.type.29c = name_ref Action, file.%Action.decl [concrete = constants.%Action.generic]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.cb0]
-// CHECK:STDOUT:   %Op.ref: <error> = name_ref Op, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16: %Action.assoc_type.827 = specific_constant @Action.%assoc0.loc5_22.1, @Action(constants.%B) [concrete = constants.%assoc0.035]
+// CHECK:STDOUT:   %Op.ref: %Action.assoc_type.827 = name_ref Op, %.loc16 [concrete = constants.%assoc0.035]
+// CHECK:STDOUT:   %impl.elem0: %.dde = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Op.40d]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%a.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

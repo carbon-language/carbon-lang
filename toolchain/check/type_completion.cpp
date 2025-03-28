@@ -649,7 +649,7 @@ auto RequireDefinedFacetType(Context& context,
   bool added_a_scope = false;
   for (const auto& impls : facet_type_info.impls_constraints) {
     const auto& interface_info = context.interfaces().Get(impls.interface_id);
-    if (interface_info.is_being_defined()) {
+    if (interface_info.has_definition_started()) {
       scopes->push_back({.name_scope_id = interface_info.scope_id,
                          .specific_id = impls.specific_id});
       added_a_scope = true;

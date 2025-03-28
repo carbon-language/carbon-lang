@@ -60,6 +60,14 @@ impl () as Core.IndexWith(()) {
   }
 }
 
+// CHECK:STDERR: wrong_arg_count.carbon:[[@LINE+8]]:10: error: member access into undefined facet type `Core.IndexWith(())` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: fn F() { ()[()]; }
+// CHECK:STDERR:          ^~~~~~
+// CHECK:STDERR: wrong_arg_count.carbon:[[@LINE-11]]:1: in import [InImport]
+// CHECK:STDERR: core_wrong_arg_count.carbon:4:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface IndexWith(SubscriptType:! type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F() { ()[()]; }
 
 // CHECK:STDOUT: --- core_wrong_index_with.carbon
@@ -266,12 +274,12 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.281: %At.type.cf4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %IndexWith.assoc_type.349: type = assoc_entity_type %IndexWith.type.bd2 [symbolic]
-// CHECK:STDOUT:   %assoc0.8c6: %IndexWith.assoc_type.349 = assoc_entity element0, imports.%Core.import_ref.e99 [symbolic]
+// CHECK:STDOUT:   %assoc0.9bc: %IndexWith.assoc_type.349 = assoc_entity element0, imports.%Core.import_ref.981 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.a51: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type)> [concrete]
 // CHECK:STDOUT:   %At.type.969: type = fn_type @At.1, @IndexWith(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %At.9b9: %At.type.969 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.assoc_type.614: type = assoc_entity_type %IndexWith.type.a51 [concrete]
-// CHECK:STDOUT:   %assoc0.64b: %IndexWith.assoc_type.614 = assoc_entity element0, imports.%Core.import_ref.e99 [concrete]
+// CHECK:STDOUT:   %assoc0.d7b: %IndexWith.assoc_type.614 = assoc_entity element0, imports.%Core.import_ref.981 [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%At.decl) [concrete]
 // CHECK:STDOUT:   %At.type.486: type = fn_type @At.2 [concrete]
 // CHECK:STDOUT:   %At.7c4: %At.type.486 = struct_value () [concrete]
@@ -279,9 +287,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %assoc0.9bc: %IndexWith.assoc_type.349 = assoc_entity element0, imports.%Core.import_ref.981 [symbolic]
-// CHECK:STDOUT:   %.851: type = fn_type_with_self_type %At.type.969, %IndexWith.facet [concrete]
-// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %empty_tuple, %At.7c4 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -292,11 +297,11 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.504 = import_ref Core//core_wrong_arg_count, IndexWith, loaded [concrete = constants.%IndexWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %Core.import_ref.68a = import_ref Core//core_wrong_arg_count, inst25 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.25c: @IndexWith.%IndexWith.assoc_type (%IndexWith.assoc_type.349) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%assoc0 (constants.%assoc0.9bc)]
+// CHECK:STDOUT:   %Core.import_ref.075 = import_ref Core//core_wrong_arg_count, loc5_52, unloaded
 // CHECK:STDOUT:   %Core.At: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, At, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2) = import_ref Core//core_wrong_arg_count, inst25 [no loc], loaded [symbolic = @IndexWith.%Self (constants.%Self)]
-// CHECK:STDOUT:   %Core.import_ref.e99: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
+// CHECK:STDOUT:   %Core.import_ref.981 = import_ref Core//core_wrong_arg_count, loc5_52, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -328,12 +333,12 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType) [symbolic = %At.type (constants.%At.type.cf4)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.cf4) = struct_value () [symbolic = %At (constants.%At.281)]
 // CHECK:STDOUT:   %IndexWith.assoc_type: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.bd2) [symbolic = %IndexWith.assoc_type (constants.%IndexWith.assoc_type.349)]
-// CHECK:STDOUT:   %assoc0: @IndexWith.%IndexWith.assoc_type (%IndexWith.assoc_type.349) = assoc_entity element0, imports.%Core.import_ref.e99 [symbolic = %assoc0 (constants.%assoc0.8c6)]
+// CHECK:STDOUT:   %assoc0: @IndexWith.%IndexWith.assoc_type (%IndexWith.assoc_type.349) = assoc_entity element0, imports.%Core.import_ref.981 [symbolic = %assoc0 (constants.%assoc0.9bc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Core.import_ref.68a
-// CHECK:STDOUT:     .At = imports.%Core.import_ref.25c
+// CHECK:STDOUT:     .At = imports.%Core.import_ref.075
 // CHECK:STDOUT:     witness = (imports.%Core.At)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -386,15 +391,12 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_14: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %empty_tuple.loc12_11: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_11.2: %empty_tuple.type = converted %.loc12_11.1, %empty_tuple.loc12_11 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %empty_tuple.loc12_14: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_15: %empty_tuple.type = converted %.loc12_14, %empty_tuple.loc12_14 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %impl.elem0: %.851 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%At.7c4]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12_11.2, %impl.elem0 [concrete = constants.%At.bound]
-// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %bound_method(%.loc12_11.2, %.loc12_15)
+// CHECK:STDOUT:   %.loc20_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc20_14: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %empty_tuple.loc20_11: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_11.2: %empty_tuple.type = converted %.loc20_11.1, %empty_tuple.loc20_11 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc20_14: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_15: %empty_tuple.type = converted %.loc20_14, %empty_tuple.loc20_14 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -424,7 +426,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.type => constants.%At.type.969
 // CHECK:STDOUT:   %At => constants.%At.9b9
 // CHECK:STDOUT:   %IndexWith.assoc_type => constants.%IndexWith.assoc_type.614
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.64b
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.d7b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%empty_tuple.type, constants.%IndexWith.facet) {

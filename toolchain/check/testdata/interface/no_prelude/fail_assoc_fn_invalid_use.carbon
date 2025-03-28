@@ -17,12 +17,9 @@ interface I {
 }
 
 fn Use(T:! I) {
-  // CHECK:STDERR: fail_member_access.carbon:[[@LINE+7]]:3: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_member_access.carbon:[[@LINE+4]]:3: error: type `<type of F in T as I>` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   T.F.member;
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_member_access.carbon:[[@LINE-8]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface I {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   T.F.member;
 }
@@ -41,6 +38,12 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %T.patt: %I.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
+// CHECK:STDOUT:   %T.as_wit.iface0: <witness> = facet_access_witness %T, element0 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type, (%T.as_wit.iface0) [symbolic]
+// CHECK:STDOUT:   %.3d7: type = fn_type_with_self_type %F.type, %I.facet [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.3d7 = impl_witness_access %T.as_wit.iface0, element0 [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.3d7 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -91,12 +94,21 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %T.patt.loc8_8.2: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.as_type.loc13_4.2: type = facet_access_type %T.loc8_8.2 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %T.as_wit.iface0.loc13_4.2: <witness> = facet_access_witness %T.loc8_8.2, element0 [symbolic = %T.as_wit.iface0.loc13_4.2 (constants.%T.as_wit.iface0)]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc13_4.2, (%T.as_wit.iface0.loc13_4.2) [symbolic = %I.facet (constants.%I.facet)]
+// CHECK:STDOUT:   %.loc13_4.2: type = fn_type_with_self_type constants.%F.type, %I.facet [symbolic = %.loc13_4.2 (constants.%.3d7)]
+// CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.3d7) = impl_witness_access %T.as_wit.iface0.loc13_4.2, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%.loc13_4.2 (%.3d7) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc8_8.1: %I.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %I.type = name_ref T, %T.loc8_8.1 [symbolic = %T.loc8_8.2 (constants.%T)]
-// CHECK:STDOUT:     %F.ref: <error> = name_ref F, <error> [concrete = <error>]
-// CHECK:STDOUT:     %member.ref: <error> = name_ref member, <error> [concrete = <error>]
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %T.as_type.loc13_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc13_4.1: type = converted %T.ref, %T.as_type.loc13_4.1 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.as_wit.iface0.loc13_4.1: <witness> = facet_access_witness %T.ref, element0 [symbolic = %T.as_wit.iface0.loc13_4.2 (constants.%T.as_wit.iface0)]
+// CHECK:STDOUT:     %impl.elem0.loc13_4.1: @Use.%.loc13_4.2 (%.3d7) = impl_witness_access %T.as_wit.iface0.loc13_4.1, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

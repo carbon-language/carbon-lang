@@ -216,19 +216,31 @@ impl i32 as I {
   fn F[self: i32](other: i32) -> i32 = "int.sadd";
 }
 
-// CHECK:STDERR: method.carbon:[[@LINE+14]]:22: error: member access into undefined facet type `Core.As(i32)` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: method.carbon:[[@LINE+26]]:22: error: member access into undefined facet type `Core.As(i32)` [QualifiedExprInUndefinedFacetTypeScope]
 // CHECK:STDERR: var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDERR:                      ^~~~~~~~
 // CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:7:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface As(Dest:! type) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: method.carbon:[[@LINE+7]]:33: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: method.carbon:[[@LINE+19]]:38: error: member access into undefined facet type `Core.ImplicitAs(i32)` [QualifiedExprInUndefinedFacetTypeScope]
 // CHECK:STDERR: var arr: array(i32, (1 as i32).(I.F)(2));
-// CHECK:STDERR:                                 ^~~
-// CHECK:STDERR: method.carbon:[[@LINE-18]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface I {
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:                                      ^
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:11:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: method.carbon:[[@LINE-17]]:19: note: initializing function parameter [InCallToFunctionParam]
+// CHECK:STDERR:   fn F[self: i32](other: i32) -> i32 = "int.sadd";
+// CHECK:STDERR:                   ^~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: method.carbon:[[@LINE+8]]:21: error: member access into undefined facet type `Core.ImplicitAs(Core.IntLiteral)` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: var arr: array(i32, (1 as i32).(I.F)(2));
+// CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:11:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var arr: array(i32, (1 as i32).(I.F)(2));
 
@@ -244,11 +256,12 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %assoc0.a5e: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
+// CHECK:STDOUT:   %impl_witness.da7: <witness> = impl_witness (@impl.a9a.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.066: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.9ec: %F.type.066 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, (%impl_witness.da7) [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %.62e: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,6 +269,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .As = %Core.As
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -269,27 +283,32 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.a9a [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.a9a.%F.decl) [concrete = constants.%impl_witness.da7]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %arr.patt: <error> = binding_pattern arr
-// CHECK:STDOUT:     %.loc233_1: <error> = var_pattern %arr.patt
+// CHECK:STDOUT:     %.loc245_1: <error> = var_pattern %arr.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr.var: ref <error> = var arr
-// CHECK:STDOUT:   %.loc233_40: type = splice_block %array_type [concrete = <error>] {
-// CHECK:STDOUT:     %int_32.loc233_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc233_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc245_40: type = splice_block %array_type [concrete = <error>] {
+// CHECK:STDOUT:     %int_32.loc245_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc245_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %int_32.loc233_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc233_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc233_24: %i32 = converted %int_1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %int_32.loc245_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc245_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc245_24: %i32 = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0.a5e]
+// CHECK:STDOUT:     %impl.elem0: %.62e = impl_witness_access constants.%impl_witness.da7, element0 [concrete = constants.%F.9ec]
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc245_24, %impl.elem0 [concrete = <error>]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:     %.loc245_38: %i32 = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:     %int.sadd: init %i32 = call %bound_method(<error>, <error>) [concrete = <error>]
+// CHECK:STDOUT:     %.loc245_39: Core.IntLiteral = converted %int.sadd, <error> [concrete = <error>]
 // CHECK:STDOUT:     %array_type: type = array_type <error>, %i32 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr: <error> = bind_name arr, <error>
@@ -333,7 +352,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %i32 as %I.ref {
+// CHECK:STDOUT: impl @impl.a9a: %i32 as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.066 = fn_decl @F.2 [concrete = constants.%F.9ec] {
 // CHECK:STDOUT:     %self.patt: %i32 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %i32 = value_param_pattern %self.patt, call_param0

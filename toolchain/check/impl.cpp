@@ -109,7 +109,8 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
-  if (witness_block.empty()) {
+  if (witness.elements_id != SemIR::InstBlockId::Empty &&
+      witness_block.empty()) {
     if (!RequireCompleteFacetTypeForImplDefinition(
             context, impl.latest_decl_id(), impl.constraint_id)) {
       return;

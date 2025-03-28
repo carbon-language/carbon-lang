@@ -19,21 +19,7 @@ interface I {
 }
 
 // We shouldn't issue further errors on uses of the invalid name.
-// CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:14: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: alias UseA = I.a;
-// CHECK:STDERR:              ^~~
-// CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE-12]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface I {
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
 alias UseA = I.a;
 
 // Ideally we would still diagnose this, but it's OK that we don't.
-// CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:18: error: member access into undefined facet type `I` [QualifiedExprInUndefinedFacetTypeScope]
-// CHECK:STDERR: alias UseOther = I.other;
-// CHECK:STDERR:                  ^~~~~~~
-// CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE-22]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface I {
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
 alias UseOther = I.other;

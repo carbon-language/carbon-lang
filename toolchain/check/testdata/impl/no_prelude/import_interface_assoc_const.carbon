@@ -641,8 +641,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -652,8 +651,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c12 = import_ref Main//interface, loc3_20, unloaded
-// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [concrete = %T]
-// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst16 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -669,7 +667,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %C3.ref: type = name_ref C3, file.%C3.decl [concrete = constants.%C3]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.da7 [concrete] {} {
 // CHECK:STDOUT:     %C3.ref: type = name_ref C3, file.%C3.decl [concrete = constants.%C3]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
@@ -690,10 +688,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.5dd: %I.type) [from "interface.carbon"] {
-// CHECK:STDOUT:   assoc_const T:! type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.16e: %C3.ref as %I.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.da7: %C3.ref as %.loc18_14 {
@@ -708,8 +702,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C3
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch.carbon
 // CHECK:STDOUT:

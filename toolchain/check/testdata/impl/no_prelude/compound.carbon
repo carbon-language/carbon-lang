@@ -27,13 +27,6 @@ impl {.a: ()} as NonInstance1 {
 }
 
 fn NonInstanceCall1() {
-  // CHECK:STDERR: non-instance_success.carbon:[[@LINE+7]]:13: error: member access into undefined facet type `NonInstance1` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   {.a: ()}.(NonInstance1.F1)();
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: non-instance_success.carbon:[[@LINE-12]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface NonInstance1 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   {.a: ()}.(NonInstance1.F1)();
 }
 
@@ -51,12 +44,13 @@ impl {.b: ()} as NonInstance2 {
 }
 
 fn NonInstanceCall2(n: {.b: ()}) {
-  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+7]]:6: error: member access into undefined facet type `NonInstance2` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+8]]:3: error: member access into undefined facet type `Core.ImplicitAs(NonInstance2)` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   n.(NonInstance2.F2)();
-  // CHECK:STDERR:      ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE-12]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface NonInstance2 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE-14]]:1: in import [InImport]
+  // CHECK:STDERR: core.carbon:3:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   n.(NonInstance2.F2)();
 }
@@ -75,12 +69,13 @@ impl {.c: ()} as NonInstance3 {
 }
 
 fn NonInstanceCallIndirect(p: {.c: ()}*) {
-  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+7]]:7: error: member access into undefined facet type `NonInstance3` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+8]]:3: error: member access into undefined facet type `Core.ImplicitAs(NonInstance3)` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   p->(NonInstance3.F3)();
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE-12]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface NonInstance3 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE-14]]:1: in import [InImport]
+  // CHECK:STDERR: core.carbon:3:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface ImplicitAs(Dest:! type) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   p->(NonInstance3.F3)();
 }
@@ -97,24 +92,10 @@ impl {.d: ()} as Instance1 {
 }
 
 fn InstanceCall(n: {.d: ()}) {
-  // CHECK:STDERR: instance_success.carbon:[[@LINE+7]]:6: error: member access into undefined facet type `Instance1` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   n.(Instance1.G1)();
-  // CHECK:STDERR:      ^~~~~~~~~~~~
-  // CHECK:STDERR: instance_success.carbon:[[@LINE-12]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface Instance1 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   n.(Instance1.G1)();
 }
 
 fn InstanceCallIndirect(p: {.d: ()}*) {
-  // CHECK:STDERR: instance_success.carbon:[[@LINE+7]]:7: error: member access into undefined facet type `Instance1` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   p->(Instance1.G1)();
-  // CHECK:STDERR:       ^~~~~~~~~~~~
-  // CHECK:STDERR: instance_success.carbon:[[@LINE-23]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface Instance1 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   p->(Instance1.G1)();
 }
 
@@ -130,12 +111,9 @@ impl {.e: ()} as Instance2 {
 }
 
 fn InstanceCallFail() {
-  // CHECK:STDERR: fail_instance.carbon:[[@LINE+7]]:13: error: member access into undefined facet type `Instance2` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: fail_instance.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Instance2` in type `type` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   {.e: ()}.(Instance2.G2)();
-  // CHECK:STDERR:             ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_instance.carbon:[[@LINE-12]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface Instance2 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   {.e: ()}.(Instance2.G2)();
 }
@@ -251,6 +229,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %NonInstance1.facet: %NonInstance1.type = facet_value %struct_type.a, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %NonInstanceCall1.type: type = fn_type @NonInstanceCall1 [concrete]
 // CHECK:STDOUT:   %NonInstanceCall1: %NonInstanceCall1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.971: type = fn_type_with_self_type %F1.type.163, %NonInstance1.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -299,11 +278,16 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCall1() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc19_9.2: type = converted %.loc19_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc12_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %NonInstance1.ref: type = name_ref NonInstance1, file.%NonInstance1.decl [concrete = constants.%NonInstance1.type]
-// CHECK:STDOUT:   %F1.ref: <error> = name_ref F1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %F1.ref: %NonInstance1.assoc_type = name_ref F1, @NonInstance1.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %NonInstance1.facet: %NonInstance1.type = facet_value constants.%struct_type.a, (constants.%impl_witness) [concrete = constants.%NonInstance1.facet]
+// CHECK:STDOUT:   %.loc12_11: %NonInstance1.type = converted %struct_type.a, %NonInstance1.facet [concrete = constants.%NonInstance1.facet]
+// CHECK:STDOUT:   %as_wit.iface0: <witness> = facet_access_witness %.loc12_11, element0 [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl.elem0: %.971 = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%F1.c75]
+// CHECK:STDOUT:   %F1.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -315,12 +299,12 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance2.type: type = facet_type <@NonInstance2> [concrete]
-// CHECK:STDOUT:   %Self: %NonInstance2.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.5a9: %NonInstance2.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F2.type.608: type = fn_type @F2.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F2.86a: %F2.type.608 = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance2.assoc_type: type = assoc_entity_type %NonInstance2.type [concrete]
-// CHECK:STDOUT:   %assoc0: %NonInstance2.assoc_type = assoc_entity element0, @NonInstance2.%F2.decl [concrete]
+// CHECK:STDOUT:   %assoc0.97a: %NonInstance2.assoc_type = assoc_entity element0, @NonInstance2.%F2.decl [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F2.decl) [concrete]
 // CHECK:STDOUT:   %F2.type.1ec: type = fn_type @F2.2 [concrete]
@@ -328,12 +312,29 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %NonInstance2.facet: %NonInstance2.type = facet_value %struct_type.b, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %NonInstanceCall2.type: type = fn_type @NonInstanceCall2 [concrete]
 // CHECK:STDOUT:   %NonInstanceCall2: %NonInstanceCall2.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
+// CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.519 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
+// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.31f = import_ref Core//default, loc4_35, unloaded
+// CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst25 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//default, loc4_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -366,14 +367,34 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance2 {
-// CHECK:STDOUT:   %Self: %NonInstance2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %NonInstance2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.5a9]
 // CHECK:STDOUT:   %F2.decl: %F2.type.608 = fn_decl @F2.1 [concrete = constants.%F2.86a] {} {}
-// CHECK:STDOUT:   %assoc0: %NonInstance2.assoc_type = assoc_entity element0, %F2.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %NonInstance2.assoc_type = assoc_entity element0, %F2.decl [concrete = constants.%assoc0.97a]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F2 = %assoc0
 // CHECK:STDOUT:   witness = (%F2.decl)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type) = struct_value () [symbolic = %Convert (constants.%Convert)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, imports.%Core.import_ref.207 [symbolic = %assoc0 (constants.%assoc0.43d)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.31f
+// CHECK:STDOUT:     witness = (imports.%Core.Convert)
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %struct_type.b as %NonInstance2.ref {
@@ -397,24 +418,55 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %struct_type.b = name_ref n, %n
 // CHECK:STDOUT:   %NonInstance2.ref: type = name_ref NonInstance2, file.%NonInstance2.decl [concrete = constants.%NonInstance2.type]
-// CHECK:STDOUT:   %F2.ref: <error> = name_ref F2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %F2.ref: %NonInstance2.assoc_type = name_ref F2, @NonInstance2.%assoc0 [concrete = constants.%assoc0.97a]
+// CHECK:STDOUT:   %.loc22: %NonInstance2.type = converted %n.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F2.1(constants.%Self) {}
+// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F2.1(constants.%Self.5a9) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F2.1(constants.%NonInstance2.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
+// CHECK:STDOUT:   %Self => constants.%Self.519
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%NonInstance2.type) {
+// CHECK:STDOUT:   %Dest => constants.%NonInstance2.type
+// CHECK:STDOUT:   %Dest.patt => constants.%NonInstance2.type
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non-instance_indirect.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance3.type: type = facet_type <@NonInstance3> [concrete]
-// CHECK:STDOUT:   %Self: %NonInstance3.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.dd1: %NonInstance3.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F3.type.ee4: type = fn_type @F3.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F3.752: %F3.type.ee4 = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance3.assoc_type: type = assoc_entity_type %NonInstance3.type [concrete]
-// CHECK:STDOUT:   %assoc0: %NonInstance3.assoc_type = assoc_entity element0, @NonInstance3.%F3.decl [concrete]
+// CHECK:STDOUT:   %assoc0.140: %NonInstance3.assoc_type = assoc_entity element0, @NonInstance3.%F3.decl [concrete]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F3.decl) [concrete]
 // CHECK:STDOUT:   %F3.type.1c2: type = fn_type @F3.2 [concrete]
@@ -423,12 +475,29 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %ptr: type = ptr_type %struct_type.c [concrete]
 // CHECK:STDOUT:   %NonInstanceCallIndirect.type: type = fn_type @NonInstanceCallIndirect [concrete]
 // CHECK:STDOUT:   %NonInstanceCallIndirect: %NonInstanceCallIndirect.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
+// CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.519 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
+// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//default, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.31f = import_ref Core//default, loc4_35, unloaded
+// CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst25 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//default, loc4_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -462,14 +531,34 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance3 {
-// CHECK:STDOUT:   %Self: %NonInstance3.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %NonInstance3.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.dd1]
 // CHECK:STDOUT:   %F3.decl: %F3.type.ee4 = fn_decl @F3.1 [concrete = constants.%F3.752] {} {}
-// CHECK:STDOUT:   %assoc0: %NonInstance3.assoc_type = assoc_entity element0, %F3.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %NonInstance3.assoc_type = assoc_entity element0, %F3.decl [concrete = constants.%assoc0.140]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F3 = %assoc0
 // CHECK:STDOUT:   witness = (%F3.decl)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type)]
+// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type) = struct_value () [symbolic = %Convert (constants.%Convert)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, imports.%Core.import_ref.207 [symbolic = %assoc0 (constants.%assoc0.43d)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.31f
+// CHECK:STDOUT:     witness = (imports.%Core.Convert)
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %struct_type.c as %NonInstance3.ref {
@@ -493,14 +582,45 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %NonInstance3.ref: type = name_ref NonInstance3, file.%NonInstance3.decl [concrete = constants.%NonInstance3.type]
-// CHECK:STDOUT:   %F3.ref: <error> = name_ref F3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc21: ref %struct_type.c = deref %p.ref
+// CHECK:STDOUT:   %F3.ref: %NonInstance3.assoc_type = name_ref F3, @NonInstance3.%assoc0 [concrete = constants.%assoc0.140]
+// CHECK:STDOUT:   %.loc22_4.1: ref %struct_type.c = deref %p.ref
+// CHECK:STDOUT:   %.loc22_4.2: %NonInstance3.type = converted %.loc22_4.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F3.1(constants.%Self) {}
+// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "core.carbon"] {
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F3.1(constants.%Self.dd1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F3.1(constants.%NonInstance3.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt => constants.%Dest
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
+// CHECK:STDOUT:   %Dest => constants.%Dest
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
+// CHECK:STDOUT:   %Self => constants.%Self.519
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(constants.%NonInstance3.type) {
+// CHECK:STDOUT:   %Dest => constants.%NonInstance3.type
+// CHECK:STDOUT:   %Dest.patt => constants.%NonInstance3.type
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- instance_success.carbon
 // CHECK:STDOUT:
@@ -520,9 +640,12 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Instance1.facet: %Instance1.type = facet_value %struct_type.d, (%impl_witness) [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.dfe: type = fn_type_with_self_type %G1.type.cde, %Instance1.facet [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %struct_type.d [concrete]
 // CHECK:STDOUT:   %InstanceCallIndirect.type: type = fn_type @InstanceCallIndirect [concrete]
 // CHECK:STDOUT:   %InstanceCallIndirect: %InstanceCallIndirect.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.d = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -556,9 +679,9 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
-// CHECK:STDOUT:     %.loc22_36: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:       %.loc22_34.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc22_34.2: type = converted %.loc22_34.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_36: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %.loc15_34.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc15_34.2: type = converted %.loc15_34.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %struct_type.d: type = struct_type {.d: %empty_tuple.type} [concrete = constants.%struct_type.d]
 // CHECK:STDOUT:       %ptr: type = ptr_type %struct_type.d [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
@@ -619,7 +742,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %struct_type.d = name_ref n, %n
 // CHECK:STDOUT:   %Instance1.ref: type = name_ref Instance1, file.%Instance1.decl [concrete = constants.%Instance1.type]
-// CHECK:STDOUT:   %G1.ref: <error> = name_ref G1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %G1.ref: %Instance1.assoc_type = name_ref G1, @Instance1.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0: %.dfe = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G1.fee]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
+// CHECK:STDOUT:   %G1.call: init %empty_tuple.type = call %bound_method(%n.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -627,8 +753,16 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %Instance1.ref: type = name_ref Instance1, file.%Instance1.decl [concrete = constants.%Instance1.type]
-// CHECK:STDOUT:   %G1.ref: <error> = name_ref G1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc30: ref %struct_type.d = deref %p.ref
+// CHECK:STDOUT:   %G1.ref: %Instance1.assoc_type = name_ref G1, @Instance1.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %.loc16_4.1: ref %struct_type.d = deref %p.ref
+// CHECK:STDOUT:   %impl.elem0: %.dfe = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G1.fee]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16_4.1, %impl.elem0
+// CHECK:STDOUT:   %.loc16_4.2: ref %empty_tuple.type = struct_access %.loc16_4.1, element0
+// CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_4.3: %empty_tuple.type = converted %.loc16_4.2, %tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %struct: %struct_type.d = struct_value (%.loc16_4.3) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc16_4.4: %struct_type.d = converted %.loc16_4.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   %G1.call: init %empty_tuple.type = call %bound_method(%.loc16_4.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -729,11 +863,11 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceCallFail() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc19_9.2: type = converted %.loc19_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc16_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_9.2: type = converted %.loc16_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %struct_type.e: type = struct_type {.e: %empty_tuple.type} [concrete = constants.%struct_type.e]
 // CHECK:STDOUT:   %Instance2.ref: type = name_ref Instance2, file.%Instance2.decl [concrete = constants.%Instance2.type]
-// CHECK:STDOUT:   %G2.ref: <error> = name_ref G2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %G2.ref: %Instance2.assoc_type = name_ref G2, @Instance2.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

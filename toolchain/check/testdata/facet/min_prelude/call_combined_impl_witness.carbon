@@ -50,21 +50,7 @@ fn G[T:! A & Empty & B](t: T) {
   T.AA();
   T.BB();
 
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE+7]]:6: error: member access into undefined facet type `A` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   T.(A.AA)();
-  // CHECK:STDERR:      ^~~~
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE-40]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface A {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   T.(A.AA)();
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE+7]]:6: error: member access into undefined facet type `B` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   T.(B.BB)();
-  // CHECK:STDERR:      ^~~~
-  // CHECK:STDERR: call_combined_impl_witness.carbon:[[@LINE-45]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface B {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   T.(B.BB)();
 }
 
@@ -266,12 +252,12 @@ fn F() {
 // CHECK:STDOUT:     %AA.ref.loc50: <error> = name_ref AA, <error> [concrete = <error>]
 // CHECK:STDOUT:     %T.ref.loc51: <error> = name_ref T, %T [concrete = <error>]
 // CHECK:STDOUT:     %BB.ref.loc51: <error> = name_ref BB, <error> [concrete = <error>]
-// CHECK:STDOUT:     %T.ref.loc60: <error> = name_ref T, %T [concrete = <error>]
-// CHECK:STDOUT:     %A.ref.loc60: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:     %AA.ref.loc60: <error> = name_ref AA, <error> [concrete = <error>]
-// CHECK:STDOUT:     %T.ref.loc68: <error> = name_ref T, %T [concrete = <error>]
-// CHECK:STDOUT:     %B.ref.loc68: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
-// CHECK:STDOUT:     %BB.ref.loc68: <error> = name_ref BB, <error> [concrete = <error>]
+// CHECK:STDOUT:     %T.ref.loc53: <error> = name_ref T, %T [concrete = <error>]
+// CHECK:STDOUT:     %A.ref.loc53: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:     %AA.ref.loc53: %A.assoc_type = name_ref AA, @A.%assoc0 [concrete = constants.%assoc0.f33]
+// CHECK:STDOUT:     %T.ref.loc54: <error> = name_ref T, %T [concrete = <error>]
+// CHECK:STDOUT:     %B.ref.loc54: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
+// CHECK:STDOUT:     %BB.ref.loc54: %B.assoc_type = name_ref BB, @B.%assoc0 [concrete = constants.%assoc0.019]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -279,12 +265,12 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %.loc72_6.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc58_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc72_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc72_6.3: init %C = class_init (), %.loc72_6.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc72_6.4: ref %C = temporary %.loc72_6.2, %.loc72_6.3
-// CHECK:STDOUT:   %.loc72_8: ref %C = converted %.loc72_6.1, %.loc72_6.4
+// CHECK:STDOUT:   %.loc58_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc58_6.3: init %C = class_init (), %.loc58_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc58_6.4: ref %C = temporary %.loc58_6.2, %.loc58_6.3
+// CHECK:STDOUT:   %.loc58_8: ref %C = converted %.loc58_6.1, %.loc58_6.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

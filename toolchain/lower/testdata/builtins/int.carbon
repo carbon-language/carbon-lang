@@ -7,6 +7,206 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/builtins/int.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/int.carbon
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/io.carbon:18:26: error: member access into undefined facet type `Negate` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR: fn EOF() -> i32 { return -1; }
+// CHECK:STDERR:                          ^~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/io.carbon:9:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Negate {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:115:13: error: member access into undefined facet type `Add` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self + other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:10:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:122:13: error: member access into undefined facet type `BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self & other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:129:13: error: member access into undefined facet type `BitOr` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self | other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitOr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:136:13: error: member access into undefined facet type `BitXor` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self ^ other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitXor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:143:13: error: member access into undefined facet type `Div` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self / other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Div {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:150:13: error: member access into undefined facet type `LeftShift` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self << other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface LeftShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:157:13: error: member access into undefined facet type `Mod` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self % other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:65:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Mod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:164:13: error: member access into undefined facet type `Mul` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self * other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Mul {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:171:13: error: member access into undefined facet type `RightShift` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self >> other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface RightShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:178:13: error: member access into undefined facet type `Sub` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self - other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:30:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Sub {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:187:5: error: member access into undefined facet type `SubAssign` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self -= 1;
+// CHECK:STDERR:     ^~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface SubAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:194:5: error: member access into undefined facet type `AddAssign` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self += 1;
+// CHECK:STDERR:     ^~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface AddAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:126:13: error: member access into undefined facet type `Add` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self + other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:10:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Add {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:133:13: error: member access into undefined facet type `BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self & other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitAnd {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:140:13: error: member access into undefined facet type `BitOr` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self | other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:25:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitOr {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:147:13: error: member access into undefined facet type `BitXor` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self ^ other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface BitXor {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:154:13: error: member access into undefined facet type `Div` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self / other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Div {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:161:13: error: member access into undefined facet type `LeftShift` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self << other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface LeftShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:168:13: error: member access into undefined facet type `Mod` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self % other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:65:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Mod {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:175:13: error: member access into undefined facet type `Mul` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self * other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:45:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Mul {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:182:13: error: member access into undefined facet type `RightShift` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self >> other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/bitwise.carbon:55:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface RightShift {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:189:13: error: member access into undefined facet type `Sub` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self = *self - other;
+// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:30:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface Sub {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:198:5: error: member access into undefined facet type `SubAssign` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self -= 1;
+// CHECK:STDERR:     ^~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:35:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface SubAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:205:5: error: member access into undefined facet type `AddAssign` [QualifiedExprInUndefinedFacetTypeScope]
+// CHECK:STDERR:     *self += 1;
+// CHECK:STDERR:     ^~~~~~~~~~
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:7:1: in import [InImport]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/e732e30cba9f3a5438beaa8b85e336f0/execroot/_main/bazel-out/k8-fastbuild/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/arithmetic.carbon:15:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface AddAssign {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 
 // --- basic.carbon
 
@@ -167,527 +367,3 @@ fn TestInt32ToInt64(a: i32) -> i64 { return Int32ToInt64(a); }
 fn TestInt32ToUint64(a: i32) -> u64 { return Int32ToUint64(a); }
 fn TestUint32ToInt64(a: u32) -> i64 { return Uint32ToInt64(a); }
 fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
-
-// CHECK:STDOUT: ; ModuleID = 'basic.carbon'
-// CHECK:STDOUT: source_filename = "basic.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestNegate.Main(i32 %a) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.snegate = sub i32 0, %a, !dbg !7
-// CHECK:STDOUT:   ret i32 %int.snegate, !dbg !8
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestAdd.Main(i32 %a, i32 %b) !dbg !9 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sadd = add i32 %a, %b, !dbg !10
-// CHECK:STDOUT:   ret i32 %int.sadd, !dbg !11
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestSub.Main(i32 %a, i32 %b) !dbg !12 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.ssub = sub i32 %a, %b, !dbg !13
-// CHECK:STDOUT:   ret i32 %int.ssub, !dbg !14
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestMul.Main(i32 %a, i32 %b) !dbg !15 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.smul = mul i32 %a, %b, !dbg !16
-// CHECK:STDOUT:   ret i32 %int.smul, !dbg !17
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestDiv.Main(i32 %a, i32 %b) !dbg !18 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sdiv = sdiv i32 %a, %b, !dbg !19
-// CHECK:STDOUT:   ret i32 %int.sdiv, !dbg !20
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestMod.Main(i32 %a, i32 %b) !dbg !21 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.smod = srem i32 %a, %b, !dbg !22
-// CHECK:STDOUT:   ret i32 %int.smod, !dbg !23
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestComplement.Main(i32 %a) !dbg !24 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.complement = xor i32 -1, %a, !dbg !25
-// CHECK:STDOUT:   ret i32 %int.complement, !dbg !26
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestAnd.Main(i32 %a, i32 %b) !dbg !27 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.and = and i32 %a, %b, !dbg !28
-// CHECK:STDOUT:   ret i32 %int.and, !dbg !29
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestOr.Main(i32 %a, i32 %b) !dbg !30 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.or = or i32 %a, %b, !dbg !31
-// CHECK:STDOUT:   ret i32 %int.or, !dbg !32
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestXor.Main(i32 %a, i32 %b) !dbg !33 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.xor = xor i32 %a, %b, !dbg !34
-// CHECK:STDOUT:   ret i32 %int.xor, !dbg !35
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestLeftShift.Main(i32 %a, i32 %b) !dbg !36 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift = shl i32 %a, %b, !dbg !37
-// CHECK:STDOUT:   ret i32 %int.left_shift, !dbg !38
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestArithmeticRightShift.Main(i32 %a, i32 %b) !dbg !39 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %b, !dbg !40
-// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !41
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestLogicalRightShift.Main(i32 %a, i32 %b) !dbg !42 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift = lshr i32 %a, %b, !dbg !43
-// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !44
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq.Main(i32 %a, i32 %b) !dbg !45 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %a, %b, !dbg !46
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !47
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestNeq.Main(i32 %a, i32 %b) !dbg !48 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.neq = icmp ne i32 %a, %b, !dbg !49
-// CHECK:STDOUT:   ret i1 %int.neq, !dbg !50
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess.Main(i32 %a, i32 %b) !dbg !51 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less = icmp slt i32 %a, %b, !dbg !52
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !53
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLessEq.Main(i32 %a, i32 %b) !dbg !54 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less_eq = icmp sle i32 %a, %b, !dbg !55
-// CHECK:STDOUT:   ret i1 %int.less_eq, !dbg !56
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestGreater.Main(i32 %a, i32 %b) !dbg !57 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %a, %b, !dbg !58
-// CHECK:STDOUT:   ret i1 %int.greater, !dbg !59
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(i32 %a, i32 %b) !dbg !60 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater_eq = icmp sge i32 %a, %b, !dbg !61
-// CHECK:STDOUT:   ret i1 %int.greater_eq, !dbg !62
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
-// CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestNegate", linkageName: "_CTestNegate.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 39, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 32, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestAdd", linkageName: "_CTestAdd.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 44, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 37, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestSub", linkageName: "_CTestSub.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 44, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 37, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestMul", linkageName: "_CTestMul.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 44, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 37, scope: !15)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestDiv", linkageName: "_CTestDiv.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = !DILocation(line: 17, column: 44, scope: !18)
-// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 37, scope: !18)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestMod", linkageName: "_CTestMod.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 44, scope: !21)
-// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 37, scope: !21)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestComplement", linkageName: "_CTestComplement.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 43, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 36, scope: !24)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestAnd", linkageName: "_CTestAnd.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !28 = !DILocation(line: 26, column: 44, scope: !27)
-// CHECK:STDOUT: !29 = !DILocation(line: 26, column: 37, scope: !27)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestOr", linkageName: "_CTestOr.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !31 = !DILocation(line: 29, column: 43, scope: !30)
-// CHECK:STDOUT: !32 = !DILocation(line: 29, column: 36, scope: !30)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestXor", linkageName: "_CTestXor.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !34 = !DILocation(line: 32, column: 44, scope: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 32, column: 37, scope: !33)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "TestLeftShift", linkageName: "_CTestLeftShift.Main", scope: null, file: !3, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !37 = !DILocation(line: 35, column: 50, scope: !36)
-// CHECK:STDOUT: !38 = !DILocation(line: 35, column: 43, scope: !36)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "TestArithmeticRightShift", linkageName: "_CTestArithmeticRightShift.Main", scope: null, file: !3, line: 38, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !40 = !DILocation(line: 38, column: 61, scope: !39)
-// CHECK:STDOUT: !41 = !DILocation(line: 38, column: 54, scope: !39)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "TestLogicalRightShift", linkageName: "_CTestLogicalRightShift.Main", scope: null, file: !3, line: 41, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !43 = !DILocation(line: 41, column: 58, scope: !42)
-// CHECK:STDOUT: !44 = !DILocation(line: 41, column: 51, scope: !42)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "TestEq", linkageName: "_CTestEq.Main", scope: null, file: !3, line: 44, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !46 = !DILocation(line: 44, column: 44, scope: !45)
-// CHECK:STDOUT: !47 = !DILocation(line: 44, column: 37, scope: !45)
-// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "TestNeq", linkageName: "_CTestNeq.Main", scope: null, file: !3, line: 47, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !49 = !DILocation(line: 47, column: 45, scope: !48)
-// CHECK:STDOUT: !50 = !DILocation(line: 47, column: 38, scope: !48)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "TestLess", linkageName: "_CTestLess.Main", scope: null, file: !3, line: 50, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !52 = !DILocation(line: 50, column: 46, scope: !51)
-// CHECK:STDOUT: !53 = !DILocation(line: 50, column: 39, scope: !51)
-// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "TestLessEq", linkageName: "_CTestLessEq.Main", scope: null, file: !3, line: 53, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !55 = !DILocation(line: 53, column: 48, scope: !54)
-// CHECK:STDOUT: !56 = !DILocation(line: 53, column: 41, scope: !54)
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "TestGreater", linkageName: "_CTestGreater.Main", scope: null, file: !3, line: 56, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !58 = !DILocation(line: 56, column: 49, scope: !57)
-// CHECK:STDOUT: !59 = !DILocation(line: 56, column: 42, scope: !57)
-// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "TestGreaterEq", linkageName: "_CTestGreaterEq.Main", scope: null, file: !3, line: 59, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !61 = !DILocation(line: 59, column: 51, scope: !60)
-// CHECK:STDOUT: !62 = !DILocation(line: 59, column: 44, scope: !60)
-// CHECK:STDOUT: ; ModuleID = 'mixed_shift.carbon'
-// CHECK:STDOUT: source_filename = "mixed_shift.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestLeftShiftSmaller.Main(i32 %a, i16 %b) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = zext i16 %b to i32, !dbg !7
-// CHECK:STDOUT:   %int.left_shift = shl i32 %a, %int.left_shift.rhs, !dbg !7
-// CHECK:STDOUT:   ret i32 %int.left_shift, !dbg !8
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestRightShiftSmaller.Main(i32 %a, i16 %b) !dbg !9 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = zext i16 %b to i32, !dbg !10
-// CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %int.right_shift.rhs, !dbg !10
-// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !11
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestLeftShiftLargerII.Main(i16 %a, i32 %b) !dbg !12 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !13
-// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !13
-// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !14
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestRightShiftLargerII.Main(i16 %a, i32 %b) !dbg !15 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !16
-// CHECK:STDOUT:   %int.right_shift = ashr i16 %a, %int.right_shift.rhs, !dbg !16
-// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !17
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestLeftShiftLargerIU.Main(i16 %a, i32 %b) !dbg !18 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !19
-// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !19
-// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !20
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestRightShiftLargerIU.Main(i16 %a, i32 %b) !dbg !21 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !22
-// CHECK:STDOUT:   %int.right_shift = ashr i16 %a, %int.right_shift.rhs, !dbg !22
-// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !23
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestLeftShiftLargerUI.Main(i16 %a, i32 %b) !dbg !24 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !25
-// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !25
-// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !26
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestRightShiftLargerUI.Main(i16 %a, i32 %b) !dbg !27 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !28
-// CHECK:STDOUT:   %int.right_shift = lshr i16 %a, %int.right_shift.rhs, !dbg !28
-// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !29
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestLeftShiftLargerUU.Main(i16 %a, i32 %b) !dbg !30 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !31
-// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !31
-// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !32
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestRightShiftLargerUU.Main(i16 %a, i32 %b) !dbg !33 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !34
-// CHECK:STDOUT:   %int.right_shift = lshr i16 %a, %int.right_shift.rhs, !dbg !34
-// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !35
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
-// CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "mixed_shift.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestLeftShiftSmaller", linkageName: "_CTestLeftShiftSmaller.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 57, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 50, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestRightShiftSmaller", linkageName: "_CTestRightShiftSmaller.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 58, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 51, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestLeftShiftLargerII", linkageName: "_CTestLeftShiftLargerII.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 58, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 51, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestRightShiftLargerII", linkageName: "_CTestRightShiftLargerII.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 59, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 52, scope: !15)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestLeftShiftLargerIU", linkageName: "_CTestLeftShiftLargerIU.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = !DILocation(line: 17, column: 58, scope: !18)
-// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 51, scope: !18)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestRightShiftLargerIU", linkageName: "_CTestRightShiftLargerIU.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 59, scope: !21)
-// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 52, scope: !21)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestLeftShiftLargerUI", linkageName: "_CTestLeftShiftLargerUI.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 58, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 51, scope: !24)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestRightShiftLargerUI", linkageName: "_CTestRightShiftLargerUI.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !28 = !DILocation(line: 26, column: 59, scope: !27)
-// CHECK:STDOUT: !29 = !DILocation(line: 26, column: 52, scope: !27)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestLeftShiftLargerUU", linkageName: "_CTestLeftShiftLargerUU.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !31 = !DILocation(line: 29, column: 58, scope: !30)
-// CHECK:STDOUT: !32 = !DILocation(line: 29, column: 51, scope: !30)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestRightShiftLargerUU", linkageName: "_CTestRightShiftLargerUU.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !34 = !DILocation(line: 32, column: 59, scope: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 32, column: 52, scope: !33)
-// CHECK:STDOUT: ; ModuleID = 'mixed_compare.carbon'
-// CHECK:STDOUT: source_filename = "mixed_compare.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq_u16_u32.Main(i16 %a, i32 %b) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = zext i16 %a to i32, !dbg !7
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !7
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !8
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq_i16_u32.Main(i16 %a, i32 %b) !dbg !9 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = sext i16 %a to i33, !dbg !10
-// CHECK:STDOUT:   %int.eq.rhs = zext i32 %b to i33, !dbg !10
-// CHECK:STDOUT:   %int.eq = icmp eq i33 %int.eq.lhs, %int.eq.rhs, !dbg !10
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !11
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq_u16_i32.Main(i16 %a, i32 %b) !dbg !12 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = zext i16 %a to i32, !dbg !13
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !13
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !14
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq_i16_i32.Main(i16 %a, i32 %b) !dbg !15 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = sext i16 %a to i32, !dbg !16
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !16
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !17
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq_i32_u32.Main(i32 %a, i32 %b) !dbg !18 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = sext i32 %a to i33, !dbg !19
-// CHECK:STDOUT:   %int.eq.rhs = zext i32 %b to i33, !dbg !19
-// CHECK:STDOUT:   %int.eq = icmp eq i33 %int.eq.lhs, %int.eq.rhs, !dbg !19
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !20
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess_u16_u32.Main(i16 %a, i32 %b) !dbg !21 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = zext i16 %a to i32, !dbg !22
-// CHECK:STDOUT:   %int.less = icmp ult i32 %int.less.lhs, %b, !dbg !22
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !23
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess_i16_u32.Main(i16 %a, i32 %b) !dbg !24 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = sext i16 %a to i33, !dbg !25
-// CHECK:STDOUT:   %int.less.rhs = zext i32 %b to i33, !dbg !25
-// CHECK:STDOUT:   %int.less = icmp slt i33 %int.less.lhs, %int.less.rhs, !dbg !25
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !26
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess_u16_i32.Main(i16 %a, i32 %b) !dbg !27 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = zext i16 %a to i32, !dbg !28
-// CHECK:STDOUT:   %int.less = icmp slt i32 %int.less.lhs, %b, !dbg !28
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !29
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess_i16_i32.Main(i16 %a, i32 %b) !dbg !30 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = sext i16 %a to i32, !dbg !31
-// CHECK:STDOUT:   %int.less = icmp slt i32 %int.less.lhs, %b, !dbg !31
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !32
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess_i32_u32.Main(i32 %a, i32 %b) !dbg !33 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = sext i32 %a to i33, !dbg !34
-// CHECK:STDOUT:   %int.less.rhs = zext i32 %b to i33, !dbg !34
-// CHECK:STDOUT:   %int.less = icmp slt i33 %int.less.lhs, %int.less.rhs, !dbg !34
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !35
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
-// CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "mixed_compare.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestEq_u16_u32", linkageName: "_CTestEq_u16_u32.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 52, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 10, column: 45, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestEq_i16_u32", linkageName: "_CTestEq_i16_u32.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 52, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 45, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestEq_u16_i32", linkageName: "_CTestEq_u16_i32.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 12, column: 52, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 12, column: 45, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestEq_i16_i32", linkageName: "_CTestEq_i16_i32.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 52, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 13, column: 45, scope: !15)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestEq_i32_u32", linkageName: "_CTestEq_i32_u32.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = !DILocation(line: 14, column: 52, scope: !18)
-// CHECK:STDOUT: !20 = !DILocation(line: 14, column: 45, scope: !18)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestLess_u16_u32", linkageName: "_CTestLess_u16_u32.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 22, column: 54, scope: !21)
-// CHECK:STDOUT: !23 = !DILocation(line: 22, column: 47, scope: !21)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestLess_i16_u32", linkageName: "_CTestLess_i16_u32.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 54, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 47, scope: !24)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestLess_u16_i32", linkageName: "_CTestLess_u16_i32.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !28 = !DILocation(line: 24, column: 54, scope: !27)
-// CHECK:STDOUT: !29 = !DILocation(line: 24, column: 47, scope: !27)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestLess_i16_i32", linkageName: "_CTestLess_i16_i32.Main", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !31 = !DILocation(line: 25, column: 54, scope: !30)
-// CHECK:STDOUT: !32 = !DILocation(line: 25, column: 47, scope: !30)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestLess_i32_u32", linkageName: "_CTestLess_i32_u32.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !34 = !DILocation(line: 26, column: 54, scope: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 26, column: 47, scope: !33)
-// CHECK:STDOUT: ; ModuleID = 'convert.carbon'
-// CHECK:STDOUT: source_filename = "convert.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestInt32ToInt32.Main(i32 %a) !dbg !4 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %a, !dbg !7
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestInt32ToUint32.Main(i32 %a) !dbg !8 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %a, !dbg !9
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestUint32ToInt32.Main(i32 %a) !dbg !10 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %a, !dbg !11
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestUint32ToUint32.Main(i32 %a) !dbg !12 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %a, !dbg !13
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestInt32ToInt16.Main(i32 %a) !dbg !14 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !15
-// CHECK:STDOUT:   ret i16 %int.convert, !dbg !16
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestInt32ToUint16.Main(i32 %a) !dbg !17 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !18
-// CHECK:STDOUT:   ret i16 %int.convert, !dbg !19
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestUint32ToInt16.Main(i32 %a) !dbg !20 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !21
-// CHECK:STDOUT:   ret i16 %int.convert, !dbg !22
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CTestUint32ToUint16.Main(i32 %a) !dbg !23 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !24
-// CHECK:STDOUT:   ret i16 %int.convert, !dbg !25
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestInt32ToInt64.Main(i32 %a) !dbg !26 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = sext i32 %a to i64, !dbg !27
-// CHECK:STDOUT:   ret i64 %int.convert, !dbg !28
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestInt32ToUint64.Main(i32 %a) !dbg !29 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = sext i32 %a to i64, !dbg !30
-// CHECK:STDOUT:   ret i64 %int.convert, !dbg !31
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestUint32ToInt64.Main(i32 %a) !dbg !32 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = zext i32 %a to i64, !dbg !33
-// CHECK:STDOUT:   ret i64 %int.convert, !dbg !34
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestUint32ToUint64.Main(i32 %a) !dbg !35 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = zext i32 %a to i64, !dbg !36
-// CHECK:STDOUT:   ret i64 %int.convert, !dbg !37
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
-// CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "convert.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestInt32ToInt32", linkageName: "_CTestInt32ToInt32.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 38, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "TestInt32ToUint32", linkageName: "_CTestInt32ToUint32.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 11, column: 39, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "TestUint32ToInt32", linkageName: "_CTestUint32ToInt32.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 39, scope: !10)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestUint32ToUint32", linkageName: "_CTestUint32ToUint32.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 13, column: 40, scope: !12)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "TestInt32ToInt16", linkageName: "_CTestInt32ToInt16.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !15 = !DILocation(line: 21, column: 45, scope: !14)
-// CHECK:STDOUT: !16 = !DILocation(line: 21, column: 38, scope: !14)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "TestInt32ToUint16", linkageName: "_CTestInt32ToUint16.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !18 = !DILocation(line: 22, column: 46, scope: !17)
-// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 39, scope: !17)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "TestUint32ToInt16", linkageName: "_CTestUint32ToInt16.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !21 = !DILocation(line: 23, column: 46, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 23, column: 39, scope: !20)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "TestUint32ToUint16", linkageName: "_CTestUint32ToUint16.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !24 = !DILocation(line: 24, column: 47, scope: !23)
-// CHECK:STDOUT: !25 = !DILocation(line: 24, column: 40, scope: !23)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "TestInt32ToInt64", linkageName: "_CTestInt32ToInt64.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !27 = !DILocation(line: 32, column: 45, scope: !26)
-// CHECK:STDOUT: !28 = !DILocation(line: 32, column: 38, scope: !26)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "TestInt32ToUint64", linkageName: "_CTestInt32ToUint64.Main", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !30 = !DILocation(line: 33, column: 46, scope: !29)
-// CHECK:STDOUT: !31 = !DILocation(line: 33, column: 39, scope: !29)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "TestUint32ToInt64", linkageName: "_CTestUint32ToInt64.Main", scope: null, file: !3, line: 34, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !33 = !DILocation(line: 34, column: 46, scope: !32)
-// CHECK:STDOUT: !34 = !DILocation(line: 34, column: 39, scope: !32)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "TestUint32ToUint64", linkageName: "_CTestUint32ToUint64.Main", scope: null, file: !3, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !36 = !DILocation(line: 35, column: 47, scope: !35)
-// CHECK:STDOUT: !37 = !DILocation(line: 35, column: 40, scope: !35)

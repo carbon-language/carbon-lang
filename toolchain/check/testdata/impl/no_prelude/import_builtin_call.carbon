@@ -28,13 +28,6 @@ impl forall [N:! IntLiteral()] MyInt(N) as Add {
 }
 
 fn Double[N:! IntLiteral()](x: MyInt(N)) -> MyInt(N) {
-  // CHECK:STDERR: generic_impl.carbon:[[@LINE+7]]:13: error: member access into undefined facet type `Add` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   return x.(Add.Op)(x);
-  // CHECK:STDERR:             ^~~~~~
-  // CHECK:STDERR: generic_impl.carbon:[[@LINE-19]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface Add {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   return x.(Add.Op)(x);
 }
 
@@ -120,6 +113,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %MyInt, (%impl_witness) [symbolic]
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [concrete]
 // CHECK:STDOUT:   %Double: %Double.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.9b8: type = fn_type_with_self_type %Op.type.31b, %Add.facet [symbolic]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.8bc, @Op.2(%N) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -339,14 +334,27 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Double.%MyInt.loc19_39.2 (%MyInt) [symbolic = %require_complete (constants.%require_complete.fc7)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl), @impl(%N.loc19_11.2) [symbolic = %impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %MyInt.loc19_39.2, (%impl_witness) [symbolic = %Add.facet (constants.%Add.facet)]
+// CHECK:STDOUT:   %.loc20_11: type = fn_type_with_self_type constants.%Op.type.31b, %Add.facet [symbolic = %.loc20_11 (constants.%.9b8)]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N.loc19_11.2) [symbolic = %Op.type (constants.%Op.type.883)]
+// CHECK:STDOUT:   %Op: @Double.%Op.type (%Op.type.883) = struct_value () [symbolic = %Op (constants.%Op.8bc)]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op, @Op.2(%N.loc19_11.2) [symbolic = %Op.specific_fn (constants.%Op.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.patt.loc19_11.1: Core.IntLiteral](%x.param_patt: @Double.%MyInt.loc19_39.2 (%MyInt)) -> @Double.%MyInt.loc19_39.2 (%MyInt) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref.loc27_10: @Double.%MyInt.loc19_39.2 (%MyInt) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc20_10: @Double.%MyInt.loc19_39.2 (%MyInt) = name_ref x, %x
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, file.%Add.decl [concrete = constants.%Add.type]
-// CHECK:STDOUT:     %Op.ref: <error> = name_ref Op, <error> [concrete = <error>]
-// CHECK:STDOUT:     %x.ref.loc27_21: @Double.%MyInt.loc19_39.2 (%MyInt) = name_ref x, %x
-// CHECK:STDOUT:     return <error>
+// CHECK:STDOUT:     %Op.ref: %Add.assoc_type = name_ref Op, @Add.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %impl.elem0: @Double.%.loc20_11 (%.9b8) = impl_witness_access constants.%impl_witness, element0 [symbolic = %Op (constants.%Op.8bc)]
+// CHECK:STDOUT:     %bound_method.loc20_11: <bound method> = bound_method %x.ref.loc20_10, %impl.elem0
+// CHECK:STDOUT:     %x.ref.loc20_21: @Double.%MyInt.loc19_39.2 (%MyInt) = name_ref x, %x
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%N) [symbolic = %Op.specific_fn (constants.%Op.specific_fn)]
+// CHECK:STDOUT:     %bound_method.loc20_22: <bound method> = bound_method %x.ref.loc20_10, %specific_fn
+// CHECK:STDOUT:     %int.sadd: init @Double.%MyInt.loc19_39.2 (%MyInt) = call %bound_method.loc20_22(%x.ref.loc20_10, %x.ref.loc20_21)
+// CHECK:STDOUT:     %.loc20_23.1: @Double.%MyInt.loc19_39.2 (%MyInt) = value_of_initializer %int.sadd
+// CHECK:STDOUT:     %.loc20_23.2: @Double.%MyInt.loc19_39.2 (%MyInt) = converted %int.sadd, %.loc20_23.1
+// CHECK:STDOUT:     return %.loc20_23.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -370,6 +378,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %N.patt.loc15_14.2 => constants.%N
 // CHECK:STDOUT:   %MyInt.loc15_39.2 => constants.%MyInt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type => constants.%Op.type.883
+// CHECK:STDOUT:   %Op => constants.%Op.8bc
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.fc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MyInt(@impl.%N.loc15_14.2) {}
@@ -379,6 +392,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: specific @Op.2(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
@@ -395,6 +410,10 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MyInt(@Double.%N.loc19_11.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@Double.%N.loc19_11.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(@Double.%N.loc19_11.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_generic_impl.carbon
 // CHECK:STDOUT:
@@ -414,12 +433,29 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %i64.builtin: type = int_type signed, %int_64 [concrete]
 // CHECK:STDOUT:   %complete_type.4a1: <witness> = complete_type_witness %i64.builtin [concrete]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete]
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %CallImportedDouble.type: type = fn_type @CallImportedDouble [concrete]
 // CHECK:STDOUT:   %CallImportedDouble: %CallImportedDouble.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [concrete]
 // CHECK:STDOUT:   %Double: %Double.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.fc7: <witness> = require_complete_type %MyInt.09f [symbolic]
+// CHECK:STDOUT:   %impl_witness.7e5be3.1: <witness> = impl_witness (imports.%Main.import_ref.464c51.1), @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Add.facet.afa: %Add.type = facet_value %MyInt.09f, (%impl_witness.7e5be3.1) [symbolic]
+// CHECK:STDOUT:   %Op.type.31b: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %.207: type = fn_type_with_self_type %Op.type.31b, %Add.facet.afa [symbolic]
+// CHECK:STDOUT:   %Op.type.883: type = fn_type @Op.2, @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Op.8bc: %Op.type.883 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Op.specific_fn.6c0: <specific function> = specific_function %Op.8bc, @Op.2(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.7e5be3.2: <witness> = impl_witness (imports.%Main.import_ref.464c51.2), @impl(%N) [symbolic]
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double, @Double(%int_64) [concrete]
+// CHECK:STDOUT:   %impl_witness.bb303b.1: <witness> = impl_witness (imports.%Main.import_ref.464c51.2), @impl(%int_64) [concrete]
+// CHECK:STDOUT:   %impl_witness.bb303b.2: <witness> = impl_witness (imports.%Main.import_ref.464c51.1), @impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Add.facet.287: %Add.type = facet_value %MyInt.f30, (%impl_witness.bb303b.2) [concrete]
+// CHECK:STDOUT:   %.fc5: type = fn_type_with_self_type %Op.type.31b, %Add.facet.287 [concrete]
+// CHECK:STDOUT:   %Op.type.5a6: type = fn_type @Op.2, @impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Op.cf9: %Op.type.5a6 = struct_value () [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.16a: <specific function> = specific_function %Op.cf9, @Op.2(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -435,6 +471,14 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.import_ref.2b8 = import_ref Main//generic_impl, loc5_41, unloaded
 // CHECK:STDOUT:   %Main.Op = import_ref Main//generic_impl, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f1e294.2: Core.IntLiteral = import_ref Main//generic_impl, loc19_11, loaded [symbolic = @Double.%N (constants.%N)]
+// CHECK:STDOUT:   %Main.import_ref.adc = import_ref Main//generic_impl, loc15_48, unloaded
+// CHECK:STDOUT:   %Main.import_ref.f1e294.3: Core.IntLiteral = import_ref Main//generic_impl, loc15_14, loaded [symbolic = @impl.%N (constants.%N)]
+// CHECK:STDOUT:   %Main.import_ref.719: type = import_ref Main//generic_impl, loc15_39, loaded [symbolic = @impl.%MyInt (constants.%MyInt.09f)]
+// CHECK:STDOUT:   %Main.import_ref.bf0: type = import_ref Main//generic_impl, loc15_44, loaded [concrete = constants.%Add.type]
+// CHECK:STDOUT:   %Main.import_ref.464c51.1 = import_ref Main//generic_impl, loc16_42, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//generic_impl, inst16 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.f1e294.4: Core.IntLiteral = import_ref Main//generic_impl, loc15_14, loaded [symbolic = @impl.%N (constants.%N)]
+// CHECK:STDOUT:   %Main.import_ref.464c51.2 = import_ref Main//generic_impl, loc16_42, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -495,6 +539,23 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @impl(imports.%Main.import_ref.f1e294.3: Core.IntLiteral) [from "generic_impl.carbon"] {
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
+// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
+// CHECK:STDOUT:   %MyInt: type = class_type @MyInt, @MyInt(%N) [symbolic = %MyInt (constants.%MyInt.09f)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.464c51.2), @impl(%N) [symbolic = %impl_witness (constants.%impl_witness.7e5be3.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.883)]
+// CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type.883) = struct_value () [symbolic = %Op (constants.%Op.8bc)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%MyInt (%MyInt.09f) [symbolic = %require_complete (constants.%require_complete.fc7)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: imports.%Main.import_ref.719 as imports.%Main.import_ref.bf0 {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     witness = imports.%Main.import_ref.adc
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @MyInt(imports.%Main.import_ref.f1e294.1: Core.IntLiteral) [from "generic_impl.carbon"] {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
@@ -539,8 +600,30 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Double.%MyInt (%MyInt.09f) [symbolic = %require_complete (constants.%require_complete.fc7)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.464c51.1), @impl(%N) [symbolic = %impl_witness (constants.%impl_witness.7e5be3.1)]
+// CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %MyInt, (%impl_witness) [symbolic = %Add.facet (constants.%Add.facet.afa)]
+// CHECK:STDOUT:   %.1: type = fn_type_with_self_type constants.%Op.type.31b, %Add.facet [symbolic = %.1 (constants.%.207)]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.883)]
+// CHECK:STDOUT:   %Op: @Double.%Op.type (%Op.type.883) = struct_value () [symbolic = %Op (constants.%Op.8bc)]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op, @Op.2(%N) [symbolic = %Op.specific_fn (constants.%Op.specific_fn.6c0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.patt.1: Core.IntLiteral](%x.param_patt: @Double.%MyInt (%MyInt.09f)) -> @Double.%MyInt (%MyInt.09f);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.1(imports.%Main.import_ref.e5e: %Add.type) [from "generic_impl.carbon"] {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type)) -> @Op.1.%Self.as_type (%Self.as_type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.2(imports.%Main.import_ref.f1e294.4: Core.IntLiteral) [from "generic_impl.carbon"] {
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
+// CHECK:STDOUT:   %MyInt: type = class_type @MyInt, @MyInt(%N) [symbolic = %MyInt (constants.%MyInt.09f)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%MyInt (%MyInt.09f)](%other.param_patt: @Op.2.%MyInt (%MyInt.09f)) -> @Op.2.%MyInt (%MyInt.09f) = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MyInt(constants.%N) {
@@ -571,6 +654,40 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.09f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%N) {
+// CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT:   %N.patt => constants.%N
+// CHECK:STDOUT:   %MyInt => constants.%MyInt.09f
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.7e5be3.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Op.type => constants.%Op.type.883
+// CHECK:STDOUT:   %Op => constants.%Op.8bc
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.fc7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%N) {
+// CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT:   %MyInt => constants.%MyInt.09f
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(@Double.%N) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(@Double.%N) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @MyInt(@impl.%N) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(%N) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.1(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%int_64) {
 // CHECK:STDOUT:   %N => constants.%int_64
 // CHECK:STDOUT:   %N.patt.2 => constants.%int_64
@@ -578,6 +695,24 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.4a1
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.bb303b.2
+// CHECK:STDOUT:   %Add.facet => constants.%Add.facet.287
+// CHECK:STDOUT:   %.1 => constants.%.fc5
+// CHECK:STDOUT:   %Op.type => constants.%Op.type.5a6
+// CHECK:STDOUT:   %Op => constants.%Op.cf9
+// CHECK:STDOUT:   %Op.specific_fn => constants.%Op.specific_fn.16a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(constants.%int_64) {
+// CHECK:STDOUT:   %N => constants.%int_64
+// CHECK:STDOUT:   %N.patt => constants.%int_64
+// CHECK:STDOUT:   %MyInt => constants.%MyInt.f30
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.bb303b.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%int_64) {
+// CHECK:STDOUT:   %N => constants.%int_64
+// CHECK:STDOUT:   %MyInt => constants.%MyInt.f30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- convert_symbolic.carbon

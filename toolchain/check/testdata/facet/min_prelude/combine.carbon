@@ -90,19 +90,12 @@ fn F() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & B))).((A & B).BB)();
-  // CHECK:STDERR: combine.carbon:[[@LINE+14]]:24: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
+  // CHECK:STDERR: combine.carbon:[[@LINE+7]]:24: error: member access into undefined facet type `Core.BitAnd` [QualifiedExprInUndefinedFacetTypeScope]
   // CHECK:STDERR:   (({} as C) as (C as (A & B))).(B.BB)();
   // CHECK:STDERR:                        ^~~~~
   // CHECK:STDERR: include_files/facet_types.carbon:17:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface BitAnd {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: combine.carbon:[[@LINE+7]]:34: error: member access into undefined facet type `B` [QualifiedExprInUndefinedFacetTypeScope]
-  // CHECK:STDERR:   (({} as C) as (C as (A & B))).(B.BB)();
-  // CHECK:STDERR:                                  ^~~~
-  // CHECK:STDERR: combine.carbon:[[@LINE-54]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface B {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
   (({} as C) as (C as (A & B))).(B.BB)();
 
