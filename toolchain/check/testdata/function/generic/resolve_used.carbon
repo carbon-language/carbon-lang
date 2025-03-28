@@ -7,7 +7,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
-// CHECK:STDERR: /usr/local/google/home/richardsmith/.cache/bazel/_bazel_richardsmith/6a55cebe9c704783710516afebb4acd9/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:13:9: error: integer type width of 0 is not positive [IntWidthNotPositive]
+// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:13:9: error: integer type width of 0 is not positive [IntWidthNotPositive]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
 
