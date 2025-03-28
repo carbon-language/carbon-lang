@@ -7,7 +7,6 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/name_lookup.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -77,15 +76,6 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
 auto RequireIdentifiedFacetType(Context& context,
                                 const SemIR::FacetType& facet_type)
     -> SemIR::IdentifiedFacetTypeId;
-
-// Require that a facet type is defined (definition started), in order to
-// perform name lookup into it. Diagnoses errors by adding notes to the builder
-// returned by `diagnoser`. Always adds at least one scope to `*scopes`, though
-// it may be empty on error.
-auto RequireDefinedFacetType(Context& context,
-                             const SemIR::FacetType& facet_type,
-                             llvm::SmallVector<LookupScope>* scopes,
-                             MakeDiagnosticBuilderFn diagnoser) -> void;
 
 // Adds a note to a diagnostic explaining that a class is incomplete.
 auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,

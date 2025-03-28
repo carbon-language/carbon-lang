@@ -2316,7 +2316,6 @@ static auto AddInterfaceDefinition(ImportContext& context,
                                    const SemIR::Interface& import_interface,
                                    SemIR::Interface& new_interface,
                                    SemIR::InstId self_param_id) -> void {
-  new_interface.definition_id = new_interface.first_owning_decl_id;
   new_interface.scope_id = context.local_name_scopes().Add(
       new_interface.first_owning_decl_id, SemIR::NameId::None,
       new_interface.parent_scope_id);

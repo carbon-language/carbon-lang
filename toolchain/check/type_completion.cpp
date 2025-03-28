@@ -633,45 +633,6 @@ auto RequireIdentifiedFacetType(Context& context,
   return context.identified_facet_types().Add(facet_type.facet_type_id, result);
 }
 
-static auto NoteInterfaceForwardDeclared(SemIR::InstId decl_id,
-                                         DiagnosticBuilder& builder) {
-  CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
-                    "interface was forward declared here");
-  builder.Note(decl_id, InterfaceForwardDeclaredHere);
-}
-
-auto RequireDefinedFacetType(Context& context,
-                             const SemIR::FacetType& facet_type,
-                             llvm::SmallVector<LookupScope>* scopes,
-                             MakeDiagnosticBuilderFn diagnoser) -> void {
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
-  std::optional<DiagnosticBuilder> builder;
-  bool added_a_scope = false;
-  for (const auto& impls : facet_type_info.impls_constraints) {
-    const auto& interface_info = context.interfaces().Get(impls.interface_id);
-    if (interface_info.has_definition_started()) {
-      scopes->push_back({.name_scope_id = interface_info.scope_id,
-                         .specific_id = impls.specific_id});
-      added_a_scope = true;
-    } else {
-      if (!builder) {
-        builder = diagnoser();
-      }
-      NoteInterfaceForwardDeclared(interface_info.latest_decl_id(), *builder);
-    }
-  }
-  if (builder) {
-    builder->Emit();
-  }
-  if (!added_a_scope) {
-    // Don't produce any more errors looking into this scope since we've already
-    // issued a diagnostic on error.
-    scopes->push_back({.name_scope_id = SemIR::NameScopeId::None,
-                       .specific_id = SemIR::SpecificId::None});
-  }
-}
-
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,
                     SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::TypeId {
@@ -718,7 +679,9 @@ auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
     builder.Note(interface_info.definition_id,
                  InterfaceIncompleteWithinDefinition);
   } else {
-    NoteInterfaceForwardDeclared(interface_info.latest_decl_id(), builder);
+    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                      "interface was forward declared here");
+    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
   }
 }
 

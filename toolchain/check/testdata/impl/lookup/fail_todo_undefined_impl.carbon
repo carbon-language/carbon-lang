@@ -19,7 +19,7 @@ class C {
 }
 
 fn F() -> i32 {
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+8]]:10: error: accessing member from impl before the end of its definition [ImplAccessMemberBeforeComplete]
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+8]]:10: error: accessing member from impl before it has a value [ImplAccessMemberBeforeSet]
   // CHECK:STDERR:   return C.F();
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
@@ -46,15 +46,15 @@ impl C as I {
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %impl_witness.85b: <witness> = impl_witness (<error>) [concrete]
+// CHECK:STDOUT:   %impl_witness.1bc: <witness> = impl_witness () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.facet.2df: %I.type = facet_value %C, (%impl_witness.85b) [concrete]
-// CHECK:STDOUT:   %.5b6: type = fn_type_with_self_type %F.type.cf0, %I.facet.2df [concrete]
+// CHECK:STDOUT:   %I.facet.998: %I.type = facet_value %C, (%impl_witness.1bc) [concrete]
+// CHECK:STDOUT:   %.995: type = fn_type_with_self_type %F.type.cf0, %I.facet.998 [concrete]
 // CHECK:STDOUT:   %impl_witness.054: <witness> = impl_witness (@impl.770.%F.decl) [concrete]
 // CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [concrete]
@@ -121,7 +121,7 @@ impl C as I {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [concrete = constants.%impl_witness.85b]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness.1bc]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -140,7 +140,7 @@ impl C as I {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.5b6 = impl_witness_access constants.%impl_witness.85b, element0 [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: %.995 = impl_witness_access constants.%impl_witness.1bc, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

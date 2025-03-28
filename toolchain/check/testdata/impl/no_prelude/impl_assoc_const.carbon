@@ -339,7 +339,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I3.assoc_type: type = assoc_entity_type %I3.type [concrete]
 // CHECK:STDOUT:   %assoc0: %I3.assoc_type = assoc_entity element0, @I3.%T3 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness.85b: <witness> = impl_witness (<error>) [concrete]
+// CHECK:STDOUT:   %impl_witness.1bc: <witness> = impl_witness () [concrete]
 // CHECK:STDOUT:   %.Self: %I3.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_wit.iface0: <witness> = facet_access_witness %.Self, element0 [symbolic_self]
@@ -360,7 +360,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.loc9_7.2: type = converted %.loc9_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I3.ref: type = name_ref I3, file.%I3.decl [concrete = constants.%I3.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc9: <witness> = impl_witness (<error>) [concrete = constants.%impl_witness.85b]
+// CHECK:STDOUT:   %impl_witness.loc9: <witness> = impl_witness () [concrete = constants.%impl_witness.1bc]
 // CHECK:STDOUT:   impl_decl @impl.2b6 [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
