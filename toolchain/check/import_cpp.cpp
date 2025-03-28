@@ -50,7 +50,7 @@ namespace {
 class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
   // Creates an instance with the location that triggers calling Clang.
-  CarbonClangDiagnosticConsumer(Context& context, SemIRLoc loc)
+  CarbonClangDiagnosticConsumer(Context* context, SemIRLoc loc)
       : context_(context), loc_(loc) {}
 
   // Generates a Carbon warning for each Clang warning and a Carbon error for
@@ -81,7 +81,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
       case clang::DiagnosticsEngine::Ignored:
       case clang::DiagnosticsEngine::Note:
       case clang::DiagnosticsEngine::Remark: {
-        context_.TODO(
+        context_->TODO(
             loc_, llvm::formatv(
                       "Unsupported: C++ diagnostic level for diagnostic\n{0}",
                       diagnostics_str));
@@ -97,7 +97,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
         CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
 
         // TODO: Use a more specific location.
-        context_.emitter()
+        context_->emitter()
             .Build(SemIR::LocId::None,
                    diag_level == clang::DiagnosticsEngine::Warning
                        ? CppInteropParseWarning
@@ -112,7 +112,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
  private:
   // The type-checking context in which we're running Clang.
-  Context& context_;
+  Context* context_;
 
   // The location that triggered calling Clang.
   SemIRLoc loc_;
@@ -135,7 +135,7 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   std::string diagnostics_str;
   llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
 
-  CarbonClangDiagnosticConsumer diagnostics_consumer(context, loc);
+  CarbonClangDiagnosticConsumer diagnostics_consumer(&context, loc);
 
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
