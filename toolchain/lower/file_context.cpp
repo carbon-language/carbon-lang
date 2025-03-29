@@ -190,11 +190,6 @@ auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
   }
 
   auto* result = BuildFunctionDecl(function_id, specific_id);
-  // TODO: Add this function to a list of specific functions whose definitions
-  // we need to emit.
-  specific_functions_[specific_id.index] = result;
-  // TODO: Use this to generate definitions for these functions.
-  specific_function_definitions_.push_back({function_id, specific_id});
   return result;
 }
 
@@ -316,6 +311,48 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
 
+  // TODO: Store just enough data to choose not to create a new llvm::Function
+  // if an identical one was created for another specific of the same generic.
+
+  if (!specific_id.has_value()) {
+    return CreateLlvmFunction(function_id, specific_id, function_type_info);
+  }
+
+  auto [existing_specifics, no_existing] =
+      GetLoweredSpecifics(function.generic_id);
+
+  if (no_existing) {
+    existing_specifics.push_back(specific_id);
+    lowered_specifics_types.Insert(specific_id, function_type_info);
+    auto* result =
+        CreateLlvmFunction(function_id, specific_id, function_type_info);
+    specific_functions_[specific_id.index] = result;
+    specific_function_definitions_.push_back({function_id, specific_id});
+    return result;
+  }
+
+  for (auto lowered_specific : existing_specifics) {
+    auto& prev_function_type_info =
+        lowered_specifics_types.Lookup(lowered_specific).value();
+    if (function_type_info.isEqual(prev_function_type_info)) {
+      deduplicate_specifics.Insert(lowered_specific, specific_id);
+      specific_functions_[specific_id.index] =
+          specific_functions_[lowered_specific.index];
+      return specific_functions_[lowered_specific.index];
+    }
+  }
+
+  auto* result =
+      CreateLlvmFunction(function_id, specific_id, function_type_info);
+  specific_functions_[specific_id.index] = result;
+  specific_function_definitions_.push_back({function_id, specific_id});
+  return result;
+}
+
+auto FileContext::CreateLlvmFunction(SemIR::FunctionId function_id,
+                                     SemIR::SpecificId specific_id,
+                                     FunctionTypeInfo& function_type_info)
+    -> llvm::Function* {
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
 

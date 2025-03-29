@@ -104,6 +104,30 @@ class FileContext {
     llvm::SmallVector<SemIR::InstId> param_inst_ids;
     llvm::Type* return_type = nullptr;
     SemIR::InstId return_param_id = SemIR::InstId::None;
+
+    // Compares the types of two functions. This is intended to be used for
+    // specifics of the same generic.
+    auto isEqual(FunctionTypeInfo other) -> bool {
+      // Two specifics of the same generic may not have the same number of
+      // params. It's possible one specific uses a return slot (so has one
+      // more param) while another does not.
+      if (param_inst_ids.size() != other.param_inst_ids.size() ||
+          return_param_id != other.return_param_id) {
+        return false;
+      }
+
+      if (type != other.type || return_type != other.return_type) {
+        return false;
+      }
+
+      for (const auto [param_id, other_param_id] :
+           llvm::zip_equal(param_inst_ids, other.param_inst_ids)) {
+        if (param_id != other_param_id) {
+          return false;
+        }
+      }
+      return true;
+    }
   };
 
   // Retrieve various features of the function's type useful for constructing
@@ -118,6 +142,13 @@ class FileContext {
   auto BuildFunctionDecl(SemIR::FunctionId function_id,
                          SemIR::SpecificId specific_id =
                              SemIR::SpecificId::None) -> llvm::Function*;
+
+  // Helper function for creating the LLVM function. Only used when building
+  // the function declaration.
+  auto CreateLlvmFunction(SemIR::FunctionId function_id,
+                          SemIR::SpecificId specific_id,
+                          FunctionTypeInfo& function_type_info)
+      -> llvm::Function*;
 
   // Builds the definition for the given function. If the function is only a
   // declaration with no definition, does nothing. If this is a generic it'll
@@ -146,6 +177,15 @@ class FileContext {
   // the caller.
   auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
       -> llvm::GlobalVariable*;
+
+  auto GetLoweredSpecifics(SemIR::GenericId generic_id)
+      -> std::pair<llvm::SmallVector<SemIR::SpecificId>&, bool> {
+    llvm::SmallVector<SemIR::SpecificId> existing_specifics;
+    auto ls_entry = lowered_specifics.Insert(generic_id, existing_specifics);
+    llvm::SmallVector<SemIR::SpecificId>& ref_existing_specifics =
+        ls_entry.value();
+    return {ref_existing_specifics, ls_entry.is_inserted()};
+  }
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
@@ -206,6 +246,20 @@ class FileContext {
 
   // Maps global variables to their lowered variant.
   Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
+
+  // For a generic function, keep track of the specifics for which LLVM
+  // function declarations were created. Those can be retrieved then via
+  // from specific_functions_, via specific_functions_[specific_id.index].
+  Map<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>> lowered_specifics;
+  // For specifics that exist in lowered_specifics, store their function type
+  // information: return and parameter types.
+  // TODO: Storing all members of FunctionTypeInfo may not be necessary.
+  Map<SemIR::SpecificId, FunctionTypeInfo> lowered_specifics_types;
+  // For specific_id B we chose not to lower the function, because another
+  // specific_id A from the same generic was already lowered with params of the
+  // same type. Store a Map of <specific_idB, specific_idA> to retrieve the
+  // corresponding llvm function for B, found in specific_functions_.
+  Map<SemIR::SpecificId, SemIR::SpecificId> deduplicate_specifics;
 };
 
 }  // namespace Carbon::Lower
