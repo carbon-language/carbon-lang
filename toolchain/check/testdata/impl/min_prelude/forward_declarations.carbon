@@ -90,7 +90,7 @@ let x: ({} as I).T = ();
 
 impl {} as I where .T = () {}
 
-// --- unset_associated_const.carbon
+// --- fail_todo_unset_associated_const.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -98,17 +98,20 @@ interface I {
 }
 impl {} as I;
 
-// CHECK:STDERR: unset_associated_const.carbon:[[@LINE+14]]:9: error: cannot convert non-type value of type `{}` into type implementing `I` with `as` [ConversionFailureNonTypeToFacet]
+// TODO: Should fail because the associated constant is not set,
+// not because it can't find the impl.
+
+// CHECK:STDERR: fail_todo_unset_associated_const.carbon:[[@LINE+14]]:9: error: cannot convert non-type value of type `{}` into type implementing `I` with `as` [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR: let x: ({} as I).T = ();
 // CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR: unset_associated_const.carbon:[[@LINE+11]]:9: note: type `{}` does not implement interface `Core.As(I)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_unset_associated_const.carbon:[[@LINE+11]]:9: note: type `{}` does not implement interface `Core.As(I)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let x: ({} as I).T = ();
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: unset_associated_const.carbon:[[@LINE-9]]:12: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_todo_unset_associated_const.carbon:[[@LINE-12]]:12: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl {} as I;
 // CHECK:STDERR:            ^
-// CHECK:STDERR: unset_associated_const.carbon:[[@LINE-14]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: fail_todo_unset_associated_const.carbon:[[@LINE-17]]:7: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:   let T:! type;
 // CHECK:STDERR:       ^~~~~~~~
 // CHECK:STDERR:
@@ -1117,7 +1120,7 @@ impl {} as I where .T = () {}
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unset_associated_const.carbon
+// CHECK:STDOUT: --- fail_todo_unset_associated_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
@@ -1193,16 +1196,16 @@ impl {} as I where .T = () {}
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %.loc22_10: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc25_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %.loc22_12: %I.type = converted %.loc22_10, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc25_12: %I.type = converted %.loc25_10, <error> [concrete = <error>]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = bind_name x, <error>
 // CHECK:STDOUT:   impl_decl @impl.8dc [concrete] {} {
-// CHECK:STDOUT:     %.loc24_7.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc24_7.2: type = converted %.loc24_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %I.ref.loc24: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:     %.loc27_7.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc27_7.2: type = converted %.loc27_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %I.ref.loc27: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1289,7 +1292,7 @@ impl {} as I where .T = () {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc22: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc25: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

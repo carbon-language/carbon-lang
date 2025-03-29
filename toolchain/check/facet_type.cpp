@@ -42,19 +42,15 @@ static auto IncompleteFacetTypeBuilder(Context& context, SemIRLoc loc,
                                        SemIR::InstId facet_type_inst_id,
                                        bool is_definition)
     -> DiagnosticBuilder {
-  if (is_definition) {
-    CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
-                      "impl as incomplete facet type {0} definition",
-                      InstIdAsType);
-    return context.emitter().Build(loc, ImplAsIncompleteFacetTypeDefinition,
-                                   facet_type_inst_id);
-  } else {
-    CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeRewrites, Error,
-                      "impl as incomplete facet type {0} with rewrites",
-                      InstIdAsType);
-    return context.emitter().Build(loc, ImplAsIncompleteFacetTypeRewrites,
-                                   facet_type_inst_id);
-  }
+  // The other case is "impl as incomplete facet type with rewrites", but
+  // currently all incomplete facet types with rewrites trigger errors before
+  // this.
+  CARBON_CHECK(is_definition);
+  CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
+                    "impl as incomplete facet type {0} definition",
+                    InstIdAsType);
+  return context.emitter().Build(loc, ImplAsIncompleteFacetTypeDefinition,
+                                 facet_type_inst_id);
 }
 
 auto InitialFacetTypeImplWitness(
