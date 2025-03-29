@@ -111,11 +111,8 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 #include "toolchain/sem_ir/inst_kind.def"
 
   // Returns the `InstKind` for an instruction, for `CARBON_KIND_SWITCH`.
-  //
-  // The `Self` parameter is an implementation detail to allow `ForImpl` to be
-  // defined after this template, and should not be specified.
-  template <typename InstT, typename Self = InstKind>
-  static constexpr auto For = Self::template ForImpl<InstT>();
+  template <typename InstT>
+  static constexpr auto& For = InstT::Kind;
 
   template <typename TypedNodeId>
   class Definition;
@@ -179,12 +176,6 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   }
 
  private:
-  // Translates a inst to its `InstKind`.
-  template <typename InstT>
-  static constexpr auto ForImpl() -> InstKind {
-    return InstT::Kind;
-  }
-
   // Returns the DefinitionInfo for the kind.
   static auto definition_info(InstKind kind) -> const DefinitionInfo&;
 };
