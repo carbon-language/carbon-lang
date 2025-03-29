@@ -285,14 +285,12 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
-      const auto& facet_type_info =
-          context_.facet_types().Get(inst.facet_type_id);
-
-      // FIXME: Require identified, and use that list of interfaces.
+      auto identified_id = RequireIdentifiedFacetType(context_, inst);
+      const auto& identified =
+          context_.identified_facet_types().Get(identified_id);
       // Every mentioned interface needs to be complete.
-      for (auto impl_interface : facet_type_info.impls_constraints) {
-        // TODO: expand named constraints
-        auto interface_id = impl_interface.interface_id;
+      for (auto req_interface : identified.required_interfaces) {
+        auto interface_id = req_interface.interface_id;
         const auto& interface = context_.interfaces().Get(interface_id);
         if (!interface.is_complete()) {
           if (diagnoser_) {
@@ -303,8 +301,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
           return false;
         }
 
-        if (impl_interface.specific_id.has_value()) {
-          ResolveSpecificDefinition(context_, loc_, impl_interface.specific_id);
+        if (req_interface.specific_id.has_value()) {
+          ResolveSpecificDefinition(context_, loc_, req_interface.specific_id);
         }
       }
       break;
