@@ -462,7 +462,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Impl definitions are required in the same file as the declaration. We skip
   // this requirement if we've already issued an invalid redeclaration error.
   if (!is_definition && !invalid_redeclaration) {
-    context.definitions_required().push_back(impl_decl_id);
+    context.definitions_required_by_decl().push_back(impl_decl_id);
   }
 
   return {impl_decl.impl_id, impl_decl_id};

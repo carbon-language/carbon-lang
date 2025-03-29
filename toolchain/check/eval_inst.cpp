@@ -353,7 +353,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
            .self_type_id.has_value()) {
     // This is not an associated function. Those will be required to be defined
     // as part of checking that the impl is complete.
-    context.function_definitions_required().push_back({loc, specific_id});
+    context.definitions_required_by_use().push_back({loc, specific_id});
   }
   return ConstantEvalResult::NewSamePhase(
       SemIR::SpecificFunction{.type_id = inst.type_id,
@@ -367,7 +367,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
            .self_type_id.has_value()) {
     // This is not an associated function. Those will be required to be defined
     // as part of checking that the impl is complete.
-    context.function_definitions_required().push_back({loc, inst.specific_id});
+    context.definitions_required_by_use().push_back({loc, inst.specific_id});
   }
   // Create new constant for a specific function.
   return ConstantEvalResult::NewSamePhase(inst);
