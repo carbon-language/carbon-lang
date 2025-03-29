@@ -17,6 +17,8 @@ namespace Carbon::SemIR {
 template <typename... Types>
 class TypeEnum : public Printable<TypeEnum<Types...>> {
  public:
+  using TypeTuple = std::tuple<Types...>;
+
   static constexpr size_t NumTypes = sizeof...(Types);
   static constexpr size_t NumValues = NumTypes + 2;
 

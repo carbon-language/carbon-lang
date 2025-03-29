@@ -3108,8 +3108,18 @@ static auto ResolveLocalEvalBlock(ImportRefResolver& resolver,
   }
 
   auto inst_ids = ResolveLocalInstBlockContents(resolver, import_block_id);
-  return RebuildGenericEvalBlock(resolver.local_context(), generic_id, region,
-                                 inst_ids);
+  auto eval_block_id = RebuildGenericEvalBlock(resolver.local_context(),
+                                               generic_id, region, inst_ids);
+
+  // Set the locations of the instructions in the inst block to match those of
+  // the imported instructions.
+  for (auto [import_inst_id, local_inst_id] :
+       llvm::zip(resolver.import_inst_blocks().Get(import_block_id),
+                 resolver.local_inst_blocks().Get(eval_block_id))) {
+    auto import_ir_inst_id = AddImportIRInst(resolver, import_inst_id);
+    resolver.local_insts().SetLocId(local_inst_id, import_ir_inst_id);
+  }
+  return eval_block_id;
 }
 
 // Fills in the remaining information in a partially-imported generic.

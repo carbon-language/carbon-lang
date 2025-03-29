@@ -110,6 +110,10 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
+  // Returns the `InstKind` for an instruction, for `CARBON_KIND_SWITCH`.
+  template <typename InstT>
+  static constexpr auto& For = InstT::Kind;
+
   template <typename TypedNodeId>
   class Definition;
 

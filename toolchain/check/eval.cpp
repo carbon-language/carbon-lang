@@ -35,10 +35,11 @@ struct SpecificEvalInfo {
 };
 
 // Information about the context within which we are performing evaluation.
+// `context` must not be null.
 class EvalContext {
  public:
   explicit EvalContext(
-      Context& context, SemIRLoc fallback_loc,
+      Context* context, SemIRLoc fallback_loc,
       SemIR::SpecificId specific_id = SemIR::SpecificId::None,
       std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
       : context_(context),
@@ -58,7 +59,7 @@ class EvalContext {
   auto GetDiagnosticLoc(llvm::ArrayRef<SemIR::InstId> inst_ids) -> SemIRLoc {
     for (auto inst_id : inst_ids) {
       if (inst_id.has_value() &&
-          context_.insts().GetLocId(inst_id).has_value()) {
+          context_->insts().GetLocId(inst_id).has_value()) {
         return inst_id;
       }
     }
@@ -183,7 +184,7 @@ class EvalContext {
   // caution.
   auto types() -> const SemIR::TypeStore& { return sem_ir().types(); }
 
-  auto context() -> Context& { return context_; }
+  auto context() -> Context& { return *context_; }
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
@@ -191,7 +192,7 @@ class EvalContext {
 
  private:
   // The type-checking context in which we're performing evaluation.
-  Context& context_;
+  Context* context_;
   // The location to use for diagnostics when a better location isn't available.
   SemIRLoc fallback_loc_;
   // The specific that we are evaluating within.
@@ -639,36 +640,52 @@ static constexpr bool HasGetConstantValueOverload = requires {
   Accept<auto (*)(EvalContext&, IdT, Phase*)->IdT>(GetConstantValue);
 };
 
+using ArgHandlerFnT = auto(EvalContext& context, int32_t arg, Phase* phase)
+    -> int32_t;
+
+// Returns a lookup table to get constants by Id::Kind. Requires a null IdKind
+// as a parameter in order to get the type pack.
+template <typename... Types>
+static constexpr auto MakeArgHandlerTable(
+    SemIR::TypeEnum<Types...>* /*id_kind*/)
+    -> std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> {
+  std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> table = {};
+  ((table[SemIR::IdKind::template For<Types>.ToIndex()] =
+        [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
+     auto id = SemIR::Inst::FromRaw<Types>(arg);
+     if constexpr (HasGetConstantValueOverload<Types>) {
+       // If we have a custom `GetConstantValue` overload, call it.
+       return SemIR::Inst::ToRaw(GetConstantValue(eval_context, id, phase));
+     } else {
+       // Otherwise, we assume the value is already constant.
+       return arg;
+     }
+   }),
+   ...);
+  table[SemIR::IdKind::Invalid.ToIndex()] = [](EvalContext& /*context*/,
+                                               int32_t /*arg*/,
+                                               Phase* /*phase*/) -> int32_t {
+    CARBON_FATAL("Instruction has argument with invalid IdKind");
+  };
+  table[SemIR::IdKind::None.ToIndex()] =
+      [](EvalContext& /*context*/, int32_t arg, Phase* /*phase*/) -> int32_t {
+    return arg;
+  };
+  return table;
+}
+
 // Given the stored value `arg` of an instruction field and its corresponding
 // kind `kind`, returns the constant value to use for that field, if it has a
 // constant phase. `*phase` is updated to include the new constant value. If
 // the resulting phase is not constant, the returned value is not useful and
 // will typically be `NoneIndex`.
-template <typename... Type>
 static auto GetConstantValueForArg(EvalContext& eval_context,
-                                   SemIR::TypeEnum<Type...> kind, int32_t arg,
+                                   SemIR::Inst::ArgAndKind arg_and_kind,
                                    Phase* phase) -> int32_t {
-  using Handler = auto(EvalContext&, int32_t arg, Phase * phase)->int32_t;
-  static constexpr Handler* Handlers[] = {
-      [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
-        auto id = SemIR::Inst::FromRaw<Type>(arg);
-        if constexpr (HasGetConstantValueOverload<Type>) {
-          // If we have a custom `GetConstantValue` overload, call it.
-          return SemIR::Inst::ToRaw(GetConstantValue(eval_context, id, phase));
-        } else {
-          // Otherwise, we assume the value is already constant.
-          return arg;
-        }
-      }...,
-      [](EvalContext&, int32_t, Phase*) -> int32_t {
-        // Handler for IdKind::Invalid is next.
-        CARBON_FATAL("Instruction has argument with invalid IdKind");
-      },
-      [](EvalContext&, int32_t arg, Phase*) -> int32_t {
-        // Handler for IdKind::None is last.
-        return arg;
-      }};
-  return Handlers[kind.ToIndex()](eval_context, arg, phase);
+  static constexpr auto Table =
+      MakeArgHandlerTable(static_cast<SemIR::IdKind*>(nullptr));
+  return Table[arg_and_kind.kind().ToIndex()](eval_context,
+                                              arg_and_kind.value(), phase);
 }
 
 // Given an instruction, replaces its type and operands with their constant
@@ -679,22 +696,20 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
                                                SemIR::Inst* inst, Phase* phase)
     -> bool {
   auto type_id = SemIR::TypeId(
-      GetConstantValueForArg(eval_context, SemIR::IdKind::For<SemIR::TypeId>,
-                             inst->type_id().index, phase));
+      GetConstantValueForArg(eval_context, inst->type_id_and_kind(), phase));
   inst->SetType(type_id);
   if (!IsConstant(*phase)) {
     return false;
   }
 
-  auto kinds = inst->ArgKinds();
   auto arg0 =
-      GetConstantValueForArg(eval_context, kinds.first, inst->arg0(), phase);
+      GetConstantValueForArg(eval_context, inst->arg0_and_kind(), phase);
   if (!IsConstant(*phase)) {
     return false;
   }
 
   auto arg1 =
-      GetConstantValueForArg(eval_context, kinds.second, inst->arg1(), phase);
+      GetConstantValueForArg(eval_context, inst->arg1_and_kind(), phase);
   if (!IsConstant(*phase)) {
     return false;
   }
@@ -1596,13 +1611,12 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
 
 // Given an instruction, compute its phase based on its operands.
 static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
-  EvalContext eval_context(context, SemIR::InstId::None);
+  EvalContext eval_context(&context, SemIR::InstId::None);
 
   auto phase = GetPhase(context.constant_values(),
                         context.types().GetConstantId(inst.type_id()));
-  auto kinds = inst.ArgKinds();
-  GetConstantValueForArg(eval_context, kinds.first, inst.arg0(), &phase);
-  GetConstantValueForArg(eval_context, kinds.second, inst.arg1(), &phase);
+  GetConstantValueForArg(eval_context, inst.arg0_and_kind(), &phase);
+  GetConstantValueForArg(eval_context, inst.arg1_and_kind(), &phase);
   CARBON_CHECK(IsConstant(phase));
   return phase;
 }
@@ -1861,13 +1875,13 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
 auto TryEvalInst(Context& context, SemIR::LocId loc_id, SemIR::InstId inst_id,
                  SemIR::Inst inst) -> SemIR::ConstantId {
-  EvalContext eval_context(context, loc_id);
+  EvalContext eval_context(&context, loc_id);
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  EvalContext eval_context(context, inst_id);
+  EvalContext eval_context(&context, inst_id);
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
@@ -1882,7 +1896,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
   llvm::SmallVector<SemIR::InstId> result;
   result.resize(eval_block.size(), SemIR::InstId::None);
 
-  EvalContext eval_context(context, loc, specific_id,
+  EvalContext eval_context(&context, loc, specific_id,
                            SpecificEvalInfo{
                                .region = region,
                                .values = result,

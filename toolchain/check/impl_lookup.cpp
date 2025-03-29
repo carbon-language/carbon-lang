@@ -71,43 +71,41 @@ static auto FindAssociatedImportIRs(Context& context,
 
     // Visit the operands of the constant.
     auto inst = context.insts().Get(inst_id);
-    auto [arg0_kind, arg1_kind] = inst.ArgKinds();
-    for (auto [arg, kind] :
-         {std::pair{inst.arg0(), arg0_kind}, {inst.arg1(), arg1_kind}}) {
-      switch (kind) {
-        case SemIR::IdKind::For<SemIR::InstId>: {
-          if (auto id = SemIR::InstId(arg); id.has_value()) {
-            worklist.push_back(id);
+    for (auto arg : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
+      CARBON_KIND_SWITCH(arg) {
+        case CARBON_KIND(SemIR::InstId inst_id): {
+          if (inst_id.has_value()) {
+            worklist.push_back(inst_id);
           }
           break;
         }
-        case SemIR::IdKind::For<SemIR::InstBlockId>: {
-          push_block(SemIR::InstBlockId(arg));
+        case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
+          push_block(inst_block_id);
           break;
         }
-        case SemIR::IdKind::For<SemIR::ClassId>: {
-          add_entity(context.classes().Get(SemIR::ClassId(arg)));
+        case CARBON_KIND(SemIR::ClassId class_id): {
+          add_entity(context.classes().Get(class_id));
           break;
         }
-        case SemIR::IdKind::For<SemIR::InterfaceId>: {
-          add_entity(context.interfaces().Get(SemIR::InterfaceId(arg)));
+        case CARBON_KIND(SemIR::InterfaceId interface_id): {
+          add_entity(context.interfaces().Get(interface_id));
           break;
         }
-        case SemIR::IdKind::For<SemIR::FacetTypeId>: {
+        case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
           const auto& facet_type_info =
-              context.facet_types().Get(SemIR::FacetTypeId(arg));
+              context.facet_types().Get(facet_type_id);
           for (const auto& impl : facet_type_info.impls_constraints) {
             add_entity(context.interfaces().Get(impl.interface_id));
             push_args(impl.specific_id);
           }
           break;
         }
-        case SemIR::IdKind::For<SemIR::FunctionId>: {
-          add_entity(context.functions().Get(SemIR::FunctionId(arg)));
+        case CARBON_KIND(SemIR::FunctionId function_id): {
+          add_entity(context.functions().Get(function_id));
           break;
         }
-        case SemIR::IdKind::For<SemIR::SpecificId>: {
-          push_args(SemIR::SpecificId(arg));
+        case CARBON_KIND(SemIR::SpecificId specific_id): {
+          push_args(specific_id);
           break;
         }
         default: {
@@ -169,6 +167,21 @@ static auto FindAndDiagnoseImplLookupCycle(
   return false;
 }
 
+// If the constant value is a FacetAccessType instruction, this returns the
+// value of the facet value it points to instead.
+static auto UnwrapFacetAccessType(Context& context, SemIR::ConstantId id)
+    -> SemIR::ConstantId {
+  // If the self type is a FacetAccessType, work with the facet value directly,
+  // which gives us the potential witnesses to avoid looking for impl
+  // declarations. We will do the same for the impl declarations we try to match
+  // so that we can compare the self constant values.
+  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
+          context.constant_values().GetInstId(id))) {
+    return context.constant_values().Get(access->facet_value_inst_id);
+  }
+  return id;
+}
+
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value).
 static auto GetInterfacesFromConstantId(
@@ -224,11 +237,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   // will not be the same constant value as a query facet value. We move through
   // to the facet value here, and if the query was a FacetAccessType we did the
   // same there so they still match.
-  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
-          context.constant_values().GetInstId(deduced_self_const_id))) {
-    deduced_self_const_id =
-        context.constant_values().Get(access->facet_value_inst_id);
-  }
+  deduced_self_const_id = UnwrapFacetAccessType(context, deduced_self_const_id);
   if (query_self_const_id != deduced_self_const_id) {
     return EvalImplLookupResult::MakeNone();
   }
@@ -388,11 +397,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // which gives us the potential witnesses to avoid looking for impl
   // declarations. We will do the same for the impl declarations we try to match
   // so that we can compare the self constant values.
-  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(
-          context.constant_values().GetInstId(query_self_const_id))) {
-    query_self_const_id =
-        context.constant_values().Get(access->facet_value_inst_id);
-  }
+  query_self_const_id = UnwrapFacetAccessType(context, query_self_const_id);
 
   if (FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
                                      loc_id, query_self_const_id,
@@ -575,6 +580,9 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
           context.constant_values().GetInstId(query_self_const_id))) {
     query_self_const_id =
         context.constant_values().Get(facet_value->type_inst_id);
+    // If the FacetValue points to a FacetAccessType, we need to unwrap that for
+    // comparison with the impl's self type.
+    query_self_const_id = UnwrapFacetAccessType(context, query_self_const_id);
   }
 
   auto query_type_structure = BuildTypeStructure(

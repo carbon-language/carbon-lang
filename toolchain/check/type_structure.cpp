@@ -115,7 +115,8 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
 // that represents its self type and interface.
 class TypeStructureBuilder {
  public:
-  explicit TypeStructureBuilder(Context& context) : context_(context) {}
+  // `context` must not be null.
+  explicit TypeStructureBuilder(Context* context) : context_(context) {}
 
   auto Run(SemIR::InstId self_inst_id,
            SemIR::SpecificInterface interface_constraint) -> TypeStructure {
@@ -174,8 +175,8 @@ class TypeStructureBuilder {
       }
 
       SemIR::TypeId next_type_id = std::get<SemIR::TypeId>(next);
-      auto inst_id = context_.types().GetInstId(next_type_id);
-      auto inst = context_.insts().Get(inst_id);
+      auto inst_id = context_->types().GetInstId(next_type_id);
+      auto inst = context_->insts().Get(inst_id);
       CARBON_KIND_SWITCH(inst) {
           // ==== Symbolic types ====
 
@@ -227,7 +228,7 @@ class TypeStructureBuilder {
           break;
         }
         case CARBON_KIND(SemIR::IntType int_type): {
-          if (context_.constant_values().Get(inst_id).is_concrete()) {
+          if (context_->constant_values().Get(inst_id).is_concrete()) {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
@@ -270,14 +271,15 @@ class TypeStructureBuilder {
           break;
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {
-          auto inner_types = context_.type_blocks().Get(tuple_type.elements_id);
+          auto inner_types =
+              context_->type_blocks().Get(tuple_type.elements_id);
           if (inner_types.empty()) {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType());
             for (auto type :
-                 context_.type_blocks().Get(tuple_type.elements_id)) {
+                 context_->type_blocks().Get(tuple_type.elements_id)) {
               Push(type);
             }
           }
@@ -285,7 +287,7 @@ class TypeStructureBuilder {
         }
         case CARBON_KIND(SemIR::StructType struct_type): {
           auto fields =
-              context_.struct_type_fields().Get(struct_type.fields_id);
+              context_->struct_type_fields().Get(struct_type.fields_id);
           if (fields.empty()) {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
@@ -322,11 +324,11 @@ class TypeStructureBuilder {
   auto TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
       -> std::variant<SemIR::TypeId, SymbolicType> {
     if (auto facet_value =
-            context_.insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
+            context_->insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
       inst_id = facet_value->type_inst_id;
     }
 
-    auto type_id_of_inst_id = context_.insts().Get(inst_id).type_id();
+    auto type_id_of_inst_id = context_->insts().Get(inst_id).type_id();
     // All instructions of type FacetType are symbolic except for FacetValue:
     // - In non-generic code, values of type FacetType are only created through
     //   conversion to a FacetType (e.g. `Class as Iface`), which produces a
@@ -342,14 +344,14 @@ class TypeStructureBuilder {
     // them. That type instruction is never of type FacetType. If it refers to a
     // FacetType it does so through a FacetAccessType, which is of type TypeType
     // and thus does not match here.
-    if (context_.types().Is<SemIR::FacetType>(type_id_of_inst_id)) {
+    if (context_->types().Is<SemIR::FacetType>(type_id_of_inst_id)) {
       return SymbolicType();
     }
     // Non-type values are concrete, only types are symbolic.
     if (type_id_of_inst_id != SemIR::TypeType::SingletonTypeId) {
       return SemIR::TypeId::None;
     }
-    return context_.types().GetTypeIdForTypeInstId(inst_id);
+    return context_->types().GetTypeIdForTypeInstId(inst_id);
   }
 
   // Get the instructions in the specific's instruction block as an ArrayRef.
@@ -358,8 +360,8 @@ class TypeStructureBuilder {
     if (specific_id == SemIR::SpecificId::None) {
       return {};
     }
-    auto specific = context_.specifics().Get(specific_id);
-    return context_.inst_blocks().Get(specific.args_id);
+    auto specific = context_->specifics().Get(specific_id);
+    return context_->inst_blocks().Get(specific.args_id);
   }
 
   // Push all arguments from the array into the work queue.
@@ -398,7 +400,7 @@ class TypeStructureBuilder {
     structure_.push_back(structural);
   }
 
-  Context& context_;
+  Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
   int first_symbolic_distance_;
   llvm::SmallVector<TypeStructure::Structural> structure_;
@@ -406,7 +408,7 @@ class TypeStructureBuilder {
 
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,
                         SemIR::SpecificInterface interface) -> TypeStructure {
-  TypeStructureBuilder builder(context);
+  TypeStructureBuilder builder(&context);
   return builder.Run(self_inst_id, interface);
 }
 
