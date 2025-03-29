@@ -291,6 +291,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
+    // TODO: Allow name lookup into classes that are being defined even if they
+    // are not complete.
     RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
         loc_id, [&] {
@@ -306,8 +308,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    // TODO: Only require that the type is defined (meaning definition is
-    // started, but may not be complete).
+    // TODO: Allow name lookup into facet types that are being defined even if
+    // they are not complete.
     if (RequireCompleteType(
             context, context.types().GetTypeIdForTypeConstantId(base_const_id),
             loc_id, [&] {
