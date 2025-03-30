@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_non_int_indexing.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+7]]:17: error: cannot implicitly convert value of type `f64` to `Core.IntLiteral` [ConversionFailure]
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+7]]:17: error: cannot implicitly convert expression of type `f64` to `Core.IntLiteral` [ConversionFailure]
 // CHECK:STDERR: var b: i32 = a.(2.6);
 // CHECK:STDERR:                 ^~~
 // CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+4]]:17: note: type `f64` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]

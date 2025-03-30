@@ -56,7 +56,7 @@ fn Test(d: D) {
 library "[[@TEST_NAME]]";
 
 fn F[template T:! type](x: T) -> i32 {
-  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+6]]:3: error: cannot implicitly convert value of type `F` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+6]]:3: error: cannot implicitly convert expression of type `F` to `i32` [ConversionFailure]
   // CHECK:STDERR:   return x.n;
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+3]]:3: note: type `F` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]

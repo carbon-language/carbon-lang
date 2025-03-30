@@ -48,7 +48,7 @@ class Adapter {
 
 fn Access(a: Adapter) -> i32 {
   // TODO: This should presumably work, but the design doesn't say how yet.
-  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert value of type `Adapter` to `C(i32)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Adapter` to `C(i32)` [ConversionFailure]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]
@@ -81,7 +81,7 @@ import library "extend_adapt_specific_type_library";
 
 fn ImportedAccess(a: Adapter) -> i32 {
   // TODO: This should presumably work, but the design doesn't say how yet.
-  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert value of type `Adapter` to `C(i32)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Adapter` to `C(i32)` [ConversionFailure]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]

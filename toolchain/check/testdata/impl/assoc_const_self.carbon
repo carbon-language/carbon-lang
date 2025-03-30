@@ -28,7 +28,7 @@ interface I {
   let V:! Self;
 }
 
-// CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+7]]:12: error: cannot implicitly convert value of type `Core.IntLiteral` to `{}` [ConversionFailure]
+// CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+7]]:12: error: cannot implicitly convert expression of type `Core.IntLiteral` to `{}` [ConversionFailure]
 // CHECK:STDERR: impl {} as I where .V = 0 {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+4]]:12: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]

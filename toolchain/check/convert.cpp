@@ -1288,11 +1288,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         return DiagnoseConversionFailureToConstraintValue(context, loc_id,
                                                           expr_id, target);
       } else {
-        // TODO: Should this message change to say "object of type" when
-        // converting from a reference expression?
         CARBON_DIAGNOSTIC(ConversionFailure, Error,
-                          "cannot{0:| implicitly} convert value of type {1} to "
-                          "{2}{0: with `as`|}",
+                          "cannot{0:| implicitly} convert expression of type "
+                          "{1} to {2}{0: with `as`|}",
                           Diagnostics::BoolAsSelect, TypeOfInstId,
                           SemIR::TypeId);
         return context.emitter().Build(

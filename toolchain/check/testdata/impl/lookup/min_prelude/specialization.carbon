@@ -237,7 +237,7 @@ fn F[D:! Y](d: D) {
   // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert value of type `()` to `<symbolic>` [ConversionFailure]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `<symbolic>` [ConversionFailure]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
   // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(<symbolic>)` [MissingImplInMemberAccessNote]
@@ -324,7 +324,7 @@ impl forall [T:! type] T as Z(C) where .X = C {}
 fn F[U:! type](T:! Z(C)) {
   // TODO: The value of `.X` can be known to be `C` here when the impl `T as Z(C)` is
   // final.
-  // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert value of type `C` to `T.(Z(C).X)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
   // CHECK:STDERR:   let a: T.X = {} as C;
   // CHECK:STDERR:                ^~~~~~~
   // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+4]]:16: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
@@ -347,7 +347,7 @@ impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
 
 fn F[U:! type](T:! Z(C)) {
   // The value of `.X` is symbolic, it can't be assigned a value of type `C`.
-  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert value of type `C` to `T.(Z(C).X)` [ConversionFailure]
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
   // CHECK:STDERR:   let a: T.X = {} as C;
   // CHECK:STDERR:                ^~~~~~~
   // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+4]]:16: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
@@ -449,7 +449,7 @@ fn H[W:! type](v: W) -> W.(I.T) {
 // While this function is still a generic context, it should see the concrete
 // `X` type and the return of `H(p)` should convert (a no-op) to `X`.
 fn G[X:! type](p: X*) -> X {
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `<symbolic>` to `X` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `<symbolic>` to `X` [ConversionFailure]
   // CHECK:STDERR:   return H(p);
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `<symbolic>` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
