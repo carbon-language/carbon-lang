@@ -48,7 +48,6 @@ class B {}
 
 fn F(T:! Generic(A));
 fn G(T:! Generic(B)) {
-  // TODO: Include generic arguments in the type name.
   // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `Generic(B)` into type implementing `Generic(A)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
