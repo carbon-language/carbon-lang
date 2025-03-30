@@ -308,7 +308,7 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 // issues a diagnostic and returns `None`.
 static auto CheckConstraintIsInterface(Context& context,
                                        const SemIR::Impl& impl)
-    -> const SemIR::SpecificInterface {
+    -> SemIR::SpecificInterface {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(impl.constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
