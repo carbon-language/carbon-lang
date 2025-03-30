@@ -26,17 +26,14 @@ fn F() {
   // with a note about the cycle as the reason for impl lookup failing, or the
   // cycle causes an error so the conversion is not diagnosed.
 
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+14]]:3: error: cycle found in search for impl of `Z` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+11]]:3: error: cycle found in search for impl of `Z` for type `Point` [ImplLookupCycle]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE-12]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [T:! Z] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+7]]:3: error: cannot convert type `Point` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_impl_simple_cycle.carbon:[[@LINE+4]]:3: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -75,17 +72,14 @@ impl forall [T:! Z & Y] T as Z {}
 class Point {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+14]]:3: error: cycle found in search for impl of `Z & Y` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+11]]:3: error: cycle found in search for impl of `Z & Y` for type `Point` [ImplLookupCycle]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE-8]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [T:! Z & Y] T as Z {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+7]]:3: error: cannot convert type `Point` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Point as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_impl_simple_two_interfaces.carbon:[[@LINE+4]]:3: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -107,7 +101,7 @@ impl forall [T:! Z] T as X {}
 class C {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `Z` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+17]]:3: error: cycle found in search for impl of `Z` for type `C` [ImplLookupCycle]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE-9]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
@@ -120,10 +114,7 @@ fn F() {
   // CHECK:STDERR: impl forall [T:! Z] T as X {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `Z` with `as` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   C as Z;
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+4]]:3: note: type `type` does not implement interface `Core.As(Z)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_impl_long_cycle.carbon:[[@LINE+4]]:3: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   C as Z;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
@@ -145,7 +136,7 @@ class D {}
 fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
 
 fn F() {
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+17]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `C` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as C, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-12]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
@@ -155,63 +146,54 @@ fn F() {
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Compare({} as C, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(C))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Compare({} as C, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-16]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Compare({} as C, {} as C);
 
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+23]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `D` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `ComparableWith(C)` for type `D` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as C, {} as D);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-31]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-34]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-37]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
-  // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-34]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-31]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `D` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: error: cannot convert type `D` into type implementing `ComparableWith(C)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Compare({} as C, {} as D);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(C))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Compare({} as C, {} as D);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-44]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-38]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Compare({} as C, {} as D);
 
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+23]]:3: error: cycle found in search for impl of `ComparableWith(D)` for type `C` [ImplLookupCycle]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+20]]:3: error: cycle found in search for impl of `ComparableWith(D)` for type `C` [ImplLookupCycle]
   // CHECK:STDERR:   Compare({} as D, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-59]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-53]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-62]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-56]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
   // CHECK:STDERR: impl forall [U:! type, T:! ComparableWith(U)]
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-59]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-53]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `ComparableWith(D)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `ComparableWith(D)` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Compare({} as D, {} as C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(ComparableWith(D))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Compare({} as D, {} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-69]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_impl_cycle_one_generic_param.carbon:[[@LINE-60]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

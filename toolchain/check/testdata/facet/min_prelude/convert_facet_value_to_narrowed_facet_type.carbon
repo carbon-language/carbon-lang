@@ -80,13 +80,10 @@ library "[[@TEST_NAME]]";
 
 fn TakesExtraWhereDeduced[T:! type where .Self impls type](x: T) {}
 fn CallsWithType[U:! type](y: U) {
-  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `U` into type implementing `type where...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE+7]]:3: error: cannot convert type `U` into type implementing `type where...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   TakesExtraWhereDeduced(y);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(type where...)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   TakesExtraWhereDeduced(y);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE-8]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE-5]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn TakesExtraWhereDeduced[T:! type where .Self impls type](x: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -95,13 +92,10 @@ fn CallsWithType[U:! type](y: U) {
 
 fn TakesExtraWhereExplicit(T:! type where .Self impls type) {}
 fn CallsWithTypeExplicit(U:! type) {
-  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `U` into type implementing `type where...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE+7]]:3: error: cannot convert type `U` into type implementing `type where...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   TakesExtraWhereExplicit(U);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(type where...)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   TakesExtraWhereExplicit(U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE-8]]:28: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_todo_no_interfaces.carbon:[[@LINE-5]]:28: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn TakesExtraWhereExplicit(T:! type where .Self impls type) {}
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
@@ -1400,9 +1394,9 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [concrete]
-// CHECK:STDOUT:   %T.25f: %type_where = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.395: %type_where = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.25f [symbolic]
+// CHECK:STDOUT:   %T: %type_where = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %type_where = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %TakesExtraWhereDeduced.type: type = fn_type @TakesExtraWhereDeduced [concrete]
 // CHECK:STDOUT:   %TakesExtraWhereDeduced: %TakesExtraWhereDeduced.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.220: <witness> = require_complete_type %T.as_type [symbolic]
@@ -1410,30 +1404,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %CallsWithType.type: type = fn_type @CallsWithType [concrete]
 // CHECK:STDOUT:   %CallsWithType: %CallsWithType.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.4aeca8.1: <witness> = require_complete_type %U [symbolic]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.d62: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self.519: %ImplicitAs.type.d62 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.519 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.837: type = assoc_entity_type %ImplicitAs.type.d62 [symbolic]
-// CHECK:STDOUT:   %assoc0.02f: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.d81: type = facet_type <@ImplicitAs, @ImplicitAs(%type_where)> [concrete]
-// CHECK:STDOUT:   %Self.79b: %ImplicitAs.type.d81 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Convert.type.c95: type = fn_type @Convert, @ImplicitAs(%type_where) [concrete]
-// CHECK:STDOUT:   %Convert.4f2: %Convert.type.c95 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.6cf: type = assoc_entity_type %ImplicitAs.type.d81 [concrete]
-// CHECK:STDOUT:   %assoc0.cf8: %ImplicitAs.assoc_type.6cf = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
-// CHECK:STDOUT:   %assoc0.43d: %ImplicitAs.assoc_type.837 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
-// CHECK:STDOUT:   %BitAnd.type: type = facet_type <@BitAnd> [concrete]
-// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.e01: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.bd4), @impl(%T.8b3) [symbolic]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op, @impl(%T.8b3) [symbolic]
-// CHECK:STDOUT:   %Op: %Op.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %require_complete.4aeca8.2: <witness> = require_complete_type %T.8b3 [symbolic]
+// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %TakesExtraWhereExplicit.type: type = fn_type @TakesExtraWhereExplicit [concrete]
 // CHECK:STDOUT:   %TakesExtraWhereExplicit: %TakesExtraWhereExplicit.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallsWithTypeExplicit.type: type = fn_type @CallsWithTypeExplicit [concrete]
@@ -1442,25 +1413,8 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//prelude, loc13_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//prelude, inst66 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.630: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.43d)]
-// CHECK:STDOUT:   %Core.Convert = import_ref Core//prelude, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//prelude, loc13_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//prelude, inst66 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %Core.import_ref.ad0 = import_ref Core//prelude, inst101 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.3bf = import_ref Core//prelude, loc18_41, unloaded
-// CHECK:STDOUT:   %Core.Op = import_ref Core//prelude, Op, unloaded
-// CHECK:STDOUT:   %Core.import_ref.f80 = import_ref Core//prelude, loc21_36, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.3: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.%T (constants.%T.8b3)]
-// CHECK:STDOUT:   %Core.import_ref.583: type = import_ref Core//prelude, loc21_24, loaded [symbolic = @impl.%T (constants.%T.8b3)]
-// CHECK:STDOUT:   %Core.import_ref.9c1: type = import_ref Core//prelude, loc21_29, loaded [concrete = constants.%BitAnd.type]
-// CHECK:STDOUT:   %Core.import_ref.bd4 = import_ref Core//prelude, loc22_42, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.4: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.%T (constants.%T.8b3)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1473,7 +1427,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %TakesExtraWhereDeduced.decl: %TakesExtraWhereDeduced.type = fn_decl @TakesExtraWhereDeduced [concrete = constants.%TakesExtraWhereDeduced] {
-// CHECK:STDOUT:     %T.patt.loc3_27.1: %type_where = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_27.2 (constants.%T.patt.395)]
+// CHECK:STDOUT:     %T.patt.loc3_27.1: %type_where = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_27.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @TakesExtraWhereDeduced.%T.as_type.loc3_63.2 (%T.as_type) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @TakesExtraWhereDeduced.%T.as_type.loc3_63.2 (%T.as_type) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -1484,10 +1438,10 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc3_27.1: %type_where = bind_symbolic_name T, 0 [symbolic = %T.loc3_27.2 (constants.%T.25f)]
+// CHECK:STDOUT:     %T.loc3_27.1: %type_where = bind_symbolic_name T, 0 [symbolic = %T.loc3_27.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @TakesExtraWhereDeduced.%T.as_type.loc3_63.2 (%T.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc3_63.1: type = splice_block %.loc3_63.2 [symbolic = %T.as_type.loc3_63.2 (constants.%T.as_type)] {
-// CHECK:STDOUT:       %T.ref: %type_where = name_ref T, %T.loc3_27.1 [symbolic = %T.loc3_27.2 (constants.%T.25f)]
+// CHECK:STDOUT:       %T.ref: %type_where = name_ref T, %T.loc3_27.1 [symbolic = %T.loc3_27.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc3_63.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc3_63.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc3_63.2: type = converted %T.ref, %T.as_type.loc3_63.1 [symbolic = %T.as_type.loc3_63.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
@@ -1504,70 +1458,27 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %y: @CallsWithType.%U.loc4_18.2 (%U) = bind_name y, %y.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TakesExtraWhereExplicit.decl: %TakesExtraWhereExplicit.type = fn_decl @TakesExtraWhereExplicit [concrete = constants.%TakesExtraWhereExplicit] {
-// CHECK:STDOUT:     %T.patt.loc18_28.1: %type_where = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_28.2 (constants.%T.patt.395)]
+// CHECK:STDOUT:     %T.patt.loc15_28.1: %type_where = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18_37.1: type = splice_block %.loc18_37.2 [concrete = constants.%type_where] {
+// CHECK:STDOUT:     %.loc15_37.1: type = splice_block %.loc15_37.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc18_37.2: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:       %.loc15_37.2: type = where_expr %.Self [concrete = constants.%type_where] {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc18_28.1: %type_where = bind_symbolic_name T, 0 [symbolic = %T.loc18_28.2 (constants.%T.25f)]
+// CHECK:STDOUT:     %T.loc15_28.1: %type_where = bind_symbolic_name T, 0 [symbolic = %T.loc15_28.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallsWithTypeExplicit.decl: %CallsWithTypeExplicit.type = fn_decl @CallsWithTypeExplicit [concrete = constants.%CallsWithTypeExplicit] {
-// CHECK:STDOUT:     %U.patt.loc19_26.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc19_26.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc16_26.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc16_26.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.loc19_26.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc19_26.2 (constants.%U)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.1: type) [from "include_files/facet_types.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt (constants.%Dest.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.275)]
-// CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = struct_value () [symbolic = %Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.837)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.837) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.02f)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Core.import_ref.ff5
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.630
-// CHECK:STDOUT:     witness = (imports.%Core.Convert)
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @BitAnd [from "include_files/facet_types.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Core.import_ref.ad0
-// CHECK:STDOUT:   .Op = imports.%Core.import_ref.3bf
-// CHECK:STDOUT:   witness = (imports.%Core.Op)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(imports.%Core.import_ref.5ab3ec.3: type) [from "include_files/facet_types.carbon"] {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.e01)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.bd4), @impl(%T) [symbolic = %impl_witness (constants.%impl_witness)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op, @impl(%T) [symbolic = %Op.type (constants.%Op.type)]
-// CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type) = struct_value () [symbolic = %Op (constants.%Op)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%T (%T.8b3) [symbolic = %require_complete (constants.%require_complete.4aeca8.2)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%Core.import_ref.f80
+// CHECK:STDOUT:     %U.loc16_26.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc16_26.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TakesExtraWhereDeduced(%T.loc3_27.1: %type_where) {
-// CHECK:STDOUT:   %T.loc3_27.2: %type_where = bind_symbolic_name T, 0 [symbolic = %T.loc3_27.2 (constants.%T.25f)]
-// CHECK:STDOUT:   %T.patt.loc3_27.2: %type_where = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_27.2 (constants.%T.patt.395)]
+// CHECK:STDOUT:   %T.loc3_27.2: %type_where = bind_symbolic_name T, 0 [symbolic = %T.loc3_27.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc3_27.2: %type_where = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_27.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.as_type.loc3_63.2: type = facet_access_type %T.loc3_27.2 [symbolic = %T.as_type.loc3_63.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1584,64 +1495,45 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %U.patt.loc4_18.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc4_18.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallsWithType.%U.loc4_18.2 (%U) [symbolic = %require_complete (constants.%require_complete.4aeca8.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallsWithType.%U.loc4_18.2 (%U) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%U.patt.loc4_18.1: type](%y.param_patt: @CallsWithType.%U.loc4_18.2 (%U)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %TakesExtraWhereDeduced.ref: %TakesExtraWhereDeduced.type = name_ref TakesExtraWhereDeduced, file.%TakesExtraWhereDeduced.decl [concrete = constants.%TakesExtraWhereDeduced]
 // CHECK:STDOUT:     %y.ref: @CallsWithType.%U.loc4_18.2 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %.loc15: %type_where = converted constants.%U, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62)) [from "include_files/facet_types.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
-// CHECK:STDOUT:   %Self: @Convert.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op(imports.%Core.import_ref.5ab3ec.4: type) [from "include_files/facet_types.carbon"] {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
+// CHECK:STDOUT: generic fn @TakesExtraWhereExplicit(%T.loc15_28.1: %type_where) {
+// CHECK:STDOUT:   %T.loc15_28.2: %type_where = bind_symbolic_name T, 0 [symbolic = %T.loc15_28.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc15_28.2: %type_where = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.%T (%T.8b3)](%other.param_patt: @Op.%T (%T.8b3)) -> @Op.%T (%T.8b3) = "type.and";
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TakesExtraWhereExplicit(%T.loc18_28.1: %type_where) {
-// CHECK:STDOUT:   %T.loc18_28.2: %type_where = bind_symbolic_name T, 0 [symbolic = %T.loc18_28.2 (constants.%T.25f)]
-// CHECK:STDOUT:   %T.patt.loc18_28.2: %type_where = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_28.2 (constants.%T.patt.395)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc18_28.1: %type_where) {
+// CHECK:STDOUT:   fn(%T.patt.loc15_28.1: %type_where) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @CallsWithTypeExplicit(%U.loc19_26.1: type) {
-// CHECK:STDOUT:   %U.loc19_26.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc19_26.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc19_26.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc19_26.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @CallsWithTypeExplicit(%U.loc16_26.1: type) {
+// CHECK:STDOUT:   %U.loc16_26.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc16_26.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc16_26.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc16_26.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.patt.loc19_26.1: type) {
+// CHECK:STDOUT:   fn(%U.patt.loc16_26.1: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %TakesExtraWhereExplicit.ref: %TakesExtraWhereExplicit.type = name_ref TakesExtraWhereExplicit, file.%TakesExtraWhereExplicit.decl [concrete = constants.%TakesExtraWhereExplicit]
-// CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc19_26.1 [symbolic = %U.loc19_26.2 (constants.%U)]
-// CHECK:STDOUT:     %.loc30: %type_where = converted %U.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc16_26.1 [symbolic = %U.loc16_26.2 (constants.%U)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @TakesExtraWhereDeduced(constants.%T.25f) {
-// CHECK:STDOUT:   %T.loc3_27.2 => constants.%T.25f
-// CHECK:STDOUT:   %T.patt.loc3_27.2 => constants.%T.25f
+// CHECK:STDOUT: specific @TakesExtraWhereDeduced(constants.%T) {
+// CHECK:STDOUT:   %T.loc3_27.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc3_27.2 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc3_63.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1650,55 +1542,14 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %U.patt.loc4_18.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt => constants.%Dest
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
-// CHECK:STDOUT:   %Self => constants.%Self.519
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(constants.%type_where) {
-// CHECK:STDOUT:   %Dest => constants.%type_where
-// CHECK:STDOUT:   %Dest.patt => constants.%type_where
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d81
-// CHECK:STDOUT:   %Self => constants.%Self.79b
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.c95
-// CHECK:STDOUT:   %Convert => constants.%Convert.4f2
-// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.6cf
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.cf8
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%T.8b3) {
-// CHECK:STDOUT:   %T => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt => constants.%T.8b3
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op(constants.%T.8b3) {
-// CHECK:STDOUT:   %T => constants.%T.8b3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @TakesExtraWhereExplicit(constants.%T.25f) {
-// CHECK:STDOUT:   %T.loc18_28.2 => constants.%T.25f
-// CHECK:STDOUT:   %T.patt.loc18_28.2 => constants.%T.25f
+// CHECK:STDOUT: specific @TakesExtraWhereExplicit(constants.%T) {
+// CHECK:STDOUT:   %T.loc15_28.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc15_28.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallsWithTypeExplicit(constants.%U) {
-// CHECK:STDOUT:   %U.loc19_26.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc19_26.2 => constants.%U
+// CHECK:STDOUT:   %U.loc16_26.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc16_26.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/facet_types.carbon
