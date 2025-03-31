@@ -1125,9 +1125,6 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         DiagnoseConversionFailureToConstraintValue(context, loc_id, value_id,
                                                    target.type_id);
       }
-      // FIXME: If target.diagnose is false, perhaps we shouldn't return an
-      // error? Right now we are using the error to prevent further attempts
-      // to convert.
       return SemIR::ErrorInst::SingletonInstId;
     }
   }
