@@ -437,12 +437,6 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
 
-        Diagnostics::AnnotationScope annotate_diagnostics(
-            &context.emitter(), [&](auto& builder) {
-              CARBON_DIAGNOSTIC(FromExtendHere, Note,
-                                "declared as an extended scope here");
-              builder.Note(extended_id, FromExtendHere);
-            });
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
                                            &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should
