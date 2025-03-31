@@ -223,7 +223,7 @@ interface X {
 }
 
 // Classes must be defined before being used in a function definition.
-class C { }
+class C {}
 
 fn G() {
   // Allowed since C is complete and we have a declaration `impl C as X;`
