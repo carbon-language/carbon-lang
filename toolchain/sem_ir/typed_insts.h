@@ -890,7 +890,7 @@ struct ImplSymbolicWitness {
 struct ImplWitness {
   static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
       {.ir_name = "impl_witness",
-       .constant_kind = InstConstantKind::WheneverPossible,
+       .constant_kind = InstConstantKind::Always,
        // TODO: For dynamic dispatch, we might want to lower witness tables as
        // constants.
        .is_lowered = false});
