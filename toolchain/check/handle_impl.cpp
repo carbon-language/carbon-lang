@@ -304,13 +304,13 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 }
 
 // Checks that the constraint specified for the impl is valid and identified.
-// Returns a pointer to the interface that the impl implements. On error,
-// issues a diagnostic and returns `None`.
+// Returns the interface that the impl implements. On error, issues a diagnostic
+// and returns `None`.
 static auto CheckConstraintIsInterface(Context& context,
-                                       const SemIR::Impl& impl)
+                                       SemIR::InstId impl_decl_id,
+                                       SemIR::InstId constraint_id)
     -> SemIR::SpecificInterface {
-  auto facet_type_id =
-      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
+  auto facet_type_id = context.types().GetTypeIdForTypeInstId(constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
     return SemIR::SpecificInterface::None;
   }
@@ -318,8 +318,7 @@ static auto CheckConstraintIsInterface(Context& context,
   if (!facet_type) {
     CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
                       InstIdAsType);
-    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType,
-                           impl.constraint_id);
+    context.emitter().Emit(impl_decl_id, ImplAsNonFacetType, constraint_id);
     return SemIR::SpecificInterface::None;
   }
 
@@ -328,7 +327,7 @@ static auto CheckConstraintIsInterface(Context& context,
   if (!identified.is_impl_as_target()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
-    context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
+    context.emitter().Emit(impl_decl_id, ImplOfNotOneInterface,
                            identified.num_interfaces_to_impl());
     return SemIR::SpecificInterface::None;
   }
@@ -377,8 +376,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                                /*is_extern=*/false, SemIR::LibraryNameId::None),
                            {.self_id = self_inst_id,
                             .constraint_id = constraint_inst_id,
-                            .interface = SemIR::SpecificInterface::None}};
-  impl_info.interface = CheckConstraintIsInterface(context, impl_info);
+                            .interface = CheckConstraintIsInterface(
+                                context, impl_decl_id, constraint_inst_id)}};
   // Add the impl declaration.
   bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);

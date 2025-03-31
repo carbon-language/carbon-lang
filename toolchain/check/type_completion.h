@@ -72,7 +72,8 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
 // set of interfaces the facet type requires is known. Since named constraints
 // are not yet supported, this currently never fails. Eventually this function
 // will be passed a diagnoser for facet types that use some incomplete named
-// constraint, and return `None` in that case.
+// constraint, and return `None` in that case. If not `None`, the result will be
+// present in context.identified_facet_type()`.
 auto RequireIdentifiedFacetType(Context& context,
                                 const SemIR::FacetType& facet_type)
     -> SemIR::IdentifiedFacetTypeId;

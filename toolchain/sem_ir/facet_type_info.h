@@ -149,6 +149,8 @@ struct IdentifiedFacetType {
     num_interface_to_impl_ = num;
   }
 
+  // If there is a single interface to implement, specify which it is.
+  // Should be an element of `required_interfaces()`.
   auto set_interface_to_impl(SpecificInterface interface) -> void {
     CARBON_CHECK(interface.interface_id.has_value());
     interface_id_ = interface.interface_id;
