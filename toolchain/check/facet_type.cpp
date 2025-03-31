@@ -38,10 +38,9 @@ static auto WitnessAccessMatchesInterface(
   return false;
 }
 
-static auto IncompleteFacetTypeDiagnosticBuilder(Context& context, SemIRLoc loc,
-                                       SemIR::InstId facet_type_inst_id,
-                                       bool is_definition)
-    -> DiagnosticBuilder {
+static auto IncompleteFacetTypeDiagnosticBuilder(
+    Context& context, SemIRLoc loc, SemIR::InstId facet_type_inst_id,
+    bool is_definition) -> DiagnosticBuilder {
   // The other case is "impl as incomplete facet type with rewrites", but
   // currently all incomplete facet types with rewrites trigger errors before
   // this.
