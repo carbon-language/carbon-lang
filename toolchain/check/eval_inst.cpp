@@ -259,7 +259,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
       }
     }
     CARBON_DIAGNOSTIC(ImplAccessMemberBeforeSet, Error,
-                      "accessing member from impl before it has a value");
+                      "accessing member from impl before it has a defined value");
     // TODO: Add note pointing to the impl declaration.
     context.emitter().Emit(loc, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;

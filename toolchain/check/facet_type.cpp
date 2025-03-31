@@ -38,7 +38,7 @@ static auto WitnessAccessMatchesInterface(
   return false;
 }
 
-static auto IncompleteFacetTypeBuilder(Context& context, SemIRLoc loc,
+static auto IncompleteFacetTypeDiagnosticBuilder(Context& context, SemIRLoc loc,
                                        SemIR::InstId facet_type_inst_id,
                                        bool is_definition)
     -> DiagnosticBuilder {
