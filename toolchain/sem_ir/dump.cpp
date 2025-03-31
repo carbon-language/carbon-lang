@@ -122,8 +122,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
   }
   for (auto rewrite : facet_type.rewrite_constraints) {
     out << "\n"
-        << "  - " << DumpConstSummary(file, rewrite.lhs_const_id) << "\n"
-        << "  - " << DumpConstSummary(file, rewrite.rhs_const_id);
+        << "  - " << DumpConstantSummary(file, rewrite.lhs_const_id) << "\n"
+        << "  - " << DumpConstantSummary(file, rewrite.rhs_const_id);
   }
   if (auto complete_id = file.complete_facet_types().TryGetId(facet_type_id);
       complete_id.has_value()) {
@@ -213,7 +213,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
     if (const_inst_id == inst_id) {
       out << const_id;
     } else {
-      out << DumpConstSummary(file, const_id);
+      out << DumpConstantSummary(file, const_id);
     }
   }
   return out.TakeStr();
