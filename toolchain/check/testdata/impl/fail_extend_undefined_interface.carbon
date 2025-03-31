@@ -11,35 +11,22 @@
 interface I;
 
 class C {
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+11]]:3: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
+  // CHECK:STDERR:   extend impl as I;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface I;
+  // CHECK:STDERR: ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
+  // CHECK:STDERR:   extend impl as I;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   extend impl as I;
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+10]]:3: error: member access into incomplete facet type `I` [QualifiedExprInIncompleteFacetTypeScope]
-  // CHECK:STDERR:   C.F();
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-10]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface I;
-  // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-10]]:18: note: declared as an extended scope here [FromExtendHere]
-  // CHECK:STDERR:   extend impl as I;
-  // CHECK:STDERR:                  ^
-  // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+14]]:3: error: member access into incomplete facet type `I` [QualifiedExprInIncompleteFacetTypeScope]
-  // CHECK:STDERR:   c.F();
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-21]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface I;
-  // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-21]]:18: note: declared as an extended scope here [FromExtendHere]
-  // CHECK:STDERR:   extend impl as I;
-  // CHECK:STDERR:                  ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-25]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   extend impl as I;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   c.F();
 }
 
@@ -77,7 +64,7 @@ fn F(c: C) {
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc28: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -99,15 +86,15 @@ fn F(c: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   .F = <poisoned>
-// CHECK:STDOUT:   extend @impl.%I.ref
+// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc28: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc28: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %C.ref.loc29: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc29: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc43: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %F.ref.loc30: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -191,6 +191,21 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   const auto& impl = context.impls().Get(impl_id);
   if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
     parent_scope.set_has_error();
+  } else {
+    bool is_complete = RequireCompleteType(
+        context, constraint_id, context.insts().GetLocId(constraint_inst_id),
+        [&] {
+          CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Error,
+                            "`extend impl as` incomplete facet type {0}",
+                            InstIdAsType);
+          return context.emitter().Build(impl.latest_decl_id(),
+                                         ExtendImplAsIncomplete,
+                                         constraint_inst_id);
+        });
+    if (!is_complete) {
+      parent_scope.set_has_error();
+      return false;
+    }
   }
 
   parent_scope.AddExtendedScope(constraint_inst_id);

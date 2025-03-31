@@ -19,7 +19,7 @@ class C {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+4]]:3: error: accessing member from impl before it has a value [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+4]]:3: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
   // CHECK:STDERR:   C.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
@@ -33,7 +33,7 @@ impl C as I {
 }
 
 fn G() {
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+8]]:3: error: accessing member from impl before it has a value [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+8]]:3: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
   // CHECK:STDERR:   C.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
