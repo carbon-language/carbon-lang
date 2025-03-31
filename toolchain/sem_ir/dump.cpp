@@ -19,6 +19,33 @@ static auto DumpNameIfValid(const File& file, NameId name_id) -> std::string {
   return out.TakeStr();
 }
 
+static auto DumpConstantSummary(const File& file, ConstantId const_id)
+    -> std::string {
+  RawStringOstream out;
+  out << const_id;
+  if (!const_id.has_value()) {
+    return out.TakeStr();
+  }
+  if (const_id.is_symbolic()) {
+    out << ": " << file.constant_values().GetSymbolicConstant(const_id);
+  } else if (const_id.is_concrete()) {
+    out << ": " << file.insts().Get(file.constant_values().GetInstId(const_id));
+  }
+  return out.TakeStr();
+}
+
+static auto DumpGenericSummary(const File& file, GenericId generic_id)
+    -> std::string {
+  RawStringOstream out;
+  out << generic_id;
+  if (!generic_id.has_value()) {
+    return out.TakeStr();
+  }
+  const auto& generic = file.generics().Get(generic_id);
+  out << ": " << generic << "\ndecl: " << Dump(file, generic.decl_id);
+  return out.TakeStr();
+}
+
 static auto DumpInstSummary(const File& file, InstId inst_id) -> std::string {
   RawStringOstream out;
   out << inst_id;
@@ -56,9 +83,12 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ConstantId const_id)
     return out.TakeStr();
   }
   if (const_id.is_symbolic()) {
-    out << ": " << file.constant_values().GetSymbolicConstant(const_id);
+    const auto& symbolic = file.constant_values().GetSymbolicConstant(const_id);
+    out << ": " << symbolic << '\n'
+        << Dump(file, symbolic.inst_id) << '\n'
+        << DumpGenericSummary(file, symbolic.generic_id);
   } else if (const_id.is_concrete()) {
-    out << ": " << file.insts().Get(file.constant_values().GetInstId(const_id));
+    out << ": " << Dump(file, file.constant_values().GetInstId(const_id));
   }
   return out.TakeStr();
 }
@@ -92,8 +122,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
   }
   for (auto rewrite : facet_type.rewrite_constraints) {
     out << "\n"
-        << "  - " << Dump(file, rewrite.lhs_const_id) << "\n"
-        << "  - " << Dump(file, rewrite.rhs_const_id);
+        << "  - " << DumpConstantSummary(file, rewrite.lhs_const_id) << "\n"
+        << "  - " << DumpConstantSummary(file, rewrite.rhs_const_id);
   }
   if (auto complete_id = file.complete_facet_types().TryGetId(facet_type_id);
       complete_id.has_value()) {
@@ -116,12 +146,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id)
 LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id)
     -> std::string {
   RawStringOstream out;
-  out << generic_id;
+  out << DumpGenericSummary(file, generic_id);
   if (!generic_id.has_value()) {
     return out.TakeStr();
   }
-  out << ": " << file.generics().Get(generic_id) << '\n'
-      << Dump(file, file.generics().Get(generic_id).bindings_id);
+  const auto& generic = file.generics().Get(generic_id);
+  out << "\nbindings block: " << Dump(file, generic.bindings_id);
+  if (generic.decl_block_id.has_value()) {
+    out << "\ngeneric decl block: " << Dump(file, generic.decl_block_id);
+  }
+  if (generic.definition_block_id.has_value()) {
+    out << "\ngeneric definition block: "
+        << Dump(file, generic.definition_block_id);
+  }
   return out.TakeStr();
 }
 
@@ -176,7 +213,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
     if (const_inst_id == inst_id) {
       out << const_id;
     } else {
-      out << Dump(file, const_id);
+      out << DumpConstantSummary(file, const_id);
     }
   }
   return out.TakeStr();
@@ -267,7 +304,17 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id)
   RawStringOstream out;
   out << DumpSpecificSummary(file, specific_id);
   if (specific_id.has_value()) {
-    out << "\n" << Dump(file, file.specifics().Get(specific_id).args_id);
+    const auto& specific = file.specifics().Get(specific_id);
+    out << '\n'
+        << Dump(file, specific.args_id) << '\n'
+        << DumpGenericSummary(file, specific.generic_id);
+    if (specific.decl_block_id.has_value()) {
+      out << "\nspecific decl block: " << Dump(file, specific.decl_block_id);
+    }
+    if (specific.definition_block_id.has_value()) {
+      out << "\nspecific definition block: "
+          << Dump(file, specific.definition_block_id);
+    }
   }
   return out.TakeStr();
 }
@@ -279,7 +326,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
   const auto& interface = file.specific_interfaces().Get(specific_interface_id);
   out << specific_interface_id << "\n"
       << "  - interface: " << Dump(file, interface.interface_id) << "\n"
-      << "  - specific_id: " << Dump(file, interface.specific_id);
+      << "  - specific_id: "
+      << DumpSpecificSummary(file, interface.specific_id);
   return out.TakeStr();
 }
 

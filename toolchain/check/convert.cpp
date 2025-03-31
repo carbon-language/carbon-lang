@@ -787,6 +787,40 @@ static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
   // Otherwise, the type itself is a non-adapter type.
   return type_id;
 }
+static auto DiagnoseConversionFailureToConstraintValue(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
+    SemIR::TypeId target_type_id) -> void {
+  CARBON_DCHECK(target_type_id == SemIR::TypeType::SingletonTypeId ||
+                context.types().Is<SemIR::FacetType>(target_type_id));
+
+  auto type_of_expr_id = context.insts().Get(expr_id).type_id();
+  CARBON_CHECK(context.types().IsFacetType(type_of_expr_id));
+  // If the source type is/has a facet value, then we can include its
+  // FacetType in the diagnostic to help explain what interfaces the
+  // source type implements.
+  auto facet_value_inst_id = SemIR::InstId::None;
+  if (auto facet_access_type =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
+    facet_value_inst_id = facet_access_type->facet_value_inst_id;
+  } else if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
+    facet_value_inst_id = expr_id;
+  }
+
+  if (facet_value_inst_id.has_value()) {
+    CARBON_DIAGNOSTIC(ConversionFailureFacetToFacet, Error,
+                      "cannot convert type {0} that implements {1} into type "
+                      "implementing {2}",
+                      InstIdAsType, TypeOfInstId, SemIR::TypeId);
+    context.emitter().Emit(loc_id, ConversionFailureFacetToFacet, expr_id,
+                           facet_value_inst_id, target_type_id);
+  } else {
+    CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
+                      "cannot convert type {0} into type implementing {1}",
+                      InstIdAsType, SemIR::TypeId);
+    context.emitter().Emit(loc_id, ConversionFailureTypeToFacet, expr_id,
+                           target_type_id);
+  }
+}
 
 static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
                                      SemIR::InstId value_id,
@@ -1082,6 +1116,16 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
              .type_inst_id = type_inst_id,
              .witnesses_block_id = lookup_result.inst_block_id()});
       }
+    } else {
+      // If impl lookup fails, don't keep looking for another way to convert.
+      // See https://github.com/carbon-language/carbon-lang/issues/5122.
+      // TODO: Pass this function into `LookupImplWitness` so it can construct
+      // the error add notes explaining failure.
+      if (target.diagnose) {
+        DiagnoseConversionFailureToConstraintValue(context, loc_id, value_id,
+                                                   target.type_id);
+      }
+      return SemIR::ErrorInst::SingletonInstId;
     }
   }
 
@@ -1113,60 +1157,6 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
     context.emitter().Emit(expr_id, CopyOfUncopyableType, expr_id);
   }
   return SemIR::ErrorInst::SingletonInstId;
-}
-
-static auto DiagnoseConversionFailureToConstraintValue(Context& context,
-                                                       SemIR::LocId loc_id,
-                                                       SemIR::InstId expr_id,
-                                                       ConversionTarget target)
-    -> DiagnosticBuilder {
-  CARBON_DCHECK(target.type_id == SemIR::TypeType::SingletonTypeId ||
-                context.types().Is<SemIR::FacetType>(target.type_id));
-
-  auto type_of_expr_id = context.insts().Get(expr_id).type_id();
-  if (context.types().IsFacetType(type_of_expr_id)) {
-    // If the source type is/has a facet value, then we can include its
-    // FacetType in the diagnostic to help explain what interfaces the
-    // source type implements.
-    auto facet_value_inst_id = SemIR::InstId::None;
-    if (auto facet_access_type =
-            context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
-      facet_value_inst_id = facet_access_type->facet_value_inst_id;
-    } else if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
-      facet_value_inst_id = expr_id;
-    }
-
-    if (facet_value_inst_id.has_value()) {
-      CARBON_DIAGNOSTIC(
-          ConversionFailureFacetToFacet, Error,
-          "cannot{0:| implicitly} convert type {1} that implements {2} "
-          "into type implementing {3}{0: with `as`|}",
-          Diagnostics::BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
-      return context.emitter().Build(
-          loc_id, ConversionFailureFacetToFacet,
-          target.kind == ConversionTarget::ExplicitAs, expr_id,
-          facet_value_inst_id, target.type_id);
-    } else {
-      CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
-                        "cannot{0:| implicitly} convert type {1} "
-                        "into type implementing {2}{0: with `as`|}",
-                        Diagnostics::BoolAsSelect, InstIdAsType, SemIR::TypeId);
-      return context.emitter().Build(
-          loc_id, ConversionFailureTypeToFacet,
-          target.kind == ConversionTarget::ExplicitAs, expr_id, target.type_id);
-    }
-  } else {
-    CARBON_DIAGNOSTIC(
-        ConversionFailureNonTypeToFacet, Error,
-        "cannot{0:| implicitly} convert non-type value of type {1} "
-        "{2:to|into type implementing} {3}{0: with `as`|}",
-        Diagnostics::BoolAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
-        SemIR::TypeId);
-    return context.emitter().Build(
-        loc_id, ConversionFailureNonTypeToFacet,
-        target.kind == ConversionTarget::ExplicitAs, expr_id,
-        target.type_id == SemIR::TypeType::SingletonTypeId, target.type_id);
-  }
 }
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
@@ -1283,16 +1273,20 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       }
       if (target.type_id == SemIR::TypeType::SingletonTypeId ||
           sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
-        // TODO: Move this to PerformBuiltinConversion(). See
-        // https://github.com/carbon-language/carbon-lang/issues/5122.
-        return DiagnoseConversionFailureToConstraintValue(context, loc_id,
-                                                          expr_id, target);
+        CARBON_DIAGNOSTIC(
+            ConversionFailureNonTypeToFacet, Error,
+            "cannot{0:| implicitly} convert non-type value of type {1} "
+            "{2:to|into type implementing} {3}{0: with `as`|}",
+            Diagnostics::BoolAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
+            SemIR::TypeId);
+        return context.emitter().Build(
+            loc_id, ConversionFailureNonTypeToFacet,
+            target.kind == ConversionTarget::ExplicitAs, expr_id,
+            target.type_id == SemIR::TypeType::SingletonTypeId, target.type_id);
       } else {
-        // TODO: Should this message change to say "object of type" when
-        // converting from a reference expression?
         CARBON_DIAGNOSTIC(ConversionFailure, Error,
-                          "cannot{0:| implicitly} convert value of type {1} to "
-                          "{2}{0: with `as`|}",
+                          "cannot{0:| implicitly} convert expression of type "
+                          "{1} to {2}{0: with `as`|}",
                           Diagnostics::BoolAsSelect, TypeOfInstId,
                           SemIR::TypeId);
         return context.emitter().Build(
