@@ -52,7 +52,7 @@ impl {} as I where .T = ();
 
 impl {} as I where .T = () {}
 
-// --- fail_todo_associated_const_compound_member_access.carbon
+// --- associated_const_compound_member_access.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -65,7 +65,7 @@ let x: C.(I.T) = ();
 
 impl C as I where .T = () {}
 
-// --- fail_todo_associated_const_of_facet.carbon
+// --- associated_const_of_facet.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -141,7 +141,7 @@ impl D as I(C) where .T = C;
 class C {}
 impl D as I(C) where .T = C {}
 
-// --- fail_todo_find_incomplete_impl.carbon
+// --- find_incomplete_impl.carbon
 library "[[@TEST_NAME]]";
 
 interface I;
@@ -673,7 +673,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_associated_const_compound_member_access.carbon
+// CHECK:STDOUT: --- associated_const_compound_member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
@@ -802,7 +802,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%I.facet.a7f) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_associated_const_of_facet.carbon
+// CHECK:STDOUT: --- associated_const_of_facet.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
@@ -1272,7 +1272,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%C, constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_find_incomplete_impl.carbon
+// CHECK:STDOUT: --- find_incomplete_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
