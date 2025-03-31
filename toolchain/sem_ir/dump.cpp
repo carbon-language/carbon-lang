@@ -19,7 +19,7 @@ static auto DumpNameIfValid(const File& file, NameId name_id) -> std::string {
   return out.TakeStr();
 }
 
-static auto DumpConstSummary(const File& file, ConstantId const_id)
+static auto DumpConstantSummary(const File& file, ConstantId const_id)
     -> std::string {
   RawStringOstream out;
   out << const_id;
@@ -42,7 +42,7 @@ static auto DumpGenericSummary(const File& file, GenericId generic_id)
     return out.TakeStr();
   }
   const auto& generic = file.generics().Get(generic_id);
-  out << ": " << generic << '\n' << Dump(file, generic.decl_id);
+  out << ": " << generic << "\ndecl: " << Dump(file, generic.decl_id);
   return out.TakeStr();
 }
 
@@ -151,7 +151,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id)
     return out.TakeStr();
   }
   const auto& generic = file.generics().Get(generic_id);
-  out << '\n' << Dump(file, generic.bindings_id);
+  out << "\nbindings block: " << Dump(file, generic.bindings_id);
   if (generic.decl_block_id.has_value()) {
     out << "\ngeneric decl block: " << Dump(file, generic.decl_block_id);
   }
