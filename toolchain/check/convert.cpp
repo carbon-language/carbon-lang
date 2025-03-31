@@ -1119,8 +1119,8 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     } else {
       // If impl lookup fails, don't keep looking for another way to convert.
       // See https://github.com/carbon-language/carbon-lang/issues/5122.
-      // TODO: Move into `LookupImplWitness` so it can add notes explaining
-      // failure.
+      // TODO: Pass this function into `LookupImplWitness` so it can construct
+      // the error add notes explaining failure.
       if (target.diagnose) {
         DiagnoseConversionFailureToConstraintValue(context, loc_id, value_id,
                                                    target.type_id);
