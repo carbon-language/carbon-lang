@@ -121,8 +121,10 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
             context, impl.latest_decl_id(), impl.constraint_id)) {
       return;
     }
-    witness_block = AllocateFacetTypeImplWitness(
-        context, impl.interface.interface_id, witness.elements_id);
+
+    AllocateFacetTypeImplWitness(context, impl.interface.interface_id,
+                                 witness.elements_id);
+    witness_block = context.inst_blocks().GetMutable(witness.elements_id);
   }
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
   auto assoc_entities =

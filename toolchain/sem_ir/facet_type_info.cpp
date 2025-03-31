@@ -70,7 +70,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto IdentifiedFacetType::CanonicalizeRequiredInterfaces() -> void {
-  SortAndDeduplicate(required_interfaces, RequiredLess);
+  SortAndDeduplicate(required_interfaces_, RequiredLess);
 }
 
 }  // namespace Carbon::SemIR

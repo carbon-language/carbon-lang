@@ -56,8 +56,7 @@ auto RequireCompleteFacetTypeForImplDefinition(Context& context, SemIRLoc loc,
 // `interface_id` to be complete.
 auto AllocateFacetTypeImplWitness(Context& context,
                                   SemIR::InterfaceId interface_id,
-                                  SemIR::InstBlockId witness_id)
-    -> llvm::MutableArrayRef<SemIR::InstId>;
+                                  SemIR::InstBlockId witness_id) -> void;
 
 }  // namespace Carbon::Check
 

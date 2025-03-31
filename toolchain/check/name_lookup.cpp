@@ -324,7 +324,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       CARBON_CHECK(identified_id.has_value());
       const auto& identified =
           context.identified_facet_types().Get(identified_id);
-      for (const auto& interface : identified.required_interfaces) {
+      for (const auto& interface : identified.required_interfaces()) {
         auto& interface_info = context.interfaces().Get(interface.interface_id);
         scopes->push_back({.name_scope_id = interface_info.scope_id,
                            .specific_id = interface.specific_id});

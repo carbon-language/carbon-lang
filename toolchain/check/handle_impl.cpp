@@ -325,15 +325,14 @@ static auto CheckConstraintIsInterface(Context& context,
 
   auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
   const auto& identified = context.identified_facet_types().Get(identified_id);
-  if (!identified.interface_id.has_value()) {
+  if (!identified.is_impl_as_target()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
     context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
-                           identified.num_to_impl);
+                           identified.num_interfaces_to_impl());
     return SemIR::SpecificInterface::None;
   }
-  return {.interface_id = identified.interface_id,
-          .specific_id = identified.specific_id};
+  return identified.impl_as_target_interface();
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the

@@ -290,7 +290,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       const auto& identified =
           context_->identified_facet_types().Get(identified_id);
       // Every mentioned interface needs to be complete.
-      for (auto req_interface : identified.required_interfaces) {
+      for (auto req_interface : identified.required_interfaces()) {
         auto interface_id = req_interface.interface_id;
         const auto& interface = context_->interfaces().Get(interface_id);
         if (!interface.is_complete()) {
@@ -616,18 +616,16 @@ auto RequireIdentifiedFacetType(Context& context,
       context.facet_types().Get(facet_type.facet_type_id);
 
   SemIR::IdentifiedFacetType result;
-  result.required_interfaces = facet_type_info.impls_constraints;
+  result.mutable_required_interfaces() = facet_type_info.impls_constraints;
   // TODO: expand named constraints
   result.CanonicalizeRequiredInterfaces();
 
   // TODO: Distinguish interfaces that are required but would not be
   // implemented, such as those from `where .Self impls I`.
-  if (result.required_interfaces.size() == 1) {
-    const auto& interface = result.required_interfaces.front();
-    result.interface_id = interface.interface_id;
-    result.specific_id = interface.specific_id;
+  if (result.required_interfaces().size() == 1) {
+    result.set_interface_to_impl(result.required_interfaces().front());
   } else {
-    result.num_to_impl = result.required_interfaces.size();
+    result.set_num_interfaces_to_impl(result.required_interfaces().size());
   }
 
   // TODO: Process other kinds of requirements.

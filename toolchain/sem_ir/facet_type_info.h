@@ -103,27 +103,74 @@ constexpr FacetTypeInfo::RewriteConstraint
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
-  IdentifiedFacetType() : interface_id(InterfaceId::None), num_to_impl(0) {}
+  IdentifiedFacetType()
+      : interface_id_(InterfaceId::None), num_interface_to_impl_(0) {}
 
+  auto required_interfaces() const
+      -> const llvm::SmallVector<RequiredInterface>& {
+    return required_interfaces_;
+  }
+
+  // Call `CanonicalizeRequiredInterfaces()` once the changes have been
+  // finished.
+  auto mutable_required_interfaces() -> llvm::SmallVector<RequiredInterface>& {
+    return required_interfaces_;
+  }
+
+  // Sorts and deduplicates `required_interfaces`. Call after building the sets
+  // of interfaces, and then don't mutate the value afterwards.
+  auto CanonicalizeRequiredInterfaces() -> void;
+
+  // Can this be used to the right of an `as` in an `impl` declaration?
+  auto is_impl_as_target() const -> bool { return interface_id_.has_value(); }
+
+  // The interface to implement when this facet type is used in an `impl`
+  // declaration.
+  auto impl_as_target_interface() const -> SpecificInterface {
+    if (is_impl_as_target()) {
+      return {.interface_id = interface_id_, .specific_id = specific_id_};
+    } else {
+      return SpecificInterface::None;
+    }
+  }
+
+  auto num_interfaces_to_impl() const -> int {
+    if (is_impl_as_target()) {
+      return 1;
+    } else {
+      return num_interface_to_impl_;
+    }
+  }
+
+  // Call this function if num != 1, otherwise call `set_interface_to_impl`.
+  auto set_num_interfaces_to_impl(int num) -> void {
+    CARBON_CHECK(num != 1);
+    interface_id_ = InterfaceId::None;
+    num_interface_to_impl_ = num;
+  }
+
+  auto set_interface_to_impl(SpecificInterface interface) -> void {
+    CARBON_CHECK(interface.interface_id.has_value());
+    interface_id_ = interface.interface_id;
+    specific_id_ = interface.specific_id;
+  }
+
+ private:
   // Interfaces mentioned explicitly in the facet type expression, or
   // transitively through a named constraint. Sorted and deduplicated.
-  llvm::SmallVector<RequiredInterface> required_interfaces;
+  llvm::SmallVector<RequiredInterface> required_interfaces_;
 
   // The single interface from `required_interfaces` to implement if this is
   // the facet type to the right of an `impl`...`as`, or `None` if no such
   // single interface.
-  InterfaceId interface_id;
+  InterfaceId interface_id_;
   union {
     // If `interface_id` is `None`, the number of interfaces to report in a
     // diagnostic about why this facet type can't be implemented.
-    int num_to_impl;
+    int num_interface_to_impl_;
     // If `interface_id` is not `None`, the specific for that interface.
-    SpecificId specific_id;
+    SpecificId specific_id_;
   };
-
-  // Sorts and deduplicates `required_interfaces`. Call after building the sets
-  // of interfaces, and then don't mutate them value afterwards.
-  auto CanonicalizeRequiredInterfaces() -> void;
 };
 
 // See common/hashing.h.

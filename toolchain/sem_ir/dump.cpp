@@ -251,17 +251,17 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
   const auto& identified_facet_type =
       file.identified_facet_types().Get(identified_facet_type_id);
   for (auto [i, req_interface] :
-       llvm::enumerate(identified_facet_type.required_interfaces)) {
+       llvm::enumerate(identified_facet_type.required_interfaces())) {
     out << "\n  - " << Dump(file, req_interface.interface_id);
     if (req_interface.specific_id.has_value()) {
       out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
     }
-    if (req_interface.interface_id == identified_facet_type.interface_id &&
-        req_interface.specific_id == identified_facet_type.specific_id) {
+    if (req_interface == identified_facet_type.impl_as_target_interface()) {
       out << " (to impl)";
     }
-    if (!identified_facet_type.interface_id.has_value()) {
-      out << "\n  - (" << identified_facet_type.num_to_impl << " to impl)\n";
+    if (!identified_facet_type.is_impl_as_target()) {
+      out << "\n  - (" << identified_facet_type.num_interfaces_to_impl()
+          << " to impl)\n";
     }
   }
   return out.TakeStr();

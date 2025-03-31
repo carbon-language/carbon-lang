@@ -81,7 +81,7 @@ auto InitialFacetTypeImplWitness(
 
   if (!RequireCompleteType(context, facet_type_id,
                            context.insts().GetLocId(facet_type_inst_id), [&] {
-                             return IncompleteFacetTypeBuilder(
+                             return IncompleteFacetTypeDiagnosticBuilder(
                                  context, witness_loc_id, facet_type_inst_id,
                                  is_definition);
                            })) {
@@ -225,7 +225,7 @@ auto RequireCompleteFacetTypeForImplDefinition(Context& context, SemIRLoc loc,
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
   return RequireCompleteType(context, facet_type_id,
                              context.insts().GetLocId(facet_type_inst_id), [&] {
-                               return IncompleteFacetTypeBuilder(
+                               return IncompleteFacetTypeDiagnosticBuilder(
                                    context, loc, facet_type_inst_id,
                                    /*is_definition=*/true);
                              });
@@ -233,8 +233,7 @@ auto RequireCompleteFacetTypeForImplDefinition(Context& context, SemIRLoc loc,
 
 auto AllocateFacetTypeImplWitness(Context& context,
                                   SemIR::InterfaceId interface_id,
-                                  SemIR::InstBlockId witness_id)
-    -> llvm::MutableArrayRef<SemIR::InstId> {
+                                  SemIR::InstBlockId witness_id) -> void {
   const auto& interface = context.interfaces().Get(interface_id);
   CARBON_CHECK(interface.is_complete());
   auto assoc_entities =
@@ -246,7 +245,6 @@ auto AllocateFacetTypeImplWitness(Context& context,
   llvm::SmallVector<SemIR::InstId> empty_table(assoc_entities.size(),
                                                SemIR::InstId::None);
   context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
-  return context.inst_blocks().GetMutable(witness_id);
 }
 
 }  // namespace Carbon::Check
