@@ -46,7 +46,7 @@ static auto IncompleteFacetTypeDiagnosticBuilder(
   // this.
   CARBON_CHECK(is_definition);
   CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
-                    "impl as incomplete facet type {0} definition",
+                    "definition of impl as incomplete facet type {0}",
                     InstIdAsType);
   return context.emitter().Build(loc, ImplAsIncompleteFacetTypeDefinition,
                                  facet_type_inst_id);
