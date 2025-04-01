@@ -72,7 +72,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc11_20.2 => constants.%ptr.79f
 // CHECK:STDOUT:   %ptr.loc11_21.2 => constants.%ptr.a13
 // CHECK:STDOUT: }

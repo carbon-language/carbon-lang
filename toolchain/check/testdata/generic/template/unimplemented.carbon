@@ -56,7 +56,7 @@ fn F[template T:! type](x: T) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   var v: T = 0;
-  // CHECK:STDERR: fail_todo_unimplemented_convert.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `T` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_unimplemented_convert.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `T` to `i32` [ConversionFailure]
   // CHECK:STDERR:   var w: i32 = x;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_unimplemented_convert.carbon:[[@LINE+4]]:3: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
@@ -134,7 +134,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_unimplemented_value.carbon
@@ -217,7 +217,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%c) {
 // CHECK:STDOUT:   %c.loc11_15.2 => constants.%c
-// CHECK:STDOUT:   %c.patt.loc11_15.2 => constants.%c
+// CHECK:STDOUT:   %c.patt.loc11_15.2 => constants.%c.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_unimplemented_convert.carbon
@@ -303,6 +303,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

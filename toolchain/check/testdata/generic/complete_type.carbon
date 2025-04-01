@@ -177,14 +177,14 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(%T.loc6_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%B) {
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%B
-// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%B
+// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => <error>
@@ -275,12 +275,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%B) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%B
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%B
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
@@ -358,12 +358,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%B) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%B
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%B
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => <error>

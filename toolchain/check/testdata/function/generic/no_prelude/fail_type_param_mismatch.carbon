@@ -82,8 +82,8 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc11_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc11_16.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc11_16.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc11_16.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

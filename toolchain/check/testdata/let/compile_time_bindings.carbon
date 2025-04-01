@@ -516,7 +516,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%b) {
 // CHECK:STDOUT:   %b.loc10_8.1 => constants.%b
-// CHECK:STDOUT:   %b.patt.loc10_8.2 => constants.%b
+// CHECK:STDOUT:   %b.patt.loc10_8.2 => constants.%b.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_let_after.carbon

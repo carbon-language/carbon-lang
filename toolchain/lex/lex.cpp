@@ -1424,7 +1424,8 @@ auto Lexer::Finalize() -> void {
 // recovery. These are buffered so that we can perform them in linear time.
 class Lexer::ErrorRecoveryBuffer {
  public:
-  explicit ErrorRecoveryBuffer(TokenizedBuffer& buffer) : buffer_(buffer) {}
+  // `buffer` must not be null.
+  explicit ErrorRecoveryBuffer(TokenizedBuffer* buffer) : buffer_(buffer) {}
 
   auto empty() const -> bool {
     return new_tokens_.empty() && !any_error_tokens_;
@@ -1437,7 +1438,7 @@ class Lexer::ErrorRecoveryBuffer {
     CARBON_CHECK(insert_before.index > 0,
                  "Cannot insert before the start of file token.");
     CARBON_CHECK(
-        insert_before.index < static_cast<int>(buffer_.token_infos_.size()),
+        insert_before.index < static_cast<int>(buffer_->token_infos_.size()),
         "Cannot insert after the end of file token.");
     CARBON_CHECK(
         new_tokens_.empty() || new_tokens_.back().first <= insert_before,
@@ -1447,14 +1448,14 @@ class Lexer::ErrorRecoveryBuffer {
     // inserted token as also having leading whitespace. This avoids changing
     // whether the prior tokens had leading or trailing whitespace when
     // inserting.
-    bool insert_leading_space = buffer_.HasLeadingWhitespace(insert_before);
+    bool insert_leading_space = buffer_->HasLeadingWhitespace(insert_before);
 
     // Find the end of the token before the target token, and add the new token
     // there.
     TokenIndex insert_after(insert_before.index - 1);
-    const auto& prev_info = buffer_.GetTokenInfo(insert_after);
+    const auto& prev_info = buffer_->GetTokenInfo(insert_after);
     int32_t byte_offset =
-        prev_info.byte_offset() + buffer_.GetTokenText(insert_after).size();
+        prev_info.byte_offset() + buffer_->GetTokenText(insert_after).size();
     new_tokens_.push_back(
         {insert_before, TokenInfo(kind, insert_leading_space, byte_offset)});
   }
@@ -1462,30 +1463,30 @@ class Lexer::ErrorRecoveryBuffer {
   // Replace the given token with an error token. We do this immediately,
   // because we don't benefit from buffering it.
   auto ReplaceWithError(TokenIndex token) -> void {
-    auto& token_info = buffer_.GetTokenInfo(token);
-    int error_length = buffer_.GetTokenText(token).size();
+    auto& token_info = buffer_->GetTokenInfo(token);
+    int error_length = buffer_->GetTokenText(token).size();
     token_info.ResetAsError(error_length);
     any_error_tokens_ = true;
   }
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
-    auto old_tokens = std::move(buffer_.token_infos_);
-    buffer_.token_infos_.clear();
+    auto old_tokens = std::move(buffer_->token_infos_);
+    buffer_->token_infos_.clear();
     int new_size = old_tokens.size() + new_tokens_.size();
-    buffer_.token_infos_.reserve(new_size);
-    buffer_.recovery_tokens_.resize(new_size);
+    buffer_->token_infos_.reserve(new_size);
+    buffer_->recovery_tokens_.resize(new_size);
 
     int old_tokens_offset = 0;
     for (auto [next_offset, info] : new_tokens_) {
-      buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                  old_tokens.begin() + next_offset.index);
-      buffer_.AddToken(info);
-      buffer_.recovery_tokens_.set(next_offset.index);
+      buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
+                                   old_tokens.begin() + next_offset.index);
+      buffer_->AddToken(info);
+      buffer_->recovery_tokens_.set(next_offset.index);
       old_tokens_offset = next_offset.index;
     }
-    buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                old_tokens.end());
+    buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
+                                 old_tokens.end());
   }
 
   // Perform bracket matching to fix cross-references between tokens. This must
@@ -1493,8 +1494,8 @@ class Lexer::ErrorRecoveryBuffer {
   // recovery will change token indexes.
   auto FixTokenCrossReferences() -> void {
     llvm::SmallVector<TokenIndex> open_groups;
-    for (auto token : buffer_.tokens()) {
-      auto kind = buffer_.GetKind(token);
+    for (auto token : buffer_->tokens()) {
+      auto kind = buffer_->GetKind(token);
       if (kind.is_opening_symbol()) {
         open_groups.push_back(token);
       } else if (kind.is_closing_symbol()) {
@@ -1502,10 +1503,11 @@ class Lexer::ErrorRecoveryBuffer {
         auto opening_token = open_groups.pop_back_val();
 
         CARBON_CHECK(
-            kind == buffer_.GetTokenInfo(opening_token).kind().closing_symbol(),
+            kind ==
+                buffer_->GetTokenInfo(opening_token).kind().closing_symbol(),
             "Failed to balance brackets");
-        auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
-        auto& closing_token_info = buffer_.GetTokenInfo(token);
+        auto& opening_token_info = buffer_->GetTokenInfo(opening_token);
+        auto& closing_token_info = buffer_->GetTokenInfo(token);
         opening_token_info.set_closing_token_index(token);
         closing_token_info.set_opening_token_index(opening_token);
       }
@@ -1513,7 +1515,7 @@ class Lexer::ErrorRecoveryBuffer {
   }
 
  private:
-  TokenizedBuffer& buffer_;
+  TokenizedBuffer* buffer_;
 
   // A list of tokens to insert into the token stream to fix mismatched
   // brackets. The first element in each pair is the original token index to
@@ -1537,7 +1539,7 @@ static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
 // brackets to fix the nesting, issue suitable diagnostics, and update the
 // token list to describe the fixes.
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
-  ErrorRecoveryBuffer fixes(buffer_);
+  ErrorRecoveryBuffer fixes(&buffer_);
 
   // Look for mismatched brackets and decide where to add tokens to fix them.
   //

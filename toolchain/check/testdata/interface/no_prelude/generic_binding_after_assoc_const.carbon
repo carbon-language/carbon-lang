@@ -86,13 +86,13 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self, constants.%T) {
 // CHECK:STDOUT:   %T.loc12_8.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_8.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_8.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%Self, constants.%T) {
 // CHECK:STDOUT:   %T.loc16_8.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc16_8.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc16_8.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

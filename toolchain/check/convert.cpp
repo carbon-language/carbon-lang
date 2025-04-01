@@ -24,6 +24,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -35,55 +36,6 @@
 // NOLINTBEGIN(misc-no-recursion)
 
 namespace Carbon::Check {
-
-// Given an initializing expression, find its return slot argument. Returns
-// `None` if there is no return slot, because the initialization is not
-// performed in place.
-static auto FindReturnSlotArgForInitializer(SemIR::File& sem_ir,
-                                            SemIR::InstId init_id)
-    -> SemIR::InstId {
-  while (true) {
-    SemIR::Inst init_untyped = sem_ir.insts().Get(init_id);
-    CARBON_KIND_SWITCH(init_untyped) {
-      case CARBON_KIND(SemIR::AsCompatible init): {
-        init_id = init.source_id;
-        continue;
-      }
-      case CARBON_KIND(SemIR::Converted init): {
-        init_id = init.result_id;
-        continue;
-      }
-      case CARBON_KIND(SemIR::ArrayInit init): {
-        return init.dest_id;
-      }
-      case CARBON_KIND(SemIR::ClassInit init): {
-        return init.dest_id;
-      }
-      case CARBON_KIND(SemIR::StructInit init): {
-        return init.dest_id;
-      }
-      case CARBON_KIND(SemIR::TupleInit init): {
-        return init.dest_id;
-      }
-      case CARBON_KIND(SemIR::InitializeFrom init): {
-        return init.dest_id;
-      }
-      case CARBON_KIND(SemIR::Call call): {
-        if (!SemIR::ReturnTypeInfo::ForType(sem_ir, call.type_id)
-                 .has_return_slot()) {
-          return SemIR::InstId::None;
-        }
-        if (!call.args_id.has_value()) {
-          // Argument initialization failed, so we have no return slot.
-          return SemIR::InstId::None;
-        }
-        return sem_ir.inst_blocks().Get(call.args_id).back();
-      }
-      default:
-        CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);
-    }
-  }
-}
 
 // Marks the initializer `init_id` as initializing `target_id`.
 static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
@@ -385,10 +337,10 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
       literal_elems_id.has_value()
-          ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
+          ? SemIR::CopyOnWriteInstBlock(&sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
-                sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
-                            src_elem_types.size()});
+                &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
+                             src_elem_types.size()});
   for (auto [i, src_type_id, dest_type_id] :
        llvm::enumerate(src_elem_types, dest_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
@@ -496,10 +448,10 @@ static auto ConvertStructToStructOrClass(Context& context,
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
       literal_elems_id.has_value() && !dest_has_vptr
-          ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
+          ? SemIR::CopyOnWriteInstBlock(&sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
-                sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
-                            dest_elem_fields.size()});
+                &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
+                             dest_elem_fields.size()});
   for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
     if (dest_field.name_id == SemIR::NameId::Vptr) {
       if constexpr (!ToClass) {
@@ -786,6 +738,40 @@ static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
 
   // Otherwise, the type itself is a non-adapter type.
   return type_id;
+}
+static auto DiagnoseConversionFailureToConstraintValue(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
+    SemIR::TypeId target_type_id) -> void {
+  CARBON_DCHECK(target_type_id == SemIR::TypeType::SingletonTypeId ||
+                context.types().Is<SemIR::FacetType>(target_type_id));
+
+  auto type_of_expr_id = context.insts().Get(expr_id).type_id();
+  CARBON_CHECK(context.types().IsFacetType(type_of_expr_id));
+  // If the source type is/has a facet value, then we can include its
+  // FacetType in the diagnostic to help explain what interfaces the
+  // source type implements.
+  auto facet_value_inst_id = SemIR::InstId::None;
+  if (auto facet_access_type =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
+    facet_value_inst_id = facet_access_type->facet_value_inst_id;
+  } else if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
+    facet_value_inst_id = expr_id;
+  }
+
+  if (facet_value_inst_id.has_value()) {
+    CARBON_DIAGNOSTIC(ConversionFailureFacetToFacet, Error,
+                      "cannot convert type {0} that implements {1} into type "
+                      "implementing {2}",
+                      InstIdAsType, TypeOfInstId, SemIR::TypeId);
+    context.emitter().Emit(loc_id, ConversionFailureFacetToFacet, expr_id,
+                           facet_value_inst_id, target_type_id);
+  } else {
+    CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
+                      "cannot convert type {0} into type implementing {1}",
+                      InstIdAsType, SemIR::TypeId);
+    context.emitter().Emit(loc_id, ConversionFailureTypeToFacet, expr_id,
+                           target_type_id);
+  }
 }
 
 static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
@@ -1082,6 +1068,16 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
              .type_inst_id = type_inst_id,
              .witnesses_block_id = lookup_result.inst_block_id()});
       }
+    } else {
+      // If impl lookup fails, don't keep looking for another way to convert.
+      // See https://github.com/carbon-language/carbon-lang/issues/5122.
+      // TODO: Pass this function into `LookupImplWitness` so it can construct
+      // the error add notes explaining failure.
+      if (target.diagnose) {
+        DiagnoseConversionFailureToConstraintValue(context, loc_id, value_id,
+                                                   target.type_id);
+      }
+      return SemIR::ErrorInst::SingletonInstId;
     }
   }
 
@@ -1113,60 +1109,6 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
     context.emitter().Emit(expr_id, CopyOfUncopyableType, expr_id);
   }
   return SemIR::ErrorInst::SingletonInstId;
-}
-
-static auto DiagnoseConversionFailureToConstraintValue(Context& context,
-                                                       SemIR::LocId loc_id,
-                                                       SemIR::InstId expr_id,
-                                                       ConversionTarget target)
-    -> DiagnosticBuilder {
-  CARBON_DCHECK(target.type_id == SemIR::TypeType::SingletonTypeId ||
-                context.types().Is<SemIR::FacetType>(target.type_id));
-
-  auto type_of_expr_id = context.insts().Get(expr_id).type_id();
-  if (context.types().IsFacetType(type_of_expr_id)) {
-    // If the source type is/has a facet value, then we can include its
-    // FacetType in the diagnostic to help explain what interfaces the
-    // source type implements.
-    auto facet_value_inst_id = SemIR::InstId::None;
-    if (auto facet_access_type =
-            context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
-      facet_value_inst_id = facet_access_type->facet_value_inst_id;
-    } else if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
-      facet_value_inst_id = expr_id;
-    }
-
-    if (facet_value_inst_id.has_value()) {
-      CARBON_DIAGNOSTIC(
-          ConversionFailureFacetToFacet, Error,
-          "cannot{0:| implicitly} convert type {1} that implements {2} "
-          "into type implementing {3}{0: with `as`|}",
-          Diagnostics::BoolAsSelect, InstIdAsType, TypeOfInstId, SemIR::TypeId);
-      return context.emitter().Build(
-          loc_id, ConversionFailureFacetToFacet,
-          target.kind == ConversionTarget::ExplicitAs, expr_id,
-          facet_value_inst_id, target.type_id);
-    } else {
-      CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
-                        "cannot{0:| implicitly} convert type {1} "
-                        "into type implementing {2}{0: with `as`|}",
-                        Diagnostics::BoolAsSelect, InstIdAsType, SemIR::TypeId);
-      return context.emitter().Build(
-          loc_id, ConversionFailureTypeToFacet,
-          target.kind == ConversionTarget::ExplicitAs, expr_id, target.type_id);
-    }
-  } else {
-    CARBON_DIAGNOSTIC(
-        ConversionFailureNonTypeToFacet, Error,
-        "cannot{0:| implicitly} convert non-type value of type {1} "
-        "{2:to|into type implementing} {3}{0: with `as`|}",
-        Diagnostics::BoolAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
-        SemIR::TypeId);
-    return context.emitter().Build(
-        loc_id, ConversionFailureNonTypeToFacet,
-        target.kind == ConversionTarget::ExplicitAs, expr_id,
-        target.type_id == SemIR::TypeType::SingletonTypeId, target.type_id);
-  }
 }
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
@@ -1283,16 +1225,20 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       }
       if (target.type_id == SemIR::TypeType::SingletonTypeId ||
           sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
-        // TODO: Move this to PerformBuiltinConversion(). See
-        // https://github.com/carbon-language/carbon-lang/issues/5122.
-        return DiagnoseConversionFailureToConstraintValue(context, loc_id,
-                                                          expr_id, target);
+        CARBON_DIAGNOSTIC(
+            ConversionFailureNonTypeToFacet, Error,
+            "cannot{0:| implicitly} convert non-type value of type {1} "
+            "{2:to|into type implementing} {3}{0: with `as`|}",
+            Diagnostics::BoolAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
+            SemIR::TypeId);
+        return context.emitter().Build(
+            loc_id, ConversionFailureNonTypeToFacet,
+            target.kind == ConversionTarget::ExplicitAs, expr_id,
+            target.type_id == SemIR::TypeType::SingletonTypeId, target.type_id);
       } else {
-        // TODO: Should this message change to say "object of type" when
-        // converting from a reference expression?
         CARBON_DIAGNOSTIC(ConversionFailure, Error,
-                          "cannot{0:| implicitly} convert value of type {1} to "
-                          "{2}{0: with `as`|}",
+                          "cannot{0:| implicitly} convert expression of type "
+                          "{1} to {2}{0: with `as`|}",
                           Diagnostics::BoolAsSelect, TypeOfInstId,
                           SemIR::TypeId);
         return context.emitter().Build(

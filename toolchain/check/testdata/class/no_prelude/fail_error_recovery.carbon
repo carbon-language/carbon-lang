@@ -27,7 +27,6 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT: --- fail_virtual_fn_in_invalid_context.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %N.patt: <error> = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -45,7 +44,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc6_6.1: <error> = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt: <error> = symbolic_binding_pattern N, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %error_not_found.ref: <error> = name_ref error_not_found, <error> [concrete = <error>]
 // CHECK:STDOUT:     %N: <error> = bind_symbolic_name N, 0 [concrete = <error>]
@@ -92,11 +91,9 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N: <error>) {
-// CHECK:STDOUT:   %N.patt.loc6_6.2: <error> = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc6_6.1: <error>) {
+// CHECK:STDOUT:   fn(%N.patt: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:     %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
@@ -113,9 +110,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(<error>) {
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => <error>
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(<error>) {
 // CHECK:STDOUT: !definition:

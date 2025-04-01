@@ -174,7 +174,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type
@@ -279,7 +279,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type

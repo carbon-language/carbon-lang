@@ -82,7 +82,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Always(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Always(%T.loc11_15.2) {}

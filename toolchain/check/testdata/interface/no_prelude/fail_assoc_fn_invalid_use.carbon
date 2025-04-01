@@ -120,6 +120,6 @@ fn Use(T:! I) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_8.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

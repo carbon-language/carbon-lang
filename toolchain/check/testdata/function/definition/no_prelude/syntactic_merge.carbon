@@ -739,12 +739,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.1(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_8.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc7_8.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc7_8.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.2(constants.%a) {
 // CHECK:STDOUT:   %a.loc15_8.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc15_8.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc15_8.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon

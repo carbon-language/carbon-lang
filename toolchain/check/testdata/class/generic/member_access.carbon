@@ -39,7 +39,7 @@ class Class(T:! type) {
 }
 
 fn StaticMemberFunctionCall(T:! type) -> Class(T) {
-  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `Class(T)` to `Class(T)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Class(T)` to `Class(T)` [ConversionFailure]
   // CHECK:STDERR:   return Class(T).Make();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+4]]:3: note: type `Class(T)` does not implement interface `Core.ImplicitAs(Class(T))` [MissingImplInMemberAccessNote]
@@ -331,7 +331,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
@@ -365,7 +365,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%i32) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -534,7 +534,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type
@@ -556,7 +556,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @StaticMemberFunctionCall(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_29.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_29.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_29.2 => constants.%T.patt
 // CHECK:STDOUT:   %Class.loc8_49.2 => constants.%Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

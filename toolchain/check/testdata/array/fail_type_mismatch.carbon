@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_type_mismatch.carbon
 
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert value of type `String` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `String` to `i32` [ConversionFailure]
 // CHECK:STDERR: var a: array(i32, 3) = (1, "Hello", "World");
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:24: note: type `String` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
@@ -18,7 +18,7 @@
 var a: array(i32, 3) = (1, "Hello", "World");
 
 var t1: (i32, String, String);
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert value of type `String` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `String` to `i32` [ConversionFailure]
 // CHECK:STDERR: var b: array(i32, 3) = t1;
 // CHECK:STDERR:                        ^~
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:24: note: type `String` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]

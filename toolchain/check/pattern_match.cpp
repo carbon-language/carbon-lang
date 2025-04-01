@@ -16,6 +16,7 @@
 #include "toolchain/check/subpattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/pattern.h"
 
 namespace Carbon::Check {

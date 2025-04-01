@@ -83,7 +83,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {}
@@ -192,7 +192,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(%T) {}
@@ -201,7 +201,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
-// CHECK:STDOUT:   %T.patt => constants.%C
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %AddWith.type => constants.%AddWith.type.e8e

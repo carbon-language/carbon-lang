@@ -76,7 +76,7 @@ fn G() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type.91ccba.2: type = facet_type <@Generic, @Generic(%T)> [symbolic]
 // CHECK:STDOUT:   %U: %Generic.type.91ccba.2 = bind_symbolic_name U, 1 [symbolic]
-// CHECK:STDOUT:   %U.patt: %Generic.type.91ccba.2 = symbolic_binding_pattern U, 1 [symbolic]
+// CHECK:STDOUT:   %U.patt.9a6: %Generic.type.91ccba.2 = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %CallGenericMethod.type: type = fn_type @CallGenericMethod [concrete]
 // CHECK:STDOUT:   %CallGenericMethod: %CallGenericMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.dee8d8.2: %Generic.type.91ccba.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -93,6 +93,7 @@ fn G() {
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @F.1(%T, %Generic.facet.0aa) [symbolic]
 // CHECK:STDOUT:   %G.type.9f9: type = fn_type @G.3 [concrete]
 // CHECK:STDOUT:   %G.57b: %G.type.9f9 = struct_value () [concrete]
+// CHECK:STDOUT:   %U.patt.8ea: %Generic.type.769 = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet.8bd) [concrete]
 // CHECK:STDOUT:   %complete_type.997: <witness> = complete_type_witness %Generic.type.769 [concrete]
 // CHECK:STDOUT:   %.1eb: type = fn_type_with_self_type %F.type.4cf, %Generic.facet.8bd [concrete]
@@ -138,7 +139,7 @@ fn G() {
 // CHECK:STDOUT:   %impl_witness.loc25: <witness> = impl_witness (@impl.728.%G.decl) [concrete = constants.%impl_witness.51c]
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
 // CHECK:STDOUT:     %T.patt.loc29_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc29_22.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %U.patt.loc29_32.1: @CallGenericMethod.%Generic.type.loc29_45.2 (%Generic.type.91ccba.2) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc29_32.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc29_32.1: @CallGenericMethod.%Generic.type.loc29_45.2 (%Generic.type.91ccba.2) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc29_32.2 (constants.%U.patt.9a6)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc29_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc29_22.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc29: type = splice_block %Generic.type.loc29_45.1 [symbolic = %Generic.type.loc29_45.2 (constants.%Generic.type.91ccba.2)] {
@@ -238,7 +239,7 @@ fn G() {
 // CHECK:STDOUT:   %T.patt.loc29_22.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc29_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %Generic.type.loc29_45.2: type = facet_type <@Generic, @Generic(%T.loc29_22.2)> [symbolic = %Generic.type.loc29_45.2 (constants.%Generic.type.91ccba.2)]
 // CHECK:STDOUT:   %U.loc29_32.2: @CallGenericMethod.%Generic.type.loc29_45.2 (%Generic.type.91ccba.2) = bind_symbolic_name U, 1 [symbolic = %U.loc29_32.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc29_32.2: @CallGenericMethod.%Generic.type.loc29_45.2 (%Generic.type.91ccba.2) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc29_32.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.patt.loc29_32.2: @CallGenericMethod.%Generic.type.loc29_45.2 (%Generic.type.91ccba.2) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc29_32.2 (constants.%U.patt.9a6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGenericMethod.%Generic.type.loc29_45.2 (%Generic.type.91ccba.2) [symbolic = %require_complete (constants.%require_complete)]
@@ -281,7 +282,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
 // CHECK:STDOUT:   %Scalar.loc11_19.2 => constants.%Scalar
-// CHECK:STDOUT:   %Scalar.patt.loc11_19.2 => constants.%Scalar
+// CHECK:STDOUT:   %Scalar.patt.loc11_19.2 => constants.%Scalar.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self.dee8d8.1) {}
@@ -290,7 +291,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc11_19.2 => constants.%GenericParam
-// CHECK:STDOUT:   %Scalar.patt.loc11_19.2 => constants.%GenericParam
+// CHECK:STDOUT:   %Scalar.patt.loc11_19.2 => constants.%Scalar.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Generic.type => constants.%Generic.type.769
@@ -309,7 +310,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
 // CHECK:STDOUT:   %Scalar.loc11_19.2 => constants.%T
-// CHECK:STDOUT:   %Scalar.patt.loc11_19.2 => constants.%T
+// CHECK:STDOUT:   %Scalar.patt.loc11_19.2 => constants.%Scalar.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Generic.type => constants.%Generic.type.91ccba.2
@@ -322,10 +323,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc29_22.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc29_22.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc29_22.2 => constants.%T.patt
 // CHECK:STDOUT:   %Generic.type.loc29_45.2 => constants.%Generic.type.91ccba.2
 // CHECK:STDOUT:   %U.loc29_32.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc29_32.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc29_32.2 => constants.%U.patt.9a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc29_22.2) {}
@@ -336,10 +337,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet.8bd) {
 // CHECK:STDOUT:   %T.loc29_22.2 => constants.%GenericParam
-// CHECK:STDOUT:   %T.patt.loc29_22.2 => constants.%GenericParam
+// CHECK:STDOUT:   %T.patt.loc29_22.2 => constants.%T.patt
 // CHECK:STDOUT:   %Generic.type.loc29_45.2 => constants.%Generic.type.769
 // CHECK:STDOUT:   %U.loc29_32.2 => constants.%Generic.facet.8bd
-// CHECK:STDOUT:   %U.patt.loc29_32.2 => constants.%Generic.facet.8bd
+// CHECK:STDOUT:   %U.patt.loc29_32.2 => constants.%U.patt.8ea
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.997

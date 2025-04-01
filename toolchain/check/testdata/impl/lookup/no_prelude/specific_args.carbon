@@ -162,7 +162,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {
@@ -178,7 +178,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc5_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc5_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc5_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_in_interface_args.carbon
@@ -310,7 +310,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(%T) {}
@@ -326,7 +326,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%InInterfaceArgs) {
 // CHECK:STDOUT:   %T => constants.%InInterfaceArgs
-// CHECK:STDOUT:   %T.patt => constants.%InInterfaceArgs
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.e45
@@ -485,7 +485,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(%T) {}
@@ -501,7 +501,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%InInterfaceArgs) {
 // CHECK:STDOUT:   %T => constants.%InInterfaceArgs
-// CHECK:STDOUT:   %T.patt => constants.%InInterfaceArgs
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.e45
@@ -663,19 +663,19 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%InClassArgs) {
 // CHECK:STDOUT:   %T => constants.%InClassArgs
-// CHECK:STDOUT:   %T.patt => constants.%InClassArgs
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(%T) {}
@@ -691,7 +691,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%X) {
 // CHECK:STDOUT:   %T => constants.%X
-// CHECK:STDOUT:   %T.patt => constants.%X
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.45c
@@ -874,19 +874,19 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%InClassArgs) {
 // CHECK:STDOUT:   %T => constants.%InClassArgs
-// CHECK:STDOUT:   %T.patt => constants.%InClassArgs
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(%T) {}
@@ -902,7 +902,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%X) {
 // CHECK:STDOUT:   %T => constants.%X
-// CHECK:STDOUT:   %T.patt => constants.%X
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.45c

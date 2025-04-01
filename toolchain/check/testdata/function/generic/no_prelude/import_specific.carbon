@@ -95,14 +95,14 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(@G.%T.loc7_6.2) {}
@@ -188,28 +188,28 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
-// CHECK:STDOUT:   %T.patt.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(@G.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
-// CHECK:STDOUT:   %T.patt.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn => constants.%F.specific_fn.04a

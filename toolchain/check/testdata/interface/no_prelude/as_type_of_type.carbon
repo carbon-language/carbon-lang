@@ -76,6 +76,6 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc13_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

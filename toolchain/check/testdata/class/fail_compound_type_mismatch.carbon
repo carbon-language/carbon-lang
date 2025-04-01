@@ -17,7 +17,7 @@ class B {
 }
 
 fn AccessBInA(a: A) -> i32 {
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+7]]:10: error: cannot implicitly convert value of type `A` to `B` [ConversionFailure]
+  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `A` to `B` [ConversionFailure]
   // CHECK:STDERR:   return a.(B.b);
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+4]]:10: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]

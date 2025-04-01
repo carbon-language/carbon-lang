@@ -228,7 +228,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_21.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Interface.type => constants.%Interface.type.d32
@@ -246,10 +246,10 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessGeneric(constants.%T, constants.%I.a5f) {
 // CHECK:STDOUT:   %T.loc8_18.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_18.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_18.2 => constants.%T.patt
 // CHECK:STDOUT:   %Interface.type.loc8_43.2 => constants.%Interface.type.d32
 // CHECK:STDOUT:   %I.loc8_28.2 => constants.%I.a5f
-// CHECK:STDOUT:   %I.patt.loc8_28.2 => constants.%I.a5f
+// CHECK:STDOUT:   %I.patt.loc8_28.2 => constants.%I.patt.47c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(@AccessGeneric.%T.loc8_18.2) {}
@@ -261,7 +261,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_21.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Interface.type => constants.%Interface.type.981
@@ -272,7 +272,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessConcrete(constants.%I.d08) {
 // CHECK:STDOUT:   %I.loc12_19.2 => constants.%I.d08
-// CHECK:STDOUT:   %I.patt.loc12_19.2 => constants.%I.d08
+// CHECK:STDOUT:   %I.patt.loc12_19.2 => constants.%I.patt.1f8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%i32, constants.%Interface.facet.124) {
@@ -432,7 +432,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_21.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Interface.type => constants.%Interface.type.d32
@@ -450,17 +450,17 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessMissingGeneric(constants.%T, constants.%I.a5f) {
 // CHECK:STDOUT:   %T.loc8_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_25.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %Interface.type.loc8_50.2 => constants.%Interface.type.d32
 // CHECK:STDOUT:   %I.loc8_35.2 => constants.%I.a5f
-// CHECK:STDOUT:   %I.patt.loc8_35.2 => constants.%I.a5f
+// CHECK:STDOUT:   %I.patt.loc8_35.2 => constants.%I.patt.47c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(@AccessMissingGeneric.%T.loc8_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_21.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Interface.type => constants.%Interface.type.981
@@ -471,6 +471,6 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessMissingConcrete(constants.%I.d08) {
 // CHECK:STDOUT:   %I.loc16_26.2 => constants.%I.d08
-// CHECK:STDOUT:   %I.patt.loc16_26.2 => constants.%I.d08
+// CHECK:STDOUT:   %I.patt.loc16_26.2 => constants.%I.patt.1f8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

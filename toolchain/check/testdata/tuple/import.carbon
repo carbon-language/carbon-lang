@@ -45,7 +45,7 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert value of type `C((1, 2))` to `C((3, 4))` [ConversionFailure]
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `C((1, 2))` to `C((3, 4))` [ConversionFailure]
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+4]]:1: note: type `C((1, 2))` does not implement interface `Core.ImplicitAs(C((3, 4)))` [MissingImplInMemberAccessNote]
@@ -295,12 +295,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X.loc7_9.2 => constants.%X
-// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%X
+// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.21c) {
 // CHECK:STDOUT:   %X.loc7_9.2 => constants.%tuple.21c
-// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%tuple.21c
+// CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon
@@ -506,12 +506,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X => constants.%X
-// CHECK:STDOUT:   %X.patt => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple) {
 // CHECK:STDOUT:   %X => constants.%tuple
-// CHECK:STDOUT:   %X.patt => constants.%tuple
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -608,12 +608,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X => constants.%X
-// CHECK:STDOUT:   %X.patt => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple) {
 // CHECK:STDOUT:   %X => constants.%tuple
-// CHECK:STDOUT:   %X.patt => constants.%tuple
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -743,19 +743,19 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %X => constants.%X
-// CHECK:STDOUT:   %X.patt => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.5de) {
 // CHECK:STDOUT:   %X => constants.%tuple.5de
-// CHECK:STDOUT:   %X.patt => constants.%tuple.5de
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%tuple.56c) {
 // CHECK:STDOUT:   %X => constants.%tuple.56c
-// CHECK:STDOUT:   %X.patt => constants.%tuple.56c
+// CHECK:STDOUT:   %X.patt => constants.%X.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

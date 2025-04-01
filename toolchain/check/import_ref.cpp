@@ -238,10 +238,11 @@ class ImportContext {
     SemIR::SpecificId local_id;
   };
 
-  explicit ImportContext(Context& context, SemIR::ImportIRId import_ir_id)
+  // `context` must not be null.
+  explicit ImportContext(Context* context, SemIR::ImportIRId import_ir_id)
       : context_(context),
         import_ir_id_(import_ir_id),
-        import_ir_(*context_.import_irs().Get(import_ir_id).sem_ir) {}
+        import_ir_(*context_->import_irs().Get(import_ir_id).sem_ir) {}
 
   // Returns the file we are importing from.
   auto import_ir() -> const SemIR::File& { return import_ir_; }
@@ -303,10 +304,10 @@ class ImportContext {
   }
 
   // Returns the file we are importing into.
-  auto local_ir() -> SemIR::File& { return context_.sem_ir(); }
+  auto local_ir() -> SemIR::File& { return context_->sem_ir(); }
 
   // Returns the type-checking context we are importing into.
-  auto local_context() -> Context& { return context_; }
+  auto local_context() -> Context& { return *context_; }
 
   // Accessors into value stores of the file we are importing into.
   auto local_associated_constants() -> decltype(auto) {
@@ -371,7 +372,7 @@ class ImportContext {
   }
 
  private:
-  Context& context_;
+  Context* context_;
   SemIR::ImportIRId import_ir_id_;
   const SemIR::File& import_ir_;
 
@@ -455,7 +456,8 @@ class ImportContext {
 // - check/testdata/packages/cross_package_import.carbon
 class ImportRefResolver : public ImportContext {
  public:
-  explicit ImportRefResolver(Context& context, SemIR::ImportIRId import_ir_id)
+  // `context` must not be null.
+  explicit ImportRefResolver(Context* context, SemIR::ImportIRId import_ir_id)
       : ImportContext(context, import_ir_id) {}
 
   // Iteratively resolves an imported instruction's inner references until a
@@ -3281,7 +3283,7 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // The last indirect instruction is the one to resolve. Pop it here because
   // Resolve will assign the constant.
   auto load_ir_inst = indirect_insts.pop_back_val();
-  ImportRefResolver resolver(context, load_ir_inst.ir_id);
+  ImportRefResolver resolver(&context, load_ir_inst.ir_id);
   // The resolver calls into Context to create instructions. Don't register
   // those instructions as part of the enclosing generic scope if they're
   // dependent on a generic parameter.
@@ -3322,7 +3324,7 @@ auto ImportImplsFromApiFile(Context& context) -> void {
 
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                 SemIR::ImplId impl_id) -> void {
-  ImportRefResolver resolver(context, import_ir_id);
+  ImportRefResolver resolver(&context, import_ir_id);
   context.generic_region_stack().Push();
 
   resolver.Resolve(context.import_irs()

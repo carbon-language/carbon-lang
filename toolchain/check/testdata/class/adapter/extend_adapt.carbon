@@ -48,7 +48,7 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) {
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+10]]:3: error: cannot implicitly convert value of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+7]]:3: note: type `SomeClassAdapter` does not implement interface `Core.ImplicitAs(SomeClass)` [MissingImplInMemberAccessNote]
@@ -75,7 +75,7 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) -> i32 {
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+7]]:10: error: cannot implicitly convert value of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+4]]:10: note: type `SomeClassAdapter` does not implement interface `Core.ImplicitAs(SomeClass)` [MissingImplInMemberAccessNote]

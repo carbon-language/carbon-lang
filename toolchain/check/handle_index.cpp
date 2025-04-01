@@ -14,6 +14,7 @@
 #include "toolchain/check/operator.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 

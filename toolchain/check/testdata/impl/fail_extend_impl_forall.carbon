@@ -168,7 +168,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_28.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_28.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_28.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericInterface.type => constants.%GenericInterface.type.3fe
@@ -187,7 +187,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc20_23.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc20_23.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc20_23.2 => constants.%T.patt
 // CHECK:STDOUT:   %GenericInterface.type.loc20_54.2 => constants.%GenericInterface.type.3fe
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.70f
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness
