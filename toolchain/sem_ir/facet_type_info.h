@@ -103,8 +103,7 @@ constexpr FacetTypeInfo::RewriteConstraint
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
-  IdentifiedFacetType()
-      : interface_id_(InterfaceId::None), num_interface_to_impl_(0) {}
+  IdentifiedFacetType() {}
 
   auto required_interfaces() const
       -> const llvm::SmallVector<RequiredInterface>& {
@@ -165,11 +164,11 @@ struct IdentifiedFacetType {
   // The single interface from `required_interfaces` to implement if this is
   // the facet type to the right of an `impl`...`as`, or `None` if no such
   // single interface.
-  InterfaceId interface_id_;
+  InterfaceId interface_id_ = InterfaceId::None;
   union {
     // If `interface_id` is `None`, the number of interfaces to report in a
     // diagnostic about why this facet type can't be implemented.
-    int num_interface_to_impl_;
+    int num_interface_to_impl_ = 0;
     // If `interface_id` is not `None`, the specific for that interface.
     SpecificId specific_id_;
   };
