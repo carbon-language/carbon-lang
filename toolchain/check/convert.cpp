@@ -385,10 +385,10 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
       literal_elems_id.has_value()
-          ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
+          ? SemIR::CopyOnWriteInstBlock(&sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
-                sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
-                            src_elem_types.size()});
+                &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
+                             src_elem_types.size()});
   for (auto [i, src_type_id, dest_type_id] :
        llvm::enumerate(src_elem_types, dest_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
@@ -496,10 +496,10 @@ static auto ConvertStructToStructOrClass(Context& context,
   // TODO: Annotate diagnostics coming from here with the element index.
   auto new_block =
       literal_elems_id.has_value() && !dest_has_vptr
-          ? SemIR::CopyOnWriteInstBlock(sem_ir, literal_elems_id)
+          ? SemIR::CopyOnWriteInstBlock(&sem_ir, literal_elems_id)
           : SemIR::CopyOnWriteInstBlock(
-                sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
-                            dest_elem_fields.size()});
+                &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
+                             dest_elem_fields.size()});
   for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
     if (dest_field.name_id == SemIR::NameId::Vptr) {
       if constexpr (!ToClass) {
