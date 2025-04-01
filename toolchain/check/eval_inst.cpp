@@ -348,13 +348,8 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
   args.append(interface_fn_args.end() - remaining_params,
               interface_fn_args.end());
   auto specific_id = MakeSpecific(context, loc, generic_id, args);
+  context.definitions_required_by_use().push_back({loc, specific_id});
 
-  if (!SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id)
-           .self_type_id.has_value()) {
-    // This is not an associated function. Those will be required to be defined
-    // as part of checking that the impl is complete.
-    context.definitions_required_by_use().push_back({loc, specific_id});
-  }
   return ConstantEvalResult::NewSamePhase(
       SemIR::SpecificFunction{.type_id = inst.type_id,
                               .callee_id = inst.callee_id,

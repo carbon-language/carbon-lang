@@ -444,6 +444,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
                     "no definition found for declaration in impl file");
 
   // Note that more required definitions can be added during this loop.
+  // NOLINTNEXTLINE (modernize-loop-convert)
   for (size_t i = 0; i != context_.definitions_required_by_decl().size(); ++i) {
     SemIR::InstId decl_inst_id = context_.definitions_required_by_decl()[i];
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
@@ -484,7 +485,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
   }
 
   // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE
+  // NOLINTNEXTLINE (modernize-loop-convert)
   for (size_t i = 0; i != context_.definitions_required_by_use().size(); ++i) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
