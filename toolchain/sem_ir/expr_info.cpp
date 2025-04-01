@@ -232,4 +232,48 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   }
 }
 
+auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
+    -> InstId {
+  while (true) {
+    Inst init_untyped = sem_ir.insts().Get(init_id);
+    CARBON_KIND_SWITCH(init_untyped) {
+      case CARBON_KIND(AsCompatible init): {
+        init_id = init.source_id;
+        continue;
+      }
+      case CARBON_KIND(Converted init): {
+        init_id = init.result_id;
+        continue;
+      }
+      case CARBON_KIND(ArrayInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(ClassInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(StructInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(TupleInit init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(InitializeFrom init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(Call call): {
+        if (!ReturnTypeInfo::ForType(sem_ir, call.type_id).has_return_slot()) {
+          return InstId::None;
+        }
+        if (!call.args_id.has_value()) {
+          // Argument initialization failed, so we have no return slot.
+          return InstId::None;
+        }
+        return sem_ir.inst_blocks().Get(call.args_id).back();
+      }
+      default:
+        CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);
+    }
+  }
+}
+
 }  // namespace Carbon::SemIR
