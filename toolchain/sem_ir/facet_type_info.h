@@ -109,15 +109,10 @@ struct IdentifiedFacetType {
     return required_interfaces_;
   }
 
-  // Call `CanonicalizeRequiredInterfaces()` once the changes have been
-  // finished.
-  auto mutable_required_interfaces() -> llvm::SmallVector<RequiredInterface>& {
-    return required_interfaces_;
+  auto set_required_interfaces(const llvm::ArrayRef<RequiredInterface> set_to) {
+    required_interfaces_.assign(set_to.begin(), set_to.end());
+    CanonicalizeRequiredInterfaces();
   }
-
-  // Sorts and deduplicates `required_interfaces`. Call after building the sets
-  // of interfaces, and then don't mutate the value afterwards.
-  auto CanonicalizeRequiredInterfaces() -> void;
 
   // Can this be used to the right of an `as` in an `impl` declaration?
   auto is_valid_impl_as_target() const -> bool {
@@ -158,6 +153,10 @@ struct IdentifiedFacetType {
   }
 
  private:
+  // Sorts and deduplicates `required_interfaces`. Call after building the sets
+  // of interfaces, and then don't mutate the value afterwards.
+  auto CanonicalizeRequiredInterfaces() -> void;
+
   // Interfaces mentioned explicitly in the facet type expression, or
   // transitively through a named constraint. Sorted and deduplicated.
   llvm::SmallVector<RequiredInterface> required_interfaces_;

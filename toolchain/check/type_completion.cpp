@@ -616,9 +616,8 @@ auto RequireIdentifiedFacetType(Context& context,
       context.facet_types().Get(facet_type.facet_type_id);
 
   SemIR::IdentifiedFacetType result;
-  result.mutable_required_interfaces() = facet_type_info.impls_constraints;
   // TODO: expand named constraints
-  result.CanonicalizeRequiredInterfaces();
+  result.set_required_interfaces(facet_type_info.impls_constraints);
 
   // TODO: Distinguish interfaces that are required but would not be
   // implemented, such as those from `where .Self impls I`.
