@@ -506,8 +506,11 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Impl definitions are required in the same file as the declaration. We skip
-  // this requirement if we've already issued an invalid redeclaration error.
-  if (!is_definition && !invalid_redeclaration) {
+  // this requirement if we've already issued an invalid redeclaration error, or
+  // there is an error that would prevent the impl from being legal to define.
+  if (!is_definition && !invalid_redeclaration &&
+      context.impls().Get(impl_decl.impl_id).witness_id !=
+          SemIR::ErrorInst::SingletonInstId) {
     context.definitions_required().push_back(impl_decl_id);
   }
 

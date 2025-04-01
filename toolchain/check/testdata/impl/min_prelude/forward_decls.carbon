@@ -160,14 +160,7 @@ library "[[@TEST_NAME]]";
 interface I;
 interface J;
 
-// TODO: Don't generate "impl declared but not defined" diagnostic
-// here after a diagnostic has already been issued.
-
-// CHECK:STDERR: fail_todo_two_interfaces.carbon:[[@LINE+8]]:1: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl {} as I & J;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_two_interfaces.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_todo_two_interfaces.carbon:[[@LINE+4]]:1: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR: impl {} as I & J;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -252,11 +245,7 @@ interface I {
   // CHECK:STDERR:
   default fn F() {
     class C {}
-    // CHECK:STDERR: fail_todo_impl_in_interface_definition.carbon:[[@LINE+8]]:5: error: `impl` with unused generic binding [ImplUnusedBinding]
-    // CHECK:STDERR:     impl C as I;
-    // CHECK:STDERR:     ^~~~~~~~~~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_todo_impl_in_interface_definition.carbon:[[@LINE+4]]:5: error: impl declared but not defined [ImplMissingDefinition]
+    // CHECK:STDERR: fail_todo_impl_in_interface_definition.carbon:[[@LINE+4]]:5: error: `impl` with unused generic binding [ImplUnusedBinding]
     // CHECK:STDERR:     impl C as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~
     // CHECK:STDERR:
@@ -1473,21 +1462,21 @@ interface I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl.loc3: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %J.decl.loc4: type = interface_decl @J [concrete = constants.%J.type] {} {}
-// CHECK:STDOUT:   %.loc17_14.1: type = value_of_initializer @impl.be3.%type.and [concrete = constants.%facet_type]
-// CHECK:STDOUT:   %.loc17_14.2: type = converted @impl.be3.%type.and, %.loc17_14.1 [concrete = constants.%facet_type]
+// CHECK:STDOUT:   %.loc10_14.1: type = value_of_initializer @impl.be3.%type.and [concrete = constants.%facet_type]
+// CHECK:STDOUT:   %.loc10_14.2: type = converted @impl.be3.%type.and, %.loc10_14.1 [concrete = constants.%facet_type]
 // CHECK:STDOUT:   impl_decl @impl.be3 [concrete] {} {
-// CHECK:STDOUT:     %.loc17_7.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc17_7.2: type = converted %.loc17_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc10_7.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl.loc4 [concrete = constants.%J.type]
 // CHECK:STDOUT:     %impl.elem0: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
-// CHECK:STDOUT:     %bound_method.loc17_14.1: <bound method> = bound_method %I.ref, %impl.elem0 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:     %bound_method.loc10_14.1: <bound method> = bound_method %I.ref, %impl.elem0 [concrete = constants.%Op.bound]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc17_14.2: <bound method> = bound_method %I.ref, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:     %type.and: init type = call %bound_method.loc17_14.2(%I.ref, %J.ref) [concrete = constants.%facet_type]
+// CHECK:STDOUT:     %bound_method.loc10_14.2: <bound method> = bound_method %I.ref, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:     %type.and: init type = call %bound_method.loc10_14.2(%I.ref, %J.ref) [concrete = constants.%facet_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl.loc19: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %J.decl.loc20: type = interface_decl @J [concrete = constants.%J.type] {} {}
+// CHECK:STDOUT:   %I.decl.loc12: type = interface_decl @I [concrete = constants.%I.type] {} {}
+// CHECK:STDOUT:   %J.decl.loc13: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -1529,7 +1518,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.be3: %.loc17_7.2 as file.%.loc17_14.2;
+// CHECK:STDOUT: impl @impl.be3: %.loc10_7.2 as file.%.loc10_14.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.1(imports.%Core.import_ref.040: %BitAnd.type) [from "include_files/facet_types.carbon"] {
 // CHECK:STDOUT:   %Self: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.25f)]

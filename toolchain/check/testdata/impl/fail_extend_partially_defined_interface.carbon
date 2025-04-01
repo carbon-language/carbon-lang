@@ -10,19 +10,12 @@
 
 interface I {
   class C {
-    // TODO: Don't generate "impl declared but not defined" diagnostic
-    // here after a diagnostic has already been issued.
-
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+11]]:5: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+7]]:5: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
     // CHECK:STDERR:     extend impl as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-8]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
     // CHECK:STDERR: interface I {
     // CHECK:STDERR: ^~~~~~~~~~~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+4]]:5: error: impl declared but not defined [ImplMissingDefinition]
-    // CHECK:STDERR:     extend impl as I;
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     extend impl as I;
   }
@@ -84,7 +77,7 @@ interface I {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %impl_witness: <witness> = impl_witness (), @impl(constants.%Self) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
-// CHECK:STDOUT:     %.loc27: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [concrete = constants.%I.type]
+// CHECK:STDOUT:     %.loc20: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [concrete = constants.%I.type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:

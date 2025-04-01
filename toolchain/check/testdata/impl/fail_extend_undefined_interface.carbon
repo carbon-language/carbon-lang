@@ -11,16 +11,12 @@
 interface I;
 
 class C {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+11]]:3: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+7]]:3: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   extend impl as I;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   extend impl as I;
 }
@@ -64,7 +60,7 @@ fn F(c: C) {
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc28: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -91,10 +87,10 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc29: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc29: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc25: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc30: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %F.ref.loc26: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
