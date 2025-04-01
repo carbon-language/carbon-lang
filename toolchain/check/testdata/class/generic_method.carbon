@@ -51,21 +51,21 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %n.patt: %T = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %T = value_param_pattern %n.patt, call_param1
+// CHECK:STDOUT:     %self.patt: @F.%Class (%Class) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.%Class (%Class) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %n.patt: @F.%T.loc13 (%T) = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: @F.%T.loc13 (%T) = value_param_pattern %n.patt, call_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
-// CHECK:STDOUT:     %self.param.loc16: %Class = value_param call_param0
-// CHECK:STDOUT:     %.loc16_28.1: type = splice_block %Self.ref.loc16 [symbolic = constants.%Class] {
-// CHECK:STDOUT:       %.loc16_28.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = constants.%Class]
-// CHECK:STDOUT:       %Self.ref.loc16: type = name_ref Self, %.loc16_28.2 [symbolic = constants.%Class]
+// CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0 [symbolic = @Class.%T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %self.param.loc16: @F.%Class (%Class) = value_param call_param0
+// CHECK:STDOUT:     %.loc16_28.1: type = splice_block %Self.ref.loc16 [symbolic = %Class (constants.%Class)] {
+// CHECK:STDOUT:       %.loc16_28.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       %Self.ref.loc16: type = name_ref Self, %.loc16_28.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc16: %Class = bind_name self, %self.param.loc16
-// CHECK:STDOUT:     %n.param.loc16: %T = value_param call_param1
-// CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T.loc16 [symbolic = constants.%T]
-// CHECK:STDOUT:     %n.loc16: %T = bind_name n, %n.param.loc16
+// CHECK:STDOUT:     %self.loc16: @F.%Class (%Class) = bind_name self, %self.param.loc16
+// CHECK:STDOUT:     %n.param.loc16: @F.%T.loc13 (%T) = value_param call_param1
+// CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T.loc16 [symbolic = %T.loc13 (constants.%T)]
+// CHECK:STDOUT:     %n.loc16: @F.%T.loc13 (%T) = bind_name n, %n.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,10 +89,10 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <none>
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
-// CHECK:STDOUT:       %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %n.patt: %T = binding_pattern n
-// CHECK:STDOUT:       %n.param_patt: %T = value_param_pattern %n.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @F.%Class (%Class) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%Class (%Class) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %n.patt: @F.%T.loc13 (%T) = binding_pattern n
+// CHECK:STDOUT:       %n.param_patt: @F.%T.loc13 (%T) = value_param_pattern %n.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param.loc13: @F.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:       %.loc13_14.1: type = splice_block %Self.ref.loc13 [symbolic = %Class (constants.%Class)] {
@@ -123,7 +123,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %require_complete.loc16_26: <witness> = require_complete_type @F.%Class (%Class) [symbolic = %require_complete.loc16_26 (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %require_complete.loc16_35: <witness> = require_complete_type @F.%T.loc13 (%T) [symbolic = %require_complete.loc16_35 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: %Class](%n.param_patt: %T) {
+// CHECK:STDOUT:   fn[%self.param_patt: @F.%Class (%Class)](%n.param_patt: @F.%T.loc13 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

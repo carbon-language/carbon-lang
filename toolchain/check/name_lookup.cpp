@@ -108,17 +108,16 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
       if (scope.is_interface_definition()) {
         SemIR::InstId target_inst_id =
             non_lexical_result.scope_result.target_inst_id();
-        if (context.types().Is<SemIR::AssociatedEntityType>(
-                context.insts().Get(target_inst_id).type_id())) {
+        if (auto assoc_type =
+                context.types().TryGetAs<SemIR::AssociatedEntityType>(
+                    context.insts().Get(target_inst_id).type_id())) {
           auto interface_decl =
               context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
-          // TODO: Refactor the code so that we can call the "no instance
-          // binding" case from `PerformCompoundMemberAccess` as a separate
-          // function (`GetAssociatedValue`).
-          SemIR::InstId result_inst_id = PerformCompoundMemberAccess(
-              context, node_id, interface.self_param_id, target_inst_id);
+          SemIR::InstId result_inst_id =
+              GetAssociatedValue(context, node_id, interface.self_param_id,
+                                 target_inst_id, assoc_type->interface_type_id);
           non_lexical_result.scope_result = SemIR::ScopeLookupResult::MakeFound(
               result_inst_id, non_lexical_result.scope_result.access_kind());
         }
@@ -226,7 +225,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   CARBON_DIAGNOSTIC(
       ClassInvalidMemberAccess, Error,
       "cannot access {0:private|protected} member `{1}` of type {2}",
-      BoolAsSelect, SemIR::NameId, SemIR::TypeId);
+      Diagnostics::BoolAsSelect, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
   context.emitter()
       .Build(loc, ClassInvalidMemberAccess,
@@ -350,17 +349,23 @@ static auto DiagnoseMemberNameNotFound(
     llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
   if (lookup_scopes.size() == 1 &&
       lookup_scopes.front().name_scope_id.has_value()) {
-    auto specific_id = lookup_scopes.front().specific_id;
-    auto scope_inst_id = specific_id.has_value()
-                             ? GetInstForSpecific(context, specific_id)
-                             : context.name_scopes()
-                                   .Get(lookup_scopes.front().name_scope_id)
-                                   .inst_id();
-    CARBON_DIAGNOSTIC(MemberNameNotFoundInScope, Error,
-                      "member name `{0}` not found in {1}", SemIR::NameId,
-                      InstIdAsType);
-    context.emitter().Emit(loc, MemberNameNotFoundInScope, name_id,
-                           scope_inst_id);
+    if (auto specific_id = lookup_scopes.front().specific_id;
+        specific_id.has_value()) {
+      CARBON_DIAGNOSTIC(MemberNameNotFoundInSpecificScope, Error,
+                        "member name `{0}` not found in {1}", SemIR::NameId,
+                        SemIR::SpecificId);
+      context.emitter().Emit(loc, MemberNameNotFoundInSpecificScope, name_id,
+                             specific_id);
+    } else {
+      auto scope_inst_id = context.name_scopes()
+                               .Get(lookup_scopes.front().name_scope_id)
+                               .inst_id();
+      CARBON_DIAGNOSTIC(MemberNameNotFoundInInstScope, Error,
+                        "member name `{0}` not found in {1}", SemIR::NameId,
+                        InstIdAsType);
+      context.emitter().Emit(loc, MemberNameNotFoundInInstScope, name_id,
+                             scope_inst_id);
+    }
     return;
   }
 
@@ -425,7 +430,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
 
-        DiagnosticAnnotationScope annotate_diagnostics(
+        Diagnostics::AnnotationScope annotate_diagnostics(
             &context.emitter(), [&](auto& builder) {
               CARBON_DIAGNOSTIC(FromExtendHere, Note,
                                 "declared as an extended scope here");

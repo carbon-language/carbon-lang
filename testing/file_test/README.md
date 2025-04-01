@@ -213,7 +213,7 @@ Supported comment markers are:
     ```
 
     Includes the specified file in the test's virtual file system and adds the
-    path to the test's arguments.
+    path to the file's splits.
 
     This can be used to provide a minimal `Core` package (and `prelude` library)
     in toolchain tests. See the

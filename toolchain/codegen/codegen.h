@@ -12,8 +12,9 @@ namespace Carbon {
 
 class CodeGen {
  public:
-  static auto Make(llvm::Module& module, llvm::StringRef target_triple,
-                   llvm::raw_pwrite_stream& errors) -> std::optional<CodeGen>;
+  // `module` and `errors` must not be null.
+  static auto Make(llvm::Module* module, llvm::StringRef target_triple,
+                   llvm::raw_pwrite_stream* errors) -> std::optional<CodeGen>;
 
   // Generates the object code file.
   // Returns false in case of failure, and any information about the failure is
@@ -32,7 +33,8 @@ class CodeGen {
   auto EmitAssembly(llvm::raw_pwrite_stream& out) -> bool;
 
  private:
-  explicit CodeGen(llvm::Module& module, llvm::raw_pwrite_stream& errors)
+  // `module` and `errors` must not be null.
+  explicit CodeGen(llvm::Module* module, llvm::raw_pwrite_stream* errors)
       : module_(module), errors_(errors) {}
 
   // Using the llvm pass emits either assembly or object code to dest.
@@ -41,8 +43,8 @@ class CodeGen {
   auto EmitCode(llvm::raw_pwrite_stream& out, llvm::CodeGenFileType file_type)
       -> bool;
 
-  llvm::Module& module_;
-  llvm::raw_pwrite_stream& errors_;
+  llvm::Module* module_;
+  llvm::raw_pwrite_stream* errors_;
   std::unique_ptr<llvm::TargetMachine> target_machine_;
 };
 

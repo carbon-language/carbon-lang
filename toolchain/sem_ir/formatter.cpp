@@ -15,6 +15,7 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -379,7 +380,7 @@ class FormatterImpl {
     out_ << " as ";
     FormatName(impl_info.constraint_id);
 
-    if (impl_info.is_defined()) {
+    if (impl_info.is_complete()) {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
@@ -1168,6 +1169,15 @@ class FormatterImpl {
     FormatImportRefRhs(inst.import_ir_inst_id, inst.entity_name_id, "unloaded");
   }
 
+  auto FormatInstRhs(InstValue inst) -> void {
+    out_ << ' ';
+    OpenBrace();
+    // TODO: Should we use a more compact representation in the case where the
+    // inst is a SpliceBlock?
+    FormatInst(inst.inst_id);
+    CloseBrace();
+  }
+
   auto FormatInstRhs(NameBindingDecl inst) -> void {
     FormatTrailingBlock(inst.pattern_block_id);
   }
@@ -1369,10 +1379,23 @@ class FormatterImpl {
     FormatName(static_cast<InstId>(id));
   }
 
+  auto FormatName(MetaInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
+  }
+
   auto FormatName(SpecificId id) -> void {
     const auto& specific = sem_ir_->specifics().Get(id);
     FormatName(specific.generic_id);
     FormatArg(specific.args_id);
+  }
+
+  auto FormatName(SpecificInterfaceId id) -> void {
+    const auto& interface = sem_ir_->specific_interfaces().Get(id);
+    FormatName(interface.interface_id);
+    if (interface.specific_id.has_value()) {
+      out_ << ", ";
+      FormatArg(interface.specific_id);
+    }
   }
 
   auto FormatLabel(InstBlockId id) -> void {

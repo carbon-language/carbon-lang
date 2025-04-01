@@ -4,15 +4,41 @@
 
 #include "toolchain/check/eval_inst.h"
 
+#include <variant>
+
+#include "toolchain/check/action.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+// When calling from eval to various Check functions, we need the actual LocId.
+// This allows us to unwrap the SemIRLoc to do so.
+//
+// TODO: Decide whether to refactor calls everywhere to accept `SemIRLoc`, or
+// fold `SemIRLoc` into `LocId`. Either way, we would like eval to call other
+// code without unwrapping `SemIRLoc`.
+class UnwrapSemIRLoc {
+ public:
+  auto operator()(Context& context, SemIRLoc loc) -> SemIR::LocId {
+    if (loc.is_inst_id_) {
+      if (loc.inst_id_.has_value()) {
+        return context.insts().GetLocId(loc.inst_id_);
+      } else {
+        return SemIR::LocId::None;
+      }
+    } else {
+      return loc.loc_id_;
+    }
+  }
+};
 
 // Performs an access into an aggregate, retrieving the specified element.
 static auto PerformAggregateAccess(Context& context, SemIR::Inst inst)
@@ -198,6 +224,24 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc loc,
+                      SemIR::LookupImplWitness inst) -> ConstantEvalResult {
+  auto result = EvalLookupSingleImplWitness(
+      context, UnwrapSemIRLoc()(context, loc), inst);
+  if (!result.has_value()) {
+    // We use NotConstant to communicate back to impl lookup that the lookup
+    // failed. This can not happen for a deferred symbolic lookup in a generic
+    // eval block, since we only add the deferred lookup instruction (being
+    // evaluated here) to the SemIR if the lookup succeeds.
+    return ConstantEvalResult::NotConstant;
+  }
+  if (!result.has_concrete_value()) {
+    return ConstantEvalResult::NewSamePhase(inst);
+  }
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(result.concrete_witness()));
+}
+
+auto EvalConstantInst(Context& context, SemIRLoc loc,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
   // This is PerformAggregateAccess followed by GetConstantInSpecific.
   if (auto witness =
@@ -378,6 +422,23 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                      SemIR::SpliceInst inst) -> ConstantEvalResult {
+  // The constant value of a SpliceInst is the constant value of the instruction
+  // being spliced. Note that `inst.inst_id` is the instruction being spliced,
+  // so we need to go through another round of obtaining the constant value in
+  // addition to the one performed by the eval infrastructure.
+  if (auto inst_value =
+          context.insts().TryGetAs<SemIR::InstValue>(inst.inst_id)) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(inst_value->inst_id));
+  }
+  // TODO: Consider creating a new `ValueOfInst` instruction analogous to
+  // `TypeOfInst` to defer determining the constant value until we know the
+  // instruction. Alternatively, produce a symbolic `SpliceInst` constant.
+  return ConstantEvalResult::NotConstant;
+}
+
+auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
                       SemIR::StructAccess inst) -> ConstantEvalResult {
   return PerformAggregateAccess(context, inst);
 }
@@ -403,6 +464,17 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
                       SemIR::TupleInit inst) -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
+auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
+                      SemIR::TypeOfInst inst) -> ConstantEvalResult {
+  // Grab the type from the instruction produced as our operand.
+  if (auto inst_value =
+          context.insts().TryGetAs<SemIR::InstValue>(inst.inst_id)) {
+    return ConstantEvalResult::Existing(context.types().GetConstantId(
+        context.insts().Get(inst_value->inst_id).type_id()));
+  }
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,

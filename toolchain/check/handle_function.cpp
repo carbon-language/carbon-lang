@@ -29,6 +29,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -178,6 +179,7 @@ static auto MergeFunctionRedecl(Context& context,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
+    prev_function.call_params_id = new_function.call_params_id;
     prev_function.return_slot_pattern_id = new_function.return_slot_pattern_id;
     prev_function.self_param_id = new_function.self_param_id;
   }
@@ -463,8 +465,7 @@ static auto BuildFunctionDecl(Context& context,
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
                                        SemIR::FunctionId::None,
                                        context.inst_block_stack().Pop()};
-  auto decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, function_decl));
+  auto decl_id = AddPlaceholderInst(context, node_id, function_decl);
   RequestVtableIfVirtual(context, node_id, virtual_modifier, parent_scope_inst,
                          decl_id);
 
@@ -473,7 +474,8 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library),
-                      {.return_slot_pattern_id = name.return_slot_pattern_id,
+                      {.call_params_id = name.call_params_id,
+                       .return_slot_pattern_id = name.return_slot_pattern_id,
                        .virtual_modifier = virtual_modifier,
                        .self_param_id = self_param_id}};
   if (is_definition) {
@@ -502,7 +504,9 @@ static auto BuildFunctionDecl(Context& context,
         GetFunctionType(context, function_decl.function_id,
                         context.scope_stack().PeekSpecificId());
   } else {
-    FinishGenericRedecl(context, decl_id, function_info.generic_id);
+    auto prev_decl_generic_id =
+        context.functions().Get(function_decl.function_id).generic_id;
+    FinishGenericRedecl(context, prev_decl_generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
 
@@ -638,7 +642,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
           "missing `return` at end of function with declared return type");
       context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
-      AddInst<SemIR::Return>(context, node_id, {});
+      AddReturnCleanupBlock(context, node_id);
     }
   }
 

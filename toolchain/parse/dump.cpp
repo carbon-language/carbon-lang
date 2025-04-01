@@ -6,32 +6,29 @@
 
 #include "toolchain/parse/dump.h"
 
-#include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "toolchain/lex/dump.h"
 
 namespace Carbon::Parse {
 
-auto DumpNoNewline(const Tree& tree, NodeId node_id) -> void {
+LLVM_DUMP_METHOD auto Dump(const Tree& tree, Lex::TokenIndex token)
+    -> std::string {
+  return Lex::Dump(tree.tokens(), token);
+}
+
+LLVM_DUMP_METHOD auto Dump(const Tree& tree, NodeId node_id) -> std::string {
+  RawStringOstream out;
   if (!node_id.has_value()) {
-    llvm::errs() << "NodeId(invalid)";
-    return;
+    out << "NodeId(<none>)";
+    return out.TakeStr();
   }
 
   auto kind = tree.node_kind(node_id);
   auto token = tree.node_token(node_id);
 
-  llvm::errs() << "NodeId(kind: " << kind << ", token: ";
-  Lex::DumpNoNewline(tree.tokens(), token);
-  llvm::errs() << ")";
-}
-
-LLVM_DUMP_METHOD auto Dump(const Tree& tree, Lex::TokenIndex token) -> void {
-  Lex::Dump(tree.tokens(), token);
-}
-
-LLVM_DUMP_METHOD auto Dump(const Tree& tree, NodeId node_id) -> void {
-  DumpNoNewline(tree, node_id);
-  llvm::errs() << '\n';
+  out << "NodeId(kind: " << kind
+      << ", token: " << Lex::Dump(tree.tokens(), token) << ")";
+  return out.TakeStr();
 }
 
 }  // namespace Carbon::Parse

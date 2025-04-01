@@ -21,7 +21,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   }
 
   volatile auto value =
-      token->ComputeValue(NullDiagnosticEmitter<const char*>());
+      token->ComputeValue(Diagnostics::NullEmitter<const char*>());
   (void)value;
   return 0;
 }

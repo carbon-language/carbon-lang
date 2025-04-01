@@ -99,13 +99,10 @@ impl C as B {}
 fn G[T:! A(P2) & B](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `A(P2) & B` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `A(P2) & B` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(A(P2) & B)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   G({} as C);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_wrong_generic_interface.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn G[T:! A(P2) & B](t: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

@@ -106,7 +106,6 @@ class DeclNameStack {
           .pattern_block_id = name.pattern_block_id,
           .implicit_param_patterns_id = name.implicit_param_patterns_id,
           .param_patterns_id = name.param_patterns_id,
-          .call_params_id = name.call_params_id,
           .is_extern = is_extern,
           .extern_library_id = extern_library,
           .non_owning_decl_id =
@@ -274,7 +273,7 @@ class DeclNameStack {
   // the name doesn't resolve to a scope.
   auto ResolveAsScope(const NameContext& name_context,
                       const NameComponent& name) const
-      -> std::pair<SemIR::NameScopeId, SemIR::SpecificId>;
+      -> std::pair<SemIR::NameScopeId, SemIR::GenericId>;
 
   // The linked context.
   Context* context_;

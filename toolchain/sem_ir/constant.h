@@ -43,7 +43,7 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
   // constants, or `None` if `generic_id` is `None`.
   GenericInstIndex index;
   // The kind of dependence this symbolic constant exhibits. Should never be
-  // `Concrete`.
+  // `None`.
   ConstantDependence dependence;
 
   auto Print(llvm::raw_ostream& out) const -> void {

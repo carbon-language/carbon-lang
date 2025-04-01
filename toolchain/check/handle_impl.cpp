@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/deduce.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
@@ -380,8 +381,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Add the impl declaration.
   SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::None,
                                .decl_block_id = decl_block_id};
-  auto impl_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, impl_decl));
+  auto impl_decl_id = AddPlaceholderInst(context, node_id, impl_decl);
 
   SemIR::Impl impl_info = {name_context.MakeEntityWithParamsBase(
                                name, impl_decl_id,
@@ -429,9 +429,57 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
+
+    // Looking to see if there are any generic bindings on the `impl`
+    // declaration that are not deducible. If so, and the `impl` does not
+    // actually use all its generic bindings, and will never be matched. This
+    // should be diagnossed to the user.
+    bool has_error_in_implicit_pattern = false;
+    if (name.implicit_param_patterns_id.has_value()) {
+      for (auto inst_id :
+           context.inst_blocks().Get(name.implicit_param_patterns_id)) {
+        if (inst_id == SemIR::ErrorInst::SingletonInstId) {
+          has_error_in_implicit_pattern = true;
+          break;
+        }
+      }
+    }
+    if (impl_info.generic_id.has_value() && !has_error_in_implicit_pattern &&
+        impl_info.witness_id != SemIR::ErrorInst::SingletonInstId) {
+      context.inst_block_stack().Push();
+      auto deduced_specific_id = DeduceImplArguments(
+          context, node_id,
+          DeduceImpl{.self_id = impl_info.self_id,
+                     .generic_id = impl_info.generic_id,
+                     .specific_id = impl_info.interface.specific_id},
+          context.constant_values().Get(impl_info.self_id),
+          impl_info.interface.specific_id);
+      // TODO: Deduce has side effects in the semir by generating `Converted`
+      // instructions which we will not use here. We should stop generating
+      // those when deducing for impl lookup, but for now we discard them by
+      // pushing an InstBlock on the stack and dropping it here.
+      context.inst_block_stack().PopAndDiscard();
+      if (!deduced_specific_id.has_value()) {
+        CARBON_DIAGNOSTIC(ImplUnusedBinding, Error,
+                          "`impl` with unused generic binding");
+        // TODO: This location may be incorrect, the binding may be inherited
+        // from an outer declaration. It would be nice to get the particular
+        // binding that was undeducible back from DeduceImplArguments here and
+        // use that.
+        auto loc = name.implicit_params_loc_id.has_value()
+                       ? name.implicit_params_loc_id
+                       : node_id;
+        context.emitter().Emit(loc, ImplUnusedBinding);
+        // Don't try to match the impl at all, save us work and possible future
+        // diagnostics.
+        context.impls().Get(impl_decl.impl_id).witness_id =
+            SemIR::ErrorInst::SingletonInstId;
+      }
+    }
   } else {
-    const auto& first_impl = context.impls().Get(impl_decl.impl_id);
-    FinishGenericRedecl(context, impl_decl_id, first_impl.generic_id);
+    auto prev_decl_generic_id =
+        context.impls().Get(impl_decl.impl_id).generic_id;
+    FinishGenericRedecl(context, prev_decl_generic_id);
   }
 
   // Write the impl ID into the ImplDecl.
@@ -513,7 +561,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
 
   auto& impl_info = context.impls().Get(impl_id);
-  CARBON_CHECK(!impl_info.is_defined());
+  CARBON_CHECK(!impl_info.is_complete());
   FinishImplWitness(context, impl_info);
   impl_info.defined = true;
   FinishGenericDefinition(context, impl_info.generic_id);

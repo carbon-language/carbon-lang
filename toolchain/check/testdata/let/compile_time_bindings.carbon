@@ -565,12 +565,12 @@ impl i32 as Empty {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   .x = <unexpected>.inst29.loc14_7
+// CHECK:STDOUT:   .x = <unexpected>.inst30.loc14_7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, <unexpected>.inst29.loc14_7
+// CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, <unexpected>.inst30.loc14_7
 // CHECK:STDOUT:   return %x.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -353,7 +353,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 auto CheckUnit::ProcessNodeIds() -> bool {
-  NodeIdTraversal traversal(context_, vlog_stream_);
+  NodeIdTraversal traversal(&context_, vlog_stream_);
 
   Parse::NodeId node_id = Parse::NodeId::None;
 
@@ -450,7 +450,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        if (!context_.classes().Get(class_decl.class_id).is_defined()) {
+        if (!context_.classes().Get(class_decl.class_id).is_complete()) {
           emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
         }
         break;
@@ -464,7 +464,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       }
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         auto& impl = context_.impls().Get(impl_decl.impl_id);
-        if (!impl.is_defined()) {
+        if (!impl.is_complete()) {
           FillImplWitnessWithErrors(context_, impl);
           CARBON_DIAGNOSTIC(ImplMissingDefinition, Error,
                             "impl declared but not defined");
@@ -518,10 +518,11 @@ auto CheckUnit::FinishRun() -> void {
   context_.scope_stack().Pop();
 
   // Finalizes the list of exports on the IR.
-  context_.inst_blocks().Set(SemIR::InstBlockId::Exports, context_.exports());
+  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,
+                                            context_.exports());
   // Finalizes the ImportRef inst block.
-  context_.inst_blocks().Set(SemIR::InstBlockId::ImportRefs,
-                             context_.import_ref_ids());
+  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::ImportRefs,
+                                            context_.import_ref_ids());
   // Finalizes __global_init.
   context_.global_init().Finalize();
 

@@ -56,7 +56,7 @@ class DeriveFromi32 {
 // but it shouldn't crash.
 fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 
-// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:70: error: member name `n` not found in `DeriveFromi32` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:70: error: member name `n` not found in `DeriveFromi32` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn AccessMemberWithInvalidBasei32(p: DeriveFromi32*) -> i32 { return (*p).n; }
 // CHECK:STDERR:                                                                      ^~~~~~
 // CHECK:STDERR:
@@ -76,7 +76,7 @@ class DeriveFromTuple {
   extend base: (Base,);
 }
 
-// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+7]]:61: error: cannot implicitly convert value of type `DeriveFromTuple*` to `(Base,)*` [ConversionFailure]
+// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+7]]:61: error: cannot implicitly convert expression of type `DeriveFromTuple*` to `(Base,)*` [ConversionFailure]
 // CHECK:STDERR: fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 // CHECK:STDERR:                                                             ^~~~~~~~~
 // CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+4]]:61: note: type `DeriveFromTuple*` does not implement interface `Core.ImplicitAs((Base,)*)` [MissingImplInMemberAccessNote]
@@ -101,7 +101,7 @@ class DeriveFromStruct {
   extend base: {.a: i32, .b: i32};
 }
 
-// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+7]]:74: error: cannot implicitly convert value of type `DeriveFromStruct*` to `{.a: i32, .b: i32}*` [ConversionFailure]
+// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+7]]:74: error: cannot implicitly convert expression of type `DeriveFromStruct*` to `{.a: i32, .b: i32}*` [ConversionFailure]
 // CHECK:STDERR: fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
 // CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+4]]:74: note: type `DeriveFromStruct*` does not implement interface `Core.ImplicitAs({.a: i32, .b: i32}*)` [MissingImplInMemberAccessNote]
@@ -134,7 +134,7 @@ class DeriveFromIncomplete {
   extend base: Incomplete;
 }
 
-// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+7]]:74: error: cannot implicitly convert value of type `DeriveFromIncomplete*` to `Incomplete*` [ConversionFailure]
+// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+7]]:74: error: cannot implicitly convert expression of type `DeriveFromIncomplete*` to `Incomplete*` [ConversionFailure]
 // CHECK:STDERR: fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
 // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+4]]:74: note: type `DeriveFromIncomplete*` does not implement interface `Core.ImplicitAs(Incomplete*)` [MissingImplInMemberAccessNote]
@@ -171,7 +171,7 @@ fn AccessMemberWithInvalidBaseFinal_WithMember(p: DeriveFromFinal*) -> i32 {
 }
 
 fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
-  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:10: error: member name `b` not found in `DeriveFromFinal` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:10: error: member name `b` not found in `DeriveFromFinal` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   return (*p).b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:

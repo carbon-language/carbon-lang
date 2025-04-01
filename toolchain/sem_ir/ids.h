@@ -27,6 +27,7 @@ struct Function;
 struct Generic;
 struct CompleteFacetType;
 struct Specific;
+struct SpecificInterface;
 struct ImportCpp;
 struct ImportIR;
 struct ImportIRInst;
@@ -88,6 +89,29 @@ class DestInstId : public InstId {
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr DestInstId(InstId inst_id) : InstId(inst_id) {}
+
+  using InstId::InstId;
+};
+
+// An ID of an instruction that is referenced as a meta-operand of an action.
+// This should only be used as the type of a field within a typed instruction
+// class.
+//
+// This is used to model cases where an action's operand is not the value
+// produced by another instruction, but is the other instruction itself. This is
+// common for actions representing template instantiation.
+//
+// This behaves in most respects like an InstId field, but evaluation of the
+// instruction that has this field will not fail if the instruction does not
+// have a constant value. If the instruction has a constant value, it will still
+// be replaced by its constant value during evaluation like normal, but if it
+// has a non-constant value, the field is left unchanged by evaluation.
+class MetaInstId : public InstId {
+ public:
+  // Support implicit conversion from InstId so that InstId and MetaInstId
+  // have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr MetaInstId(InstId inst_id) : InstId(inst_id) {}
 
   using InstId::InstId;
 };
@@ -277,8 +301,18 @@ struct GenericId : public IdBase<GenericId> {
 // The ID of a specific, which is the result of specifying the generic arguments
 // for a generic.
 struct SpecificId : public IdBase<SpecificId> {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   static constexpr llvm::StringLiteral Label = "specific";
   using ValueType = Specific;
+
+  using IdBase::IdBase;
+};
+
+// The ID of a SpecificInterface, which is an interface and a specific pair.
+struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
+  static constexpr llvm::StringLiteral Label = "specific_interface";
+  using ValueType = SpecificInterface;
 
   using IdBase::IdBase;
 };
@@ -447,7 +481,7 @@ struct NameId : public IdBase<NameId> {
   static constexpr llvm::StringLiteral Label = "name";
 
   // names().GetFormatted() is used for diagnostics.
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   // An enum of special names.
   enum class SpecialNameId : uint8_t {
@@ -676,7 +710,7 @@ struct TypeId : public IdBase<TypeId> {
   // `StringifyTypeExpr` is used for diagnostics. However, where possible, an
   // `InstId` describing how the type was written should be preferred, using
   // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   using IdBase::IdBase;
 
@@ -723,7 +757,7 @@ struct ElementIndex : public IndexBase<ElementIndex> {
 // The ID of a library name. This is either a string literal or `default`.
 struct LibraryNameId : public IdBase<LibraryNameId> {
   static constexpr llvm::StringLiteral Label = "library_name";
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   // The name of `default`.
   static const LibraryNameId Default;

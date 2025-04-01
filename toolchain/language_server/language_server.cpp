@@ -44,7 +44,7 @@ class Logger : public clang::clangd::Logger {
 
 auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
          llvm::raw_ostream& error_stream, llvm::raw_ostream* vlog_stream,
-         DiagnosticConsumer& consumer) -> bool {
+         Diagnostics::Consumer& consumer) -> bool {
   // The language server internally uses diagnostics for logging issues, but the
   // clangd parts have their own logging system. We intercept that here.
   Logger logger(&error_stream, vlog_stream);
@@ -65,7 +65,7 @@ auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
     RawStringOstream out;
     out << err;
     CARBON_DIAGNOSTIC(LanguageServerTransportError, Error, "{0}", std::string);
-    NoLocDiagnosticEmitter emitter(&consumer);
+    Diagnostics::NoLocEmitter emitter(&consumer);
     emitter.Emit(LanguageServerTransportError, out.TakeStr());
     return false;
   }

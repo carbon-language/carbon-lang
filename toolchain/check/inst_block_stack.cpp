@@ -29,7 +29,7 @@ auto InstBlockStack::PeekOrAdd(int depth) -> SemIR::InstBlockId {
   int index = id_stack_.size() - depth - 1;
   auto& slot = id_stack_[index];
   if (!slot.has_value()) {
-    slot = sem_ir_->inst_blocks().AddDefaultValue();
+    slot = sem_ir_->inst_blocks().AddPlaceholder();
   }
   return slot;
 }
@@ -42,7 +42,7 @@ auto InstBlockStack::Pop() -> SemIR::InstBlockId {
   // Finalize the block.
   if (!insts.empty() && id != SemIR::InstBlockId::Unreachable) {
     if (id.has_value()) {
-      sem_ir_->inst_blocks().Set(id, insts);
+      sem_ir_->inst_blocks().ReplacePlaceholder(id, insts);
     } else {
       id = sem_ir_->inst_blocks().Add(insts);
     }

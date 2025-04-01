@@ -23,7 +23,7 @@ class Bad {
   adapt 100;
 }
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:18: error: member name `F` not found in `Bad` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:18: error: member name `F` not found in `Bad` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn Use(b: Bad) { b.F(); }
 // CHECK:STDERR:                  ^~~
 // CHECK:STDERR:

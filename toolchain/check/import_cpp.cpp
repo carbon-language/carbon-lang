@@ -8,7 +8,7 @@
 #include <optional>
 #include <string>
 
-#include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Tooling/Tooling.h"
 #include "common/raw_string_ostream.h"
@@ -19,6 +19,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -43,6 +44,87 @@ static auto GenerateCppIncludesHeaderCode(
   return code;
 }
 
+namespace {
+
+// Used to convert Clang diagnostics to Carbon diagnostics.
+class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
+ public:
+  // Creates an instance with the location that triggers calling Clang.
+  // `context` must not be null.
+  explicit CarbonClangDiagnosticConsumer(Context* context, SemIRLoc loc)
+      : context_(context), loc_(loc) {}
+
+  // Generates a Carbon warning for each Clang warning and a Carbon error for
+  // each Clang error or fatal.
+  auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
+                        const clang::Diagnostic& info) -> void override {
+    DiagnosticConsumer::HandleDiagnostic(diag_level, info);
+
+    llvm::SmallString<256> message;
+    info.FormatDiagnostic(message);
+
+    RawStringOstream diagnostics_stream;
+    clang::TextDiagnostic text_diagnostic(
+        diagnostics_stream,
+        // TODO: Consider allowing setting `LangOptions` or use
+        // `ASTContext::getLangOptions()`.
+        clang::LangOptions(),
+        // TODO: Consider allowing setting `DiagnosticOptions` or use
+        // `ASTUnit::getDiagnostics().::getLangOptions().getDiagnosticOptions()`.
+        new clang::DiagnosticOptions());
+    text_diagnostic.emitDiagnostic(
+        clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
+        diag_level, message, info.getRanges(), info.getFixItHints());
+
+    std::string diagnostics_str = diagnostics_stream.TakeStr();
+
+    switch (diag_level) {
+      case clang::DiagnosticsEngine::Ignored:
+      case clang::DiagnosticsEngine::Note:
+      case clang::DiagnosticsEngine::Remark: {
+        context_->TODO(
+            loc_, llvm::formatv(
+                      "Unsupported: C++ diagnostic level for diagnostic\n{0}",
+                      diagnostics_str));
+        return;
+      }
+      case clang::DiagnosticsEngine::Warning:
+      case clang::DiagnosticsEngine::Error:
+      case clang::DiagnosticsEngine::Fatal: {
+        // TODO: Adjust diagnostics to drop the Carbon file here, and then
+        // remove the "C++:\n" prefix.
+        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "C++:\n{0}",
+                          std::string);
+        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "C++:\n{0}",
+                          std::string);
+        // TODO: This should be part of the location, instead of added as a note
+        // here.
+        CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
+
+        // TODO: Use a more specific location.
+        context_->emitter()
+            .Build(SemIR::LocId::None,
+                   diag_level == clang::DiagnosticsEngine::Warning
+                       ? CppInteropParseWarning
+                       : CppInteropParseError,
+                   diagnostics_str)
+            .Note(loc_, InCppImport)
+            .Emit();
+        return;
+      }
+    }
+  }
+
+ private:
+  // The type-checking context in which we're running Clang.
+  Context* context_;
+
+  // The location that triggered calling Clang.
+  SemIRLoc loc_;
+};
+
+}  // namespace
+
 // Returns an AST for the C++ imports and a bool that represents whether
 // compilation errors where encountered or the generated AST is null due to an
 // error.
@@ -58,10 +140,8 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   std::string diagnostics_str;
   llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
 
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options(
-      new clang::DiagnosticOptions());
-  clang::TextDiagnosticPrinter diagnostics_consumer(diagnostics_stream,
-                                                    diagnostic_options.get());
+  CarbonClangDiagnosticConsumer diagnostics_consumer(&context, loc);
+
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
       GenerateCppIncludesHeaderCode(context, imports),
@@ -70,26 +150,10 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
       "clang-tool", std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
-  // TODO: Implement and use a DynamicRecursiveASTVisitor to traverse the AST.
-  int num_errors = diagnostics_consumer.getNumErrors();
-  int num_warnings = diagnostics_consumer.getNumWarnings();
-  int num_imports = imports.size();
-  if (num_errors > 0) {
-    // TODO: Remove the warnings part when there are no warnings.
-    CARBON_DIAGNOSTIC(
-        CppInteropParseError, Error,
-        "{0} error{0:s} and {1} warning{1:s} in {2} `Cpp` import{2:s}:\n{3}",
-        IntAsSelect, IntAsSelect, IntAsSelect, std::string);
-    context.emitter().Emit(loc, CppInteropParseError, num_errors, num_warnings,
-                           num_imports, diagnostics_str);
-  } else if (num_warnings > 0) {
-    CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning,
-                      "{0} warning{0:s} in `Cpp` {1} import{1:s}:\n{2}",
-                      IntAsSelect, IntAsSelect, std::string);
-    context.emitter().Emit(loc, CppInteropParseWarning, num_warnings,
-                           num_imports, diagnostics_str);
-  }
-  return {std::move(ast), !ast || num_errors > 0};
+  // Remove link to the diagnostics consumer before its deletion.
+  ast->getDiagnostics().setClient(nullptr);
+
+  return {std::move(ast), !ast || diagnostics_consumer.getNumErrors() > 0};
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
@@ -193,6 +257,52 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
   return lookup;
 }
 
+// Returns the return type of the given function declaration.
+// Currently only void and 32-bit int are supported.
+// TODO: Support more return types.
+static auto GetReturnType(Context& context, SemIRLoc loc_id,
+                          const clang::FunctionDecl* clang_decl)
+    -> SemIR::InstId {
+  clang::QualType ret_type = clang_decl->getReturnType().getCanonicalType();
+  if (ret_type->isVoidType()) {
+    return SemIR::InstId::None;
+  }
+  if (const auto* builtin_type = dyn_cast<clang::BuiltinType>(ret_type);
+      builtin_type && builtin_type->getKind() == clang::BuiltinType::Int) {
+    constexpr int SupportedIntWidth = 32;
+    uint64_t int_size = context.ast_context().getTypeSize(ret_type);
+    if (int_size != SupportedIntWidth) {
+      // TODO: Add tests for this case.
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: return type: {0}, size: {1}",
+                                 ret_type.getAsString(), int_size));
+      return SemIR::ErrorInst::SingletonInstId;
+    }
+    IntId size_id = context.ints().Add(int_size);
+    // TODO: Fill in a location for the type once available.
+    SemIR::TypeId type_id = MakeIntType(context, Parse::NodeId::None,
+                                        SemIR::IntKind::Signed, size_id);
+    // TODO: Fill in a location for the type once available.
+    SemIR::InstId type_inst_id = MakeIntTypeLiteral(
+        context, Parse::NodeId::None, SemIR::IntKind::Signed, size_id);
+
+    SemIR::InstId return_slot_pattern_id = AddInstInNoBlock(
+        // TODO: Fill in a location for the return type once available.
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
+                     {.type_id = type_id, .type_inst_id = type_inst_id})));
+    SemIR::InstId param_pattern_id = AddInstInNoBlock(
+        // TODO: Fill in a location for the return type once available.
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
+                     {.type_id = type_id,
+                      .subpattern_id = return_slot_pattern_id,
+                      .index = SemIR::CallParamIndex::None})));
+    return param_pattern_id;
+  }
+  context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
+                                     ret_type.getAsString()));
+  return SemIR::ErrorInst::SingletonInstId;
+}
+
 // Imports a function declaration from Clang to Carbon. If successful, returns
 // the new Carbon function declaration `InstId`.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
@@ -216,15 +326,16 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, "Unsupported: Function with parameters");
     return SemIR::ErrorInst::SingletonInstId;
   }
-  if (!clang_decl->getReturnType()->isVoidType()) {
-    context.TODO(loc_id, "Unsupported: Function with non-void return type");
+
+  auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
+  if (SemIR::ErrorInst::SingletonInstId == return_slot_pattern_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, SemIR::InstBlockId::Empty};
-  auto decl_id = AddPlaceholderInst(
-      context, SemIR::LocIdAndInst(Parse::NodeId::None, function_decl));
+  auto decl_id =
+      AddPlaceholderInst(context, Parse::NodeId::None, function_decl);
 
   auto function_info = SemIR::Function{
       {.name_id = name_id,
@@ -235,13 +346,13 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .pattern_block_id = SemIR::InstBlockId::Empty,
        .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
        .param_patterns_id = SemIR::InstBlockId::Empty,
-       .call_params_id = SemIR::InstBlockId::Empty,
        .is_extern = false,
        .extern_library_id = SemIR::LibraryNameId::None,
        .non_owning_decl_id = SemIR::InstId::None,
        .first_owning_decl_id = decl_id,
        .definition_id = SemIR::InstId::None},
-      {.return_slot_pattern_id = SemIR::InstId::None,
+      {.call_params_id = SemIR::InstBlockId::Empty,
+       .return_slot_pattern_id = return_slot_pattern_id,
        .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
        .self_param_id = SemIR::InstId::None,
        .cpp_decl = clang_decl}};
@@ -297,17 +408,17 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
-  auto lookup = ClangLookup(context, loc_id, scope_id, name_id);
-  if (!lookup) {
-    return SemIR::InstId::None;
-  }
-
-  DiagnosticAnnotationScope annotate_diagnostics(
+  Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InCppNameLookup, Note,
                           "in `Cpp` name lookup for `{0}`", SemIR::NameId);
         builder.Note(loc_id, InCppNameLookup, name_id);
       });
+
+  auto lookup = ClangLookup(context, loc_id, scope_id, name_id);
+  if (!lookup) {
+    return SemIR::InstId::None;
+  }
 
   if (!lookup->isSingleResult()) {
     context.TODO(loc_id,

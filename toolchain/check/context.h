@@ -10,8 +10,10 @@
 #include "common/map.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
@@ -49,7 +51,7 @@ namespace Carbon::Check {
 class Context {
  public:
   // Stores references for work.
-  explicit Context(DiagnosticEmitter<SemIRLoc>* emitter,
+  explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
@@ -68,7 +70,7 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto emitter() -> DiagnosticEmitter<SemIRLoc>& { return *emitter_; }
+  auto emitter() -> DiagnosticEmitterBase& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return tree_and_subtrees_getter_();
@@ -182,7 +184,9 @@ class Context {
   // known. This represents each binding to be done at the end of checking the
   // Choice type.
   struct ChoiceDeferredBinding {
-    Parse::NodeId node_id;
+    Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
+                       Parse::ChoiceDefinitionId>
+        node_id;
     NameComponent name_component;
   };
   auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
@@ -235,6 +239,10 @@ class Context {
     return sem_ir().complete_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
+  auto specific_interfaces()
+      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+    return sem_ir().specific_interfaces();
+  }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
@@ -242,6 +250,9 @@ class Context {
   }
   auto import_ir_insts() -> ValueStore<SemIR::ImportIRInstId>& {
     return sem_ir().import_ir_insts();
+  }
+  auto ast_context() -> clang::ASTContext& {
+    return sem_ir().cpp_ast()->getASTContext();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
@@ -271,7 +282,7 @@ class Context {
 
  private:
   // Handles diagnostics.
-  DiagnosticEmitter<SemIRLoc>* emitter_;
+  DiagnosticEmitterBase* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;

@@ -26,7 +26,8 @@ namespace {
 // matter except when it influences which error is diagnosed.
 class DeductionWorklist {
  public:
-  explicit DeductionWorklist(Context& context) : context_(context) {}
+  // `context` must not be null.
+  explicit DeductionWorklist(Context* context) : context_(context) {}
 
   struct PendingDeduction {
     SemIR::InstId param;
@@ -44,7 +45,7 @@ class DeductionWorklist {
   // Adds a single (param, arg) type deduction.
   auto Add(SemIR::TypeId param, SemIR::TypeId arg, bool needs_substitution)
       -> void {
-    Add(context_.types().GetInstId(param), context_.types().GetInstId(arg),
+    Add(context_->types().GetInstId(param), context_->types().GetInstId(arg),
         needs_substitution);
   }
 
@@ -54,8 +55,8 @@ class DeductionWorklist {
     if (!param.has_value() || !arg.has_value()) {
       return;
     }
-    auto& param_specific = context_.specifics().Get(param);
-    auto& arg_specific = context_.specifics().Get(arg);
+    auto& param_specific = context_->specifics().Get(param);
+    auto& arg_specific = context_->specifics().Get(arg);
     if (param_specific.generic_id != arg_specific.generic_id) {
       // TODO: Decide whether to error on this or just treat the specific as
       // non-deduced. For now we treat it as non-deduced.
@@ -81,13 +82,13 @@ class DeductionWorklist {
 
   auto AddAll(SemIR::InstBlockId params, llvm::ArrayRef<SemIR::InstId> args,
               bool needs_substitution) -> void {
-    AddAll(context_.inst_blocks().Get(params), args, needs_substitution);
+    AddAll(context_->inst_blocks().Get(params), args, needs_substitution);
   }
 
   auto AddAll(SemIR::StructTypeFieldsId params, SemIR::StructTypeFieldsId args,
               bool needs_substitution) -> void {
-    const auto& param_fields = context_.struct_type_fields().Get(params);
-    const auto& arg_fields = context_.struct_type_fields().Get(args);
+    const auto& param_fields = context_->struct_type_fields().Get(params);
+    const auto& arg_fields = context_->struct_type_fields().Get(args);
     if (param_fields.size() != arg_fields.size()) {
       // TODO: Decide whether to error on this or just treat the parameter list
       // as non-deduced. For now we treat it as non-deduced.
@@ -108,21 +109,21 @@ class DeductionWorklist {
 
   auto AddAll(SemIR::InstBlockId params, SemIR::InstBlockId args,
               bool needs_substitution) -> void {
-    AddAll(context_.inst_blocks().Get(params), context_.inst_blocks().Get(args),
-           needs_substitution);
+    AddAll(context_->inst_blocks().Get(params),
+           context_->inst_blocks().Get(args), needs_substitution);
   }
 
   auto AddAll(SemIR::TypeBlockId params, SemIR::TypeBlockId args,
               bool needs_substitution) -> void {
-    AddAll(context_.type_blocks().Get(params), context_.type_blocks().Get(args),
-           needs_substitution);
+    AddAll(context_->type_blocks().Get(params),
+           context_->type_blocks().Get(args), needs_substitution);
   }
 
   auto AddAll(SemIR::FacetTypeId params, SemIR::FacetTypeId args,
               bool needs_substitution) -> void {
     const auto& param_impls =
-        context_.facet_types().Get(params).impls_constraints;
-    const auto& arg_impls = context_.facet_types().Get(args).impls_constraints;
+        context_->facet_types().Get(params).impls_constraints;
+    const auto& arg_impls = context_->facet_types().Get(args).impls_constraints;
     // TODO: Decide whether to error on these or just treat the parameter list
     // as non-deduced. For now we treat it as non-deduced.
     if (param_impls.size() != 1 || arg_impls.size() != 1) {
@@ -137,39 +138,41 @@ class DeductionWorklist {
   }
 
   // Adds a (param, arg) pair for an instruction argument, given its kind.
-  auto AddInstArg(SemIR::IdKind kind, int32_t param, int32_t arg,
+  auto AddInstArg(SemIR::Inst::ArgAndKind param, int32_t arg,
                   bool needs_substitution) -> void {
-    switch (kind) {
+    CARBON_KIND_SWITCH(param) {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
         break;
-      case SemIR::IdKind::For<SemIR::InstId>:
-        Add(SemIR::InstId(param), SemIR::InstId(arg), needs_substitution);
+      case CARBON_KIND(SemIR::InstId inst_id): {
+        Add(inst_id, SemIR::InstId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::TypeId>:
-        Add(SemIR::TypeId(param), SemIR::TypeId(arg), needs_substitution);
+      }
+      case CARBON_KIND(SemIR::TypeId type_id): {
+        Add(type_id, SemIR::TypeId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::StructTypeFieldsId>:
-        AddAll(SemIR::StructTypeFieldsId(param), SemIR::StructTypeFieldsId(arg),
-               needs_substitution);
+      }
+      case CARBON_KIND(SemIR::StructTypeFieldsId fields_id): {
+        AddAll(fields_id, SemIR::StructTypeFieldsId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::InstBlockId>:
-        AddAll(SemIR::InstBlockId(param), SemIR::InstBlockId(arg),
-               needs_substitution);
+      }
+      case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
+        AddAll(inst_block_id, SemIR::InstBlockId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::TypeBlockId>:
-        AddAll(SemIR::TypeBlockId(param), SemIR::TypeBlockId(arg),
-               needs_substitution);
+      }
+      case CARBON_KIND(SemIR::TypeBlockId type_block_id): {
+        AddAll(type_block_id, SemIR::TypeBlockId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::SpecificId>:
-        Add(SemIR::SpecificId(param), SemIR::SpecificId(arg),
-            needs_substitution);
+      }
+      case CARBON_KIND(SemIR::SpecificId specific_id): {
+        Add(specific_id, SemIR::SpecificId(arg), needs_substitution);
         break;
-      case SemIR::IdKind::For<SemIR::FacetTypeId>:
-        AddAll(SemIR::FacetTypeId(param), SemIR::FacetTypeId(arg),
-               needs_substitution);
+      }
+      case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
+        AddAll(facet_type_id, SemIR::FacetTypeId(arg), needs_substitution);
         break;
+      }
       default:
         CARBON_FATAL("unexpected argument kind");
     }
@@ -182,7 +185,7 @@ class DeductionWorklist {
   auto PopNext() -> PendingDeduction { return deductions_.pop_back_val(); }
 
  private:
-  Context& context_;
+  Context* context_;
   llvm::SmallVector<PendingDeduction> deductions_;
 };
 
@@ -191,8 +194,8 @@ class DeductionContext {
  public:
   // Preparse to perform deduction. If an enclosing specific or self type
   // are provided, adds the corresponding arguments as known arguments that will
-  // not be deduced.
-  DeductionContext(Context& context, SemIR::LocId loc_id,
+  // not be deduced. `context` must not be null.
+  DeductionContext(Context* context, SemIR::LocId loc_id,
                    SemIR::GenericId generic_id,
                    SemIR::SpecificId enclosing_specific_id,
                    SemIR::InstId self_type_id, bool diagnose);
@@ -262,11 +265,11 @@ static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
   diag.Note(context.generics().Get(generic_id).decl_id, DeductionGenericHere);
 }
 
-DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
+DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
                                    SemIR::GenericId generic_id,
                                    SemIR::SpecificId enclosing_specific_id,
                                    SemIR::InstId self_type_id, bool diagnose)
-    : context_(&context),
+    : context_(context),
       loc_id_(loc_id),
       generic_id_(generic_id),
       diagnose_(diagnose),
@@ -277,16 +280,16 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
 
   // Initialize the deduced arguments to `None`.
   result_arg_ids_.resize(
-      context.inst_blocks()
-          .Get(context.generics().Get(generic_id_).bindings_id)
+      context->inst_blocks()
+          .Get(context->generics().Get(generic_id_).bindings_id)
           .size(),
       SemIR::InstId::None);
 
   if (enclosing_specific_id.has_value()) {
     // Copy any outer generic arguments from the specified instance and prepare
     // to substitute them into the function declaration.
-    auto args = context.inst_blocks().Get(
-        context.specifics().Get(enclosing_specific_id).args_id);
+    auto args = context->inst_blocks().Get(
+        context->specifics().Get(enclosing_specific_id).args_id);
     llvm::copy(args, result_arg_ids_.begin());
 
     // TODO: Subst is linear in the length of the substitutions list. Change
@@ -295,7 +298,7 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
     for (auto [i, subst_inst_id] : llvm::enumerate(args)) {
       substitutions_.push_back(
           {.bind_id = SemIR::CompileTimeBindIndex(i),
-           .replacement_id = context.constant_values().Get(subst_inst_id)});
+           .replacement_id = context->constant_values().Get(subst_inst_id)});
     }
     first_deduced_index_ = SemIR::CompileTimeBindIndex(args.size());
   }
@@ -306,7 +309,7 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
     result_arg_ids_[self_index.index] = self_type_id;
     substitutions_.push_back(
         {.bind_id = SemIR::CompileTimeBindIndex(self_index),
-         .replacement_id = context.constant_values().Get(self_type_id)});
+         .replacement_id = context->constant_values().Get(self_type_id)});
     first_deduced_index_ = SemIR::CompileTimeBindIndex(self_index.index + 1);
   }
 
@@ -332,7 +335,7 @@ auto DeductionContext::Deduce() -> bool {
       // compile-time value (e.g. TupleType) that we can decompose further.
       // So we do this conversion here, even though we will later try convert
       // again when we have deduced all of the bindings.
-      DiagnosticAnnotationScope annotate_diagnostics(
+      Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
               NoteInitializingParam(param_id, builder);
@@ -444,7 +447,7 @@ auto DeductionContext::Deduce() -> bool {
         // TODO: Match field name order between param and arg.
         break;
 
-      case SemIR::FacetAccessType::Kind:
+      case CARBON_KIND(SemIR::FacetAccessType access): {
         // Given `fn F[G:! Interface](g: G)`, the type of `g` is `G as type`.
         // `G` is a symbolic binding, whose type is a facet type, but `G as
         // type` converts into a `FacetAccessType`.
@@ -454,9 +457,9 @@ auto DeductionContext::Deduce() -> bool {
         // argument would be a facet value, whose type is the same facet type of
         // `G`. So here we "undo" the `as type` operation that's built into the
         // `g` parameter's type.
-        Add(param_inst.As<SemIR::FacetAccessType>().facet_value_inst_id, arg_id,
-            needs_substitution);
+        Add(access.facet_value_inst_id, arg_id, needs_substitution);
         continue;
+      }
 
         // TODO: Handle more cases.
 
@@ -468,10 +471,9 @@ auto DeductionContext::Deduce() -> bool {
           if (arg_inst.kind() != param_inst.kind()) {
             break;
           }
-          auto [kind0, kind1] = param_inst.ArgKinds();
-          worklist_.AddInstArg(kind0, param_inst.arg0(), arg_inst.arg0(),
+          worklist_.AddInstArg(param_inst.arg0_and_kind(), arg_inst.arg0(),
                                needs_substitution);
-          worklist_.AddInstArg(kind1, param_inst.arg1(), arg_inst.arg1(),
+          worklist_.AddInstArg(param_inst.arg1_and_kind(), arg_inst.arg1(),
                                needs_substitution);
           continue;
         }
@@ -573,7 +575,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
       binding_type_id =
           context().types().GetTypeIdForTypeConstantId(param_type_const_id);
 
-      DiagnosticAnnotationScope annotate_diagnostics(
+      Diagnostics::AnnotationScope annotate_diagnostics(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
               NoteInitializingParam(binding_id, builder);
@@ -626,8 +628,9 @@ auto DeduceGenericCallArguments(
     [[maybe_unused]] SemIR::InstBlockId implicit_params_id,
     SemIR::InstBlockId params_id, [[maybe_unused]] SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
-  DeductionContext deduction(context, loc_id, generic_id, enclosing_specific_id,
-                             self_type_id, /*diagnose=*/true);
+  DeductionContext deduction(&context, loc_id, generic_id,
+                             enclosing_specific_id, self_type_id,
+                             /*diagnose=*/true);
 
   // Prepare to perform deduction of the explicit parameters against their
   // arguments.
@@ -645,7 +648,7 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id, DeduceImpl impl,
                          SemIR::ConstantId self_id,
                          SemIR::SpecificId constraint_specific_id)
     -> SemIR::SpecificId {
-  DeductionContext deduction(context, loc_id, impl.generic_id,
+  DeductionContext deduction(&context, loc_id, impl.generic_id,
                              /*enclosing_specific_id=*/SemIR::SpecificId::None,
                              /*self_type_id=*/SemIR::InstId::None,
                              /*diagnose=*/false);

@@ -18,7 +18,7 @@
 #include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
 namespace Internal {
 
@@ -30,13 +30,13 @@ using NoTypeDeduction = std::type_identity_t<Arg>;
 }  // namespace Internal
 
 template <typename LocT, typename AnnotateFn>
-class DiagnosticAnnotationScope;
+class AnnotationScope;
 
 // The result of `DiagnosticConvert::ConvertLoc`. This is non-templated to allow
 // sharing across converters.
-struct ConvertedDiagnosticLoc {
-  // Becomes DiagnosticMessage::loc.
-  DiagnosticLoc loc;
+struct ConvertedLoc {
+  // Becomes Message::loc.
+  Loc loc;
   // Becomes Diagnostic::last_byte_offset.
   int32_t last_byte_offset;
 };
@@ -46,10 +46,10 @@ struct ConvertedDiagnosticLoc {
 // write:
 //
 // struct NameId {
-//   using DiagnosticType = DiagnosticTypeInfo<std::string>;
+//   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 // };
 template <typename StorageTypeT>
-struct DiagnosticTypeInfo {
+struct TypeInfo {
   using StorageType = StorageTypeT;
 };
 
@@ -62,48 +62,51 @@ struct DiagnosticTypeInfo {
 // when parsing, or a parse tree node when type-checking, and to allow unit
 // tests to be decoupled from any concrete location representation.
 template <typename LocT>
-class DiagnosticEmitter {
+class Emitter {
  public:
   // A builder-pattern type to provide a fluent interface for constructing
-  // a more complex diagnostic. See `DiagnosticEmitter::Build` for the
+  // a more complex diagnostic. See `Emitter::Build` for the
   // expected usage.
   // This is nodiscard to protect against accidentally building a diagnostic
   // without emitting it.
-  class [[nodiscard]] DiagnosticBuilder {
+  class [[nodiscard]] Builder {
    public:
-    // DiagnosticBuilder is move-only and cannot be copied.
-    DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
-    auto operator=(DiagnosticBuilder&&) noexcept
-        -> DiagnosticBuilder& = default;
+    // Builder is move-only and cannot be copied.
+    Builder(Builder&&) noexcept = default;
+    auto operator=(Builder&&) noexcept -> Builder& = default;
 
     // Adds a note diagnostic attached to the main diagnostic being built.
-    // The API mirrors the main emission API: `DiagnosticEmitter::Emit`.
-    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
+    // The API mirrors the main emission API: `Emitter::Emit`.
+    // For the expected usage see the builder API: `Emitter::Build`.
     template <typename... Args>
     auto Note(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-              Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder&;
+              Internal::NoTypeDeduction<Args>... args) -> Builder&;
 
     // Emits the built diagnostic and its attached notes.
-    // For the expected usage see the builder API: `DiagnosticEmitter::Build`.
+    // For the expected usage see the builder API: `Emitter::Build`.
     template <typename... Args>
-    auto Emit() -> void;
+    auto Emit() & -> void;
 
-    // Returns true if this DiagnosticBuilder may emit a diagnostic. Can be used
+    // Prevent trivial uses of the builder; always `static_assert`s.
+    template <typename... Args>
+    auto Emit() && -> void;
+
+    // Returns true if this Builder may emit a diagnostic. Can be used
     // to avoid excess work computing notes, etc, if no diagnostic is going to
     // be emitted anyway.
     explicit operator bool() { return emitter_; }
 
    private:
-    friend class DiagnosticEmitter<LocT>;
+    friend class Emitter<LocT>;
 
     template <typename... Args>
-    explicit DiagnosticBuilder(DiagnosticEmitter<LocT>* emitter, LocT loc,
-                               const DiagnosticBase<Args...>& diagnostic_base,
-                               llvm::SmallVector<llvm::Any> args);
+    explicit Builder(Emitter<LocT>* emitter, LocT loc,
+                     const DiagnosticBase<Args...>& diagnostic_base,
+                     llvm::SmallVector<llvm::Any> args);
 
-    // Create a null `DiagnosticBuilder` that will not emit anything. Notes will
+    // Create a null `Builder` that will not emit anything. Notes will
     // be silently ignored.
-    DiagnosticBuilder() : emitter_(nullptr) {}
+    Builder() : emitter_(nullptr) {}
 
     // Adds a message to the diagnostic, handling conversion of the location and
     // arguments.
@@ -112,30 +115,29 @@ class DiagnosticEmitter {
                     llvm::SmallVector<llvm::Any> args) -> void;
 
     // Adds a message to the diagnostic, handling conversion of the arguments. A
-    // DiagnosticLoc must be provided instead of a LocT in order to
+    // Loc must be provided instead of a LocT in order to
     // avoid potential recursion.
     template <typename... Args>
-    auto AddMessageWithDiagnosticLoc(
-        DiagnosticLoc loc, const DiagnosticBase<Args...>& diagnostic_base,
-        llvm::SmallVector<llvm::Any> args) -> void;
+    auto AddMessageWithLoc(Loc loc,
+                           const DiagnosticBase<Args...>& diagnostic_base,
+                           llvm::SmallVector<llvm::Any> args) -> void;
 
     // Handles the cast of llvm::Any to Args types for formatv.
     // TODO: Custom formatting can be provided with an format_provider, but that
     // affects all formatv calls. Consider replacing formatv with a custom call
     // that allows diagnostic-specific formatting.
     template <typename... Args, size_t... N>
-    static auto FormatFn(const DiagnosticMessage& message,
+    static auto FormatFn(const Message& message,
                          std::index_sequence<N...> /*indices*/) -> std::string;
 
-    DiagnosticEmitter<LocT>* emitter_;
+    Emitter<LocT>* emitter_;
     Diagnostic diagnostic_;
   };
 
   // `consumer` is required to outlive the diagnostic emitter.
-  explicit DiagnosticEmitter(DiagnosticConsumer* consumer)
-      : consumer_(consumer) {}
+  explicit Emitter(Consumer* consumer) : consumer_(consumer) {}
 
-  virtual ~DiagnosticEmitter() = default;
+  virtual ~Emitter() = default;
 
   // Emits an error.
   //
@@ -153,24 +155,24 @@ class DiagnosticEmitter {
   //     .Emit();
   template <typename... Args>
   auto Build(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-             Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder;
+             Internal::NoTypeDeduction<Args>... args) -> Builder;
 
-  // Create a null `DiagnosticBuilder` that will not emit anything. Notes will
+  // Create a null `Builder` that will not emit anything. Notes will
   // be silently ignored.
-  auto BuildSuppressed() -> DiagnosticBuilder { return DiagnosticBuilder(); }
+  auto BuildSuppressed() -> Builder { return Builder(); }
 
  protected:
   // Callback type used to report context messages from ConvertLoc.
-  // Note that the first parameter type is DiagnosticLoc rather than
+  // Note that the first parameter type is Loc rather than
   // LocT, because ConvertLoc must not recurse.
   using ContextFnT =
-      llvm::function_ref<auto(DiagnosticLoc, const DiagnosticBase<>&)->void>;
+      llvm::function_ref<auto(Loc, const DiagnosticBase<>&)->void>;
 
-  // Converts a LocT to a DiagnosticLoc and its `last_byte_offset` (see
-  // `DiagnosticMessage`). ConvertLoc may invoke context_fn to provide context
+  // Converts a LocT to a Loc and its `last_byte_offset` (see
+  // `Message`). ConvertLoc may invoke context_fn to provide context
   // messages.
   virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
-      -> ConvertedDiagnosticLoc = 0;
+      -> ConvertedLoc = 0;
 
   // Converts arg types as needed. Most children don't customize conversion, so
   // the default returns the argument unchanged.
@@ -183,35 +185,35 @@ class DiagnosticEmitter {
   auto MakeAny(Arg arg) -> llvm::Any;
 
   template <typename OtherLocT, typename AnnotateFn>
-  friend class DiagnosticAnnotationScope;
+  friend class AnnotationScope;
 
-  DiagnosticConsumer* consumer_;
-  llvm::SmallVector<llvm::function_ref<auto(DiagnosticBuilder& builder)->void>>
+  Consumer* consumer_;
+  llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
       annotate_fns_;
 };
 
-// This relies on `void*` location handling on `DiagnosticEmitter`.
+// This relies on `void*` location handling on `Emitter`.
 //
 // TODO: Based on how this ends up used or if we get more distinct emitters, it
 // might be worth considering having diagnostics specify that they don't apply
 // to source-location carrying emitters. For example, this might look like a
 // `CARBON_NO_LOC_DIAGNOSTIC` macro, or some other factoring. But it might end
 // up being more noise than it is worth.
-class NoLocDiagnosticEmitter : public DiagnosticEmitter<void*> {
+class NoLocEmitter : public Emitter<void*> {
  public:
-  using DiagnosticEmitter::DiagnosticEmitter;
+  using Emitter::Emitter;
 
   // Emits an error. This specialization only applies to
-  // `NoLocDiagnosticEmitter`.
+  // `NoLocEmitter`.
   template <typename... Args>
   auto Emit(const DiagnosticBase<Args...>& diagnostic_base,
             Internal::NoTypeDeduction<Args>... args) -> void {
-    DiagnosticEmitter::Emit(nullptr, diagnostic_base, args...);
+    Emitter::Emit(nullptr, diagnostic_base, args...);
   }
 
  protected:
   auto ConvertLoc(void* /*loc*/, ContextFnT /*context_fn*/) const
-      -> ConvertedDiagnosticLoc override {
+      -> ConvertedLoc override {
     return {.loc = {.filename = ""}, .last_byte_offset = -1};
   }
 };
@@ -220,28 +222,27 @@ class NoLocDiagnosticEmitter : public DiagnosticEmitter<void*> {
 // be annotated in some way.
 //
 // This object is given a function `annotate` that will be called with a
-// `DiagnosticBuilder& builder` for any diagnostic that is emitted through the
+// `Builder& builder` for any diagnostic that is emitted through the
 // given emitter. That function can annotate the diagnostic by calling
 // `builder.Note` to add notes.
 template <typename LocT, typename AnnotateFn>
-class DiagnosticAnnotationScope {
+class AnnotationScope {
  public:
-  DiagnosticAnnotationScope(DiagnosticEmitter<LocT>* emitter,
-                            AnnotateFn annotate)
+  AnnotationScope(Emitter<LocT>* emitter, AnnotateFn annotate)
       : emitter_(emitter), annotate_(std::move(annotate)) {
     emitter_->annotate_fns_.push_back(annotate_);
   }
-  ~DiagnosticAnnotationScope() { emitter_->annotate_fns_.pop_back(); }
+  ~AnnotationScope() { emitter_->annotate_fns_.pop_back(); }
 
  private:
-  DiagnosticEmitter<LocT>* emitter_;
+  Emitter<LocT>* emitter_;
   // Make a copy of the annotation function to ensure that it lives long enough.
   AnnotateFn annotate_;
 };
 
 template <typename LocT, typename AnnotateFn>
-DiagnosticAnnotationScope(DiagnosticEmitter<LocT>* emitter, AnnotateFn annotate)
-    -> DiagnosticAnnotationScope<LocT, AnnotateFn>;
+AnnotationScope(Emitter<LocT>* emitter, AnnotateFn annotate)
+    -> AnnotationScope<LocT, AnnotateFn>;
 
 // ============================================================================
 // Only internal implementation details below this point.
@@ -250,13 +251,13 @@ DiagnosticAnnotationScope(DiagnosticEmitter<LocT>* emitter, AnnotateFn annotate)
 namespace Internal {
 
 // Determines whether there's a DiagnosticType member on Arg.
-// Used by DiagnosticEmitter.
+// Used by Emitter.
 template <typename Arg>
 concept HasDiagnosticType = requires { typename Arg::DiagnosticType; };
 
 // The default implementation with no conversion.
 template <typename Arg>
-struct DiagnosticTypeForArg : public DiagnosticTypeInfo<Arg> {};
+struct DiagnosticTypeForArg : public TypeInfo<Arg> {};
 
 // Exposes a custom conversion for an argument type.
 template <typename Arg>
@@ -267,14 +268,14 @@ struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 
 template <typename LocT>
 template <typename... Args>
-auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Note(
+auto Emitter<LocT>::Builder::Note(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-    Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder& {
+    Internal::NoTypeDeduction<Args>... args) -> Builder& {
   if (!emitter_) {
     return *this;
   }
-  CARBON_CHECK(diagnostic_base.Level == DiagnosticLevel::Note ||
-                   diagnostic_base.Level == DiagnosticLevel::LocationInfo,
+  CARBON_CHECK(diagnostic_base.Level == Level::Note ||
+                   diagnostic_base.Level == Level::LocationInfo,
                "{0}", static_cast<int>(diagnostic_base.Level));
   AddMessage(loc, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
   return *this;
@@ -282,7 +283,7 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Note(
 
 template <typename LocT>
 template <typename... Args>
-auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() -> void {
+auto Emitter<LocT>::Builder::Emit() & -> void {
   if (!emitter_) {
     return;
   }
@@ -292,61 +293,76 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::Emit() -> void {
   emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
 }
 
+namespace Internal {
+template <typename LocT>
+concept AlwaysFalse = false;
+}  // namespace Internal
+
 template <typename LocT>
 template <typename... Args>
-DiagnosticEmitter<LocT>::DiagnosticBuilder::DiagnosticBuilder(
-    DiagnosticEmitter<LocT>* emitter, LocT loc,
-    const DiagnosticBase<Args...>& diagnostic_base,
-    llvm::SmallVector<llvm::Any> args)
-    : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
-  AddMessage(loc, diagnostic_base, std::move(args));
-  CARBON_CHECK(diagnostic_base.Level != DiagnosticLevel::Note);
+auto Emitter<LocT>::Builder::Emit() && -> void {
+  // TODO: This is required by clang-16, but `false` may work in newer clang
+  // versions. Replace when possible.
+  static_assert(Internal::AlwaysFalse<LocT>,
+                "Use `emitter.Emit(...)` or "
+                "`emitter.Build(...).Note(...).Emit(...)` "
+                "instead of `emitter.Build(...).Emit(...)`");
 }
 
 template <typename LocT>
 template <typename... Args>
-auto DiagnosticEmitter<LocT>::DiagnosticBuilder::AddMessage(
+Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
+                                const DiagnosticBase<Args...>& diagnostic_base,
+                                llvm::SmallVector<llvm::Any> args)
+    : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
+  AddMessage(loc, diagnostic_base, std::move(args));
+  CARBON_CHECK(diagnostic_base.Level != Level::Note);
+}
+
+template <typename LocT>
+template <typename... Args>
+auto Emitter<LocT>::Builder::AddMessage(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     llvm::SmallVector<llvm::Any> args) -> void {
   if (!emitter_) {
     return;
   }
   auto converted = emitter_->ConvertLoc(
-      loc, [&](DiagnosticLoc context_loc,
-               const DiagnosticBase<>& context_diagnostic_base) {
-        AddMessageWithDiagnosticLoc(context_loc, context_diagnostic_base, {});
+      loc,
+      [&](Loc context_loc, const DiagnosticBase<>& context_diagnostic_base) {
+        AddMessageWithLoc(context_loc, context_diagnostic_base, {});
       });
   // Use the last byte offset from the first message.
   if (diagnostic_.messages.empty()) {
     diagnostic_.last_byte_offset = converted.last_byte_offset;
   }
-  AddMessageWithDiagnosticLoc(converted.loc, diagnostic_base, args);
+  AddMessageWithLoc(converted.loc, diagnostic_base, args);
 }
 
 template <typename LocT>
 template <typename... Args>
-auto DiagnosticEmitter<LocT>::DiagnosticBuilder::AddMessageWithDiagnosticLoc(
-    DiagnosticLoc loc, const DiagnosticBase<Args...>& diagnostic_base,
+auto Emitter<LocT>::Builder::AddMessageWithLoc(
+    Loc loc, const DiagnosticBase<Args...>& diagnostic_base,
     llvm::SmallVector<llvm::Any> args) -> void {
   if (!emitter_) {
     return;
   }
-  diagnostic_.messages.emplace_back(DiagnosticMessage{
-      .kind = diagnostic_base.Kind,
-      .level = diagnostic_base.Level,
-      .loc = loc,
-      .format = diagnostic_base.Format,
-      .format_args = std::move(args),
-      .format_fn = [](const DiagnosticMessage& message) -> std::string {
-        return FormatFn<Args...>(message,
-                                 std::make_index_sequence<sizeof...(Args)>());
-      }});
+  diagnostic_.messages.emplace_back(
+      Message{.kind = diagnostic_base.Kind,
+              .level = diagnostic_base.Level,
+              .loc = loc,
+              .format = diagnostic_base.Format,
+              .format_args = std::move(args),
+              .format_fn = [](const Message& message) -> std::string {
+                return FormatFn<Args...>(
+                    message, std::make_index_sequence<sizeof...(Args)>());
+              }});
 }
 
 template <typename LocT>
 template <typename... Args, size_t... N>
-auto DiagnosticEmitter<LocT>::DiagnosticBuilder::FormatFn(
-    const DiagnosticMessage& message, std::index_sequence<N...> /*indices*/)
+auto Emitter<LocT>::Builder::FormatFn(const Message& message,
+                                      std::index_sequence<N...> /*indices*/)
     -> std::string {
   static_assert(sizeof...(Args) == sizeof...(N), "Invalid template args");
   CARBON_CHECK(message.format_args.size() == sizeof...(Args),
@@ -361,25 +377,24 @@ auto DiagnosticEmitter<LocT>::DiagnosticBuilder::FormatFn(
 
 template <typename LocT>
 template <typename... Args>
-auto DiagnosticEmitter<LocT>::Emit(
-    LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-    Internal::NoTypeDeduction<Args>... args) -> void {
-  DiagnosticBuilder(this, loc, diagnostic_base, {MakeAny<Args>(args)...})
-      .Emit();
+auto Emitter<LocT>::Emit(LocT loc,
+                         const DiagnosticBase<Args...>& diagnostic_base,
+                         Internal::NoTypeDeduction<Args>... args) -> void {
+  Builder builder(this, loc, diagnostic_base, {MakeAny<Args>(args)...});
+  builder.Emit();
 }
 
 template <typename LocT>
 template <typename... Args>
-auto DiagnosticEmitter<LocT>::Build(
-    LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
-    Internal::NoTypeDeduction<Args>... args) -> DiagnosticBuilder {
-  return DiagnosticBuilder(this, loc, diagnostic_base,
-                           {MakeAny<Args>(args)...});
+auto Emitter<LocT>::Build(LocT loc,
+                          const DiagnosticBase<Args...>& diagnostic_base,
+                          Internal::NoTypeDeduction<Args>... args) -> Builder {
+  return Builder(this, loc, diagnostic_base, {MakeAny<Args>(args)...});
 }
 
 template <typename LocT>
 template <typename Arg>
-auto DiagnosticEmitter<LocT>::MakeAny(Arg arg) -> llvm::Any {
+auto Emitter<LocT>::MakeAny(Arg arg) -> llvm::Any {
   llvm::Any converted = ConvertArg(arg);
   using Storage = Internal::DiagnosticTypeForArg<Arg>::StorageType;
   CARBON_CHECK(llvm::any_cast<Storage>(&converted),
@@ -388,6 +403,6 @@ auto DiagnosticEmitter<LocT>::MakeAny(Arg arg) -> llvm::Any {
   return converted;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics
 
 #endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_

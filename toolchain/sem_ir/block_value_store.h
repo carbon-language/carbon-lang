@@ -103,24 +103,13 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   auto size() const -> int { return values_.size(); }
 
  protected:
-  // Reserves and returns a block ID. The contents of the block
-  // should be specified by calling Set, or similar.
-  auto AddDefaultValue() -> IdT { return values_.AddDefaultValue(); }
-
-  // Adds an uninitialized block of the given size.
-  auto AddUninitialized(size_t size) -> IdT {
-    return values_.Add(AllocateUninitialized(size));
+  // Allocates a copy of the given data using our slab allocator.
+  auto AllocateCopy(llvm::ArrayRef<ElementType> data)
+      -> llvm::MutableArrayRef<ElementType> {
+    auto result = AllocateUninitialized(data.size());
+    std::uninitialized_copy(data.begin(), data.end(), result.begin());
+    return result;
   }
-
-  // Sets the contents of an empty block to the given content.
-  auto SetContent(IdT block_id, llvm::ArrayRef<ElementType> content) -> void {
-    CARBON_CHECK(Get(block_id).empty(),
-                 "inst block content set more than once");
-    values_.Get(block_id) = AllocateCopy(content);
-  }
-
- private:
-  class KeyContext;
 
   // Allocates an uninitialized array using our slab allocator.
   auto AllocateUninitialized(size_t size)
@@ -133,13 +122,11 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
     return llvm::MutableArrayRef<ElementType>(storage, size);
   }
 
-  // Allocates a copy of the given data using our slab allocator.
-  auto AllocateCopy(llvm::ArrayRef<ElementType> data)
-      -> llvm::MutableArrayRef<ElementType> {
-    auto result = AllocateUninitialized(data.size());
-    std::uninitialized_copy(data.begin(), data.end(), result.begin());
-    return result;
-  }
+  // Allow children to have more complex value handling.
+  auto values() -> ValueStore<IdT>& { return values_; }
+
+ private:
+  class KeyContext;
 
   llvm::BumpPtrAllocator* allocator_;
   ValueStore<IdT> values_;

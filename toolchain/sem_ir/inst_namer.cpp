@@ -696,6 +696,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         queue_block_id(impl_scope_id, inst.decl_block_id);
         break;
       }
+      case CARBON_KIND(LookupImplWitness inst): {
+        const auto& interface = sem_ir_->specific_interfaces().Get(
+            inst.query_specific_interface_id);
+        add_inst_name_id(
+            sem_ir_->interfaces().Get(interface.interface_id).name_id,
+            ".lookup_impl_witness");
+        continue;
+      }
       case ImplWitness::Kind: {
         // TODO: Include name of interface (is this available from the
         // specific?).
@@ -761,6 +769,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                               llvm::ArrayRef(const_inst_id));
           }
         }
+        continue;
+      }
+      case CARBON_KIND(InstValue inst): {
+        insts.push_back({scope_id, inst.inst_id});
+        add_inst_name(
+            ("inst." + sem_ir_->insts().Get(inst.inst_id).kind().ir_name())
+                .str());
         continue;
       }
       case CARBON_KIND(InterfaceDecl inst): {

@@ -49,16 +49,16 @@ struct Impl : public EntityWithParamsBase,
               public ImplFields,
               public Printable<Impl> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{self: " << self_id << ", constraint: " << constraint_id << "}";
+    out << "{self: " << self_id << ", constraint: " << constraint_id
+        << ", witness: " << witness_id << "}";
   }
 
-  // Determines whether this impl has been fully defined. This is false until we
-  // reach the `}` of the impl definition.
-  auto is_defined() const -> bool { return defined; }
+  // This is false until we reach the `}` of the impl definition.
+  auto is_complete() const -> bool { return defined; }
 
   // Determines whether this impl's definition has begun but not yet ended.
   auto is_being_defined() const -> bool {
-    return has_definition_started() && !is_defined();
+    return has_definition_started() && !is_complete();
   }
 };
 

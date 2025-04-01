@@ -87,7 +87,7 @@ static auto DiagnoseDuplicateNames(
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "duplicated field name `{1}` in "
                         "{0:struct type literal|struct literal}",
-                        BoolAsSelect, SemIR::NameId);
+                        Diagnostics::BoolAsSelect, SemIR::NameId);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "field with the same name here");
       context.emitter()

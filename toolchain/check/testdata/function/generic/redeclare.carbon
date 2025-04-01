@@ -116,9 +116,9 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
-// CHECK:STDOUT:     %return.patt: %ptr = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
+// CHECK:STDOUT:     %return.patt: @F.%ptr.loc4_20.2 (%ptr) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_20.2 (%ptr) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc4_20.1: type = ptr_type %T [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
@@ -127,15 +127,15 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.loc4: ref @F.%ptr.loc4_20.2 (%ptr) = return_slot %return.param.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc6: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
-// CHECK:STDOUT:     %return.patt: %ptr = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
+// CHECK:STDOUT:     %return.patt: @F.%ptr.loc4_20.2 (%ptr) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_20.2 (%ptr) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, %T.loc6 [symbolic = constants.%T]
-// CHECK:STDOUT:     %ptr.loc6: type = ptr_type %T [symbolic = constants.%ptr]
-// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
-// CHECK:STDOUT:     %return.param.loc6: ref %ptr = out_param call_param0
-// CHECK:STDOUT:     %return.loc6: ref %ptr = return_slot %return.param.loc6
+// CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.2 (constants.%T)]
+// CHECK:STDOUT:     %ptr.loc6: type = ptr_type %T [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
+// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
+// CHECK:STDOUT:     %return.param.loc6: ref @F.%ptr.loc4_20.2 (%ptr) = out_param call_param0
+// CHECK:STDOUT:     %return.loc6: ref @F.%ptr.loc4_20.2 (%ptr) = return_slot %return.param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -148,7 +148,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%ptr.loc4_20.2 (%ptr) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_10.2: <specific function> = specific_function constants.%F, @F(%T.loc4_6.2) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc6: type) -> %ptr {
+// CHECK:STDOUT:   fn(%T.patt.loc6: type) -> @F.%ptr.loc4_20.2 (%ptr) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.2 (constants.%T)]

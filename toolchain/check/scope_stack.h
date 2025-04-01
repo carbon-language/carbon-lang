@@ -98,6 +98,9 @@ class ScopeStack {
     return Peek().specific_id;
   }
 
+  // Returns true if current scope is lexical.
+  auto PeekIsLexicalScope() const -> bool { return Peek().is_lexical_scope(); }
+
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
@@ -165,6 +168,10 @@ class ScopeStack {
     return break_continue_stack_;
   }
 
+  auto destroy_id_stack() -> ArrayStack<SemIR::InstId>& {
+    return destroy_id_stack_;
+  }
+
   auto compile_time_bindings_stack() -> ArrayStack<SemIR::InstId>& {
     return compile_time_binding_stack_;
   }
@@ -174,6 +181,8 @@ class ScopeStack {
  private:
   // An entry in scope_stack_.
   struct ScopeStackEntry {
+    auto is_lexical_scope() const -> bool { return !scope_id.has_value(); }
+
     // The sequential index of this scope entry within the file.
     ScopeIndex index;
 
@@ -208,8 +217,6 @@ class ScopeStack {
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
     Set<SemIR::NameId> names = {};
-
-    // TODO: This likely needs to track things which need to be destructed.
   };
 
   auto Peek() const -> const ScopeStackEntry& { return scope_stack_.back(); }
@@ -238,6 +245,10 @@ class ScopeStack {
 
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
+
+  // A stack of `destroy` functions to call. This only has entries for lexical
+  // scopes, because non-lexical scopes don't have destruction on scope exit.
+  ArrayStack<SemIR::InstId> destroy_id_stack_;
 
   // Information about non-lexical scopes. This is a subset of the entries and
   // the information in scope_stack_.

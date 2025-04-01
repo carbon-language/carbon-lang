@@ -54,6 +54,13 @@ enum class InstConstantKind : int8_t {
   // a symbolic constant but never a concrete constant. The instruction may have
   // a concrete constant value of a different kind.
   SymbolicOnly,
+  // This instruction is a metaprogramming or template instantiation action that
+  // generates an instruction. Like `SymbolicOnly`, it may define a symbolic
+  // constant, depending on its operands, but never defines a concrete constant.
+  // The instruction may have a concrete constant value that is a generated
+  // instruction. Constant evaluation support for types with this constant kind
+  // is provided automatically, by calling `PerformDelayedAction`.
+  InstAction,
   // This instruction can define a symbolic or concrete constant, but might not
   // have a constant value, might have a constant value that is not defined by
   // itself, or might result in a compile-time error, depending on its operands.
@@ -103,6 +110,10 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
+  // Returns the `InstKind` for an instruction, for `CARBON_KIND_SWITCH`.
+  template <typename InstT>
+  static constexpr auto& For = InstT::Kind;
+
   template <typename TypedNodeId>
   class Definition;
 
@@ -115,6 +126,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
+    bool has_cleanup = false;
   };
 
   // Provides a definition for this instruction kind. Should only be called
@@ -214,6 +226,10 @@ class InstKind::Definition : public InstKind {
   // Returns true if `Instruction(A)` == `Instruction(B)` allows deduction to
   // conclude `A` == `B`.
   constexpr auto deduce_through() const -> bool { return info_.deduce_through; }
+
+  // Returns true if this instruction has scoped cleanup associated, typically a
+  // destructor.
+  constexpr auto has_cleanup() const -> bool { return info_.has_cleanup; }
 
  private:
   friend class InstKind;

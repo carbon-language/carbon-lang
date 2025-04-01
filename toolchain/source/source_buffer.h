@@ -36,19 +36,19 @@ class SourceBuffer {
  public:
   // Opens and reads the contents of stdin. Returns a SourceBuffer on success.
   // Prints an error and returns nullopt on failure.
-  static auto MakeFromStdin(DiagnosticConsumer& consumer)
+  static auto MakeFromStdin(Diagnostics::Consumer& consumer)
       -> std::optional<SourceBuffer>;
 
   // Opens the requested file. Returns a SourceBuffer on success. Prints an
   // error and returns nullopt on failure.
   static auto MakeFromFile(llvm::vfs::FileSystem& fs, llvm::StringRef filename,
-                           DiagnosticConsumer& consumer)
+                           Diagnostics::Consumer& consumer)
       -> std::optional<SourceBuffer>;
 
   // Handles conditional use of stdin based on the filename being "-".
   static auto MakeFromFileOrStdin(llvm::vfs::FileSystem& fs,
                                   llvm::StringRef filename,
-                                  DiagnosticConsumer& consumer)
+                                  Diagnostics::Consumer& consumer)
       -> std::optional<SourceBuffer> {
     if (filename == "-") {
       return MakeFromStdin(consumer);
@@ -60,7 +60,7 @@ class SourceBuffer {
   // Returns a source buffer with the provided text content. Copies `filename`
   // and `text` to take ownership.
   static auto MakeFromStringCopy(llvm::StringRef filename, llvm::StringRef text,
-                                 DiagnosticConsumer& consumer)
+                                 Diagnostics::Consumer& consumer)
       -> std::optional<SourceBuffer>;
 
   // Use one of the factory functions above to create a source buffer.
@@ -80,7 +80,7 @@ class SourceBuffer {
   static auto MakeFromMemoryBuffer(
       llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
       llvm::StringRef filename, bool is_regular_file,
-      DiagnosticConsumer& consumer) -> std::optional<SourceBuffer>;
+      Diagnostics::Consumer& consumer) -> std::optional<SourceBuffer>;
 
   explicit SourceBuffer(std::string filename,
                         std::unique_ptr<llvm::MemoryBuffer> text,

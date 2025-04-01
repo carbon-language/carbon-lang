@@ -9,14 +9,15 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/file_not_found.carbon
 
 // --- fail_cpp_file_not_found.carbon
-
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+8]]:1: error: 1 error and 0 warnings in 1 `Cpp` import:
+// CHECK:STDERR: fail_cpp_file_not_found.carbon: error: C++:
 // CHECK:STDERR: fail_cpp_file_not_found.carbon.generated.cpp_imports.h:1:10: fatal error: 'not_found.h' file not found
 // CHECK:STDERR:     1 | #include "not_found.h"
 // CHECK:STDERR:       |          ^~~~~~~~~~~~~
 // CHECK:STDERR:  [CppInteropParseError]
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
 // CHECK:STDERR: import Cpp library "not_found.h";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

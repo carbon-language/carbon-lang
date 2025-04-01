@@ -9,13 +9,13 @@
 #include <optional>
 #include <string>
 
+#include "absl/strings/str_replace.h"
 #include "common/error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "testing/file_test/file_system.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
 
@@ -96,6 +96,21 @@ ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
 auto ToolchainFileTest::GetArgReplacements() const
     -> llvm::StringMap<std::string> {
   return {{"core_package_dir", installation_.core_package()}};
+}
+
+// Adds a file to the fs.
+static auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
+    -> ErrorOr<Success> {
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
+      llvm::MemoryBuffer::getFile(path);
+  if (file.getError()) {
+    return ErrorBuilder() << "Getting `" << path
+                          << "`: " << file.getError().message();
+  }
+  if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
+    return ErrorBuilder() << "Duplicate file: `" << path << "`";
+  }
+  return Success();
 }
 
 auto ToolchainFileTest::Run(
@@ -216,6 +231,14 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // The column happens to be right for FileStart, but the line is wrong.
     static RE2 file_token_re(R"((FileEnd.*column: |FileStart.*line: )( *\d+))");
     RE2::Replace(&check_line, file_token_re, R"(\1{{ *\\d+}})");
+  } else if (component_ == "check") {
+    // The path to the core package appears in some check diagnostics, and will
+    // differ between testing environments, so don't test it.
+    // TODO: Consider adding a content keyword to name the core package, and
+    // replace with that instead. Alternatively, consider adding the core
+    // package to the VFS with a fixed name.
+    absl::StrReplaceAll({{installation_.core_package(), "{{.*}}"}},
+                        &check_line);
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);
   }

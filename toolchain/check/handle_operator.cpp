@@ -11,6 +11,7 @@
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/sem_ir/expr_info.h"
 
 namespace Carbon::Check {
 

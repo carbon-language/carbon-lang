@@ -222,8 +222,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
                        .class_id = SemIR::ClassId::None,
                        .decl_block_id = decl_block_id};
-  auto class_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, class_decl));
+  auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
@@ -252,7 +251,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
           context, class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
   } else {
-    FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
+    auto prev_decl_generic_id =
+        context.classes().Get(class_decl.class_id).generic_id;
+    FinishGenericRedecl(context, prev_decl_generic_id);
   }
 
   // Write the class ID into the ClassDecl.

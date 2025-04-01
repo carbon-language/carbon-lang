@@ -11,10 +11,12 @@
 namespace Carbon::Check {
 
 // Creates SemIR to perform a member access with base expression `base_id` and
-// member name `name_id`. Returns the result of the access.
+// member name `name_id`. When `required`, failing to find the name is a
+// diagnosed error; otherwise, `None` is returned. Returns the result of the
+// access.
 auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
-                         SemIR::InstId base_id, SemIR::NameId name_id)
-    -> SemIR::InstId;
+                         SemIR::InstId base_id, SemIR::NameId name_id,
+                         bool required = true) -> SemIR::InstId;
 
 // Creates SemIR to perform a compound member access with base expression
 // `base_id` and member name expression `member_expr_id`. Returns the result of
@@ -24,6 +26,14 @@ auto PerformCompoundMemberAccess(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     SemIR::InstId member_expr_id,
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId;
+
+// Finds the value of an associated entity (given by assoc_entity_inst_id, a
+// member of the interface given by interface_type_id) associated with a type or
+// facet (given by base_id). Never does instance binding.
+auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
+                        SemIR::InstId base_id,
+                        SemIR::InstId assoc_entity_inst_id,
+                        SemIR::TypeId interface_type_id) -> SemIR::InstId;
 
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
 // and index expression `index_inst_id`. Returns the result of the access.

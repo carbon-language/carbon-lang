@@ -43,7 +43,7 @@ auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
     return type_id;
   }
   const auto& class_info = file_->classes().Get(class_type->class_id);
-  if (!class_info.is_defined()) {
+  if (!class_info.is_complete()) {
     return TypeId::None;
   }
   return class_info.GetObjectRepr(*file_, class_type->specific_id);
