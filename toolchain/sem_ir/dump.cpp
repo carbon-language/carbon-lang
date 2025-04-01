@@ -259,7 +259,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     if (req_interface == identified_facet_type.impl_as_target_interface()) {
       out << " (to impl)";
     }
-    if (!identified_facet_type.is_impl_as_target()) {
+    if (!identified_facet_type.is_valid_impl_as_target()) {
       out << "\n  - (" << identified_facet_type.num_interfaces_to_impl()
           << " to impl)\n";
     }

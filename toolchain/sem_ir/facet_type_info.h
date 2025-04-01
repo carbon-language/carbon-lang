@@ -105,8 +105,7 @@ struct IdentifiedFacetType {
 
   IdentifiedFacetType() {}
 
-  auto required_interfaces() const
-      -> const llvm::ArrayRef<RequiredInterface> {
+  auto required_interfaces() const -> const llvm::ArrayRef<RequiredInterface> {
     return required_interfaces_;
   }
 
@@ -121,12 +120,14 @@ struct IdentifiedFacetType {
   auto CanonicalizeRequiredInterfaces() -> void;
 
   // Can this be used to the right of an `as` in an `impl` declaration?
-  auto is_valid_impl_as_target() const -> bool { return interface_id_.has_value(); }
+  auto is_valid_impl_as_target() const -> bool {
+    return interface_id_.has_value();
+  }
 
   // The interface to implement when this facet type is used in an `impl`
   // declaration.
   auto impl_as_target_interface() const -> SpecificInterface {
-    if (is_impl_as_target()) {
+    if (is_valid_impl_as_target()) {
       return {.interface_id = interface_id_, .specific_id = specific_id_};
     } else {
       return SpecificInterface::None;
@@ -134,7 +135,7 @@ struct IdentifiedFacetType {
   }
 
   auto num_interfaces_to_impl() const -> int {
-    if (is_impl_as_target()) {
+    if (is_valid_impl_as_target()) {
       return 1;
     } else {
       return num_interface_to_impl_;

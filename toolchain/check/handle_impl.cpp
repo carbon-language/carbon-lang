@@ -339,7 +339,7 @@ static auto CheckConstraintIsInterface(Context& context,
 
   auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
   const auto& identified = context.identified_facet_types().Get(identified_id);
-  if (!identified.is_impl_as_target()) {
+  if (!identified.is_valid_impl_as_target()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
     context.emitter().Emit(impl_decl_id, ImplOfNotOneInterface,
