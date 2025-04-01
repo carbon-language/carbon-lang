@@ -46,6 +46,26 @@ fn Run() {
   var u: Use = {.a = &o, .b = {}};
 }
 
+// --- implicit_init_with_nonempty_nonconst.carbon
+
+library "[[@TEST_NAME]]";
+
+class Other {
+  var v: i32;
+}
+
+class Use {
+  var a: Other*;
+  var b: Other;
+}
+
+fn Run() {
+  var o: Other;
+  // .a is initialized with a non-constant expression
+  // .b is initialized with in-place class_init
+  var u: Use = {.a = &o, .b = {.v = 42}};
+}
+
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -137,3 +157,48 @@ fn Run() {
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 15, column: 16, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 11, column: 1, scope: !4)
+// CHECK:STDOUT: ; ModuleID = 'implicit_init_with_nonempty_nonconst.carbon'
+// CHECK:STDOUT: source_filename = "implicit_init_with_nonempty_nonconst.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: @Other.val.loc17_40.5 = internal constant { i32 } { i32 42 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @main() !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %o.var = alloca { i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %u.var = alloca { ptr, { i32 } }, align 8, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %o.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %u.var), !dbg !7
+// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw { ptr, { i32 } }, ptr %u.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   store ptr %o.var, ptr %.loc17_40.2.a, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw { ptr, { i32 } }, ptr %u.var, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   %.loc17_39.3.v = getelementptr inbounds nuw { i32 }, ptr %.loc17_40.4.b, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc17_40.4.b, ptr align 4 @Other.val.loc17_40.5, i64 4, i1 false), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "implicit_init_with_nonempty_nonconst.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 16, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 31, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 1, scope: !4)
