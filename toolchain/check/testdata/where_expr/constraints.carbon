@@ -86,13 +86,10 @@ impl C as J {}
 
 // TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error: cannot implicitly convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `Core.ImplicitAs(J where...)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Impls(C);
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-14]]:1: in import [InImport]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-11]]:1: in import [InImport]
   // CHECK:STDERR: state_constraints.carbon:13:10: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Impls(V:! J where .Self impls I);
   // CHECK:STDERR:          ^
@@ -104,13 +101,10 @@ fn EmptyStruct(Y:! J where .Self == {});
 
 // TODO: Should report that `C` does not meeet the constraint.
 fn NotEmptyStruct() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+10]]:3: error: cannot implicitly convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+7]]:3: note: type `type` does not implement interface `Core.ImplicitAs(J where...)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   EmptyStruct(C);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:16: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-7]]:16: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn EmptyStruct(Y:! J where .Self == {});
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -609,7 +603,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Main.Impls: %Impls.type = import_ref Main//state_constraints, Impls, loaded [concrete = constants.%Impls]
 // CHECK:STDOUT:   %Main.And = import_ref Main//state_constraints, And, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -640,18 +633,18 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [concrete = constants.%DoesNotImplI] {} {}
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [concrete = constants.%EmptyStruct] {
-// CHECK:STDOUT:     %Y.patt.loc26_16.1: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT:     %Y.patt.loc23_16.1: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc23_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc26_22.1: type = splice_block %.loc26_22.2 [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:     %.loc23_22.1: type = splice_block %.loc23_22.2 [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc26_38: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc26_22.2: type = where_expr %.Self [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc26_38
+// CHECK:STDOUT:       %.loc23_38: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc23_22.2: type = where_expr %.Self [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc23_38
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Y.loc26_16.1: %J_where.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc26_16.2 (constants.%Y)]
+// CHECK:STDOUT:     %Y.loc23_16.1: %J_where.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc23_16.2 (constants.%Y)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [concrete = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }
@@ -679,7 +672,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Impls.ref: %Impls.type = name_ref Impls, imports.%Main.Impls [concrete = constants.%Impls]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc23: %J_where.type = converted %C.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -690,18 +682,17 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   fn(%V.patt.1: %J_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc26_16.1: %J_where.type) {
-// CHECK:STDOUT:   %Y.loc26_16.2: %J_where.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc26_16.2 (constants.%Y)]
-// CHECK:STDOUT:   %Y.patt.loc26_16.2: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc23_16.1: %J_where.type) {
+// CHECK:STDOUT:   %Y.loc23_16.2: %J_where.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc23_16.2 (constants.%Y)]
+// CHECK:STDOUT:   %Y.patt.loc23_16.2: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc23_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%Y.patt.loc26_16.1: %J_where.type);
+// CHECK:STDOUT:   fn(%Y.patt.loc23_16.1: %J_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEmptyStruct() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %EmptyStruct.ref: %EmptyStruct.type = name_ref EmptyStruct, file.%EmptyStruct.decl [concrete = constants.%EmptyStruct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc40: %J_where.type = converted %C.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -711,7 +702,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {
-// CHECK:STDOUT:   %Y.loc26_16.2 => constants.%Y
-// CHECK:STDOUT:   %Y.patt.loc26_16.2 => constants.%Y
+// CHECK:STDOUT:   %Y.loc23_16.2 => constants.%Y
+// CHECK:STDOUT:   %Y.patt.loc23_16.2 => constants.%Y
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

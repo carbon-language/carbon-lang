@@ -131,6 +131,7 @@ cc_library(
         ":context",
         "//common:check",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//toolchain/lex:dump",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:dump",

@@ -8,12 +8,12 @@
 
 namespace Carbon::Check {
 
-NodeIdTraversal::NodeIdTraversal(Context& context,
+NodeIdTraversal::NodeIdTraversal(Context* context,
                                  llvm::raw_ostream* vlog_stream)
     : context_(context),
-      next_deferred_definition_(&context.parse_tree()),
+      next_deferred_definition_(&context->parse_tree()),
       worklist_(vlog_stream) {
-  auto range = context.parse_tree().postorder();
+  auto range = context->parse_tree().postorder();
   chunks_.push_back({.it = range.begin(),
                      .end = range.end(),
                      .next_definition = Parse::DeferredDefinitionIndex::None});
@@ -53,9 +53,9 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
     // it, and track that we need to check it later.
     if (node_id == next_deferred_definition_.start_id()) {
       const auto& definition_info =
-          context_.parse_tree().deferred_definitions().Get(
+          context_->parse_tree().deferred_definitions().Get(
               next_deferred_definition_.index());
-      worklist_.SuspendFunctionAndPush(context_,
+      worklist_.SuspendFunctionAndPush(*context_,
                                        next_deferred_definition_.index(),
                                        definition_info.start_id);
 
@@ -107,7 +107,7 @@ auto NodeIdTraversal::Handle(Parse::NodeKind parse_kind) -> void {
   // When we reach the start of a deferred definition scope, add a task to the
   // worklist to check future skipped definitions in the new context.
   if (IsStartOfDeferredDefinitionScope(parse_kind)) {
-    worklist_.PushEnterDeferredDefinitionScope(context_);
+    worklist_.PushEnterDeferredDefinitionScope(*context_);
   }
 
   // When we reach the end of a deferred definition scope, add a task to the
@@ -115,7 +115,7 @@ auto NodeIdTraversal::Handle(Parse::NodeKind parse_kind) -> void {
   // checking the deferred definitions now.
   if (IsEndOfDeferredDefinitionScope(parse_kind)) {
     chunks_.back().checking_deferred_definitions =
-        worklist_.SuspendFinishedScopeAndPush(context_);
+        worklist_.SuspendFinishedScopeAndPush(*context_);
   }
 }
 
@@ -123,7 +123,7 @@ auto NodeIdTraversal::PerformTask(
     DeferredDefinitionWorklist::EnterDeferredDefinitionScope&& enter) -> void {
   CARBON_CHECK(enter.suspended_name,
                "Entering a scope with no suspension information.");
-  context_.decl_name_stack().Restore(std::move(*enter.suspended_name));
+  context_->decl_name_stack().Restore(std::move(*enter.suspended_name));
 }
 
 auto NodeIdTraversal::PerformTask(
@@ -132,7 +132,7 @@ auto NodeIdTraversal::PerformTask(
     // We're done with checking deferred definitions.
     chunks_.back().checking_deferred_definitions = false;
   }
-  context_.decl_name_stack().PopScope();
+  context_->decl_name_stack().PopScope();
 }
 
 auto NodeIdTraversal::PerformTask(
@@ -140,8 +140,8 @@ auto NodeIdTraversal::PerformTask(
     -> void {
   auto& [definition_index, suspended_fn] = parse_definition;
   const auto& definition_info =
-      context_.parse_tree().deferred_definitions().Get(definition_index);
-  HandleFunctionDefinitionResume(context_, definition_info.start_id,
+      context_->parse_tree().deferred_definitions().Get(definition_index);
+  HandleFunctionDefinitionResume(*context_, definition_info.start_id,
                                  std::move(suspended_fn));
   auto range = Parse::Tree::PostorderIterator::MakeRange(
       definition_info.start_id, definition_info.definition_id);

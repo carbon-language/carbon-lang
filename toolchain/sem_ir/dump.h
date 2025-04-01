@@ -20,24 +20,27 @@
 
 namespace Carbon::SemIR {
 
-auto Dump(const File& file, ClassId class_id) -> void;
-auto Dump(const File& file, ConstantId const_id) -> void;
-auto Dump(const File& file, EntityNameId entity_name_id) -> void;
-auto Dump(const File& file, FacetTypeId facet_type_id) -> void;
-auto Dump(const File& file, FunctionId function_id) -> void;
-auto Dump(const File& file, GenericId generic_id) -> void;
-auto Dump(const File& file, ImplId impl_id) -> void;
-auto Dump(const File& file, InstBlockId inst_block_id) -> void;
-auto Dump(const File& file, InstId inst_id) -> void;
-auto Dump(const File& file, InterfaceId interface_id) -> void;
-auto Dump(const File& file, NameId name_id) -> void;
-auto Dump(const File& file, NameScopeId name_scope_id) -> void;
-auto Dump(const File& file, CompleteFacetTypeId complete_facet_type_id) -> void;
-auto Dump(const File& file, SpecificId specific_id) -> void;
-auto Dump(const File& file, SpecificInterfaceId specific_interface_id) -> void;
-auto Dump(const File& file, StructTypeFieldsId struct_type_fields_id) -> void;
-auto Dump(const File& file, TypeBlockId type_block_id) -> void;
-auto Dump(const File& file, TypeId type_id) -> void;
+auto Dump(const File& file, ClassId class_id) -> std::string;
+auto Dump(const File& file, ConstantId const_id) -> std::string;
+auto Dump(const File& file, EntityNameId entity_name_id) -> std::string;
+auto Dump(const File& file, FacetTypeId facet_type_id) -> std::string;
+auto Dump(const File& file, FunctionId function_id) -> std::string;
+auto Dump(const File& file, GenericId generic_id) -> std::string;
+auto Dump(const File& file, ImplId impl_id) -> std::string;
+auto Dump(const File& file, InstBlockId inst_block_id) -> std::string;
+auto Dump(const File& file, InstId inst_id) -> std::string;
+auto Dump(const File& file, InterfaceId interface_id) -> std::string;
+auto Dump(const File& file, NameId name_id) -> std::string;
+auto Dump(const File& file, NameScopeId name_scope_id) -> std::string;
+auto Dump(const File& file, CompleteFacetTypeId complete_facet_type_id)
+    -> std::string;
+auto Dump(const File& file, SpecificId specific_id) -> std::string;
+auto Dump(const File& file, SpecificInterfaceId specific_interface_id)
+    -> std::string;
+auto Dump(const File& file, StructTypeFieldsId struct_type_fields_id)
+    -> std::string;
+auto Dump(const File& file, TypeBlockId type_block_id) -> std::string;
+auto Dump(const File& file, TypeId type_id) -> std::string;
 
 }  // namespace Carbon::SemIR
 

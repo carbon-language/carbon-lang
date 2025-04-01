@@ -223,7 +223,7 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc loc,
-                      SemIR::ImplSymbolicWitness inst) -> ConstantEvalResult {
+                      SemIR::LookupImplWitness inst) -> ConstantEvalResult {
   auto result = EvalLookupSingleImplWitness(
       context, UnwrapSemIRLoc()(context, loc), inst);
   if (!result.has_value()) {

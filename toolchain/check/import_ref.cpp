@@ -238,10 +238,11 @@ class ImportContext {
     SemIR::SpecificId local_id;
   };
 
-  explicit ImportContext(Context& context, SemIR::ImportIRId import_ir_id)
+  // `context` must not be null.
+  explicit ImportContext(Context* context, SemIR::ImportIRId import_ir_id)
       : context_(context),
         import_ir_id_(import_ir_id),
-        import_ir_(*context_.import_irs().Get(import_ir_id).sem_ir) {}
+        import_ir_(*context_->import_irs().Get(import_ir_id).sem_ir) {}
 
   // Returns the file we are importing from.
   auto import_ir() -> const SemIR::File& { return import_ir_; }
@@ -303,10 +304,10 @@ class ImportContext {
   }
 
   // Returns the file we are importing into.
-  auto local_ir() -> SemIR::File& { return context_.sem_ir(); }
+  auto local_ir() -> SemIR::File& { return context_->sem_ir(); }
 
   // Returns the type-checking context we are importing into.
-  auto local_context() -> Context& { return context_; }
+  auto local_context() -> Context& { return *context_; }
 
   // Accessors into value stores of the file we are importing into.
   auto local_associated_constants() -> decltype(auto) {
@@ -371,7 +372,7 @@ class ImportContext {
   }
 
  private:
-  Context& context_;
+  Context* context_;
   SemIR::ImportIRId import_ir_id_;
   const SemIR::File& import_ir_;
 
@@ -455,7 +456,8 @@ class ImportContext {
 // - check/testdata/packages/cross_package_import.carbon
 class ImportRefResolver : public ImportContext {
  public:
-  explicit ImportRefResolver(Context& context, SemIR::ImportIRId import_ir_id)
+  // `context` must not be null.
+  explicit ImportRefResolver(Context* context, SemIR::ImportIRId import_ir_id)
       : ImportContext(context, import_ir_id) {}
 
   // Iteratively resolves an imported instruction's inner references until a
@@ -1791,7 +1793,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_context().types().GetTypeIdForTypeConstantId(
           self_const_id);
 
-  if (import_class.is_defined()) {
+  if (import_class.is_complete()) {
     auto complete_type_witness_id = AddLoadedImportRef(
         resolver,
         GetSingletonType(resolver.local_context(),
@@ -2242,7 +2244,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                          import_impl.constraint_id, constraint_const_id);
   new_impl.interface = GetLocalSpecificInterface(
       resolver, import_impl.interface.specific_id, specific_interface_data);
-  if (import_impl.is_defined()) {
+  if (import_impl.is_complete()) {
     AddImplDefinition(resolver, import_impl, new_impl);
   }
 
@@ -2392,7 +2394,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalGenericData(resolver, import_interface.generic_id);
 
   std::optional<SemIR::InstId> self_param_id;
-  if (import_interface.is_defined()) {
+  if (import_interface.is_complete()) {
     self_param_id =
         GetLocalConstantInstId(resolver, import_interface.self_param_id);
   }
@@ -2411,7 +2413,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   SetGenericData(resolver, import_interface.generic_id,
                  new_interface.generic_id, generic_data);
 
-  if (import_interface.is_defined()) {
+  if (import_interface.is_complete()) {
     CARBON_CHECK(self_param_id);
     AddInterfaceDefinition(resolver, import_interface, new_interface,
                            *self_param_id);
@@ -2511,7 +2513,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ImplSymbolicWitness inst)
+                                SemIR::LookupImplWitness inst)
     -> ResolveResult {
   auto query_self_inst_id =
       GetLocalConstantInstId(resolver, inst.query_self_inst_id);
@@ -2529,7 +2531,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_specific_interface.specific_id, data);
   auto query_specific_interface_id =
       resolver.local_specific_interfaces().Add(specific_interface);
-  return ResolveAs<SemIR::ImplSymbolicWitness>(
+  return ResolveAs<SemIR::LookupImplWitness>(
       resolver,
       {.type_id = GetSingletonType(resolver.local_context(),
                                    SemIR::WitnessType::SingletonInstId),
@@ -2935,7 +2937,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::ImplDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
     }
-    case CARBON_KIND(SemIR::ImplSymbolicWitness inst): {
+    case CARBON_KIND(SemIR::LookupImplWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitness inst): {
@@ -3108,8 +3110,18 @@ static auto ResolveLocalEvalBlock(ImportRefResolver& resolver,
   }
 
   auto inst_ids = ResolveLocalInstBlockContents(resolver, import_block_id);
-  return RebuildGenericEvalBlock(resolver.local_context(), generic_id, region,
-                                 inst_ids);
+  auto eval_block_id = RebuildGenericEvalBlock(resolver.local_context(),
+                                               generic_id, region, inst_ids);
+
+  // Set the locations of the instructions in the inst block to match those of
+  // the imported instructions.
+  for (auto [import_inst_id, local_inst_id] :
+       llvm::zip(resolver.import_inst_blocks().Get(import_block_id),
+                 resolver.local_inst_blocks().Get(eval_block_id))) {
+    auto import_ir_inst_id = AddImportIRInst(resolver, import_inst_id);
+    resolver.local_insts().SetLocId(local_inst_id, import_ir_inst_id);
+  }
+  return eval_block_id;
 }
 
 // Fills in the remaining information in a partially-imported generic.
@@ -3271,7 +3283,7 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // The last indirect instruction is the one to resolve. Pop it here because
   // Resolve will assign the constant.
   auto load_ir_inst = indirect_insts.pop_back_val();
-  ImportRefResolver resolver(context, load_ir_inst.ir_id);
+  ImportRefResolver resolver(&context, load_ir_inst.ir_id);
   // The resolver calls into Context to create instructions. Don't register
   // those instructions as part of the enclosing generic scope if they're
   // dependent on a generic parameter.
@@ -3312,7 +3324,7 @@ auto ImportImplsFromApiFile(Context& context) -> void {
 
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                 SemIR::ImplId impl_id) -> void {
-  ImportRefResolver resolver(context, import_ir_id);
+  ImportRefResolver resolver(&context, import_ir_id);
   context.generic_region_stack().Push();
 
   resolver.Resolve(context.import_irs()

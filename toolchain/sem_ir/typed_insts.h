@@ -61,6 +61,20 @@ struct AccessMemberAction {
   NameId name_id;
 };
 
+// An action that performs member access which should fail silently. For
+// example, `base.destroy`.
+struct AccessOptionalMemberAction {
+  static constexpr auto Kind =
+      InstKind::AccessOptionalMemberAction.Define<Parse::NodeId>(
+          {.ir_name = "access_optional_member_action",
+           .constant_kind = InstConstantKind::InstAction,
+           .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId base_id;
+  NameId name_id;
+};
+
 // Common representation for declarations describing the foundation type of a
 // class -- either its adapted type or its base class.
 struct AnyFoundationDecl {
@@ -868,29 +882,11 @@ struct ImplDecl {
   DeclInstBlockId decl_block_id;
 };
 
-// A symbolic witness that a type implements an interface. It represents a
-// promise that an impl lookup query can be satisfied without providing which
-// impl declaration satisfies it. When evaluated, it does lookup again to form a
-// concrete ImplWitness from a more specific query.
-struct ImplSymbolicWitness {
-  static constexpr auto Kind =
-      InstKind::ImplSymbolicWitness.Define<Parse::NodeId>(
-          {.ir_name = "impl_symbolic_witness",
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  // Always the type of the builtin `WitnessType` singleton instruction.
-  TypeId type_id;
-  // The self type (or facet value) and interface of the impl lookup query.
-  InstId query_self_inst_id;
-  SpecificInterfaceId query_specific_interface_id;
-};
-
 // A witness that a type implements an interface.
 struct ImplWitness {
   static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
       {.ir_name = "impl_witness",
-       .constant_kind = InstConstantKind::WheneverPossible,
+       .constant_kind = InstConstantKind::Always,
        // TODO: For dynamic dispatch, we might want to lower witness tables as
        // constants.
        .is_lowered = false});
@@ -1066,6 +1062,30 @@ struct IntType {
   // TODO: Consider adding a more compact way of representing either a small
   // unsigned integer bit width or an inst_id.
   InstId bit_width_id;
+};
+
+// A symbolic instruction that takes the place of an `ImplWitness` when the
+// result is not fully known. When evaluated it does an impl lookup query, based
+// on the stored query arguments, that a type implements an interface. The query
+// can be symbolic, and thus modified to be more concrete by applying a
+// specific. Once the query is concrete enough, or a final impl is found, the
+// instruction evaluates to an `ImplWitness`.
+//
+// This instruction also represents a promise that an impl lookup query was
+// satisfied, like `ImplWitness`, but without providing which impl declaration
+// satisfies it.
+struct LookupImplWitness {
+  static constexpr auto Kind =
+      InstKind::LookupImplWitness.Define<Parse::NodeId>(
+          {.ir_name = "lookup_impl_witness",
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // The self type (or facet value) and interface of the impl lookup query.
+  InstId query_self_inst_id;
+  SpecificInterfaceId query_specific_interface_id;
 };
 
 // A name-binding declaration, i.e. a declaration introduced with `let` or
@@ -1570,7 +1590,8 @@ struct TemporaryStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TemporaryStorage.Define<Parse::NodeId>(
       {.ir_name = "temporary_storage",
-       .constant_kind = InstConstantKind::Never});
+       .constant_kind = InstConstantKind::Never,
+       .has_cleanup = true});
 
   TypeId type_id;
 };
@@ -1744,7 +1765,9 @@ struct VarPattern {
 struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
-      {.ir_name = "var", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "var",
+       .constant_kind = InstConstantKind::Never,
+       .has_cleanup = true});
 
   TypeId type_id;
 

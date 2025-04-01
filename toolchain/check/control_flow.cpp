@@ -4,7 +4,12 @@
 
 #include "toolchain/check/control_flow.h"
 
+#include "toolchain/base/kind_switch.h"
+#include "toolchain/check/call.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/member_access.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -128,6 +133,60 @@ auto IsCurrentPositionReachable(Context& context) -> bool {
   const auto& last_inst = context.insts().Get(block_contents.back());
   return last_inst.kind().terminator_kind() !=
          SemIR::TerminatorKind::Terminator;
+}
+
+auto MaybeAddCleanupForInst(Context& context, SemIR::TypeId type_id,
+                            SemIR::InstId inst_id) -> void {
+  if (!context.scope_stack().PeekIsLexicalScope()) {
+    // Cleanup can only occur in lexical scopes.
+    return;
+  }
+
+  // TODO: Add destruction of members of ArrayType, StructType, and
+  // TupleType. Includes refactoring MaybeAddCleanupForInst to remain
+  // non-recursive.
+
+  auto type_inst = context.types().GetAsInst(type_id);
+  CARBON_KIND_SWITCH(type_inst) {
+    case SemIR::ClassType::Kind: {
+      // TODO: Figure out what destruction of classes with destroyable members
+      // should look like (maybe an implicit `fn destroy` added by
+      // `handle_class.cpp`?).
+      auto destroy_id =
+          PerformMemberAccess(context, SemIR::LocId::None, inst_id,
+                              SemIR::NameId::Destroy, /*required=*/false);
+      if (destroy_id.has_value()) {
+        context.scope_stack().destroy_id_stack().AppendToTop(destroy_id);
+      }
+      break;
+    }
+
+    default:
+      // Not interesting storage for destruction.
+      return;
+  }
+}
+
+// Common support for cleanup blocks.
+static auto AddCleanupBlock(Context& context) -> void {
+  auto destroy_ids = context.scope_stack().destroy_id_stack().PeekArray();
+
+  // If there's nothing to destroy, add the final instruction to the current
+  // block.
+  if (destroy_ids.empty()) {
+    return;
+  }
+
+  for (auto destroy_id : llvm::reverse(destroy_ids)) {
+    PerformCall(context, SemIR::LocId::None, destroy_id, {});
+  }
+}
+
+auto AddReturnCleanupBlock(
+    Context& context,
+    typename decltype(SemIR::Return::Kind)::TypedNodeId node_id) -> void {
+  AddCleanupBlock(context);
+  AddInst(context, node_id, SemIR::Return{});
 }
 
 }  // namespace Carbon::Check

@@ -90,11 +90,11 @@ class EvalImplLookupResult {
 
 // Looks for a witness instruction of an impl declaration for a query consisting
 // of a type value or facet value, and a single interface. This is for eval to
-// execute lookup via the ImplSymbolicWitness instruction. It does not consider
+// execute lookup via the LookupImplWitness instruction. It does not consider
 // the self facet value for finding a witness, since LookupImplWitness() would
 // have found that and not caused us to defer lookup to here.
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                                 SemIR::ImplSymbolicWitness eval_query)
+                                 SemIR::LookupImplWitness eval_query)
     -> EvalImplLookupResult;
 
 }  // namespace Carbon::Check

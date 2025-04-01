@@ -696,12 +696,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         queue_block_id(impl_scope_id, inst.decl_block_id);
         break;
       }
-      case CARBON_KIND(ImplSymbolicWitness inst): {
+      case CARBON_KIND(LookupImplWitness inst): {
         const auto& interface = sem_ir_->specific_interfaces().Get(
             inst.query_specific_interface_id);
         add_inst_name_id(
             sem_ir_->interfaces().Get(interface.interface_id).name_id,
-            ".impl_symbolic_witness");
+            ".lookup_impl_witness");
         continue;
       }
       case ImplWitness::Kind: {

@@ -15,6 +15,8 @@ namespace Carbon::Check {
 // Performs a member access action. Defined in member_access.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::AccessMemberAction action) -> SemIR::InstId;
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::AccessOptionalMemberAction action) -> SemIR::InstId;
 
 // Performs a conversion action. Defined in convert.cpp.
 auto PerformAction(Context& context, SemIR::LocId loc_id,

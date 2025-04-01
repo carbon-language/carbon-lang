@@ -45,7 +45,7 @@ interface Z {
   // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+7]]:3: error: impl as incomplete facet type `Z` [ImplAsIncompleteFacetType]
   // CHECK:STDERR:   extend impl as Z {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE-10]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE-10]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR: interface Z {
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:

@@ -27,16 +27,16 @@ class CopyOnWriteBlock {
   };
 
   // Constructs the block. `source_id` is used as the initial value of the
-  // block.
-  explicit CopyOnWriteBlock(SemIR::File& file, BlockIdType source_id)
+  // block. `file` must not be null.
+  explicit CopyOnWriteBlock(SemIR::File* file, BlockIdType source_id)
       : file_(file), source_id_(source_id) {}
 
   // Constructs the block, treating the original block as an uninitialized block
-  // with `size` elements.
-  explicit CopyOnWriteBlock(SemIR::File& file, UninitializedBlock uninit)
+  // with `size` elements. `file` must not be null.
+  explicit CopyOnWriteBlock(SemIR::File* file, UninitializedBlock uninit)
       : file_(file),
         source_id_(BlockIdType::None),
-        id_((file_.*ValueStore)().AddUninitialized(uninit.size)) {}
+        id_((file_->*ValueStore)().AddUninitialized(uninit.size)) {}
 
   // Gets a block ID containing the resulting elements. Note that further
   // modifications may or may not allocate a new ID, so this should only be
@@ -46,23 +46,23 @@ class CopyOnWriteBlock {
   // Gets a canonical block ID containing the resulting elements. This assumes
   // the original block ID, if specified, was also canonical.
   auto GetCanonical() const -> BlockIdType {
-    return id_ == source_id_ ? id_ : (file_.*ValueStore)().MakeCanonical(id_);
+    return id_ == source_id_ ? id_ : (file_->*ValueStore)().MakeCanonical(id_);
   }
 
   // Sets the element at index `i` within the block. Lazily allocates a new
   // block when the value changes for the first time.
   auto Set(int i, typename BlockIdType::ElementType value) -> void {
-    if (source_id_.has_value() && (file_.*ValueStore)().Get(id_)[i] == value) {
+    if (source_id_.has_value() && (file_->*ValueStore)().Get(id_)[i] == value) {
       return;
     }
     if (id_ == source_id_) {
-      id_ = (file_.*ValueStore)().Add((file_.*ValueStore)().Get(source_id_));
+      id_ = (file_->*ValueStore)().Add((file_->*ValueStore)().Get(source_id_));
     }
-    (file_.*ValueStore)().GetMutable(id_)[i] = value;
+    (file_->*ValueStore)().GetMutable(id_)[i] = value;
   }
 
  private:
-  SemIR::File& file_;
+  SemIR::File* file_;
   BlockIdType source_id_;
   BlockIdType id_ = source_id_;
 };

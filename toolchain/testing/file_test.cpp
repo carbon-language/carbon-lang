@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 
+#include "absl/strings/str_replace.h"
 #include "common/error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -230,6 +231,14 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // The column happens to be right for FileStart, but the line is wrong.
     static RE2 file_token_re(R"((FileEnd.*column: |FileStart.*line: )( *\d+))");
     RE2::Replace(&check_line, file_token_re, R"(\1{{ *\\d+}})");
+  } else if (component_ == "check") {
+    // The path to the core package appears in some check diagnostics, and will
+    // differ between testing environments, so don't test it.
+    // TODO: Consider adding a content keyword to name the core package, and
+    // replace with that instead. Alternatively, consider adding the core
+    // package to the VFS with a fixed name.
+    absl::StrReplaceAll({{installation_.core_package(), "{{.*}}"}},
+                        &check_line);
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);
   }

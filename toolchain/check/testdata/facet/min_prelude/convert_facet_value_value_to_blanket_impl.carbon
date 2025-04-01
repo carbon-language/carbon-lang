@@ -45,8 +45,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.234: <witness> = require_complete_type %T.as_type.2ad [symbolic]
 // CHECK:STDOUT:   %impl_witness.11010a.2: <witness> = impl_witness (), @impl(%T.fd4) [symbolic]
-// CHECK:STDOUT:   %Eats.impl_symbolic_witness: <witness> = impl_symbolic_witness %T.fd4, @Eats [symbolic]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %T.as_type.2ad, (%Eats.impl_symbolic_witness) [symbolic]
+// CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %T.fd4, @Eats [symbolic]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %T.as_type.2ad, (%Eats.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed, @Feed(%Eats.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -161,8 +161,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) [symbolic = %require_complete (constants.%require_complete.234)]
-// CHECK:STDOUT:   %Eats.impl_symbolic_witness: <witness> = impl_symbolic_witness %T.loc21_17.2, @Eats [symbolic = %Eats.impl_symbolic_witness (constants.%Eats.impl_symbolic_witness)]
-// CHECK:STDOUT:   %Eats.facet.loc21_43.3: %Eats.type = facet_value %T.as_type.loc21_32.2, (%Eats.impl_symbolic_witness) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc21_17.2, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
+// CHECK:STDOUT:   %Eats.facet.loc21_43.3: %Eats.type = facet_value %T.as_type.loc21_32.2, (%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc21_37.2: <specific function> = specific_function constants.%Feed, @Feed(%Eats.facet.loc21_43.3) [symbolic = %Feed.specific_fn.loc21_37.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc21_17.1: %Animal.type](%a.param_patt: @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad)) {
@@ -172,12 +172,12 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %T.as_type.loc21_43.1: type = facet_access_type constants.%T.fd4 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
 // CHECK:STDOUT:     %.loc21_43.1: type = converted constants.%T.fd4, %T.as_type.loc21_43.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
 // CHECK:STDOUT:     %.loc21_43.2: %Animal.type = converted %.loc21_43.1, constants.%T.fd4 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
-// CHECK:STDOUT:     %Eats.facet.loc21_43.1: %Eats.type = facet_value constants.%T.as_type.2ad, (constants.%Eats.impl_symbolic_witness) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:     %Eats.facet.loc21_43.1: %Eats.type = facet_value constants.%T.as_type.2ad, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:     %.loc21_43.3: %Eats.type = converted constants.%T.as_type.2ad, %Eats.facet.loc21_43.1 [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:     %T.as_type.loc21_43.2: type = facet_access_type constants.%T.fd4 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
 // CHECK:STDOUT:     %.loc21_43.4: type = converted constants.%T.fd4, %T.as_type.loc21_43.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
 // CHECK:STDOUT:     %.loc21_43.5: %Animal.type = converted %.loc21_43.4, constants.%T.fd4 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
-// CHECK:STDOUT:     %Eats.facet.loc21_43.2: %Eats.type = facet_value constants.%T.as_type.2ad, (constants.%Eats.impl_symbolic_witness) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
+// CHECK:STDOUT:     %Eats.facet.loc21_43.2: %Eats.type = facet_value constants.%T.as_type.2ad, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:     %.loc21_43.6: %Eats.type = converted constants.%T.as_type.2ad, %Eats.facet.loc21_43.2 [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:     %Feed.specific_fn.loc21_37.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet) [symbolic = %Feed.specific_fn.loc21_37.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc21_37.1(%a.ref)
