@@ -731,19 +731,20 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info) -> void {
                                      .GetAs<SemIR::Vtable>(canonical_vtable_id)
                                      .virtual_functions_id);
 
-  auto* EntryTy = llvm::IntegerType::getInt32Ty(llvm_context());
-  auto* TableTy = llvm::ArrayType::get(EntryTy, vtable_inst_block.size());
+  auto* entry_type = llvm::IntegerType::getInt32Ty(llvm_context());
+  auto* table_type = llvm::ArrayType::get(entry_type, vtable_inst_block.size());
 
   Mangler m(*this);
   std::string mangled_name = m.MangleVTable(class_info);
 
-  auto* GV = new llvm::GlobalVariable(
-      llvm_module(), TableTy, /*isConstant=*/true,
+  auto* llvm_vtable = new llvm::GlobalVariable(
+      llvm_module(), table_type, /*isConstant=*/true,
       llvm::GlobalValue::ExternalLinkage, nullptr, mangled_name);
 
   auto* i32_type = llvm::IntegerType::getInt32Ty(llvm_context());
   auto* i64_type = llvm::IntegerType::getInt64Ty(llvm_context());
-  auto* vtable_const_int = llvm::ConstantExpr::getPtrToInt(GV, i64_type);
+  auto* vtable_const_int =
+      llvm::ConstantExpr::getPtrToInt(llvm_vtable, i64_type);
 
   llvm::SmallVector<llvm::Constant*> vfuncs;
   vfuncs.reserve(vtable_inst_block.size());
@@ -760,8 +761,8 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info) -> void {
         i32_type));
   }
 
-  GV->setInitializer(llvm::ConstantArray::get(TableTy, vfuncs));
-  GV->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+  llvm_vtable->setInitializer(llvm::ConstantArray::get(table_type, vfuncs));
+  llvm_vtable->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
 }
 
 }  // namespace Carbon::Lower
