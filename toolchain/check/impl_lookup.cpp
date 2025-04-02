@@ -409,15 +409,19 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
 
   bool has_other_requirements = false;
-  auto interfaces = GetInterfacesFromConstantId(
+  auto interfaces_array_ref = GetInterfacesFromConstantId(
       context, query_facet_type_const_id, has_other_requirements);
   if (has_other_requirements) {
     // TODO: Remove this when other requirements go away.
     return SemIR::InstBlockId::None;
   }
-  if (interfaces.empty()) {
+  if (interfaces_array_ref.empty()) {
     return SemIR::InstBlockId::Empty;
   }
+  // Make a copy to avoid use-after-free when the identified_facet_types store
+  // resizes.
+  llvm::SmallVector<SemIR::SpecificInterface> interfaces(
+      interfaces_array_ref.begin(), interfaces_array_ref.end());
 
   auto& stack = context.impl_lookup_stack();
   stack.push_back({
