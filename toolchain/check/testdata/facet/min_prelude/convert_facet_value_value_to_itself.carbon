@@ -213,6 +213,9 @@ fn F() {
 // CHECK:STDOUT:   %T.loc16_15.2 => constants.%Animal.facet
 // CHECK:STDOUT:   %T.patt.loc16_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc16_30.2 => constants.%Goat
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/convert.carbon

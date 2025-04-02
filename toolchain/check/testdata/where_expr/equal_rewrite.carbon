@@ -621,6 +621,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {
 // CHECK:STDOUT:   %G.loc8_15.2 => constants.%I
 // CHECK:STDOUT:   %G.patt.loc8_15.2 => constants.%G.patt
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- rewrites_reordered.carbon

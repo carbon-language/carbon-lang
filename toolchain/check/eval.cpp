@@ -363,6 +363,9 @@ static auto GetConstantValue(EvalContext& eval_context,
 // If the given instruction is constant, returns its constant value.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
                              Phase* phase) -> SemIR::InstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
   auto const_id = eval_context.GetConstantValue(inst_id);
   *phase =
       LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
@@ -733,6 +736,18 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
   }
   inst->SetArgs(arg0, arg1);
   return true;
+}
+
+auto AddImportedConstant(Context& context, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  EvalContext eval_context(&context, SemIR::InstId::None);
+  Phase phase = Phase::Concrete;
+  // TODO: Can we avoid doing this replacement? It may do things that are
+  // undesirable during importing, such as resolving specifics.
+  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+    return SemIR::ConstantId::NotConstant;
+  }
+  return MakeConstantResult(context, inst, phase);
 }
 
 // Performs an index into a homogeneous aggregate, retrieving the specified

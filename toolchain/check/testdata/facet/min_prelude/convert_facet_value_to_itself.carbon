@@ -172,6 +172,8 @@ fn F() {
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {
 // CHECK:STDOUT:   %T.loc16_15.2 => constants.%Animal.facet
 // CHECK:STDOUT:   %T.patt.loc16_15.2 => constants.%T.patt
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/convert.carbon

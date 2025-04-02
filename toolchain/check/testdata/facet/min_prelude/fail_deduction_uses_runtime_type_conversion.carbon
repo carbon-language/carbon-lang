@@ -384,9 +384,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %A.loc26_20.2 => <error>
 // CHECK:STDOUT:   %A.patt.loc26_20.2 => constants.%A.patt.78b
 // CHECK:STDOUT:   %HoldsType.loc26_43.2 => constants.%HoldsType.066
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/convert.carbon

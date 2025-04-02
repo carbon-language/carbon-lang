@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_negative_indexing.carbon
 
 var c: array(i32, 2) = (42, 42);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+4]]:16: error: array index `-10` is past the end of type `[i32; 2]` [ArrayIndexOutOfBounds]
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+4]]:16: error: array index `-10` is past the end of type `array(i32, 2)` [ArrayIndexOutOfBounds]
 // CHECK:STDERR: var d: i32 = c[-10];
 // CHECK:STDERR:                ^~~
 // CHECK:STDERR:

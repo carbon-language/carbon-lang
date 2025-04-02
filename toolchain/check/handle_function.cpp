@@ -531,7 +531,7 @@ static auto BuildFunctionDecl(Context& context,
                         function_info);
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
-    context.definitions_required().push_back(decl_id);
+    context.definitions_required_by_decl().push_back(decl_id);
   }
 
   return {function_decl.function_id, decl_id};

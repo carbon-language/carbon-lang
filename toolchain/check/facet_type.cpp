@@ -9,6 +9,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 
 namespace Carbon::Check {
 
@@ -37,15 +38,55 @@ static auto WitnessAccessMatchesInterface(
   return false;
 }
 
-auto ResolveFacetTypeImplWitness(
+static auto IncompleteFacetTypeDiagnosticBuilder(
+    Context& context, SemIRLoc loc, SemIR::InstId facet_type_inst_id,
+    bool is_definition) -> DiagnosticBuilder {
+  // The other case is "impl as incomplete facet type with rewrites", but
+  // currently all incomplete facet types with rewrites trigger errors before
+  // this.
+  CARBON_CHECK(is_definition);
+  CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
+                    "definition of impl as incomplete facet type {0}",
+                    InstIdAsType);
+  return context.emitter().Build(loc, ImplAsIncompleteFacetTypeDefinition,
+                                 facet_type_inst_id);
+}
+
+auto InitialFacetTypeImplWitness(
     Context& context, SemIR::LocId witness_loc_id,
     SemIR::InstId facet_type_inst_id, SemIR::InstId self_type_inst_id,
     const SemIR::SpecificInterface& interface_to_witness,
-    SemIR::SpecificId self_specific_id) -> SemIR::InstId {
+    SemIR::SpecificId self_specific_id, bool is_definition) -> SemIR::InstId {
   // TODO: Finish facet type resolution. This code currently only handles
   // rewrite constraints that set associated constants to a concrete value.
   // Need logic to topologically sort rewrites to respect dependencies, and
   // afterwards reject duplicates that are not identical.
+
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
+  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
+  auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
+  // TODO: This is currently a copy because I'm not sure whether anything could
+  // cause the facet type store to resize before we are done with it.
+  auto facet_type_info = context.facet_types().Get(facet_type.facet_type_id);
+
+  if (!is_definition && facet_type_info.rewrite_constraints.empty()) {
+    return AddInst<SemIR::ImplWitness>(
+        context, witness_loc_id,
+        {.type_id =
+             GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+         .elements_id = context.inst_blocks().AddPlaceholder(),
+         .specific_id = self_specific_id});
+  }
+
+  if (!RequireCompleteType(context, facet_type_id,
+                           context.insts().GetLocId(facet_type_inst_id), [&] {
+                             return IncompleteFacetTypeDiagnosticBuilder(
+                                 context, witness_loc_id, facet_type_inst_id,
+                                 is_definition);
+                           })) {
+    return SemIR::ErrorInst::SingletonInstId;
+  }
 
   const auto& interface =
       context.interfaces().Get(interface_to_witness.interface_id);
@@ -72,14 +113,6 @@ auto ResolveFacetTypeImplWitness(
          .elements_id = table_id,
          .specific_id = self_specific_id});
   }
-
-  auto facet_type_id =
-      context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
-  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
-  auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
-  // TODO: This is currently a copy because I'm not sure whether anything could
-  // cause the facet type store to resize before we are done with it.
-  auto facet_type_info = context.facet_types().Get(facet_type.facet_type_id);
 
   for (auto rewrite : facet_type_info.rewrite_constraints) {
     auto inst_id = context.constant_values().GetInstId(rewrite.lhs_const_id);
@@ -183,6 +216,35 @@ auto ResolveFacetTypeImplWitness(
     table_entry = context.constant_values().GetInstId(rewrite_value);
   }
   return witness_inst_id;
+}
+
+auto RequireCompleteFacetTypeForImplDefinition(Context& context, SemIRLoc loc,
+                                               SemIR::InstId facet_type_inst_id)
+    -> bool {
+  auto facet_type_id =
+      context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
+  return RequireCompleteType(context, facet_type_id,
+                             context.insts().GetLocId(facet_type_inst_id), [&] {
+                               return IncompleteFacetTypeDiagnosticBuilder(
+                                   context, loc, facet_type_inst_id,
+                                   /*is_definition=*/true);
+                             });
+}
+
+auto AllocateFacetTypeImplWitness(Context& context,
+                                  SemIR::InterfaceId interface_id,
+                                  SemIR::InstBlockId witness_id) -> void {
+  const auto& interface = context.interfaces().Get(interface_id);
+  CARBON_CHECK(interface.is_complete());
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
+  for (auto decl_id : assoc_entities) {
+    LoadImportRef(context, decl_id);
+  }
+
+  llvm::SmallVector<SemIR::InstId> empty_table(assoc_entities.size(),
+                                               SemIR::InstId::None);
+  context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
 }
 
 }  // namespace Carbon::Check

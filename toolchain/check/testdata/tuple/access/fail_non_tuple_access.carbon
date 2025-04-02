@@ -16,7 +16,7 @@ fn Main() {
   0[1];
 
   var non_tuple: array(i32, 2) = (5, 5);
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+4]]:20: error: type `[i32; 2]` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
+  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+4]]:20: error: type `array(i32, 2)` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
   // CHECK:STDERR:   var first: i32 = non_tuple.0;
   // CHECK:STDERR:                    ^~~~~~~~~~~
   // CHECK:STDERR:

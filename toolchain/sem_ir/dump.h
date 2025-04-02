@@ -32,7 +32,7 @@ auto Dump(const File& file, InstId inst_id) -> std::string;
 auto Dump(const File& file, InterfaceId interface_id) -> std::string;
 auto Dump(const File& file, NameId name_id) -> std::string;
 auto Dump(const File& file, NameScopeId name_scope_id) -> std::string;
-auto Dump(const File& file, CompleteFacetTypeId complete_facet_type_id)
+auto Dump(const File& file, IdentifiedFacetTypeId identified_facet_type_id)
     -> std::string;
 auto Dump(const File& file, SpecificId specific_id) -> std::string;
 auto Dump(const File& file, SpecificInterfaceId specific_interface_id)

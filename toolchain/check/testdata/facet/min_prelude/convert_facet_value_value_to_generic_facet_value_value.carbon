@@ -532,6 +532,10 @@ fn F() {
 // CHECK:STDOUT:   %T.loc30_24.2 => constants.%Eats.facet.fa6
 // CHECK:STDOUT:   %T.patt.loc30_24.2 => constants.%T.patt.1ac
 // CHECK:STDOUT:   %T.as_type.loc30_43.2 => constants.%Goat
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc30_41 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc30_50 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/convert.carbon

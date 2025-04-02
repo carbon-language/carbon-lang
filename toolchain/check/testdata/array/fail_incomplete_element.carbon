@@ -10,7 +10,7 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `[Incomplete; 1]` in name binding declaration [IncompleteTypeInBindingDecl]
+// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `array(Incomplete, 1)` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var a: array(Incomplete, 1);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]

@@ -265,8 +265,6 @@ fn G() {
 // CHECK:STDOUT:   %Generic.type.loc26_45.2 => constants.%Generic.type.c3b
 // CHECK:STDOUT:   %U.loc26_32.2 => <error>
 // CHECK:STDOUT:   %U.patt.loc26_32.2 => constants.%U.patt.19b
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/convert.carbon

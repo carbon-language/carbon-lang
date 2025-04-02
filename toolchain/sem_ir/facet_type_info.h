@@ -100,25 +100,78 @@ constexpr FacetTypeInfo::RewriteConstraint
     FacetTypeInfo::RewriteConstraint::None = {.lhs_const_id = ConstantId::None,
                                               .rhs_const_id = ConstantId::None};
 
-struct CompleteFacetType {
-  // TODO: Add additional fields, for example to support types other than
-  // `.Self` implementation requirements.
+struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
-  // Interfaces mentioned explicitly in the facet type expression, or
-  // transitively through a named constraint.
-  llvm::SmallVector<RequiredInterface> required_interfaces;
+  IdentifiedFacetType() {}
 
-  // Number of interfaces from `interfaces` to implement if this is the facet
-  // type to the right of an `impl`...`as`. Invalid to use in that position
-  // unless this value is 1.
-  int num_to_impl;
+  auto required_interfaces() const -> llvm::ArrayRef<RequiredInterface> {
+    return required_interfaces_;
+  }
 
-  // TODO: Which interfaces to perform name lookup into.
+  auto set_required_interfaces(const llvm::ArrayRef<RequiredInterface> set_to) {
+    required_interfaces_.assign(set_to.begin(), set_to.end());
+    CanonicalizeRequiredInterfaces();
+  }
 
+  // Can this be used to the right of an `as` in an `impl` declaration?
+  auto is_valid_impl_as_target() const -> bool {
+    return interface_id_.has_value();
+  }
+
+  // The interface to implement when this facet type is used in an `impl`
+  // declaration.
+  auto impl_as_target_interface() const -> SpecificInterface {
+    if (is_valid_impl_as_target()) {
+      return {.interface_id = interface_id_, .specific_id = specific_id_};
+    } else {
+      return SpecificInterface::None;
+    }
+  }
+
+  auto num_interfaces_to_impl() const -> int {
+    if (is_valid_impl_as_target()) {
+      return 1;
+    } else {
+      return num_interface_to_impl_;
+    }
+  }
+
+  // Call this function if num != 1, otherwise call `set_interface_to_impl`.
+  auto set_num_interfaces_to_impl(int num) -> void {
+    CARBON_CHECK(num != 1);
+    interface_id_ = InterfaceId::None;
+    num_interface_to_impl_ = num;
+  }
+
+  // If there is a single interface to implement, specify which it is.
+  // Should be an element of `required_interfaces()`.
+  auto set_interface_to_impl(SpecificInterface interface) -> void {
+    CARBON_CHECK(interface.interface_id.has_value());
+    interface_id_ = interface.interface_id;
+    specific_id_ = interface.specific_id;
+  }
+
+ private:
   // Sorts and deduplicates `required_interfaces`. Call after building the sets
-  // of interfaces, and then don't mutate them value afterwards.
+  // of interfaces, and then don't mutate the value afterwards.
   auto CanonicalizeRequiredInterfaces() -> void;
+
+  // Interfaces mentioned explicitly in the facet type expression, or
+  // transitively through a named constraint. Sorted and deduplicated.
+  llvm::SmallVector<RequiredInterface> required_interfaces_;
+
+  // The single interface from `required_interfaces` to implement if this is
+  // the facet type to the right of an `impl`...`as`, or `None` if no such
+  // single interface.
+  InterfaceId interface_id_ = InterfaceId::None;
+  union {
+    // If `interface_id` is `None`, the number of interfaces to report in a
+    // diagnostic about why this facet type can't be implemented.
+    int num_interface_to_impl_ = 0;
+    // If `interface_id` is not `None`, the specific for that interface.
+    SpecificId specific_id_;
+  };
 };
 
 // See common/hashing.h.

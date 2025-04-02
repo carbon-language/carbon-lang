@@ -11,6 +11,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/ids.h"
@@ -246,22 +247,24 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
     auto elements = context.inst_blocks().Get(witness->elements_id);
-    auto index = static_cast<size_t>(inst.index.index);
-    CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-    auto element = elements[index];
-    if (!element.has_value()) {
-      // TODO: Perhaps this should be a `{}` value with incomplete type?
-      CARBON_DIAGNOSTIC(ImplAccessMemberBeforeComplete, Error,
-                        "accessing member from impl before the end of "
-                        "its definition");
-      // TODO: Add note pointing to the impl declaration.
-      context.emitter().Emit(loc, ImplAccessMemberBeforeComplete);
-      return ConstantEvalResult::Error;
+    // `elements` can be empty if there is only a forward declaration of the
+    // impl.
+    if (!elements.empty()) {
+      auto index = static_cast<size_t>(inst.index.index);
+      CARBON_CHECK(index < elements.size(), "Access out of bounds.");
+      auto element = elements[index];
+      if (element.has_value()) {
+        LoadImportRef(context, element);
+        return ConstantEvalResult::Existing(GetConstantValueInSpecific(
+            context.sem_ir(), witness->specific_id, element));
+      }
     }
-
-    LoadImportRef(context, element);
-    return ConstantEvalResult::Existing(GetConstantValueInSpecific(
-        context.sem_ir(), witness->specific_id, element));
+    CARBON_DIAGNOSTIC(
+        ImplAccessMemberBeforeSet, Error,
+        "accessing member from impl before it has a defined value");
+    // TODO: Add note pointing to the impl declaration.
+    context.emitter().Emit(loc, ImplAccessMemberBeforeSet);
+    return ConstantEvalResult::Error;
   }
 
   return ConstantEvalResult::NewSamePhase(inst);
@@ -391,12 +394,24 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
   args.append(interface_fn_args.end() - remaining_params,
               interface_fn_args.end());
   auto specific_id = MakeSpecific(context, loc, generic_id, args);
+  context.definitions_required_by_use().push_back({loc, specific_id});
 
-  // TODO: Add the new `SpecificFunction` to definitions_required.
   return ConstantEvalResult::NewSamePhase(
       SemIR::SpecificFunction{.type_id = inst.type_id,
                               .callee_id = inst.callee_id,
                               .specific_id = specific_id});
+}
+
+auto EvalConstantInst(Context& context, SemIRLoc loc,
+                      SemIR::SpecificFunction inst) -> ConstantEvalResult {
+  if (!SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id)
+           .self_type_id.has_value()) {
+    // This is not an associated function. Those will be required to be defined
+    // as part of checking that the impl is complete.
+    context.definitions_required_by_use().push_back({loc, inst.specific_id});
+  }
+  // Create new constant for a specific function.
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
