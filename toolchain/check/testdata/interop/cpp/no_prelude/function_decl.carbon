@@ -133,7 +133,9 @@ fn F() {
 
 // --- parameterized_function_decl.h
 
-void foo(int);
+struct S {};
+
+void foo(S);
 
 // --- fail_import_parameterized_function_decl.carbon
 
@@ -142,14 +144,14 @@ library "[[@TEST_NAME]]";
 import Cpp library "parameterized_function_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_parameterized_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Function with parameters` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo();
+  // CHECK:STDERR: fail_import_parameterized_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_import_parameterized_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
+  // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  Cpp.foo();
+  Cpp.foo({});
 }
 
 // --- non_void_return_function_decl.h
@@ -416,6 +418,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -440,6 +443,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
