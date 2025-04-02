@@ -118,7 +118,7 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -141,7 +141,7 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:     %.loc11_6.2: type = converted %float.make_type, %.loc11_6.1 [concrete = f64]
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_18: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:     %.loc11_18: type = where_expr %.Self [concrete = constants.%type] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

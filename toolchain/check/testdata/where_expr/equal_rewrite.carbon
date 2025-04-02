@@ -148,10 +148,6 @@ interface A {}
 class D {}
 impl D as A {}
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_todo_let.carbon:[[@LINE+4]]:35: error: cannot convert type `D` into type implementing `type where...` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: let B: type where .Self impls A = D;
-// CHECK:STDERR:                                   ^
-// CHECK:STDERR:
 let B: type where .Self impls A = D;
 
 // --- fail_type_does_not_implement_where.carbon
@@ -1368,7 +1364,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <type where .Self impls @A> [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %D, (%impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1394,17 +1391,19 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %B.patt: %type_where = binding_pattern B
+// CHECK:STDOUT:     %B.patt: %facet_type = binding_pattern B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_13.1: type = splice_block %.loc12_13.2 [concrete = constants.%type_where] {
+// CHECK:STDOUT:   %.loc8_13.1: type = splice_block %.loc8_13.2 [concrete = constants.%facet_type] {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, %A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:     %.loc12_13.2: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:     %.loc8_13.2: type = where_expr %.Self [concrete = constants.%facet_type] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %A.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: %type_where = bind_name B, <error>
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value constants.%D, (constants.%impl_witness) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc8_35: %facet_type = converted @__global_init.%D.ref, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %B: %facet_type = bind_name B, %.loc8_35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {

@@ -71,7 +71,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // In some cases, a facet type is expected to represent a single interface.
   // For example, an interface declaration or an associated constant are
   // associated with a facet type that will always be a single interface with no
-  // other constraints.
+  // other constraints. This returns the single interface that this facet type
+  // represents, or `std::nullopt` if it has any other constraints.
   auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
     if (extend_constraints.size() == 1 && self_impls_constraints.empty() &&
         rewrite_constraints.empty() && !other_requirements) {
