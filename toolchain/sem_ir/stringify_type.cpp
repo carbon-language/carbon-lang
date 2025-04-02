@@ -218,8 +218,8 @@ class Stringifier {
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, ArrayType inst) -> void {
-    *out_ << "[";
-    step_stack_->Push(inst.element_type_id, "; ", inst.bound_id, "]");
+    *out_ << "array(";
+    step_stack_->Push(inst.element_type_id, ", ", inst.bound_id, ")");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, AssociatedConstantDecl inst)

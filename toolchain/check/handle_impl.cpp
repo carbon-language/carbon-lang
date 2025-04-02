@@ -183,11 +183,6 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     diag.Emit();
   }
 
-  if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
-    context.TODO(node_id, "extending non-facet-type constraint");
-    parent_scope.set_has_error();
-    return false;
-  }
   const auto& impl = context.impls().Get(impl_id);
   if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
     parent_scope.set_has_error();
@@ -506,8 +501,11 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Impl definitions are required in the same file as the declaration. We skip
-  // this requirement if we've already issued an invalid redeclaration error.
-  if (!is_definition && !invalid_redeclaration) {
+  // this requirement if we've already issued an invalid redeclaration error, or
+  // there is an error that would prevent the impl from being legal to define.
+  if (!is_definition && !invalid_redeclaration &&
+      context.impls().Get(impl_decl.impl_id).witness_id !=
+          SemIR::ErrorInst::SingletonInstId) {
     context.definitions_required().push_back(impl_decl_id);
   }
 

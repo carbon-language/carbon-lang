@@ -11,6 +11,13 @@
 
 namespace Carbon::Check {
 
+// Adds a `ConstantId` for a constant that has been imported from another IR.
+// Does not evaluate the instruction, instead trusting that it is already in a
+// suitable form, but does canonicalize the operands if necessary.
+// TODO: Rely on import to canonicalize the operands to avoid this work.
+auto AddImportedConstant(Context& context, SemIR::Inst inst)
+    -> SemIR::ConstantId;
+
 // Determines the phase of the instruction `inst`, and returns its constant
 // value if it has constant phase. If it has runtime phase, returns
 // `SemIR::ConstantId::NotConstant`.
