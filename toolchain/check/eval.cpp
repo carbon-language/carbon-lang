@@ -111,7 +111,15 @@ class EvalContext {
                      symbolic_info.index.index());
         return constant_values().Get(inst_id);
       } else {
-        // TODO: Stop storing `TypeId`s in instructions and eliminate this call.
+        // TODO: Eliminate this call. This is the only place where we get a
+        // value from a specific without using an InstId. There are three ways
+        // we can get here:
+        // 1) From GetConstantValue(InstId): these can use
+        //    GetConstantValueInSpecific.
+        // 2) From GetConstantValue(TypeId): for these, we could change
+        //    instructions so they store InstIds instead of TypeIds.
+        // 3) From GetConstantFacetTypeInfo: for these, we could store an
+        //    InstId instead of a ConstantId in rewrite_constraints.
         return GetConstantInSpecific(sem_ir(), specific_id_, const_id);
       }
     }
