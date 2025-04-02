@@ -93,8 +93,7 @@ auto Function::GetDeclaredReturnType(const File& file,
   if (!return_slot_pattern_id.has_value()) {
     return TypeId::None;
   }
-  return GetTypeInSpecific(file, specific_id,
-                           file.insts().Get(return_slot_pattern_id).type_id());
+  return GetTypeOfInstInSpecific(file, specific_id, return_slot_pattern_id);
 }
 
 }  // namespace Carbon::SemIR

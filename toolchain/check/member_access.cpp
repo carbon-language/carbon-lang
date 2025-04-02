@@ -260,10 +260,11 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   }
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
-  auto inst = context.insts().Get(result.scope_result.target_inst_id());
-  auto type_id = SemIR::GetTypeInSpecific(context.sem_ir(), result.specific_id,
-                                          inst.type_id());
-  CARBON_CHECK(type_id.has_value(), "Missing type for member {0}", inst);
+  auto type_id =
+      SemIR::GetTypeOfInstInSpecific(context.sem_ir(), result.specific_id,
+                                     result.scope_result.target_inst_id());
+  CARBON_CHECK(type_id.has_value(), "Missing type for member {0}",
+               context.insts().Get(result.scope_result.target_inst_id()));
 
   // If the named entity has a constant value that depends on its specific,
   // store the specific too.

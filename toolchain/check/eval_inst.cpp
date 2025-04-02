@@ -242,7 +242,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
 
 auto EvalConstantInst(Context& context, SemIRLoc loc,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
-  // This is PerformAggregateAccess followed by GetConstantInSpecific.
+  // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
     auto elements = context.inst_blocks().Get(witness->elements_id);

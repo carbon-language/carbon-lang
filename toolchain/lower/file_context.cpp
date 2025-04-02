@@ -211,13 +211,11 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
                                         /*isVarArg=*/false)};
   }
 
-  // TODO nit: add is_symbolic() to type_id to forward to
-  // type_id.AsConstantId().is_symbolic(). Update call below too.
   auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
     if (!type_id.has_value()) {
       return nullptr;
     }
-    return GetType(SemIR::GetTypeInSpecific(sem_ir(), specific_id, type_id));
+    return GetType(type_id);
   };
 
   // TODO: expose the `Call` parameter patterns in `Function`, and use them here
@@ -263,8 +261,8 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     if (!param_pattern_info) {
       continue;
     }
-    auto param_type_id = SemIR::GetTypeInSpecific(
-        sem_ir(), specific_id, param_pattern_info->inst.type_id);
+    auto param_type_id = SemIR::GetTypeOfInstInSpecific(
+        sem_ir(), specific_id, param_pattern_info->inst_id);
     CARBON_CHECK(
         !param_type_id.AsConstantId().is_symbolic(),
         "Found symbolic type id after resolution when lowering type {0}.",
@@ -408,7 +406,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       ++param_index;
     } else {
       param_value = llvm::PoisonValue::get(GetType(
-          SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_inst.type_id)));
+          SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id, param_id)));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);
