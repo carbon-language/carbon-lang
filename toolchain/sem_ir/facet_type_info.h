@@ -105,7 +105,7 @@ struct IdentifiedFacetType {
 
   IdentifiedFacetType() {}
 
-  auto required_interfaces() const -> const llvm::ArrayRef<RequiredInterface> {
+  auto required_interfaces() const -> llvm::ArrayRef<RequiredInterface> {
     return required_interfaces_;
   }
 
