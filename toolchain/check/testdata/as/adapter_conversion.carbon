@@ -241,7 +241,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: type = splice_block %ptr [concrete = constants.%ptr.e79] {
 // CHECK:STDOUT:     %B.ref.loc22: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr: type = ptr_type %B [concrete = constants.%ptr.e79]
+// CHECK:STDOUT:     %ptr: type = ptr_type %B.ref.loc22 [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ptr: %ptr.e79 = bind_name b_ptr, @__global_init.%addr
 // CHECK:STDOUT:   name_binding_decl {

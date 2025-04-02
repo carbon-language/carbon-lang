@@ -82,7 +82,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %int_32.loc11_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc11_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:       %array_type: type = array_type %int_3, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:       %array_type: type = array_type %int_3, %i32.loc11_17 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: %array_type = bind_name arr, %arr.param
 // CHECK:STDOUT:     %i.param: %i32 = value_param call_param1

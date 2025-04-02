@@ -70,7 +70,7 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 // Returns a pointer type whose pointee type is `pointee_type_id`.
-auto GetPointerType(Context& context, SemIR::TypeId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
     -> SemIR::TypeId;
 
 // Returns a struct type with the given fields.

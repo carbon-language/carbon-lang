@@ -133,11 +133,11 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %return.param_patt: %ptr.e79 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr.loc25_27: type = ptr_type %B [concrete = constants.%ptr.e79]
+// CHECK:STDOUT:     %ptr.loc25_27: type = ptr_type %B.ref [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:     %p.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc25_20: type = splice_block %ptr.loc25_20 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr.loc25_20: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:       %ptr.loc25_20: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.019 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.e79 = out_param call_param1
@@ -150,11 +150,11 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %ptr.loc26_27: type = ptr_type %A [concrete = constants.%ptr.6db]
+// CHECK:STDOUT:     %ptr.loc26_27: type = ptr_type %A.ref [concrete = constants.%ptr.6db]
 // CHECK:STDOUT:     %p.param: %ptr.e79 = value_param call_param0
 // CHECK:STDOUT:     %.loc26_20: type = splice_block %ptr.loc26_20 [concrete = constants.%ptr.e79] {
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:       %ptr.loc26_20: type = ptr_type %B [concrete = constants.%ptr.e79]
+// CHECK:STDOUT:       %ptr.loc26_20: type = ptr_type %B.ref [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.e79 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1
@@ -167,11 +167,11 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %ptr.loc27_27: type = ptr_type %A [concrete = constants.%ptr.6db]
+// CHECK:STDOUT:     %ptr.loc27_27: type = ptr_type %A.ref [concrete = constants.%ptr.6db]
 // CHECK:STDOUT:     %p.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc27_20: type = splice_block %ptr.loc27_20 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr.loc27_20: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:       %ptr.loc27_20: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.019 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1
@@ -192,11 +192,11 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %ptr.loc33_26: type = ptr_type %A [concrete = constants.%ptr.6db]
+// CHECK:STDOUT:     %ptr.loc33_26: type = ptr_type %A.ref.loc33 [concrete = constants.%ptr.6db]
 // CHECK:STDOUT:     %c.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc33: type = splice_block %ptr.loc33_19 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr.loc33_19: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:       %ptr.loc33_19: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %ptr.019 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1

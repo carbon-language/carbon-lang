@@ -60,7 +60,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %ptr.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc16: type = splice_block %ptr.loc16_14 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr.loc16_14: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:       %ptr.loc16_14: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %ptr.loc16_8: %ptr.019 = bind_name ptr, %ptr.param
 // CHECK:STDOUT:   }

@@ -754,9 +754,8 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   if (defining_vptr) {
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
-         .type_id = GetPointerType(
-             context,
-             GetSingletonType(context, SemIR::VtableType::SingletonInstId))});
+         .type_id =
+             GetPointerType(context, SemIR::VtableType::SingletonInstId)});
   }
   if (base_type_id.has_value()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);

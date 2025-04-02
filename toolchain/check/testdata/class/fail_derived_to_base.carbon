@@ -98,11 +98,11 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %return.param_patt: %ptr.678 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, file.%A1.decl [concrete = constants.%A1]
-// CHECK:STDOUT:     %ptr.loc31_34: type = ptr_type %A1 [concrete = constants.%ptr.678]
+// CHECK:STDOUT:     %ptr.loc31_34: type = ptr_type %A1.ref [concrete = constants.%ptr.678]
 // CHECK:STDOUT:     %p.param: %ptr.afe = value_param call_param0
 // CHECK:STDOUT:     %.loc31_26: type = splice_block %ptr.loc31_26 [concrete = constants.%ptr.afe] {
 // CHECK:STDOUT:       %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
-// CHECK:STDOUT:       %ptr.loc31_26: type = ptr_type %B2 [concrete = constants.%ptr.afe]
+// CHECK:STDOUT:       %ptr.loc31_26: type = ptr_type %B2.ref [concrete = constants.%ptr.afe]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.afe = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.678 = out_param call_param1
@@ -116,11 +116,11 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %return.param_patt: %ptr.590 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [concrete = constants.%A2]
-// CHECK:STDOUT:     %ptr.loc42_43: type = ptr_type %A2 [concrete = constants.%ptr.590]
+// CHECK:STDOUT:     %ptr.loc42_43: type = ptr_type %A2.ref [concrete = constants.%ptr.590]
 // CHECK:STDOUT:     %p.param: %ptr.c62 = value_param call_param0
 // CHECK:STDOUT:     %.loc42_35: type = splice_block %ptr.loc42_35 [concrete = constants.%ptr.c62] {
 // CHECK:STDOUT:       %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete]
-// CHECK:STDOUT:       %ptr.loc42_35: type = ptr_type %Incomplete [concrete = constants.%ptr.c62]
+// CHECK:STDOUT:       %ptr.loc42_35: type = ptr_type %Incomplete.ref [concrete = constants.%ptr.c62]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.c62 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.590 = out_param call_param1

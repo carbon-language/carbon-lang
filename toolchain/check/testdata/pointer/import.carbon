@@ -75,7 +75,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %.loc5_15: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc5 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %ptr = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT: }

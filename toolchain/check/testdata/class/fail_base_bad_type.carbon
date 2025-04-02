@@ -217,7 +217,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc13_55: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %DeriveFromError.ref: type = name_ref DeriveFromError, file.%DeriveFromError.decl [concrete = constants.%DeriveFromError]
-// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromError [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromError.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -286,7 +286,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc15_58: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %DeriveFromNonType.ref: type = name_ref DeriveFromNonType, file.%DeriveFromNonType.decl [concrete = constants.%DeriveFromNonType]
-// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromNonType [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromNonType.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -362,7 +362,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.45c = value_param call_param0
 // CHECK:STDOUT:     %.loc14_40: type = splice_block %ptr.loc14_40 [concrete = constants.%ptr.45c] {
 // CHECK:STDOUT:       %DeriveFromi32.ref: type = name_ref DeriveFromi32, file.%DeriveFromi32.decl [concrete = constants.%DeriveFromi32]
-// CHECK:STDOUT:       %ptr.loc14_40: type = ptr_type %DeriveFromi32 [concrete = constants.%ptr.45c]
+// CHECK:STDOUT:       %ptr.loc14_40: type = ptr_type %DeriveFromi32.ref [concrete = constants.%ptr.45c]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.45c = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param call_param1
@@ -379,7 +379,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.45c = value_param call_param0
 // CHECK:STDOUT:     %.loc20_51: type = splice_block %ptr [concrete = constants.%ptr.45c] {
 // CHECK:STDOUT:       %DeriveFromi32.ref: type = name_ref DeriveFromi32, file.%DeriveFromi32.decl [concrete = constants.%DeriveFromi32]
-// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromi32 [concrete = constants.%ptr.45c]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromi32.ref [concrete = constants.%ptr.45c]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.45c = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -467,11 +467,11 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:     %.loc21_56: %tuple.type.85c = tuple_literal (%Base.ref)
 // CHECK:STDOUT:     %.loc21_57: type = converted %.loc21_56, constants.%tuple.type.469 [concrete = constants.%tuple.type.469]
-// CHECK:STDOUT:     %ptr.loc21_57: type = ptr_type %tuple.type.469 [concrete = constants.%ptr.1ab]
+// CHECK:STDOUT:     %ptr.loc21_57: type = ptr_type %.loc21_57 [concrete = constants.%ptr.1ab]
 // CHECK:STDOUT:     %p.param: %ptr.340 = value_param call_param0
 // CHECK:STDOUT:     %.loc21_44: type = splice_block %ptr.loc21_44 [concrete = constants.%ptr.340] {
 // CHECK:STDOUT:       %DeriveFromTuple.ref: type = name_ref DeriveFromTuple, file.%DeriveFromTuple.decl [concrete = constants.%DeriveFromTuple]
-// CHECK:STDOUT:       %ptr.loc21_44: type = ptr_type %DeriveFromTuple [concrete = constants.%ptr.340]
+// CHECK:STDOUT:       %ptr.loc21_44: type = ptr_type %DeriveFromTuple.ref [concrete = constants.%ptr.340]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.340 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.1ab = out_param call_param1
@@ -488,7 +488,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.340 = value_param call_param0
 // CHECK:STDOUT:     %.loc23_55: type = splice_block %ptr [concrete = constants.%ptr.340] {
 // CHECK:STDOUT:       %DeriveFromTuple.ref: type = name_ref DeriveFromTuple, file.%DeriveFromTuple.decl [concrete = constants.%DeriveFromTuple]
-// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromTuple [concrete = constants.%ptr.340]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromTuple.ref [concrete = constants.%ptr.340]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.340 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -583,7 +583,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.df0 = value_param call_param0
 // CHECK:STDOUT:     %.loc21_46: type = splice_block %ptr.loc21_46 [concrete = constants.%ptr.df0] {
 // CHECK:STDOUT:       %DeriveFromStruct.ref: type = name_ref DeriveFromStruct, file.%DeriveFromStruct.decl [concrete = constants.%DeriveFromStruct]
-// CHECK:STDOUT:       %ptr.loc21_46: type = ptr_type %DeriveFromStruct [concrete = constants.%ptr.df0]
+// CHECK:STDOUT:       %ptr.loc21_46: type = ptr_type %DeriveFromStruct.ref [concrete = constants.%ptr.df0]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.df0 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.3ee = out_param call_param1
@@ -600,7 +600,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.df0 = value_param call_param0
 // CHECK:STDOUT:     %.loc24_57: type = splice_block %ptr [concrete = constants.%ptr.df0] {
 // CHECK:STDOUT:       %DeriveFromStruct.ref: type = name_ref DeriveFromStruct, file.%DeriveFromStruct.decl [concrete = constants.%DeriveFromStruct]
-// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromStruct [concrete = constants.%ptr.df0]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromStruct.ref [concrete = constants.%ptr.df0]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.df0 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -682,11 +682,11 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %ptr.c62 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete]
-// CHECK:STDOUT:     %ptr.loc28_70: type = ptr_type %Incomplete [concrete = constants.%ptr.c62]
+// CHECK:STDOUT:     %ptr.loc28_70: type = ptr_type %Incomplete.ref [concrete = constants.%ptr.c62]
 // CHECK:STDOUT:     %p.param: %ptr.089 = value_param call_param0
 // CHECK:STDOUT:     %.loc28_54: type = splice_block %ptr.loc28_54 [concrete = constants.%ptr.089] {
 // CHECK:STDOUT:       %DeriveFromIncomplete.ref: type = name_ref DeriveFromIncomplete, file.%DeriveFromIncomplete.decl [concrete = constants.%DeriveFromIncomplete]
-// CHECK:STDOUT:       %ptr.loc28_54: type = ptr_type %DeriveFromIncomplete [concrete = constants.%ptr.089]
+// CHECK:STDOUT:       %ptr.loc28_54: type = ptr_type %DeriveFromIncomplete.ref [concrete = constants.%ptr.089]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.089 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.c62 = out_param call_param1
@@ -703,7 +703,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.089 = value_param call_param0
 // CHECK:STDOUT:     %.loc30_65: type = splice_block %ptr [concrete = constants.%ptr.089] {
 // CHECK:STDOUT:       %DeriveFromIncomplete.ref: type = name_ref DeriveFromIncomplete, file.%DeriveFromIncomplete.decl [concrete = constants.%DeriveFromIncomplete]
-// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromIncomplete [concrete = constants.%ptr.089]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromIncomplete.ref [concrete = constants.%ptr.089]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.089 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -792,11 +792,11 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %ptr.5f6 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Final.ref: type = name_ref Final, file.%Final.decl [concrete = constants.%Final]
-// CHECK:STDOUT:     %ptr.loc17_55: type = ptr_type %Final [concrete = constants.%ptr.5f6]
+// CHECK:STDOUT:     %ptr.loc17_55: type = ptr_type %Final.ref [concrete = constants.%ptr.5f6]
 // CHECK:STDOUT:     %p.param: %ptr.160 = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = splice_block %ptr.loc17_44 [concrete = constants.%ptr.160] {
 // CHECK:STDOUT:       %DeriveFromFinal.ref: type = name_ref DeriveFromFinal, file.%DeriveFromFinal.decl [concrete = constants.%DeriveFromFinal]
-// CHECK:STDOUT:       %ptr.loc17_44: type = ptr_type %DeriveFromFinal [concrete = constants.%ptr.160]
+// CHECK:STDOUT:       %ptr.loc17_44: type = ptr_type %DeriveFromFinal.ref [concrete = constants.%ptr.160]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.160 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.5f6 = out_param call_param1
@@ -813,7 +813,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.160 = value_param call_param0
 // CHECK:STDOUT:     %.loc21: type = splice_block %ptr [concrete = constants.%ptr.160] {
 // CHECK:STDOUT:       %DeriveFromFinal.ref: type = name_ref DeriveFromFinal, file.%DeriveFromFinal.decl [concrete = constants.%DeriveFromFinal]
-// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromFinal [concrete = constants.%ptr.160]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromFinal.ref [concrete = constants.%ptr.160]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.160 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -830,7 +830,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.160 = value_param call_param0
 // CHECK:STDOUT:     %.loc25: type = splice_block %ptr [concrete = constants.%ptr.160] {
 // CHECK:STDOUT:       %DeriveFromFinal.ref: type = name_ref DeriveFromFinal, file.%DeriveFromFinal.decl [concrete = constants.%DeriveFromFinal]
-// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromFinal [concrete = constants.%ptr.160]
+// CHECK:STDOUT:       %ptr: type = ptr_type %DeriveFromFinal.ref [concrete = constants.%ptr.160]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.160 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1

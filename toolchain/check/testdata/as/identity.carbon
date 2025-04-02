@@ -78,7 +78,7 @@ fn Initializing() {
 // CHECK:STDOUT:     %p.param: %ptr.d17 = value_param call_param0
 // CHECK:STDOUT:     %.loc21: type = splice_block %ptr.loc21 [concrete = constants.%ptr.d17] {
 // CHECK:STDOUT:       %X.ref.loc21: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:       %ptr.loc21: type = ptr_type %X [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:       %ptr.loc21: type = ptr_type %X.ref.loc21 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.d17 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -124,7 +124,7 @@ fn Initializing() {
 // CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc22_17
 // CHECK:STDOUT:   %.loc22_11: type = splice_block %ptr.loc22 [concrete = constants.%ptr.d17] {
 // CHECK:STDOUT:     %X.ref.loc22_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc22: type = ptr_type %X [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:     %ptr.loc22: type = ptr_type %X.ref.loc22_10 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q: %ptr.d17 = bind_name q, %addr
 // CHECK:STDOUT:   return

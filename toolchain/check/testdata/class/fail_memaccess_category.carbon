@@ -101,7 +101,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %self.param: %ptr.6db = value_param call_param0
 // CHECK:STDOUT:     %.loc12_20: type = splice_block %ptr [concrete = constants.%ptr.6db] {
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:       %ptr: type = ptr_type %A [concrete = constants.%ptr.6db]
+// CHECK:STDOUT:       %ptr: type = ptr_type %A.ref [concrete = constants.%ptr.6db]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.6db = bind_name self, %self.param
 // CHECK:STDOUT:   }

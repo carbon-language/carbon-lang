@@ -152,7 +152,7 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
       FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
 }
 
-auto GetPointerType(Context& context, SemIR::TypeId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }

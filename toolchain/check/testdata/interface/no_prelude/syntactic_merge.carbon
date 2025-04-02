@@ -1123,7 +1123,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %const [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const: type = const_type %C [concrete = constants.%const]
+// CHECK:STDOUT:       %const: type = const_type %C.ref [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc6_15.1: %const = bind_symbolic_name a, 0 [symbolic = %a.loc6_15.2 (constants.%a)]
 // CHECK:STDOUT:   }
@@ -1132,8 +1132,8 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_19 [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc18_26: type = const_type %C [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc18_19: type = const_type %const [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_26: type = const_type %C.ref [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_19: type = const_type %const.loc18_26 [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc18_15.1: %const = bind_symbolic_name a, 0 [symbolic = %a.loc18_15.2 (constants.%a)]
 // CHECK:STDOUT:   }

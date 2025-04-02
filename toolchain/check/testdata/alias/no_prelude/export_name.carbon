@@ -275,7 +275,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   %d.var: ref %ptr.019 = var d
 // CHECK:STDOUT:   %.loc8_9: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:     %ptr: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %ptr.019 = bind_name d, %d.var
 // CHECK:STDOUT: }

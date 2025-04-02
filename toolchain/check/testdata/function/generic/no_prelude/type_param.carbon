@@ -41,7 +41,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %T.patt.loc11_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ptr.loc12_11.2: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
+// CHECK:STDOUT:   %ptr.loc12_11.2: type = ptr_type %T.loc11_6.2 [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
 // CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type @F.%ptr.loc12_11.2 (%ptr) [symbolic = %require_complete.loc12 (constants.%require_complete.6e5)]
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %require_complete.loc13 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
@@ -54,7 +54,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %p.var: ref @F.%ptr.loc12_11.2 (%ptr) = var p
 // CHECK:STDOUT:     %.loc12_11: type = splice_block %ptr.loc12_11.1 [symbolic = %ptr.loc12_11.2 (constants.%ptr)] {
 // CHECK:STDOUT:       %T.ref.loc12: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:       %ptr.loc12_11.1: type = ptr_type %T [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
+// CHECK:STDOUT:       %ptr.loc12_11.1: type = ptr_type %T.ref.loc12 [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: ref @F.%ptr.loc12_11.2 (%ptr) = bind_name p, %p.var
 // CHECK:STDOUT:     name_binding_decl {

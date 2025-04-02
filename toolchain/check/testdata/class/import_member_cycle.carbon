@@ -117,7 +117,7 @@ fn Run() {
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
 // CHECK:STDOUT:   %.loc7_15: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, imports.%Main.Cycle [concrete = constants.%Cycle]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT:   return
