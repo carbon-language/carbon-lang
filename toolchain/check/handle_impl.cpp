@@ -183,11 +183,6 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     diag.Emit();
   }
 
-  if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
-    context.TODO(node_id, "extending non-facet-type constraint");
-    parent_scope.set_has_error();
-    return false;
-  }
   const auto& impl = context.impls().Get(impl_id);
   if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
     parent_scope.set_has_error();
