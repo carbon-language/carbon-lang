@@ -321,19 +321,13 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         // First look for `*assoc_interface` in the type of the base. If it is
         // found, get the witness that the interface is implemented from
         // `base_id`.
-        const auto& facet_type_info =
-            context.facet_types().Get(facet_type->facet_type_id);
+        auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
+        const auto& identified =
+            context.identified_facet_types().Get(identified_id);
         // Witness that `T` implements the `*assoc_interface`.
         SemIR::InstId witness_inst_id = SemIR::InstId::None;
-        // TODO: This assumes `impls_constraints` are in the same order as
-        // `CompleteFacetType::required_interfaces`, and come first in the list.
-        // Once we add support for named constraints there may be more
-        // interfaces in the `CompleteFacetType`, and we will require those
-        // additional interfaces in the `CompleteFacetType` to come after the
-        // ones we see in `impls_constraints` in order to not invalidate the
-        // index computed here.
         for (auto [index, base_interface] :
-             llvm::enumerate(facet_type_info.impls_constraints)) {
+             llvm::enumerate(identified.required_interfaces())) {
           // Get the witness that `T` implements `base_type_id`.
           if (base_interface == *assoc_interface) {
             witness_inst_id = GetOrAddInst(

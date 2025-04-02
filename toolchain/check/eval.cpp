@@ -579,9 +579,16 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
   const auto& orig = eval_context.facet_types().Get(facet_type_id);
   SemIR::FacetTypeInfo info;
-  info.impls_constraints.reserve(orig.impls_constraints.size());
-  for (const auto& interface : orig.impls_constraints) {
-    info.impls_constraints.push_back(
+  info.extend_constraints.reserve(orig.extend_constraints.size());
+  for (const auto& interface : orig.extend_constraints) {
+    info.extend_constraints.push_back(
+        {.interface_id = interface.interface_id,
+         .specific_id =
+             GetConstantValue(eval_context, interface.specific_id, phase)});
+  }
+  info.self_impls_constraints.reserve(orig.self_impls_constraints.size());
+  for (const auto& interface : orig.self_impls_constraints) {
+    info.self_impls_constraints.push_back(
         {.interface_id = interface.interface_id,
          .specific_id =
              GetConstantValue(eval_context, interface.specific_id, phase)});

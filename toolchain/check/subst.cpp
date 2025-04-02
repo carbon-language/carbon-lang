@@ -121,7 +121,10 @@ static auto PushOperand(Context& context, Worklist& worklist,
     }
     case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
       const auto& facet_type_info = context.facet_types().Get(facet_type_id);
-      for (auto interface : facet_type_info.impls_constraints) {
+      for (auto interface : facet_type_info.extend_constraints) {
+        push_specific(interface.specific_id);
+      }
+      for (auto interface : facet_type_info.self_impls_constraints) {
         push_specific(interface.specific_id);
       }
       for (auto rewrite : facet_type_info.rewrite_constraints) {
@@ -242,12 +245,22 @@ static auto PopOperand(Context& context, Worklist& worklist,
         auto lhs_id = context.constant_values().Get(worklist.Pop());
         new_constraint = {.lhs_const_id = lhs_id, .rhs_const_id = rhs_id};
       }
-      new_facet_type_info.impls_constraints.resize(
-          old_facet_type_info.impls_constraints.size(),
+      new_facet_type_info.self_impls_constraints.resize(
+          old_facet_type_info.self_impls_constraints.size(),
+          SemIR::SpecificInterface::None);
+      for (auto [old_constraint, new_constraint] : llvm::reverse(
+               llvm::zip(old_facet_type_info.self_impls_constraints,
+                         new_facet_type_info.self_impls_constraints))) {
+        new_constraint = {
+            .interface_id = old_constraint.interface_id,
+            .specific_id = pop_specific(old_constraint.specific_id)};
+      }
+      new_facet_type_info.extend_constraints.resize(
+          old_facet_type_info.extend_constraints.size(),
           SemIR::SpecificInterface::None);
       for (auto [old_constraint, new_constraint] :
-           llvm::reverse(llvm::zip(old_facet_type_info.impls_constraints,
-                                   new_facet_type_info.impls_constraints))) {
+           llvm::reverse(llvm::zip(old_facet_type_info.extend_constraints,
+                                   new_facet_type_info.extend_constraints))) {
         new_constraint = {
             .interface_id = old_constraint.interface_id,
             .specific_id = pop_specific(old_constraint.specific_id)};

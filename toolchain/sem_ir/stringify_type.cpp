@@ -302,18 +302,32 @@ class Stringifier {
       step_stack_->Push(" ", lhs_const_id, " = ", rhs_const_id);
       some_where = true;
     }
+    if (!facet_type_info.self_impls_constraints.empty()) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      llvm::ListSeparator sep(" & ");
+      for (auto impls : llvm::reverse(facet_type_info.self_impls_constraints)) {
+        const auto& interface_info =
+            sem_ir_->interfaces().Get(impls.interface_id);
+        step_stack_->Push(
+            StepStack::EntityNameItem(interface_info, impls.specific_id), &sep);
+      }
+      step_stack_->PushString(" .Self impls");
+      some_where = true;
+    }
     // TODO: Other restrictions from facet_type_info.
     if (some_where) {
       step_stack_->PushString(" where");
     }
 
-    // Output interface requirements.
-    if (facet_type_info.impls_constraints.empty()) {
+    // Output extend interface requirements.
+    if (facet_type_info.extend_constraints.empty()) {
       step_stack_->PushString("type");
       return;
     }
     llvm::ListSeparator sep(" & ");
-    for (auto impls : llvm::reverse(facet_type_info.impls_constraints)) {
+    for (auto impls : llvm::reverse(facet_type_info.extend_constraints)) {
       const auto& interface_info =
           sem_ir_->interfaces().Get(impls.interface_id);
       step_stack_->Push(
@@ -393,11 +407,13 @@ class Stringifier {
     auto facet_type = sem_ir_->types().GetAs<FacetType>(witness_type_id);
     step_stack_->PushString(")");
     // TODO: Support != 1 interface better.
-    if (auto impls_constraint = sem_ir_->facet_types()
-                                    .Get(facet_type.facet_type_id)
-                                    .TryAsSingleInterface()) {
+    const auto& facet_type_info =
+        sem_ir_->facet_types().Get(facet_type.facet_type_id);
+    if (facet_type_info.extend_constraints.size() == 1) {
+      const auto& specific_interface =
+          facet_type_info.extend_constraints.front();
       const auto& interface =
-          sem_ir_->interfaces().Get(impls_constraint->interface_id);
+          sem_ir_->interfaces().Get(specific_interface.interface_id);
       auto entities =
           sem_ir_->inst_blocks().Get(interface.associated_entities_id);
       size_t index = inst.index.index;
@@ -419,7 +435,7 @@ class Stringifier {
       }
       step_stack_->Push(
           ".(",
-          StepStack::EntityNameItem{interface, impls_constraint->specific_id},
+          StepStack::EntityNameItem{interface, specific_interface.specific_id},
           ".");
     } else {
       step_stack_->Push(".(TODO: ", witness_type_id);
