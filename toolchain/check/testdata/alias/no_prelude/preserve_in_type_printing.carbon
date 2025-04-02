@@ -40,7 +40,7 @@ fn H() -> const A* { return; }
 // CHECK:STDERR: preserve_in_type_printing.carbon:[[@LINE+7]]:26: error: missing return value [ReturnStatementMissingExpr]
 // CHECK:STDERR: fn I() -> array(A, 42) { return; }
 // CHECK:STDERR:                          ^~~~~~~
-// CHECK:STDERR: preserve_in_type_printing.carbon:[[@LINE+4]]:8: note: return type of function is `[A; 42]` [ReturnTypeHereNote]
+// CHECK:STDERR: preserve_in_type_printing.carbon:[[@LINE+4]]:8: note: return type of function is `array(A, 42)` [ReturnTypeHereNote]
 // CHECK:STDERR: fn I() -> array(A, 42) { return; }
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
