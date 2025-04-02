@@ -7,6 +7,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -389,12 +390,17 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   }
 
   // Rebuilds an instruction by building a new constant.
-  auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
+  auto Rebuild(SemIR::InstId old_inst_id, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
-    auto result_id = TryEvalInst(*context_, SemIR::InstId::None, new_inst);
-    CARBON_CHECK(result_id.is_constant(),
+    auto result_id = GetOrAddInst(
+        *context_,
+        SemIR::LocIdAndInst::UncheckedLoc(
+            context_->insts().GetLocId(old_inst_id).ToImplicit(), new_inst));
+    auto const_inst_id =
+        context_->constant_values().GetConstantInstId(result_id);
+    CARBON_CHECK(const_inst_id.has_value(),
                  "Substitution into constant produced non-constant");
-    return context_->constant_values().GetInstId(result_id);
+    return const_inst_id;
   }
 
  private:

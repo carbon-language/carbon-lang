@@ -8,9 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_bound_overflow.carbon
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:8: error: array bound of 39999999999999999993 is too large [ArrayBoundTooLarge]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:19: error: array bound of 39999999999999999993 is too large [ArrayBoundTooLarge]
 // CHECK:STDERR: var a: array(i32, 39999999999999999993);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var a: array(i32, 39999999999999999993);
 

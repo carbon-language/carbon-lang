@@ -123,6 +123,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     llvm::StringLiteral ir_name;
     InstIsType is_type = InstIsType::Never;
     InstConstantKind constant_kind = InstConstantKind::Indirect;
+    bool constant_needs_inst_id = constant_kind == InstConstantKind::Unique;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
@@ -158,6 +159,22 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // Returns this instruction kind's category of allowed constants.
   auto constant_kind() const -> InstConstantKind {
     return definition_info(*this).constant_kind;
+  }
+
+  // Returns whether we need an `InstId` referring to the instruction to
+  // constant evaluate this instruction. If this is set to `true`, then:
+  //
+  //  - `Check::TryEvalInst` will not allow this instruction to be directly
+  //    evaluated without an `InstId`.
+  //  - `Check::EvalConstantInst` will be passed an `InstId` for the original
+  //    instruction being evaluated.
+  //
+  // This is set to true for instructions whose evaluation either might need a
+  // location, for example for diagnostics or for newly-created instructions,
+  // and for instructions whose evaluation needs to inspect the original form of
+  // its operands.
+  auto constant_needs_inst_id() const -> bool {
+    return definition_info(*this).constant_needs_inst_id;
   }
 
   // Returns whether this instruction kind is a code block terminator, such as
@@ -212,6 +229,11 @@ class InstKind::Definition : public InstKind {
   // Returns this instruction kind's category of allowed constants.
   constexpr auto constant_kind() const -> InstConstantKind {
     return info_.constant_kind;
+  }
+
+  // Returns whether constant evaluation of this instruction needs an InstId.
+  constexpr auto constant_needs_inst_id() const -> bool {
+    return info_.constant_needs_inst_id;
   }
 
   // Returns whether this instruction kind is a code block terminator. See

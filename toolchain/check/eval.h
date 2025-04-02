@@ -18,15 +18,27 @@ namespace Carbon::Check {
 auto AddImportedConstant(Context& context, SemIR::Inst inst)
     -> SemIR::ConstantId;
 
-// Determines the phase of the instruction `inst`, and returns its constant
+// Evaluates the instruction `inst`. If `inst_id` is specified, it is the ID of
+// the instruction; otherwise, evaluation of the instruction must not require an
+// `InstId` to be provided.
+auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
+                       SemIR::Inst inst) -> SemIR::ConstantId;
+
+// Determines the phase of the instruction `inst_id`, and returns its constant
 // value if it has constant phase. If it has runtime phase, returns
 // `SemIR::ConstantId::NotConstant`.
-auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> SemIR::ConstantId;
-// Like the above but specific a LocId instead of deriving it from the
-// `inst_id`. This is most useful when passing `None` as the `inst_id`.
-auto TryEvalInst(Context& context, SemIR::LocId loc_id, SemIR::InstId inst_id,
-                 SemIR::Inst inst) -> SemIR::ConstantId;
+inline auto TryEvalInst(Context& context, SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
+  return TryEvalInstUnsafe(context, inst_id, context.insts().Get(inst_id));
+}
+
+// Same, but for a typed instruction that doesn't have an InstId assigned yet,
+// in the case where evaluation doesn't need an InstId.
+template <typename InstT>
+  requires(!InstT::Kind.constant_needs_inst_id())
+auto TryEvalInst(Context& context, InstT inst) -> SemIR::ConstantId {
+  return TryEvalInstUnsafe(context, SemIR::InstId::None, inst);
+}
 
 // Evaluates the eval block for a region of a specific. Produces a block
 // containing the evaluated constant values of the instructions in the eval

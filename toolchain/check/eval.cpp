@@ -1727,13 +1727,15 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       // Couldn't perform the action because it's still dependent.
       return MakeConstantResult(eval_context.context(), inst,
                                 Phase::TemplateSymbolic);
+    } else if constexpr (InstT::Kind.constant_needs_inst_id()) {
+      return ConvertEvalResultToConstantId(
+          eval_context.context(),
+          EvalConstantInst(eval_context.context(), inst_id, inst.As<InstT>()),
+          phase);
     } else {
       return ConvertEvalResultToConstantId(
           eval_context.context(),
-          EvalConstantInst(eval_context.context(),
-                           eval_context.GetDiagnosticLoc({inst_id}),
-                           inst.As<InstT>()),
-          phase);
+          EvalConstantInst(eval_context.context(), inst.As<InstT>()), phase);
     }
   }
 }
@@ -1871,14 +1873,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                                               inst_id, inst);
 }
 
-auto TryEvalInst(Context& context, SemIR::LocId loc_id, SemIR::InstId inst_id,
-                 SemIR::Inst inst) -> SemIR::ConstantId {
-  EvalContext eval_context(&context, loc_id);
-  return TryEvalInstInContext(eval_context, inst_id, inst);
-}
-
-auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
-    -> SemIR::ConstantId {
+auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
+                       SemIR::Inst inst) -> SemIR::ConstantId {
   EvalContext eval_context(&context, inst_id);
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }

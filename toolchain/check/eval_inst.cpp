@@ -13,31 +13,11 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
-
-// When calling from eval to various Check functions, we need the actual LocId.
-// This allows us to unwrap the SemIRLoc to do so.
-//
-// TODO: Decide whether to refactor calls everywhere to accept `SemIRLoc`, or
-// fold `SemIRLoc` into `LocId`. Either way, we would like eval to call other
-// code without unwrapping `SemIRLoc`.
-class UnwrapSemIRLoc {
- public:
-  auto operator()(Context& context, SemIRLoc loc) -> SemIR::LocId {
-    if (loc.is_inst_id_) {
-      if (loc.inst_id_.has_value()) {
-        return context.insts().GetLocId(loc.inst_id_);
-      } else {
-        return SemIR::LocId::None;
-      }
-    } else {
-      return loc.loc_id_;
-    }
-  }
-};
 
 // Performs an access into an aggregate, retrieving the specified element.
 static auto PerformAggregateAccess(Context& context, SemIR::Inst inst)
@@ -58,16 +38,16 @@ static auto PerformAggregateAccess(Context& context, SemIR::Inst inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::ArrayInit inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::ArrayInit inst)
+    -> ConstantEvalResult {
   // TODO: Add an `ArrayValue` to represent a constant array object
   // representation instead of using a `TupleValue`.
   return ConstantEvalResult::NewSamePhase(
       SemIR::TupleValue{.type_id = inst.type_id, .elements_id = inst.inits_id});
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc loc, SemIR::ArrayType inst)
-    -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::ArrayType inst) -> ConstantEvalResult {
   auto bound_inst = context.insts().Get(inst.bound_id);
   auto int_bound = bound_inst.TryAs<SemIR::IntValue>();
   if (!int_bound) {
@@ -83,22 +63,24 @@ auto EvalConstantInst(Context& context, SemIRLoc loc, SemIR::ArrayType inst)
       bound_val.isNegative()) {
     CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                       "array bound of {0} is negative", TypedInt);
-    context.emitter().Emit(loc, ArrayBoundNegative,
-                           {.type = int_bound->type_id, .value = bound_val});
+    context.emitter().Emit(
+        context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
+        ArrayBoundNegative, {.type = int_bound->type_id, .value = bound_val});
     return ConstantEvalResult::Error;
   }
   if (bound_val.getActiveBits() > 64) {
     CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                       "array bound of {0} is too large", TypedInt);
-    context.emitter().Emit(loc, ArrayBoundTooLarge,
-                           {.type = int_bound->type_id, .value = bound_val});
+    context.emitter().Emit(
+        context.insts().GetAs<SemIR::ArrayType>(inst_id).bound_id,
+        ArrayBoundTooLarge, {.type = int_bound->type_id, .value = bound_val});
     return ConstantEvalResult::Error;
   }
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::AsCompatible inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::AsCompatible inst)
+    -> ConstantEvalResult {
   // AsCompatible changes the type of the source instruction; its constant
   // value, if there is one, needs to be modified to be of the same type.
   auto value_id = context.constant_values().Get(inst.source_id);
@@ -110,26 +92,26 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   return ConstantEvalResult::NewAnyPhase(value_inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::BindAlias inst)
+auto EvalConstantInst(Context& context, SemIR::BindAlias inst)
     -> ConstantEvalResult {
   // An alias evaluates to the value it's bound to.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::BindValue /*inst*/) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::BindValue /*inst*/)
+    -> ConstantEvalResult {
   // TODO: Handle this once we've decided how to represent constant values of
   // reference expressions.
   return ConstantEvalResult::TODO;
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::ClassElementAccess inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::ClassElementAccess inst)
+    -> ConstantEvalResult {
   return PerformAggregateAccess(context, inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::ClassDecl inst)
+auto EvalConstantInst(Context& context, SemIR::ClassDecl inst)
     -> ConstantEvalResult {
   // If the class has generic parameters, we don't produce a class type, but a
   // callable whose return value is a class type.
@@ -145,15 +127,15 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::ClassDecl inst)
                        .specific_id = SemIR::SpecificId::None});
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::ClassInit inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::ClassInit inst)
+    -> ConstantEvalResult {
   // TODO: Add a `ClassValue` to represent a constant class object
   // representation instead of using a `StructValue`.
   return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::ConstType inst)
+auto EvalConstantInst(Context& context, SemIR::ConstType inst)
     -> ConstantEvalResult {
   // `const (const T)` evaluates to `const T`.
   if (context.types().Is<SemIR::ConstType>(inst.inner_id)) {
@@ -164,28 +146,28 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::ConstType inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::Converted inst)
+auto EvalConstantInst(Context& context, SemIR::Converted inst)
     -> ConstantEvalResult {
   // A conversion evaluates to the result of the conversion.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.result_id));
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::Deref /*inst*/) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::Deref /*inst*/)
+    -> ConstantEvalResult {
   // TODO: Handle this.
   return ConstantEvalResult::TODO;
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::ExportDecl inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::ExportDecl inst)
+    -> ConstantEvalResult {
   // An export instruction evaluates to the exported declaration.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::FacetAccessType inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
+    -> ConstantEvalResult {
   if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
           inst.facet_value_inst_id)) {
     return ConstantEvalResult::Existing(
@@ -194,8 +176,13 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::FacetAccessWitness inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::FacetAccessWitness inst)
+    -> ConstantEvalResult {
+  // TODO: The `index` we are given is an index into the required_interfaces of
+  // the original facet type, but we're using it to index into the witnesses of
+  // the substituted facet type. There is no reason to expect those witnesses to
+  // be in the same order, or even for there to be the same number of witnesses.
+
   if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
           inst.facet_value_inst_id)) {
     auto impl_witness_inst_id = context.inst_blocks().Get(
@@ -206,15 +193,15 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc loc, SemIR::FloatType inst)
-    -> ConstantEvalResult {
-  return ValidateFloatType(context, loc, inst)
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::FloatType inst) -> ConstantEvalResult {
+  return ValidateFloatType(context, inst_id, inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::FunctionDecl inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
+    -> ConstantEvalResult {
   // A function declaration evaluates to a function object, which is an empty
   // object of function type.
   // TODO: Eventually we may need to handle captures here.
@@ -222,10 +209,10 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
       .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc loc,
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::LookupImplWitness inst) -> ConstantEvalResult {
   auto result = EvalLookupSingleImplWitness(
-      context, UnwrapSemIRLoc()(context, loc), inst);
+      context, context.insts().GetLocId(inst_id), inst);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
@@ -240,7 +227,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
       context.constant_values().Get(result.concrete_witness()));
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc loc,
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
   // This is PerformAggregateAccess followed by GetConstantInSpecific.
   if (auto witness =
@@ -262,36 +249,36 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
         ImplAccessMemberBeforeSet, Error,
         "accessing member from impl before it has a defined value");
     // TODO: Add note pointing to the impl declaration.
-    context.emitter().Emit(loc, ImplAccessMemberBeforeSet);
+    context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;
   }
 
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::ImportRefUnloaded inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::ImportRefUnloaded inst)
+    -> ConstantEvalResult {
   CARBON_FATAL("ImportRefUnloaded should be loaded before TryEvalInst: {0}",
                inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::InitializeFrom inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::InitializeFrom inst)
+    -> ConstantEvalResult {
   // Initialization is not performed in-place during constant evaluation, so
   // just return the value of the initializer.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.src_id));
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc loc, SemIR::IntType inst)
-    -> ConstantEvalResult {
-  return ValidateIntType(context, loc, inst)
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::IntType inst) -> ConstantEvalResult {
+  return ValidateIntType(context, inst_id, inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::InterfaceDecl inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::InterfaceDecl inst)
+    -> ConstantEvalResult {
   // If the interface has generic parameters, we don't produce an interface
   // type, but a callable whose return value is an interface type.
   if (context.interfaces().Get(inst.interface_id).has_parameters()) {
@@ -304,14 +291,14 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
       context, inst.interface_id, SemIR::SpecificId::None));
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::NameRef inst)
+auto EvalConstantInst(Context& context, SemIR::NameRef inst)
     -> ConstantEvalResult {
   // A name reference evaluates to the value the name resolves to.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc loc,
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::RequireCompleteType inst) -> ConstantEvalResult {
   auto witness_type_id =
       GetSingletonType(context, SemIR::WitnessType::SingletonInstId);
@@ -319,13 +306,16 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
   // If the type is a concrete constant, require it to be complete now.
   auto complete_type_id = inst.complete_type_id;
   if (context.types().GetConstantId(complete_type_id).is_concrete()) {
-    if (!TryToCompleteType(context, complete_type_id, loc, [&] {
-          // TODO: It'd be nice to report the original type prior to
-          // evaluation here.
+    if (!TryToCompleteType(context, complete_type_id, inst_id, [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
-                            "type {0} is incomplete", SemIR::TypeId);
-          return context.emitter().Build(loc, IncompleteTypeInMonomorphization,
-                                         complete_type_id);
+                            "{0} evaluates to incomplete type {1}",
+                            SemIR::TypeId, SemIR::TypeId);
+          return context.emitter().Build(
+              inst_id, IncompleteTypeInMonomorphization,
+              context.insts()
+                  .GetAs<SemIR::RequireCompleteType>(inst_id)
+                  .complete_type_id,
+              complete_type_id);
         })) {
       return ConstantEvalResult::Error;
     }
@@ -339,14 +329,14 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::SpecificConstant inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::SpecificConstant inst)
+    -> ConstantEvalResult {
   // Pull the constant value out of the specific.
   return ConstantEvalResult::Existing(SemIR::GetConstantValueInSpecific(
       context.sem_ir(), inst.specific_id, inst.inst_id));
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc loc,
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificImplFunction inst) -> ConstantEvalResult {
   auto callee_inst = context.insts().Get(inst.callee_id);
   // If the callee is not a function value, we're not ready to evaluate this
@@ -392,7 +382,7 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
   CARBON_CHECK(static_cast<int>(interface_fn_args.size()) >= remaining_params);
   args.append(interface_fn_args.end() - remaining_params,
               interface_fn_args.end());
-  auto specific_id = MakeSpecific(context, loc, generic_id, args);
+  auto specific_id = MakeSpecific(context, inst_id, generic_id, args);
 
   // TODO: Add the new `SpecificFunction` to definitions_required.
   return ConstantEvalResult::NewSamePhase(
@@ -401,8 +391,8 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
                               .specific_id = specific_id});
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::SpliceBlock inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::SpliceBlock inst)
+    -> ConstantEvalResult {
   // SpliceBlock evaluates to the result value that is (typically) within the
   // block. This can be constant even if the block contains other non-constant
   // instructions.
@@ -410,8 +400,8 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
       context.constant_values().Get(inst.result_id));
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::SpliceInst inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::SpliceInst inst)
+    -> ConstantEvalResult {
   // The constant value of a SpliceInst is the constant value of the instruction
   // being spliced. Note that `inst.inst_id` is the instruction being spliced,
   // so we need to go through another round of obtaining the constant value in
@@ -427,36 +417,36 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   return ConstantEvalResult::NotConstant;
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::StructAccess inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::StructAccess inst)
+    -> ConstantEvalResult {
   return PerformAggregateAccess(context, inst);
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::StructInit inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::StructInit inst)
+    -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::Temporary /*inst*/) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::Temporary /*inst*/)
+    -> ConstantEvalResult {
   // TODO: Handle this. Can we just return the value of `init_id`?
   return ConstantEvalResult::TODO;
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::TupleAccess inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)
+    -> ConstantEvalResult {
   return PerformAggregateAccess(context, inst);
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::TupleInit inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::TupleInit inst)
+    -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::TypeOfInst inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::TypeOfInst inst)
+    -> ConstantEvalResult {
   // Grab the type from the instruction produced as our operand.
   if (auto inst_value =
           context.insts().TryGetAs<SemIR::InstValue>(inst.inst_id)) {
@@ -466,8 +456,8 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::UnaryOperatorNot inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::UnaryOperatorNot inst)
+    -> ConstantEvalResult {
   // `not true` -> `false`, `not false` -> `true`.
   // All other uses of unary `not` are non-constant.
   auto const_id = context.constant_values().Get(inst.operand_id);
@@ -480,8 +470,8 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
   return ConstantEvalResult::NotConstant;
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::ValueOfInitializer inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)
+    -> ConstantEvalResult {
   // Values of value expressions and initializing expressions are represented in
   // the same way during constant evaluation, so just return the value of the
   // operand.
@@ -489,16 +479,16 @@ auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
       context.constant_values().Get(inst.init_id));
 }
 
-auto EvalConstantInst(Context& context, SemIRLoc /*loc*/,
-                      SemIR::ValueParamPattern inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::ValueParamPattern inst)
+    -> ConstantEvalResult {
   // TODO: Treat this as a non-expression (here and in GetExprCategory)
   // once generic deduction doesn't need patterns to have constant values.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.subpattern_id));
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
-                      SemIR::VtablePtr /*inst*/) -> ConstantEvalResult {
+auto EvalConstantInst(Context& /*context*/, SemIR::VtablePtr /*inst*/)
+    -> ConstantEvalResult {
   // TODO: Handle this.
   return ConstantEvalResult::TODO;
 }

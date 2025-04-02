@@ -603,7 +603,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   // That facet value has both the self type we need below and the witness
   // we are going to use to look up the value of the associated member.
   auto self_type_const_id = TryEvalInst(
-      context, SemIR::InstId::None,
+      context,
       SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
                              .facet_value_inst_id = facet_inst_id});
   auto self_type_id =

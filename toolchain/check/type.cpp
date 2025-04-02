@@ -72,10 +72,8 @@ auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
-  // TODO: Remove inst_id parameter from TryEvalInst.
   InstT inst = {SemIR::TypeType::SingletonTypeId, each_arg...};
-  return context.types().GetTypeIdForTypeConstantId(
-      TryEvalInst(context, SemIR::InstId::None, inst));
+  return context.types().GetTypeIdForTypeConstantId(TryEvalInst(context, inst));
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments,

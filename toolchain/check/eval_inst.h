@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_EVAL_INST_H_
 
 #include "toolchain/check/eval.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -93,6 +94,60 @@ constexpr ConstantEvalResult ConstantEvalResult::NotConstant =
 
 constexpr ConstantEvalResult ConstantEvalResult::TODO = NotConstant;
 
+// Implementation details to compute the type of the `EvalConstantInst`
+// functions.
+namespace Internal {
+
+// Returns whether an `EvalConstantInst` overload is expected to exist for this
+// instruction constant kind.
+constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
+    -> bool {
+  switch (kind) {
+    case SemIR::InstConstantKind::Never:
+    case SemIR::InstConstantKind::InstAction:
+    case SemIR::InstConstantKind::WheneverPossible:
+    case SemIR::InstConstantKind::Always:
+    case SemIR::InstConstantKind::Unique:
+      return false;
+
+    case SemIR::InstConstantKind::Indirect:
+    case SemIR::InstConstantKind::SymbolicOnly:
+    case SemIR::InstConstantKind::Conditional:
+      return true;
+  }
+}
+
+// Given an instruction kind, determines the type that should be used to declare
+// `EvalConstantInst` for that instruction.
+template <typename InstT, bool HasFn, bool HasInstId>
+struct FunctionTypeForEvalConstantInstImpl {
+  // By default, we want no `EvalConstantInst` function at all. But we can't
+  // express that, so use the type `auto () -> voic` as a placaeholder.
+  using Type = auto() -> void;
+};
+template <typename InstT>
+struct FunctionTypeForEvalConstantInstImpl<InstT, true, false> {
+  // Can be evaluated, evaluation doesn't need InstId.
+  using Type = auto(Context& context, InstT inst) -> ConstantEvalResult;
+};
+template <typename InstT>
+struct FunctionTypeForEvalConstantInstImpl<InstT, true, true> {
+  // Can be evaluated, evaluation needs InstId.
+  using Type = auto(Context& context, SemIR::InstId inst_id, InstT inst)
+      -> ConstantEvalResult;
+};
+template <typename InstT>
+using FunctionTypeForEvalConstantInst =
+    typename FunctionTypeForEvalConstantInstImpl<
+        InstT, ConstantKindHasEvalConstantInst(InstT::Kind.constant_kind()),
+        InstT::Kind.constant_needs_inst_id()>::Type;
+
+}  // namespace Internal
+
+// Explicitly delete the overload generated for non-evaluatable instructions.
+// These all produce the same signature, so we only need to delete it once.
+auto EvalConstantInst() -> void = delete;
+
 // `EvalConstantInst` evaluates an instruction whose operands are all constant,
 // in a context unrelated to the enclosing evaluation. The function is given the
 // instruction after its operands, including its type, are replaced by their
@@ -110,12 +165,23 @@ constexpr ConstantEvalResult ConstantEvalResult::TODO = NotConstant;
 // context itself. Those cases are handled by explicit specialization of
 // `TryEvalTypedInst` in `eval.cpp` instead.
 //
+// The signature of an overload is
+//
+//   auto EvalConstantInst(Context& context, SemIR::InstId inst_id, InstT inst)
+//       -> ConstantEvalResult;
+//
+// if `InstT::Kind.constant_needs_inst_id()` is true, and
+//
+//   auto EvalConstantInst(Context& context, InstT inst) -> ConstantEvalResult;
+//
+// otherwise.
+//
 // Overloads are *declared* for all types, because there isn't a good way to
 // declare only the overloads we want here without duplicating the list of
-// types. Missing overloads will be diagnosed when linking.
-#define CARBON_SEM_IR_INST_KIND(Kind)                                     \
-  auto EvalConstantInst(Context& context, SemIRLoc loc, SemIR::Kind inst) \
-      -> ConstantEvalResult;
+// types. Missing overloads will be diagnosed when linking. Excess overloads
+// map to a deleted signature to prevent accidental calls.
+#define CARBON_SEM_IR_INST_KIND(Kind) \
+  Internal::FunctionTypeForEvalConstantInst<SemIR::Kind> EvalConstantInst;
 #include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::Check

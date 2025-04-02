@@ -28,7 +28,7 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
   }
 
   // If the instruction has a constant value, compute it.
-  auto const_id = TryEvalInst(context, inst_id, inst);
+  auto const_id = TryEvalInstUnsafe(context, inst_id, inst);
   context.constant_values().Set(inst_id, const_id);
   if (const_id.is_constant()) {
     CARBON_VLOG_TO(context.vlog_stream(), "Constant: {0} -> {1}\n", inst,
@@ -100,9 +100,10 @@ auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 
 auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
-  if (loc_id_and_inst.loc_id.is_implicit()) {
+  if (loc_id_and_inst.loc_id.is_implicit() &&
+      !loc_id_and_inst.inst.kind().constant_needs_inst_id()) {
     auto const_id =
-        TryEvalInst(context, SemIR::InstId::None, loc_id_and_inst.inst);
+        TryEvalInstUnsafe(context, SemIR::InstId::None, loc_id_and_inst.inst);
     if (const_id.has_value()) {
       CARBON_VLOG_TO(context.vlog_stream(), "GetOrAddInst: constant: {0}\n",
                      loc_id_and_inst.inst);
@@ -154,7 +155,7 @@ auto ReplaceInstPreservingConstantValue(Context& context, SemIR::InstId inst_id,
   context.sem_ir().insts().Set(inst_id, inst);
   CARBON_VLOG_TO(context.vlog_stream(), "ReplaceInst: {0} -> {1}\n", inst_id,
                  inst);
-  auto new_const_id = TryEvalInst(context, inst_id, inst);
+  auto new_const_id = TryEvalInstUnsafe(context, inst_id, inst);
   CARBON_CHECK(old_const_id == new_const_id);
 }
 

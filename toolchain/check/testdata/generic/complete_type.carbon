@@ -15,7 +15,7 @@ library "[[@TEST_NAME]]";
 class B;
 
 class A(T:! type) {
-  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+6]]:10: error: type `B` is incomplete [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+6]]:10: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   var v: T;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
@@ -61,7 +61,7 @@ library "[[@TEST_NAME]]";
 class B;
 
 fn F(T:! type) {
-  // CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+6]]:10: error: type `B` is incomplete [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+6]]:10: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   var v: T;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]

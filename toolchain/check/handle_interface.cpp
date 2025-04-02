@@ -174,7 +174,7 @@ auto HandleParseNode(Context& context,
   SemIR::FacetType facet_type =
       FacetTypeFromInterface(context, interface_id, self_specific_id);
   SemIR::TypeId self_type_id = context.types().GetTypeIdForTypeConstantId(
-      TryEvalInst(context, SemIR::InstId::None, facet_type));
+      TryEvalInst(context, facet_type));
 
   // We model `Self` as a symbolic binding whose type is the interface.
   // Because there is no equivalent non-symbolic value, we use `None` as
