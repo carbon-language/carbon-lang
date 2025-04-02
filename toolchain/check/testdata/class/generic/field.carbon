@@ -220,7 +220,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.1
@@ -234,7 +234,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%i32) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -246,7 +246,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc19_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc19_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc19_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %Class.loc19_26.2 => constants.%Class.fe1b2d.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -254,7 +254,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%U) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%U
-// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%U
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.2
@@ -266,7 +266,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%U) {
 // CHECK:STDOUT:   %U.loc23_6.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc23_6.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc23_6.2 => constants.%U.patt
 // CHECK:STDOUT:   %Class.loc23_26.2 => constants.%Class.fe1b2d.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

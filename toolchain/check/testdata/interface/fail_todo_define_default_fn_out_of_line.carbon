@@ -329,7 +329,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C.7e5
 // CHECK:STDOUT:   %U.loc14_22.1 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc14 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc14 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(@F.%Self) {}

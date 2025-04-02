@@ -247,22 +247,24 @@ auto EvalConstantInst(Context& context, SemIRLoc loc,
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
     auto elements = context.inst_blocks().Get(witness->elements_id);
-    auto index = static_cast<size_t>(inst.index.index);
-    CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-    auto element = elements[index];
-    if (!element.has_value()) {
-      // TODO: Perhaps this should be a `{}` value with incomplete type?
-      CARBON_DIAGNOSTIC(ImplAccessMemberBeforeComplete, Error,
-                        "accessing member from impl before the end of "
-                        "its definition");
-      // TODO: Add note pointing to the impl declaration.
-      context.emitter().Emit(loc, ImplAccessMemberBeforeComplete);
-      return ConstantEvalResult::Error;
+    // `elements` can be empty if there is only a forward declaration of the
+    // impl.
+    if (!elements.empty()) {
+      auto index = static_cast<size_t>(inst.index.index);
+      CARBON_CHECK(index < elements.size(), "Access out of bounds.");
+      auto element = elements[index];
+      if (element.has_value()) {
+        LoadImportRef(context, element);
+        return ConstantEvalResult::Existing(GetConstantValueInSpecific(
+            context.sem_ir(), witness->specific_id, element));
+      }
     }
-
-    LoadImportRef(context, element);
-    return ConstantEvalResult::Existing(GetConstantValueInSpecific(
-        context.sem_ir(), witness->specific_id, element));
+    CARBON_DIAGNOSTIC(
+        ImplAccessMemberBeforeSet, Error,
+        "accessing member from impl before it has a defined value");
+    // TODO: Add note pointing to the impl declaration.
+    context.emitter().Emit(loc, ImplAccessMemberBeforeSet);
+    return ConstantEvalResult::Error;
   }
 
   return ConstantEvalResult::NewSamePhase(inst);

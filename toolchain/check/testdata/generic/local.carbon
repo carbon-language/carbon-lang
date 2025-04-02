@@ -163,14 +163,14 @@ class C(C:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc5_11.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc5_11.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc5_11.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(%T.loc5_11.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
 // CHECK:STDOUT:   %T.loc5_11.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc5_11.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc5_11.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -237,7 +237,7 @@ class C(C:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%C.8b3) {
 // CHECK:STDOUT:   %C.loc13_11.2 => constants.%C.8b3
-// CHECK:STDOUT:   %C.patt.loc13_11.2 => constants.%C.8b3
+// CHECK:STDOUT:   %C.patt.loc13_11.2 => constants.%C.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon
@@ -289,6 +289,6 @@ class C(C:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%C.8b3) {
 // CHECK:STDOUT:   %C.loc4_9.2 => constants.%C.8b3
-// CHECK:STDOUT:   %C.patt.loc4_9.2 => constants.%C.8b3
+// CHECK:STDOUT:   %C.patt.loc4_9.2 => constants.%C.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

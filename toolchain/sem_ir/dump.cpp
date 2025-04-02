@@ -125,9 +125,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
         << "  - " << DumpConstantSummary(file, rewrite.lhs_const_id) << "\n"
         << "  - " << DumpConstantSummary(file, rewrite.rhs_const_id);
   }
-  if (auto complete_id = file.complete_facet_types().TryGetId(facet_type_id);
-      complete_id.has_value()) {
-    out << "\ncomplete: " << Dump(file, complete_id);
+  if (auto identified_id =
+          file.identified_facet_types().TryGetId(facet_type_id);
+      identified_id.has_value()) {
+    out << "\nidentified: " << Dump(file, identified_id);
   }
   return out.TakeStr();
 }
@@ -276,24 +277,28 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file,
-                           CompleteFacetTypeId complete_facet_type_id)
+                           IdentifiedFacetTypeId identified_facet_type_id)
     -> std::string {
   RawStringOstream out;
-  out << complete_facet_type_id;
-  if (!complete_facet_type_id.has_value()) {
+  out << identified_facet_type_id;
+  if (!identified_facet_type_id.has_value()) {
     return out.TakeStr();
   }
 
-  const auto& complete_facet_type =
-      file.complete_facet_types().Get(complete_facet_type_id);
+  const auto& identified_facet_type =
+      file.identified_facet_types().Get(identified_facet_type_id);
   for (auto [i, req_interface] :
-       llvm::enumerate(complete_facet_type.required_interfaces)) {
+       llvm::enumerate(identified_facet_type.required_interfaces())) {
     out << "\n  - " << Dump(file, req_interface.interface_id);
     if (req_interface.specific_id.has_value()) {
       out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
     }
-    if (static_cast<int>(i) < complete_facet_type.num_to_impl) {
+    if (req_interface == identified_facet_type.impl_as_target_interface()) {
       out << " (to impl)";
+    }
+    if (!identified_facet_type.is_valid_impl_as_target()) {
+      out << "\n  - (" << identified_facet_type.num_interfaces_to_impl()
+          << " to impl)\n";
     }
   }
   return out.TakeStr();
@@ -415,9 +420,9 @@ LLVM_DUMP_METHOD static auto MakeNameId(int id) -> NameId { return NameId(id); }
 LLVM_DUMP_METHOD static auto MakeNameScopeId(int id) -> NameScopeId {
   return NameScopeId(id);
 }
-LLVM_DUMP_METHOD static auto MakeCompleteFacetTypeId(int id)
-    -> CompleteFacetTypeId {
-  return CompleteFacetTypeId(id);
+LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
+    -> IdentifiedFacetTypeId {
+  return IdentifiedFacetTypeId(id);
 }
 LLVM_DUMP_METHOD static auto MakeSpecificId(int id) -> SpecificId {
   return SpecificId(id);

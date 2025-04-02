@@ -315,14 +315,14 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc4_18.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(%T.loc4_18.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc8_23.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc8_23.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc8_23.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.8b3, constants.%Self.088) {}
@@ -331,7 +331,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_18.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.patt.e01
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Simple.type => constants.%Simple.type.51f
@@ -340,7 +340,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%C) {
 // CHECK:STDOUT:   %T.loc8_23.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc8_23.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc8_23.2 => constants.%T.patt.e01
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %WithAssocFn.type => constants.%WithAssocFn.type.683
@@ -355,21 +355,21 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.8b3, constants.%N) {
 // CHECK:STDOUT:   %T.loc22_28.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc22_28.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc22_28.2 => constants.%T.patt.e01
 // CHECK:STDOUT:   %N.loc22_38.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc22_38.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc22_38.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(constants.%T.692) {
 // CHECK:STDOUT:   %T.loc24_12.2 => constants.%T.692
-// CHECK:STDOUT:   %T.patt.loc24_12.2 => constants.%T.692
+// CHECK:STDOUT:   %T.patt.loc24_12.2 => constants.%T.patt.6ae
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Pass(constants.%T.692) {
 // CHECK:STDOUT:   %T.loc25_9.2 => constants.%T.692
-// CHECK:STDOUT:   %T.patt.loc25_9.2 => constants.%T.692
+// CHECK:STDOUT:   %T.patt.loc25_9.2 => constants.%T.patt.6ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Receive(@Pass.%T.loc25_9.2) {}
@@ -492,28 +492,28 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(%T.loc4_19.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%A
-// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%A
+// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.a53) {
 // CHECK:STDOUT:   %T.loc9_6.2 => constants.%T.a53
-// CHECK:STDOUT:   %T.patt.loc9_6.2 => constants.%T.a53
+// CHECK:STDOUT:   %T.patt.loc9_6.2 => constants.%T.patt.3e0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%B) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%B
-// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%B
+// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.bae) {
 // CHECK:STDOUT:   %T.loc10_6.2 => constants.%T.bae
-// CHECK:STDOUT:   %T.patt.loc10_6.2 => constants.%T.bae
+// CHECK:STDOUT:   %T.patt.loc10_6.2 => constants.%T.patt.53a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

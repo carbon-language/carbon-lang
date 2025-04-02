@@ -157,24 +157,24 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NotGeneric.2(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc19_22.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc19_22.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc19_22.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NotGeneric.2(%T.loc19_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.1(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc21_19.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc21_19.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc21_19.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.1(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc31_27.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc31_27.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc31_27.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.2(constants.%T.7a6) {
 // CHECK:STDOUT:   %T.loc39_27.2 => constants.%T.7a6
-// CHECK:STDOUT:   %T.patt.loc39_27.2 => constants.%T.7a6
+// CHECK:STDOUT:   %T.patt.loc39_27.2 => constants.%T.patt.e60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.2(%T.loc39_27.2) {}

@@ -132,7 +132,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc4_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.patt.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_init_template_dependent_bound.carbon
@@ -263,12 +263,12 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc5_15.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc5_15.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc5_15.2 => constants.%N.patt.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%int_3.822) {
 // CHECK:STDOUT:   %N.loc5_15.2 => constants.%int_3.822
-// CHECK:STDOUT:   %N.patt.loc5_15.2 => constants.%int_3.822
+// CHECK:STDOUT:   %N.patt.loc5_15.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc10_23.2 => constants.%inst.splice_block

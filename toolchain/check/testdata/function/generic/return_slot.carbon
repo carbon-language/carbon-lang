@@ -210,7 +210,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.652
@@ -235,7 +235,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%i32) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.572
@@ -254,7 +254,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.20e
@@ -273,7 +273,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%C) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.708

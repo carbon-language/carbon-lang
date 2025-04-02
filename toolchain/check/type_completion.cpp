@@ -286,21 +286,12 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
-      if (context_->complete_facet_types()
-              .TryGetId(inst.facet_type_id)
-              .has_value()) {
-        break;
-      }
-      const auto& facet_type_info =
-          context_->facet_types().Get(inst.facet_type_id);
-
-      SemIR::CompleteFacetType result;
-      result.required_interfaces.reserve(
-          facet_type_info.impls_constraints.size());
-      // Every mentioned interface needs to be defined.
-      for (auto impl_interface : facet_type_info.impls_constraints) {
-        // TODO: expand named constraints
-        auto interface_id = impl_interface.interface_id;
+      auto identified_id = RequireIdentifiedFacetType(*context_, inst);
+      const auto& identified =
+          context_->identified_facet_types().Get(identified_id);
+      // Every mentioned interface needs to be complete.
+      for (auto req_interface : identified.required_interfaces()) {
+        auto interface_id = req_interface.interface_id;
         const auto& interface = context_->interfaces().Get(interface_id);
         if (!interface.is_complete()) {
           if (diagnoser_) {
@@ -311,22 +302,10 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
           return false;
         }
 
-        if (impl_interface.specific_id.has_value()) {
-          ResolveSpecificDefinition(*context_, loc_,
-                                    impl_interface.specific_id);
+        if (req_interface.specific_id.has_value()) {
+          ResolveSpecificDefinition(*context_, loc_, req_interface.specific_id);
         }
-        result.required_interfaces.push_back(
-            {.interface_id = interface_id,
-             .specific_id = impl_interface.specific_id});
       }
-      result.CanonicalizeRequiredInterfaces();
-
-      // TODO: Distinguish interfaces that are required but would not be
-      // implemented, such as those from `where .Self impls I`.
-      result.num_to_impl = result.required_interfaces.size();
-
-      // TODO: Process other kinds of requirements.
-      context_->complete_facet_types().Add(inst.facet_type_id, result);
       break;
     }
 
@@ -625,16 +604,31 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
-                              SemIR::LocId loc_id,
-                              const SemIR::FacetType& facet_type,
-                              MakeDiagnosticBuilderFn diagnoser)
-    -> SemIR::CompleteFacetTypeId {
-  if (!RequireCompleteType(context, type_id, loc_id, diagnoser)) {
-    return SemIR::CompleteFacetTypeId::None;
+auto RequireIdentifiedFacetType(Context& context,
+                                const SemIR::FacetType& facet_type)
+    -> SemIR::IdentifiedFacetTypeId {
+  if (auto identified_id =
+          context.identified_facet_types().TryGetId(facet_type.facet_type_id);
+      identified_id.has_value()) {
+    return identified_id;
+  }
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
+
+  SemIR::IdentifiedFacetType result;
+  // TODO: expand named constraints
+  result.set_required_interfaces(facet_type_info.impls_constraints);
+
+  // TODO: Distinguish interfaces that are required but would not be
+  // implemented, such as those from `where .Self impls I`.
+  if (result.required_interfaces().size() == 1) {
+    result.set_interface_to_impl(result.required_interfaces().front());
+  } else {
+    result.set_num_interfaces_to_impl(result.required_interfaces().size());
   }
 
-  return context.complete_facet_types().TryGetId(facet_type.facet_type_id);
+  // TODO: Process other kinds of requirements.
+  return context.identified_facet_types().Add(facet_type.facet_type_id, result);
 }
 
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,

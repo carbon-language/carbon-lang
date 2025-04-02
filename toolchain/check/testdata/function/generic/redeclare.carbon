@@ -162,7 +162,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_20.2 => constants.%ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -259,17 +259,17 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc4_16.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc4_16.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc4_16.2 => constants.%U.patt
 // CHECK:STDOUT:   %ptr.loc4_30.2 => constants.%ptr.79f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc13_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc13_16.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc13_16.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc13_16.2 => constants.%U.patt
 // CHECK:STDOUT:   %ptr.loc13_30.2 => constants.%ptr.b51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -364,17 +364,17 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.8b3, constants.%U.336) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt.e01
 // CHECK:STDOUT:   %U.loc4_16.2 => constants.%U.336
-// CHECK:STDOUT:   %U.patt.loc4_16.2 => constants.%U.336
+// CHECK:STDOUT:   %U.patt.loc4_16.2 => constants.%U.patt.7a9
 // CHECK:STDOUT:   %ptr.loc4_30.2 => constants.%ptr.79f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%U.8b3, constants.%T.336) {
 // CHECK:STDOUT:   %U.loc13_6.2 => constants.%U.8b3
-// CHECK:STDOUT:   %U.patt.loc13_6.2 => constants.%U.8b3
+// CHECK:STDOUT:   %U.patt.loc13_6.2 => constants.%U.patt.e01
 // CHECK:STDOUT:   %T.loc13_16.2 => constants.%T.336
-// CHECK:STDOUT:   %T.patt.loc13_16.2 => constants.%T.336
+// CHECK:STDOUT:   %T.patt.loc13_16.2 => constants.%T.patt.7a9
 // CHECK:STDOUT:   %ptr.loc13_30.2 => constants.%ptr.b51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -469,17 +469,17 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.8b3, constants.%U.336) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt.e01
 // CHECK:STDOUT:   %U.loc4_16.2 => constants.%U.336
-// CHECK:STDOUT:   %U.patt.loc4_16.2 => constants.%U.336
+// CHECK:STDOUT:   %U.patt.loc4_16.2 => constants.%U.patt.7a9
 // CHECK:STDOUT:   %ptr.loc4_30.2 => constants.%ptr.79f131.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%U.8b3, constants.%T.336) {
 // CHECK:STDOUT:   %U.loc13_6.2 => constants.%U.8b3
-// CHECK:STDOUT:   %U.patt.loc13_6.2 => constants.%U.8b3
+// CHECK:STDOUT:   %U.patt.loc13_6.2 => constants.%U.patt.e01
 // CHECK:STDOUT:   %T.loc13_16.2 => constants.%T.336
-// CHECK:STDOUT:   %T.patt.loc13_16.2 => constants.%T.336
+// CHECK:STDOUT:   %T.patt.loc13_16.2 => constants.%T.patt.7a9
 // CHECK:STDOUT:   %ptr.loc13_30.2 => constants.%ptr.79f131.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

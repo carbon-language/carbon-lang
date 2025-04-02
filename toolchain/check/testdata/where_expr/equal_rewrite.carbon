@@ -269,7 +269,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_10.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_10.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_10.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_rewrites.carbon
@@ -393,7 +393,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NestedRewrite(constants.%D) {
 // CHECK:STDOUT:   %D.loc9_18.2 => constants.%D
-// CHECK:STDOUT:   %D.patt.loc9_18.2 => constants.%D
+// CHECK:STDOUT:   %D.patt.loc9_18.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- repeated_rewrite.carbon
@@ -586,17 +586,17 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%G) {
 // CHECK:STDOUT:   %G.loc8_15.2 => constants.%G
-// CHECK:STDOUT:   %G.patt.loc8_15.2 => constants.%G
+// CHECK:STDOUT:   %G.patt.loc8_15.2 => constants.%G.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RepeatedRewrite(constants.%H) {
 // CHECK:STDOUT:   %H.loc10_20.2 => constants.%H
-// CHECK:STDOUT:   %H.patt.loc10_20.2 => constants.%H
+// CHECK:STDOUT:   %H.patt.loc10_20.2 => constants.%H.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%H) {
 // CHECK:STDOUT:   %G.loc8_15.2 => constants.%H
-// CHECK:STDOUT:   %G.patt.loc8_15.2 => constants.%H
+// CHECK:STDOUT:   %G.patt.loc8_15.2 => constants.%G.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -605,12 +605,12 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewriteAgain(constants.%I) {
 // CHECK:STDOUT:   %I.loc14_20.2 => constants.%I
-// CHECK:STDOUT:   %I.patt.loc14_20.2 => constants.%I
+// CHECK:STDOUT:   %I.patt.loc14_20.2 => constants.%I.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RepeatedRewrite(constants.%I) {
 // CHECK:STDOUT:   %H.loc10_20.2 => constants.%I
-// CHECK:STDOUT:   %H.patt.loc10_20.2 => constants.%I
+// CHECK:STDOUT:   %H.patt.loc10_20.2 => constants.%H.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OneRewrite.specific_fn.loc11_3.2 => constants.%OneRewrite.specific_fn.90a0d5.2
@@ -620,7 +620,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {
 // CHECK:STDOUT:   %G.loc8_15.2 => constants.%I
-// CHECK:STDOUT:   %G.patt.loc8_15.2 => constants.%I
+// CHECK:STDOUT:   %G.patt.loc8_15.2 => constants.%G.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -796,17 +796,17 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Alphabetical(constants.%M) {
 // CHECK:STDOUT:   %M.loc9_17.2 => constants.%M
-// CHECK:STDOUT:   %M.patt.loc9_17.2 => constants.%M
+// CHECK:STDOUT:   %M.patt.loc9_17.2 => constants.%M.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Reversed(constants.%N) {
 // CHECK:STDOUT:   %N.loc11_13.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc11_13.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc11_13.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Alphabetical(constants.%N) {
 // CHECK:STDOUT:   %M.loc9_17.2 => constants.%N
-// CHECK:STDOUT:   %M.patt.loc9_17.2 => constants.%N
+// CHECK:STDOUT:   %M.patt.loc9_17.2 => constants.%M.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -965,17 +965,17 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithInteger(constants.%Q) {
 // CHECK:STDOUT:   %Q.loc8_16.2 => constants.%Q
-// CHECK:STDOUT:   %Q.patt.loc8_16.2 => constants.%Q
+// CHECK:STDOUT:   %Q.patt.loc8_16.2 => constants.%Q.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithBool(constants.%R) {
 // CHECK:STDOUT:   %R.loc10_13.2 => constants.%R
-// CHECK:STDOUT:   %R.patt.loc10_13.2 => constants.%R
+// CHECK:STDOUT:   %R.patt.loc10_13.2 => constants.%R.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithInteger(constants.%O.facet.3ed) {
 // CHECK:STDOUT:   %Q.loc8_16.2 => constants.%O.facet.3ed
-// CHECK:STDOUT:   %Q.patt.loc8_16.2 => constants.%O.facet.3ed
+// CHECK:STDOUT:   %Q.patt.loc8_16.2 => constants.%Q.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -1139,19 +1139,19 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithT(constants.%V) {
 // CHECK:STDOUT:   %V.loc9_10.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc9_10.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc9_10.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @U(constants.%S.facet.140) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithU(constants.%W) {
 // CHECK:STDOUT:   %W.loc11_10.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc11_10.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc11_10.2 => constants.%W.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithT(constants.%S.facet.6fe) {
 // CHECK:STDOUT:   %V.loc9_10.2 => constants.%S.facet.6fe
-// CHECK:STDOUT:   %V.patt.loc9_10.2 => constants.%S.facet.6fe
+// CHECK:STDOUT:   %V.patt.loc9_10.2 => constants.%V.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -1271,12 +1271,12 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NestedRewrite(constants.%D) {
 // CHECK:STDOUT:   %D => constants.%D
-// CHECK:STDOUT:   %D.patt.2 => constants.%D
+// CHECK:STDOUT:   %D.patt.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_check_rewrite_constraints.carbon
@@ -1292,7 +1292,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%.Self.as_wit.iface0) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit.iface0, element0 [symbolic_self]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
-// CHECK:STDOUT:   %X.patt: <error> = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %RewriteTypeMismatch.type: type = fn_type @RewriteTypeMismatch [concrete]
 // CHECK:STDOUT:   %RewriteTypeMismatch: %RewriteTypeMismatch.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1314,7 +1313,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %RewriteTypeMismatch.decl: %RewriteTypeMismatch.type = fn_decl @RewriteTypeMismatch [concrete = constants.%RewriteTypeMismatch] {
-// CHECK:STDOUT:     %X.patt.loc16_24.1: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.patt: <error> = symbolic_binding_pattern X, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_30.1: type = splice_block %.loc16_30.2 [concrete = <error>] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -1352,18 +1351,14 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X: <error>) {
-// CHECK:STDOUT:   %X.patt.loc16_24.2: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%X.patt.loc16_24.1: <error>);
+// CHECK:STDOUT:   fn(%X.patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%Self.826) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @RewriteTypeMismatch(<error>) {
-// CHECK:STDOUT:   %X.patt.loc16_24.2 => <error>
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @RewriteTypeMismatch(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_let.carbon
 // CHECK:STDOUT:

@@ -1694,7 +1694,7 @@ class T2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {
@@ -1708,7 +1708,7 @@ class T2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T1
-// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T1
+// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.d82

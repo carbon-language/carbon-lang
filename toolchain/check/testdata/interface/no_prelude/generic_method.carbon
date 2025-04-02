@@ -405,12 +405,12 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.8b3, constants.%Self.753, constants.%U.2cb) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%U.2cb
-// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.2cb
+// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.patt.b3a
 // CHECK:STDOUT:   %T => constants.%T.8b3
 // CHECK:STDOUT:   %A.type => constants.%A.type.75a
 // CHECK:STDOUT:   %Self => constants.%Self.753
@@ -425,7 +425,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%X) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%X
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%X
+// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.patt.e01
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.type => constants.%A.type.91f
@@ -438,13 +438,13 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%U.8b3) {
 // CHECK:STDOUT:   %U.loc16_8.1 => constants.%U.8b3
-// CHECK:STDOUT:   %U.patt.loc16_8.2 => constants.%U.8b3
+// CHECK:STDOUT:   %U.patt.loc16_8.2 => constants.%U.patt.e01
 // CHECK:STDOUT:   %tuple.type.loc16 => constants.%tuple.type.765
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%X, constants.%A.facet.166, constants.%U.8b3) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%U.8b3
-// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.8b3
+// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.patt.b3a
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:   %A.type => constants.%A.type.91f
 // CHECK:STDOUT:   %Self => constants.%A.facet.166
@@ -455,7 +455,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Z) {
 // CHECK:STDOUT:   %U.loc16_8.1 => constants.%Z
-// CHECK:STDOUT:   %U.patt.loc16_8.2 => constants.%Z
+// CHECK:STDOUT:   %U.patt.loc16_8.2 => constants.%U.patt.e01
 // CHECK:STDOUT:   %tuple.type.loc16 => constants.%tuple.type.f6b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -466,12 +466,12 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGeneric(constants.%T.9c2) {
 // CHECK:STDOUT:   %T.loc25_16.2 => constants.%T.9c2
-// CHECK:STDOUT:   %T.patt.loc25_16.2 => constants.%T.9c2
+// CHECK:STDOUT:   %T.patt.loc25_16.2 => constants.%T.patt.e81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%X, constants.%A.facet.834, constants.%Z) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%Z
-// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%Z
+// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.patt.b3a
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:   %A.type => constants.%A.type.91f
 // CHECK:STDOUT:   %Self => constants.%A.facet.834
@@ -484,7 +484,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGeneric(constants.%A.facet.166) {
 // CHECK:STDOUT:   %T.loc25_16.2 => constants.%A.facet.166
-// CHECK:STDOUT:   %T.patt.loc25_16.2 => constants.%A.facet.166
+// CHECK:STDOUT:   %T.patt.loc25_16.2 => constants.%T.patt.e81
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc26_4.2 => constants.%Y
@@ -499,7 +499,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%X, constants.%A.facet.166, constants.%Z) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%Z
-// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%Z
+// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.patt.b3a
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:   %A.type => constants.%A.type.91f
 // CHECK:STDOUT:   %Self => constants.%A.facet.166
@@ -934,12 +934,12 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.8b3, constants.%Self.753, constants.%U.2cb) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%U.2cb
-// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.2cb
+// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.patt.b3a
 // CHECK:STDOUT:   %T => constants.%T.8b3
 // CHECK:STDOUT:   %A.type => constants.%A.type.75a
 // CHECK:STDOUT:   %Self => constants.%Self.753
@@ -954,7 +954,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%W) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%W
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%W
+// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.patt.e01
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.type => constants.%A.type.f21
@@ -967,11 +967,11 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%V1, constants.%V2, constants.%W) {
 // CHECK:STDOUT:   %V1.loc14_14.2 => constants.%V1
-// CHECK:STDOUT:   %V1.patt.loc14_14.2 => constants.%V1
+// CHECK:STDOUT:   %V1.patt.loc14_14.2 => constants.%V1.patt
 // CHECK:STDOUT:   %V2.loc14_25.2 => constants.%V2
-// CHECK:STDOUT:   %V2.patt.loc14_25.2 => constants.%V2
+// CHECK:STDOUT:   %V2.patt.loc14_25.2 => constants.%V2.patt
 // CHECK:STDOUT:   %W.loc14_36.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc14_36.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc14_36.2 => constants.%W.patt
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.30b
 // CHECK:STDOUT:   %A.type.loc14_61.2 => constants.%A.type.f21
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.796
@@ -988,7 +988,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%V1, constants.%V2, constants.%W, constants.%U.753) {
 // CHECK:STDOUT:   %U.loc17_8.1 => constants.%U.753
-// CHECK:STDOUT:   %U.patt.loc17_8.2 => constants.%U.753
+// CHECK:STDOUT:   %U.patt.loc17_8.2 => constants.%U.patt.cfd
 // CHECK:STDOUT:   %W => constants.%W
 // CHECK:STDOUT:   %V1 => constants.%V1
 // CHECK:STDOUT:   %V2 => constants.%V2
@@ -1009,7 +1009,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%W, constants.%A.facet.412, constants.%U.753) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%U.753
-// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.753
+// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.patt.b3a
 // CHECK:STDOUT:   %T => constants.%W
 // CHECK:STDOUT:   %A.type => constants.%A.type.f21
 // CHECK:STDOUT:   %Self => constants.%A.facet.412
@@ -1024,7 +1024,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%X) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%X
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%X
+// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.patt.e01
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.type => constants.%A.type.91f
@@ -1037,11 +1037,11 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%Y1, constants.%Y2, constants.%X) {
 // CHECK:STDOUT:   %V1.loc14_14.2 => constants.%Y1
-// CHECK:STDOUT:   %V1.patt.loc14_14.2 => constants.%Y1
+// CHECK:STDOUT:   %V1.patt.loc14_14.2 => constants.%V1.patt
 // CHECK:STDOUT:   %V2.loc14_25.2 => constants.%Y2
-// CHECK:STDOUT:   %V2.patt.loc14_25.2 => constants.%Y2
+// CHECK:STDOUT:   %V2.patt.loc14_25.2 => constants.%V2.patt
 // CHECK:STDOUT:   %W.loc14_36.2 => constants.%X
-// CHECK:STDOUT:   %W.patt.loc14_36.2 => constants.%X
+// CHECK:STDOUT:   %W.patt.loc14_36.2 => constants.%W.patt
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.a46
 // CHECK:STDOUT:   %A.type.loc14_61.2 => constants.%A.type.91f
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.d76
@@ -1054,7 +1054,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Y1, constants.%Y2, constants.%X, constants.%Z) {
 // CHECK:STDOUT:   %U.loc17_8.1 => constants.%Z
-// CHECK:STDOUT:   %U.patt.loc17_8.2 => constants.%Z
+// CHECK:STDOUT:   %U.patt.loc17_8.2 => constants.%U.patt.cfd
 // CHECK:STDOUT:   %W => constants.%X
 // CHECK:STDOUT:   %V1 => constants.%Y1
 // CHECK:STDOUT:   %V2 => constants.%Y2
@@ -1075,12 +1075,12 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGeneric(constants.%T.9c2) {
 // CHECK:STDOUT:   %T.loc27_16.2 => constants.%T.9c2
-// CHECK:STDOUT:   %T.patt.loc27_16.2 => constants.%T.9c2
+// CHECK:STDOUT:   %T.patt.loc27_16.2 => constants.%T.patt.e81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%X, constants.%A.facet.834, constants.%Z) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%Z
-// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%Z
+// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.patt.b3a
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:   %A.type => constants.%A.type.91f
 // CHECK:STDOUT:   %Self => constants.%A.facet.834
@@ -1093,7 +1093,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGeneric(constants.%A.facet.058) {
 // CHECK:STDOUT:   %T.loc27_16.2 => constants.%A.facet.058
-// CHECK:STDOUT:   %T.patt.loc27_16.2 => constants.%A.facet.058
+// CHECK:STDOUT:   %T.patt.loc27_16.2 => constants.%T.patt.e81
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc28_4.2 => constants.%tuple.type.a46
@@ -1108,7 +1108,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%X, constants.%A.facet.058, constants.%Z) {
 // CHECK:STDOUT:   %U.loc6_8.1 => constants.%Z
-// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%Z
+// CHECK:STDOUT:   %U.patt.loc6_8.2 => constants.%U.patt.b3a
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:   %A.type => constants.%A.type.91f
 // CHECK:STDOUT:   %Self => constants.%A.facet.058

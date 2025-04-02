@@ -61,23 +61,24 @@ class OutputMapping {
  public:
   class Map {
    public:
-    explicit Map(llvm::yaml::IO& io) : io_(io) {}
+    // `io` must not be null.
+    explicit Map(llvm::yaml::IO* io) : io_(io) {}
 
     // Maps a value. This mainly takes responsibility for copying the value,
     // letting mapRequired take `&value`.
     template <typename T>
     auto Add(llvm::StringRef key, T value) -> void {
-      io_.mapRequired(key.data(), value);
+      io_->mapRequired(key.data(), value);
     }
 
    private:
-    llvm::yaml::IO& io_;
+    llvm::yaml::IO* io_;
   };
 
   explicit OutputMapping(std::function<auto(OutputMapping::Map)->void> output)
       : output_(std::move(output)) {}
 
-  auto Output(llvm::yaml::IO& io) -> void { output_(Map(io)); }
+  auto Output(llvm::yaml::IO& io) -> void { output_(Map(&io)); }
 
  private:
   std::function<auto(OutputMapping::Map)->void> output_;

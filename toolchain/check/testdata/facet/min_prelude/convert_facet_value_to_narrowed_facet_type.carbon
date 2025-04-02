@@ -317,7 +317,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T.1b5) {
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%T.1b5
-// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.1b5
+// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt.6be
 // CHECK:STDOUT:   %T.as_type.loc6_22.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -328,7 +328,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T.8b3) {
 // CHECK:STDOUT:   %T => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.e01
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.db8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -340,7 +340,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(type) {
 // CHECK:STDOUT:   %T => type
-// CHECK:STDOUT:   %T.patt => type
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.e01
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.3ea
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -357,13 +357,13 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%U) {
 // CHECK:STDOUT:   %U.loc8_17.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc8_17.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc8_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.as_type.loc8_39.2 => constants.%U.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Eats.facet) {
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%Eats.facet
-// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%Eats.facet
+// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt.6be
 // CHECK:STDOUT:   %T.as_type.loc6_22.2 => constants.%U.as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -632,7 +632,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.db8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -644,7 +644,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(type) {
 // CHECK:STDOUT:   %T => type
-// CHECK:STDOUT:   %T.patt => type
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.3ea
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -661,19 +661,19 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame(constants.%V) {
 // CHECK:STDOUT:   %V.loc7_13.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc7_13.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc7_13.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc7_33.2 => constants.%V.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleTameAnimal(constants.%W) {
 // CHECK:STDOUT:   %W.loc9_21.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc9_21.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc9_21.2 => constants.%W.patt
 // CHECK:STDOUT:   %W.as_type.loc9_50.2 => constants.%W.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame(constants.%facet_value) {
 // CHECK:STDOUT:   %V.loc7_13.2 => constants.%facet_value
-// CHECK:STDOUT:   %V.patt.loc7_13.2 => constants.%facet_value
+// CHECK:STDOUT:   %V.patt.loc7_13.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc7_33.2 => constants.%W.as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -968,7 +968,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.e7b(constants.%A) {
 // CHECK:STDOUT:   %A.loc7_14.2 => constants.%A
-// CHECK:STDOUT:   %A.patt.loc7_14.2 => constants.%A
+// CHECK:STDOUT:   %A.patt.loc7_14.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.as_type.loc7_26.2 => constants.%A.as_type
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.110
 // CHECK:STDOUT: }
@@ -982,7 +982,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.f92(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.db8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -994,7 +994,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.f92(type) {
 // CHECK:STDOUT:   %T => type
-// CHECK:STDOUT:   %T.patt => type
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.3ea
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1011,19 +1011,19 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame2(constants.%V) {
 // CHECK:STDOUT:   %V.loc9_14.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc9_14.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc9_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc9_34.2 => constants.%V.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleTameAnimal2(constants.%W) {
 // CHECK:STDOUT:   %W.loc11_22.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc11_22.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc11_22.2 => constants.%W.patt
 // CHECK:STDOUT:   %W.as_type.loc11_44.2 => constants.%W.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.e7b(constants.%Animal.facet) {
 // CHECK:STDOUT:   %A.loc7_14.2 => constants.%Animal.facet
-// CHECK:STDOUT:   %A.patt.loc7_14.2 => constants.%Animal.facet
+// CHECK:STDOUT:   %A.patt.loc7_14.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.as_type.loc7_26.2 => constants.%W.as_type
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.1d8
 // CHECK:STDOUT:
@@ -1032,7 +1032,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame2(constants.%facet_value) {
 // CHECK:STDOUT:   %V.loc9_14.2 => constants.%facet_value
-// CHECK:STDOUT:   %V.patt.loc9_14.2 => constants.%facet_value
+// CHECK:STDOUT:   %V.patt.loc9_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc9_34.2 => constants.%W.as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1174,19 +1174,19 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesA(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_11.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_11.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_11.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc7_21.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithExtraWhere(constants.%U) {
 // CHECK:STDOUT:   %U.loc9_19.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc9_19.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc9_19.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.as_type.loc9_52.2 => constants.%U.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesA(constants.%A.facet) {
 // CHECK:STDOUT:   %T.loc7_11.2 => constants.%A.facet
-// CHECK:STDOUT:   %T.patt.loc7_11.2 => constants.%A.facet
+// CHECK:STDOUT:   %T.patt.loc7_11.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc7_21.2 => constants.%U.as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1351,18 +1351,18 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesTypeDeduced(constants.%T) {
 // CHECK:STDOUT:   %T.loc3_21.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc3_21.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc3_21.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallsWithExtraWhere(constants.%U) {
 // CHECK:STDOUT:   %U.loc4_24.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc4_24.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc4_24.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.as_type.loc4_60.2 => constants.%U.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesTypeDeduced(constants.%U.as_type) {
 // CHECK:STDOUT:   %T.loc3_21.2 => constants.%U.as_type
-// CHECK:STDOUT:   %T.patt.loc3_21.2 => constants.%U.as_type
+// CHECK:STDOUT:   %T.patt.loc3_21.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.220
@@ -1372,17 +1372,17 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesTypeExplicit(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_22.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_22.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_22.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallsWithExtraWhereExplicit(constants.%U) {
 // CHECK:STDOUT:   %U.loc9_32.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc9_32.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc9_32.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesTypeExplicit(constants.%U.as_type) {
 // CHECK:STDOUT:   %T.loc8_22.2 => constants.%U.as_type
-// CHECK:STDOUT:   %T.patt.loc8_22.2 => constants.%U.as_type
+// CHECK:STDOUT:   %T.patt.loc8_22.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -1533,23 +1533,23 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesExtraWhereDeduced(constants.%T) {
 // CHECK:STDOUT:   %T.loc3_27.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc3_27.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc3_27.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc3_63.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallsWithType(constants.%U) {
 // CHECK:STDOUT:   %U.loc4_18.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc4_18.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc4_18.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesExtraWhereExplicit(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_28.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc15_28.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc15_28.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallsWithTypeExplicit(constants.%U) {
 // CHECK:STDOUT:   %U.loc16_26.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc16_26.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc16_26.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/facet_types.carbon
@@ -1811,7 +1811,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc9_14.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc9_14.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc9_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
@@ -1827,7 +1827,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc13_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc13_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc13_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {
@@ -1848,7 +1848,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc21_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc21_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

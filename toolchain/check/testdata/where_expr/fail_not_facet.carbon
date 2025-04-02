@@ -45,7 +45,6 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %T.patt: <error> = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -66,7 +65,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc8_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_14.1: type = splice_block %.loc8_14.2 [concrete = <error>] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -83,21 +82,16 @@ var v: e where .x = 3;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T: <error>) {
-// CHECK:STDOUT:   %T.patt.loc8_6.2: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc8_6.1: <error>);
+// CHECK:STDOUT:   fn(%T.patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(<error>) {
-// CHECK:STDOUT:   %T.patt.loc8_6.2 => <error>
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_left_where_unknown.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %U.patt: <error> = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -118,7 +112,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %U.patt.loc8_6.1: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt: <error> = symbolic_binding_pattern U, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_23.1: type = splice_block %.loc8_23.2 [concrete = <error>] {
 // CHECK:STDOUT:       %NOT_DECLARED.ref: <error> = name_ref NOT_DECLARED, <error> [concrete = <error>]
@@ -134,14 +128,10 @@ var v: e where .x = 3;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%U: <error>) {
-// CHECK:STDOUT:   %U.patt.loc8_6.2: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.patt.loc8_6.1: <error>);
+// CHECK:STDOUT:   fn(%U.patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(<error>) {
-// CHECK:STDOUT:   %U.patt.loc8_6.2 => <error>
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @G(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_var.carbon
 // CHECK:STDOUT:

@@ -141,7 +141,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_list.carbon
@@ -197,7 +197,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon
@@ -279,14 +279,14 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.1(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc4_9.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc4_9.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc4_9.2 => constants.%N.patt.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.2(constants.%T, constants.%N.f22) {
 // CHECK:STDOUT:   %T.loc12_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc12_19.2 => constants.%N.f22
-// CHECK:STDOUT:   %N.patt.loc12_19.2 => constants.%N.f22
+// CHECK:STDOUT:   %N.patt.loc12_19.2 => constants.%N.patt.51c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_count.carbon
@@ -365,14 +365,14 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.2(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc12_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc12_19.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc12_19.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc12_19.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_type.carbon
@@ -447,12 +447,12 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.1(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.2(constants.%T.51e) {
 // CHECK:STDOUT:   %T.loc12_9.2 => constants.%T.51e
-// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T.51e
+// CHECK:STDOUT:   %T.patt.loc12_9.2 => constants.%T.patt.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_name.carbon
@@ -520,11 +520,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E.2(constants.%U) {
 // CHECK:STDOUT:   %U.loc12_9.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc12_9.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc12_9.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

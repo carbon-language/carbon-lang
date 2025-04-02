@@ -385,14 +385,14 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
 // CHECK:STDOUT:   %T.loc3_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(%T.loc3_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%U) {
 // CHECK:STDOUT:   %U.loc7_13.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%U, constants.%Self.209206.1) {
@@ -408,7 +408,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%V) {
 // CHECK:STDOUT:   %T.loc3_9.2 => constants.%V
-// CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%V
+// CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.2
@@ -420,7 +420,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%V) {
 // CHECK:STDOUT:   %U.loc7_13.2 => constants.%V
-// CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%V
+// CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.325e65.2
@@ -433,7 +433,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%V) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %A.loc11_27.2 => constants.%A.13025a.2
 // CHECK:STDOUT:   %I.type.loc11_35.2 => constants.%I.type.325e65.2
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.cfebb2.1
@@ -466,7 +466,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%W) {
 // CHECK:STDOUT:   %T.loc3_9.2 => constants.%W
-// CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%W
+// CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.3
@@ -478,7 +478,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestGeneric(constants.%W) {
 // CHECK:STDOUT:   %W.loc17_16.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc17_16.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc17_16.2 => constants.%W.patt
 // CHECK:STDOUT:   %A.loc17_32.2 => constants.%A.13025a.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -486,7 +486,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%W) {
 // CHECK:STDOUT:   %U.loc7_13.2 => constants.%W
-// CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%W
+// CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.325e65.3
@@ -499,7 +499,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%W) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%W
-// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%W
+// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %A.loc11_27.2 => constants.%A.13025a.3
 // CHECK:STDOUT:   %I.type.loc11_35.2 => constants.%I.type.325e65.3
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.cfebb2.2
@@ -523,7 +523,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc3_9.2 => constants.%empty_struct_type
-// CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.357
@@ -535,7 +535,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %U.loc7_13.2 => constants.%empty_struct_type
-// CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.885
@@ -548,7 +548,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%empty_struct_type
-// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %A.loc11_27.2 => constants.%A.235
 // CHECK:STDOUT:   %I.type.loc11_35.2 => constants.%I.type.885
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.788

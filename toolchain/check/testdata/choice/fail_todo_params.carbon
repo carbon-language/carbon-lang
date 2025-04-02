@@ -208,7 +208,7 @@ choice C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc3_10.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc3_10.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc3_10.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_self_param.carbon
