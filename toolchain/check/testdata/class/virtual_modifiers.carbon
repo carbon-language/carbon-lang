@@ -552,6 +552,7 @@ class T2 {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
+// CHECK:STDOUT:   %Modifiers.import_ref.ace = import_ref Modifiers//default, loc6_1, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
@@ -585,7 +586,7 @@ class T2 {
 // CHECK:STDOUT:   %v.var: ref %Base = var v
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_28.2: ref %ptr.454 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %.loc7_28.3: ref %ptr.454 = vtable_ptr
+// CHECK:STDOUT:   %.loc7_28.3: ref %ptr.454 = vtable_ptr imports.%Modifiers.import_ref.ace
 // CHECK:STDOUT:   %.loc7_28.4: init %ptr.454 = initialize_from %.loc7_28.3 to %.loc7_28.2
 // CHECK:STDOUT:   %.loc7_28.5: init %Base = class_init (%.loc7_28.4), %v.var
 // CHECK:STDOUT:   %.loc7_3.2: init %Base = converted %.loc7_28.1, %.loc7_28.5
@@ -964,7 +965,7 @@ class T2 {
 // CHECK:STDOUT:   %i.ref.loc14_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.68c = struct_literal (%i.ref.loc14_25, %i.ref.loc14_34)
 // CHECK:STDOUT:   %.loc14_35.2: ref %ptr.454 = class_element_access %b1.var, element0
-// CHECK:STDOUT:   %.loc14_35.3: ref %ptr.454 = vtable_ptr
+// CHECK:STDOUT:   %.loc14_35.3: ref %ptr.454 = vtable_ptr @Base.%.loc9
 // CHECK:STDOUT:   %.loc14_35.4: init %ptr.454 = initialize_from %.loc14_35.3 to %.loc14_35.2
 // CHECK:STDOUT:   %.loc14_34: %i32 = bind_value %i.ref.loc14_34
 // CHECK:STDOUT:   %.loc14_35.5: ref %i32 = class_element_access %b1.var, element2
@@ -986,7 +987,7 @@ class T2 {
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc15_35.1: %struct_type.m2.m1.5f2 = struct_literal (%int_3.loc15, %int_5)
 // CHECK:STDOUT:   %.loc15_35.2: ref %ptr.454 = class_element_access %b2.var, element0
-// CHECK:STDOUT:   %.loc15_35.3: ref %ptr.454 = vtable_ptr
+// CHECK:STDOUT:   %.loc15_35.3: ref %ptr.454 = vtable_ptr @Base.%.loc9
 // CHECK:STDOUT:   %.loc15_35.4: init %ptr.454 = initialize_from %.loc15_35.3 to %.loc15_35.2
 // CHECK:STDOUT:   %impl.elem0.loc15_35.1: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [concrete = constants.%Convert.bound.4e6]

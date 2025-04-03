@@ -370,12 +370,10 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
 
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
 template <typename TargetAccessInstT>
-static auto ConvertStructToStructOrClass(Context& context,
-                                         SemIR::StructType src_type,
-                                         SemIR::StructType dest_type,
-                                         SemIR::InstId value_id,
-                                         ConversionTarget target)
-    -> SemIR::InstId {
+static auto ConvertStructToStructOrClass(
+    Context& context, SemIR::StructType src_type, SemIR::StructType dest_type,
+    SemIR::InstId value_id, ConversionTarget target,
+    SemIR::InstId dest_vtable_id = SemIR::InstId::None) -> SemIR::InstId {
   static_assert(std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT> ||
                 std::is_same_v<SemIR::StructAccess, TargetAccessInstT>);
   constexpr bool ToClass =
@@ -464,7 +462,8 @@ static auto ConvertStructToStructOrClass(Context& context,
                                               .base_id = target.init_id,
                                               .index = SemIR::ElementIndex(i)});
       auto vtable_ptr_id = AddInst<SemIR::VtablePtr>(
-          context, value_loc_id, {.type_id = dest_field.type_id});
+          context, value_loc_id,
+          {.type_id = dest_field.type_id, .vtable_id = dest_vtable_id});
       auto init_id =
           AddInst<SemIR::InitializeFrom>(context, value_loc_id,
                                          {.type_id = dest_field.type_id,
@@ -578,7 +577,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   }
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
-      context, src_type, dest_struct_type, value_id, target);
+      context, src_type, dest_struct_type, value_id, target,
+      dest_class_info.vtable_id);
 
   if (need_temporary) {
     target_block.InsertHere();

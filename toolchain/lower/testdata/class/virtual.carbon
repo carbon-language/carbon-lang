@@ -106,6 +106,9 @@ fn Use() {
 // CHECK:STDOUT: ; ModuleID = 'create.carbon'
 // CHECK:STDOUT: source_filename = "create.carbon"
 // CHECK:STDOUT:
+// CHECK:STDOUT: @"_CIntermediate.Classes.$vtable" = external unnamed_addr constant ptr
+// CHECK:STDOUT: @"_CDerived.Classes.$vtable" = external unnamed_addr constant ptr
+// CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Create() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !7
@@ -167,7 +170,7 @@ fn Use() {
 // CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %v.var), !dbg !9
 // CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store ptr null, ptr %.loc11_24.2.vptr, align 8, !dbg !10
+// CHECK:STDOUT:   store ptr @"_CBase.MemberInit.$vtable", ptr %.loc11_24.2.vptr, align 8, !dbg !10
 // CHECK:STDOUT:   %.loc11_23 = load i32, ptr %i.var, align 4, !dbg !11
 // CHECK:STDOUT:   %.loc11_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !10
 // CHECK:STDOUT:   store i32 %.loc11_23, ptr %.loc11_24.5.m, align 4, !dbg !10
@@ -175,7 +178,7 @@ fn Use() {
 // CHECK:STDOUT:   store i32 5, ptr %.loc12_4.m, align 4, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %u.var), !dbg !9
 // CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 0, !dbg !13
-// CHECK:STDOUT:   store ptr null, ptr %.loc13_24.2.vptr, align 8, !dbg !13
+// CHECK:STDOUT:   store ptr @"_CBase.MemberInit.$vtable", ptr %.loc13_24.2.vptr, align 8, !dbg !13
 // CHECK:STDOUT:   %.loc13_24.6.m = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 1, !dbg !13
 // CHECK:STDOUT:   store i32 3, ptr %.loc13_24.6.m, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
@@ -222,7 +225,7 @@ fn Use() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %v.var), !dbg !7
 // CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   store ptr null, ptr %.loc13_31.2.vptr, align 8, !dbg !9
+// CHECK:STDOUT:   store ptr @"_CBase.Main.$vtable", ptr %.loc13_31.2.vptr, align 8, !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -69,7 +69,9 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   }
 
   for (const auto& class_info : sem_ir_->classes().array_ref()) {
-    BuildVtable(class_info);
+    if (auto* llvm_vtable = BuildVtable(class_info)) {
+      global_variables_.Insert(class_info.vtable_id, llvm_vtable);
+    }
   }
 
   // Specific functions are lowered when we emit a reference to them.
@@ -707,24 +709,35 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
   }
 }
 
-auto FileContext::BuildVtable(const SemIR::Class& class_info) -> void {
+auto FileContext::BuildVtable(const SemIR::Class& class_info)
+    -> llvm::GlobalVariable* {
   // Bail out if this class is not dynamic (this will account for classes that
   // are declared-and-not-defined (including extern declarations) as well).
   if (!class_info.is_dynamic) {
-    return;
+    return nullptr;
   }
+
+  Mangler m(*this);
+  std::string mangled_name = m.MangleVTable(class_info);
 
   auto first_owning_decl_loc =
       sem_ir().insts().GetLocId(class_info.first_owning_decl_id);
   if (first_owning_decl_loc.is_import_ir_inst_id()) {
-    return;
+    // Emit a declaration of an imported vtable using a(n opaque) pointer type.
+    // This doesn't have to match the definition that appears elsewhere, it'll
+    // still get merged correctly.
+    auto* gv = new llvm::GlobalVariable(
+        llvm_module(),
+        llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0),
+        /*isConstant=*/true, llvm::GlobalValue::ExternalLinkage, nullptr,
+        mangled_name);
+    gv->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+    return gv;
   }
 
   auto canonical_vtable_id =
       sem_ir().constant_values().GetConstantInstId(class_info.vtable_id);
-  if (canonical_vtable_id == SemIR::ErrorInst::SingletonInstId) {
-    return;
-  }
+
   auto vtable_inst_block =
       sem_ir().inst_blocks().Get(sem_ir()
                                      .insts()
@@ -733,9 +746,6 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info) -> void {
 
   auto* entry_type = llvm::IntegerType::getInt32Ty(llvm_context());
   auto* table_type = llvm::ArrayType::get(entry_type, vtable_inst_block.size());
-
-  Mangler m(*this);
-  std::string mangled_name = m.MangleVTable(class_info);
 
   auto* llvm_vtable = new llvm::GlobalVariable(
       llvm_module(), table_type, /*isConstant=*/true,
@@ -763,6 +773,8 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info) -> void {
 
   llvm_vtable->setInitializer(llvm::ConstantArray::get(table_type, vfuncs));
   llvm_vtable->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+
+  return llvm_vtable;
 }
 
 }  // namespace Carbon::Lower

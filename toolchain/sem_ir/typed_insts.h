@@ -1792,9 +1792,10 @@ struct VtableType {
 
 // Initializer for virtual function table pointers in object initialization.
 struct VtablePtr {
-  static constexpr auto Kind =
-      InstKind::VtablePtr.Define<Parse::NodeId>({.ir_name = "vtable_ptr"});
+  static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
+      {.ir_name = "vtable_ptr", .constant_kind = InstConstantKind::Never});
   TypeId type_id;
+  InstId vtable_id;
 };
 
 // Definition of ABI-neutral vtable information for a dynamic class.
