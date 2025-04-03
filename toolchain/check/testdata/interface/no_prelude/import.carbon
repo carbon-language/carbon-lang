@@ -67,7 +67,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %F.type.505: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.eb5: %F.type.505 = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1.02a: %ForwardDeclared.assoc_type = assoc_entity element1, @ForwardDeclared.%F.decl [concrete]
-// CHECK:STDOUT:   %struct_type.f.2f5: type = struct_type {.f: %ForwardDeclared.type} [concrete]
+// CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,15 +81,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Basic.decl: type = interface_decl @Basic [concrete = constants.%Basic.type] {} {}
 // CHECK:STDOUT:   %ForwardDeclared.decl: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f_ref.patt: %struct_type.f.2f5 = binding_pattern f_ref
-// CHECK:STDOUT:     %.loc20_1: %struct_type.f.2f5 = var_pattern %f_ref.patt
+// CHECK:STDOUT:     %f_ref.patt: %struct_type.f = binding_pattern f_ref
+// CHECK:STDOUT:     %.loc20_1: %struct_type.f = var_pattern %f_ref.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f_ref.var: ref %struct_type.f.2f5 = var f_ref
-// CHECK:STDOUT:   %.loc20_32: type = splice_block %struct_type.f [concrete = constants.%struct_type.f.2f5] {
+// CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var f_ref
+// CHECK:STDOUT:   %.loc20_32: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:     %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete = constants.%struct_type.f.2f5]
+// CHECK:STDOUT:     %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f_ref: ref %struct_type.f.2f5 = bind_name f_ref, %f_ref.var
+// CHECK:STDOUT:   %f_ref: ref %struct_type.f = bind_name f_ref, %f_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -173,14 +173,14 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %assoc0.c94: %ForwardDeclared.assoc_type = assoc_entity element0, imports.%Main.import_ref.69a [concrete]
 // CHECK:STDOUT:   %assoc1.660: %ForwardDeclared.assoc_type = assoc_entity element1, imports.%Main.import_ref.1cc [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared.type [concrete]
-// CHECK:STDOUT:   %struct_type.f.2f5: type = struct_type {.f: %ForwardDeclared.type} [concrete]
+// CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Empty: type = import_ref Main//a, Empty, loaded [concrete = constants.%Empty.type]
 // CHECK:STDOUT:   %Main.Basic: type = import_ref Main//a, Basic, loaded [concrete = constants.%Basic.type]
 // CHECK:STDOUT:   %Main.ForwardDeclared: type = import_ref Main//a, ForwardDeclared, loaded [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f.2f5 = import_ref Main//a, f_ref, loaded
+// CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f = import_ref Main//a, f_ref, loaded
 // CHECK:STDOUT:   %Main.import_ref.cc0 = import_ref Main//a, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst20 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.152: %Basic.assoc_type = import_ref Main//a, loc8_8, loaded [concrete = constants.%assoc0.b26]
@@ -297,7 +297,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f.2f5 = name_ref f_ref, imports.%Main.f_ref
+// CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f = name_ref f_ref, imports.%Main.f_ref
 // CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0
 // CHECK:STDOUT:   %addr: %ptr = addr_of %.loc16
 // CHECK:STDOUT:   assign file.%f.var, %addr

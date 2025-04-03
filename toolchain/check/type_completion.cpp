@@ -85,13 +85,13 @@ class TypeCompleter {
       -> SemIR::CompleteTypeInfo;
 
   template <typename InstT>
-    requires(
-        InstT::Kind.template IsAnyOf<
-            SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
-            SemIR::ErrorInst, SemIR::FloatType, SemIR::IntType,
-            SemIR::IntLiteralType, SemIR::LegacyFloatType, SemIR::NamespaceType,
-            SemIR::PointerType, SemIR::SpecificFunctionType, SemIR::TypeType,
-            SemIR::VtableType, SemIR::WitnessType>())
+    requires(InstT::Kind.template IsAnyOf<
+             SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
+             SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatType,
+             SemIR::IntType, SemIR::IntLiteralType, SemIR::LegacyFloatType,
+             SemIR::NamespaceType, SemIR::PointerType,
+             SemIR::SpecificFunctionType, SemIR::TypeType, SemIR::VtableType,
+             SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     return {.value_repr = MakeCopyValueRepr(type_id)};
@@ -121,7 +121,7 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
+             SemIR::AssociatedEntityType, SemIR::FunctionType,
              SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
              SemIR::GenericInterfaceType, SemIR::InstType,
              SemIR::UnboundElementType, SemIR::WhereExpr>())

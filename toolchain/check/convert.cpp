@@ -1015,13 +1015,20 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
+  if (target.type_id != value_type_id &&
+      sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
       (sem_ir.types().Is<SemIR::TypeType>(value_type_id) ||
        sem_ir.types().Is<SemIR::FacetType>(value_type_id))) {
     // The value is a type or facet value, so it has a constant value. We get
     // that to unwrap things like NameRef and get to the underlying type or
     // facet value instruction so that we can use `TryGetAs`.
     auto const_value_id = sem_ir.constant_values().GetConstantInstId(value_id);
+    // TODO: Runtime facet values should be allowed to convert based on their
+    // FacetTypes, but we assume constant values for impl lookup at the moment.
+    if (!const_value_id.has_value()) {
+      context.TODO(loc_id, "conversion of runtime facet value");
+      const_value_id = SemIR::ErrorInst::SingletonInstId;
+    }
 
     if (auto facet_access_type_inst =
             sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(const_value_id)) {
