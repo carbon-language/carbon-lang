@@ -86,7 +86,7 @@ impl C as J {}
 
 // TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: error: cannot convert type `C` into type implementing `J where .Self implsI` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-11]]:1: in import [InImport]

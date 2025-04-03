@@ -57,7 +57,7 @@ class Point {}
 
 fn F() {
   // TODO: A cycle should be found in the `impl forall T as Z` above.
-  // CHECK:STDERR: todo_fail_impl_simple_where_cycle.carbon:[[@LINE+7]]:3: error: cycle found in search for impl of `type where .Self implsZ` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR: todo_fail_impl_simple_where_cycle.carbon:[[@LINE+7]]:3: error: cycle found in search for impl of `type where .Self impls Z` for type `Point` [ImplLookupCycle]
   // CHECK:STDERR:   Point as Z;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: todo_fail_impl_simple_where_cycle.carbon:[[@LINE-13]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]

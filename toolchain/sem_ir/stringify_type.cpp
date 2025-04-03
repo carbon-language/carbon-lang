@@ -313,7 +313,7 @@ class Stringifier {
         step_stack_->Push(
             StepStack::EntityNameItem(interface_info, impls.specific_id), &sep);
       }
-      step_stack_->PushString(" .Self impls");
+      step_stack_->PushString(" .Self impls ");
       some_where = true;
     }
     // TODO: Other restrictions from facet_type_info.

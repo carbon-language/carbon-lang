@@ -67,6 +67,10 @@ static auto SubtractSorted(
           ++b_iter;
         }
       }
+      for (; a_iter != a_end; ++a_iter) {
+        *a_new_end = *a_iter;
+        ++a_new_end;
+      }
       a.erase(a_new_end, a_end);
       return;
     }
