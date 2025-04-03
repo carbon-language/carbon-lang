@@ -243,7 +243,7 @@ auto TypeCompleter::ProcessStep() -> bool {
 auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
   CARBON_KIND_SWITCH(type_inst) {
     case CARBON_KIND(SemIR::ArrayType inst): {
-      Push(context_->types().GetTypeIdForTypeInstId(inst.element_type_id));
+      Push(context_->types().GetTypeIdForTypeInstId(inst.element_type_inst_id));
       break;
     }
     case CARBON_KIND(SemIR::StructType inst): {

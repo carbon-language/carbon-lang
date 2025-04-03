@@ -192,7 +192,7 @@ struct ArrayType {
 
   TypeId type_id;
   InstId bound_id;
-  InstId element_type_id;
+  InstId element_type_inst_id;
 };
 
 // Perform a no-op conversion to a compatible type.

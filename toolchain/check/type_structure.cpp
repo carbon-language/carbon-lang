@@ -243,7 +243,7 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::ArrayType array_type): {
           AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType());
-          PushInstId(array_type.element_type_id);
+          PushInstId(array_type.element_type_inst_id);
           PushInstId(array_type.bound_id);
           break;
         }

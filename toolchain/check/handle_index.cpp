@@ -156,7 +156,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       auto elem_id = AddInst<SemIR::ArrayIndex>(
           context, node_id,
           {.type_id = context.types().GetTypeIdForTypeInstId(
-               array_type.element_type_id),
+               array_type.element_type_inst_id),
            .array_id = operand_inst_id,
            .index_id = cast_index_id});
       if (array_cat != SemIR::ExprCategory::DurableRef) {

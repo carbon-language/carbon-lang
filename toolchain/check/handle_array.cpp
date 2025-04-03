@@ -53,7 +53,7 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   AddInstAndPush<SemIR::ArrayType>(context, node_id,
                                    {.type_id = SemIR::TypeType::SingletonTypeId,
                                     .bound_id = bound_inst_id,
-                                    .element_type_id = element_type.inst_id});
+                                    .element_type_inst_id = element_type.inst_id});
   return true;
 }
 

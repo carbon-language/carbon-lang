@@ -264,7 +264,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_arg_id,
-            context.types().GetTypeIdForTypeInstId(array_type.element_type_id),
+            context.types().GetTypeIdForTypeInstId(array_type.element_type_inst_id),
             target_block, i, i);
     if (init_id == SemIR::ErrorInst::SingletonInstId) {
       return SemIR::ErrorInst::SingletonInstId;
