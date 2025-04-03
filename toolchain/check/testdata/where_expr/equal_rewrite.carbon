@@ -140,7 +140,7 @@ interface I {
 // CHECK:STDERR:
 fn RewriteTypeMismatch(X:! I where .Member = 2);
 
-// --- fail_todo_let.carbon
+// --- todo_let.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -1354,7 +1354,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RewriteTypeMismatch(<error>) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_let.carbon
+// CHECK:STDOUT: --- todo_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
