@@ -260,7 +260,7 @@ class Stringifier {
     if (GetTypePrecedence(sem_ir_->insts().Get(inst.inner_id).kind()) <
         GetTypePrecedence(SemIR::ConstType::Kind)) {
       *out_ << "(";
-      // Note the inner_type_inst_id ends up here.
+      // Note the `inst.inner_id` ends up here.
       step_stack_->PushString(")");
     }
 
