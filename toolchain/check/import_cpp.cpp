@@ -137,9 +137,6 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   // relevant import.
   SemIRLoc loc = imports.back().node_id;
 
-  std::string diagnostics_str;
-  llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
-
   CarbonClangDiagnosticConsumer diagnostics_consumer(&context, loc);
 
   // TODO: Share compilation flags with ClangRunner.
