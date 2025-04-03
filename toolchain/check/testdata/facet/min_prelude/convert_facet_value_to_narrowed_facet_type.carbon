@@ -75,7 +75,7 @@ fn CallsWithExtraWhereExplicit(U:! type where .Self impls type) {
   TakesTypeExplicit(U);
 }
 
-// --- fail_todo_no_interfaces.carbon
+// --- no_interfaces.carbon
 library "[[@TEST_NAME]]";
 
 fn TakesExtraWhereDeduced[T:! type where .Self impls type](x: T) {}
@@ -1366,7 +1366,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TakesTypeExplicit(@CallsWithExtraWhereExplicit.%U.as_type.loc10_22.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_no_interfaces.carbon
+// CHECK:STDOUT: --- no_interfaces.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
