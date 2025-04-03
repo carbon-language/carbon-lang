@@ -1824,9 +1824,15 @@ static auto IsPeriodSelf(EvalContext& eval_context, SemIR::ConstantId const_id)
   if (symbolic_info.dependence != SemIR::ConstantDependence::PeriodSelf) {
     return false;
   }
+  auto inst_id = symbolic_info.inst_id;
+  // Unwrap the `FacetAccessType` instruction, which we get when the `.Self` is
+  // converted to `type`.
+  if (auto facet_access_type =
+          eval_context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
+    inst_id = facet_access_type->facet_value_inst_id;
+  }
   if (auto bind_symbolic_name =
-          eval_context.insts().TryGetAs<SemIR::BindSymbolicName>(
-              symbolic_info.inst_id)) {
+          eval_context.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
     const auto& bind_name =
         eval_context.entity_names().Get(bind_symbolic_name->entity_name_id);
     return bind_name.name_id == SemIR::NameId::PeriodSelf;

@@ -319,12 +319,11 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
               return context.emitter().Build(
                   loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
             })) {
-      auto identified_id =
-          RequireIdentifiedFacetType(context, *base_as_facet_type);
-      CARBON_CHECK(identified_id.has_value());
-      const auto& identified =
-          context.identified_facet_types().Get(identified_id);
-      for (const auto& interface : identified.required_interfaces()) {
+      auto facet_type_info =
+          context.facet_types().Get(base_as_facet_type->facet_type_id);
+      // Name lookup into "extend" constraints but not "self impls" constraints.
+      // TODO: Include named constraints, once they are supported.
+      for (const auto& interface : facet_type_info.extend_constraints) {
         auto& interface_info = context.interfaces().Get(interface.interface_id);
         scopes->push_back({.name_scope_id = interface_info.scope_id,
                            .specific_id = interface.specific_id});
