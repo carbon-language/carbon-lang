@@ -28,8 +28,6 @@ fn M() {
 
   F(n);
   m = G(n);
-  // Adding something like this makes check/eval emit a definition for H, hence no crash.
-  // m = H(n);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'call_basic_depth.carbon'
