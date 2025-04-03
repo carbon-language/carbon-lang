@@ -233,22 +233,25 @@ static auto GetParamPatternsBlockId(Context& context, SemIRLoc loc_id,
   }
   SemIR::CallParamIndex next_index = SemIR::CallParamIndex::None;
   llvm::SmallVector<SemIR::InstId> params;
-  for (auto* param : clang_decl->parameters()) {
+  for (clang::ParmVarDecl* param : clang_decl->parameters()) {
     clang::QualType param_type = param->getType().getCanonicalType();
-    auto type_id = MapType(context, param_type).type_id;
+    SemIR::TypeId type_id = MapType(context, param_type).type_id;
     if (type_id == SemIR::ErrorInst::SingletonTypeId) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
                                          param_type.getAsString()));
       return std::nullopt;
     }
-    const char* param_name = param->getName().data();
+    llvm::StringRef param_name = param->getName();
     SemIR::EntityNameId entity_name_id = context.entity_names().Add(
-        {.name_id = (strcmp(param_name, "") == 0)
-                        ? SemIR::NameId::Underscore
-                        : SemIR::NameId::ForIdentifier(
-                              context.sem_ir().identifiers().Add(param_name)),
+        {.name_id =
+             (param_name == "")
+                 // Translating unnamed parameter to an underscore to
+                 // match Carbon's naming of unnamed/unused function params
+                 ? SemIR::NameId::Underscore
+                 : SemIR::NameId::ForIdentifier(
+                       context.sem_ir().identifiers().Add(param_name)),
          .parent_scope_id = SemIR::NameScopeId::None});
-    auto binding_pattern_id = AddInstInNoBlock(
+    SemIR::InstId binding_pattern_id = AddInstInNoBlock(
         context, SemIR::LocIdAndInst::NoLoc(SemIR::BindingPattern(
                      {.type_id = type_id, .entity_name_id = entity_name_id})));
     ++next_index.index;
