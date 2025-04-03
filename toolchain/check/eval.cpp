@@ -614,9 +614,6 @@ static auto GetConstantValue(EvalContext& eval_context,
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::EntityNameId entity_name_id, Phase* phase)
     -> SemIR::EntityNameId {
-  if (!entity_name_id.has_value()) {
-    return SemIR::EntityNameId::None;
-  }
   const auto& bind_name = eval_context.entity_names().Get(entity_name_id);
   Phase name_phase;
   if (bind_name.name_id == SemIR::NameId::PeriodSelf) {
