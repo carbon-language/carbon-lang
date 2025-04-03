@@ -30,26 +30,30 @@ static auto WitnessAccessMatchesInterface(
   auto access = context.insts().GetAs<SemIR::FacetAccessWitness>(witness_id);
   auto type_id = context.insts().Get(access.facet_value_inst_id).type_id();
   auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
-  const auto& facet_info = context.facet_types().Get(facet_type.facet_type_id);
-  if (auto impls = facet_info.TryAsSingleInterface()) {
-    return impls->interface_id == interface.interface_id &&
-           impls->specific_id == interface.specific_id;
-  }
-  return false;
+  // The order of witnesses is from the identified facet type.
+  auto identified_id = RequireIdentifiedFacetType(context, facet_type);
+  const auto& identified = context.identified_facet_types().Get(identified_id);
+  const auto& impls = identified.required_interfaces()[access.index.index];
+  return impls == interface;
 }
 
 static auto IncompleteFacetTypeDiagnosticBuilder(
     Context& context, SemIRLoc loc, SemIR::InstId facet_type_inst_id,
     bool is_definition) -> DiagnosticBuilder {
-  // The other case is "impl as incomplete facet type with rewrites", but
-  // currently all incomplete facet types with rewrites trigger errors before
-  // this.
-  CARBON_CHECK(is_definition);
-  CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
-                    "definition of impl as incomplete facet type {0}",
-                    InstIdAsType);
-  return context.emitter().Build(loc, ImplAsIncompleteFacetTypeDefinition,
-                                 facet_type_inst_id);
+  if (is_definition) {
+    CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
+                      "definition of impl as incomplete facet type {0}",
+                      InstIdAsType);
+    return context.emitter().Build(loc, ImplAsIncompleteFacetTypeDefinition,
+                                   facet_type_inst_id);
+  } else {
+    CARBON_DIAGNOSTIC(
+        ImplAsIncompleteFacetTypeRewrites, Error,
+        "declaration of impl as incomplete facet type {0} with rewrites",
+        InstIdAsType);
+    return context.emitter().Build(loc, ImplAsIncompleteFacetTypeRewrites,
+                                   facet_type_inst_id);
+  }
 }
 
 auto InitialFacetTypeImplWitness(
