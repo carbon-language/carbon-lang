@@ -66,39 +66,36 @@ static auto HandleLocId(llvm::SmallVector<AbsoluteNodeId>& absolute_node_ids,
 static auto GetAbsoluteNodeIdImpl(
     llvm::SmallVector<AbsoluteNodeId>& absolute_node_ids, const File* cursor_ir,
     InstId cursor_inst_id) -> void {
-  while (true) {
-    if (cursor_inst_id.has_value()) {
-      auto cursor_inst = cursor_ir->insts().Get(cursor_inst_id);
-      if (auto bind_ref = cursor_inst.TryAs<ExportDecl>();
-          bind_ref && bind_ref->value_id.has_value()) {
-        cursor_inst_id = bind_ref->value_id;
-        continue;
-      }
-
-      // If the parse node has a value, use it for the location.
-      if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
-          loc_id.has_value()) {
-        if (HandleLocId(absolute_node_ids, cursor_ir, cursor_inst_id, loc_id)) {
-          return;
-        }
-        continue;
-      }
-
-      // If a namespace has an instruction for an import, switch to looking at
-      // it.
-      if (auto ns = cursor_inst.TryAs<Namespace>()) {
-        if (ns->import_id.has_value()) {
-          cursor_inst_id = ns->import_id;
-          continue;
-        }
-      }
+  while (cursor_inst_id.has_value()) {
+    auto cursor_inst = cursor_ir->insts().Get(cursor_inst_id);
+    if (auto bind_ref = cursor_inst.TryAs<ExportDecl>();
+        bind_ref && bind_ref->value_id.has_value()) {
+      cursor_inst_id = bind_ref->value_id;
+      continue;
     }
 
-    // `None` parse node but not an import; just nothing to point at.
-    absolute_node_ids.push_back({.check_ir_id = cursor_ir->check_ir_id(),
-                                 .node_id = Parse::NodeId::None});
-    return;
+    // If the parse node has a value, use it for the location.
+    if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+        loc_id.has_value()) {
+      if (HandleLocId(absolute_node_ids, cursor_ir, cursor_inst_id, loc_id)) {
+        return;
+      }
+      continue;
+    }
+
+    // If a namespace has an instruction for an import, switch to looking at it.
+    if (auto ns = cursor_inst.TryAs<Namespace>()) {
+      if (ns->import_id.has_value()) {
+        cursor_inst_id = ns->import_id;
+        continue;
+      }
+    }
+    break;
   }
+
+  // `None` parse node but not an import; just nothing to point at.
+  absolute_node_ids.push_back({.check_ir_id = cursor_ir->check_ir_id(),
+                               .node_id = Parse::NodeId::None});
 }
 
 auto GetAbsoluteNodeId(const File* sem_ir, InstId inst_id)
