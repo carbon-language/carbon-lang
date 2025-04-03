@@ -182,11 +182,11 @@ fn G(N:! i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc12_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc18_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc18_6.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc18_6.2 => constants.%N.patt.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

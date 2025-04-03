@@ -231,7 +231,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc4_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc4_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self) {
@@ -326,7 +326,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_8.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DoIt(constants.%I.facet) {}
@@ -440,7 +440,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_8.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc8_18.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -578,7 +578,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_8.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc8_18.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -681,7 +681,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_8.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc8_18.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -817,7 +817,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseIndirect(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_16.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_16.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_16.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc8_26.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -947,14 +947,14 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Id(constants.%U) {
 // CHECK:STDOUT:   %U.loc4_7.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc4_7.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc4_7.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Id(constants.%I.assoc_type) {
 // CHECK:STDOUT:   %U.loc4_7.2 => constants.%I.assoc_type
-// CHECK:STDOUT:   %U.patt.loc4_7.2 => constants.%I.assoc_type
+// CHECK:STDOUT:   %U.patt.loc4_7.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
@@ -1064,7 +1064,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Id(constants.%U) {
 // CHECK:STDOUT:   %U.loc3_7.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc3_7.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc3_7.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self) {}
@@ -1073,7 +1073,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Id(type) {
 // CHECK:STDOUT:   %U.loc3_7.2 => type
-// CHECK:STDOUT:   %U.patt.loc3_7.2 => type
+// CHECK:STDOUT:   %U.patt.loc3_7.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type

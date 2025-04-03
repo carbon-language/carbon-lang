@@ -287,7 +287,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
@@ -298,7 +298,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%X) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%X
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%X
+// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.54b
@@ -307,7 +307,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%i32) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a

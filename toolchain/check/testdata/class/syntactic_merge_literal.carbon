@@ -156,17 +156,17 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%a) {
 // CHECK:STDOUT:   %a.loc4_9.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_1000.1b6) {
 // CHECK:STDOUT:   %a.loc4_9.2 => constants.%int_1000.1b6
-// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%int_1000.1b6
+// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%b) {
 // CHECK:STDOUT:   %b.loc5_9.2 => constants.%b
-// CHECK:STDOUT:   %b.patt.loc5 => constants.%b
+// CHECK:STDOUT:   %b.patt.loc5 => constants.%b.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_mismatch.carbon
@@ -303,21 +303,21 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%a) {
 // CHECK:STDOUT:   %a.loc4_9.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_1000.1b6) {
 // CHECK:STDOUT:   %a.loc4_9.2 => constants.%int_1000.1b6
-// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%int_1000.1b6
+// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.1(constants.%b) {
 // CHECK:STDOUT:   %b.loc5_9.2 => constants.%b
-// CHECK:STDOUT:   %b.patt.loc5_9.2 => constants.%b
+// CHECK:STDOUT:   %b.patt.loc5_9.2 => constants.%b.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.2(constants.%b) {
 // CHECK:STDOUT:   %b.loc13_9.2 => constants.%b
-// CHECK:STDOUT:   %b.patt.loc13_9.2 => constants.%b
+// CHECK:STDOUT:   %b.patt.loc13_9.2 => constants.%b.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -95,6 +95,6 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%a) {
 // CHECK:STDOUT:   %a.loc16_13.1 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc16_13.2 => constants.%a
+// CHECK:STDOUT:   %a.patt.loc16_13.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

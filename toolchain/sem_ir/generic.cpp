@@ -92,10 +92,12 @@ auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                sem_ir.constant_values().Get(inst_id));
 }
 
-auto GetTypeInSpecific(const File& sem_ir, SpecificId specific_id,
-                       TypeId type_id) -> TypeId {
-  return TypeId::ForTypeConstant(GetConstantInSpecific(
-      sem_ir, specific_id, sem_ir.types().GetConstantId(type_id)));
+auto GetTypeOfInstInSpecific(const File& sem_ir, SpecificId specific_id,
+                             InstId inst_id) -> TypeId {
+  auto type_id = sem_ir.insts().Get(inst_id).type_id();
+  auto const_id = sem_ir.types().GetConstantId(type_id);
+  auto specific_const_id = GetConstantInSpecific(sem_ir, specific_id, const_id);
+  return TypeId::ForTypeConstant(specific_const_id);
 }
 
 }  // namespace Carbon::SemIR

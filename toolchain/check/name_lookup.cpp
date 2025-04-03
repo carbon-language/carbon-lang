@@ -291,6 +291,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
+    // TODO: Allow name lookup into classes that are being defined even if they
+    // are not complete.
     RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
         loc_id, [&] {
@@ -306,18 +308,23 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    auto complete_id = RequireCompleteFacetType(
-        context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-        loc_id, *base_as_facet_type, [&] {
-          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
-                            "member access into incomplete facet type {0}",
-                            InstIdAsType);
-          return context.emitter().Build(
-              loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
-        });
-    if (complete_id.has_value()) {
-      const auto& resolved = context.complete_facet_types().Get(complete_id);
-      for (const auto& interface : resolved.required_interfaces) {
+    // TODO: Allow name lookup into facet types that are being defined even if
+    // they are not complete.
+    if (RequireCompleteType(
+            context, context.types().GetTypeIdForTypeConstantId(base_const_id),
+            loc_id, [&] {
+              CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
+                                "member access into incomplete facet type {0}",
+                                InstIdAsType);
+              return context.emitter().Build(
+                  loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
+            })) {
+      auto identified_id =
+          RequireIdentifiedFacetType(context, *base_as_facet_type);
+      CARBON_CHECK(identified_id.has_value());
+      const auto& identified =
+          context.identified_facet_types().Get(identified_id);
+      for (const auto& interface : identified.required_interfaces()) {
         auto& interface_info = context.interfaces().Get(interface.interface_id);
         scopes->push_back({.name_scope_id = interface_info.scope_id,
                            .specific_id = interface.specific_id});
@@ -430,12 +437,6 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
 
-        Diagnostics::AnnotationScope annotate_diagnostics(
-            &context.emitter(), [&](auto& builder) {
-              CARBON_DIAGNOSTIC(FromExtendHere, Note,
-                                "declared as an extended scope here");
-              builder.Note(extended_id, FromExtendHere);
-            });
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
                                            &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should

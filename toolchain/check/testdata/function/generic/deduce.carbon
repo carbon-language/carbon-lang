@@ -368,7 +368,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.79f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -380,7 +380,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.235
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -390,14 +390,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallExplicitGenericParamWithGenericArg(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_43.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc10_43.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc10_43.2 => constants.%T.patt
 // CHECK:STDOUT:   %struct_type.a.loc10_62.2 => constants.%struct_type.a
 // CHECK:STDOUT:   %ptr.loc10_63.2 => constants.%ptr.48a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(constants.%struct_type.a) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%struct_type.a
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%struct_type.a
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.48a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -512,7 +512,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -524,7 +524,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallExplicitGenericParamConst(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_34.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_34.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_34.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamConst.%T.loc6_34.2) {}
@@ -644,7 +644,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_27.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_27.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_27.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc6_47.2 => constants.%ptr.79f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -657,7 +657,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%A) {
 // CHECK:STDOUT:   %T.loc6_27.2 => constants.%A
-// CHECK:STDOUT:   %T.patt.loc6_27.2 => constants.%A
+// CHECK:STDOUT:   %T.patt.loc6_27.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc6_47.2 => constants.%ptr.6db
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -774,7 +774,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitGenericParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_45.2 => constants.%ptr.79f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -787,7 +787,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitGenericParam(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_45.2 => constants.%ptr.235
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -902,13 +902,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TupleParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.f83
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TupleParam(Core.IntLiteral) {
 // CHECK:STDOUT:   %T.loc4_15.2 => Core.IntLiteral
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => Core.IntLiteral
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.4c8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1019,13 +1019,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @StructParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T.patt
 // CHECK:STDOUT:   %struct_type.a.b.loc4_44.2 => constants.%struct_type.a.b.46e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @StructParam(Core.IntLiteral) {
 // CHECK:STDOUT:   %T.loc4_16.2 => Core.IntLiteral
-// CHECK:STDOUT:   %T.patt.loc4_16.2 => Core.IntLiteral
+// CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T.patt
 // CHECK:STDOUT:   %struct_type.a.b.loc4_44.2 => constants.%struct_type.a.b.a13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1110,7 +1110,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @BigStructParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.patt
 // CHECK:STDOUT:   %struct_type.c.d.e.loc4_56.2 => constants.%struct_type.c.d.e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1192,7 +1192,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @SmallStructParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_21.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_21.2 => constants.%T.patt
 // CHECK:STDOUT:   %struct_type.f.g.loc4_49.2 => constants.%struct_type.f.g
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1272,7 +1272,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WrongNameStructParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %struct_type.i.different.loc4_61.2 => constants.%struct_type.i.different
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1352,7 +1352,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WrongOrderStructParam(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_26.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_26.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_26.2 => constants.%T.patt
 // CHECK:STDOUT:   %struct_type.first.second.loc4_63.2 => constants.%struct_type.first.second
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1422,9 +1422,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitNotDeducible(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc6_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_25.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc6_35.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc6_35.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc6_35.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_inconsistent.carbon
@@ -1496,7 +1496,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitNotDeducible(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduce_nested_generic_class.carbon
@@ -1694,12 +1694,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DD(constants.%E) {
 // CHECK:STDOUT:   %E.loc8_10.2 => constants.%E
-// CHECK:STDOUT:   %E.patt.loc8_10.2 => constants.%E
+// CHECK:STDOUT:   %E.patt.loc8_10.2 => constants.%E.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.266(constants.%E) {
 // CHECK:STDOUT:   %E.loc9_14.2 => constants.%E
-// CHECK:STDOUT:   %E.patt.loc9_14.2 => constants.%E
+// CHECK:STDOUT:   %E.patt.loc9_14.2 => constants.%E.patt
 // CHECK:STDOUT:   %DD.loc9_28.2 => constants.%DD.296
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.d1b
 // CHECK:STDOUT:
@@ -1712,17 +1712,17 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%D) {
 // CHECK:STDOUT:   %D.loc11_10.2 => constants.%D
-// CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%D
+// CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Z.facet.aae) {
 // CHECK:STDOUT:   %D.loc11_10.2 => constants.%Z.facet.aae
-// CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%Z.facet.aae
+// CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.497(constants.%E) {
 // CHECK:STDOUT:   %E.loc12_14.2 => constants.%E
-// CHECK:STDOUT:   %E.patt.loc12_14.2 => constants.%E
+// CHECK:STDOUT:   %E.patt.loc12_14.2 => constants.%E.patt
 // CHECK:STDOUT:   %DD.loc12_31.2 => constants.%DD.296
 // CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.lookup_impl_witness
 // CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.aae
@@ -1738,12 +1738,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DD(constants.%EE) {
 // CHECK:STDOUT:   %E.loc8_10.2 => constants.%EE
-// CHECK:STDOUT:   %E.patt.loc8_10.2 => constants.%EE
+// CHECK:STDOUT:   %E.patt.loc8_10.2 => constants.%E.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.266(constants.%EE) {
 // CHECK:STDOUT:   %E.loc9_14.2 => constants.%EE
-// CHECK:STDOUT:   %E.patt.loc9_14.2 => constants.%EE
+// CHECK:STDOUT:   %E.patt.loc9_14.2 => constants.%E.patt
 // CHECK:STDOUT:   %DD.loc9_28.2 => constants.%DD.689
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.f62
 // CHECK:STDOUT:
@@ -1752,12 +1752,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Z.facet.85b) {
 // CHECK:STDOUT:   %D.loc11_10.2 => constants.%Z.facet.85b
-// CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%Z.facet.85b
+// CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.497(constants.%EE) {
 // CHECK:STDOUT:   %E.loc12_14.2 => constants.%EE
-// CHECK:STDOUT:   %E.patt.loc12_14.2 => constants.%EE
+// CHECK:STDOUT:   %E.patt.loc12_14.2 => constants.%E.patt
 // CHECK:STDOUT:   %DD.loc12_31.2 => constants.%DD.689
 // CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%impl_witness.f62
 // CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.85b
@@ -1966,17 +1966,17 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%D) {
 // CHECK:STDOUT:   %D.loc12_10.2 => constants.%D
-// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%D
+// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Y.facet.15a) {
 // CHECK:STDOUT:   %D.loc12_10.2 => constants.%Y.facet.15a
-// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%Y.facet.15a
+// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.0ce(constants.%E) {
 // CHECK:STDOUT:   %E.loc19_14.2 => constants.%E
-// CHECK:STDOUT:   %E.patt.loc19_14.2 => constants.%E
+// CHECK:STDOUT:   %E.patt.loc19_14.2 => constants.%E.patt
 // CHECK:STDOUT:   %E.as_wit.iface0.loc19_29.2 => constants.%E.as_wit.iface0
 // CHECK:STDOUT:   %E.as_type.loc19_29.2 => constants.%E.as_type
 // CHECK:STDOUT:   %Y.facet.loc19_29.2 => constants.%Y.facet.15a
@@ -1990,12 +1990,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Y.facet.885) {
 // CHECK:STDOUT:   %D.loc12_10.2 => constants.%Y.facet.885
-// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%Y.facet.885
+// CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.0ce(constants.%facet_value) {
 // CHECK:STDOUT:   %E.loc19_14.2 => constants.%facet_value
-// CHECK:STDOUT:   %E.patt.loc19_14.2 => constants.%facet_value
+// CHECK:STDOUT:   %E.patt.loc19_14.2 => constants.%E.patt
 // CHECK:STDOUT:   %E.as_wit.iface0.loc19_29.2 => constants.%impl_witness.1bc
 // CHECK:STDOUT:   %E.as_type.loc19_29.2 => constants.%DD
 // CHECK:STDOUT:   %Y.facet.loc19_29.2 => constants.%Y.facet.885

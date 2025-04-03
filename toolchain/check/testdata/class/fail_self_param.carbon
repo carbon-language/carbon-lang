@@ -18,7 +18,6 @@ var v: C(0);
 // CHECK:STDOUT: --- fail_self_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %x.patt: <error> = symbolic_binding_pattern x, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -41,7 +40,7 @@ var v: C(0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %x.patt.loc15_22.1: <error> = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc15_22.2 (constants.%x.patt)]
+// CHECK:STDOUT:     %x.patt: <error> = symbolic_binding_pattern x, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.ref: <error> = name_ref self, <error> [concrete = <error>]
 // CHECK:STDOUT:     %x: <error> = bind_symbolic_name x, 0 [concrete = <error>]
@@ -59,8 +58,6 @@ var v: C(0);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%x: <error>) {
-// CHECK:STDOUT:   %x.patt.loc15_22.2: <error> = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc15_22.2 (constants.%x.patt)]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -72,7 +69,5 @@ var v: C(0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(<error>) {
-// CHECK:STDOUT:   %x.patt.loc15_22.2 => <error>
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(<error>) {}
 // CHECK:STDOUT:

@@ -1332,7 +1332,7 @@ static auto RetryOrDone(ImportRefResolver& resolver, SemIR::ConstantId const_id)
 // that there is no new work.
 static auto ResolveAsUntyped(ImportContext& context, SemIR::Inst inst)
     -> ResolveResult {
-  auto result = TryEvalInst(context.local_context(), SemIR::InstId::None, inst);
+  auto result = AddImportedConstant(context.local_context(), inst);
   CARBON_CHECK(result.is_constant(), "{0} is not constant", inst);
   return ResolveResult::Done(result);
 }

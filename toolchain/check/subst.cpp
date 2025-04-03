@@ -155,7 +155,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
                        SemIR::Inst::ArgAndKind arg) -> int32_t {
   auto pop_block_id = [&](SemIR::InstBlockId old_inst_block_id) {
     auto size = context.inst_blocks().Get(old_inst_block_id).size();
-    SemIR::CopyOnWriteInstBlock new_inst_block(context.sem_ir(),
+    SemIR::CopyOnWriteInstBlock new_inst_block(&context.sem_ir(),
                                                old_inst_block_id);
     for (auto i : llvm::reverse(llvm::seq(size))) {
       new_inst_block.Set(i, worklist.Pop());
@@ -196,7 +196,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
     }
     case CARBON_KIND(SemIR::StructTypeFieldsId old_fields_id): {
       auto old_fields = context.struct_type_fields().Get(old_fields_id);
-      SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(context.sem_ir(),
+      SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(&context.sem_ir(),
                                                          old_fields_id);
       for (auto i : llvm::reverse(llvm::seq(old_fields.size()))) {
         new_fields.Set(i, {.name_id = old_fields[i].name_id,
@@ -207,7 +207,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
     }
     case CARBON_KIND(SemIR::TypeBlockId old_type_block_id): {
       auto size = context.type_blocks().Get(old_type_block_id).size();
-      SemIR::CopyOnWriteTypeBlock new_type_block(context.sem_ir(),
+      SemIR::CopyOnWriteTypeBlock new_type_block(&context.sem_ir(),
                                                  old_type_block_id);
       for (auto i : llvm::reverse(llvm::seq(size))) {
         new_type_block.Set(

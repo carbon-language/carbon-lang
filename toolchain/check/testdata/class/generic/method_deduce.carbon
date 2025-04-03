@@ -307,7 +307,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc14_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc14_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc14_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.fd9
@@ -318,7 +318,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Get(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc15_10.1 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc15_10.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc15_10.2 => constants.%U.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.30b
 // CHECK:STDOUT:
@@ -334,7 +334,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT: specific @GetNoDeduce(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %U.loc16_24.1 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc16_24.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc16_24.2 => constants.%U.patt
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.30b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -358,7 +358,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%A) {
 // CHECK:STDOUT:   %T.loc14_13.2 => constants.%A
-// CHECK:STDOUT:   %T.patt.loc14_13.2 => constants.%A
+// CHECK:STDOUT:   %T.patt.loc14_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.501
@@ -369,7 +369,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Get(constants.%A, constants.%B) {
 // CHECK:STDOUT:   %U.loc15_10.1 => constants.%B
-// CHECK:STDOUT:   %U.patt.loc15_10.2 => constants.%B
+// CHECK:STDOUT:   %U.patt.loc15_10.2 => constants.%U.patt
 // CHECK:STDOUT:   %T => constants.%A
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.cc6
 // CHECK:STDOUT:
@@ -385,7 +385,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT: specific @GetNoDeduce(constants.%A, constants.%B) {
 // CHECK:STDOUT:   %T => constants.%A
 // CHECK:STDOUT:   %U.loc16_24.1 => constants.%B
-// CHECK:STDOUT:   %U.patt.loc16_24.2 => constants.%B
+// CHECK:STDOUT:   %U.patt.loc16_24.2 => constants.%U.patt
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.cc6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

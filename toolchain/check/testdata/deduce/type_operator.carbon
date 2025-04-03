@@ -178,7 +178,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc6_20.2 => constants.%ptr.79f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -191,7 +191,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc6_20.2 => constants.%ptr.019
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -320,7 +320,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %const.loc6_19.2 => constants.%const.a1a
 // CHECK:STDOUT:   %ptr.loc6_26.2 => constants.%ptr.6d4
 // CHECK:STDOUT:
@@ -334,7 +334,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %const.loc6_19.2 => constants.%const.668
 // CHECK:STDOUT:   %ptr.loc6_26.2 => constants.%ptr.801
 // CHECK:STDOUT:
@@ -462,7 +462,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc6_20.2 => constants.%ptr.79f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -475,7 +475,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%const) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%const
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%const
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc6_20.2 => constants.%ptr.801
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -599,7 +599,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %const.loc6_19.2 => constants.%const.a1a
 // CHECK:STDOUT:   %ptr.loc6_26.2 => constants.%ptr.6d4
 // CHECK:STDOUT:

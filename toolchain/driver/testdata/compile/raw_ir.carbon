@@ -210,7 +210,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:       2:               inst38
 // CHECK:STDOUT:     inst_block15:
 // CHECK:STDOUT:       0:               inst15
-// CHECK:STDOUT:       1:               inst15
+// CHECK:STDOUT:       1:               inst17
 // CHECK:STDOUT:       2:               inst28
 // CHECK:STDOUT:     inst_block16:
 // CHECK:STDOUT:       0:               inst46

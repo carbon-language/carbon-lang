@@ -68,6 +68,10 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     functions_[id.index] = BuildFunctionDecl(id);
   }
 
+  for (const auto& class_info : sem_ir_->classes().array_ref()) {
+    BuildVtable(class_info);
+  }
+
   // Specific functions are lowered when we emit a reference to them.
   specific_functions_.resize(sem_ir_->specifics().size());
 
@@ -211,13 +215,11 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
                                         /*isVarArg=*/false)};
   }
 
-  // TODO nit: add is_symbolic() to type_id to forward to
-  // type_id.AsConstantId().is_symbolic(). Update call below too.
   auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
     if (!type_id.has_value()) {
       return nullptr;
     }
-    return GetType(SemIR::GetTypeInSpecific(sem_ir(), specific_id, type_id));
+    return GetType(type_id);
   };
 
   // TODO: expose the `Call` parameter patterns in `Function`, and use them here
@@ -263,8 +265,8 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     if (!param_pattern_info) {
       continue;
     }
-    auto param_type_id = SemIR::GetTypeInSpecific(
-        sem_ir(), specific_id, param_pattern_info->inst.type_id);
+    auto param_type_id = SemIR::GetTypeOfInstInSpecific(
+        sem_ir(), specific_id, param_pattern_info->inst_id);
     CARBON_CHECK(
         !param_type_id.AsConstantId().is_symbolic(),
         "Found symbolic type id after resolution when lowering type {0}.",
@@ -408,7 +410,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       ++param_index;
     } else {
       param_value = llvm::PoisonValue::get(GetType(
-          SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_inst.type_id)));
+          SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id, param_id)));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);
@@ -701,6 +703,64 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
             .line_number = 0,
             .column_number = 0};
   }
+}
+
+auto FileContext::BuildVtable(const SemIR::Class& class_info) -> void {
+  // Bail out if this class is not dynamic (this will account for classes that
+  // are declared-and-not-defined (including extern declarations) as well).
+  if (!class_info.is_dynamic) {
+    return;
+  }
+
+  auto first_owning_decl_loc =
+      sem_ir().insts().GetLocId(class_info.first_owning_decl_id);
+  if (first_owning_decl_loc.is_import_ir_inst_id()) {
+    return;
+  }
+
+  auto canonical_vtable_id =
+      sem_ir().constant_values().GetConstantInstId(class_info.vtable_id);
+  if (canonical_vtable_id == SemIR::ErrorInst::SingletonInstId) {
+    return;
+  }
+  auto vtable_inst_block =
+      sem_ir().inst_blocks().Get(sem_ir()
+                                     .insts()
+                                     .GetAs<SemIR::Vtable>(canonical_vtable_id)
+                                     .virtual_functions_id);
+
+  auto* entry_type = llvm::IntegerType::getInt32Ty(llvm_context());
+  auto* table_type = llvm::ArrayType::get(entry_type, vtable_inst_block.size());
+
+  Mangler m(*this);
+  std::string mangled_name = m.MangleVTable(class_info);
+
+  auto* llvm_vtable = new llvm::GlobalVariable(
+      llvm_module(), table_type, /*isConstant=*/true,
+      llvm::GlobalValue::ExternalLinkage, nullptr, mangled_name);
+
+  auto* i32_type = llvm::IntegerType::getInt32Ty(llvm_context());
+  auto* i64_type = llvm::IntegerType::getInt64Ty(llvm_context());
+  auto* vtable_const_int =
+      llvm::ConstantExpr::getPtrToInt(llvm_vtable, i64_type);
+
+  llvm::SmallVector<llvm::Constant*> vfuncs;
+  vfuncs.reserve(vtable_inst_block.size());
+
+  for (auto fn_decl_id : vtable_inst_block) {
+    auto fn_decl = GetCalleeFunction(sem_ir(), fn_decl_id);
+    vfuncs.push_back(llvm::ConstantExpr::getTrunc(
+        llvm::ConstantExpr::getSub(
+            llvm::ConstantExpr::getPtrToInt(
+                GetOrCreateFunction(fn_decl.function_id,
+                                    SemIR::SpecificId::None),
+                i64_type),
+            vtable_const_int),
+        i32_type));
+  }
+
+  llvm_vtable->setInitializer(llvm::ConstantArray::get(table_type, vfuncs));
+  llvm_vtable->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
 }
 
 }  // namespace Carbon::Lower

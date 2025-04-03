@@ -158,12 +158,12 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_12.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_12.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_12.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_12.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -291,12 +291,12 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_12.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -399,11 +399,11 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Undefined(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Undefined(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_14.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

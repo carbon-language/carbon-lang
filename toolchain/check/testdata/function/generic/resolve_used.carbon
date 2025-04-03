@@ -126,12 +126,12 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%int_0) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%int_0
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%int_0
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Int.loc12_20.2 => constants.%i0

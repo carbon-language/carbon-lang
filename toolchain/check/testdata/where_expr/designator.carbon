@@ -223,19 +223,19 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
 // CHECK:STDOUT:   %U.loc10_17.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc10_17.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc10_17.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
 // CHECK:STDOUT:   %V.loc12_18.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc12_18.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc12_18.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_wrong_member.carbon
@@ -247,7 +247,6 @@ class D {
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%Member [concrete]
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %W.patt: <error> = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMismatch.type: type = fn_type @PeriodMismatch [concrete]
 // CHECK:STDOUT:   %PeriodMismatch: %PeriodMismatch.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -268,7 +267,7 @@ class D {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %PeriodMismatch.decl: %PeriodMismatch.type = fn_decl @PeriodMismatch [concrete = constants.%PeriodMismatch] {
-// CHECK:STDOUT:     %W.patt.loc12_19.1: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.patt: <error> = symbolic_binding_pattern W, 0 [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_25.1: type = splice_block %.loc12_25.2 [concrete = <error>] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
@@ -302,16 +301,12 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @PeriodMismatch(%W: <error>) {
-// CHECK:STDOUT:   %W.patt.loc12_19.2: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.patt.loc12_19.1: <error>);
+// CHECK:STDOUT:   fn(%W.patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @PeriodMismatch(<error>) {
-// CHECK:STDOUT:   %W.patt.loc12_19.2 => <error>
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @PeriodMismatch(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_designator_matches_var.carbon
 // CHECK:STDOUT:

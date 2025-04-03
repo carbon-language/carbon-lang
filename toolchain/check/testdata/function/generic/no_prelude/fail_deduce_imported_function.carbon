@@ -104,7 +104,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc4_21.2 => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a.loc4_22.2 => constants.%struct_type.a
 // CHECK:STDOUT: }
@@ -216,14 +216,14 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc4_25.2 => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a.loc4_26.2 => constants.%struct_type.a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
 // CHECK:STDOUT: }

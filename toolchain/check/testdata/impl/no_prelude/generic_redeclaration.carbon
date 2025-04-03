@@ -317,7 +317,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.c3d(constants.%T.826) {
 // CHECK:STDOUT:   %T.loc11_14.2 => constants.%T.826
-// CHECK:STDOUT:   %T.patt.loc11_14.2 => constants.%T.826
+// CHECK:STDOUT:   %T.patt.loc11_14.2 => constants.%T.patt.3ad
 // CHECK:STDOUT:   %T.as_type.loc11_21.2 => constants.%T.as_type.b70
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.d14
 // CHECK:STDOUT: }
@@ -326,7 +326,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.793(constants.%T.ccd) {
 // CHECK:STDOUT:   %T.loc12_14.2 => constants.%T.ccd
-// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T.ccd
+// CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T.patt.371
 // CHECK:STDOUT:   %T.as_type.loc12_21.2 => constants.%T.as_type.3df
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.d94
 // CHECK:STDOUT: }
@@ -335,7 +335,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.c93(constants.%T.09f) {
 // CHECK:STDOUT:   %T.loc13_14.2 => constants.%T.09f
-// CHECK:STDOUT:   %T.patt.loc13_14.2 => constants.%T.09f
+// CHECK:STDOUT:   %T.patt.loc13_14.2 => constants.%T.patt.036
 // CHECK:STDOUT:   %T.as_type.loc13_21.2 => constants.%T.as_type.037
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.8aa
 // CHECK:STDOUT: }
@@ -344,7 +344,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.9e6(constants.%T.1d2) {
 // CHECK:STDOUT:   %T.loc14_14.2 => constants.%T.1d2
-// CHECK:STDOUT:   %T.patt.loc14_14.2 => constants.%T.1d2
+// CHECK:STDOUT:   %T.patt.loc14_14.2 => constants.%T.patt.29d
 // CHECK:STDOUT:   %T.as_type.loc14_21.2 => constants.%T.as_type.0ed
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.da5
 // CHECK:STDOUT: }
@@ -442,7 +442,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.bfd509.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc7_21.2 => constants.%T.as_type
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.1896b7.1
 // CHECK:STDOUT: }
@@ -451,7 +451,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.bfd509.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc15_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc15_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc15_21.2 => constants.%T.as_type
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.1896b7.2
 // CHECK:STDOUT: }
@@ -681,7 +681,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2caff2.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.1f09a1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -695,7 +695,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2caff2.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc15_14.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc15_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.1f09a1.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

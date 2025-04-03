@@ -20,6 +20,8 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 
 namespace Carbon::Check {
@@ -440,9 +442,11 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
 auto CheckUnit::CheckRequiredDefinitions() -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
+
   // Note that more required definitions can be added during this loop.
-  for (size_t i = 0; i != context_.definitions_required().size(); ++i) {
-    SemIR::InstId decl_inst_id = context_.definitions_required()[i];
+  // NOLINTNEXTLINE(modernize-loop-convert)
+  for (size_t i = 0; i != context_.definitions_required_by_decl().size(); ++i) {
+    SemIR::InstId decl_inst_id = context_.definitions_required_by_decl()[i];
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -474,31 +478,30 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         // https://github.com/carbon-language/carbon-lang/issues/4071.
         CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
-      case CARBON_KIND(SemIR::SpecificFunction specific_function): {
-        // TODO: Track a location for the use. In general we may want to track a
-        // list of enclosing locations if this was used from a generic.
-        SemIRLoc use_loc = decl_inst_id;
-        if (!ResolveSpecificDefinition(context_, use_loc,
-                                       specific_function.specific_id)) {
-          CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
-                            "use of undefined generic function");
-          CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
-                            "generic function declared here");
-          auto generic_decl_id =
-              context_.generics()
-                  .Get(context_.specifics()
-                           .Get(specific_function.specific_id)
-                           .generic_id)
-                  .decl_id;
-          emitter_.Build(decl_inst_id, MissingGenericFunctionDefinition)
-              .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
-              .Emit();
-        }
-        break;
-      }
       default: {
         CARBON_FATAL("Unexpected inst in definitions_required: {0}", decl_inst);
       }
+    }
+  }
+
+  // Note that more required definitions can be added during this loop.
+  // NOLINTNEXTLINE(modernize-loop-convert)
+  for (size_t i = 0; i != context_.definitions_required_by_use().size(); ++i) {
+    // This is using the location for the use. We could track the
+    // list of enclosing locations if this was used from a generic.
+    auto [loc, specific_id] = context_.definitions_required_by_use()[i];
+    if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
+      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
+                        "use of undefined generic function");
+      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
+                        "generic function declared here");
+      auto generic_decl_id =
+          context_.generics()
+              .Get(context_.specifics().Get(specific_id).generic_id)
+              .decl_id;
+      emitter_.Build(loc, MissingGenericFunctionDefinition)
+          .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
+          .Emit();
     }
   }
 }

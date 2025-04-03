@@ -158,13 +158,13 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %Int.loc4_42.2 => constants.%Int
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_64) {
 // CHECK:STDOUT:   %N.loc4_6.2 => constants.%int_64
-// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%int_64
+// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %Int.loc4_42.2 => constants.%i64
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -284,6 +284,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc9_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc9_6.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc9_6.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

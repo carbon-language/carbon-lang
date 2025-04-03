@@ -147,9 +147,9 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 }
 
 LLVM_DUMP_METHOD static auto Dump(
-    const Context& context, SemIR::CompleteFacetTypeId complete_facet_type_id)
-    -> std::string {
-  return SemIR::Dump(context.sem_ir(), complete_facet_type_id);
+    const Context& context,
+    SemIR::IdentifiedFacetTypeId identified_facet_type_id) -> std::string {
+  return SemIR::Dump(context.sem_ir(), identified_facet_type_id);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,

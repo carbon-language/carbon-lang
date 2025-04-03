@@ -183,14 +183,24 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     diag.Emit();
   }
 
-  if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
-    context.TODO(node_id, "extending non-facet-type constraint");
-    parent_scope.set_has_error();
-    return false;
-  }
   const auto& impl = context.impls().Get(impl_id);
   if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
     parent_scope.set_has_error();
+  } else {
+    bool is_complete = RequireCompleteType(
+        context, constraint_id, context.insts().GetLocId(constraint_inst_id),
+        [&] {
+          CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Error,
+                            "`extend impl as` incomplete facet type {0}",
+                            InstIdAsType);
+          return context.emitter().Build(impl.latest_decl_id(),
+                                         ExtendImplAsIncomplete,
+                                         constraint_inst_id);
+        });
+    if (!is_complete) {
+      parent_scope.set_has_error();
+      return false;
+    }
   }
 
   parent_scope.AddExtendedScope(constraint_inst_id);
@@ -303,47 +313,35 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
   return true;
 }
 
-// Checks that the constraint specified for the impl is valid and complete.
-// Returns a pointer to the interface that the impl implements. On error,
-// issues a diagnostic and returns nullptr.
+// Checks that the constraint specified for the impl is valid and identified.
+// Returns the interface that the impl implements. On error, issues a diagnostic
+// and returns `None`.
 static auto CheckConstraintIsInterface(Context& context,
-                                       const SemIR::Impl& impl)
-    -> const SemIR::CompleteFacetType::RequiredInterface* {
-  auto facet_type_id =
-      context.types().GetTypeIdForTypeInstId(impl.constraint_id);
+                                       SemIR::InstId impl_decl_id,
+                                       SemIR::InstId constraint_id)
+    -> SemIR::SpecificInterface {
+  auto facet_type_id = context.types().GetTypeIdForTypeInstId(constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    return nullptr;
+    return SemIR::SpecificInterface::None;
   }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
   if (!facet_type) {
     CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
                       InstIdAsType);
-    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType,
-                           impl.constraint_id);
-    return nullptr;
+    context.emitter().Emit(impl_decl_id, ImplAsNonFacetType, constraint_id);
+    return SemIR::SpecificInterface::None;
   }
 
-  auto complete_id = RequireCompleteFacetType(
-      context, facet_type_id, context.insts().GetLocId(impl.constraint_id),
-      *facet_type, [&] {
-        CARBON_DIAGNOSTIC(ImplAsIncompleteFacetType, Error,
-                          "impl as incomplete facet type {0}", InstIdAsType);
-        return context.emitter().Build(impl.latest_decl_id(),
-                                       ImplAsIncompleteFacetType,
-                                       impl.constraint_id);
-      });
-  if (!complete_id.has_value()) {
-    return nullptr;
-  }
-  const auto& complete = context.complete_facet_types().Get(complete_id);
-  if (complete.num_to_impl != 1) {
+  auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
+  const auto& identified = context.identified_facet_types().Get(identified_id);
+  if (!identified.is_valid_impl_as_target()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
-    context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
-                           complete.num_to_impl);
-    return nullptr;
+    context.emitter().Emit(impl_decl_id, ImplOfNotOneInterface,
+                           identified.num_interfaces_to_impl());
+    return SemIR::SpecificInterface::None;
   }
-  return &complete.required_interfaces.front();
+  return identified.impl_as_target_interface();
 }
 
 // Build an ImplDecl describing the signature of an impl. This handles the
@@ -388,14 +386,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                                /*is_extern=*/false, SemIR::LibraryNameId::None),
                            {.self_id = self_inst_id,
                             .constraint_id = constraint_inst_id,
-                            .interface = SemIR::SpecificInterface::None}};
-
-  const SemIR::CompleteFacetType::RequiredInterface* required_interface =
-      CheckConstraintIsInterface(context, impl_info);
-  if (required_interface) {
-    impl_info.interface = *required_interface;
-  }
-
+                            .interface = CheckConstraintIsInterface(
+                                context, impl_decl_id, constraint_inst_id)}};
   // Add the impl declaration.
   bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
@@ -417,8 +409,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.has_value()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
-    if (required_interface) {
-      impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
+    if (impl_info.interface.interface_id.has_value()) {
+      impl_info.witness_id =
+          ImplWitnessForDeclaration(context, impl_info, is_definition);
     } else {
       impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
       // TODO: We might also want to mark that the name scope for the impl has
@@ -508,9 +501,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Impl definitions are required in the same file as the declaration. We skip
-  // this requirement if we've already issued an invalid redeclaration error.
-  if (!is_definition && !invalid_redeclaration) {
-    context.definitions_required().push_back(impl_decl_id);
+  // this requirement if we've already issued an invalid redeclaration error, or
+  // there is an error that would prevent the impl from being legal to define.
+  if (!is_definition && !invalid_redeclaration &&
+      context.impls().Get(impl_decl.impl_id).witness_id !=
+          SemIR::ErrorInst::SingletonInstId) {
+    context.definitions_required_by_decl().push_back(impl_decl_id);
   }
 
   return {impl_decl.impl_id, impl_decl_id};

@@ -664,7 +664,7 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_13.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc4_13.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc4_13.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%N, constants.%Self.3a0) {
@@ -682,7 +682,7 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%int_-1) {
 // CHECK:STDOUT:   %N.loc4_13.2 => constants.%int_-1
-// CHECK:STDOUT:   %N.patt.loc4_13.2 => constants.%int_-1
+// CHECK:STDOUT:   %N.patt.loc4_13.2 => constants.%N.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.057
@@ -829,6 +829,6 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

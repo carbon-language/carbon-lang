@@ -280,19 +280,19 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqualEqual(constants.%U) {
 // CHECK:STDOUT:   %U.loc11_15.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc11_15.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc11_15.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
 // CHECK:STDOUT:   %V.loc13_10.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc13_10.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc13_10.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @And(constants.%W) {
 // CHECK:STDOUT:   %W.loc15_8.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc15_8.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc15_8.2 => constants.%W.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_type_impls.carbon
@@ -407,7 +407,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AssociatedTypeImpls(constants.%W) {
 // CHECK:STDOUT:   %W.loc11_24.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc11_24.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc11_24.2 => constants.%W.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_left_of_impls_non_type.carbon
@@ -460,7 +460,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonTypeImpls(constants.%U) {
 // CHECK:STDOUT:   %U.loc11_17.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_right_of_impls_non_type.carbon
@@ -514,7 +514,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplsNonType(constants.%U) {
 // CHECK:STDOUT:   %U.loc11_17.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc11_17.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_right_of_impls_non_facet_type.carbon
@@ -569,7 +569,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplsOfNonFacetType(constants.%U) {
 // CHECK:STDOUT:   %U.loc8_24.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc8_24.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc8_24.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_enforce_constraint.carbon
@@ -698,11 +698,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
 // CHECK:STDOUT:   %V => constants.%V
-// CHECK:STDOUT:   %V.patt.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {
 // CHECK:STDOUT:   %Y.loc23_16.2 => constants.%Y
-// CHECK:STDOUT:   %Y.patt.loc23_16.2 => constants.%Y
+// CHECK:STDOUT:   %Y.patt.loc23_16.2 => constants.%Y.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

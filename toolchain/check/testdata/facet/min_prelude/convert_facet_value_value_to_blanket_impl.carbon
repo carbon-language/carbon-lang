@@ -187,7 +187,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%A) {
 // CHECK:STDOUT:   %A.loc17_14.2 => constants.%A
-// CHECK:STDOUT:   %A.patt.loc17_14.2 => constants.%A
+// CHECK:STDOUT:   %A.patt.loc17_14.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.as_type.loc17_26.2 => constants.%A.as_type
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.11010a.1
 // CHECK:STDOUT: }
@@ -196,19 +196,19 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T.1b5) {
 // CHECK:STDOUT:   %T.loc19_9.2 => constants.%T.1b5
-// CHECK:STDOUT:   %T.patt.loc19_9.2 => constants.%T.1b5
+// CHECK:STDOUT:   %T.patt.loc19_9.2 => constants.%T.patt.6be
 // CHECK:STDOUT:   %T.as_type.loc19_22.2 => constants.%T.as_type.27d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T.fd4) {
 // CHECK:STDOUT:   %T.loc21_17.2 => constants.%T.fd4
-// CHECK:STDOUT:   %T.patt.loc21_17.2 => constants.%T.fd4
+// CHECK:STDOUT:   %T.patt.loc21_17.2 => constants.%T.patt.a9c
 // CHECK:STDOUT:   %T.as_type.loc21_32.2 => constants.%T.as_type.2ad
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T.fd4) {
 // CHECK:STDOUT:   %A.loc17_14.2 => constants.%T.fd4
-// CHECK:STDOUT:   %A.patt.loc17_14.2 => constants.%T.fd4
+// CHECK:STDOUT:   %A.patt.loc17_14.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.as_type.loc17_26.2 => constants.%T.as_type.2ad
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.11010a.2
 // CHECK:STDOUT:
@@ -217,7 +217,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Eats.facet) {
 // CHECK:STDOUT:   %T.loc19_9.2 => constants.%Eats.facet
-// CHECK:STDOUT:   %T.patt.loc19_9.2 => constants.%Eats.facet
+// CHECK:STDOUT:   %T.patt.loc19_9.2 => constants.%T.patt.6be
 // CHECK:STDOUT:   %T.as_type.loc19_22.2 => constants.%T.as_type.2ad
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -372,7 +372,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc8_14.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc8_14.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc8_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
@@ -388,7 +388,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc12_22.2 => constants.%Dest
+// CHECK:STDOUT:   %Dest.patt.loc12_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {

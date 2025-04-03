@@ -178,6 +178,7 @@ cc_library(
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
     deps = [
+        ":expr_info",
         ":file",
         ":inst_namer",
         ":typed_insts",
@@ -209,6 +210,18 @@ cc_library(
         ":typed_insts",
         "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "expr_info",
+    srcs = ["expr_info.cpp"],
+    hdrs = ["expr_info.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//toolchain/base:kind_switch",
     ],
 )
 

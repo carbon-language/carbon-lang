@@ -180,7 +180,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%F.8b3) {
 // CHECK:STDOUT:   %F.loc5_13.2 => constants.%F.8b3
-// CHECK:STDOUT:   %F.patt.loc5_13.2 => constants.%F.8b3
+// CHECK:STDOUT:   %F.patt.loc5_13.2 => constants.%F.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

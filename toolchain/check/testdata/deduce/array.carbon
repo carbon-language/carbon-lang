@@ -58,10 +58,10 @@ fn F[T:! type](a: array(T, 2)) -> T { return a[0]; }
 fn G() -> C {
   // TODO: We succeed at deducing T here but fail to convert. Is this the right behavior?
   var a: array(C, 3) = ({}, {}, {});
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert expression of type `[C; 3]` to `[C; 2]` [ConversionFailure]
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert expression of type `array(C, 3)` to `array(C, 2)` [ConversionFailure]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note: type `[C; 3]` does not implement interface `Core.ImplicitAs([C; 2])` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE+7]]:12: note: type `array(C, 3)` does not implement interface `Core.ImplicitAs(array(C, 2))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
   // CHECK:STDERR: fail_bound_mismatch.carbon:[[@LINE-11]]:16: note: initializing function parameter [InCallToFunctionParam]
@@ -83,10 +83,10 @@ fn F[N:! Core.IntLiteral()](a: array(C, N)) -> i32 { return N; }
 fn G() -> i32 {
   // TODO: We succeed at deducing N here but fail to convert. Is this the right behavior?
   var a: array(D, 3) = ({}, {}, {});
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert expression of type `[D; 3]` to `[C; 3]` [ConversionFailure]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+10]]:12: error: cannot implicitly convert expression of type `array(D, 3)` to `array(C, 3)` [ConversionFailure]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:12: note: type `[D; 3]` does not implement interface `Core.ImplicitAs([C; 3])` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:12: note: type `array(D, 3)` does not implement interface `Core.ImplicitAs(array(C, 3))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return F(a);
   // CHECK:STDERR:            ^
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-11]]:29: note: initializing function parameter [InCallToFunctionParam]
@@ -288,13 +288,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %array_type.loc6_29.2 => constants.%array_type.743
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %array_type.loc6_29.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -481,13 +481,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc6_42.2 => constants.%array_type.6a2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_3.1ba) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%int_3.1ba
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%int_3.1ba
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc6_42.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -638,17 +638,17 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc6_16.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc6_16.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc6_16.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc6_52.2 => constants.%array_type.bb5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C, constants.%int_3) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc6_16.2 => constants.%int_3
-// CHECK:STDOUT:   %N.patt.loc6_16.2 => constants.%int_3
+// CHECK:STDOUT:   %N.patt.loc6_16.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc6_52.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -823,13 +823,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %array_type.loc6_29.2 => constants.%array_type.9d4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %array_type.loc6_29.2 => constants.%array_type.15a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1028,13 +1028,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc7_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc7_42.2 => constants.%array_type.6a2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_3.1ba) {
 // CHECK:STDOUT:   %N.loc7_6.2 => constants.%int_3.1ba
-// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%int_3.1ba
+// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc7_42.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1206,7 +1206,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:   %Convert.bound => constants.%Convert.bound
 // CHECK:STDOUT:   %bound_method.loc6_27.3 => constants.%bound_method
 // CHECK:STDOUT:   %int.convert_checked.loc6_27.2 => constants.%int.convert_checked

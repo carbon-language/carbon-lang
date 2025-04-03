@@ -81,9 +81,8 @@ static auto GetSelfFacet(Context& context,
                          SemIR::InstId self_witness_id) -> SemIR::InstId {
   auto self_binding_id =
       GetSelfBinding(context, interface_specific_id, generic_id);
-  auto self_binding = context.insts().Get(self_binding_id);
-  auto self_facet_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), interface_specific_id, self_binding.type_id());
+  auto self_facet_type_id = SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), interface_specific_id, self_binding_id);
   // Create a facet value to be the value of `Self` in the interface.
   // TODO: Pass this in instead of creating it here. The caller sometimes
   // already has a facet value.
@@ -190,15 +189,14 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
         GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
                                    self_type_id, self_witness_id);
     auto const_specific_id = MakeSpecific(context, loc, generic_id, arg_ids);
-    return SemIR::GetTypeInSpecific(context.sem_ir(), const_specific_id,
-                                    context.insts().Get(decl_id).type_id());
+    return SemIR::GetTypeOfInstInSpecific(context.sem_ir(), const_specific_id,
+                                          decl_id);
   } else if (auto fn = context.types().TryGetAs<SemIR::FunctionType>(
                  decl.type_id())) {
     // Form the type of the function within the interface, and attach the `Self`
     // type.
-    auto interface_fn_type_id =
-        SemIR::GetTypeInSpecific(context.sem_ir(), interface_specific_id,
-                                 context.insts().Get(decl_id).type_id());
+    auto interface_fn_type_id = SemIR::GetTypeOfInstInSpecific(
+        context.sem_ir(), interface_specific_id, decl_id);
     auto self_facet_id =
         GetSelfFacet(context, interface_specific_id,
                      context.functions().Get(fn->function_id).generic_id,

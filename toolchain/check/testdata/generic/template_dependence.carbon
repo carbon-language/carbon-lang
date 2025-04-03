@@ -93,7 +93,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_29.2 => constants.%ptr.79f
 // CHECK:STDOUT:   %ptr.loc4_30.2 => constants.%ptr.a13
 // CHECK:STDOUT: }
@@ -183,9 +183,9 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc4_25.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc4_25.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc4_25.2 => constants.%U.patt
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.30b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

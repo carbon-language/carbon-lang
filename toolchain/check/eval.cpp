@@ -96,26 +96,36 @@ class EvalContext {
 
     // While resolving a specific, map from previous instructions in the eval
     // block into their evaluated values. These values won't be present on the
-    // specific itself yet, so `GetConstantInSpecific` won't be able to find
-    // them.
-    if (specific_eval_info_) {
-      const auto& symbolic_info =
-          constant_values().GetSymbolicConstant(const_id);
-      if (symbolic_info.index.has_value() &&
-          symbolic_info.generic_id ==
-              specifics().Get(specific_id_).generic_id &&
-          symbolic_info.index.region() == specific_eval_info_->region) {
+    // specific itself yet, so `GetConstantValueInSpecific` won't be able to
+    // find them.
+    const auto& symbolic_info = constant_values().GetSymbolicConstant(const_id);
+    if (specific_eval_info_ && symbolic_info.index.has_value()) {
+      CARBON_CHECK(
+          symbolic_info.generic_id == specifics().Get(specific_id_).generic_id,
+          "Instruction has constant operand in wrong generic");
+      if (symbolic_info.index.region() == specific_eval_info_->region) {
         auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
         CARBON_CHECK(inst_id.has_value(),
                      "Forward reference in eval block: index {0} referenced "
                      "before evaluation",
                      symbolic_info.index.index());
         return constant_values().Get(inst_id);
+      } else {
+        // TODO: Eliminate this call. This is the only place where we get a
+        // value from a specific without using an InstId. There are three ways
+        // we can get here:
+        // 1) From GetConstantValue(InstId): these can use
+        //    GetConstantValueInSpecific.
+        // 2) From GetConstantValue(TypeId): for these, we could change
+        //    instructions so they store InstIds instead of TypeIds.
+        // 3) From GetConstantFacetTypeInfo: for these, we could store an
+        //    InstId instead of a ConstantId in rewrite_constraints.
+        return GetConstantInSpecific(sem_ir(), specific_id_, const_id);
       }
     }
 
     // Map from a specific constant value to the canonical value.
-    return GetConstantInSpecific(sem_ir(), specific_id_, const_id);
+    return constant_values().Get(symbolic_info.inst_id);
   }
 
   // Gets the constant value of the specified instruction in this context.
@@ -363,6 +373,9 @@ static auto GetConstantValue(EvalContext& eval_context,
 // If the given instruction is constant, returns its constant value.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
                              Phase* phase) -> SemIR::InstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
   auto const_id = eval_context.GetConstantValue(inst_id);
   *phase =
       LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
@@ -611,6 +624,24 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.facet_types().Add(info);
 }
 
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::EntityNameId entity_name_id, Phase* phase)
+    -> SemIR::EntityNameId {
+  const auto& bind_name = eval_context.entity_names().Get(entity_name_id);
+  Phase name_phase;
+  if (bind_name.name_id == SemIR::NameId::PeriodSelf) {
+    name_phase = Phase::PeriodSelfSymbolic;
+  } else if (!bind_name.bind_index().has_value()) {
+    name_phase = Phase::Concrete;
+  } else if (bind_name.is_template) {
+    name_phase = Phase::TemplateSymbolic;
+  } else {
+    name_phase = Phase::CheckedSymbolic;
+  }
+  *phase = LatestPhase(*phase, name_phase);
+  return eval_context.entity_names().MakeCanonical(entity_name_id);
+}
+
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
 // has runtime phase.
@@ -715,6 +746,18 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
   }
   inst->SetArgs(arg0, arg1);
   return true;
+}
+
+auto AddImportedConstant(Context& context, SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  EvalContext eval_context(&context, SemIR::InstId::None);
+  Phase phase = Phase::Concrete;
+  // TODO: Can we avoid doing this replacement? It may do things that are
+  // undesirable during importing, such as resolving specifics.
+  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+    return SemIR::ConstantId::NotConstant;
+  }
+  return MakeConstantResult(context, inst, phase);
 }
 
 // Performs an index into a homogeneous aggregate, retrieving the specified
@@ -1739,37 +1782,6 @@ auto TryEvalTypedInst<SemIR::ImportRefLoaded>(EvalContext& /*eval_context*/,
   return SemIR::ConstantId::NotConstant;
 }
 
-// TODO: Disable constant evaluation of SymbolicBindingPattern once
-// DeduceGenericCallArguments no longer needs implicit params to have constant
-// values.
-template <>
-auto TryEvalTypedInst<SemIR::SymbolicBindingPattern>(EvalContext& eval_context,
-                                                     SemIR::InstId /*inst_id*/,
-                                                     SemIR::Inst inst)
-    -> SemIR::ConstantId {
-  auto bind = inst.As<SemIR::SymbolicBindingPattern>();
-
-  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
-
-  // If we know which specific we're evaluating within and this is an
-  // argument of that specific, its constant value is the corresponding
-  // argument value.
-  if (auto value = eval_context.GetCompileTimeBindValue(bind_name.bind_index());
-      value.has_value()) {
-    // TODO: This seems incorrect: patterns don't typically evaluate to the
-    // value matched by the pattern.
-    return value;
-  }
-
-  // The constant form of a symbolic binding is an idealized form of the
-  // original, with no equivalent value.
-  bind.entity_name_id =
-      eval_context.entity_names().MakeCanonical(bind.entity_name_id);
-  return MakeConstantResult(
-      eval_context.context(), bind,
-      bind_name.is_template ? Phase::TemplateSymbolic : Phase::CheckedSymbolic);
-}
-
 // Symbolic bindings are a special case because they can reach into the eval
 // context and produce a context-specific value.
 template <>
@@ -1779,30 +1791,26 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
     -> SemIR::ConstantId {
   auto bind = inst.As<SemIR::BindSymbolicName>();
 
+  // If we know which specific we're evaluating within and this is an argument
+  // of that specific, its constant value is the corresponding argument value.
   const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
-
-  Phase phase;
-  if (bind_name.name_id == SemIR::NameId::PeriodSelf) {
-    phase = Phase::PeriodSelfSymbolic;
-  } else {
-    // If we know which specific we're evaluating within and this is an
-    // argument of that specific, its constant value is the corresponding
-    // argument value.
+  if (bind_name.bind_index().has_value()) {
     if (auto value =
             eval_context.GetCompileTimeBindValue(bind_name.bind_index());
         value.has_value()) {
       return value;
     }
-    phase = bind_name.is_template ? Phase::TemplateSymbolic
-                                  : Phase::CheckedSymbolic;
   }
+
   // The constant form of a symbolic binding is an idealized form of the
   // original, with no equivalent value.
-  bind.entity_name_id =
-      eval_context.entity_names().MakeCanonical(bind.entity_name_id);
+  Phase phase = Phase::Concrete;
   bind.value_id = SemIR::InstId::None;
   if (!ReplaceFieldWithConstantValue(
-          eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase)) {
+          eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase) ||
+      !ReplaceFieldWithConstantValue(eval_context, &bind,
+                                     &SemIR::BindSymbolicName::entity_name_id,
+                                     &phase)) {
     return MakeNonConstantResult(phase);
   }
   return MakeConstantResult(eval_context.context(), bind, phase);

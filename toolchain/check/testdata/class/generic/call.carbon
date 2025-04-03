@@ -212,25 +212,25 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.356) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc4_23.2 => constants.%N.356
-// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.356
+// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.patt.8cf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%ptr.235, constants.%int_5.0f6) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.235
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%ptr.235
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc4_23.2 => constants.%int_5.0f6
-// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%int_5.0f6
+// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.patt.8cf
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%empty_tuple.type, constants.%int_0.6a9) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc4_23.2 => constants.%int_0.6a9
-// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%int_0.6a9
+// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.patt.8cf
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -311,9 +311,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.356) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc4_23.2 => constants.%N.356
-// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.356
+// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.patt.8cf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_too_many.carbon
@@ -396,9 +396,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.356) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc4_23.2 => constants.%N.356
-// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.356
+// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.patt.8cf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_conversion.carbon
@@ -481,9 +481,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T, constants.%N.356) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc4_23.2 => constants.%N.356
-// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.356
+// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.patt.8cf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_in_nested_return_type.carbon
@@ -725,7 +725,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.eae
@@ -734,7 +734,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc3_15.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc3_15.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc3_15.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%T
@@ -757,7 +757,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%U) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%U
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%U
+// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.a71
@@ -773,7 +773,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%T) {
 // CHECK:STDOUT:   %U.loc3_15.2 => constants.%T
-// CHECK:STDOUT:   %U.patt.loc3_15.2 => constants.%T
+// CHECK:STDOUT:   %U.patt.loc3_15.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%T

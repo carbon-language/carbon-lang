@@ -73,12 +73,12 @@ export C2(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_10.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_10.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_10.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C2(constants.%T) {
 // CHECK:STDOUT:   %T.loc5_10.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc5_10.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc5_10.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
@@ -126,11 +126,11 @@ export C2(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
