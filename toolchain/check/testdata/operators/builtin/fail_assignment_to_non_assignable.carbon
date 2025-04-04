@@ -218,7 +218,7 @@ fn Main() {
 // CHECK:STDOUT:   %i32.loc39_3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc39_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc39_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32.loc39_9 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   assign %i32.loc39_3, %ptr
 // CHECK:STDOUT:   %int_1.loc44: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc44: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]

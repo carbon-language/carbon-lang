@@ -253,7 +253,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f.var: ref %ptr = var f
 // CHECK:STDOUT:   %.loc16_23: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.type [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var
 // CHECK:STDOUT: }

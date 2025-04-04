@@ -264,7 +264,9 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_arg_id,
-            array_type.element_type_id, target_block, i, i);
+            context.types().GetTypeIdForTypeInstId(
+                array_type.element_type_inst_id),
+            target_block, i, i);
     if (init_id == SemIR::ErrorInst::SingletonInstId) {
       return SemIR::ErrorInst::SingletonInstId;
     }
@@ -660,7 +662,9 @@ static auto ConvertDerivedPointerToBasePointer(
   ptr_id = ConvertToValueExpr(context, ptr_id);
   auto ref_id = AddInst<SemIR::Deref>(
       context, loc_id,
-      {.type_id = src_ptr_type.pointee_id, .pointer_id = ptr_id});
+      {.type_id =
+           context.types().GetTypeIdForTypeInstId(src_ptr_type.pointee_id),
+       .pointer_id = ptr_id});
 
   // Convert as a reference expression.
   ref_id = ConvertDerivedToBase(context, loc_id, ref_id, path);
@@ -964,9 +968,12 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   if (auto target_pointer_type = target_type_inst.TryAs<SemIR::PointerType>()) {
     if (auto src_pointer_type =
             sem_ir.types().TryGetAs<SemIR::PointerType>(value_type_id)) {
-      if (auto path = ComputeInheritancePath(context, loc_id,
-                                             src_pointer_type->pointee_id,
-                                             target_pointer_type->pointee_id);
+      if (auto path =
+              ComputeInheritancePath(context, loc_id,
+                                     context.types().GetTypeIdForTypeInstId(
+                                         src_pointer_type->pointee_id),
+                                     context.types().GetTypeIdForTypeInstId(
+                                         target_pointer_type->pointee_id));
           path && !path->empty()) {
         return ConvertDerivedPointerToBasePointer(
             context, loc_id, *src_pointer_type, target.type_id, value_id,

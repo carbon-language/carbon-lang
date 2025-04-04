@@ -71,7 +71,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %.loc6_12: type = splice_block %const.loc6 [concrete = constants.%const] {
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc6: type = const_type %i32 [concrete = constants.%const]
+// CHECK:STDOUT:     %const.loc6: type = const_type %i32.loc6 [concrete = constants.%const]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %const = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -82,8 +82,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %.loc7_25: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc7: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr: type = ptr_type %const [concrete = constants.%ptr]
+// CHECK:STDOUT:     %const.loc7: type = const_type %i32.loc7 [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr: type = ptr_type %const.loc7 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr_ref: ref %ptr = bind_name a_ptr_ref, %a_ptr_ref.var
 // CHECK:STDOUT: }
@@ -141,8 +141,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %.loc6_17: type = splice_block %ptr.loc6 [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc6: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr.loc6: type = ptr_type %const [concrete = constants.%ptr]
+// CHECK:STDOUT:     %const.loc6: type = const_type %i32.loc6 [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr.loc6: type = ptr_type %const.loc6 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -153,8 +153,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %.loc7_21: type = splice_block %ptr.loc7 [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc7: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr.loc7: type = ptr_type %const [concrete = constants.%ptr]
+// CHECK:STDOUT:     %const.loc7: type = const_type %i32.loc7 [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr.loc7: type = ptr_type %const.loc7 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr: ref %ptr = bind_name a_ptr, %a_ptr.var
 // CHECK:STDOUT: }

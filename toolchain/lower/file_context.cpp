@@ -531,7 +531,8 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
     -> llvm::Type* {
   return llvm::ArrayType::get(
-      context.GetType(inst.element_type_id),
+      context.GetType(context.sem_ir().types().GetTypeIdForTypeInstId(
+          inst.element_type_inst_id)),
       *context.sem_ir().GetArrayBoundValue(inst.bound_id));
 }
 
@@ -558,7 +559,8 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
     -> llvm::Type* {
-  return context.GetType(inst.inner_id);
+  return context.GetType(
+      context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
 static auto BuildTypeForInst(FileContext& /*context*/,

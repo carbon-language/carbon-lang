@@ -168,7 +168,7 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:     %int.convert_checked.loc14_27: init Core.IntLiteral = call %bound_method.loc14_27.2(%.loc14_27.2) [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %.loc14_27.3: Core.IntLiteral = value_of_initializer %int.convert_checked.loc14_27 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %.loc14_27.4: Core.IntLiteral = converted %int.sadd, %.loc14_27.3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %array_type.loc14: type = array_type %.loc14_27.4, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type.loc14: type = array_type %.loc14_27.4, %i32.loc14 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -178,8 +178,8 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3.loc15: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %array_type.loc15: type = array_type %int_3.loc15, %i32 [concrete = constants.%array_type]
-// CHECK:STDOUT:     %ptr.loc15: type = ptr_type %array_type [concrete = constants.%ptr]
+// CHECK:STDOUT:     %array_type.loc15: type = array_type %int_3.loc15, %i32.loc15 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %ptr.loc15: type = ptr_type %array_type.loc15 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr = bind_name b, @__global_init.%addr.loc15
 // CHECK:STDOUT:   name_binding_decl {
@@ -207,8 +207,8 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:     %int.convert_checked.loc16_33.2: init Core.IntLiteral = call %bound_method.loc16_33.2(%.loc16_33.2) [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %.loc16_33.3: Core.IntLiteral = value_of_initializer %int.convert_checked.loc16_33.2 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %.loc16_33.4: Core.IntLiteral = converted %int.convert_checked.loc16_33.1, %.loc16_33.3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %array_type.loc16: type = array_type %.loc16_33.4, %i32 [concrete = constants.%array_type]
-// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %array_type [concrete = constants.%ptr]
+// CHECK:STDOUT:     %array_type.loc16: type = array_type %.loc16_33.4, %i32.loc16 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %array_type.loc16 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: %ptr = bind_name c, @__global_init.%addr.loc16
 // CHECK:STDOUT: }

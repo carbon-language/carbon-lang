@@ -607,6 +607,13 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
       context, SemIR::InstId::None,
       SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
                              .facet_value_inst_id = facet_inst_id});
+  // TODO: We should be able to lookup constant associated values from runtime
+  // facet values by using their FacetType only, but we assume constant values
+  // for impl lookup at the moment.
+  if (!self_type_const_id.is_constant()) {
+    context.TODO(loc_id, "associated value lookup on runtime facet value");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(self_type_const_id);
   auto witness_id =

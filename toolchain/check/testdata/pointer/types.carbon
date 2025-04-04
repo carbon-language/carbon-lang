@@ -53,12 +53,12 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc11_23: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %ptr.loc11_23: type = ptr_type %i32.loc11_20 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:     %p.param: %ptr.235 = value_param call_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %ptr.loc11_14 [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:       %int_32.loc11_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc11_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %ptr.loc11_14: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:       %ptr.loc11_14: type = ptr_type %i32.loc11_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.235 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param call_param1
@@ -72,14 +72,14 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_38: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_38: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc15_32: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr.loc15_42: type = ptr_type %const [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:     %const.loc15_32: type = const_type %i32.loc15_38 [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr.loc15_42: type = ptr_type %const.loc15_32 [concrete = constants.%ptr.36b]
 // CHECK:STDOUT:     %p.param: %ptr.36b = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %ptr.loc15_25 [concrete = constants.%ptr.36b] {
 // CHECK:STDOUT:       %int_32.loc15_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc15_16: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:       %ptr.loc15_25: type = ptr_type %const [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:       %const.loc15_16: type = const_type %i32.loc15_22 [concrete = constants.%const]
+// CHECK:STDOUT:       %ptr.loc15_25: type = ptr_type %const.loc15_16 [concrete = constants.%ptr.36b]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.36b = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.36b = out_param call_param1

@@ -17,18 +17,17 @@
 
 namespace Carbon::SemIR {
 
-// Map an instruction kind representing a type into an integer describing the
-// precedence of that type's syntax. Higher numbers correspond to higher
-// precedence.
+// Map an instruction kind representing a type expression into an integer
+// describing the precedence of that type's syntax. Higher numbers correspond to
+// higher precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  CARBON_CHECK(kind.is_type() != InstIsType::Never,
-               "Only called for kinds which can define a type.");
   if (kind == ConstType::Kind) {
     return -1;
   }
   if (kind == PointerType::Kind) {
     return -2;
   }
+  // TODO: Do any other kinds of type expression need precedence handling?
   return 0;
 }
 
@@ -219,7 +218,7 @@ class Stringifier {
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, ArrayType inst) -> void {
     *out_ << "array(";
-    step_stack_->Push(inst.element_type_id, ", ", inst.bound_id, ")");
+    step_stack_->Push(inst.element_type_inst_id, ", ", inst.bound_id, ")");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, AssociatedConstantDecl inst)
@@ -258,15 +257,14 @@ class Stringifier {
     *out_ << "const ";
 
     // Add parentheses if required.
-    auto inner_type_inst_id = sem_ir_->types().GetInstId(inst.inner_id);
-    if (GetTypePrecedence(sem_ir_->insts().Get(inner_type_inst_id).kind()) <
+    if (GetTypePrecedence(sem_ir_->insts().Get(inst.inner_id).kind()) <
         GetTypePrecedence(SemIR::ConstType::Kind)) {
       *out_ << "(";
-      // Note the inner_type_inst_id ends up here.
+      // Note the `inst.inner_id` ends up here.
       step_stack_->PushString(")");
     }
 
-    step_stack_->PushInstId(inner_type_inst_id);
+    step_stack_->PushInstId(inst.inner_id);
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, FacetAccessType inst)

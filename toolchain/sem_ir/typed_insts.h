@@ -192,7 +192,7 @@ struct ArrayType {
 
   TypeId type_id;
   InstId bound_id;
-  TypeId element_type_id;
+  InstId element_type_inst_id;
 };
 
 // Perform a no-op conversion to a compatible type.
@@ -256,7 +256,7 @@ struct AssociatedEntityType {
 
   TypeId type_id;
   // The interface in which the entity was declared.
-  // TODO: Consider storing an `InterfaceId` and `SpecificId` instead.
+  // TODO: Consider storing a `SpecificInterfaceId` instead.
   TypeId interface_type_id;
 };
 
@@ -606,7 +606,7 @@ struct ConstType {
            .deduce_through = true});
 
   TypeId type_id;
-  TypeId inner_id;
+  InstId inner_id;
 };
 
 // An action that performs simple conversion to a value expression of a given
@@ -1255,7 +1255,7 @@ struct PointerType {
            .deduce_through = true});
 
   TypeId type_id;
-  TypeId pointee_id;
+  InstId pointee_id;
 };
 
 // An action that performs type refinement for an instruction, by creating an

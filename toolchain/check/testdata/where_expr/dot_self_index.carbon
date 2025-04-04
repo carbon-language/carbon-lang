@@ -117,7 +117,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %.Self.as_wit.iface0.loc18_34.1: <witness> = facet_access_witness %.Self.ref, element0 [symbolic = %.Self.as_wit.iface0.loc18_34.2 (constants.%.Self.as_wit.iface0.663)]
 // CHECK:STDOUT:       %impl.elem0.loc18_34.1: type = impl_witness_access %.Self.as_wit.iface0.loc18_34.1, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.d0b)]
 // CHECK:STDOUT:       %T.ref.loc18_39: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
-// CHECK:STDOUT:       %ptr.loc18_40.1: type = ptr_type %T [symbolic = %ptr.loc18_40.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:       %ptr.loc18_40.1: type = ptr_type %T.ref.loc18_39 [symbolic = %ptr.loc18_40.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:       %.loc18_28.2: type = where_expr %.Self.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.5a8)] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc18_34.1, %ptr.loc18_40.1
 // CHECK:STDOUT:       }
@@ -145,7 +145,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit.iface0, element0 [symbolic_self = constants.%impl.elem0.1bd]
 // CHECK:STDOUT:       %int_32.loc20_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc20_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %ptr: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:       %ptr: type = ptr_type %i32.loc20_31 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:       %.loc20_20.2: type = where_expr %.Self [concrete = constants.%Empty_where.type.52c] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %ptr
 // CHECK:STDOUT:       }
@@ -192,7 +192,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %.Self.as_type.loc18_34.2: type = facet_access_type %.Self.2 [symbolic = %.Self.as_type.loc18_34.2 (constants.%.Self.as_type.a75)]
 // CHECK:STDOUT:   %.Self.as_wit.iface0.loc18_34.2: <witness> = facet_access_witness %.Self.2, element0 [symbolic = %.Self.as_wit.iface0.loc18_34.2 (constants.%.Self.as_wit.iface0.663)]
 // CHECK:STDOUT:   %impl.elem0.loc18_34.2: type = impl_witness_access %.Self.as_wit.iface0.loc18_34.2, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.d0b)]
-// CHECK:STDOUT:   %ptr.loc18_40.2: type = ptr_type @H.%T.loc18_6.2 (%T) [symbolic = %ptr.loc18_40.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %ptr.loc18_40.2: type = ptr_type %T.loc18_6.2 [symbolic = %ptr.loc18_40.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc18_6.2) where %impl.elem0.loc18_34.2 (constants.%impl.elem0.d0b) = %ptr.loc18_40.2 (constants.%ptr.79f)> [symbolic = %Empty_where.type (constants.%Empty_where.type.5a8)]
 // CHECK:STDOUT:   %V.loc18_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc18_43.2 (constants.%V)]
 // CHECK:STDOUT:   %V.patt.loc18_43.2: type = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]

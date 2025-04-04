@@ -102,7 +102,7 @@ var array_index: array(i32, 1) = (0,) as array(i32, ((5, 7, 1, 9) as array(i32, 
 // CHECK:STDOUT:   %int_32.loc17_76: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc17_76: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:   %array_type: type = array_type %int_4, %i32 [concrete = constants.%array_type.f32]
+// CHECK:STDOUT:   %array_type: type = array_type %int_4, %i32.loc17_76 [concrete = constants.%array_type.f32]
 // CHECK:STDOUT:   %impl.elem0.loc17_65.1: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc17_65.1: <bound method> = bound_method %int_5, %impl.elem0.loc17_65.1 [concrete = constants.%Convert.bound.4e6]
 // CHECK:STDOUT:   %specific_fn.loc17_65.1: <specific function> = specific_function %impl.elem0.loc17_65.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]

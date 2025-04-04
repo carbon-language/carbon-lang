@@ -59,7 +59,7 @@ class Class {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc16_13.2: %ptr = bind_symbolic_name a, 0 [symbolic = %a.loc16_13.1 (constants.%a)]
 // CHECK:STDOUT:   }
@@ -70,7 +70,7 @@ class Class {
 // CHECK:STDOUT:     %b.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc22: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %ptr = bind_name b, %b.param
 // CHECK:STDOUT:   }

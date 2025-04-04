@@ -43,11 +43,11 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:     %return.param_patt: %ptr = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc13_20: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc13_25: type = ptr_type %Class [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr.loc13_25: type = ptr_type %Class.ref.loc13_20 [concrete = constants.%ptr]
 // CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc13: type = splice_block %ptr.loc13_14 [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Class.ref.loc13_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc13_14: type = ptr_type %Class [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr.loc13_14: type = ptr_type %Class.ref.loc13_9 [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr = out_param call_param1

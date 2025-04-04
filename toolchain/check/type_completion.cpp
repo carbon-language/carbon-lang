@@ -243,7 +243,7 @@ auto TypeCompleter::ProcessStep() -> bool {
 auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
   CARBON_KIND_SWITCH(type_inst) {
     case CARBON_KIND(SemIR::ArrayType inst): {
-      Push(inst.element_type_id);
+      Push(context_->types().GetTypeIdForTypeInstId(inst.element_type_inst_id));
       break;
     }
     case CARBON_KIND(SemIR::StructType inst): {
@@ -282,7 +282,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::ConstType inst): {
-      Push(inst.inner_id);
+      Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
@@ -335,7 +335,8 @@ auto TypeCompleter::MakePointerValueRepr(
   // TODO: Should we add `const` qualification to `pointee_id`?
   return {.kind = SemIR::ValueRepr::Pointer,
           .aggregate_kind = aggregate_kind,
-          .type_id = GetPointerType(*context_, pointee_id)};
+          .type_id = GetPointerType(*context_,
+                                    context_->types().GetInstId(pointee_id))};
 }
 
 auto TypeCompleter::GetNestedInfo(SemIR::TypeId nested_type_id) const
@@ -498,7 +499,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
     -> SemIR::CompleteTypeInfo {
   // The value representation of `const T` is the same as that of `T`.
   // Objects are not modifiable through their value representations.
-  return GetNestedInfo(inst.inner_id);
+  return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
 // Builds and returns the value representation for the given type. All nested

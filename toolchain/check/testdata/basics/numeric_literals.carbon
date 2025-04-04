@@ -216,7 +216,7 @@ fn F() {
 // CHECK:STDOUT:     %int_6.loc22: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
 // CHECK:STDOUT:     %.loc22_21.1: type = value_of_initializer %float.make_type [concrete = f64]
 // CHECK:STDOUT:     %.loc22_21.2: type = converted %float.make_type, %.loc22_21.1 [concrete = f64]
-// CHECK:STDOUT:     %array_type.loc22: type = array_type %int_6.loc22, f64 [concrete = constants.%array_type.72b]
+// CHECK:STDOUT:     %array_type.loc22: type = array_type %int_6.loc22, %.loc22_21.2 [concrete = constants.%array_type.72b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %floats: ref %array_type.72b = bind_name floats, %floats.var
 // CHECK:STDOUT:   return

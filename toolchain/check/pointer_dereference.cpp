@@ -29,7 +29,8 @@ auto PerformPointerDereference(
   auto result_type_id = SemIR::ErrorInst::SingletonTypeId;
   if (auto pointer_type =
           context.types().TryGetAs<SemIR::PointerType>(type_id)) {
-    result_type_id = pointer_type->pointee_id;
+    result_type_id =
+        context.types().GetTypeIdForTypeInstId(pointer_type->pointee_id);
   } else if (type_id != SemIR::ErrorInst::SingletonTypeId) {
     diagnose_not_pointer(type_id);
   }

@@ -98,12 +98,12 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %return.param_patt: @GetAddr.%ptr.loc12_38.1 (%ptr.79f) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %ptr.loc12_38.2: type = ptr_type %T [symbolic = %ptr.loc12_38.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:       %ptr.loc12_38.2: type = ptr_type %T.ref [symbolic = %ptr.loc12_38.1 (constants.%ptr.79f)]
 // CHECK:STDOUT:       %self.param: @GetAddr.%ptr.loc12_29.1 (%ptr.955) = value_param call_param0
 // CHECK:STDOUT:       %.loc12_29: type = splice_block %ptr.loc12_29.2 [symbolic = %ptr.loc12_29.1 (constants.%ptr.955)] {
 // CHECK:STDOUT:         %.loc12_25: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc12_25 [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:         %ptr.loc12_29.2: type = ptr_type %Class [symbolic = %ptr.loc12_29.1 (constants.%ptr.955)]
+// CHECK:STDOUT:         %ptr.loc12_29.2: type = ptr_type %Self.ref [symbolic = %ptr.loc12_29.1 (constants.%ptr.955)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @GetAddr.%ptr.loc12_29.1 (%ptr.955) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @GetAddr.%ptr.loc12_38.1 (%ptr.79f) = out_param call_param1
@@ -152,8 +152,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT: generic fn @GetAddr(@Class.%T.loc11_13.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %ptr.loc12_29.1: type = ptr_type @GetAddr.%Class (%Class) [symbolic = %ptr.loc12_29.1 (constants.%ptr.955)]
-// CHECK:STDOUT:   %ptr.loc12_38.1: type = ptr_type @GetAddr.%T (%T) [symbolic = %ptr.loc12_38.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %ptr.loc12_29.1: type = ptr_type %Class [symbolic = %ptr.loc12_29.1 (constants.%ptr.955)]
+// CHECK:STDOUT:   %ptr.loc12_38.1: type = ptr_type %T [symbolic = %ptr.loc12_38.1 (constants.%ptr.79f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc12_34: <witness> = require_complete_type @GetAddr.%ptr.loc12_38.1 (%ptr.79f) [symbolic = %require_complete.loc12_34 (constants.%require_complete.6e5)]

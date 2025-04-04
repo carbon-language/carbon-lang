@@ -99,7 +99,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst38:          {kind: TupleType, arg0: type_block3, type: type(TypeType)}
 // CHECK:STDOUT:     inst39:          {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst40:          {kind: StructValue, arg0: inst_block_empty, type: type(inst39)}
-// CHECK:STDOUT:     inst41:          {kind: PointerType, arg0: type(symbolic_constant2), type: type(TypeType)}
+// CHECK:STDOUT:     inst41:          {kind: PointerType, arg0: inst28, type: type(TypeType)}
 // CHECK:STDOUT:     inst42:          {kind: RequireCompleteType, arg0: type(symbolic_constant2), type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst43:          {kind: RequireCompleteType, arg0: type(symbolic_constant2), type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst44:          {kind: RequireCompleteType, arg0: type(symbolic_constant3), type: type(inst(WitnessType))}

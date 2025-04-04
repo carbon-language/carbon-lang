@@ -146,7 +146,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %.loc15_12.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:       %.loc15_12.2: %i32 = converted %int_0, %.loc15_12.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%int_0.6a9) [concrete = constants.%A.6fc]
-// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %A.6fc [concrete = constants.%ptr.b65]
+// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %A [concrete = constants.%ptr.b65]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %ptr.b65 = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -210,7 +210,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %a.ref: %ptr.b65 = name_ref a, %a
 // CHECK:STDOUT:   %.loc20_11: type = splice_block %ptr.loc20 [concrete = constants.%ptr.e79] {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B [concrete = constants.%ptr.e79]
+// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B.ref [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20_15.1: ref %A.6fc = deref %a.ref
 // CHECK:STDOUT:   %.loc20_15.2: ref %B = class_element_access %.loc20_15.1, element0

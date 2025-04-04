@@ -35,6 +35,41 @@ fn H() {
   F({});
 }
 
+// --- function_generic.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F(_:! type) {};
+
+fn G() {
+  F({});
+}
+
+// --- fail_function_generic_undefined.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F(_:! type);
+
+fn G() {
+  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
+  // CHECK:STDERR:   F({});
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE-6]]:1: note: generic function declared here [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR: fn F(_:! type);
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F({});
+}
+
+// --- function_implict.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F[_:! type]();
+
+fn G[_:! type]() {}
+
 // --- fail_class.carbon
 
 library "[[@TEST_NAME]]";
@@ -100,6 +135,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc4_14: %empty_struct_type = converted @__global_init.%.loc4, %empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %_.loc4: %empty_struct_type = bind_name _, %.loc4_14
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc5: %empty_struct_type = binding_pattern _
 // CHECK:STDOUT:     %.loc5_1: %empty_struct_type = var_pattern %_.patt.loc5
@@ -109,6 +145,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %_.loc5: ref %empty_struct_type = bind_name _, %_.var
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,6 +161,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_16.2: %empty_struct_type = converted %.loc8_16.1, %empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %_.loc8: %empty_struct_type = bind_name _, %.loc8_16.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc9: %empty_struct_type = binding_pattern _
 // CHECK:STDOUT:     %.loc9_3.1: %empty_struct_type = var_pattern %_.patt.loc9
@@ -137,6 +175,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc9_11.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc9_11.3: type = converted %.loc9_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %_.loc9: ref %empty_struct_type = bind_name _, %_.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -179,6 +218,7 @@ fn F() -> {} {
 // CHECK:STDOUT:       %.loc4_10.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %_: %empty_struct_type = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %_.patt: %empty_struct_type = binding_pattern _
@@ -189,6 +229,7 @@ fn F() -> {} {
 // CHECK:STDOUT:       %.loc6_10.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %.loc6_10.3: type = converted %.loc6_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %_: %empty_struct_type = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT: }
@@ -208,6 +249,178 @@ fn F() -> {} {
 // CHECK:STDOUT:   %.loc9_6.2: %empty_struct_type = converted %.loc9_6.1, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc9_6.2)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- function_generic.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %_: type = bind_symbolic_name _, 0 [symbolic]
+// CHECK:STDOUT:   %_.patt: type = symbolic_binding_pattern _, 0 [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%empty_struct_type) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %_.patt.loc4_6.1: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %_.loc4_6.1: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%_.loc4_6.1: type) {
+// CHECK:STDOUT:   %_.loc4_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
+// CHECK:STDOUT:   %_.patt.loc4_6.2: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%_.patt.loc4_6.1: type) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc7_6: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc7_7: type = converted %.loc7_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%_) {
+// CHECK:STDOUT:   %_.loc4_6.2 => constants.%_
+// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
+// CHECK:STDOUT:   %_.loc4_6.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_function_generic_undefined.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %_: type = bind_symbolic_name _, 0 [symbolic]
+// CHECK:STDOUT:   %_.patt: type = symbolic_binding_pattern _, 0 [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%empty_struct_type) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %_.patt.loc4_6.1: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %_.loc4_6.1: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%_.loc4_6.1: type) {
+// CHECK:STDOUT:   %_.loc4_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
+// CHECK:STDOUT:   %_.patt.loc4_6.2: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%_.patt.loc4_6.1: type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc14_6: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc14_7: type = converted %.loc14_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%_) {
+// CHECK:STDOUT:   %_.loc4_6.2 => constants.%_
+// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
+// CHECK:STDOUT:   %_.loc4_6.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- function_implict.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %_: type = bind_symbolic_name _, 0 [symbolic]
+// CHECK:STDOUT:   %_.patt: type = symbolic_binding_pattern _, 0 [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %_.patt.loc4_6.1: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %_.loc4_6.1: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
+// CHECK:STDOUT:     %_.patt.loc6_6.1: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc6_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %_.loc6_6.1: type = bind_symbolic_name _, 0 [symbolic = %_.loc6_6.2 (constants.%_)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%_.loc4_6.1: type) {
+// CHECK:STDOUT:   %_.loc4_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
+// CHECK:STDOUT:   %_.patt.loc4_6.2: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%_.patt.loc4_6.1: type]();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @G(%_.loc6_6.1: type) {
+// CHECK:STDOUT:   %_.loc6_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc6_6.2 (constants.%_)]
+// CHECK:STDOUT:   %_.patt.loc6_6.2: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc6_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%_.patt.loc6_6.1: type]() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%_) {
+// CHECK:STDOUT:   %_.loc4_6.2 => constants.%_
+// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @G(constants.%_) {
+// CHECK:STDOUT:   %_.loc6_6.2 => constants.%_
+// CHECK:STDOUT:   %_.patt.loc6_6.2 => constants.%_.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_class.carbon

@@ -55,25 +55,23 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto entity_name_id = SemIR::EntityNameId::None;
-    if (name_id != SemIR::NameId::Underscore) {
-      entity_name_id = context.entity_names().AddSymbolicBindingName(
-          name_id, context.scope_stack().PeekNameScopeId(),
-          is_generic ? context.scope_stack().AddCompileTimeBinding()
-                     : SemIR::CompileTimeBindIndex::None,
-          is_template);
-      if (is_generic) {
-        bind_id = AddInstInNoBlock(
-            context, name_node,
-            SemIR::BindSymbolicName{.type_id = cast_type_id,
-                                    .entity_name_id = entity_name_id,
-                                    .value_id = SemIR::InstId::None});
-      } else {
-        bind_id =
-            AddInstInNoBlock(context, name_node,
-                             SemIR::BindName{.type_id = cast_type_id,
-                                             .entity_name_id = entity_name_id,
-                                             .value_id = SemIR::InstId::None});
-      }
+    entity_name_id = context.entity_names().AddSymbolicBindingName(
+        name_id, context.scope_stack().PeekNameScopeId(),
+        is_generic ? context.scope_stack().AddCompileTimeBinding()
+                   : SemIR::CompileTimeBindIndex::None,
+        is_template);
+    if (is_generic) {
+      bind_id = AddInstInNoBlock(
+          context, name_node,
+          SemIR::BindSymbolicName{.type_id = cast_type_id,
+                                  .entity_name_id = entity_name_id,
+                                  .value_id = SemIR::InstId::None});
+    } else {
+      bind_id =
+          AddInstInNoBlock(context, name_node,
+                           SemIR::BindName{.type_id = cast_type_id,
+                                           .entity_name_id = entity_name_id,
+                                           .value_id = SemIR::InstId::None});
     }
 
     auto binding_pattern_id = SemIR::InstId::None;
@@ -87,12 +85,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           {.type_id = cast_type_id, .entity_name_id = entity_name_id});
     }
 
+    if (is_generic) {
+      context.scope_stack().PushCompileTimeBinding(bind_id);
+    }
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
       // enclosing pattern.
-      if (is_generic) {
-        context.scope_stack().PushCompileTimeBinding(bind_id);
-      }
       auto name_context =
           context.decl_name_stack().MakeUnqualifiedName(name_node, name_id);
       context.decl_name_stack().AddNameOrDiagnose(

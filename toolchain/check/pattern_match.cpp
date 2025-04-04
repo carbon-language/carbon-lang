@@ -271,9 +271,11 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           context, scrutinee.loc_id, {.type_id = scrutinee.inst.type_id()});
   }
   auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
+  auto scrutinee_ref_type_inst_id =
+      context.types().GetInstId(scrutinee_ref.type_id());
   auto new_scrutinee = AddInst<SemIR::AddrOf>(
       context, context.insts().GetLocId(scrutinee_ref_id),
-      {.type_id = GetPointerType(context, scrutinee_ref.type_id()),
+      {.type_id = GetPointerType(context, scrutinee_ref_type_inst_id),
        .lvalue_id = scrutinee_ref_id});
   AddWork({.pattern_id = addr_pattern.inner_id, .scrutinee_id = new_scrutinee});
 }

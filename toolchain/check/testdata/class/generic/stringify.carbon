@@ -218,7 +218,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %Outer.ref.loc9: %Outer.type = name_ref Outer, %Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:     %.loc9_15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc9_16: type = converted %.loc9_15, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %empty_struct_type [concrete = constants.%ptr.c28]
+// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %.loc9_16 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %Outer.loc9: type = class_type @Outer, @Outer(constants.%ptr.c28) [concrete = constants.%Outer.614]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %Outer.614 = bind_name v, %v.var
@@ -231,7 +231,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %Outer.ref.loc19: %Outer.type = name_ref Outer, %Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:     %.loc19_15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc19_16: type = converted %.loc19_15, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %ptr.loc19_16: type = ptr_type %empty_struct_type [concrete = constants.%ptr.c28]
+// CHECK:STDOUT:     %ptr.loc19_16: type = ptr_type %.loc19_16 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %Outer.loc19: type = class_type @Outer, @Outer(constants.%ptr.c28) [concrete = constants.%Outer.614]
 // CHECK:STDOUT:     %.loc19_18: %Inner.type.5d2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%ptr.c28) [concrete = constants.%Inner.generic.8e6]
 // CHECK:STDOUT:     %Inner.ref: %Inner.type.5d2 = name_ref Inner, %.loc19_18 [concrete = constants.%Inner.generic.8e6]

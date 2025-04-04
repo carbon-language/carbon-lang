@@ -53,7 +53,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
 // CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc22 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT: }

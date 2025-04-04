@@ -157,9 +157,9 @@ auto EvalConstantInst(Context& /*context*/, SemIRLoc /*loc*/,
 auto EvalConstantInst(Context& context, SemIRLoc /*loc*/, SemIR::ConstType inst)
     -> ConstantEvalResult {
   // `const (const T)` evaluates to `const T`.
-  if (context.types().Is<SemIR::ConstType>(inst.inner_id)) {
+  if (context.insts().Is<SemIR::ConstType>(inst.inner_id)) {
     return ConstantEvalResult::Existing(
-        context.types().GetConstantId(inst.inner_id));
+        context.constant_values().Get(inst.inner_id));
   }
   // Otherwise, `const T` evaluates to itself.
   return ConstantEvalResult::NewSamePhase(inst);

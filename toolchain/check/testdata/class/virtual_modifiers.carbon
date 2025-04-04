@@ -1832,7 +1832,7 @@ class T2 {
 // CHECK:STDOUT:     %self.param: %ptr.87b = value_param call_param0
 // CHECK:STDOUT:     %.loc5: type = splice_block %ptr [concrete = constants.%ptr.87b] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%T1 [concrete = constants.%T1]
-// CHECK:STDOUT:       %ptr: type = ptr_type %T1 [concrete = constants.%ptr.87b]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.87b]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.87b = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1856,7 +1856,7 @@ class T2 {
 // CHECK:STDOUT:     %self.param: %ptr.63e = value_param call_param0
 // CHECK:STDOUT:     %.loc17_29: type = splice_block %ptr [concrete = constants.%ptr.63e] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%T2 [concrete = constants.%T2]
-// CHECK:STDOUT:       %ptr: type = ptr_type %T2 [concrete = constants.%ptr.63e]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.63e]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.63e = bind_name self, %self.param
 // CHECK:STDOUT:   }
