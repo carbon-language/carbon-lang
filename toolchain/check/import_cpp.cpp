@@ -231,7 +231,7 @@ static auto GetParamPatternsBlockId(Context& context, SemIRLoc loc_id,
   if (clang_decl->parameters().empty()) {
     return SemIR::InstBlockId::Empty;
   }
-  SemIR::CallParamIndex next_index = SemIR::CallParamIndex::None;
+  SemIR::CallParamIndex next_index(0);
   llvm::SmallVector<SemIR::InstId> params;
   for (clang::ParmVarDecl* param : clang_decl->parameters()) {
     clang::QualType param_type = param->getType().getCanonicalType();
@@ -244,24 +244,25 @@ static auto GetParamPatternsBlockId(Context& context, SemIRLoc loc_id,
     llvm::StringRef param_name = param->getName();
     SemIR::EntityNameId entity_name_id = context.entity_names().Add(
         {.name_id =
-             (param_name == "")
-                 // Translating unnamed parameter to an underscore to
+             (param_name.empty())
+                 // Translate unnamed parameter to an underscore to
                  // match Carbon's naming of unnamed/unused function params
                  ? SemIR::NameId::Underscore
                  : SemIR::NameId::ForIdentifier(
                        context.sem_ir().identifiers().Add(param_name)),
          .parent_scope_id = SemIR::NameScopeId::None});
     SemIR::InstId binding_pattern_id = AddInstInNoBlock(
+        // TODO: Fill in a location once available.
         context, SemIR::LocIdAndInst::NoLoc(SemIR::BindingPattern(
                      {.type_id = type_id, .entity_name_id = entity_name_id})));
-    ++next_index.index;
     SemIR::InstId var_pattern_id = AddInstInNoBlock(
         context,
+        // TODO: Fill in a location once available.
         SemIR::LocIdAndInst::NoLoc(SemIR::ValueParamPattern(
             {.type_id = context.insts().Get(binding_pattern_id).type_id(),
              .subpattern_id = binding_pattern_id,
              .index = next_index})));
-
+    ++next_index.index;
     params.push_back(var_pattern_id);
   }
   SemIR::InstBlockId param_patterns_id = context.inst_blocks().Add(params);
