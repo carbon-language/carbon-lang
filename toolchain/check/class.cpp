@@ -152,7 +152,7 @@ static auto BuildVtable(Context& context, Parse::NodeId node_id,
     // elements of the top of `vtable_stack`.
     for (auto fn_decl_id : base_vtable_inst_block) {
       auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
-      const auto& fn = context.functions().Get(fn_decl.function_id);
+      auto& fn = context.functions().Get(fn_decl.function_id);
       for (auto override_fn_decl_id : vtable_contents) {
         auto override_fn_decl =
             context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
@@ -170,14 +170,16 @@ static auto BuildVtable(Context& context, Parse::NodeId node_id,
           fn_decl_id = override_fn_decl_id;
         }
       }
+      fn.virtual_index = vtable.size();
       vtable.push_back(fn_decl_id);
     }
   }
 
   for (auto inst_id : vtable_contents) {
     auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
-    const auto& fn = context.functions().Get(fn_decl.function_id);
+    auto& fn = context.functions().Get(fn_decl.function_id);
     if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Impl) {
+      fn.virtual_index = vtable.size();
       vtable.push_back(inst_id);
     }
   }

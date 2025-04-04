@@ -475,8 +475,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
             llvm::Intrinsic::getOrInsertDeclaration(
                 &context.llvm_module(), llvm::Intrinsic::load_relative,
                 {i32_type}),
-            {vtable, llvm::ConstantInt::get(i32_type,
-                                            0 /*function.virtual_index*/ * 4)}),
+            {vtable,
+             llvm::ConstantInt::get(i32_type, function.virtual_index * 4)}),
         args);
   } else {
     call = context.builder().CreateCall(
