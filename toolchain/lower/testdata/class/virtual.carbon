@@ -173,9 +173,9 @@ fn Use() {
 // CHECK:STDOUT: !9 = !DILocation(line: 9, column: 28, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 9, column: 37, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Create", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 23, column: 3, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 1, scope: !12)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Create", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 3, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 14, column: 1, scope: !12)
 // CHECK:STDOUT: ; ModuleID = 'member_init.carbon'
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:
