@@ -39,10 +39,13 @@ static auto RequiredLess(const IdentifiedFacetType::RequiredInterface& lhs,
 static auto SubtractSorted(
     llvm::SmallVector<FacetTypeInfo::ImplsConstraint>& a,
     const llvm::SmallVector<FacetTypeInfo::ImplsConstraint>& b) -> void {
-  auto a_iter = a.begin();
-  auto b_iter = b.begin();
-  auto a_end = a.end();
-  auto b_end = b.end();
+  typedef llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::iterator Iter;
+  typedef llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::const_iterator
+      ConstIter;
+  Iter a_iter = a.begin();
+  ConstIter b_iter = b.begin();
+  Iter a_end = a.end();
+  ConstIter b_end = b.end();
   // Advance the iterator pointing to the smaller element until we find a match.
   while (a_iter != a_end && b_iter != b_end) {
     if (ImplsLess(*a_iter, *b_iter)) {
@@ -61,7 +64,7 @@ static auto SubtractSorted(
   CARBON_DCHECK(*a_iter == *b_iter);
   // We copy the elements we want to keep to `*a_new_end`, and skip the elements
   // of `a` that match something in `b`.
-  auto a_new_end = a_iter;
+  Iter a_new_end = a_iter;
   ++a_iter;
   ++b_iter;
   while (a_iter != a_end && b_iter != b_end) {
