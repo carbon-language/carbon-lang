@@ -104,9 +104,9 @@ struct IdentifiedFacetType {
     return required_interfaces_;
   }
 
-  auto set_required_interfaces(
-      const llvm::ArrayRef<RequiredInterface> extend,
-      llvm::ArrayRef<RequiredInterface> self_impls) -> void;
+  auto set_required_interfaces(const llvm::ArrayRef<RequiredInterface> extend,
+                               llvm::ArrayRef<RequiredInterface> self_impls)
+      -> void;
 
   // Can this be used to the right of an `as` in an `impl` declaration?
   auto is_valid_impl_as_target() const -> bool {
