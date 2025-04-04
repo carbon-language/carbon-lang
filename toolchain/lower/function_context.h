@@ -80,6 +80,12 @@ class FunctionContext {
     return file_context_->GetOrCreateFunction(function_id, specific_id);
   }
 
+  auto BuildFunctionTypeInfo(const SemIR::Function& function,
+                             SemIR::SpecificId specific_id)
+      -> FileContext::FunctionTypeInfo {
+    return file_context_->BuildFunctionTypeInfo(function, specific_id);
+  }
+
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
     return file_context_->GetType(type_id);

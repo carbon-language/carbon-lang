@@ -436,9 +436,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto* callee = context.GetOrCreateFunction(
-      callee_function.function_id, callee_function.resolved_specific_id);
-
   std::vector<llvm::Value*> args;
 
   auto inst_type_id = SemIR::GetTypeOfInstInSpecific(
@@ -458,7 +455,37 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     }
   }
 
-  context.SetLocal(inst_id, context.builder().CreateCall(callee, args));
+  llvm::CallInst* call;
+  const auto& function =
+      context.sem_ir().functions().Get(callee_function.function_id);
+  if (function.virtual_modifier != SemIR::Function::VirtualModifier::None) {
+    CARBON_CHECK(args.size() >= 1,
+                 "Virtual functions must have at least one parameter");
+    auto* ptr_type =
+        llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
+    auto* vtable_ptr =
+        context.builder().CreateLoad(ptr_type, args.front(), "vtable_ptr");
+    auto* vtable = context.builder().CreateLoad(ptr_type, vtable_ptr, "vtable");
+    auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
+    auto function_type_info = context.BuildFunctionTypeInfo(
+        function, callee_function.resolved_specific_id);
+    call = context.builder().CreateCall(
+        function_type_info.type,
+        context.builder().CreateCall(
+            llvm::Intrinsic::getOrInsertDeclaration(
+                &context.llvm_module(), llvm::Intrinsic::load_relative,
+                {i32_type}),
+            {vtable, llvm::ConstantInt::get(i32_type,
+                                            0 /*function.virtual_index*/ * 4)}),
+        args);
+  } else {
+    call = context.builder().CreateCall(
+        context.GetOrCreateFunction(callee_function.function_id,
+                                    callee_function.resolved_specific_id),
+        args);
+  }
+
+  context.SetLocal(inst_id, call);
 }
 
 }  // namespace Carbon::Lower

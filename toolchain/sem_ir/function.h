@@ -44,6 +44,8 @@ struct FunctionFields {
   // this function.
   VirtualModifier virtual_modifier;
 
+  uint16_t virtual_index = 0;
+
   // The implicit self parameter, if any, in implicit_param_patterns_id from
   // EntityWithParamsBase.
   InstId self_param_id = SemIR::InstId::None;
