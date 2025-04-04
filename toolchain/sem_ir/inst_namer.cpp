@@ -630,14 +630,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& facet_type_info =
             sem_ir_->facet_types().Get(inst.facet_type_id);
         bool has_where = facet_type_info.other_requirements ||
+                         !facet_type_info.self_impls_constraints.empty() ||
                          !facet_type_info.rewrite_constraints.empty();
         if (facet_type_info.extend_constraints.size() == 1) {
           const auto& interface_info = sem_ir_->interfaces().Get(
               facet_type_info.extend_constraints.front().interface_id);
           add_inst_name_id(interface_info.name_id,
                            has_where ? "_where.type" : ".type");
-        } else if (facet_type_info.extend_constraints.empty() &&
-                   facet_type_info.self_impls_constraints.empty()) {
+        } else if (facet_type_info.extend_constraints.empty()) {
           add_inst_name(has_where ? "type_where" : "type");
         } else {
           add_inst_name("facet_type");

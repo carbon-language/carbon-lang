@@ -618,9 +618,8 @@ auto RequireIdentifiedFacetType(Context& context,
   // TODO: expand named constraints
   // TODO: Process other kinds of requirements.
   return context.identified_facet_types().Add(
-      facet_type.facet_type_id,
-      SemIR::IdentifiedFacetType(facet_type_info.extend_constraints,
-                                 facet_type_info.self_impls_constraints));
+      facet_type.facet_type_id, {facet_type_info.extend_constraints,
+                                 facet_type_info.self_impls_constraints});
 }
 
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,
