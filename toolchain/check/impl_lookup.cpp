@@ -190,7 +190,8 @@ static auto UnwrapFacetAccessType(Context& context, SemIR::ConstantId id)
 // (as a constant value).
 static auto GetInterfacesFromConstantId(
     Context& context, SemIR::ConstantId query_facet_type_const_id,
-    bool& has_other_requirements) -> llvm::ArrayRef<SemIR::SpecificInterface> {
+    bool& has_other_requirements)
+    -> llvm::SmallVector<SemIR::SpecificInterface> {
   auto facet_type_inst_id =
       context.constant_values().GetInstId(query_facet_type_const_id);
   auto facet_type_inst =
@@ -199,9 +200,11 @@ static auto GetInterfacesFromConstantId(
       context.facet_types().Get(facet_type_inst.facet_type_id);
   has_other_requirements = facet_type_info.other_requirements;
   auto identified_id = RequireIdentifiedFacetType(context, facet_type_inst);
-  return context.identified_facet_types()
-      .Get(identified_id)
-      .required_interfaces();
+  auto interfaces_array_ref =
+      context.identified_facet_types().Get(identified_id).required_interfaces();
+  // Returns a copy to avoid use-after-free when the identified_facet_types
+  // store resizes.
+  return {interfaces_array_ref.begin(), interfaces_array_ref.end()};
 }
 
 static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
@@ -250,8 +253,6 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   // type: the `I` in `impl ... as I`. The deduction step may be unable to be
   // fully applied to the types in the constraint and result in an error here,
   // in which case it does not match the query.
-  // TODO: Should this be using `impl.interface` instead of
-  // `impl.constraint_id`?
   auto deduced_constraint_id =
       context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
           context.sem_ir(), specific_id, impl.constraint_id));
@@ -409,19 +410,15 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
 
   bool has_other_requirements = false;
-  auto interfaces_array_ref = GetInterfacesFromConstantId(
+  auto interfaces = GetInterfacesFromConstantId(
       context, query_facet_type_const_id, has_other_requirements);
   if (has_other_requirements) {
     // TODO: Remove this when other requirements go away.
     return SemIR::InstBlockId::None;
   }
-  if (interfaces_array_ref.empty()) {
+  if (interfaces.empty()) {
     return SemIR::InstBlockId::Empty;
   }
-  // Make a copy to avoid use-after-free when the identified_facet_types store
-  // resizes.
-  llvm::SmallVector<SemIR::SpecificInterface> interfaces(
-      interfaces_array_ref.begin(), interfaces_array_ref.end());
 
   auto& stack = context.impl_lookup_stack();
   stack.push_back({

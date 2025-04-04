@@ -1896,7 +1896,9 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                 eval_context.insts().GetAs<SemIR::FacetType>(rhs_inst_id);
             SemIR::FacetTypeInfo more_info = GetConstantFacetTypeInfo(
                 eval_context, facet_type.facet_type_id, &phase);
-            // All interface requirements go in `self_impls_constraints`.
+            // The way to prevent lookup into the interface requirements of a
+            // facet type is to put it to the right of a `.Self impls`, which we
+            // accomplish by putting them into `self_impls_constraints`.
             llvm::append_range(info.self_impls_constraints,
                                more_info.extend_constraints);
             llvm::append_range(info.self_impls_constraints,

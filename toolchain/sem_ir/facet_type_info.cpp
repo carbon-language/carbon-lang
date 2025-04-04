@@ -43,38 +43,48 @@ static auto SubtractSorted(
   auto b_iter = b.begin();
   auto a_end = a.end();
   auto b_end = b.end();
+  // Advance the iterator pointing to the smaller element until we find a match.
   while (a_iter != a_end && b_iter != b_end) {
     if (ImplsLess(*a_iter, *b_iter)) {
       ++a_iter;
     } else if (ImplsLess(*b_iter, *a_iter)) {
       ++b_iter;
     } else {
-      CARBON_DCHECK(*a_iter == *b_iter);
-      // Found a match, switch to removing elements of `a`.
-      auto a_new_end = a_iter;
-      ++a_iter;
-      ++b_iter;
-      while (a_iter != a_end && b_iter != b_end) {
-        if (ImplsLess(*a_iter, *b_iter)) {
-          *a_new_end = *a_iter;
-          ++a_new_end;
-          ++a_iter;
-        } else if (ImplsLess(*b_iter, *a_iter)) {
-          ++b_iter;
-        } else {
-          CARBON_DCHECK(*a_iter == *b_iter);
-          ++a_iter;
-          ++b_iter;
-        }
-      }
-      for (; a_iter != a_end; ++a_iter) {
-        *a_new_end = *a_iter;
-        ++a_new_end;
-      }
-      a.erase(a_new_end, a_end);
-      return;
+      break;
     }
   }
+  if (a_iter == a_end || b_iter == b_end) {
+    // Nothing to remove from `a`.
+    return;
+  }
+  // Found a match, switch to removing elements of `a`.
+  CARBON_DCHECK(*a_iter == *b_iter);
+  // We copy the elements we want to keep to `*a_new_end`, and skip the elements
+  // of `a` that match something in `b`.
+  auto a_new_end = a_iter;
+  ++a_iter;
+  ++b_iter;
+  while (a_iter != a_end && b_iter != b_end) {
+    if (ImplsLess(*a_iter, *b_iter)) {
+      *a_new_end = *a_iter;
+      ++a_new_end;
+      ++a_iter;
+    } else if (ImplsLess(*b_iter, *a_iter)) {
+      ++b_iter;
+    } else {
+      CARBON_DCHECK(*a_iter == *b_iter);
+      ++a_iter;
+      ++b_iter;
+    }
+  }
+  // Keep the remaining elements of `a`, if any.
+  for (; a_iter != a_end; ++a_iter) {
+    *a_new_end = *a_iter;
+    ++a_new_end;
+  }
+  // Shrink `a` by the number of elements that we skipped since they matched
+  // something in `b`.
+  a.erase(a_new_end, a_end);
 }
 
 auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)

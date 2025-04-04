@@ -74,7 +74,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn ImplsOfNonFacetType(U:! type where .Self impls i32);
 
-// --- fail_todo_enforce_constraint.carbon
+// --- fail_enforce_impls_constraint.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -84,12 +84,11 @@ import library "state_constraints";
 class C {}
 impl C as J {}
 
-// TODO: Should report that `C` does not meet the constraint.
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE+8]]:3: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-11]]:1: in import [InImport]
+  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE-10]]:1: in import [InImport]
   // CHECK:STDERR: state_constraints.carbon:13:10: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn Impls(V:! J where .Self impls I);
   // CHECK:STDERR:          ^
@@ -97,14 +96,23 @@ fn DoesNotImplI() {
   Impls(C);
 }
 
+// --- fail_todo_enforce_equality_constraint.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "state_constraints";
+
+class C {}
+impl C as J {}
+
 fn EmptyStruct(Y:! J where .Self == {});
 
 // TODO: Should report that `C` does not meeet the constraint.
 fn NotEmptyStruct() {
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-7]]:16: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE-7]]:16: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn EmptyStruct(Y:! J where .Self == {});
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
@@ -573,7 +581,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %U.patt.loc8_24.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_enforce_constraint.carbon
+// CHECK:STDOUT: --- fail_enforce_impls_constraint.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -585,17 +593,9 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %DoesNotImplI: %DoesNotImplI.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [concrete]
 // CHECK:STDOUT:   %Impls: %Impls.type = struct_value () [concrete]
-// CHECK:STDOUT:   %J_where.type.c41: type = facet_type <@J where .Self impls @I> [concrete]
-// CHECK:STDOUT:   %V.patt: %J_where.type.c41 = symbolic_binding_pattern V, 0 [symbolic]
-// CHECK:STDOUT:   %V: %J_where.type.c41 = bind_symbolic_name V, 0 [symbolic]
-// CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %J_where.type.688: type = facet_type <@J where TODO> [concrete]
-// CHECK:STDOUT:   %Y: %J_where.type.688 = bind_symbolic_name Y, 0 [symbolic]
-// CHECK:STDOUT:   %Y.patt: %J_where.type.688 = symbolic_binding_pattern Y, 0 [symbolic]
-// CHECK:STDOUT:   %EmptyStruct.type: type = fn_type @EmptyStruct [concrete]
-// CHECK:STDOUT:   %EmptyStruct: %EmptyStruct.type = struct_value () [concrete]
-// CHECK:STDOUT:   %NotEmptyStruct.type: type = fn_type @NotEmptyStruct [concrete]
-// CHECK:STDOUT:   %NotEmptyStruct: %NotEmptyStruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %J_where.type: type = facet_type <@J where .Self impls @I> [concrete]
+// CHECK:STDOUT:   %V.patt: %J_where.type = symbolic_binding_pattern V, 0 [symbolic]
+// CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -614,7 +614,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Main.import_ref.4ae = import_ref Main//state_constraints, loc8_13, unloaded
 // CHECK:STDOUT:   %Main.Member = import_ref Main//state_constraints, Member, unloaded
 // CHECK:STDOUT:   %Main.Second = import_ref Main//state_constraints, Second, unloaded
-// CHECK:STDOUT:   %Main.import_ref.d1a: %J_where.type.c41 = import_ref Main//state_constraints, loc13_10, loaded [symbolic = @Impls.%V (constants.%V)]
+// CHECK:STDOUT:   %Main.import_ref.d1a: %J_where.type = import_ref Main//state_constraints, loc13_10, loaded [symbolic = @Impls.%V (constants.%V)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -627,8 +627,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .DoesNotImplI = %DoesNotImplI.decl
-// CHECK:STDOUT:     .EmptyStruct = %EmptyStruct.decl
-// CHECK:STDOUT:     .NotEmptyStruct = %NotEmptyStruct.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
@@ -639,21 +637,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [concrete = constants.%DoesNotImplI] {} {}
-// CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [concrete = constants.%EmptyStruct] {
-// CHECK:STDOUT:     %Y.patt.loc23_16.1: %J_where.type.688 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc23_16.2 (constants.%Y.patt)]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc23_22.1: type = splice_block %.loc23_22.2 [concrete = constants.%J_where.type.688] {
-// CHECK:STDOUT:       %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
-// CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc23_38: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc23_22.2: type = where_expr %.Self [concrete = constants.%J_where.type.688] {
-// CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc23_38
-// CHECK:STDOUT:       }
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Y.loc23_16.1: %J_where.type.688 = bind_symbolic_name Y, 0 [symbolic = %Y.loc23_16.2 (constants.%Y)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [concrete = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J [from "state_constraints.carbon"] {
@@ -690,18 +673,110 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Impls(imports.%Main.import_ref.d1a: %J_where.type.c41) [from "state_constraints.carbon"] {
-// CHECK:STDOUT:   %V: %J_where.type.c41 = bind_symbolic_name V, 0 [symbolic = %V (constants.%V)]
-// CHECK:STDOUT:   %V.patt.2: %J_where.type.c41 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.2 (constants.%V.patt)]
+// CHECK:STDOUT: generic fn @Impls(imports.%Main.import_ref.d1a: %J_where.type) [from "state_constraints.carbon"] {
+// CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V (constants.%V)]
+// CHECK:STDOUT:   %V.patt.2: %J_where.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.2 (constants.%V.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.patt.1: %J_where.type.c41);
+// CHECK:STDOUT:   fn(%V.patt.1: %J_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc23_16.1: %J_where.type.688) {
-// CHECK:STDOUT:   %Y.loc23_16.2: %J_where.type.688 = bind_symbolic_name Y, 0 [symbolic = %Y.loc23_16.2 (constants.%Y)]
-// CHECK:STDOUT:   %Y.patt.loc23_16.2: %J_where.type.688 = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc23_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT: specific @Impls(constants.%V) {
+// CHECK:STDOUT:   %V => constants.%V
+// CHECK:STDOUT:   %V.patt.2 => constants.%V.patt
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%Y.patt.loc23_16.1: %J_where.type.688);
+// CHECK:STDOUT: --- fail_todo_enforce_equality_constraint.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %J_where.type: type = facet_type <@J where TODO> [concrete]
+// CHECK:STDOUT:   %Y: %J_where.type = bind_symbolic_name Y, 0 [symbolic]
+// CHECK:STDOUT:   %Y.patt: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic]
+// CHECK:STDOUT:   %EmptyStruct.type: type = fn_type @EmptyStruct [concrete]
+// CHECK:STDOUT:   %EmptyStruct: %EmptyStruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NotEmptyStruct.type: type = fn_type @NotEmptyStruct [concrete]
+// CHECK:STDOUT:   %NotEmptyStruct: %NotEmptyStruct.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.J: type = import_ref Main//state_constraints, J, loaded [concrete = constants.%J.type]
+// CHECK:STDOUT:   %Main.I = import_ref Main//state_constraints, I, unloaded
+// CHECK:STDOUT:   %Main.EqualEqual = import_ref Main//state_constraints, EqualEqual, unloaded
+// CHECK:STDOUT:   %Main.Impls = import_ref Main//state_constraints, Impls, unloaded
+// CHECK:STDOUT:   %Main.And = import_ref Main//state_constraints, And, unloaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref = import_ref Main//state_constraints, inst18 [no loc], unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .J = imports.%Main.J
+// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .EqualEqual = imports.%Main.EqualEqual
+// CHECK:STDOUT:     .Impls = imports.%Main.Impls
+// CHECK:STDOUT:     .And = imports.%Main.And
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .EmptyStruct = %EmptyStruct.decl
+// CHECK:STDOUT:     .NotEmptyStruct = %NotEmptyStruct.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [concrete = constants.%EmptyStruct] {
+// CHECK:STDOUT:     %Y.patt.loc9_16.1: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc9_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc9_22.1: type = splice_block %.loc9_22.2 [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:       %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
+// CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.loc9_38: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc9_22.2: type = where_expr %.Self [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc9_38
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Y.loc9_16.1: %J_where.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc9_16.2 (constants.%Y)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [concrete = constants.%NotEmptyStruct] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @J [from "state_constraints.carbon"] {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %C.ref as %J.ref {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @EmptyStruct(%Y.loc9_16.1: %J_where.type) {
+// CHECK:STDOUT:   %Y.loc9_16.2: %J_where.type = bind_symbolic_name Y, 0 [symbolic = %Y.loc9_16.2 (constants.%Y)]
+// CHECK:STDOUT:   %Y.patt.loc9_16.2: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc9_16.2 (constants.%Y.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%Y.patt.loc9_16.1: %J_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEmptyStruct() {
@@ -711,13 +786,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Impls(constants.%V) {
-// CHECK:STDOUT:   %V => constants.%V
-// CHECK:STDOUT:   %V.patt.2 => constants.%V.patt
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @EmptyStruct(constants.%Y) {
-// CHECK:STDOUT:   %Y.loc23_16.2 => constants.%Y
-// CHECK:STDOUT:   %Y.patt.loc23_16.2 => constants.%Y.patt
+// CHECK:STDOUT:   %Y.loc9_16.2 => constants.%Y
+// CHECK:STDOUT:   %Y.patt.loc9_16.2 => constants.%Y.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

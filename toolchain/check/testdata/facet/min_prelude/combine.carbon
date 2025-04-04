@@ -150,10 +150,12 @@ fn TestIncomplete() {
   AssertSame(Type(I & J), Type(I & J & I));
   AssertSame(Type(I & J), Type(J & I & I));
   AssertSame(Type(I & K({})), Type(K({}) & I));
+  AssertSame(Type(I & K({}) & K(())), Type(K(()) & K({}) & I));
 }
 
 interface I {}
 interface J {}
+interface K(T:! type) {}
 
 fn TestComplete() {
   AssertSame(Type(I), Type(I & I));
@@ -162,6 +164,8 @@ fn TestComplete() {
   AssertSame(Type(I & J), Type(I & I & J));
   AssertSame(Type(I & J), Type(I & J & I));
   AssertSame(Type(I & J), Type(J & I & I));
+  AssertSame(Type(I & K({})), Type(K({}) & I));
+  AssertSame(Type(I & K({}) & K(())), Type(K(()) & K({}) & I));
 }
 
 // --- fail_compare_not_equal.carbon
@@ -205,4 +209,25 @@ fn Test() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J({}) & I));
+}
+
+// --- fail_compare_not_equal_parameterized_extra.carbon
+library "[[@TEST_NAME]]";
+
+class WrapType(T:! type) {}
+fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn Type(T:! type) -> WrapType(T) { return {}; }
+
+interface I {}
+interface J(T:! type) {}
+
+fn Test() {
+  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   Same(Type(I & J(())), Type(J(()) & J({}) & I));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_compare_not_equal_parameterized_extra.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Same(Type(I & J(())), Type(J(()) & J({}) & I));
 }
