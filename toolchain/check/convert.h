@@ -56,7 +56,8 @@ struct ConversionTarget {
 
 // Convert a value to another type and expression category.
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
-             ConversionTarget target) -> SemIR::InstId;
+             ConversionTarget target,
+             SemIR::InstId vtable_id = SemIR::InstId::None) -> SemIR::InstId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the
 // possibly-converted initializing expression, which should be assigned to the

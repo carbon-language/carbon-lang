@@ -225,7 +225,7 @@ fn Use() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %v.var), !dbg !7
 // CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   store ptr @"_CBase.Main.$vtable", ptr %.loc13_31.2.vptr, align 8, !dbg !9
+// CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc13_31.2.vptr, align 8, !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
