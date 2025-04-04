@@ -236,3 +236,24 @@ impl {.b: C} as J where .Self impls I and .T = () {}
 
 // Rewrite constraints can appear inside the `where .Self impls`.
 impl {.c: C} as J where .Self impls (I & J where .T = ()) {}
+
+// --- impl_with_rewrite_of_interface_not_being_implemented.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let A:! type; }
+interface J { let A:! type; }
+
+class C {}
+
+// Implementation of `C as J`.
+impl C as J where .A = {} {}
+
+// This is an implementation of `I` with `I.A = ()`. The requirement
+// that `C` also impls `J where .A = {}` is an additional constraint
+// that must be satisfied (and is satisfied by the impl above, though
+// that currently isn't checked), but doesn't affect `C as I`.
+impl C as I where .Self impls
+    (J where .A = {} and .Self impls (I where .A = ())) {}
+
+let x: C.(I.A) = ();
+let y: C.(J.A) = {};
