@@ -15,25 +15,34 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  fn F();
+  fn FNonInstance();
+  fn FSelf[self: Self]();
 }
 
 interface J {
-  fn G();
+  fn GNonInstance();
+  fn GSelf[self: Self]();
 }
 
-fn INotJ(T:! I where .Self impls J) {
+fn INotJ[T:! I where .Self impls J](x: T) {
   // Can access members of `I` using either kind of member access.
-  T.F();
-  T.(I.F)();
+  T.FNonInstance();
+  T.(I.FNonInstance)();
+
+  x.FNonInstance();
+  x.FSelf();
+  x.(I.FSelf)();
 
   // Can still find members of `J` using compound member access,
-  // even though they are not available via `T.G`.
-  T.(J.G)();
+  // even though they are not available via `T.GNonInstance` or
+  // `x.GSelf`.
+  T.(J.GNonInstance)();
+  x.(J.GSelf)();
 }
 
-fn TypeNotJ(T:! type where .Self impls J) {
-  T.(J.G)();
+fn TypeNotJ[T:! type where .Self impls J](x: T) {
+  T.(J.GNonInstance)();
+  x.(J.GSelf)();
 }
 
 // --- no_name_conflict_with_where_self_impls.carbon
@@ -64,7 +73,7 @@ interface J {
 }
 
 fn INotJ(T:! I where .Self impls J) {
-  // CHECK:STDERR: fail_name_lookup_with_i.carbon:[[@LINE+4]]:3: error: member name `G` not found in `I` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+4]]:3: error: member name `G` not found in `I` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   T.G();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
@@ -104,31 +113,6 @@ fn F(T:! A & B) {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (A where .Self impls B).Bfn;
-}
-
-// --- compound_member_access_instance_through_where_self_impls.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  fn FNonInstance();
-  fn FSelf[self: Self]();
-}
-
-interface J {
-  fn GNonInstance();
-  fn GSelf[self: Self]();
-}
-
-fn INotJ[T:! I where .Self impls J](x: T) {
-  x.FNonInstance();
-  x.FSelf();
-  x.(I.FSelf)();
-
-  x.(J.GSelf)();
-}
-
-fn TypeNotJ[T:! type where .Self impls J](x: T) {
-  x.(J.GSelf)();
 }
 
 // --- fail_name_lookup_instance.carbon
