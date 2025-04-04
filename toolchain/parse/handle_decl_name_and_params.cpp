@@ -21,21 +21,21 @@ static auto HandleName(Context& context, Context::StateStackEntry state,
       context.AddNode(not_before_params_qualifier_kind,
                       context.ConsumeChecked(Lex::TokenKind::Period),
                       state.has_error);
-      context.PushState(State::DeclNameAndParams);
+      context.PushState(StateKind::DeclNameAndParams);
       break;
 
     case Lex::TokenKind::OpenSquareBracket:
       context.AddLeafNode(before_params_kind, name_token);
-      state.state = State::DeclNameAndParamsAfterImplicit;
+      state.kind = StateKind::DeclNameAndParamsAfterImplicit;
       context.PushState(state);
-      context.PushState(State::PatternListAsImplicit);
+      context.PushState(StateKind::PatternListAsImplicit);
       break;
 
     case Lex::TokenKind::OpenParen:
       context.AddLeafNode(before_params_kind, name_token);
-      state.state = State::DeclNameAndParamsAfterParams;
+      state.kind = StateKind::DeclNameAndParamsAfterParams;
       context.PushState(state);
-      context.PushState(State::PatternListAsExplicit);
+      context.PushState(StateKind::PatternListAsExplicit);
       break;
 
     default:
@@ -86,14 +86,14 @@ auto HandleDeclNameAndParams(Context& context) -> void {
 auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
   auto state = context.PopState();
 
-  state.state = State::DeclNameAndParamsAfterParams;
+  state.kind = StateKind::DeclNameAndParamsAfterParams;
   context.PushState(state);
 
   if (!context.PositionIs(Lex::TokenKind::OpenParen)) {
     return;
   }
 
-  context.PushState(State::PatternListAsExplicit);
+  context.PushState(StateKind::PatternListAsExplicit);
 }
 
 auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
@@ -105,7 +105,7 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
                          ? NodeKind::IdentifierNameQualifierWithParams
                          : NodeKind::KeywordNameQualifierWithParams;
     context.AddNode(node_kind, *period, state.has_error);
-    context.PushState(State::DeclNameAndParams);
+    context.PushState(StateKind::DeclNameAndParams);
   }
 }
 

@@ -47,10 +47,10 @@ auto HandleExpr(Context& context) -> void {
     }
 
     if (context.PositionIs(Lex::TokenKind::If)) {
-      context.PushState(State::IfExprFinish);
-      context.PushState(State::IfExprFinishCondition);
+      context.PushState(StateKind::IfExprFinish);
+      context.PushState(StateKind::IfExprFinishCondition);
     } else {
-      context.PushStateForExprLoop(State::ExprLoopForPrefixOperator,
+      context.PushStateForExprLoop(StateKind::ExprLoopForPrefixOperator,
                                    state.ambient_precedence,
                                    *operator_precedence);
     }
@@ -58,9 +58,9 @@ auto HandleExpr(Context& context) -> void {
     context.ConsumeAndDiscard();
     context.PushStateForExpr(*operator_precedence);
   } else {
-    context.PushStateForExprLoop(State::ExprLoop, state.ambient_precedence,
+    context.PushStateForExprLoop(StateKind::ExprLoop, state.ambient_precedence,
                                  PrecedenceGroup::ForPostfixExpr());
-    context.PushState(State::ExprInPostfix);
+    context.PushState(StateKind::ExprInPostfix);
   }
 }
 
@@ -68,7 +68,7 @@ auto HandleExprInPostfix(Context& context) -> void {
   auto state = context.PopState();
 
   // Continue to the loop state.
-  state.state = State::ExprInPostfixLoop;
+  state.kind = StateKind::ExprInPostfixLoop;
 
   // Parses a primary expression, which is either a terminal portion of an
   // expression tree, such as an identifier or literal, or a parenthesized
@@ -141,17 +141,17 @@ auto HandleExprInPostfix(Context& context) -> void {
     }
     case Lex::TokenKind::OpenCurlyBrace: {
       context.PushState(state);
-      context.PushState(State::BraceExpr);
+      context.PushState(StateKind::BraceExpr);
       break;
     }
     case Lex::TokenKind::OpenParen: {
       context.PushState(state);
-      context.PushState(State::ParenExpr);
+      context.PushState(StateKind::ParenExpr);
       break;
     }
     case Lex::TokenKind::Array: {
       context.PushState(state);
-      context.PushState(State::ArrayExpr);
+      context.PushState(StateKind::ArrayExpr);
       break;
     }
     case Lex::TokenKind::Package: {
@@ -240,22 +240,22 @@ auto HandleExprInPostfixLoop(Context& context) -> void {
   switch (context.PositionKind()) {
     case Lex::TokenKind::Period: {
       context.PushState(state);
-      context.PushState(state, State::PeriodAsExpr);
+      context.PushState(state, StateKind::PeriodAsExpr);
       break;
     }
     case Lex::TokenKind::MinusGreater: {
       context.PushState(state);
-      context.PushState(state, State::ArrowExpr);
+      context.PushState(state, StateKind::ArrowExpr);
       break;
     }
     case Lex::TokenKind::OpenParen: {
       context.PushState(state);
-      context.PushState(state, State::CallExpr);
+      context.PushState(state, StateKind::CallExpr);
       break;
     }
     case Lex::TokenKind::OpenSquareBracket: {
       context.PushState(state);
-      context.PushState(state, State::IndexExpr);
+      context.PushState(state, StateKind::IndexExpr);
       break;
     }
     default: {
@@ -328,12 +328,12 @@ auto HandleExprLoop(Context& context) -> void {
       case Lex::TokenKind::And:
         context.AddNode(NodeKind::ShortCircuitOperandAnd, state.token,
                         state.has_error);
-        state.state = State::ExprLoopForShortCircuitOperatorAsAnd;
+        state.kind = StateKind::ExprLoopForShortCircuitOperatorAsAnd;
         break;
       case Lex::TokenKind::Or:
         context.AddNode(NodeKind::ShortCircuitOperandOr, state.token,
                         state.has_error);
-        state.state = State::ExprLoopForShortCircuitOperatorAsOr;
+        state.kind = StateKind::ExprLoopForShortCircuitOperatorAsOr;
         break;
 
       // `where` also needs a virtual parse tree node, and parses its right
@@ -341,12 +341,12 @@ auto HandleExprLoop(Context& context) -> void {
       // `impls` and `=`.
       case Lex::TokenKind::Where:
         context.AddNode(NodeKind::WhereOperand, state.token, state.has_error);
-        context.PushState(state, State::WhereFinish);
-        context.PushState(State::RequirementBegin);
+        context.PushState(state, StateKind::WhereFinish);
+        context.PushState(StateKind::RequirementBegin);
         return;
 
       default:
-        state.state = State::ExprLoopForInfixOperator;
+        state.kind = StateKind::ExprLoopForInfixOperator;
         break;
     }
 
@@ -379,7 +379,7 @@ static auto HandleExprLoopForOperator(Context& context,
                                       NodeKind node_kind) -> void {
   context.AddNode(node_kind, state.token, state.has_error);
   state.has_error = false;
-  context.PushState(state, State::ExprLoop);
+  context.PushState(state, StateKind::ExprLoop);
 }
 
 auto HandleExprLoopForInfixOperator(Context& context) -> void {

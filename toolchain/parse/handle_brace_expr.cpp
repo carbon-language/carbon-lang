@@ -10,32 +10,33 @@ namespace Carbon::Parse {
 
 auto HandleBraceExpr(Context& context) -> void {
   auto state = context.PopState();
-  context.PushState(state, State::BraceExprFinishAsUnknown);
+  context.PushState(state, StateKind::BraceExprFinishAsUnknown);
 
   CARBON_CHECK(context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::OpenCurlyBrace,
                                                NodeKind::Placeholder));
   if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
-    context.PushState(State::BraceExprParamAsUnknown);
+    context.PushState(StateKind::BraceExprParamAsUnknown);
   }
 }
 
 // Prints a diagnostic for brace expression syntax errors.
 static auto HandleBraceExprParamError(Context& context,
                                       Context::StateStackEntry state,
-                                      State param_finish_state) -> void {
+                                      StateKind param_finish_state_kind)
+    -> void {
   Diagnostics::IntAsSelect mode(0);
-  switch (param_finish_state) {
-    case State::BraceExprParamFinishAsType:
+  switch (param_finish_state_kind) {
+    case StateKind::BraceExprParamFinishAsType:
       mode.value = 0;
       break;
-    case State::BraceExprParamFinishAsValue:
+    case StateKind::BraceExprParamFinishAsValue:
       mode.value = 1;
       break;
-    case State::BraceExprParamFinishAsUnknown:
+    case StateKind::BraceExprParamFinishAsUnknown:
       mode.value = 2;
       break;
     default:
-      CARBON_FATAL("Unexpected state: {0}", param_finish_state);
+      CARBON_FATAL("Unexpected state: {0}", param_finish_state_kind);
   }
   CARBON_DIAGNOSTIC(
       ExpectedStructLiteralField, Error,
@@ -45,41 +46,43 @@ static auto HandleBraceExprParamError(Context& context,
   context.emitter().Emit(*context.position(), ExpectedStructLiteralField, mode);
 
   state.has_error = true;
-  context.PushState(state, param_finish_state);
+  context.PushState(state, param_finish_state_kind);
 }
 
 // Handles BraceExprParamAs(Type|Value|Unknown).
-static auto HandleBraceExprParam(Context& context, State after_designator_state,
-                                 State param_finish_state) -> void {
+static auto HandleBraceExprParam(Context& context,
+                                 StateKind after_designator_kind,
+                                 StateKind param_finish_kind) -> void {
   auto state = context.PopState();
 
   if (!context.PositionIs(Lex::TokenKind::Period)) {
-    HandleBraceExprParamError(context, state, param_finish_state);
+    HandleBraceExprParamError(context, state, param_finish_kind);
     return;
   }
 
-  context.PushState(state, after_designator_state);
-  context.PushState(State::PeriodAsStruct);
+  context.PushState(state, after_designator_kind);
+  context.PushState(StateKind::PeriodAsStruct);
 }
 
 auto HandleBraceExprParamAsType(Context& context) -> void {
-  HandleBraceExprParam(context, State::BraceExprParamAfterDesignatorAsType,
-                       State::BraceExprParamFinishAsType);
+  HandleBraceExprParam(context, StateKind::BraceExprParamAfterDesignatorAsType,
+                       StateKind::BraceExprParamFinishAsType);
 }
 
 auto HandleBraceExprParamAsValue(Context& context) -> void {
-  HandleBraceExprParam(context, State::BraceExprParamAfterDesignatorAsValue,
-                       State::BraceExprParamFinishAsValue);
+  HandleBraceExprParam(context, StateKind::BraceExprParamAfterDesignatorAsValue,
+                       StateKind::BraceExprParamFinishAsValue);
 }
 
 auto HandleBraceExprParamAsUnknown(Context& context) -> void {
-  HandleBraceExprParam(context, State::BraceExprParamAfterDesignatorAsUnknown,
-                       State::BraceExprParamFinishAsUnknown);
+  HandleBraceExprParam(context,
+                       StateKind::BraceExprParamAfterDesignatorAsUnknown,
+                       StateKind::BraceExprParamFinishAsUnknown);
 }
 
 // Handles BraceExprParamAfterDesignatorAs(Type|Value|Unknown).
 static auto HandleBraceExprParamAfterDesignator(Context& context,
-                                                State param_finish_state)
+                                                StateKind param_finish_kind)
     -> void {
   auto state = context.PopState();
 
@@ -88,7 +91,7 @@ static auto HandleBraceExprParamAfterDesignator(Context& context,
         {Lex::TokenKind::Equal, Lex::TokenKind::Colon, Lex::TokenKind::Comma});
     if (!recovery_pos ||
         context.tokens().GetKind(*recovery_pos) == Lex::TokenKind::Comma) {
-      context.PushState(state, param_finish_state);
+      context.PushState(state, param_finish_kind);
       return;
     }
     context.SkipTo(*recovery_pos);
@@ -101,57 +104,58 @@ static auto HandleBraceExprParamAfterDesignator(Context& context,
   } else if (context.PositionIs(Lex::TokenKind::Equal)) {
     is_type = false;
   } else {
-    HandleBraceExprParamError(context, state, param_finish_state);
+    HandleBraceExprParamError(context, state, param_finish_kind);
     return;
   }
 
   // If we're changing from unknown, update the related finish states.
-  if (param_finish_state == State::BraceExprParamFinishAsUnknown) {
+  if (param_finish_kind == StateKind::BraceExprParamFinishAsUnknown) {
     auto finish_state = context.PopState();
-    CARBON_CHECK(finish_state.state == State::BraceExprFinishAsUnknown);
+    CARBON_CHECK(finish_state.kind == StateKind::BraceExprFinishAsUnknown);
     if (is_type) {
-      finish_state.state = State::BraceExprFinishAsType;
-      param_finish_state = State::BraceExprParamFinishAsType;
+      finish_state.kind = StateKind::BraceExprFinishAsType;
+      param_finish_kind = StateKind::BraceExprParamFinishAsType;
     } else {
-      finish_state.state = State::BraceExprFinishAsValue;
-      param_finish_state = State::BraceExprParamFinishAsValue;
+      finish_state.kind = StateKind::BraceExprFinishAsValue;
+      param_finish_kind = StateKind::BraceExprParamFinishAsValue;
     }
     context.PushState(finish_state);
   }
 
-  auto want_param_finish_state = is_type ? State::BraceExprParamFinishAsType
-                                         : State::BraceExprParamFinishAsValue;
-  if (param_finish_state != want_param_finish_state) {
-    HandleBraceExprParamError(context, state, param_finish_state);
+  auto want_param_finish_kind = is_type
+                                    ? StateKind::BraceExprParamFinishAsType
+                                    : StateKind::BraceExprParamFinishAsValue;
+  if (param_finish_kind != want_param_finish_kind) {
+    HandleBraceExprParamError(context, state, param_finish_kind);
     return;
   }
 
   // Struct type fields and value fields use the same grammar except
   // that one has a `:` separator and the other has an `=` separator.
   state.token = context.Consume();
-  context.PushState(state, param_finish_state);
-  context.PushState(State::Expr);
+  context.PushState(state, param_finish_kind);
+  context.PushState(StateKind::Expr);
 }
 
 auto HandleBraceExprParamAfterDesignatorAsType(Context& context) -> void {
   HandleBraceExprParamAfterDesignator(context,
-                                      State::BraceExprParamFinishAsType);
+                                      StateKind::BraceExprParamFinishAsType);
 }
 
 auto HandleBraceExprParamAfterDesignatorAsValue(Context& context) -> void {
   HandleBraceExprParamAfterDesignator(context,
-                                      State::BraceExprParamFinishAsValue);
+                                      StateKind::BraceExprParamFinishAsValue);
 }
 
 auto HandleBraceExprParamAfterDesignatorAsUnknown(Context& context) -> void {
   HandleBraceExprParamAfterDesignator(context,
-                                      State::BraceExprParamFinishAsUnknown);
+                                      StateKind::BraceExprParamFinishAsUnknown);
 }
 
 // Handles BraceExprParamFinishAs(Type|Value|Unknown).
 static auto HandleBraceExprParamFinish(Context& context, NodeKind field_kind,
-                                       NodeKind comma_kind, State param_state)
-    -> void {
+                                       NodeKind comma_kind,
+                                       StateKind param_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -172,19 +176,19 @@ static auto HandleBraceExprParamFinish(Context& context, NodeKind field_kind,
 auto HandleBraceExprParamFinishAsType(Context& context) -> void {
   HandleBraceExprParamFinish(context, NodeKind::StructTypeLiteralField,
                              NodeKind::StructTypeLiteralComma,
-                             State::BraceExprParamAsType);
+                             StateKind::BraceExprParamAsType);
 }
 
 auto HandleBraceExprParamFinishAsValue(Context& context) -> void {
   HandleBraceExprParamFinish(context, NodeKind::StructLiteralField,
                              NodeKind::StructLiteralComma,
-                             State::BraceExprParamAsValue);
+                             StateKind::BraceExprParamAsValue);
 }
 
 auto HandleBraceExprParamFinishAsUnknown(Context& context) -> void {
   HandleBraceExprParamFinish(context, NodeKind::InvalidParse,
                              NodeKind::InvalidParse,
-                             State::BraceExprParamAsUnknown);
+                             StateKind::BraceExprParamAsUnknown);
 }
 
 // Handles BraceExprFinishAs(Type|Value|Unknown).

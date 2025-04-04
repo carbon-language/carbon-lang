@@ -39,20 +39,20 @@
 #define CARBON_PARSE_STATE(Name)
 #endif
 
-// Use CARBON_PARSE_STATE_VARIANTSN(State, Variant1, Variant2, ...) to generate
-// StateAsVariant1, StateAsVariant2, ... states.
-#define CARBON_PARSE_STATE_VARIANT(State, Variant) \
-  CARBON_PARSE_STATE(State##As##Variant)
-#define CARBON_PARSE_STATE_VARIANTS2(State, Variant1, Variant2) \
-  CARBON_PARSE_STATE_VARIANT(State, Variant1)                   \
-  CARBON_PARSE_STATE_VARIANT(State, Variant2)
-#define CARBON_PARSE_STATE_VARIANTS3(State, Variant1, Variant2, Variant3) \
-  CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
-  CARBON_PARSE_STATE_VARIANTS2(State, Variant2, Variant3)
-#define CARBON_PARSE_STATE_VARIANTS4(State, Variant1, Variant2, Variant3, \
-                                     Variant4)                            \
-  CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
-  CARBON_PARSE_STATE_VARIANTS3(State, Variant2, Variant3, Variant4)
+// Use CARBON_PARSE_STATE_VARIANTSN(Kind, Variant1, Variant2, ...) to generate
+// KindAsVariant1, KindAsVariant2, ... states.
+#define CARBON_PARSE_STATE_VARIANT(Kind, Variant) \
+  CARBON_PARSE_STATE(Kind##As##Variant)
+#define CARBON_PARSE_STATE_VARIANTS2(Kind, Variant1, Variant2) \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                   \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant2)
+#define CARBON_PARSE_STATE_VARIANTS3(Kind, Variant1, Variant2, Variant3) \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                             \
+  CARBON_PARSE_STATE_VARIANTS2(Kind, Variant2, Variant3)
+#define CARBON_PARSE_STATE_VARIANTS4(Kind, Variant1, Variant2, Variant3, \
+                                     Variant4)                           \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                             \
+  CARBON_PARSE_STATE_VARIANTS3(Kind, Variant2, Variant3, Variant4)
 
 // Used as a default for StateStackEntry initialization in some cases. Should
 // not be put on the state stack.

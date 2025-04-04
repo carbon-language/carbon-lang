@@ -75,15 +75,16 @@ class Context {
   };
 
   // Used to track state on state_stack_.
+  // TODO: Rename to `State`.
   struct StateStackEntry : public Printable<StateStackEntry> {
     // Prints state information for verbose output.
     auto Print(llvm::raw_ostream& output) const -> void {
-      output << state << " @" << token << " subtree_start=" << subtree_start
+      output << kind << " @" << token << " subtree_start=" << subtree_start
              << " has_error=" << has_error;
     }
 
     // The state.
-    State state;
+    StateKind kind;
     // Set to true to indicate that an error was found, and that contextual
     // error recovery may be needed.
     bool has_error : 1 = false;
@@ -294,26 +295,26 @@ class Context {
   }
 
   // Pushes a new state with the current position for context.
-  auto PushState(State state) -> void { PushState(state, *position_); }
+  auto PushState(StateKind kind) -> void { PushState(kind, *position_); }
 
   // Pushes a new state with a specific token for context. Used when forming a
   // new subtree when the current position isn't the start of the subtree.
-  auto PushState(State state, Lex::TokenIndex token) -> void {
-    PushState({.state = state, .token = token, .subtree_start = tree_->size()});
+  auto PushState(StateKind kind, Lex::TokenIndex token) -> void {
+    PushState({.kind = kind, .token = token, .subtree_start = tree_->size()});
   }
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
-    PushState({.state = State::Expr,
+    PushState({.kind = StateKind::Expr,
                .ambient_precedence = ambient_precedence,
                .token = *position_,
                .subtree_start = tree_->size()});
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
-  auto PushStateForExprLoop(State state, PrecedenceGroup ambient_precedence,
+  auto PushStateForExprLoop(StateKind kind, PrecedenceGroup ambient_precedence,
                             PrecedenceGroup lhs_precedence) -> void {
-    PushState({.state = state,
+    PushState({.kind = kind,
                .ambient_precedence = ambient_precedence,
                .lhs_precedence = lhs_precedence,
                .token = *position_,
@@ -322,8 +323,8 @@ class Context {
 
   // Pushes a new state for handling a pattern. `in_var_pattern` indicates
   // whether that pattern is nested inside a `var` pattern.
-  auto PushStateForPattern(State state, bool in_var_pattern) -> void {
-    PushState({.state = state,
+  auto PushStateForPattern(StateKind kind, bool in_var_pattern) -> void {
+    PushState({.kind = kind,
                .in_var_pattern = in_var_pattern,
                .token = *position_,
                .subtree_start = tree_->size()});
@@ -337,9 +338,9 @@ class Context {
                  "Excessive stack size: likely infinite loop");
   }
 
-  // Pushes a constructed state onto the stack, with a different parse state.
-  auto PushState(StateStackEntry state_entry, State parse_state) -> void {
-    state_entry.state = parse_state;
+  // Pushes a constructed state onto the stack, with a different kind.
+  auto PushState(StateStackEntry state_entry, StateKind kind) -> void {
+    state_entry.kind = kind;
     PushState(state_entry);
   }
 

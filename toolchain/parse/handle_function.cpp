@@ -9,20 +9,20 @@ namespace Carbon::Parse {
 
 auto HandleFunctionIntroducer(Context& context) -> void {
   auto state = context.PopState();
-  context.PushState(state, State::FunctionAfterParams);
-  context.PushState(State::DeclNameAndParams, state.token);
+  context.PushState(state, StateKind::FunctionAfterParams);
+  context.PushState(StateKind::DeclNameAndParams, state.token);
 }
 
 auto HandleFunctionAfterParams(Context& context) -> void {
   auto state = context.PopState();
 
   // Regardless of whether there's a return type, we'll finish the signature.
-  context.PushState(state, State::FunctionSignatureFinish);
+  context.PushState(state, StateKind::FunctionSignatureFinish);
 
   // If there is a return type, parse the expression before adding the return
   // type node.
   if (context.PositionIs(Lex::TokenKind::MinusGreater)) {
-    context.PushState(State::FunctionReturnTypeFinish);
+    context.PushState(StateKind::FunctionReturnTypeFinish);
     context.ConsumeAndDiscard();
     context.PushStateForExpr(PrecedenceGroup::ForType());
   }
@@ -47,8 +47,8 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       context.AddFunctionDefinitionStart(context.Consume(), state.has_error);
       // Any error is recorded on the FunctionDefinitionStart.
       state.has_error = false;
-      context.PushState(state, State::FunctionDefinitionFinish);
-      context.PushState(State::StatementScopeLoop);
+      context.PushState(state, StateKind::FunctionDefinitionFinish);
+      context.PushState(StateKind::StatementScopeLoop);
       break;
     }
     case Lex::TokenKind::Equal: {
