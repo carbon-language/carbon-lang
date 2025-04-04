@@ -119,6 +119,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
     if (impls.specific_id.has_value()) {
       out << "; " << DumpSpecificSummary(file, impls.specific_id);
     }
+    out << " (extend)";
   }
   for (auto impls : facet_type.self_impls_constraints) {
     out << "\n  - " << Dump(file, impls.interface_id);

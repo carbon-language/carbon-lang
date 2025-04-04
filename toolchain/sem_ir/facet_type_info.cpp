@@ -120,7 +120,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   }
 
   if (!self_impls_constraints.empty()) {
-    out << outer_sep << "impls interface: ";
+    out << outer_sep << "self impls interface: ";
     llvm::ListSeparator sep;
     for (ImplsConstraint req : self_impls_constraints) {
       out << sep << req.interface_id;

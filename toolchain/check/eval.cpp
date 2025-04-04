@@ -1815,10 +1815,11 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
 
 static auto IsPeriodSelf(EvalContext& eval_context, SemIR::ConstantId const_id)
     -> bool {
+  // This also rejects the singleton Error value as it's concrete.
   if (!const_id.is_symbolic()) {
     return false;
   }
-  const auto& symbolic_info =
+  const auto& symbolic =
       eval_context.constant_values().GetSymbolicConstant(const_id);
   // Fast early reject before doing more expensive operations.
   if (symbolic_info.dependence != SemIR::ConstantDependence::PeriodSelf) {
@@ -1888,7 +1889,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
         if (rhs != SemIR::ErrorInst::SingletonConstantId &&
             IsPeriodSelf(eval_context, lhs)) {
           auto rhs_inst_id = eval_context.constant_values().GetInstId(rhs);
-          if (eval_context.insts().Is<SemIR::TypeType>(rhs_inst_id)) {
+          if (rhs_inst_id == SemIR::TypeType::SingletonInstId) {
             // `.Self impls type` -> nothing to do.
           } else {
             auto facet_type =
