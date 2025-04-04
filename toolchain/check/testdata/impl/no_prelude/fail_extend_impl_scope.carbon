@@ -147,7 +147,7 @@ fn F() {
 // CHECK:STDOUT:   %Zero.type.822: type = fn_type @Zero.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Zero.d14: %Zero.type.822 = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type %Z.type [concrete]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, @Z.%Zero.decl [concrete]
 // CHECK:STDOUT:   %Zero.type.db4: type = fn_type @Zero.2, @impl.6b5(%Self) [symbolic]
 // CHECK:STDOUT:   %Zero.8fb: %Zero.type.db4 = struct_value () [symbolic]

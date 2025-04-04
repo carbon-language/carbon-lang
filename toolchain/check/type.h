@@ -29,7 +29,8 @@ auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
 // diagnostics.
 // TODO: Should we use a different type for each such entity, or the same type
 // for all associated entities?
-auto GetAssociatedEntityType(Context& context, SemIR::TypeId interface_type_id)
+auto GetAssociatedEntityType(Context& context,
+                             SemIR::SpecificInterfaceId specific_interface_id)
     -> SemIR::TypeId;
 
 // Gets a singleton type. The returned type will be complete. Requires that

@@ -33,7 +33,8 @@ auto PerformCompoundMemberAccess(
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
                         SemIR::InstId assoc_entity_inst_id,
-                        SemIR::TypeId interface_type_id) -> SemIR::InstId;
+                        SemIR::SpecificInterfaceId interface_id)
+    -> SemIR::InstId;
 
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
 // and index expression `index_inst_id`. Returns the result of the access.

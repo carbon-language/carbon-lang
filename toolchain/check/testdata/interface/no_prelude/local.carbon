@@ -29,7 +29,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %G.type.bff: type = fn_type @G.1 [concrete]
 // CHECK:STDOUT:   %G.f0a: %G.type.bff = struct_value () [concrete]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%G.decl [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%G.decl) [concrete]
 // CHECK:STDOUT:   %G.type.c84: type = fn_type @G.2 [concrete]

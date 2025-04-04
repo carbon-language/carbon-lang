@@ -38,7 +38,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [concrete]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [concrete]
+// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, @Add.%Op.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -115,7 +115,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [concrete]
+// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [concrete]
 // CHECK:STDOUT:   %.9ca: type = fn_type_with_self_type %Op.type.31b, %Add.facet [concrete]
 // CHECK:STDOUT: }
@@ -123,7 +123,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Add: type = import_ref Main//a, Add, loaded [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//a, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.db7: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op: %Op.type.31b = import_ref Main//a, Op, loaded [concrete = constants.%Op.d59]
 // CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//a, inst16 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
@@ -170,7 +170,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: interface @Add [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.07c
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.db7
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.f99
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,7 +218,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
-// CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.db7 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.f99 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.9ca = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Op.489]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %empty_tuple.type = name_ref y, %y

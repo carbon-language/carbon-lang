@@ -279,7 +279,7 @@ class ImportContext {
     return import_ir().name_scopes();
   }
   auto import_specifics() -> decltype(auto) { return import_ir().specifics(); }
-  auto import_specific_interfaes() -> decltype(auto) {
+  auto import_specific_interfaces() -> decltype(auto) {
     return import_ir().specific_interfaces();
   }
   auto import_string_literal_values() -> decltype(auto) {
@@ -953,6 +953,56 @@ static auto GetOrAddLocalSpecific(ImportContext& context,
   return specific_id;
 }
 
+namespace {
+struct SpecificInterfaceData {
+  SemIR::ConstantId interface_const_id;
+  SpecificData specific_data;
+};
+}  // namespace
+
+static auto GetLocalSpecificInterfaceData(
+    ImportRefResolver& resolver, SemIR::SpecificInterface import_interface)
+    -> SpecificInterfaceData {
+  SemIR::ConstantId interface_const_id = SemIR::ConstantId::None;
+  if (import_interface.interface_id.has_value()) {
+    interface_const_id =
+        GetLocalConstantId(resolver, resolver.import_interfaces()
+                                         .Get(import_interface.interface_id)
+                                         .first_owning_decl_id);
+  }
+  return {.interface_const_id = interface_const_id,
+          .specific_data =
+              GetLocalSpecificData(resolver, import_interface.specific_id)};
+}
+
+static auto GetLocalSpecificInterface(
+    ImportContext& context, SemIR::SpecificInterface import_specific_interface,
+    SpecificInterfaceData interface_data) -> SemIR::SpecificInterface {
+  if (!interface_data.interface_const_id.has_value()) {
+    return SemIR::SpecificInterface::None;
+  }
+  // Find the corresponding interface type. For a non-generic interface,
+  // this is the type of the interface declaration. For a generic interface,
+  // build a interface type referencing this specialization of the generic
+  // interface.
+  auto interface_const_inst =
+      context.local_insts().Get(context.local_constant_values().GetInstId(
+          interface_data.interface_const_id));
+  if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
+    const SemIR::FacetTypeInfo& new_facet_type_info =
+        context.local_facet_types().Get(facet_type->facet_type_id);
+    return new_facet_type_info.impls_constraints.front();
+  } else {
+    auto generic_interface_type =
+        context.local_types().GetAs<SemIR::GenericInterfaceType>(
+            interface_const_inst.type_id());
+    auto specific_id =
+        GetOrAddLocalSpecific(context, import_specific_interface.specific_id,
+                              interface_data.specific_data);
+    return {generic_interface_type.interface_id, specific_id};
+  }
+}
+
 // Adds unresolved constants for each parameter's type to the resolver's work
 // stack.
 static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
@@ -1487,18 +1537,21 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::AssociatedEntityType inst)
     -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
+  auto import_specific_interface =
+      resolver.import_specific_interfaces().Get(inst.interface_id);
+  auto data =
+      GetLocalSpecificInterfaceData(resolver, import_specific_interface);
 
-  auto interface_inst_id = GetLocalConstantId(resolver, inst.interface_type_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
+  auto specific_interface =
+      GetLocalSpecificInterface(resolver, import_specific_interface, data);
   return ResolveAs<SemIR::AssociatedEntityType>(
-      resolver,
-      {.type_id = SemIR::TypeType::SingletonTypeId,
-       .interface_type_id =
-           resolver.local_context().types().GetTypeIdForTypeConstantId(
-               interface_inst_id)});
+      resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
+                 .interface_id = resolver.local_specific_interfaces().Add(
+                     specific_interface)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2126,56 +2179,6 @@ static auto AddImplDefinition(ImportContext& context,
   }
 }
 
-namespace {
-struct SpecificInterfaceData {
-  SemIR::ConstantId interface_const_id;
-  SpecificData specific_data;
-};
-}  // namespace
-
-static auto GetLocalSpecificInstanceData(
-    ImportRefResolver& resolver, SemIR::SpecificInterface import_interface)
-    -> SpecificInterfaceData {
-  SemIR::ConstantId interface_const_id = SemIR::ConstantId::None;
-  if (import_interface.interface_id.has_value()) {
-    interface_const_id =
-        GetLocalConstantId(resolver, resolver.import_interfaces()
-                                         .Get(import_interface.interface_id)
-                                         .first_owning_decl_id);
-  }
-  return {.interface_const_id = interface_const_id,
-          .specific_data =
-              GetLocalSpecificData(resolver, import_interface.specific_id)};
-}
-
-static auto GetLocalSpecificInterface(ImportContext& context,
-                                      SemIR::SpecificId import_specific_id,
-                                      SpecificInterfaceData interface_data)
-    -> SemIR::SpecificInterface {
-  if (!interface_data.interface_const_id.has_value()) {
-    return SemIR::SpecificInterface::None;
-  }
-  // Find the corresponding interface type. For a non-generic interface,
-  // this is the type of the interface declaration. For a generic interface,
-  // build a interface type referencing this specialization of the generic
-  // interface.
-  auto interface_const_inst =
-      context.local_insts().Get(context.local_constant_values().GetInstId(
-          interface_data.interface_const_id));
-  if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
-    const SemIR::FacetTypeInfo& new_facet_type_info =
-        context.local_facet_types().Get(facet_type->facet_type_id);
-    return new_facet_type_info.impls_constraints.front();
-  } else {
-    auto generic_interface_type =
-        context.local_types().GetAs<SemIR::GenericInterfaceType>(
-            interface_const_inst.type_id());
-    auto specific_id = GetOrAddLocalSpecific(context, import_specific_id,
-                                             interface_data.specific_data);
-    return {generic_interface_type.interface_id, specific_id};
-  }
-}
-
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplDecl inst,
                                 SemIR::ConstantId impl_const_id)
@@ -2184,7 +2187,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // functions. Factor out the commonality.
   const auto& import_impl = resolver.import_impls().Get(inst.impl_id);
   auto specific_interface_data =
-      GetLocalSpecificInstanceData(resolver, import_impl.interface);
+      GetLocalSpecificInterfaceData(resolver, import_impl.interface);
   SemIR::ImplId impl_id = SemIR::ImplId::None;
   if (!impl_const_id.has_value()) {
     if (resolver.HasNewWork()) {
@@ -2237,7 +2240,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       AddLoadedImportRef(resolver, SemIR::TypeType::SingletonTypeId,
                          import_impl.constraint_id, constraint_const_id);
   new_impl.interface = GetLocalSpecificInterface(
-      resolver, import_impl.interface.specific_id, specific_interface_data);
+      resolver, import_impl.interface, specific_interface_data);
   if (import_impl.is_complete()) {
     AddImplDefinition(resolver, import_impl, new_impl);
   }
@@ -2454,7 +2457,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   for (auto interface : facet_type_info.impls_constraints) {
     // We discard this here and recompute it below instead of saving it to avoid
     // allocations.
-    GetLocalSpecificInstanceData(resolver, interface);
+    GetLocalSpecificInterfaceData(resolver, interface);
   }
   for (auto rewrite : facet_type_info.rewrite_constraints) {
     GetLocalConstantId(resolver, rewrite.lhs_const_id);
@@ -2466,9 +2469,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   llvm::SmallVector<SemIR::FacetTypeInfo::ImplsConstraint> impls_constraints;
   for (auto interface : facet_type_info.impls_constraints) {
-    auto data = GetLocalSpecificInstanceData(resolver, interface);
+    auto data = GetLocalSpecificInterfaceData(resolver, interface);
     impls_constraints.push_back(
-        GetLocalSpecificInterface(resolver, interface.specific_id, data));
+        GetLocalSpecificInterface(resolver, interface, data));
   }
   llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>
       rewrite_constraints;
@@ -2513,16 +2516,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalConstantInstId(resolver, inst.query_self_inst_id);
 
   const auto& import_specific_interface =
-      resolver.import_specific_interfaes().Get(
+      resolver.import_specific_interfaces().Get(
           inst.query_specific_interface_id);
-  auto data = GetLocalSpecificInstanceData(resolver, import_specific_interface);
+  auto data =
+      GetLocalSpecificInterfaceData(resolver, import_specific_interface);
 
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  auto specific_interface = GetLocalSpecificInterface(
-      resolver, import_specific_interface.specific_id, data);
+  auto specific_interface =
+      GetLocalSpecificInterface(resolver, import_specific_interface, data);
   auto query_specific_interface_id =
       resolver.local_specific_interfaces().Add(specific_interface);
   return ResolveAs<SemIR::LookupImplWitness>(

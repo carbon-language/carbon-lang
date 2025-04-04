@@ -142,14 +142,6 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
-static auto GetInterfaceFromFacetType(Context& context, SemIR::TypeId type_id)
-    -> std::optional<SemIR::FacetTypeInfo::ImplsConstraint> {
-  auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
-  return facet_type_info.TryAsSingleInterface();
-}
-
 static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
                                       SemIR::TypeId self_type_id,
                                       SemIR::InstId witness_id,
@@ -190,17 +182,14 @@ static auto PerformImplLookup(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
-  auto interface_type =
-      GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
-  // An associated entity is always associated with a single interface.
-  CARBON_CHECK(interface_type);
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
-  auto lookup_result =
-      LookupImplWitness(context, loc_id, type_const_id,
-                        assoc_type.interface_type_id.AsConstantId());
+  auto interface = context.specific_interfaces().Get(assoc_type.interface_id);
+  // TODO: Avoid forming and then immediately decomposing a `FacetType` here.
+  auto interface_type_id =
+      GetInterfaceType(context, interface.interface_id, interface.specific_id);
+  auto lookup_result = LookupImplWitness(context, loc_id, type_const_id,
+                                         interface_type_id.AsConstantId());
   if (!lookup_result.has_value()) {
-    auto interface_type_id = GetInterfaceType(
-        context, interface_type->interface_id, interface_type->specific_id);
     if (missing_impl_diagnoser) {
       // TODO: Pass in the expression whose type we are printing.
       CARBON_DIAGNOSTIC(MissingImplInMemberAccessNote, Note,
@@ -235,7 +224,7 @@ static auto PerformImplLookup(
   }
 
   return AccessMemberOfImplWitness(context, loc_id, self_type_id, witness_id,
-                                   interface_type->specific_id, member_id);
+                                   interface.specific_id, member_id);
 }
 
 // Performs a member name lookup into the specified scope, including performing
@@ -314,17 +303,14 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         auto base_as_type = ExprAsType(context, loc_id, base_id);
 
         auto assoc_interface =
-            GetInterfaceFromFacetType(context, assoc_type->interface_type_id);
-        // An associated entity should always be associated with a single
-        // interface.
-        CARBON_CHECK(assoc_interface);
+            context.specific_interfaces().Get(assoc_type->interface_id);
 
-        // First look for `*assoc_interface` in the type of the base. If it is
+        // First look for `assoc_interface` in the type of the base. If it is
         // found, get the witness that the interface is implemented from
         // `base_id`.
         const auto& facet_type_info =
             context.facet_types().Get(facet_type->facet_type_id);
-        // Witness that `T` implements the `*assoc_interface`.
+        // Witness that `T` implements the `assoc_interface`.
         SemIR::InstId witness_inst_id = SemIR::InstId::None;
         // TODO: This assumes `impls_constraints` are in the same order as
         // `CompleteFacetType::required_interfaces`, and come first in the list.
@@ -336,7 +322,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         for (auto [index, base_interface] :
              llvm::enumerate(facet_type_info.impls_constraints)) {
           // Get the witness that `T` implements `base_type_id`.
-          if (base_interface == *assoc_interface) {
+          if (base_interface == assoc_interface) {
             witness_inst_id = GetOrAddInst(
                 context, loc_id,
                 SemIR::FacetAccessWitness{
@@ -358,7 +344,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
 
         member_id = AccessMemberOfImplWitness(
             context, loc_id, base_as_type.type_id, witness_inst_id,
-            assoc_interface->specific_id, member_id);
+            assoc_interface.specific_id, member_id);
       } else {
         // Handles `x.F` if `x` is of type `class C` that extends an interface
         // containing `F`.
@@ -591,11 +577,13 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    const SemIR::AssociatedEntity& assoc_entity,
-                                   SemIR::TypeId interface_type_id,
-                                   SemIR::SpecificId interface_specific_id)
+                                   SemIR::SpecificInterfaceId interface_id)
     -> SemIR::InstId {
   // Convert to the interface type of the associated member, to get a facet
   // value.
+  auto interface = context.specific_interfaces().Get(interface_id);
+  auto interface_type_id =
+      GetInterfaceType(context, interface.interface_id, interface.specific_id);
   auto facet_inst_id =
       ConvertToValueOfType(context, loc_id, base_id, interface_type_id);
   if (facet_inst_id == SemIR::ErrorInst::SingletonInstId) {
@@ -628,7 +616,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   // the type of that element. It depends on the self type and the specific
   // interface.
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
-      context, loc_id, interface_specific_id, assoc_entity.decl_id,
+      context, loc_id, interface.specific_id, assoc_entity.decl_id,
       self_type_id, witness_id);
   // Now that we have the witness, an index into it, and the type of the
   // result, return the element of the witness.
@@ -641,13 +629,10 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
                         SemIR::InstId assoc_entity_inst_id,
-                        SemIR::TypeId interface_type_id) -> SemIR::InstId {
+                        SemIR::SpecificInterfaceId interface_id)
+    -> SemIR::InstId {
   // TODO: This function shares a code with PerformCompoundMemberAccess(),
   // it would be nice to reduce the duplication.
-
-  auto interface_type = GetInterfaceFromFacetType(context, interface_type_id);
-  // An associated entity is always associated with a single interface.
-  CARBON_CHECK(interface_type);
 
   auto value_inst_id =
       context.constant_values().GetConstantInstId(assoc_entity_inst_id);
@@ -658,7 +643,7 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
   LoadImportRef(context, decl_id);
 
   return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
-                                interface_type_id, interface_type->specific_id);
+                                interface_id);
 }
 
 auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
@@ -678,10 +663,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
           member.type_id())) {
     // Step 1: figure out the type of the associated entity from the interface.
 
-    SemIR::TypeId interface_type_id = assoc_type->interface_type_id;
-    auto interface_type = GetInterfaceFromFacetType(context, interface_type_id);
-    // An associated entity is always associated with a single interface.
-    CARBON_CHECK(interface_type);
+    SemIR::SpecificInterfaceId interface_id = assoc_type->interface_id;
     auto value_inst_id = context.constant_values().GetConstantInstId(member_id);
     // TODO: According to
     // https://docs.carbon-lang.dev/docs/design/expressions/member_access.html#member-resolution
@@ -711,8 +693,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
       // the value of the associated constant, and don't do any instance
       // binding.
       return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
-                                    interface_type_id,
-                                    interface_type->specific_id);
+                                    interface_id);
     }
   } else if (context.insts().Is<SemIR::TupleType>(
                  context.constant_values().GetInstId(base_type_const_id))) {

@@ -20,7 +20,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %UseSelf.assoc_type: type = assoc_entity_type %UseSelf.type [concrete]
+// CHECK:STDOUT:   %UseSelf.assoc_type: type = assoc_entity_type @UseSelf [concrete]
 // CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, @UseSelf.%F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -100,9 +100,11 @@ auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::TypeId> type_ids)
       context, context.type_blocks().AddCanonical(type_ids));
 }
 
-auto GetAssociatedEntityType(Context& context, SemIR::TypeId interface_type_id)
+auto GetAssociatedEntityType(Context& context,
+                             SemIR::SpecificInterfaceId specific_interface_id)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::AssociatedEntityType>(context, interface_type_id);
+  return GetTypeImpl<SemIR::AssociatedEntityType>(context,
+                                                  specific_interface_id);
 }
 
 auto GetSingletonType(Context& context, SemIR::InstId singleton_id)

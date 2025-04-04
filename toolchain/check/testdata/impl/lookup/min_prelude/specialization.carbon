@@ -237,10 +237,10 @@ fn F[D:! Y](d: D) {
   // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `<symbolic>` [ConversionFailure]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `(C(D) as Z).(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(<symbolic>)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs((C(D) as Z).(Z.X))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
   // CHECK:STDERR:
@@ -449,10 +449,10 @@ fn H[W:! type](v: W) -> W.(I.T) {
 // While this function is still a generic context, it should see the concrete
 // `X` type and the return of `H(p)` should convert (a no-op) to `X`.
 fn G[X:! type](p: X*) -> X {
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `<symbolic>` to `X` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `(X* as I).(I.T)` to `X` [ConversionFailure]
   // CHECK:STDERR:   return H(p);
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `<symbolic>` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `(X* as I).(I.T)` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return H(p);
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
