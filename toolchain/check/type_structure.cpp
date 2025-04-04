@@ -122,7 +122,7 @@ class TypeStructureBuilder {
            SemIR::SpecificInterface interface_constraint) -> TypeStructure {
     CARBON_CHECK(work_list_.empty());
 
-    first_symbolic_distance_ = TypeStructure::InfiniteDistance;
+    symbolic_type_indices_.clear();
     structure_.clear();
 
     // The self type comes first in the type structure, so we push it last, as
@@ -132,7 +132,7 @@ class TypeStructureBuilder {
     BuildTypeStructure();
 
     return TypeStructure(std::exchange(structure_, {}),
-                         first_symbolic_distance_);
+                         std::exchange(symbolic_type_indices_, {}));
   }
 
  private:
@@ -391,18 +391,14 @@ class TypeStructureBuilder {
   // Append a structural element to the TypeStructure being built.
   auto AppendStructural(TypeStructure::Structural structural) -> void {
     if (structural == TypeStructure::Structural::Symbolic) {
-      // Sets the `distance` in `first_symbolic_distance_` if it does not
-      // already have a non-infinite value.
-      if (first_symbolic_distance_ == TypeStructure::InfiniteDistance) {
-        first_symbolic_distance_ = structure_.size();
-      }
+      symbolic_type_indices_.push_back(structure_.size());
     }
     structure_.push_back(structural);
   }
 
   Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
-  int first_symbolic_distance_;
+  llvm::SmallVector<int> symbolic_type_indices_;
   llvm::SmallVector<TypeStructure::Structural> structure_;
 };
 

@@ -535,16 +535,13 @@ static auto CollectCandidateImplsForQuery(
   }
 
   auto compare = [](auto& lhs, auto& rhs) -> bool {
-    // TODO: Allow Carbon code to provide a priority ordering explicitly. For
-    // now they have all the same priority, so the priority is the order in
-    // which they are found in code.
-
-    // Sort by their type structures. Higher value in type structure comes
-    // first, so we use `>` comparison.
-    return lhs.type_structure > rhs.type_structure;
+    return lhs.type_structure < rhs.type_structure;
   };
   // Stable sort is used so that impls that are seen first are preferred when
   // they have an equal priority ordering.
+  // TODO: Allow Carbon code to provide a priority ordering explicitly. For
+  // now they have all the same priority, so the priority is the order in
+  // which they are found in code.
   llvm::stable_sort(candidate_impls, compare);
 
   return candidate_impls;

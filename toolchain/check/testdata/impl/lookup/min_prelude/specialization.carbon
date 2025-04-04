@@ -458,3 +458,33 @@ fn G[X:! type](p: X*) -> X {
   // CHECK:STDERR:
   return H(p);
 }
+
+// --- type_structure_first_difference.carbon
+
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+    let X:! type;
+    fn MakeX() -> X;
+}
+
+class C {}
+
+// Type structure: "?(?)"
+impl forall [T:! type] T as Z(T) where .X = {.less_good: ()} {
+    fn MakeX() -> {.less_good: ()} { return {.less_good = ()}; }
+}
+
+// Type structure: "?(c)". Should outrank the previous impl.
+impl forall [T:! type] T as Z(C) where .X = () {
+    fn MakeX() -> () { return (); }
+}
+
+fn F(T:! Z(C)) -> T.(Z(C).X) {
+    return T.MakeX();
+}
+
+fn G() {
+    // This won't compile if the first impl is selected.
+    let a: () = F(C);
+}
