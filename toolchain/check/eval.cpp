@@ -1822,10 +1822,10 @@ static auto IsPeriodSelf(EvalContext& eval_context, SemIR::ConstantId const_id)
   const auto& symbolic =
       eval_context.constant_values().GetSymbolicConstant(const_id);
   // Fast early reject before doing more expensive operations.
-  if (symbolic_info.dependence != SemIR::ConstantDependence::PeriodSelf) {
+  if (symbolic.dependence != SemIR::ConstantDependence::PeriodSelf) {
     return false;
   }
-  auto inst_id = symbolic_info.inst_id;
+  auto inst_id = symbolic.inst_id;
   // Unwrap the `FacetAccessType` instruction, which we get when the `.Self` is
   // converted to `type`.
   if (auto facet_access_type =

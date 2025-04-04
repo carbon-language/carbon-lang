@@ -145,9 +145,9 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   out << "}";
 }
 
-auto IdentifiedFacetType::set_required_interfaces(
-    const llvm::ArrayRef<RequiredInterface> extend,
-    const llvm::ArrayRef<RequiredInterface> self_impls) -> void {
+IdentifiedFacetType::IdentifiedFacetType(
+    llvm::ArrayRef<RequiredInterface> extend,
+    llvm::ArrayRef<RequiredInterface> self_impls) {
   if (extend.size() == 1) {
     interface_id_ = extend.front().interface_id;
     specific_id_ = extend.front().specific_id;

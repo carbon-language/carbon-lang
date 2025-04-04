@@ -97,16 +97,13 @@ constexpr FacetTypeInfo::RewriteConstraint
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
-  IdentifiedFacetType() {}
+  IdentifiedFacetType(llvm::ArrayRef<RequiredInterface> extend,
+                      llvm::ArrayRef<RequiredInterface> self_impls);
 
   // The order here defines the order of impl witnesses for this facet type.
   auto required_interfaces() const -> llvm::ArrayRef<RequiredInterface> {
     return required_interfaces_;
   }
-
-  auto set_required_interfaces(const llvm::ArrayRef<RequiredInterface> extend,
-                               llvm::ArrayRef<RequiredInterface> self_impls)
-      -> void;
 
   // Can this be used to the right of an `as` in an `impl` declaration?
   auto is_valid_impl_as_target() const -> bool {
