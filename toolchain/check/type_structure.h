@@ -29,15 +29,17 @@ class TypeStructure : public Printable<TypeStructure> {
   auto IsCompatibleWith(const TypeStructure& other) const -> bool;
 
   // Ordering of type structures. A lower value is a better match.
-  friend auto operator<=>(const TypeStructure& lhs, const TypeStructure& rhs)
-      -> std::weak_ordering {
-    return std::lexicographical_compare_three_way(
+  // TODO: switch to operator<=> once we can depend on
+  // std::lexicographical_compare_three_way
+  friend auto operator<(const TypeStructure& lhs, const TypeStructure& rhs)
+      -> bool {
+    return std::lexicographical_compare(
         lhs.symbolic_type_indices_.begin(), lhs.symbolic_type_indices_.end(),
         rhs.symbolic_type_indices_.begin(), rhs.symbolic_type_indices_.end(),
         [](int lhs_index, int rhs_index) {
           // A higher symbolic type index is a better match, so we need to
           // reverse the order.
-          return rhs_index <=> lhs_index;
+          return rhs_index < lhs_index;
         });
   }
 
