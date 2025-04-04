@@ -11,7 +11,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/where_expr/min_prelude/dot_self_impls.carbon
 
-// --- name_lookup_success.carbon
+// --- compound_member_access_through_where_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -52,7 +52,7 @@ fn INotJ(T:! I where .Self impls J) {
   let x: () = T.F();
 }
 
-// --- fail_name_lookup_with_i.carbon
+// --- fail_name_lookup_through_where_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -106,7 +106,7 @@ fn F(T:! A & B) {
   (A where .Self impls B).Bfn;
 }
 
-// --- name_lookup_instance_success.carbon
+// --- compound_member_access_instance_through_where_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
