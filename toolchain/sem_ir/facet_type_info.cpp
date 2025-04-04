@@ -157,7 +157,7 @@ IdentifiedFacetType::IdentifiedFacetType(
   }
 
   required_interfaces_.reserve(extend.size() + self_impls.size());
-  required_interfaces_.assign(extend.begin(), extend.end());
+  llvm::append_range(required_interfaces_, extend);
   llvm::append_range(required_interfaces_, self_impls);
   SortAndDeduplicate(required_interfaces_, RequiredLess);
 }
