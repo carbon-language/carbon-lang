@@ -463,9 +463,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                  "Virtual functions must have at least one parameter");
     auto* ptr_type =
         llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
-    auto* vtable_ptr =
-        context.builder().CreateLoad(ptr_type, args.front(), "vtable_ptr");
-    auto* vtable = context.builder().CreateLoad(ptr_type, vtable_ptr, "vtable");
+    // The vtable pointer is always at the start of the object in the Carbon
+    // ABI, so a pointer to the object is a pointer to the vtable pointer - load
+    // that to get a pointer to the vtable.
+    auto* vtable =
+        context.builder().CreateLoad(ptr_type, args.front(), "vtable");
     auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
     auto function_type_info = context.BuildFunctionTypeInfo(
         function, callee_function.resolved_specific_id);
