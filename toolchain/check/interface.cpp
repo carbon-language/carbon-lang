@@ -27,12 +27,8 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 
   // This associated entity is being declared as a member of the self specific
   // of the interface.
-  // TODO: Consider storing the self specific interface ID on the interface
-  // rather than recomputing it for each associated entity.
-  auto specific_interface_id = context.specific_interfaces().Add(
-      {.interface_id = interface_id,
-       .specific_id =
-           context.generics().GetSelfSpecific(interface_info.generic_id)});
+  auto interface_specific_id =
+      context.generics().GetSelfSpecific(interface_info.generic_id);
 
   // Register this declaration as declaring an associated entity.
   auto index = SemIR::ElementIndex(
@@ -41,7 +37,8 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.
-  auto type_id = GetAssociatedEntityType(context, specific_interface_id);
+  auto type_id =
+      GetAssociatedEntityType(context, interface_id, interface_specific_id);
   return AddInst<SemIR::AssociatedEntity>(
       context, context.insts().GetLocId(decl_id),
       {.type_id = type_id, .index = index, .decl_id = decl_id});

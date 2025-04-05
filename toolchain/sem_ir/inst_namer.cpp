@@ -499,9 +499,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        auto interface_id =
-            sem_ir_->specific_interfaces().Get(inst.interface_id).interface_id;
-        const auto& interface_info = sem_ir_->interfaces().Get(interface_id);
+        const auto& interface_info =
+            sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".assoc_type");
         continue;
       }

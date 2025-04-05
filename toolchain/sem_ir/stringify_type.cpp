@@ -55,7 +55,7 @@ class StepStack {
   using PushItem =
       std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
                    QualifiedNameItem, EntityNameItem, EntityNameId, TypeId,
-                   SpecificInterfaceId, llvm::ListSeparator*>;
+                   SpecificInterface, llvm::ListSeparator*>;
 
   // Starts a new stack, which always contains the first instruction to
   // stringify.
@@ -104,11 +104,9 @@ class StepStack {
   }
 
   // Pushes a specific interface.
-  auto PushSpecificInterfaceId(SpecificInterfaceId specific_interface_id)
-      -> void {
-    auto interface = sem_ir_->specific_interfaces().Get(specific_interface_id);
-    PushEntityName(sem_ir_->interfaces().Get(interface.interface_id),
-                   interface.specific_id);
+  auto PushSpecificInterface(SpecificInterface specific_interface) -> void {
+    PushEntityName(sem_ir_->interfaces().Get(specific_interface.interface_id),
+                   specific_interface.specific_id);
   }
 
   // Pushes a sequence of items onto the stack. This handles reversal, such that
@@ -134,8 +132,8 @@ class StepStack {
             PushEntityNameId(entity_name_id);
           },
           [&](TypeId type_id) { PushTypeId(type_id); },
-          [&](SpecificInterfaceId specific_interface_id) {
-            PushSpecificInterfaceId(specific_interface_id);
+          [&](SpecificInterface specific_interface) {
+            PushSpecificInterface(specific_interface);
           },
           [&](llvm::ListSeparator* sep) { PushString(*sep); });
     }
@@ -244,7 +242,9 @@ class Stringifier {
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, AssociatedEntityType inst)
       -> void {
     *out_ << "<associated entity in ";
-    step_stack_->Push(inst.interface_id, ">");
+    step_stack_->Push(">");
+    step_stack_->PushSpecificInterface(
+        SpecificInterface{inst.interface_id, inst.interface_specific_id});
   }
 
   template <typename InstT>
@@ -324,10 +324,7 @@ class Stringifier {
     }
     llvm::ListSeparator sep(" & ");
     for (auto impls : llvm::reverse(facet_type_info.impls_constraints)) {
-      const auto& interface_info =
-          sem_ir_->interfaces().Get(impls.interface_id);
-      step_stack_->Push(
-          StepStack::EntityNameItem(interface_info, impls.specific_id), &sep);
+      step_stack_->Push(impls, &sep);
     }
   }
 
@@ -497,8 +494,9 @@ class Stringifier {
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, LookupImplWitness inst)
       -> void {
-    step_stack_->Push(inst.query_self_inst_id, " as ",
-                      inst.query_specific_interface_id);
+    step_stack_->Push(
+        inst.query_self_inst_id, " as ",
+        sem_ir_->specific_interfaces().Get(inst.query_specific_interface_id));
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, NameRef inst) -> void {

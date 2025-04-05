@@ -183,10 +183,9 @@ static auto PerformImplLookup(
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
-  auto interface = context.specific_interfaces().Get(assoc_type.interface_id);
   // TODO: Avoid forming and then immediately decomposing a `FacetType` here.
-  auto interface_type_id =
-      GetInterfaceType(context, interface.interface_id, interface.specific_id);
+  auto interface_type_id = GetInterfaceType(context, assoc_type.interface_id,
+                                            assoc_type.interface_specific_id);
   auto lookup_result = LookupImplWitness(context, loc_id, type_const_id,
                                          interface_type_id.AsConstantId());
   if (!lookup_result.has_value()) {
@@ -224,7 +223,7 @@ static auto PerformImplLookup(
   }
 
   return AccessMemberOfImplWitness(context, loc_id, self_type_id, witness_id,
-                                   interface.specific_id, member_id);
+                                   assoc_type.interface_specific_id, member_id);
 }
 
 // Performs a member name lookup into the specified scope, including performing
@@ -302,8 +301,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         // Handles `T.F` when `T` is a non-type facet.
         auto base_as_type = ExprAsType(context, loc_id, base_id);
 
-        auto assoc_interface =
-            context.specific_interfaces().Get(assoc_type->interface_id);
+        auto assoc_interface = assoc_type->GetSpecificInterface();
 
         // First look for `assoc_interface` in the type of the base. If it is
         // found, get the witness that the interface is implemented from
@@ -577,11 +575,10 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    const SemIR::AssociatedEntity& assoc_entity,
-                                   SemIR::SpecificInterfaceId interface_id)
+                                   SemIR::SpecificInterface interface)
     -> SemIR::InstId {
   // Convert to the interface type of the associated member, to get a facet
   // value.
-  auto interface = context.specific_interfaces().Get(interface_id);
   auto interface_type_id =
       GetInterfaceType(context, interface.interface_id, interface.specific_id);
   auto facet_inst_id =
@@ -629,8 +626,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
                         SemIR::InstId assoc_entity_inst_id,
-                        SemIR::SpecificInterfaceId interface_id)
-    -> SemIR::InstId {
+                        SemIR::SpecificInterface interface) -> SemIR::InstId {
   // TODO: This function shares a code with PerformCompoundMemberAccess(),
   // it would be nice to reduce the duplication.
 
@@ -643,7 +639,7 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
   LoadImportRef(context, decl_id);
 
   return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
-                                interface_id);
+                                interface);
 }
 
 auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
@@ -663,7 +659,6 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
           member.type_id())) {
     // Step 1: figure out the type of the associated entity from the interface.
 
-    SemIR::SpecificInterfaceId interface_id = assoc_type->interface_id;
     auto value_inst_id = context.constant_values().GetConstantInstId(member_id);
     // TODO: According to
     // https://docs.carbon-lang.dev/docs/design/expressions/member_access.html#member-resolution
@@ -693,7 +688,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
       // the value of the associated constant, and don't do any instance
       // binding.
       return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
-                                    interface_id);
+                                    assoc_type->GetSpecificInterface());
     }
   } else if (context.insts().Is<SemIR::TupleType>(
                  context.constant_values().GetInstId(base_type_const_id))) {

@@ -256,7 +256,13 @@ struct AssociatedEntityType {
 
   TypeId type_id;
   // The interface in which the entity was declared.
-  SpecificInterfaceId interface_id;
+  InterfaceId interface_id;
+  // The specific for the interface in which the entity was declared.
+  SpecificId interface_specific_id;
+
+  auto GetSpecificInterface() -> SpecificInterface {
+    return {.interface_id = interface_id, .specific_id = interface_specific_id};
+  }
 };
 
 // Used for the type of patterns that do not match a fixed type.
