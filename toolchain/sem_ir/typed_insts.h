@@ -188,7 +188,7 @@ struct ArrayType {
       {.ir_name = "array_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
-       .constant_needs_inst_id = true,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .deduce_through = true});
 
   TypeId type_id;
@@ -773,7 +773,7 @@ struct FloatType {
       {.ir_name = "float_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
-       .constant_needs_inst_id = true,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .deduce_through = true});
 
   TypeId type_id;
@@ -924,7 +924,8 @@ struct ImplWitnessAccess {
           {.ir_name = "impl_witness_access",
            .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly,
-           .constant_needs_inst_id = true,
+           .constant_needs_inst_id =
+               InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1108,7 +1109,7 @@ struct IntType {
       {.ir_name = "int_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
-       .constant_needs_inst_id = true,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .deduce_through = true});
 
   TypeId type_id;
@@ -1133,7 +1134,8 @@ struct LookupImplWitness {
       InstKind::LookupImplWitness.Define<Parse::NodeId>(
           {.ir_name = "lookup_impl_witness",
            .constant_kind = InstConstantKind::SymbolicOnly,
-           .constant_needs_inst_id = true,
+           .constant_needs_inst_id =
+               InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
 
   // Always the type of the builtin `WitnessType` singleton instruction.
@@ -1337,7 +1339,8 @@ struct RequireCompleteType {
       InstKind::RequireCompleteType.Define<Parse::NodeId>(
           {.ir_name = "require_complete_type",
            .constant_kind = InstConstantKind::SymbolicOnly,
-           .constant_needs_inst_id = true,
+           .constant_needs_inst_id =
+               InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
   // Always the builtin witness type.
   TypeId type_id;
@@ -1477,7 +1480,8 @@ struct SpecificFunction {
   static constexpr auto Kind = InstKind::SpecificFunction.Define<Parse::NodeId>(
       {.ir_name = "specific_function",
        .constant_kind = InstConstantKind::Conditional,
-       .constant_needs_inst_id = true});
+       // InstId is added to definitions_required_by_use.
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;
@@ -1514,7 +1518,8 @@ struct SpecificImplFunction {
       InstKind::SpecificImplFunction.Define<Parse::NodeId>(
           {.ir_name = "specific_impl_function",
            .constant_kind = InstConstantKind::SymbolicOnly,
-           .constant_needs_inst_id = true});
+           // InstId is added to definitions_required_by_use.
+           .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;

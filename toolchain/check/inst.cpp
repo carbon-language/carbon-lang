@@ -10,6 +10,7 @@
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -100,18 +101,80 @@ auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 
 auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
-  if (loc_id_and_inst.loc_id.is_implicit() &&
-      !loc_id_and_inst.inst.kind().constant_needs_inst_id()) {
-    auto const_id =
-        TryEvalInstUnsafe(context, SemIR::InstId::None, loc_id_and_inst.inst);
-    if (const_id.has_value()) {
-      CARBON_VLOG_TO(context.vlog_stream(), "GetOrAddInst: constant: {0}\n",
-                     loc_id_and_inst.inst);
-      return context.constant_values().GetInstId(const_id);
+  auto handle_constant_id =
+      [&](SemIR::ConstantId const_id) -> std::optional<SemIR::InstId> {
+    CARBON_CHECK(const_id.has_value());
+
+    // If we didn't produce a constant value for the instruction, we have to add
+    // the instruction.
+    if (!const_id.is_constant()) {
+      return std::nullopt;
+    }
+
+    CARBON_VLOG_TO(context.vlog_stream(), "GetOrAddInst: constant: {0}\n",
+                   loc_id_and_inst.inst);
+    return context.constant_values().GetInstId(const_id);
+  };
+
+  // If the instruction is implicit, produce its constant value instead if
+  // possible.
+  if (loc_id_and_inst.loc_id.is_implicit()) {
+    switch (loc_id_and_inst.inst.kind().constant_needs_inst_id()) {
+      case SemIR::InstConstantNeedsInstIdKind::No: {
+        // Evaluation doesn't need an InstId. Just do it.
+        auto const_id = TryEvalInstUnsafe(context, SemIR::InstId::None,
+                                          loc_id_and_inst.inst);
+        if (auto result_inst_id = handle_constant_id(const_id)) {
+          return *result_inst_id;
+        }
+        break;
+      }
+
+      case SemIR::InstConstantNeedsInstIdKind::DuringEvaluation: {
+        // Evaluation temporarily needs an InstId. Add one for now.
+        auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
+        auto const_id = context.constant_values().Get(inst_id);
+        if (auto result_inst_id = handle_constant_id(const_id)) {
+          // TODO: We didn't end up needing the instruction. Consider removing
+          // it from `insts` if it's still the most recently added instruction.
+          return *result_inst_id;
+        }
+        context.inst_block_stack().AddInstId(inst_id);
+        return inst_id;
+      }
+
+      case SemIR::InstConstantNeedsInstIdKind::Permanent: {
+        // Evaluation needs a permanent InstId. Add the instruction.
+        break;
+      }
     }
   }
+
   // TODO: For an implicit instruction, this reattempts evaluation.
   return AddInst(context, loc_id_and_inst);
+}
+
+auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::ConstantId {
+  switch (loc_id_and_inst.inst.kind().constant_needs_inst_id()) {
+    case SemIR::InstConstantNeedsInstIdKind::No: {
+      // Evaluation doesn't need an InstId. Just do it.
+      return TryEvalInstUnsafe(context, SemIR::InstId::None,
+                               loc_id_and_inst.inst);
+    }
+
+    case SemIR::InstConstantNeedsInstIdKind::DuringEvaluation: {
+      // Evaluation temporarily needs an InstId. Add one for now.
+      auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
+      return context.constant_values().Get(inst_id);
+    }
+
+    case SemIR::InstConstantNeedsInstIdKind::Permanent: {
+      // Evaluation needs a permanent InstId. Add the instruction.
+      auto inst_id = AddInst(context, loc_id_and_inst);
+      return context.constant_values().Get(inst_id);
+    }
+  }
 }
 
 auto AddPlaceholderInstInNoBlock(Context& context,

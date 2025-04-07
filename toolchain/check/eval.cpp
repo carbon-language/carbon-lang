@@ -1744,7 +1744,8 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       // Couldn't perform the action because it's still dependent.
       return MakeConstantResult(eval_context.context(), inst,
                                 Phase::TemplateSymbolic);
-    } else if constexpr (InstT::Kind.constant_needs_inst_id()) {
+    } else if constexpr (InstT::Kind.constant_needs_inst_id() !=
+                         SemIR::InstConstantNeedsInstIdKind::No) {
       CARBON_CHECK(inst_id.has_value());
       return ConvertEvalResultToConstantId(
           eval_context.context(),

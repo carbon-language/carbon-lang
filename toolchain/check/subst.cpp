@@ -405,15 +405,13 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   // Rebuilds an instruction by building a new constant.
   auto Rebuild(SemIR::InstId old_inst_id, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
-    auto result_id = GetOrAddInst(
+    auto const_id = EvalOrAddInst(
         *context_,
         SemIR::LocIdAndInst::UncheckedLoc(
             context_->insts().GetLocId(old_inst_id).ToImplicit(), new_inst));
-    auto const_inst_id =
-        context_->constant_values().GetConstantInstId(result_id);
-    CARBON_CHECK(const_inst_id.has_value(),
+    CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");
-    return const_inst_id;
+    return context_->constant_values().GetInstId(const_id);
   }
 
  private:
