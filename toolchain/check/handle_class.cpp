@@ -267,11 +267,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     auto specific_id =
         context.generics().GetSelfSpecific(class_info.generic_id);
     class_info.self_type_id =
-        context.types().GetTypeIdForTypeConstantId(TryEvalInst(
-            context, SemIR::InstId::None,
-            SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
-                             .class_id = class_decl.class_id,
-                             .specific_id = specific_id}));
+        GetClassType(context, class_decl.class_id, specific_id);
   }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {

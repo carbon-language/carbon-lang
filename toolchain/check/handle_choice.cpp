@@ -104,11 +104,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   // `Class` in the ValueStore.
   SemIR::Class& mut_class = context.classes().Get(class_decl.class_id);
   // Build the `Self` type using the resulting type constant.
-  auto self_type_id = context.types().GetTypeIdForTypeConstantId(
-      TryEvalInst(context, SemIR::InstId::None,
-                  SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
-                                   .class_id = class_decl.class_id,
-                                   .specific_id = self_specific_id}));
+  auto self_type_id =
+      GetClassType(context, class_decl.class_id, self_specific_id);
   mut_class.self_type_id = self_type_id;
 
   // Enter the choice scope.
