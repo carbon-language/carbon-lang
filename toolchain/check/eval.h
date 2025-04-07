@@ -33,7 +33,11 @@ inline auto TryEvalInst(Context& context, SemIR::InstId inst_id)
 }
 
 // Same, but for a typed instruction that doesn't have an InstId assigned yet,
-// in the case where evaluation doesn't need an InstId.
+// in the case where evaluation doesn't need an InstId. This can be used to
+// avoid allocating an instruction in the case where you just want a constant
+// value and the instruction is known to not matter. However, even then care
+// should be taken: if the produced constant is symbolic, you may still need an
+// instruction to associate the constant with the enclosing generic.
 template <typename InstT>
   requires(!InstT::Kind.constant_needs_inst_id())
 auto TryEvalInst(Context& context, InstT inst) -> SemIR::ConstantId {
