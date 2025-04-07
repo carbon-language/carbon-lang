@@ -10,6 +10,7 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -106,8 +107,9 @@ auto InitialFacetTypeImplWitness(
   SemIR::InstId witness_inst_id = SemIR::InstId::None;
   llvm::MutableArrayRef<SemIR::InstId> table;
   {
-    llvm::SmallVector<SemIR::InstId> empty_table(assoc_entities.size(),
-                                                 SemIR::InstId::None);
+    llvm::SmallVector<SemIR::InstId> empty_table(
+        assoc_entities.size(),
+        SemIR::ImplWitnessTablePlaceholder::SingletonInstId);
     auto table_id = context.inst_blocks().Add(empty_table);
     table = context.inst_blocks().GetMutable(table_id);
     witness_inst_id = AddInst<SemIR::ImplWitness>(
@@ -133,90 +135,94 @@ auto InitialFacetTypeImplWitness(
       continue;
     }
     auto rewrite_value = rewrite.rhs_const_id;
+    if (rewrite_value == SemIR::ErrorInst::SingletonConstantId) {
+      table_entry = SemIR::ErrorInst::SingletonInstId;
+      continue;
+    }
 
-    if (table_entry.has_value()) {
-      auto const_id = context.constant_values().Get(table_entry);
-      if (const_id != rewrite_value &&
-          rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
-        table_entry = SemIR::ErrorInst::SingletonInstId;
+    auto decl_id = context.constant_values().GetConstantInstId(
+        assoc_entities[access.index.index]);
+    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+    if (decl_id == SemIR::ErrorInst::SingletonInstId) {
+      table_entry = SemIR::ErrorInst::SingletonInstId;
+      continue;
+    }
+
+    auto assoc_constant_decl =
+        context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id);
+    if (!assoc_constant_decl) {
+      auto type_id = context.insts().Get(decl_id).type_id();
+      auto type_inst = context.types().GetAsInst(type_id);
+      auto fn_type = type_inst.As<SemIR::FunctionType>();
+      const auto& fn = context.functions().Get(fn_type.function_id);
+      CARBON_DIAGNOSTIC(RewriteForAssociatedFunction, Error,
+                        "rewrite specified for associated function {0}",
+                        SemIR::NameId);
+      context.emitter().Emit(facet_type_inst_id, RewriteForAssociatedFunction,
+                             fn.name_id);
+      table_entry = SemIR::ErrorInst::SingletonInstId;
+      continue;
+    }
+
+    if (table_entry != SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
+      if (context.constant_values().Get(table_entry) != rewrite_value) {
         // TODO: Figure out how to print the two different values
         // `const_id` & `rewrite_value` in the diagnostic
         // message.
         CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
                           "associated constant {0} given two different values",
                           SemIR::NameId);
-        auto decl_id = assoc_entities[access.index.index];
-        SemIR::NameId name_id = SemIR::NameId::None;
-        if (auto decl = context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(
-                decl_id)) {
-          auto& assoc_const =
-              context.associated_constants().Get(decl->assoc_const_id);
-          name_id = assoc_const.name_id;
-        } else {
-          auto import_ref = context.insts().GetAs<SemIR::AnyImportRef>(decl_id);
-          const auto& entity_name =
-              context.entity_names().Get(import_ref.entity_name_id);
-          name_id = entity_name.name_id;
-        }
+        auto& assoc_const = context.associated_constants().Get(
+            assoc_constant_decl->assoc_const_id);
         context.emitter().Emit(facet_type_inst_id,
-                               AssociatedConstantWithDifferentValues, name_id);
+                               AssociatedConstantWithDifferentValues,
+                               assoc_const.name_id);
       }
+      table_entry = SemIR::ErrorInst::SingletonInstId;
       continue;
     }
-    auto decl_id = context.constant_values().GetConstantInstId(
-        assoc_entities[access.index.index]);
-    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-    if (auto decl =
-            context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      // If the associated constant has a symbolic type, convert the rewrite
-      // value to that type now we know the value of `Self`.
-      SemIR::TypeId assoc_const_type_id = decl->type_id;
-      if (assoc_const_type_id.is_symbolic()) {
-        // Get the type of the associated constant in this interface with this
-        // value for `Self`.
-        assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
-            context, facet_type_inst_id, interface_to_witness.specific_id,
-            decl_id, context.types().GetTypeIdForTypeInstId(self_type_inst_id),
-            witness_inst_id);
-        // Perform the conversion of the value to the type. We skipped this when
-        // forming the facet type because the type of the associated constant
-        // was symbolic.
-        auto converted_inst_id = ConvertToValueOfType(
-            context, context.insts().GetLocId(facet_type_inst_id),
-            context.constant_values().GetInstId(rewrite_value),
-            assoc_const_type_id);
-        rewrite_value = context.constant_values().Get(converted_inst_id);
-        // The result of conversion can be non-constant even if the original
-        // value was constant.
-        if (!rewrite_value.is_constant() &&
-            rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
-          const auto& assoc_const =
-              context.associated_constants().Get(decl->assoc_const_id);
-          CARBON_DIAGNOSTIC(
-              AssociatedConstantNotConstantAfterConversion, Error,
-              "associated constant {0} given value that is not constant "
-              "after conversion to {1}",
-              SemIR::NameId, SemIR::TypeId);
-          context.emitter().Emit(facet_type_inst_id,
-                                 AssociatedConstantNotConstantAfterConversion,
-                                 assoc_const.name_id, assoc_const_type_id);
-          rewrite_value = SemIR::ErrorInst::SingletonConstantId;
-        }
+
+    // If the associated constant has a symbolic type, convert the rewrite
+    // value to that type now we know the value of `Self`.
+    SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
+    if (assoc_const_type_id.is_symbolic()) {
+      // Get the type of the associated constant in this interface with this
+      // value for `Self`.
+      assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
+          context, facet_type_inst_id, interface_to_witness.specific_id,
+          decl_id, context.types().GetTypeIdForTypeInstId(self_type_inst_id),
+          witness_inst_id);
+      // Perform the conversion of the value to the type. We skipped this when
+      // forming the facet type because the type of the associated constant
+      // was symbolic.
+      auto converted_inst_id = ConvertToValueOfType(
+          context, context.insts().GetLocId(facet_type_inst_id),
+          context.constant_values().GetInstId(rewrite_value),
+          assoc_const_type_id);
+      rewrite_value = context.constant_values().Get(converted_inst_id);
+      // The result of conversion can be non-constant even if the original
+      // value was constant.
+      if (!rewrite_value.is_constant() &&
+          rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
+        const auto& assoc_const = context.associated_constants().Get(
+            assoc_constant_decl->assoc_const_id);
+        CARBON_DIAGNOSTIC(
+            AssociatedConstantNotConstantAfterConversion, Error,
+            "associated constant {0} given value that is not constant "
+            "after conversion to {1}",
+            SemIR::NameId, SemIR::TypeId);
+        context.emitter().Emit(facet_type_inst_id,
+                               AssociatedConstantNotConstantAfterConversion,
+                               assoc_const.name_id, assoc_const_type_id);
+        rewrite_value = SemIR::ErrorInst::SingletonConstantId;
       }
-    } else {
-      if (decl_id != SemIR::ErrorInst::SingletonInstId) {
-        auto type_id = context.insts().Get(decl_id).type_id();
-        auto type_inst = context.types().GetAsInst(type_id);
-        auto fn_type = type_inst.As<SemIR::FunctionType>();
-        const auto& fn = context.functions().Get(fn_type.function_id);
-        CARBON_DIAGNOSTIC(RewriteForAssociatedFunction, Error,
-                          "rewrite specified for associated function {0}",
-                          SemIR::NameId);
-        context.emitter().Emit(facet_type_inst_id, RewriteForAssociatedFunction,
-                               fn.name_id);
-      }
-      continue;
     }
+
+    auto rewrite_inst_id = context.constant_values().GetInstId(rewrite_value);
+    table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
+        context, witness_loc_id,
+        {.type_id = context.insts().Get(rewrite_inst_id).type_id(),
+         .inst_id = rewrite_inst_id});
     table_entry = context.constant_values().GetInstId(rewrite_value);
   }
   return witness_inst_id;
@@ -246,8 +252,9 @@ auto AllocateFacetTypeImplWitness(Context& context,
     LoadImportRef(context, decl_id);
   }
 
-  llvm::SmallVector<SemIR::InstId> empty_table(assoc_entities.size(),
-                                               SemIR::InstId::None);
+  llvm::SmallVector<SemIR::InstId> empty_table(
+      assoc_entities.size(),
+      SemIR::ImplWitnessTablePlaceholder::SingletonInstId);
   context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
 }
 

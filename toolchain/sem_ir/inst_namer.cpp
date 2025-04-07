@@ -701,6 +701,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         add_inst_name(out.TakeStr());
         continue;
       }
+      case ImplWitnessAssociatedConstant::Kind: {
+        add_inst_name("impl_witness_assoc_constant");
+        continue;
+      }
       case ImportCppDecl::Kind: {
         add_inst_name("Cpp.import_cpp");
         continue;

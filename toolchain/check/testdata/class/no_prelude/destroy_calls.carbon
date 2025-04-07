@@ -266,15 +266,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Main.ExplicitReturn: type = import_ref Main//types, ExplicitReturn, loaded [concrete = constants.%ExplicitReturn]
 // CHECK:STDOUT:   %Main.WithAddr: type = import_ref Main//types, WithAddr, loaded [concrete = constants.%WithAddr]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b5b = import_ref Main//types, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst38 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b14 = import_ref Main//types, loc10_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.83a: %destroy.type.dfa = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.539]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst62 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst63 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//types, loc15_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc16_33, loaded [concrete = constants.%destroy.8d0]
 // CHECK:STDOUT: }
@@ -359,7 +359,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @destroy.2[%self.param_patt: %ExplicitReturn]() -> %empty_tuple.type [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst82: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst83: %ptr.b4e]() [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_scope.carbon
 // CHECK:STDOUT:
@@ -387,15 +387,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Main.ExplicitReturn: type = import_ref Main//types, ExplicitReturn, loaded [concrete = constants.%ExplicitReturn]
 // CHECK:STDOUT:   %Main.WithAddr: type = import_ref Main//types, WithAddr, loaded [concrete = constants.%WithAddr]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b5b = import_ref Main//types, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst38 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b14 = import_ref Main//types, loc10_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.83a: %destroy.type.dfa = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.539]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst62 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst63 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//types, loc15_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc16_33, loaded [concrete = constants.%destroy.8d0]
 // CHECK:STDOUT: }
@@ -496,7 +496,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @destroy.2[%self.param_patt: %ExplicitReturn]() -> %empty_tuple.type [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst82: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst83: %ptr.b4e]() [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- temp.carbon
 // CHECK:STDOUT:
@@ -529,15 +529,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Main.ExplicitReturn: type = import_ref Main//types, ExplicitReturn, loaded [concrete = constants.%ExplicitReturn]
 // CHECK:STDOUT:   %Main.WithAddr: type = import_ref Main//types, WithAddr, loaded [concrete = constants.%WithAddr]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.784: %Make.type.bc9 = import_ref Main//types, loc5_22, loaded [concrete = constants.%Make.1be]
 // CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst38 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8e0: %Make.type.378 = import_ref Main//types, loc10_30, loaded [concrete = constants.%Make.960]
 // CHECK:STDOUT:   %Main.import_ref.83a: %destroy.type.dfa = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.539]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst62 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst63 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.974: %Make.type.e14 = import_ref Main//types, loc15_24, loaded [concrete = constants.%Make.b0a]
 // CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc16_33, loaded [concrete = constants.%destroy.8d0]
 // CHECK:STDOUT: }
@@ -622,7 +622,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.3() -> %WithAddr [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst92: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst93: %ptr.b4e]() [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_recovery.carbon
 // CHECK:STDOUT:

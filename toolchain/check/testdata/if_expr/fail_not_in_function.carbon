@@ -94,7 +94,7 @@ class C {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %i32 = bind_name x, <unexpected>.inst1065.loc27_14
+// CHECK:STDOUT:   %x: %i32 = bind_name x, <unexpected>.inst1066.loc27_14
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
 // CHECK:STDOUT:     %.loc37: %i32 = var_pattern %y.patt

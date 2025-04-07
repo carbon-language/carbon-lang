@@ -78,6 +78,11 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
+      case CARBON_KIND(ImplWitnessAssociatedConstant inst): {
+        inst_id = inst.inst_id;
+        continue;
+      }
+
       case CARBON_KIND(SpecificConstant inst): {
         inst_id = inst.inst_id;
         continue;
@@ -116,6 +121,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case LookupImplWitness::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
+      case ImplWitnessTablePlaceholder::Kind:
       case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case InstType::Kind:

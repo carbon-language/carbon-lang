@@ -10,9 +10,12 @@
 
 namespace Carbon::Check {
 
-// Returns the initial witness value for a new impl declaration.
+// Returns the initial witness value for a new `impl` declaration.
+//
+// `has_witness` is whether this declaration is immediately followed by the
+// opening of the definition.
 auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
-                               bool is_definition) -> SemIR::InstId;
+                               bool has_definition) -> SemIR::InstId;
 
 // Update `impl`'s witness at the start of a definition.
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;

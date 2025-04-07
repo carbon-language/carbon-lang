@@ -140,6 +140,10 @@ class TypeCompleter {
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, SemIR::ConstType inst) const
       -> SemIR::CompleteTypeInfo;
 
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::ImplWitnessAssociatedConstant inst) const
+      -> SemIR::CompleteTypeInfo;
+
   template <typename InstT>
     requires(InstT::Kind.constant_kind() ==
                  SemIR::InstConstantKind::SymbolicOnly ||
@@ -500,6 +504,12 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
   // The value representation of `const T` is the same as that of `T`.
   // Objects are not modifiable through their value representations.
   return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+auto TypeCompleter::BuildInfoForInst(
+    SemIR::TypeId /*type_id*/, SemIR::ImplWitnessAssociatedConstant inst) const
+    -> SemIR::CompleteTypeInfo {
+  return GetNestedInfo(inst.type_id);
 }
 
 // Builds and returns the value representation for the given type. All nested

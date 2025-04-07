@@ -128,7 +128,9 @@ class TypeStructureBuilder {
     // The self type comes first in the type structure, so we push it last, as
     // the queue works from the back.
     Push(interface_constraint);
-    PushInstId(self_inst_id);
+    if (self_inst_id.has_value()) {
+      PushInstId(self_inst_id);
+    }
     BuildTypeStructure();
 
     return TypeStructure(std::exchange(structure_, {}),
@@ -262,6 +264,10 @@ class TypeStructureBuilder {
           // We don't put the `const` into the type structure since it is a
           // modifier; just move to the inner type.
           PushInstId(const_type.inner_id);
+          break;
+        }
+        case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
+          Push(assoc.type_id);
           break;
         }
         case CARBON_KIND(SemIR::PointerType pointer_type): {

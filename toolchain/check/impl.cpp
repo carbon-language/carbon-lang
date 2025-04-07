@@ -86,7 +86,7 @@ static auto CheckAssociatedFunctionImplementation(
 
 // Builds an initial witness from the rewrites in the facet type, if any.
 auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
-                               bool is_definition) -> SemIR::InstId {
+                               bool has_definition) -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
 
   auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
@@ -98,7 +98,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
   return InitialFacetTypeImplWitness(
       context, context.insts().GetLocId(impl.latest_decl_id()),
       impl.constraint_id, impl.self_id, impl.interface,
-      context.generics().GetSelfSpecific(impl.generic_id), is_definition);
+      context.generics().GetSelfSpecific(impl.generic_id), has_definition);
 }
 
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
@@ -139,7 +139,8 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      if (!witness_value.has_value()) {
+      if (witness_value ==
+          SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
         CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
                           "associated constant {0} not given a value in impl "
                           "of interface {1}",
@@ -147,7 +148,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
         CARBON_DIAGNOSTIC(AssociatedConstantHere, Note,
                           "associated constant declared here");
         context.emitter()
-            .Build(impl.constraint_id, ImplAssociatedConstantNeedsValue,
+            .Build(impl.definition_id, ImplAssociatedConstantNeedsValue,
                    context.associated_constants()
                        .Get(decl->assoc_const_id)
                        .name_id,
@@ -241,7 +242,7 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
     auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
     auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
     for (auto& elem : witness_block) {
-      if (!elem.has_value()) {
+      if (elem == SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
         elem = SemIR::ErrorInst::SingletonInstId;
       }
     }

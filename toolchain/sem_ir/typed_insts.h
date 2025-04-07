@@ -688,6 +688,7 @@ struct FacetAccessType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::SymbolicOnly});
 
+  // Always the builtin type TypeType.
   TypeId type_id;
   // An instruction that evaluates to a `FacetValue`.
   InstId facet_value_inst_id;
@@ -900,6 +901,18 @@ struct ImplWitness {
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
+  // The witness table with an instruction for each associated constant and
+  // function in the impl declaration (and definition, if seen). The specific_id
+  // should be applied to those instructions. Instructions will be
+  // `ImplWitnessTablePlaceholder` until a value is seen for them.
+  //
+  // TODO: To avoid importing the table with every `ImplWitness`, split this
+  // table out to a separate `ImplWitnessTable` instruction. It can still remain
+  // as an AbsoluteInstBlockId there. The `ImplWitnessTable's constant_kind
+  // should be `Unique` to avoid it being evaluated or substituted. The
+  // `ImplWitnessTable` can also hold a reference back to the impl that the
+  // witness is for via an `ImplId` which allows diagnostics to show the impl
+  // from a given witness or witness access.
   AbsoluteInstBlockId elements_id;
   SpecificId specific_id;
 };
@@ -917,6 +930,40 @@ struct ImplWitnessAccess {
   TypeId type_id;
   InstId witness_id;
   ElementIndex index;
+};
+
+// An instruction that just points to an associated constant, which exists to
+// live inside the generic for an `impl` and be rewritten in the generic eval
+// block, unlike the instruction which it points to. This allows a symbolic
+// constant value of this instruction to be be substituted to be associated with
+// the generic.
+struct ImplWitnessAssociatedConstant {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessAssociatedConstant.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_assoc_constant",
+           .is_type = InstIsType::Maybe,
+           // TODO: For dynamic dispatch, we might want to lower witness tables
+           // as constants.
+           .is_lowered = false});
+
+  // The type of the `inst_id`.
+  TypeId type_id;
+  // The instruction of the associated constant.
+  InstId inst_id;
+};
+
+// A singleton placeholder instruction used in the `ImplWitness` table of
+// instructions for members of the impl. These are replaced as values are seen
+// for the witness table in the impl declaration or definition.
+struct ImplWitnessTablePlaceholder {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessTablePlaceholder.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_table_placeholder",
+           .constant_kind = InstConstantKind::Unique,
+           .is_lowered = false});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+
+  TypeId type_id;
 };
 
 // An `import Cpp` declaration.
@@ -1836,6 +1883,8 @@ struct WhereExpr {
 // The type of `ImplWitness` and `ImplSymbolicType` instructions. The latter
 // will evaluate at some point during specific computation into the former, and
 // their types should not change in the process.
+//
+// Also the type of `RequireCompleteType` instructions.
 struct WitnessType {
   static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
       {.ir_name = "<witness>",

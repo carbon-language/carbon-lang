@@ -257,6 +257,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
+auto EvalConstantInst(Context& context,
+                      SemIR::ImplWitnessAssociatedConstant inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.inst_id));
+}
+
 auto EvalConstantInst(Context& /*context*/, SemIR::ImportRefUnloaded inst)
     -> ConstantEvalResult {
   CARBON_FATAL("ImportRefUnloaded should be loaded before TryEvalInst: {0}",

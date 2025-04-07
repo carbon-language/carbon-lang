@@ -10,9 +10,9 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+7]]:12: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+7]]:1: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl () as I {}
-// CHECK:STDERR:            ^
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:19: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR: interface I { let T:! type; }
 // CHECK:STDERR:                   ^~~~~~~~

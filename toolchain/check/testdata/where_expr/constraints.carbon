@@ -610,8 +610,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst18 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//state_constraints, inst22 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//state_constraints, inst23 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.ce7 = import_ref Main//state_constraints, loc7_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.731 = import_ref Main//state_constraints, loc8_13, unloaded
 // CHECK:STDOUT:   %Main.Member = import_ref Main//state_constraints, Member, unloaded
@@ -715,7 +715,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref = import_ref Main//state_constraints, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref = import_ref Main//state_constraints, inst19 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

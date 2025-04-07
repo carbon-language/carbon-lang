@@ -465,6 +465,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
         context.emitter().Emit(loc, ImplUnusedBinding);
         // Don't try to match the impl at all, save us work and possible future
         // diagnostics.
+        FillImplWitnessWithErrors(context, impl_info);
         context.impls().Get(impl_decl.impl_id).witness_id =
             SemIR::ErrorInst::SingletonInstId;
       }
@@ -495,6 +496,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                     self_type_node, self_type_id, name.implicit_params_loc_id,
                     constraint_inst_id, constraint_type_id)) {
       // Don't allow the invalid impl to be used.
+      FillImplWitnessWithErrors(context, impl_info);
       context.impls().Get(impl_decl.impl_id).witness_id =
           SemIR::ErrorInst::SingletonInstId;
     }

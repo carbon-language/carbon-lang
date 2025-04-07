@@ -565,6 +565,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
+static auto BuildTypeForInst(FileContext& context,
+                             SemIR::ImplWitnessAssociatedConstant inst)
+    -> llvm::Type* {
+  return context.GetType(inst.type_id);
+}
+
 static auto BuildTypeForInst(FileContext& /*context*/,
                              SemIR::ErrorInst /*inst*/) -> llvm::Type* {
   // This is a complete type but uses of it should never be lowered.
