@@ -1245,10 +1245,10 @@ class FormatterImpl {
     out_ << "<";
 
     llvm::ListSeparator sep(" & ");
-    if (info.impls_constraints.empty()) {
+    if (info.extend_constraints.empty()) {
       out_ << "type";
     } else {
-      for (auto interface : info.impls_constraints) {
+      for (auto interface : info.extend_constraints) {
         out_ << sep;
         FormatName(interface.interface_id);
         if (interface.specific_id.has_value()) {
@@ -1258,10 +1258,22 @@ class FormatterImpl {
       }
     }
 
-    if (info.other_requirements || !info.rewrite_constraints.empty()) {
-      // TODO: Include specifics.
+    if (info.other_requirements || !info.self_impls_constraints.empty() ||
+        !info.rewrite_constraints.empty()) {
       out_ << " where ";
       llvm::ListSeparator and_sep(" and ");
+      if (!info.self_impls_constraints.empty()) {
+        out_ << and_sep << ".Self impls ";
+        llvm::ListSeparator amp_sep(" & ");
+        for (auto interface : info.self_impls_constraints) {
+          out_ << amp_sep;
+          FormatName(interface.interface_id);
+          if (interface.specific_id.has_value()) {
+            out_ << ", ";
+            FormatName(interface.specific_id);
+          }
+        }
+      }
       for (auto rewrite : info.rewrite_constraints) {
         out_ << and_sep;
         FormatConstant(rewrite.lhs_const_id);

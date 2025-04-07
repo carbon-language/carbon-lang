@@ -29,7 +29,8 @@ auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
 // diagnostics.
 // TODO: Should we use a different type for each such entity, or the same type
 // for all associated entities?
-auto GetAssociatedEntityType(Context& context, SemIR::TypeId interface_type_id)
+auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
+                             SemIR::SpecificId interface_specific_id)
     -> SemIR::TypeId;
 
 // Gets a singleton type. The returned type will be complete. Requires that
@@ -70,7 +71,7 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 // Returns a pointer type whose pointee type is `pointee_type_id`.
-auto GetPointerType(Context& context, SemIR::TypeId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
     -> SemIR::TypeId;
 
 // Returns a struct type with the given fields.

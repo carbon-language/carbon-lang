@@ -211,7 +211,11 @@ struct Worklist {
 
   auto Add(FacetTypeId facet_type_id) -> void {
     const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
-    for (auto [interface_id, specific_id] : facet_type.impls_constraints) {
+    for (auto [interface_id, specific_id] : facet_type.extend_constraints) {
+      Add(interface_id);
+      Add(specific_id);
+    }
+    for (auto [interface_id, specific_id] : facet_type.self_impls_constraints) {
       Add(interface_id);
       Add(specific_id);
     }

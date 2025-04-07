@@ -2095,15 +2095,15 @@ class TypeChecker::SubstitutedGenericBindings {
 };
 
 auto TypeChecker::Substitute(const Bindings& bindings,
-                             Nonnull<const Value*> type) const
+                             Nonnull<const Value*> value) const
     -> ErrorOr<Nonnull<const Value*>> {
   // Don't waste time recursively rebuilding a type if we have nothing to
   // substitute.
   if (bindings.empty()) {
-    return type;
+    return value;
   }
 
-  CARBON_ASSIGN_OR_RETURN(const auto* result, SubstituteImpl(bindings, type));
+  CARBON_ASSIGN_OR_RETURN(const auto* result, SubstituteImpl(bindings, value));
 
   if (trace_stream_->is_enabled()) {
     trace_stream_->Substitute() << "substitution of [";
@@ -2114,7 +2114,7 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     for (const auto& [name, value] : bindings.witnesses()) {
       *trace_stream_ << sep << "`" << *name << "` -> `" << *value << "`";
     }
-    *trace_stream_ << "]\n -  old: `" << *type << "`\n +  new: `" << *result
+    *trace_stream_ << "]\n -  old: `" << *value << "`\n +  new: `" << *result
                    << "`\n";
   }
   return result;

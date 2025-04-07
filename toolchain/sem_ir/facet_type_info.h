@@ -11,33 +11,11 @@
 
 namespace Carbon::SemIR {
 
-struct SpecificInterface {
-  InterfaceId interface_id;
-  SpecificId specific_id;
-
-  static const SpecificInterface None;
-
-  friend auto operator==(const SpecificInterface& lhs,
-                         const SpecificInterface& rhs) -> bool = default;
-};
-
-constexpr SpecificInterface SpecificInterface::None = {
-    .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
-
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
   static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
-      -> FacetTypeInfo {
-    FacetTypeInfo info = {.other_requirements = false};
-    llvm::append_range(info.impls_constraints, lhs.impls_constraints);
-    llvm::append_range(info.impls_constraints, rhs.impls_constraints);
-    llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
-    llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
-    info.other_requirements |= lhs.other_requirements;
-    info.other_requirements |= rhs.other_requirements;
-    return info;
-  }
+      -> FacetTypeInfo;
 
   // TODO: Need to switch to a processed, canonical form, that can support facet
   // type equality as defined by
@@ -49,10 +27,11 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // `ImplsConstraint` holds the interfaces this facet type requires.
   // TODO: extend this so it can represent named constraint requirements
   // and requirements on members, not just `.Self`.
-  // TODO: Add whether this is a lookup context. Those that are should sort
-  // first for easy access. Right now, all are assumed to be lookup contexts.
   using ImplsConstraint = SpecificInterface;
-  llvm::SmallVector<ImplsConstraint> impls_constraints;
+  // These are the required interfaces that are lookup contexts.
+  llvm::SmallVector<ImplsConstraint> extend_constraints;
+  // These are the required interfaces that are not lookup contexts.
+  llvm::SmallVector<ImplsConstraint> self_impls_constraints;
 
   // Rewrite constraints of the form `.T = U`
   struct RewriteConstraint {
@@ -78,19 +57,21 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   // In some cases, a facet type is expected to represent a single interface.
   // For example, an interface declaration or an associated constant are
-  // associated with a facet type that will always be a single interface.
+  // associated with a facet type that will always be a single interface with no
+  // other constraints. This returns the single interface that this facet type
+  // represents, or `std::nullopt` if it has any other constraints.
   auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
-    // We are ignoring other requirements for the moment, since this function is
-    // (hopefully) temporary.
-    if (impls_constraints.size() == 1) {
-      return impls_constraints.front();
+    if (extend_constraints.size() == 1 && self_impls_constraints.empty() &&
+        rewrite_constraints.empty() && !other_requirements) {
+      return extend_constraints.front();
     }
     return std::nullopt;
   }
 
   friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> bool {
-    return lhs.impls_constraints == rhs.impls_constraints &&
+    return lhs.extend_constraints == rhs.extend_constraints &&
+           lhs.self_impls_constraints == rhs.self_impls_constraints &&
            lhs.rewrite_constraints == rhs.rewrite_constraints &&
            lhs.other_requirements == rhs.other_requirements;
   }
@@ -103,15 +84,12 @@ constexpr FacetTypeInfo::RewriteConstraint
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
-  IdentifiedFacetType() {}
+  IdentifiedFacetType(llvm::ArrayRef<RequiredInterface> extends,
+                      llvm::ArrayRef<RequiredInterface> self_impls);
 
+  // The order here defines the order of impl witnesses for this facet type.
   auto required_interfaces() const -> llvm::ArrayRef<RequiredInterface> {
     return required_interfaces_;
-  }
-
-  auto set_required_interfaces(const llvm::ArrayRef<RequiredInterface> set_to) {
-    required_interfaces_.assign(set_to.begin(), set_to.end());
-    CanonicalizeRequiredInterfaces();
   }
 
   // Can this be used to the right of an `as` in an `impl` declaration?
@@ -137,26 +115,7 @@ struct IdentifiedFacetType {
     }
   }
 
-  // Call this function if num != 1, otherwise call `set_interface_to_impl`.
-  auto set_num_interfaces_to_impl(int num) -> void {
-    CARBON_CHECK(num != 1);
-    interface_id_ = InterfaceId::None;
-    num_interface_to_impl_ = num;
-  }
-
-  // If there is a single interface to implement, specify which it is.
-  // Should be an element of `required_interfaces()`.
-  auto set_interface_to_impl(SpecificInterface interface) -> void {
-    CARBON_CHECK(interface.interface_id.has_value());
-    interface_id_ = interface.interface_id;
-    specific_id_ = interface.specific_id;
-  }
-
  private:
-  // Sorts and deduplicates `required_interfaces`. Call after building the sets
-  // of interfaces, and then don't mutate the value afterwards.
-  auto CanonicalizeRequiredInterfaces() -> void;
-
   // Interfaces mentioned explicitly in the facet type expression, or
   // transitively through a named constraint. Sorted and deduplicated.
   llvm::SmallVector<RequiredInterface> required_interfaces_;
@@ -178,7 +137,8 @@ struct IdentifiedFacetType {
 inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
-  hasher.HashSizedBytes(llvm::ArrayRef(value.impls_constraints));
+  hasher.HashSizedBytes(llvm::ArrayRef(value.extend_constraints));
+  hasher.HashSizedBytes(llvm::ArrayRef(value.self_impls_constraints));
   hasher.HashSizedBytes(llvm::ArrayRef(value.rewrite_constraints));
   hasher.HashRaw(value.other_requirements);
   // `complete_id` is not part of the state to hash.

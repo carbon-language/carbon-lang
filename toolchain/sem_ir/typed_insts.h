@@ -193,7 +193,7 @@ struct ArrayType {
 
   TypeId type_id;
   InstId bound_id;
-  TypeId element_type_id;
+  InstId element_type_inst_id;
 };
 
 // Perform a no-op conversion to a compatible type.
@@ -257,8 +257,13 @@ struct AssociatedEntityType {
 
   TypeId type_id;
   // The interface in which the entity was declared.
-  // TODO: Consider storing an `InterfaceId` and `SpecificId` instead.
-  TypeId interface_type_id;
+  InterfaceId interface_id;
+  // The specific for the interface in which the entity was declared.
+  SpecificId interface_specific_id;
+
+  auto GetSpecificInterface() -> SpecificInterface {
+    return {.interface_id = interface_id, .specific_id = interface_specific_id};
+  }
 };
 
 // Used for the type of patterns that do not match a fixed type.
@@ -607,7 +612,7 @@ struct ConstType {
            .deduce_through = true});
 
   TypeId type_id;
-  TypeId inner_id;
+  InstId inner_id;
 };
 
 // An action that performs simple conversion to a value expression of a given
@@ -1015,8 +1020,6 @@ struct InterfaceDecl {
           {.ir_name = "interface_decl", .is_lowered = false});
 
   TypeId type_id;
-  // TODO: For a generic interface declaration, the name of the interface
-  // declaration should become a parameterized entity name value.
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
@@ -1260,7 +1263,7 @@ struct PointerType {
            .deduce_through = true});
 
   TypeId type_id;
-  TypeId pointee_id;
+  InstId pointee_id;
 };
 
 // An action that performs type refinement for an instruction, by creating an
@@ -1426,7 +1429,8 @@ struct SpecificConstant {
 struct SpecificFunction {
   static constexpr auto Kind = InstKind::SpecificFunction.Define<Parse::NodeId>(
       {.ir_name = "specific_function",
-       .constant_kind = InstConstantKind::WheneverPossible});
+       .constant_kind = InstConstantKind::Conditional,
+       .constant_needs_inst_id = true});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;
@@ -1799,9 +1803,10 @@ struct VtableType {
 
 // Initializer for virtual function table pointers in object initialization.
 struct VtablePtr {
-  static constexpr auto Kind =
-      InstKind::VtablePtr.Define<Parse::NodeId>({.ir_name = "vtable_ptr"});
+  static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
+      {.ir_name = "vtable_ptr", .constant_kind = InstConstantKind::Never});
   TypeId type_id;
+  InstId vtable_id;
 };
 
 // Definition of ABI-neutral vtable information for a dynamic class.

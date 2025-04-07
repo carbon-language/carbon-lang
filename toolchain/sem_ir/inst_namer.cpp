@@ -499,25 +499,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        auto facet_type =
-            sem_ir_->types().TryGetAs<FacetType>(inst.interface_type_id);
-        if (!facet_type) {
-          // Should never happen, but we don't want the instruction namer to
-          // crash on bad IR.
-          add_inst_name("<invalid interface>");
-          continue;
-        }
-        const auto& facet_type_info =
-            sem_ir_->facet_types().Get(facet_type->facet_type_id);
-        auto interface = facet_type_info.TryAsSingleInterface();
-        if (!interface) {
-          // Should never happen, but we don't want the instruction namer to
-          // crash on bad IR.
-          add_inst_name("<invalid interface>");
-          continue;
-        }
         const auto& interface_info =
-            sem_ir_->interfaces().Get(interface->interface_id);
+            sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".assoc_type");
         continue;
       }
@@ -630,13 +613,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& facet_type_info =
             sem_ir_->facet_types().Get(inst.facet_type_id);
         bool has_where = facet_type_info.other_requirements ||
+                         !facet_type_info.self_impls_constraints.empty() ||
                          !facet_type_info.rewrite_constraints.empty();
-        if (auto interface = facet_type_info.TryAsSingleInterface()) {
-          const auto& interface_info =
-              sem_ir_->interfaces().Get(interface->interface_id);
+        if (facet_type_info.extend_constraints.size() == 1) {
+          const auto& interface_info = sem_ir_->interfaces().Get(
+              facet_type_info.extend_constraints.front().interface_id);
           add_inst_name_id(interface_info.name_id,
                            has_where ? "_where.type" : ".type");
-        } else if (facet_type_info.impls_constraints.empty()) {
+        } else if (facet_type_info.extend_constraints.empty()) {
           add_inst_name(has_where ? "type_where" : "type");
         } else {
           add_inst_name("facet_type");

@@ -241,7 +241,7 @@ choice C {
 // CHECK:STDOUT:   %a.param: %ptr = value_param call_param0
 // CHECK:STDOUT:   %.loc8: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %ptr = bind_name a, %a.param
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type]

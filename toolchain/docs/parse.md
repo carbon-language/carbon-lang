@@ -462,9 +462,9 @@ switches to the expression-statement state.
 Depending on the introducer, different actions can be taken. The most common
 case is to:
 
--   Call `context.PushState(State::___);` to mark the beginning of the statement
-    or declaration and indicate the state that will handle the tokens after the
-    introducer.
+-   Call `context.PushState(StateKind::___);` to mark the beginning of the
+    statement or declaration and indicate the state that will handle the tokens
+    after the introducer.
 
 -   Call `context.AddLeafNode(NodeKind::___, context.Consume());` to output a
     bracketing node for this introducer.
@@ -513,8 +513,8 @@ declaration or statement.
 
 -   **Step 1**: Save the current value of `context.tree().size()`. This could be
     accomplished by calling `context.PushState()`, which saves that value in the
-    `subtree_start` field of `Context::StateStackEntry`; or by constructing a
-    `Context::StateStackEntry` value directly, as is done in
+    `subtree_start` field of `Context::State`; or by constructing a
+    `Context::State` value directly, as is done in
     [parse/handle_decl_scope_loop.cpp](/toolchain/parse/handle_decl_scope_loop.cpp).
     This marks the position of the placeholder node we are going to replace, as
     well as the beginning of the subtree we are eventually going to emit for
@@ -701,10 +701,10 @@ This is handled by the `ExpectAsOrTypeExpression` code from
 if (context.PositionIs(Lex::TokenKind::As)) {
   // as <expression> ...
   context.AddLeafNode(NodeKind::DefaultSelfImplAs, context.Consume());
-  context.PushState(State::Expr);
+  context.PushState(StateKind::Expr);
 } else {
   // <expression> as <expression>...
-  context.PushState(State::ImplBeforeAs);
+  context.PushState(StateKind::ImplBeforeAs);
   context.PushStateForExpr(PrecedenceGroup::ForImplAs());
 }
 ```
@@ -716,7 +716,7 @@ auto state = context.PopState();
 if (auto as = context.ConsumeIf(Lex::TokenKind::As)) {
   context.AddNode(NodeKind::TypeImplAs, *as, state.subtree_start,
                   state.has_error);
-  context.PushState(State::Expr);
+  context.PushState(StateKind::Expr);
 } else {
   if (!state.has_error) {
     CARBON_DIAGNOSTIC(ImplExpectedAs, Error,
@@ -728,9 +728,9 @@ if (auto as = context.ConsumeIf(Lex::TokenKind::As)) {
 ```
 
 Note (1) that the `state.subtree_start` value comes from the
-`context.PushState(State::ImplBeforeAs);` before parsing the type expression,
-and that is how that type expression ends up as the child of the created
-`TypeImplAs` node. Unlike
+`context.PushState(StateKind::ImplBeforeAs);` before parsing the type
+expression, and that is how that type expression ends up as the child of the
+created `TypeImplAs` node. Unlike
 [the previous case 1](#case-1-introducer-to-optional-clause-is-used-as-parent-node),
 though, the parent node uses the token after the optional expression, rather
 than an introducer token for the optional clause.
@@ -784,10 +784,10 @@ This is handled by the `ExpectAsOrTypeExpression` code from
 if (context.PositionIs(Lex::TokenKind::As)) {
   // as <expression> ...
   context.AddLeafNode(NodeKind::ImplAs, context.Consume());
-  context.PushState(State::Expr);
+  context.PushState(StateKind::Expr);
 } else {
   // <expression> as <expression>...
-  context.PushState(State::ImplBeforeAs);
+  context.PushState(StateKind::ImplBeforeAs);
   context.PushStateForExpr(PrecedenceGroup::ForImplAs());
 }
 ```

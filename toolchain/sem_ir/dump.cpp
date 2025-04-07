@@ -114,7 +114,14 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
 
   const auto& facet_type = file.facet_types().Get(facet_type_id);
   out << ": " << facet_type;
-  for (auto impls : facet_type.impls_constraints) {
+  for (auto impls : facet_type.extend_constraints) {
+    out << "\n  - " << Dump(file, impls.interface_id);
+    if (impls.specific_id.has_value()) {
+      out << "; " << DumpSpecificSummary(file, impls.specific_id);
+    }
+    out << " (extend)";
+  }
+  for (auto impls : facet_type.self_impls_constraints) {
     out << "\n  - " << Dump(file, impls.interface_id);
     if (impls.specific_id.has_value()) {
       out << "; " << DumpSpecificSummary(file, impls.specific_id);
@@ -296,10 +303,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     if (req_interface == identified_facet_type.impl_as_target_interface()) {
       out << " (to impl)";
     }
-    if (!identified_facet_type.is_valid_impl_as_target()) {
-      out << "\n  - (" << identified_facet_type.num_interfaces_to_impl()
-          << " to impl)\n";
-    }
+  }
+  if (!identified_facet_type.is_valid_impl_as_target()) {
+    out << "\n  - (" << identified_facet_type.num_interfaces_to_impl()
+        << " to impl)\n";
   }
   return out.TakeStr();
 }

@@ -40,7 +40,7 @@ fn F() {
   Point as Z;
 }
 
-// --- todo_fail_impl_simple_where_cycle.carbon
+// --- fail_impl_simple_where_cycle.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
@@ -48,15 +48,21 @@ interface Z {}
 
 // This creates a dependency cycle with itself.
 impl forall [T:! type where .Self impls Z] T as Z {}
-// TODO: Remove these two when the above impl can match Point as the self type
-// (and makes a cycle).
-impl forall [T:! Y] T as Z {}
-impl forall [T:! type] T as Y {}
 
 class Point {}
 
 fn F() {
-  // TODO: A cycle should be found in the `impl forall T as Z` above.
+  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+11]]:3: error: cycle found in search for impl of `type where .Self impls Z` for type `Point` [ImplLookupCycle]
+  // CHECK:STDERR:   Point as Z;
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE-8]]:1: note: determining if this impl clause matches [ImplLookupCycleNote]
+  // CHECK:STDERR: impl forall [T:! type where .Self impls Z] T as Z {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_impl_simple_where_cycle.carbon:[[@LINE+4]]:3: error: cannot convert type `Point` into type implementing `Z` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   Point as Z;
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   Point as Z;
 }
 

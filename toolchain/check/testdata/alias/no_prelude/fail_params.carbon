@@ -30,7 +30,7 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic = constants.%ptr]
+// CHECK:STDOUT:   %ptr: type = ptr_type %T.ref [symbolic = constants.%ptr]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
 // CHECK:STDOUT:   %A: <error> = bind_alias A, <error> [concrete = <error>]
 // CHECK:STDOUT: }

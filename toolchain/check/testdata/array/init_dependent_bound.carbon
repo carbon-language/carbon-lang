@@ -97,7 +97,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc4_6.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:   %bound_method.loc9_23.3: <bound method> = bound_method %N.loc4_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc9_23.3 (constants.%bound_method)]
 // CHECK:STDOUT:   %int.convert_checked.loc9_23.2: init Core.IntLiteral = call %bound_method.loc9_23.3(%N.loc4_6.2) [symbolic = %int.convert_checked.loc9_23.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:   %array_type.loc9_24.2: type = array_type %int.convert_checked.loc9_23.2, %i32 [symbolic = %array_type.loc9_24.2 (constants.%array_type)]
+// CHECK:STDOUT:   %array_type.loc9_24.2: type = array_type %int.convert_checked.loc9_23.2, constants.%i32 [symbolic = %array_type.loc9_24.2 (constants.%array_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc9_24.2 (%array_type) [symbolic = %require_complete (constants.%require_complete.7cb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.patt.loc4_6.1: %i32) {
@@ -123,7 +123,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %int.convert_checked.loc9_23.1: init Core.IntLiteral = call %bound_method.loc9_23.2(%N.ref) [symbolic = %int.convert_checked.loc9_23.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:       %.loc9_23.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc9_23.1 [symbolic = %int.convert_checked.loc9_23.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:       %.loc9_23.2: Core.IntLiteral = converted %N.ref, %.loc9_23.1 [symbolic = %int.convert_checked.loc9_23.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:       %array_type.loc9_24.1: type = array_type %.loc9_23.2, %i32 [symbolic = %array_type.loc9_24.2 (constants.%array_type)]
+// CHECK:STDOUT:       %array_type.loc9_24.1: type = array_type %.loc9_23.2, %i32.loc9 [symbolic = %array_type.loc9_24.2 (constants.%array_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: ref @F.%array_type.loc9_24.2 (%array_type) = bind_name arr, %arr.var
 // CHECK:STDOUT:     return
@@ -238,7 +238,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc5_15.1 [template = %N.loc5_15.2 (constants.%N.51e)]
 // CHECK:STDOUT:       %.loc10_23.1: Core.IntLiteral = splice_inst %.loc10_23.2
-// CHECK:STDOUT:       %array_type: type = array_type %.loc10_23.1, %i32
+// CHECK:STDOUT:       %array_type: type = array_type %.loc10_23.1, %i32.loc10
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: <error> = bind_name arr, <error>
 // CHECK:STDOUT:     return

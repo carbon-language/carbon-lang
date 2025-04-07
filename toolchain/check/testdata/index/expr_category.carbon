@@ -110,7 +110,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:       %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_3.loc13: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:       %array_type.loc13: type = array_type %int_3.loc13, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:       %array_type.loc13: type = array_type %int_3.loc13, %i32.loc13 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %array_type = bind_name b, %b.param
 // CHECK:STDOUT:   }
@@ -123,7 +123,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:       %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_3.loc21: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:       %array_type.loc21: type = array_type %int_3.loc21, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:       %array_type.loc21: type = array_type %int_3.loc21, %i32.loc21 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %array_type = bind_name b, %b.param
 // CHECK:STDOUT:   }
@@ -176,7 +176,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3.loc14_21: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %array_type.loc14: type = array_type %int_3.loc14_21, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type.loc14: type = array_type %int_3.loc14_21, %i32.loc14 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -201,7 +201,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   %.loc17_14: type = splice_block %ptr [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc17_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc17_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc17_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pa: ref %ptr.235 = bind_name pa, %pa.var
 // CHECK:STDOUT:   %a.ref.loc18: ref %array_type = name_ref a, %a
@@ -272,7 +272,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3.loc22_21: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %array_type.loc22: type = array_type %int_3.loc22_21, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type.loc22: type = array_type %int_3.loc22_21, %i32.loc22 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, %a

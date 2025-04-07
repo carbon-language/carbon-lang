@@ -62,7 +62,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_12.1: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %.loc13_11: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_11, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %ptr: type = ptr_type %empty_tuple.type [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %.loc13_12.2 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %ptr = name_ref b, %b

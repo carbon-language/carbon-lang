@@ -98,9 +98,11 @@ auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::TypeId> type_ids)
       context, context.type_blocks().AddCanonical(type_ids));
 }
 
-auto GetAssociatedEntityType(Context& context, SemIR::TypeId interface_type_id)
+auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
+                             SemIR::SpecificId interface_specific_id)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::AssociatedEntityType>(context, interface_type_id);
+  return GetTypeImpl<SemIR::AssociatedEntityType>(context, interface_id,
+                                                  interface_specific_id);
 }
 
 auto GetSingletonType(Context& context, SemIR::InstId singleton_id)
@@ -150,7 +152,7 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
       FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
 }
 
-auto GetPointerType(Context& context, SemIR::TypeId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }

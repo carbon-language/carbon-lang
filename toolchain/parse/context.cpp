@@ -68,8 +68,8 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
 }
 
 auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
-                                       StateStackEntry state,
-                                       NodeKind close_kind) -> void {
+                                       State state, NodeKind close_kind)
+    -> void {
   Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
 
   if (!open_token_kind.is_opening_symbol()) {
@@ -346,8 +346,7 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   }
 }
 
-auto Context::AddNodeExpectingDeclSemi(StateStackEntry state,
-                                       NodeKind node_kind,
+auto Context::AddNodeExpectingDeclSemi(State state, NodeKind node_kind,
                                        Lex::TokenKind decl_kind,
                                        bool is_def_allowed) -> void {
   // TODO: This could better handle things like:
@@ -373,7 +372,7 @@ auto Context::AddNodeExpectingDeclSemi(StateStackEntry state,
   }
 }
 
-auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
+auto Context::RecoverFromDeclError(State state, NodeKind node_kind,
                                    bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {
@@ -436,14 +435,14 @@ auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
 // definitions are deferred, such as a class or interface.
 static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
   auto& stack = context.state_stack();
-  if (stack.size() < 2 || stack.back().state != State::DeclScopeLoop) {
+  if (stack.size() < 2 || stack.back().kind != StateKind::DeclScopeLoop) {
     return false;
   }
-  auto state = stack[stack.size() - 2].state;
-  return state == State::DeclDefinitionFinishAsClass ||
-         state == State::DeclDefinitionFinishAsImpl ||
-         state == State::DeclDefinitionFinishAsInterface ||
-         state == State::DeclDefinitionFinishAsNamedConstraint;
+  auto kind = stack[stack.size() - 2].kind;
+  return kind == StateKind::DeclDefinitionFinishAsClass ||
+         kind == StateKind::DeclDefinitionFinishAsImpl ||
+         kind == StateKind::DeclDefinitionFinishAsInterface ||
+         kind == StateKind::DeclDefinitionFinishAsNamedConstraint;
 }
 
 auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
@@ -470,7 +469,7 @@ auto Context::AddFunctionDefinition(Lex::TokenIndex token, bool has_error)
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   output << "Parser stack:\n";
   for (auto [i, entry] : llvm::enumerate(state_stack_)) {
-    output << "\t" << i << ".\t" << entry.state;
+    output << "\t" << i << ".\t" << entry.kind;
     PrintTokenForStackDump(output, entry.token);
   }
   output << "\tcursor\tposition_";

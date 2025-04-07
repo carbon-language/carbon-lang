@@ -119,24 +119,6 @@ class DeductionWorklist {
            context_->type_blocks().Get(args), needs_substitution);
   }
 
-  auto AddAll(SemIR::FacetTypeId params, SemIR::FacetTypeId args,
-              bool needs_substitution) -> void {
-    const auto& param_impls =
-        context_->facet_types().Get(params).impls_constraints;
-    const auto& arg_impls = context_->facet_types().Get(args).impls_constraints;
-    // TODO: Decide whether to error on these or just treat the parameter list
-    // as non-deduced. For now we treat it as non-deduced.
-    if (param_impls.size() != 1 || arg_impls.size() != 1) {
-      return;
-    }
-    auto param = param_impls.front();
-    auto arg = arg_impls.front();
-    if (param.interface_id != arg.interface_id) {
-      return;
-    }
-    Add(param.specific_id, arg.specific_id, needs_substitution);
-  }
-
   // Adds a (param, arg) pair for an instruction argument, given its kind.
   auto AddInstArg(SemIR::Inst::ArgAndKind param, int32_t arg,
                   bool needs_substitution) -> void {
@@ -144,6 +126,11 @@ class DeductionWorklist {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
+      // Decided on 2025-04-02 not to do deduction through facet types, because
+      // types can implement a generic interface multiple times with different
+      // arguments. See:
+      // https://docs.google.com/document/d/1Iut5f2TQBrtBNIduF4vJYOKfw7MbS8xH_J01_Q4e6Rk/edit?pli=1&resourcekey=0-mc_vh5UzrzXfU4kO-3tOjA&tab=t.0#heading=h.95phmuvxog9n
+      case SemIR::IdKind::For<SemIR::FacetTypeId>:
         break;
       case CARBON_KIND(SemIR::InstId inst_id): {
         Add(inst_id, SemIR::InstId(arg), needs_substitution);
@@ -167,10 +154,6 @@ class DeductionWorklist {
       }
       case CARBON_KIND(SemIR::SpecificId specific_id): {
         Add(specific_id, SemIR::SpecificId(arg), needs_substitution);
-        break;
-      }
-      case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
-        AddAll(facet_type_id, SemIR::FacetTypeId(arg), needs_substitution);
         break;
       }
       default:

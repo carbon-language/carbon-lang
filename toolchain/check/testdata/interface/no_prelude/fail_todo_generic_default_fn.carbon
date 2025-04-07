@@ -34,7 +34,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type.2aef59.1: type = fn_type @F.1, @I(%T) [symbolic]
 // CHECK:STDOUT:   %F.bb2dd4.1: %F.type.2aef59.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type.325 [symbolic]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %F.type.2aef59.2: type = fn_type @F.2, @I(%T) [symbolic]
 // CHECK:STDOUT:   %F.bb2dd4.2: %F.type.2aef59.2 = struct_value () [symbolic]
@@ -83,7 +83,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %Self.2: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @I(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type.2aef59.1)]
 // CHECK:STDOUT:   %F: @I.%F.type (%F.type.2aef59.1) = struct_value () [symbolic = %F (constants.%F.bb2dd4.1)]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I.%I.type (%I.type.325) [symbolic = %I.assoc_type (constants.%I.assoc_type)]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T.loc11_13.2) [symbolic = %I.assoc_type (constants.%I.assoc_type)]
 // CHECK:STDOUT:   %assoc0.loc13_29.2: @I.%I.assoc_type (%I.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc13_29.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {

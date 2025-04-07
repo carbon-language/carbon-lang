@@ -84,7 +84,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Op.type.31b: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Op.d59: %Op.type.31b = struct_value () [concrete]
-// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [concrete]
+// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, @Add.%Op.decl [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
@@ -433,7 +433,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %complete_type.4a1: <witness> = complete_type_witness %i64.builtin [concrete]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete]
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type %Add.type [concrete]
+// CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [concrete]
 // CHECK:STDOUT:   %Op.type.31b: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
@@ -470,7 +470,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.import_ref.9e9: <witness> = import_ref Main//generic_impl, loc13_1, loaded [symbolic = @MyInt.%complete_type (constants.%complete_type.a87)]
 // CHECK:STDOUT:   %Main.import_ref.697 = import_ref Main//generic_impl, inst88 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//generic_impl, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.db7: %Add.assoc_type = import_ref Main//generic_impl, loc5_41, loaded [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//generic_impl, loc5_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//generic_impl, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//generic_impl, inst16 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.33b: <witness> = import_ref Main//generic_impl, loc15_48, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.7e5)]
@@ -536,7 +536,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: interface @Add [from "generic_impl.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.07c
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.db7
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.f99
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -578,7 +578,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc9_10: %MyInt.f30 = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
-// CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.db7 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.f99 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.1ca = impl_witness_access constants.%impl_witness.8d6, element0 [concrete = constants.%Op.cf9]
 // CHECK:STDOUT:   %bound_method.loc9_11: <bound method> = bound_method %x.ref.loc9_10, %impl.elem0
 // CHECK:STDOUT:   %x.ref.loc9_21: %MyInt.f30 = name_ref x, %x

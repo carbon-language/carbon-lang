@@ -71,8 +71,8 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:       %int.convert_checked.loc11_29.1: init Core.IntLiteral = call %bound_method.loc11_29.2(%N.ref) [symbolic = %int.convert_checked.loc11_29.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:       %.loc11_29.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc11_29.1 [symbolic = %int.convert_checked.loc11_29.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:       %.loc11_29.2: Core.IntLiteral = converted %N.ref, %.loc11_29.1 [symbolic = %int.convert_checked.loc11_29.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:       %array_type.loc11_30.1: type = array_type %.loc11_29.2, %i32 [symbolic = %array_type.loc11_30.2 (constants.%array_type)]
-// CHECK:STDOUT:       %ptr.loc11_31.1: type = ptr_type %array_type [symbolic = %ptr.loc11_31.2 (constants.%ptr)]
+// CHECK:STDOUT:       %array_type.loc11_30.1: type = array_type %.loc11_29.2, %i32.loc11_24 [symbolic = %array_type.loc11_30.2 (constants.%array_type)]
+// CHECK:STDOUT:       %ptr.loc11_31.1: type = ptr_type %array_type.loc11_30.1 [symbolic = %ptr.loc11_31.2 (constants.%ptr)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: @F.%ptr.loc11_31.2 (%ptr) = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -84,8 +84,8 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc11_6.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:   %bound_method.loc11_29.3: <bound method> = bound_method %N.loc11_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc11_29.3 (constants.%bound_method)]
 // CHECK:STDOUT:   %int.convert_checked.loc11_29.2: init Core.IntLiteral = call %bound_method.loc11_29.3(%N.loc11_6.2) [symbolic = %int.convert_checked.loc11_29.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:   %array_type.loc11_30.2: type = array_type %int.convert_checked.loc11_29.2, %i32 [symbolic = %array_type.loc11_30.2 (constants.%array_type)]
-// CHECK:STDOUT:   %ptr.loc11_31.2: type = ptr_type @F.%array_type.loc11_30.2 (%array_type) [symbolic = %ptr.loc11_31.2 (constants.%ptr)]
+// CHECK:STDOUT:   %array_type.loc11_30.2: type = array_type %int.convert_checked.loc11_29.2, constants.%i32 [symbolic = %array_type.loc11_30.2 (constants.%array_type)]
+// CHECK:STDOUT:   %ptr.loc11_31.2: type = ptr_type %array_type.loc11_30.2 [symbolic = %ptr.loc11_31.2 (constants.%ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.patt.loc11_6.1: %i32, %a.param_patt: @F.%ptr.loc11_31.2 (%ptr));
 // CHECK:STDOUT: }

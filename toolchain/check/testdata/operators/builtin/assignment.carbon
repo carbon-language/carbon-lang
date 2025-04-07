@@ -256,7 +256,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc23_13: type = splice_block %ptr [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc23 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.235 = bind_name p, %p.var
 // CHECK:STDOUT:   %p.ref.loc24: ref %ptr.235 = name_ref p, %p

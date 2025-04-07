@@ -99,7 +99,7 @@ class Class {
 // CHECK:STDOUT:     %self.param.loc15: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc15_27: type = splice_block %ptr.loc15 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Self.ref.loc15: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %Self.ref.loc15 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc15: %ptr.e71 = bind_name self, %self.param.loc15
 // CHECK:STDOUT:     %return.param.loc15: ref %i32 = out_param call_param1
@@ -134,7 +134,7 @@ class Class {
 // CHECK:STDOUT:     %self.param.loc6: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Self.ref.loc6: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc6: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr.loc6: type = ptr_type %Self.ref.loc6 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc6: %ptr.e71 = bind_name self, %self.param.loc6
 // CHECK:STDOUT:     %return.param.loc6: ref %i32 = out_param call_param1

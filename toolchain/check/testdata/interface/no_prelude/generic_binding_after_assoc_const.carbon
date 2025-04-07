@@ -25,7 +25,7 @@ interface I {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%U [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]

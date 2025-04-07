@@ -92,7 +92,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
 // CHECK:STDOUT:   %.loc8_9: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT: }
@@ -140,7 +140,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %b.var: ref %ptr = var b
 // CHECK:STDOUT:   %.loc8_15: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %c_alias.ref.loc8: type = name_ref c_alias, imports.%Main.c_alias [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %c_alias.ref.loc8 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -182,7 +182,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %c.var: ref %ptr = var c
 // CHECK:STDOUT:   %.loc6_21: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %c_alias_alias.ref: type = name_ref c_alias_alias, imports.%Main.c_alias_alias [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %c_alias_alias.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %ptr = bind_name c, %c.var
 // CHECK:STDOUT: }

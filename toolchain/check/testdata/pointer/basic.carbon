@@ -94,7 +94,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_13: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc13 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p

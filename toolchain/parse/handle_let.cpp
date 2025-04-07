@@ -11,11 +11,11 @@ auto HandleLet(Context& context) -> void {
   auto state = context.PopState();
 
   // These will start at the `let`.
-  context.PushState(state, State::LetFinish);
-  context.PushState(state, State::LetAfterPattern);
+  context.PushState(state, StateKind::LetFinish);
+  context.PushState(state, StateKind::LetAfterPattern);
 
   // This will start at the pattern.
-  context.PushState(State::Pattern);
+  context.PushState(StateKind::Pattern);
 }
 
 auto HandleLetAfterPattern(Context& context) -> void {
@@ -30,7 +30,7 @@ auto HandleLetAfterPattern(Context& context) -> void {
 
   if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::LetInitializer, *equals);
-    context.PushState(State::Expr);
+    context.PushState(StateKind::Expr);
   }
 }
 

@@ -8,33 +8,33 @@
 namespace Carbon::Parse {
 
 // Handles PatternListElementAs(Tuple|Explicit|Implicit).
-static auto HandlePatternListElement(Context& context, State pattern_state,
-                                     State finish_state) -> void {
+static auto HandlePatternListElement(Context& context, StateKind pattern_state,
+                                     StateKind finish_state_kind) -> void {
   auto state = context.PopState();
 
-  context.PushStateForPattern(finish_state, state.in_var_pattern);
+  context.PushStateForPattern(finish_state_kind, state.in_var_pattern);
   context.PushStateForPattern(pattern_state, state.in_var_pattern);
 }
 
 auto HandlePatternListElementAsTuple(Context& context) -> void {
-  HandlePatternListElement(context, State::Pattern,
-                           State::PatternListElementFinishAsTuple);
+  HandlePatternListElement(context, StateKind::Pattern,
+                           StateKind::PatternListElementFinishAsTuple);
 }
 
 auto HandlePatternListElementAsExplicit(Context& context) -> void {
-  HandlePatternListElement(context, State::Pattern,
-                           State::PatternListElementFinishAsExplicit);
+  HandlePatternListElement(context, StateKind::Pattern,
+                           StateKind::PatternListElementFinishAsExplicit);
 }
 
 auto HandlePatternListElementAsImplicit(Context& context) -> void {
-  HandlePatternListElement(context, State::Pattern,
-                           State::PatternListElementFinishAsImplicit);
+  HandlePatternListElement(context, StateKind::Pattern,
+                           StateKind::PatternListElementFinishAsImplicit);
 }
 
 // Handles PatternListElementFinishAs(Tuple|Explicit|Implicit).
 static auto HandlePatternListElementFinish(Context& context,
                                            Lex::TokenKind close_token,
-                                           State param_state) -> void {
+                                           StateKind param_state_kind) -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -44,30 +44,31 @@ static auto HandlePatternListElementFinish(Context& context,
   if (context.ConsumeListToken(NodeKind::PatternListComma, close_token,
                                state.has_error) ==
       Context::ListTokenKind::Comma) {
-    context.PushStateForPattern(param_state, state.in_var_pattern);
+    context.PushStateForPattern(param_state_kind, state.in_var_pattern);
   }
 }
 
 auto HandlePatternListElementFinishAsTuple(Context& context) -> void {
   HandlePatternListElementFinish(context, Lex::TokenKind::CloseParen,
-                                 State::PatternListElementAsTuple);
+                                 StateKind::PatternListElementAsTuple);
 }
 
 auto HandlePatternListElementFinishAsExplicit(Context& context) -> void {
   HandlePatternListElementFinish(context, Lex::TokenKind::CloseParen,
-                                 State::PatternListElementAsExplicit);
+                                 StateKind::PatternListElementAsExplicit);
 }
 
 auto HandlePatternListElementFinishAsImplicit(Context& context) -> void {
   HandlePatternListElementFinish(context, Lex::TokenKind::CloseSquareBracket,
-                                 State::PatternListElementAsImplicit);
+                                 StateKind::PatternListElementAsImplicit);
 }
 
 // Handles PatternListAs(Tuple|Explicit|Implicit).
 static auto HandlePatternList(Context& context, NodeKind node_kind,
                               Lex::TokenKind open_token_kind,
                               Lex::TokenKind close_token_kind,
-                              State param_state, State finish_state) -> void {
+                              StateKind param_state, StateKind finish_state)
+    -> void {
   auto state = context.PopState();
 
   context.PushStateForPattern(finish_state, state.in_var_pattern);
@@ -81,22 +82,23 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
 auto HandlePatternListAsTuple(Context& context) -> void {
   HandlePatternList(context, NodeKind::TuplePatternStart,
                     Lex::TokenKind::OpenParen, Lex::TokenKind::CloseParen,
-                    State::PatternListElementAsTuple,
-                    State::PatternListFinishAsTuple);
+                    StateKind::PatternListElementAsTuple,
+                    StateKind::PatternListFinishAsTuple);
 }
 
 auto HandlePatternListAsExplicit(Context& context) -> void {
   HandlePatternList(context, NodeKind::ExplicitParamListStart,
                     Lex::TokenKind::OpenParen, Lex::TokenKind::CloseParen,
-                    State::PatternListElementAsExplicit,
-                    State::PatternListFinishAsExplicit);
+                    StateKind::PatternListElementAsExplicit,
+                    StateKind::PatternListFinishAsExplicit);
 }
 
 auto HandlePatternListAsImplicit(Context& context) -> void {
-  HandlePatternList(
-      context, NodeKind::ImplicitParamListStart,
-      Lex::TokenKind::OpenSquareBracket, Lex::TokenKind::CloseSquareBracket,
-      State::PatternListElementAsImplicit, State::PatternListFinishAsImplicit);
+  HandlePatternList(context, NodeKind::ImplicitParamListStart,
+                    Lex::TokenKind::OpenSquareBracket,
+                    Lex::TokenKind::CloseSquareBracket,
+                    StateKind::PatternListElementAsImplicit,
+                    StateKind::PatternListFinishAsImplicit);
 }
 
 // Handles PatternListFinishAs(Tuple|Explicit|Implicit).

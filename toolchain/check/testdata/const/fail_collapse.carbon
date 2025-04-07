@@ -60,16 +60,16 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %ptr.loc15_37: type = ptr_type %ptr.235 [concrete = constants.%ptr.5d5]
+// CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32.loc15_33 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %ptr.loc15_37: type = ptr_type %ptr.loc15_36 [concrete = constants.%ptr.5d5]
 // CHECK:STDOUT:     %p.param: %ptr.3bc = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %ptr.loc15_27 [concrete = constants.%ptr.3bc] {
 // CHECK:STDOUT:       %int_32.loc15_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc15_16: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc15_9: type = const_type %const [concrete = constants.%const]
-// CHECK:STDOUT:       %ptr.loc15_26: type = ptr_type %const [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:       %ptr.loc15_27: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
+// CHECK:STDOUT:       %const.loc15_16: type = const_type %i32.loc15_22 [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc15_9: type = const_type %const.loc15_16 [concrete = constants.%const]
+// CHECK:STDOUT:       %ptr.loc15_26: type = ptr_type %const.loc15_9 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:       %ptr.loc15_27: type = ptr_type %ptr.loc15_26 [concrete = constants.%ptr.3bc]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.3bc = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.5d5 = out_param call_param1

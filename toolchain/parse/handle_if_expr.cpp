@@ -14,7 +14,7 @@ auto HandleIfExprFinishCondition(Context& context) -> void {
   context.AddNode(NodeKind::IfExprIf, state.token, state.has_error);
 
   if (context.PositionIs(Lex::TokenKind::Then)) {
-    context.PushState(State::IfExprFinishThen);
+    context.PushState(StateKind::IfExprFinishThen);
     context.ConsumeChecked(Lex::TokenKind::Then);
     context.PushStateForExpr(*PrecedenceGroup::ForLeading(Lex::TokenKind::If));
   } else {
@@ -37,7 +37,7 @@ auto HandleIfExprFinishThen(Context& context) -> void {
   context.AddNode(NodeKind::IfExprThen, state.token, state.has_error);
 
   if (context.PositionIs(Lex::TokenKind::Else)) {
-    context.PushState(State::IfExprFinishElse);
+    context.PushState(StateKind::IfExprFinishElse);
     context.ConsumeChecked(Lex::TokenKind::Else);
     context.PushStateForExpr(*PrecedenceGroup::ForLeading(Lex::TokenKind::If));
   } else {

@@ -121,7 +121,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_20.2 (%ptr) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:     %ptr.loc4_20.1: type = ptr_type %T [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
+// CHECK:STDOUT:     %ptr.loc4_20.1: type = ptr_type %T.ref.loc4 [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
 // CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return.param.loc4: ref @F.%ptr.loc4_20.2 (%ptr) = out_param call_param0
 // CHECK:STDOUT:     %return.loc4: ref @F.%ptr.loc4_20.2 (%ptr) = return_slot %return.param.loc4
@@ -132,7 +132,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_20.2 (%ptr) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:     %ptr.loc6: type = ptr_type %T [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
+// CHECK:STDOUT:     %ptr.loc6: type = ptr_type %T.ref.loc6 [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
 // CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %return.param.loc6: ref @F.%ptr.loc4_20.2 (%ptr) = out_param call_param0
 // CHECK:STDOUT:     %return.loc6: ref @F.%ptr.loc4_20.2 (%ptr) = return_slot %return.param.loc6
@@ -142,7 +142,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: generic fn @F(%T.loc4_6.1: type) {
 // CHECK:STDOUT:   %T.loc4_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
-// CHECK:STDOUT:   %ptr.loc4_20.2: type = ptr_type @F.%T.loc4_6.2 (%T) [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
+// CHECK:STDOUT:   %ptr.loc4_20.2: type = ptr_type %T.loc4_6.2 [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%ptr.loc4_20.2 (%ptr) [symbolic = %require_complete (constants.%require_complete)]
@@ -208,7 +208,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param_patt: @F.1.%ptr.loc4_30.2 (%ptr.79f) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T.ref [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref @F.1.%ptr.loc4_30.2 (%ptr.79f) = out_param call_param0
@@ -221,7 +221,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param_patt: @F.2.%ptr.loc13_30.2 (%ptr.b51) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_16.1 [symbolic = %U.loc13_16.2 (constants.%U)]
-// CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %U [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
+// CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %U.ref [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
 // CHECK:STDOUT:     %T.loc13_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.loc13_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref @F.2.%ptr.loc13_30.2 (%ptr.b51) = out_param call_param0
@@ -234,7 +234,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.patt.loc4_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %U.loc4_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc4_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt)]
-// CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type @F.1.%T.loc4_6.2 (%T) [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %T.loc4_6.2 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc4_6.1: type, %U.patt.loc4_16.1: type) -> @F.1.%ptr.loc4_30.2 (%ptr.79f);
 // CHECK:STDOUT: }
@@ -244,7 +244,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.patt.loc13_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %U.loc13_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc13_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc13_16.2 (constants.%U.patt)]
-// CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type @F.2.%U.loc13_16.2 (%U) [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
+// CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type %U.loc13_16.2 [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.2.%ptr.loc13_30.2 (%ptr.b51) [symbolic = %require_complete (constants.%require_complete)]
@@ -313,7 +313,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param_patt: @F.1.%ptr.loc4_30.2 (%ptr.79f) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T.8b3)]
-// CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T.8b3 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T.ref [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T.8b3)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U.336)]
 // CHECK:STDOUT:     %return.param: ref @F.1.%ptr.loc4_30.2 (%ptr.79f) = out_param call_param0
@@ -326,7 +326,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param_patt: @F.2.%ptr.loc13_30.2 (%ptr.b51) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T.loc13_16.1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
-// CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %T.336 [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
+// CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %T.ref.loc13 [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
 // CHECK:STDOUT:     %U.loc13_6.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc13_6.2 (constants.%U.8b3)]
 // CHECK:STDOUT:     %T.loc13_16.1: type = bind_symbolic_name T, 1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
 // CHECK:STDOUT:     %return.param: ref @F.2.%ptr.loc13_30.2 (%ptr.b51) = out_param call_param0
@@ -339,7 +339,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.patt.loc4_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:   %U.loc4_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U.336)]
 // CHECK:STDOUT:   %U.patt.loc4_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt.7a9)]
-// CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type @F.1.%T.loc4_6.2 (%T.8b3) [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %T.loc4_6.2 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc4_6.1: type, %U.patt.loc4_16.1: type) -> @F.1.%ptr.loc4_30.2 (%ptr.79f);
 // CHECK:STDOUT: }
@@ -349,7 +349,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.patt.loc13_6.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.e01)]
 // CHECK:STDOUT:   %T.loc13_16.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
 // CHECK:STDOUT:   %T.patt.loc13_16.2: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc13_16.2 (constants.%T.patt.7a9)]
-// CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type @F.2.%T.loc13_16.2 (%T.336) [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
+// CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type %T.loc13_16.2 [symbolic = %ptr.loc13_30.2 (constants.%ptr.b51)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.2.%ptr.loc13_30.2 (%ptr.b51) [symbolic = %require_complete (constants.%require_complete)]
@@ -418,7 +418,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param_patt: @F.1.%ptr.loc4_30.2 (%ptr.79f131.1) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T.8b3)]
-// CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T.8b3 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f131.1)]
+// CHECK:STDOUT:     %ptr.loc4_30.1: type = ptr_type %T.ref [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f131.1)]
 // CHECK:STDOUT:     %T.loc4_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T.8b3)]
 // CHECK:STDOUT:     %U.loc4_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U.336)]
 // CHECK:STDOUT:     %return.param: ref @F.1.%ptr.loc4_30.2 (%ptr.79f131.1) = out_param call_param0
@@ -431,7 +431,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %return.param_patt: @F.2.%ptr.loc13_30.2 (%ptr.79f131.2) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_6.1 [symbolic = %U.loc13_6.2 (constants.%U.8b3)]
-// CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %U.8b3 [symbolic = %ptr.loc13_30.2 (constants.%ptr.79f131.2)]
+// CHECK:STDOUT:     %ptr.loc13_30.1: type = ptr_type %U.ref [symbolic = %ptr.loc13_30.2 (constants.%ptr.79f131.2)]
 // CHECK:STDOUT:     %U.loc13_6.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc13_6.2 (constants.%U.8b3)]
 // CHECK:STDOUT:     %T.loc13_16.1: type = bind_symbolic_name T, 1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
 // CHECK:STDOUT:     %return.param: ref @F.2.%ptr.loc13_30.2 (%ptr.79f131.2) = out_param call_param0
@@ -444,7 +444,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %T.patt.loc4_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt.e01)]
 // CHECK:STDOUT:   %U.loc4_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_16.2 (constants.%U.336)]
 // CHECK:STDOUT:   %U.patt.loc4_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt.7a9)]
-// CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type @F.1.%T.loc4_6.2 (%T.8b3) [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f131.1)]
+// CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %T.loc4_6.2 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f131.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc4_6.1: type, %U.patt.loc4_16.1: type) -> @F.1.%ptr.loc4_30.2 (%ptr.79f131.1);
 // CHECK:STDOUT: }
@@ -454,7 +454,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.patt.loc13_6.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc13_6.2 (constants.%U.patt.e01)]
 // CHECK:STDOUT:   %T.loc13_16.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
 // CHECK:STDOUT:   %T.patt.loc13_16.2: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc13_16.2 (constants.%T.patt.7a9)]
-// CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type @F.2.%U.loc13_6.2 (%U.8b3) [symbolic = %ptr.loc13_30.2 (constants.%ptr.79f131.2)]
+// CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type %U.loc13_6.2 [symbolic = %ptr.loc13_30.2 (constants.%ptr.79f131.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.2.%ptr.loc13_30.2 (%ptr.79f131.2) [symbolic = %require_complete (constants.%require_complete)]

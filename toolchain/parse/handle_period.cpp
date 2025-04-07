@@ -12,7 +12,8 @@ namespace Carbon::Parse {
 // TODO: This currently only supports identifiers on the rhs, but will in the
 // future need to handle things like `object.(Interface.member)` for qualifiers.
 static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
-                                State paren_state, bool is_arrow) -> void {
+                                StateKind paren_state_kind, bool is_arrow)
+    -> void {
   auto state = context.PopState();
 
   // We're handling `.something` or `->something`.
@@ -30,11 +31,11 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
              context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::IntLiteral,
                                              NodeKind::IntLiteral)) {
     // OK, '.42'.
-  } else if (paren_state != State::Invalid &&
+  } else if (paren_state_kind != StateKind::Invalid &&
              context.PositionIs(Lex::TokenKind::OpenParen)) {
-    state.state = paren_state;
+    state.kind = paren_state_kind;
     context.PushState(state);
-    context.PushState(State::OnlyParenExpr);
+    context.PushState(StateKind::OnlyParenExpr);
     return;
   } else {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPeriodOrArrow, Error,
@@ -61,18 +62,19 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
 
 auto HandlePeriodAsExpr(Context& context) -> void {
   HandlePeriodOrArrow(context, NodeKind::MemberAccessExpr,
-                      State::CompoundMemberAccess,
+                      StateKind::CompoundMemberAccess,
                       /*is_arrow=*/false);
 }
 
 auto HandlePeriodAsStruct(Context& context) -> void {
-  HandlePeriodOrArrow(context, NodeKind::StructFieldDesignator, State::Invalid,
+  HandlePeriodOrArrow(context, NodeKind::StructFieldDesignator,
+                      StateKind::Invalid,
                       /*is_arrow=*/false);
 }
 
 auto HandleArrowExpr(Context& context) -> void {
   HandlePeriodOrArrow(context, NodeKind::PointerMemberAccessExpr,
-                      State::CompoundPointerMemberAccess,
+                      StateKind::CompoundPointerMemberAccess,
                       /*is_arrow=*/true);
 }
 

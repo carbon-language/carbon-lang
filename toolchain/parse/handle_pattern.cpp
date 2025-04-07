@@ -11,14 +11,16 @@ auto HandlePattern(Context& context) -> void {
   auto state = context.PopState();
   switch (context.PositionKind()) {
     case Lex::TokenKind::OpenParen:
-      context.PushStateForPattern(State::PatternListAsTuple,
+      context.PushStateForPattern(StateKind::PatternListAsTuple,
                                   state.in_var_pattern);
       break;
     case Lex::TokenKind::Var:
-      context.PushStateForPattern(State::VariablePattern, state.in_var_pattern);
+      context.PushStateForPattern(StateKind::VariablePattern,
+                                  state.in_var_pattern);
       break;
     default:
-      context.PushStateForPattern(State::BindingPattern, state.in_var_pattern);
+      context.PushStateForPattern(StateKind::BindingPattern,
+                                  state.in_var_pattern);
       break;
   }
 }

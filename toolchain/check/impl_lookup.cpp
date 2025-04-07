@@ -94,7 +94,11 @@ static auto FindAssociatedImportIRs(Context& context,
         case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
           const auto& facet_type_info =
               context.facet_types().Get(facet_type_id);
-          for (const auto& impl : facet_type_info.impls_constraints) {
+          for (const auto& impl : facet_type_info.extend_constraints) {
+            add_entity(context.interfaces().Get(impl.interface_id));
+            push_args(impl.specific_id);
+          }
+          for (const auto& impl : facet_type_info.self_impls_constraints) {
             add_entity(context.interfaces().Get(impl.interface_id));
             push_args(impl.specific_id);
           }
@@ -195,9 +199,12 @@ static auto GetInterfacesFromConstantId(
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
   has_other_requirements = facet_type_info.other_requirements;
-  // TODO: This needs to match the order of witnesses for the facet type, which
-  // will need to be maintained once we add support for named constraints.
-  return facet_type_info.impls_constraints;
+  auto identified_id = RequireIdentifiedFacetType(context, facet_type_inst);
+  auto interfaces_array_ref =
+      context.identified_facet_types().Get(identified_id).required_interfaces();
+  // Returns a copy to avoid use-after-free when the identified_facet_types
+  // store resizes.
+  return {interfaces_array_ref.begin(), interfaces_array_ref.end()};
 }
 
 static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
@@ -259,7 +266,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
           .facet_type_id;
   const auto& deduced_constraint_facet_type_info =
       context.facet_types().Get(deduced_constraint_facet_type_id);
-  CARBON_CHECK(deduced_constraint_facet_type_info.impls_constraints.size() ==
+  CARBON_CHECK(deduced_constraint_facet_type_info.extend_constraints.size() ==
                1);
 
   if (deduced_constraint_facet_type_info.other_requirements) {
@@ -270,7 +277,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   // The specifics in the queried interface must match the deduced specifics in
   // the impl's constraint facet type.
   auto impl_interface_specific_id =
-      deduced_constraint_facet_type_info.impls_constraints[0].specific_id;
+      deduced_constraint_facet_type_info.extend_constraints[0].specific_id;
   auto query_interface_specific_id = interface.specific_id;
   if (impl_interface_specific_id != query_interface_specific_id) {
     return EvalImplLookupResult::MakeNone();
@@ -307,14 +314,11 @@ static auto FindWitnessInFacet(
   SemIR::TypeId facet_type_id = context.insts().Get(facet_inst_id).type_id();
   if (auto facet_type_inst =
           context.types().TryGetAs<SemIR::FacetType>(facet_type_id)) {
-    const auto& facet_type_info =
-        context.facet_types().Get(facet_type_inst->facet_type_id);
-    // TODO: This depends on the index into `impls_constraints` matching
-    // the index into the facet type witness. This will have to be maintained
-    // even for facet types that include named constraints, once that is
-    // supported.
+    auto identified_id = RequireIdentifiedFacetType(context, *facet_type_inst);
+    const auto& identified =
+        context.identified_facet_types().Get(identified_id);
     for (auto [index, interface] :
-         llvm::enumerate(facet_type_info.impls_constraints)) {
+         llvm::enumerate(identified.required_interfaces())) {
       if (interface == specific_interface) {
         auto witness_id =
             GetOrAddInst(context, loc_id,

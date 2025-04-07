@@ -48,8 +48,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Op.type.e3a: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %impl_witness.ec3: <witness> = impl_witness (@impl.c51.%Op.decl) [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.73a: type = fn_type @Op.2 [concrete]
@@ -133,7 +133,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc16_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.019 = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -155,7 +155,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc19_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref.loc19_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc19_20 [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.019 = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param call_param1

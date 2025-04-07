@@ -19,9 +19,9 @@ fn F(T: I) -> I { return T; }
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: define {} @_CF.Main({} %T) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   ret {} %T, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

@@ -17,18 +17,17 @@
 
 namespace Carbon::SemIR {
 
-// Map an instruction kind representing a type into an integer describing the
-// precedence of that type's syntax. Higher numbers correspond to higher
-// precedence.
+// Map an instruction kind representing a type expression into an integer
+// describing the precedence of that type's syntax. Higher numbers correspond to
+// higher precedence.
 static auto GetTypePrecedence(InstKind kind) -> int {
-  CARBON_CHECK(kind.is_type() != InstIsType::Never,
-               "Only called for kinds which can define a type.");
   if (kind == ConstType::Kind) {
     return -1;
   }
   if (kind == PointerType::Kind) {
     return -2;
   }
+  // TODO: Do any other kinds of type expression need precedence handling?
   return 0;
 }
 
@@ -53,9 +52,10 @@ class StepStack {
 
   // The full set of things which can be pushed, including all members of
   // `Step`.
-  using PushItem = std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
-                                QualifiedNameItem, EntityNameItem, EntityNameId,
-                                TypeId, llvm::ListSeparator*>;
+  using PushItem =
+      std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
+                   QualifiedNameItem, EntityNameItem, EntityNameId, TypeId,
+                   SpecificInterface, llvm::ListSeparator*>;
 
   // Starts a new stack, which always contains the first instruction to
   // stringify.
@@ -103,6 +103,12 @@ class StepStack {
     PushInstId(sem_ir_->types().GetInstId(type_id));
   }
 
+  // Pushes a specific interface.
+  auto PushSpecificInterface(SpecificInterface specific_interface) -> void {
+    PushEntityName(sem_ir_->interfaces().Get(specific_interface.interface_id),
+                   specific_interface.specific_id);
+  }
+
   // Pushes a sequence of items onto the stack. This handles reversal, such that
   // the caller can pass items in print order instead of stack order.
   //
@@ -126,6 +132,9 @@ class StepStack {
             PushEntityNameId(entity_name_id);
           },
           [&](TypeId type_id) { PushTypeId(type_id); },
+          [&](SpecificInterface specific_interface) {
+            PushSpecificInterface(specific_interface);
+          },
           [&](llvm::ListSeparator* sep) { PushString(*sep); });
     }
   }
@@ -219,7 +228,7 @@ class Stringifier {
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, ArrayType inst) -> void {
     *out_ << "array(";
-    step_stack_->Push(inst.element_type_id, ", ", inst.bound_id, ")");
+    step_stack_->Push(inst.element_type_inst_id, ", ", inst.bound_id, ")");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, AssociatedConstantDecl inst)
@@ -233,7 +242,9 @@ class Stringifier {
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, AssociatedEntityType inst)
       -> void {
     *out_ << "<associated entity in ";
-    step_stack_->Push(inst.interface_type_id, ">");
+    step_stack_->Push(">");
+    step_stack_->PushSpecificInterface(
+        SpecificInterface{inst.interface_id, inst.interface_specific_id});
   }
 
   template <typename InstT>
@@ -258,15 +269,14 @@ class Stringifier {
     *out_ << "const ";
 
     // Add parentheses if required.
-    auto inner_type_inst_id = sem_ir_->types().GetInstId(inst.inner_id);
-    if (GetTypePrecedence(sem_ir_->insts().Get(inner_type_inst_id).kind()) <
+    if (GetTypePrecedence(sem_ir_->insts().Get(inst.inner_id).kind()) <
         GetTypePrecedence(SemIR::ConstType::Kind)) {
       *out_ << "(";
-      // Note the inner_type_inst_id ends up here.
+      // Note the `inst.inner_id` ends up here.
       step_stack_->PushString(")");
     }
 
-    step_stack_->PushInstId(inner_type_inst_id);
+    step_stack_->PushInstId(inst.inner_id);
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, FacetAccessType inst)
@@ -302,22 +312,30 @@ class Stringifier {
       step_stack_->Push(" ", lhs_const_id, " = ", rhs_const_id);
       some_where = true;
     }
+    if (!facet_type_info.self_impls_constraints.empty()) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      llvm::ListSeparator sep(" & ");
+      for (auto impls : llvm::reverse(facet_type_info.self_impls_constraints)) {
+        step_stack_->Push(impls, &sep);
+      }
+      step_stack_->PushString(" .Self impls ");
+      some_where = true;
+    }
     // TODO: Other restrictions from facet_type_info.
     if (some_where) {
       step_stack_->PushString(" where");
     }
 
-    // Output interface requirements.
-    if (facet_type_info.impls_constraints.empty()) {
+    // Output extend interface requirements.
+    if (facet_type_info.extend_constraints.empty()) {
       step_stack_->PushString("type");
       return;
     }
     llvm::ListSeparator sep(" & ");
-    for (auto impls : llvm::reverse(facet_type_info.impls_constraints)) {
-      const auto& interface_info =
-          sem_ir_->interfaces().Get(impls.interface_id);
-      step_stack_->Push(
-          StepStack::EntityNameItem(interface_info, impls.specific_id), &sep);
+    for (auto impls : llvm::reverse(facet_type_info.extend_constraints)) {
+      step_stack_->Push(impls, &sep);
     }
   }
 
@@ -378,31 +396,48 @@ class Stringifier {
                       ">");
   }
 
+  // Determine the specific interface that an impl witness instruction provides
+  // an implementation of.
+  // TODO: Should we track this in the type?
+  auto TryGetSpecificInterfaceForImplWitness(SemIR::InstId impl_witness_id)
+      -> std::optional<SpecificInterface> {
+    if (auto lookup = sem_ir_->insts().TryGetAs<SemIR::LookupImplWitness>(
+            impl_witness_id)) {
+      return sem_ir_->specific_interfaces().Get(
+          lookup->query_specific_interface_id);
+    }
+
+    if (auto witness =
+            sem_ir_->insts().TryGetAs<FacetAccessWitness>(impl_witness_id)) {
+      auto witness_type_id =
+          sem_ir_->insts().Get(witness->facet_value_inst_id).type_id();
+      auto facet_type = sem_ir_->types().GetAs<FacetType>(witness_type_id);
+      // TODO: Support != 1 interface better.
+      const auto& facet_type_info =
+          sem_ir_->facet_types().Get(facet_type.facet_type_id);
+      if (facet_type_info.extend_constraints.size() == 1) {
+        return facet_type_info.extend_constraints.front();
+      }
+    }
+
+    // TODO: Handle other cases.
+    return std::nullopt;
+  }
+
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, ImplWitnessAccess inst)
       -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
-    if (sem_ir_->insts().Is<SemIR::LookupImplWitness>(witness_inst_id)) {
-      // TODO: Include the query in the diagnostic output?
-      step_stack_->PushString("<symbolic>");
-      return;
-    }
-    auto witness = sem_ir_->insts().GetAs<FacetAccessWitness>(witness_inst_id);
-    auto witness_type_id =
-        sem_ir_->insts().Get(witness.facet_value_inst_id).type_id();
-    auto facet_type = sem_ir_->types().GetAs<FacetType>(witness_type_id);
-    step_stack_->PushString(")");
-    // TODO: Support != 1 interface better.
-    if (auto impls_constraint = sem_ir_->facet_types()
-                                    .Get(facet_type.facet_type_id)
-                                    .TryAsSingleInterface()) {
+    if (auto specific_interface =
+            TryGetSpecificInterfaceForImplWitness(witness_inst_id)) {
       const auto& interface =
-          sem_ir_->interfaces().Get(impls_constraint->interface_id);
+          sem_ir_->interfaces().Get(specific_interface->interface_id);
       auto entities =
           sem_ir_->inst_blocks().Get(interface.associated_entities_id);
       size_t index = inst.index.index;
       CARBON_CHECK(index < entities.size(), "Access out of bounds.");
       auto entity_inst_id = entities[index];
+      step_stack_->PushString(")");
       if (auto associated_const =
               sem_ir_->insts().TryGetAs<AssociatedConstantDecl>(
                   entity_inst_id)) {
@@ -419,21 +454,28 @@ class Stringifier {
       }
       step_stack_->Push(
           ".(",
-          StepStack::EntityNameItem{interface, impls_constraint->specific_id},
+          StepStack::EntityNameItem{interface, specific_interface->specific_id},
           ".");
     } else {
-      step_stack_->Push(".(TODO: ", witness_type_id);
+      step_stack_->Push(".(TODO: element ", inst.index, " in ", witness_inst_id,
+                        ")");
     }
 
-    bool period_self = false;
-    if (auto sym_name = sem_ir_->insts().TryGetAs<BindSymbolicName>(
-            witness.facet_value_inst_id)) {
-      auto name_id =
-          sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
-      period_self = (name_id == SemIR::NameId::PeriodSelf);
-    }
-    if (!period_self) {
-      step_stack_->PushInstId(witness.facet_value_inst_id);
+    if (auto witness =
+            sem_ir_->insts().TryGetAs<FacetAccessWitness>(witness_inst_id)) {
+      bool period_self = false;
+      if (auto sym_name = sem_ir_->insts().TryGetAs<BindSymbolicName>(
+              witness->facet_value_inst_id)) {
+        auto name_id =
+            sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
+        period_self = (name_id == SemIR::NameId::PeriodSelf);
+      }
+      if (!period_self) {
+        step_stack_->PushInstId(witness->facet_value_inst_id);
+      }
+    } else {
+      // TODO: Omit parens if not needed for precedence.
+      step_stack_->Push("(", witness_inst_id, ")");
     }
   }
 
@@ -461,6 +503,13 @@ class Stringifier {
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, IntValue inst) -> void {
     sem_ir_->ints().Get(inst.int_id).print(*out_, /*isSigned=*/true);
+  }
+
+  auto StringifyTypeInst(SemIR::InstId /*inst_id*/, LookupImplWitness inst)
+      -> void {
+    step_stack_->Push(
+        inst.query_self_inst_id, " as ",
+        sem_ir_->specific_interfaces().Get(inst.query_specific_interface_id));
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, NameRef inst) -> void {

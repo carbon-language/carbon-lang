@@ -58,13 +58,13 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %return.param_patt: @F.%ptr.loc4_29.2 (%ptr.79f) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_36: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %ptr.loc4_37: type = ptr_type %T [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:     %ptr.loc4_37: type = ptr_type %T.ref.loc4_36 [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @F.%ptr.loc4_30.2 (%ptr.a13) = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %ptr.loc4_30.1 [template = %ptr.loc4_30.2 (constants.%ptr.a13)] {
 // CHECK:STDOUT:       %T.ref.loc4_28: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:       %ptr.loc4_29.1: type = ptr_type %T [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:       %ptr.loc4_30.1: type = ptr_type %ptr.79f [template = %ptr.loc4_30.2 (constants.%ptr.a13)]
+// CHECK:STDOUT:       %ptr.loc4_29.1: type = ptr_type %T.ref.loc4_28 [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:       %ptr.loc4_30.1: type = ptr_type %ptr.loc4_29.1 [template = %ptr.loc4_30.2 (constants.%ptr.a13)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @F.%ptr.loc4_30.2 (%ptr.a13) = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr.loc4_29.2 (%ptr.79f) = out_param call_param1
@@ -75,8 +75,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %ptr.loc4_29.2: type = ptr_type @F.%T.loc4_15.2 (%T) [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type @F.%ptr.loc4_29.2 (%ptr.79f) [template = %ptr.loc4_30.2 (constants.%ptr.a13)]
+// CHECK:STDOUT:   %ptr.loc4_29.2: type = ptr_type %T.loc4_15.2 [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %ptr.loc4_29.2 [template = %ptr.loc4_30.2 (constants.%ptr.a13)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc4_33: <witness> = require_complete_type @F.%ptr.loc4_29.2 (%ptr.79f) [template = %require_complete.loc4_33 (constants.%require_complete.6e5)]
