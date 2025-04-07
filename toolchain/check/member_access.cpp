@@ -176,6 +176,27 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
                                                  .index = assoc_entity->index});
 }
 
+// For an impl lookup query with a single interface in it, we can convert the
+// result to a single witness InstId.
+//
+// This CHECKs that the result (and thus the query) was a single interface. This
+// generally only makes sense in member access, where the lookup query's
+// interface is found through name lookup, and we don't have an arbitrary
+// `FacetType`.
+static auto GetWitnessFromSingleImplLookupResult(
+    Context& context, SemIR::InstBlockIdOrError lookup_result)
+    -> SemIR::InstId {
+  auto witness_id = SemIR::InstId::None;
+  if (lookup_result.has_error_value()) {
+    witness_id = SemIR::ErrorInst::SingletonInstId;
+  } else {
+    auto witnesses = context.inst_blocks().Get(lookup_result.inst_block_id());
+    CARBON_CHECK(witnesses.size() == 1);
+    witness_id = witnesses[0];
+  }
+  return witness_id;
+}
+
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(
@@ -210,18 +231,8 @@ static auto PerformImplLookup(
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // The query facet type given to `LookupImplWitness()` had only a single
-  // interface in it, so the returned witness set will have the same. Convert
-  // from the InstBlockId to the single ImplWitness instruction.
-  auto witness_id = SemIR::InstId::None;
-  if (lookup_result.has_error_value()) {
-    witness_id = SemIR::ErrorInst::SingletonInstId;
-  } else {
-    auto witnesses = context.inst_blocks().Get(lookup_result.inst_block_id());
-    CARBON_CHECK(witnesses.size() == 1);
-    witness_id = witnesses[0];
-  }
-
+  auto witness_id =
+      GetWitnessFromSingleImplLookupResult(context, lookup_result);
   return AccessMemberOfImplWitness(context, loc_id, self_type_id, witness_id,
                                    assoc_type.interface_specific_id, member_id);
 }
@@ -303,26 +314,56 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
 
         auto assoc_interface = assoc_type->GetSpecificInterface();
 
-        // First look for `assoc_interface` in the type of the base. If it is
-        // found, get the witness that the interface is implemented from
-        // `base_id`.
-        auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
-        const auto& identified =
-            context.identified_facet_types().Get(identified_id);
         // Witness that `T` implements the `assoc_interface`.
         SemIR::InstId witness_inst_id = SemIR::InstId::None;
-        for (auto [index, base_interface] :
-             llvm::enumerate(identified.required_interfaces())) {
-          // Get the witness that `T` implements `base_type_id`.
-          if (base_interface == assoc_interface) {
-            witness_inst_id = GetOrAddInst(
-                context, loc_id,
-                SemIR::FacetAccessWitness{
-                    .type_id = GetSingletonType(
-                        context, SemIR::WitnessType::SingletonInstId),
-                    .facet_value_inst_id = base_id,
-                    .index = SemIR::ElementIndex(index)});
-            break;
+
+        bool is_lookup_in_period_self = false;
+        if (auto name = context.insts().TryGetAs<SemIR::NameRef>(base_id)) {
+          if (name->name_id == SemIR::NameId::PeriodSelf) {
+            is_lookup_in_period_self = true;
+          }
+        }
+
+        if (!is_lookup_in_period_self) {
+          // For an associated constant value, we need to do impl lookup to try
+          // find a final impl declaration. If we find one, we can use the value
+          // assigned to the constant there, instead of its symbolic value.
+          auto assoc_entity = context.insts().GetAs<SemIR::AssociatedEntity>(
+              context.constant_values().GetConstantInstId(
+                  result.scope_result.target_inst_id()));
+          if (context.insts().Is<SemIR::AssociatedConstantDecl>(
+                  assoc_entity.decl_id)) {
+            // TODO: These results should be cached somehow. Positive (non-None)
+            // results could be cached globally, as they can not change. But
+            // negative results can change after a final impl is written, so
+            // they can only be cached in a limited way, or the cache needs to
+            // be invalidated by writing a final impl that would match.
+            witness_inst_id = LookupFinalImplWitnessForSpecificInterface(
+                context, loc_id, context.constant_values().Get(base_id),
+                assoc_interface);
+          }
+        }
+
+        if (!witness_inst_id.has_value()) {
+          // First look for `assoc_interface` in the type of the base. If it is
+          // found, get the witness that the interface is implemented from
+          // `base_id`.
+          auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
+          const auto& identified =
+              context.identified_facet_types().Get(identified_id);
+          for (auto [index, base_interface] :
+               llvm::enumerate(identified.required_interfaces())) {
+            // Get the witness that `T` implements `base_type_id`.
+            if (base_interface == assoc_interface) {
+              witness_inst_id = GetOrAddInst(
+                  context, loc_id,
+                  SemIR::FacetAccessWitness{
+                      .type_id = GetSingletonType(
+                          context, SemIR::WitnessType::SingletonInstId),
+                      .facet_value_inst_id = base_id,
+                      .index = SemIR::ElementIndex(index)});
+              break;
+            }
           }
         }
         // TODO: If that fails, would need to do impl lookup to see if the facet
@@ -356,9 +397,10 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   return member_id;
 }
 
-// Performs the instance binding step in member access. If the found member is a
-// field, forms a class member access. If the found member is an instance
-// method, forms a bound method. Otherwise, the member is returned unchanged.
+// Performs the instance binding step in member access. If the found member
+// is a field, forms a class member access. If the found member is an
+// instance method, forms a bound method. Otherwise, the member is returned
+// unchanged.
 static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
@@ -462,8 +504,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId base_id, SemIR::NameId name_id,
                                 bool required) -> SemIR::InstId {
-  // If the base is a name scope, such as a class or namespace, perform lookup
-  // into that scope.
+  // If the base is a name scope, such as a class or namespace, perform
+  // lookup into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
     llvm::SmallVector<LookupScope> lookup_scopes;
@@ -505,7 +547,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                context.struct_type_fields().Get(struct_type->fields_id))) {
         if (name_id == field.name_id) {
           // TODO: Model this as producing a lookup result, and do instance
-          // binding separately. Perhaps a struct type should be a name scope.
+          // binding separately. Perhaps a struct type should be a name
+          // scope.
           return GetOrAddInst<SemIR::StructAccess>(
               context, loc_id,
               {.type_id = field.type_id,
@@ -540,9 +583,9 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       /*lookup_in_type_of_base=*/true, /*required=*/required);
 
   // For name lookup into a facet, never perform instance binding.
-  // TODO: According to the design, this should be a "lookup in base" lookup,
-  // not a "lookup in type of base" lookup, and the facet itself should have
-  // member names that directly name members of the `impl`.
+  // TODO: According to the design, this should be a "lookup in base"
+  // lookup, not a "lookup in type of base" lookup, and the facet itself
+  // should have member names that directly name members of the `impl`.
   if (context.types().IsFacetType(base_type_id)) {
     return member_id;
   }
@@ -586,9 +629,9 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
       context,
       SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
                              .facet_value_inst_id = facet_inst_id});
-  // TODO: We should be able to lookup constant associated values from runtime
-  // facet values by using their FacetType only, but we assume constant values
-  // for impl lookup at the moment.
+  // TODO: We should be able to lookup constant associated values from
+  // runtime facet values by using their FacetType only, but we assume
+  // constant values for impl lookup at the moment.
   if (!self_type_const_id.is_constant()) {
     context.TODO(loc_id, "associated value lookup on runtime facet value");
     return SemIR::ErrorInst::SingletonInstId;
@@ -647,11 +690,12 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
   auto member_id = member_expr_id;
   auto member = context.insts().Get(member_id);
 
-  // If the member expression names an associated entity, impl lookup is always
-  // performed using the type of the base expression.
+  // If the member expression names an associated entity, impl lookup is
+  // always performed using the type of the base expression.
   if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
           member.type_id())) {
-    // Step 1: figure out the type of the associated entity from the interface.
+    // Step 1: figure out the type of the associated entity from the
+    // interface.
 
     auto value_inst_id = context.constant_values().GetConstantInstId(member_id);
     // TODO: According to
@@ -678,9 +722,9 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                             member_id, missing_impl_diagnoser);
       // Next we will perform instance binding.
     } else {
-      // Step 2b: For non-instance methods and associated constants, we access
-      // the value of the associated constant, and don't do any instance
-      // binding.
+      // Step 2b: For non-instance methods and associated constants, we
+      // access the value of the associated constant, and don't do any
+      // instance binding.
       return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
                                     assoc_type->GetSpecificInterface());
     }
@@ -730,8 +774,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     context.emitter().Emit(loc_id, TupleIndexNotConstant);
     return SemIR::ErrorInst::SingletonInstId;
   };
-  // Diagnose a non-constant index prior to conversion to IntLiteral, because
-  // the conversion will fail if the index is not constant.
+  // Diagnose a non-constant index prior to conversion to IntLiteral,
+  // because the conversion will fail if the index is not constant.
   if (!context.constant_values().Get(index_inst_id).is_concrete()) {
     return diag_non_constant_index();
   }
@@ -757,7 +801,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // TODO: Handle the case when `index_val->getZExtValue()` has too many bits.
+  // TODO: Handle the case when `index_val->getZExtValue()` has too many
+  // bits.
   element_type_id = type_block[index_val->getZExtValue()];
   auto tuple_index = SemIR::ElementIndex(index_val->getZExtValue());
 

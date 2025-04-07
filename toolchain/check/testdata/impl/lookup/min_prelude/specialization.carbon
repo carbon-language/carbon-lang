@@ -449,10 +449,10 @@ fn H[W:! type](v: W) -> W.(I.T) {
 // While this function is still a generic context, it should see the concrete
 // `X` type and the return of `H(p)` should convert (a no-op) to `X`.
 fn G[X:! type](p: X*) -> X {
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `(X* as I).(I.T)` to `X` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `V` to `X` [ConversionFailure]
   // CHECK:STDERR:   return H(p);
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `(X* as I).(I.T)` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `V` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return H(p);
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -487,4 +487,38 @@ fn F(T:! Z(C)) -> T.(Z(C).X) {
 fn G() {
     // This won't typecheck if the first impl is selected.
     let a: () = F(C);
+}
+
+// --- final_impl_fallback_through_facet_with_where.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let X:! type;
+  let Y:! type;
+}
+
+final impl forall [T:! type] T as Z where .X = () and .Y = () {}
+
+fn F(ZZ:! Z where .X = {.r: ()}) {
+  // Z.Y is unspecified on `ZZ` so it's found on the final impl where it's known
+  // to be the concrete type (), which can then be used in this generic
+  // function.
+  let a: ZZ.Y = ();
+}
+
+// --- final_impl_fallback_through_facet_access_type_with_where.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let X:! type;
+  let Y:! type;
+}
+
+final impl forall [T:! type] T as Z where .X = () and .Y = () {}
+
+fn F[T:! Z where .X = {.r: ()}](z: T) {
+  // z.Y is unspecified on `ZZ` so it's found on the final impl where it's known
+  // to be the concrete type (), which can then be used in this generic
+  // function.
+  let a: z.Y = ();
 }

@@ -11,7 +11,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/min_prelude/find_in_final.carbon
 
-// --- fail_todo_keep_looking_for_final_impl.carbon
+// --- keep_looking_for_final_impl.carbon
 library "[[@TEST_NAME]]";
 interface I {
   let T:! type;
@@ -20,16 +20,31 @@ interface I {
 final impl forall [U:! type] U as I where .T = () {}
 
 fn F(V:! I) -> V.T {
-  // TODO: Even though we have a witness that `V impls I` from the constraint
-  // on `I`, we should do an impl lookup to see if any effectively final impl
-  // applies when we find an unknown value in that witness. In this case, that
-  // lookup would find an impl with more specific values for associated
-  // constants that we should merge.
+  // Even though we have a witness that `V impls I` from the constraint on `I`,
+  // we should do an impl lookup to see if any effectively final impl applies
+  // when we find an unknown value in that witness. In this case, that lookup
+  // would find an impl with more specific values for associated constants that
+  // we should merge.
+  return ();
+}
 
-  // CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `()` to `V.(I.T)` [ConversionFailure]
+// --- fail_todo_use_where_in_facet_value.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let T:! type;
+}
+
+final impl forall [U:! type] U as I where .T = {.r: ()} {}
+
+fn F(V:! I where .T = ()) -> V.T {
+  // TODO: `V.T` is specified by the facet type on `V` so it should be used, but
+  // currently we don't use it and find the final impl unconditionally instead.
+  //
+  // CHECK:STDERR: fail_todo_use_where_in_facet_value.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `()` to `{.r: ()}` [ConversionFailure]
   // CHECK:STDERR:   return ();
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_keep_looking_for_final_impl.carbon:[[@LINE+4]]:3: note: type `()` does not implement interface `Core.ImplicitAs(V.(I.T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_use_where_in_facet_value.carbon:[[@LINE+4]]:3: note: type `()` does not implement interface `Core.ImplicitAs({.r: ()})` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return ();
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:

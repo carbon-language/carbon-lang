@@ -28,6 +28,7 @@ cc_library(
         "function.cpp",
         "generic.cpp",
         "global_init.cpp",
+        "impl.cpp",
         "impl_lookup.cpp",
         "import.cpp",
         "import_cpp.cpp",
@@ -66,6 +67,7 @@ cc_library(
         "function.h",
         "generic.h",
         "global_init.h",
+        "impl.h",
         "impl_lookup.h",
         "import.h",
         "import_cpp.h",
@@ -164,7 +166,6 @@ cc_library(
         ":context",
         ":diagnostic_emitter",
         ":dump",
-        ":impl",
         ":pointer_dereference",
         "//common:check",
         "//common:error",
@@ -218,21 +219,6 @@ cc_library(
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "impl",
-    srcs = ["impl.cpp"],
-    hdrs = ["impl.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/base:kind_switch",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:typed_insts",
     ],
 )
 

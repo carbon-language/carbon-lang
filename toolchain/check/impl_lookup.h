@@ -97,6 +97,18 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query)
     -> EvalImplLookupResult;
 
+// Looks for a witness of a _final_ impl declaration. Since only final impls are
+// returned, it always returns a concrete ImplWitness or None, it will never
+// return a symbolic LookupImplWitness instruction.
+//
+// Generally prefer to call LookupImplWitness(). This method is used to look for
+// a final specialization in order to get concrete associated constants in
+// generic contexts.
+auto LookupFinalImplWitnessForSpecificInterface(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPL_LOOKUP_H_
