@@ -97,7 +97,7 @@ constexpr FacetTypeInfo::RewriteConstraint
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
-  IdentifiedFacetType(llvm::ArrayRef<RequiredInterface> extend,
+  IdentifiedFacetType(llvm::ArrayRef<RequiredInterface> extends,
                       llvm::ArrayRef<RequiredInterface> self_impls);
 
   // The order here defines the order of impl witnesses for this facet type.

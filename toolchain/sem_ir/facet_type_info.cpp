@@ -159,18 +159,18 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
 }
 
 IdentifiedFacetType::IdentifiedFacetType(
-    llvm::ArrayRef<RequiredInterface> extend,
+    llvm::ArrayRef<RequiredInterface> extends,
     llvm::ArrayRef<RequiredInterface> self_impls) {
-  if (extend.size() == 1) {
-    interface_id_ = extend.front().interface_id;
-    specific_id_ = extend.front().specific_id;
+  if (extends.size() == 1) {
+    interface_id_ = extends.front().interface_id;
+    specific_id_ = extends.front().specific_id;
   } else {
     interface_id_ = InterfaceId::None;
-    num_interface_to_impl_ = extend.size();
+    num_interface_to_impl_ = extends.size();
   }
 
-  required_interfaces_.reserve(extend.size() + self_impls.size());
-  llvm::append_range(required_interfaces_, extend);
+  required_interfaces_.reserve(extends.size() + self_impls.size());
+  llvm::append_range(required_interfaces_, extends);
   llvm::append_range(required_interfaces_, self_impls);
   SortAndDeduplicate(required_interfaces_, RequiredLess);
 }
