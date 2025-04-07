@@ -22,7 +22,7 @@ impl Y as I {
   fn F() { Core.Print(2); }
 }
 
-// Similar to "call_different_impls.carbon", cannot lower a single G due to different calls to F.
+// Builds on "call_different_impls.carbon", cannot lower a single G due to different calls to F.
 // Additionaly add recursion so function fingerprint is dependednt on itself.
 fn G(T:! I, count: i32) -> i32 {
   T.F();

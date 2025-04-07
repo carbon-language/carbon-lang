@@ -23,6 +23,7 @@ impl Y as I {
 }
 
 // Cannot coalesce the lowering for G specifics, as they call different functions.
+// Check different functions are still emitted when trying to deduplicate emitted definitons.
 fn G(T:! I) { T.F(); }
 
 fn Run() {
@@ -87,13 +88,13 @@ fn Run() {
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.Y.Main:I.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !10 = !DILocation(line: 22, column: 12, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 29, column: 3, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 30, column: 3, scope: !12)
-// CHECK:STDOUT: !15 = !DILocation(line: 28, column: 1, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.562d5cdd5cdbd5c5", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !17 = !DILocation(line: 26, column: 15, scope: !16)
-// CHECK:STDOUT: !18 = !DILocation(line: 26, column: 1, scope: !16)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.386ac59331346fc4", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !20 = !DILocation(line: 26, column: 15, scope: !19)
-// CHECK:STDOUT: !21 = !DILocation(line: 26, column: 1, scope: !19)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 30, column: 3, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 31, column: 3, scope: !12)
+// CHECK:STDOUT: !15 = !DILocation(line: 29, column: 1, scope: !12)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.562d5cdd5cdbd5c5", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = !DILocation(line: 27, column: 15, scope: !16)
+// CHECK:STDOUT: !18 = !DILocation(line: 27, column: 1, scope: !16)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.386ac59331346fc4", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !20 = !DILocation(line: 27, column: 15, scope: !19)
+// CHECK:STDOUT: !21 = !DILocation(line: 27, column: 1, scope: !19)
