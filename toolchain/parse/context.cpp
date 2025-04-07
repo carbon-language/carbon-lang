@@ -68,8 +68,8 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
 }
 
 auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
-                                       StateStackEntry state,
-                                       NodeKind close_kind) -> void {
+                                       State state, NodeKind close_kind)
+    -> void {
   Lex::TokenKind open_token_kind = tokens().GetKind(expected_open);
 
   if (!open_token_kind.is_opening_symbol()) {
@@ -346,8 +346,7 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   }
 }
 
-auto Context::AddNodeExpectingDeclSemi(StateStackEntry state,
-                                       NodeKind node_kind,
+auto Context::AddNodeExpectingDeclSemi(State state, NodeKind node_kind,
                                        Lex::TokenKind decl_kind,
                                        bool is_def_allowed) -> void {
   // TODO: This could better handle things like:
@@ -373,7 +372,7 @@ auto Context::AddNodeExpectingDeclSemi(StateStackEntry state,
   }
 }
 
-auto Context::RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
+auto Context::RecoverFromDeclError(State state, NodeKind node_kind,
                                    bool skip_past_likely_end) -> void {
   auto token = state.token;
   if (skip_past_likely_end) {

@@ -13,7 +13,7 @@
 namespace Carbon::Parse {
 
 // Provides common error exiting logic that skips to the semi, if present.
-static auto OnParseError(Context& context, Context::StateStackEntry state,
+static auto OnParseError(Context& context, Context::State state,
                          NodeKind declaration) -> void {
   context.AddNode(declaration, context.SkipPastLikelyEnd(state.token),
                   /*has_error=*/true);
@@ -23,7 +23,7 @@ static auto OnParseError(Context& context, Context::StateStackEntry state,
 // the given declaration.
 // TODO: Restructure how we handle packaging declarations to avoid the need to
 // do this.
-static auto HasModifier(Context& context, Context::StateStackEntry state,
+static auto HasModifier(Context& context, Context::State state,
                         Lex::TokenKind modifier) -> bool {
   for (Lex::TokenIterator it(state.token); it != context.position(); ++it) {
     if (context.tokens().GetKind(*it) == modifier) {
@@ -35,7 +35,7 @@ static auto HasModifier(Context& context, Context::StateStackEntry state,
 
 // Handles everything after the declaration's introducer.
 template <const Parse::NodeKind& DeclKind>
-static auto HandleDeclContent(Context& context, Context::StateStackEntry state,
+static auto HandleDeclContent(Context& context, Context::State state,
                               bool is_export, bool is_impl,
                               llvm::function_ref<auto()->void> on_parse_error)
     -> void {
@@ -163,8 +163,8 @@ static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
 }
 
 // Diagnoses if `export` is used in an `impl` file.
-static auto RestrictExportToApi(Context& context,
-                                Context::StateStackEntry& state) -> void {
+static auto RestrictExportToApi(Context& context, Context::State& state)
+    -> void {
   // Error for both Main//default and every implementation file.
   auto packaging = context.tree().packaging_decl();
   if (!packaging || packaging->is_impl) {

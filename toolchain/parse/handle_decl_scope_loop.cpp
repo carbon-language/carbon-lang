@@ -32,7 +32,7 @@ static auto HandleUnrecognizedDecl(Context& context, int32_t subtree_start)
 
 // Replaces the introducer placeholder node, and pushes the introducer state for
 // processing.
-static auto ApplyIntroducer(Context& context, Context::StateStackEntry state,
+static auto ApplyIntroducer(Context& context, Context::State state,
                             NodeKind introducer_kind, StateKind next_state_kind)
     -> void {
   context.ReplacePlaceholderNode(state.subtree_start, introducer_kind,
@@ -118,7 +118,7 @@ static constexpr auto DeclIntroducers = [] {
 // Returns true if the current position is a declaration. If we see a
 // declaration introducer keyword token, replace the placeholder node and switch
 // to a state to parse the rest of the declaration.
-static auto TryHandleAsDecl(Context& context, Context::StateStackEntry state,
+static auto TryHandleAsDecl(Context& context, Context::State state,
                             bool saw_modifier) -> bool {
   const auto& info = DeclIntroducers[context.PositionKind().AsInt()];
 

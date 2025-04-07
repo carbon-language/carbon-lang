@@ -19,8 +19,8 @@ auto HandleOnlyParenExpr(Context& context) -> void {
   context.PushState(StateKind::Expr);
 }
 
-static auto FinishParenExpr(Context& context,
-                            const Context::StateStackEntry& state) -> void {
+static auto FinishParenExpr(Context& context, const Context::State& state)
+    -> void {
   context.AddNode(NodeKind::ParenExpr, context.Consume(), state.has_error);
 }
 

@@ -54,7 +54,7 @@
   CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                             \
   CARBON_PARSE_STATE_VARIANTS3(Kind, Variant2, Variant3, Variant4)
 
-// Used as a default for StateStackEntry initialization in some cases. Should
+// Used as a default for State initialization in some cases. Should
 // not be put on the state stack.
 CARBON_PARSE_STATE(Invalid)
 

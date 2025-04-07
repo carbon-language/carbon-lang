@@ -10,7 +10,7 @@ namespace Carbon::Parse {
 
 // Adds a leaf node for the name, and updates the state stack for parameter
 // handling.
-static auto HandleName(Context& context, Context::StateStackEntry state,
+static auto HandleName(Context& context, Context::State state,
                        Lex::TokenIndex name_token,
                        NodeKind not_before_params_kind,
                        NodeKind not_before_params_qualifier_kind,

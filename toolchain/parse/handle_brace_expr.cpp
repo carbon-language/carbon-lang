@@ -20,8 +20,7 @@ auto HandleBraceExpr(Context& context) -> void {
 }
 
 // Prints a diagnostic for brace expression syntax errors.
-static auto HandleBraceExprParamError(Context& context,
-                                      Context::StateStackEntry state,
+static auto HandleBraceExprParamError(Context& context, Context::State state,
                                       StateKind param_finish_state_kind)
     -> void {
   Diagnostics::IntAsSelect mode(0);

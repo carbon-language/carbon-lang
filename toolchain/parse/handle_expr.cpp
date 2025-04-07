@@ -374,8 +374,7 @@ auto HandleExprLoop(Context& context) -> void {
 }
 
 // Adds the operator node and returns the main expression loop.
-static auto HandleExprLoopForOperator(Context& context,
-                                      Context::StateStackEntry state,
+static auto HandleExprLoopForOperator(Context& context, Context::State state,
                                       NodeKind node_kind) -> void {
   context.AddNode(node_kind, state.token, state.has_error);
   state.has_error = false;
