@@ -39,12 +39,12 @@ static auto RequiredLess(const IdentifiedFacetType::RequiredInterface& lhs,
 static auto SubtractSorted(
     llvm::SmallVector<FacetTypeInfo::ImplsConstraint>& a,
     const llvm::SmallVector<FacetTypeInfo::ImplsConstraint>& b) -> void {
-  typedef llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::iterator Iter;
-  typedef llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::const_iterator
-      ConstIter;
+  using Iter = llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::iterator;
   Iter a_iter = a.begin();
-  ConstIter b_iter = b.begin();
   Iter a_end = a.end();
+  using ConstIter =
+      llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::const_iterator;
+  ConstIter b_iter = b.begin();
   ConstIter b_end = b.end();
   // Advance the iterator pointing to the smaller element until we find a match.
   while (a_iter != a_end && b_iter != b_end) {

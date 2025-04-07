@@ -107,12 +107,14 @@ impl C as J {}
 
 fn EmptyStruct(Y:! J where .Self == {});
 
-// TODO: Should report that `C` does not meeet the constraint.
+// TODO: Should report that `C` does not meeet the `==` constraint. Right
+// now there is no support for `==` constraints so it rejects it as an
+// "other currently unsupported constraint."
 fn NotEmptyStruct() {
   // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE-7]]:16: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE-9]]:16: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn EmptyStruct(Y:! J where .Self == {});
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
