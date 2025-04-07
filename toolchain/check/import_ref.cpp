@@ -2455,19 +2455,19 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FacetType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
 
-  const SemIR::FacetTypeInfo& facet_type_info =
+  const SemIR::FacetTypeInfo& import_facet_type_info =
       resolver.import_facet_types().Get(inst.facet_type_id);
-  for (auto interface : facet_type_info.extend_constraints) {
+  for (auto interface : import_facet_type_info.extend_constraints) {
     // We discard this here and recompute it below instead of saving it to avoid
     // allocations.
     GetLocalSpecificInstanceData(resolver, interface);
   }
-  for (auto interface : facet_type_info.self_impls_constraints) {
+  for (auto interface : import_facet_type_info.self_impls_constraints) {
     // We discard this here and recompute it below instead of saving it to avoid
     // allocations.
     GetLocalSpecificInstanceData(resolver, interface);
   }
-  for (auto rewrite : facet_type_info.rewrite_constraints) {
+  for (auto rewrite : import_facet_type_info.rewrite_constraints) {
     GetLocalConstantId(resolver, rewrite.lhs_const_id);
     GetLocalConstantId(resolver, rewrite.rhs_const_id);
   }
@@ -2475,32 +2475,32 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  SemIR::FacetTypeInfo local_facet_type_info = {.other_requirements =
-                                       facet_type_info.other_requirements};
-  new_info.extend_constraints.reserve(
-      facet_type_info.extend_constraints.size());
-  for (auto interface : facet_type_info.extend_constraints) {
+  SemIR::FacetTypeInfo local_facet_type_info = {
+      .other_requirements = import_facet_type_info.other_requirements};
+  local_facet_type_info.extend_constraints.reserve(
+      import_facet_type_info.extend_constraints.size());
+  for (auto interface : import_facet_type_info.extend_constraints) {
     auto data = GetLocalSpecificInstanceData(resolver, interface);
-    new_info.extend_constraints.push_back(
+    local_facet_type_info.extend_constraints.push_back(
         GetLocalSpecificInterface(resolver, interface.specific_id, data));
   }
-  new_info.self_impls_constraints.reserve(
-      facet_type_info.self_impls_constraints.size());
-  for (auto interface : facet_type_info.self_impls_constraints) {
+  local_facet_type_info.self_impls_constraints.reserve(
+      import_facet_type_info.self_impls_constraints.size());
+  for (auto interface : import_facet_type_info.self_impls_constraints) {
     auto data = GetLocalSpecificInstanceData(resolver, interface);
-    new_info.self_impls_constraints.push_back(
+    local_facet_type_info.self_impls_constraints.push_back(
         GetLocalSpecificInterface(resolver, interface.specific_id, data));
   }
-  new_info.rewrite_constraints.reserve(
-      facet_type_info.rewrite_constraints.size());
-  for (auto rewrite : facet_type_info.rewrite_constraints) {
-    new_info.rewrite_constraints.push_back(
+  local_facet_type_info.rewrite_constraints.reserve(
+      import_facet_type_info.rewrite_constraints.size());
+  for (auto rewrite : import_facet_type_info.rewrite_constraints) {
+    local_facet_type_info.rewrite_constraints.push_back(
         {.lhs_const_id = GetLocalConstantId(resolver, rewrite.lhs_const_id),
          .rhs_const_id = GetLocalConstantId(resolver, rewrite.rhs_const_id)});
   }
   // TODO: Also process the other requirements.
   SemIR::FacetTypeId facet_type_id =
-      resolver.local_facet_types().Add(std::move(new_info));
+      resolver.local_facet_types().Add(std::move(local_facet_type_info));
   return ResolveAs<SemIR::FacetType>(
       resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
                  .facet_type_id = facet_type_id});
