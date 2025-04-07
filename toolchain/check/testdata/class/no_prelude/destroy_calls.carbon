@@ -215,7 +215,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %self.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc16_29: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%WithAddr [concrete = constants.%WithAddr]
-// CHECK:STDOUT:       %ptr: type = ptr_type %WithAddr [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr = bind_name self, %self.param
 // CHECK:STDOUT:   }

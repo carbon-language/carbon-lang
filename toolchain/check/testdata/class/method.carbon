@@ -202,7 +202,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc43: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.e71 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -219,7 +219,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc47: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.e71 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -280,7 +280,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %self.param: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_23: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.e71 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1

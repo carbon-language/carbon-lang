@@ -179,7 +179,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic_self]
@@ -247,7 +247,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I2.type: type = facet_type <@I2> [concrete]
 // CHECK:STDOUT:   %Self: %I2.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I2.assoc_type: type = assoc_entity_type %I2.type [concrete]
+// CHECK:STDOUT:   %I2.assoc_type: type = assoc_entity_type @I2 [concrete]
 // CHECK:STDOUT:   %assoc0: %I2.assoc_type = assoc_entity element0, @I2.%T2 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %I2.type = bind_symbolic_name .Self [symbolic_self]
@@ -332,7 +332,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I3.type: type = facet_type <@I3> [concrete]
 // CHECK:STDOUT:   %Self: %I3.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I3.assoc_type: type = assoc_entity_type %I3.type [concrete]
+// CHECK:STDOUT:   %I3.assoc_type: type = assoc_entity_type @I3 [concrete]
 // CHECK:STDOUT:   %assoc0: %I3.assoc_type = assoc_entity element0, @I3.%T3 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %impl_witness.1bc: <witness> = impl_witness () [concrete]
@@ -409,7 +409,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type %J.type [concrete]
+// CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type @J [concrete]
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%U [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic_self]
@@ -499,7 +499,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I4.type: type = facet_type <@I4> [concrete]
 // CHECK:STDOUT:   %Self: %I4.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I4.assoc_type: type = assoc_entity_type %I4.type [concrete]
+// CHECK:STDOUT:   %I4.assoc_type: type = assoc_entity_type @I4 [concrete]
 // CHECK:STDOUT:   %assoc0: %I4.assoc_type = assoc_entity element0, @I4.%T4 [concrete]
 // CHECK:STDOUT:   %assoc1: %I4.assoc_type = assoc_entity element1, @I4.%T5 [concrete]
 // CHECK:STDOUT:   %assoc2: %I4.assoc_type = assoc_entity element2, @I4.%T6 [concrete]
@@ -651,7 +651,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
 // CHECK:STDOUT:   %Self: %K.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type %K.type [concrete]
+// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type @K [concrete]
 // CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.%V [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %K.type = bind_symbolic_name .Self [symbolic_self]
@@ -728,7 +728,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L.type: type = facet_type <@L> [concrete]
 // CHECK:STDOUT:   %Self: %L.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %L.assoc_type: type = assoc_entity_type %L.type [concrete]
+// CHECK:STDOUT:   %L.assoc_type: type = assoc_entity_type @L [concrete]
 // CHECK:STDOUT:   %assoc0: %L.assoc_type = assoc_entity element0, @L.%W [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %L.type = bind_symbolic_name .Self [symbolic_self]
@@ -805,7 +805,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L2.type: type = facet_type <@L2> [concrete]
 // CHECK:STDOUT:   %Self: %L2.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %L2.assoc_type: type = assoc_entity_type %L2.type [concrete]
+// CHECK:STDOUT:   %L2.assoc_type: type = assoc_entity_type @L2 [concrete]
 // CHECK:STDOUT:   %assoc0: %L2.assoc_type = assoc_entity element0, @L2.%W2 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %L2.type = bind_symbolic_name .Self [symbolic_self]
@@ -878,7 +878,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L3.type: type = facet_type <@L3> [concrete]
 // CHECK:STDOUT:   %Self: %L3.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %L3.assoc_type: type = assoc_entity_type %L3.type [concrete]
+// CHECK:STDOUT:   %L3.assoc_type: type = assoc_entity_type @L3 [concrete]
 // CHECK:STDOUT:   %assoc0: %L3.assoc_type = assoc_entity element0, @L3.%W3 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %L3.type = bind_symbolic_name .Self [symbolic_self]
@@ -952,7 +952,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L4.type: type = facet_type <@L4> [concrete]
 // CHECK:STDOUT:   %Self: %L4.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %L4.assoc_type: type = assoc_entity_type %L4.type [concrete]
+// CHECK:STDOUT:   %L4.assoc_type: type = assoc_entity_type @L4 [concrete]
 // CHECK:STDOUT:   %assoc0: %L4.assoc_type = assoc_entity element0, @L4.%W4 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %L4.type = bind_symbolic_name .Self [symbolic_self]
@@ -1025,7 +1025,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %M.type: type = facet_type <@M> [concrete]
 // CHECK:STDOUT:   %Self: %M.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %M.assoc_type: type = assoc_entity_type %M.type [concrete]
+// CHECK:STDOUT:   %M.assoc_type: type = assoc_entity_type @M [concrete]
 // CHECK:STDOUT:   %assoc0: %M.assoc_type = assoc_entity element0, @M.%X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self: %M.type = bind_symbolic_name .Self [symbolic_self]
@@ -1105,7 +1105,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %N.assoc_type: type = assoc_entity_type %N.type [concrete]
+// CHECK:STDOUT:   %N.assoc_type: type = assoc_entity_type @N [concrete]
 // CHECK:STDOUT:   %assoc0: %N.assoc_type = assoc_entity element0, @N.%Y [concrete]
 // CHECK:STDOUT:   %.Self: %N.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
@@ -1179,7 +1179,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Self: %IF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.496: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.1de: %F.type.496 = struct_value () [concrete]
-// CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type %IF.type [concrete]
+// CHECK:STDOUT:   %IF.assoc_type: type = assoc_entity_type @IF [concrete]
 // CHECK:STDOUT:   %assoc0: %IF.assoc_type = assoc_entity element0, @IF.%F.decl [concrete]
 // CHECK:STDOUT:   %CD: type = class_type @CD [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]

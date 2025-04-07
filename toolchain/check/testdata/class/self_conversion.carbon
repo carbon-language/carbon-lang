@@ -109,7 +109,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.param.loc26: %ptr.11f = value_param call_param0
 // CHECK:STDOUT:     %.loc26_40: type = splice_block %ptr.loc26 [concrete = constants.%ptr.11f] {
 // CHECK:STDOUT:       %Base.ref.loc26: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:       %ptr.loc26: type = ptr_type %Base [concrete = constants.%ptr.11f]
+// CHECK:STDOUT:       %ptr.loc26: type = ptr_type %Base.ref.loc26 [concrete = constants.%ptr.11f]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc26: %ptr.11f = bind_name self, %self.param.loc26
 // CHECK:STDOUT:   }
@@ -124,7 +124,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %p.param: %ptr.404 = value_param call_param0
 // CHECK:STDOUT:     %.loc30: type = splice_block %ptr [concrete = constants.%ptr.404] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Derived [concrete = constants.%ptr.404]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.404]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.404 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -172,7 +172,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.param.loc19: %ptr.11f = value_param call_param0
 // CHECK:STDOUT:     %.loc19: type = splice_block %ptr.loc19 [concrete = constants.%ptr.11f] {
 // CHECK:STDOUT:       %Base.ref.loc19: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:       %ptr.loc19: type = ptr_type %Base [concrete = constants.%ptr.11f]
+// CHECK:STDOUT:       %ptr.loc19: type = ptr_type %Base.ref.loc19 [concrete = constants.%ptr.11f]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc19: %ptr.11f = bind_name self, %self.param.loc19
 // CHECK:STDOUT:   }

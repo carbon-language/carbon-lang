@@ -9,12 +9,12 @@ namespace Carbon::Parse {
 
 auto HandleCallExpr(Context& context) -> void {
   auto state = context.PopState();
-  context.PushState(state, State::CallExprFinish);
+  context.PushState(state, StateKind::CallExprFinish);
 
   context.AddNode(NodeKind::CallExprStart, context.Consume(), state.has_error);
   if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
-    context.PushState(State::CallExprParamFinish);
-    context.PushState(State::Expr);
+    context.PushState(StateKind::CallExprParamFinish);
+    context.PushState(StateKind::Expr);
   }
 }
 
@@ -28,8 +28,8 @@ auto HandleCallExprParamFinish(Context& context) -> void {
   if (context.ConsumeListToken(NodeKind::CallExprComma,
                                Lex::TokenKind::CloseParen, state.has_error) ==
       Context::ListTokenKind::Comma) {
-    context.PushState(State::CallExprParamFinish);
-    context.PushState(State::Expr);
+    context.PushState(StateKind::CallExprParamFinish);
+    context.PushState(StateKind::Expr);
   }
 }
 

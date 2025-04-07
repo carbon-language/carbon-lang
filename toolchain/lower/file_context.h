@@ -147,7 +147,7 @@ class FileContext {
   auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
       -> llvm::GlobalVariable*;
 
-  auto BuildVtable(const SemIR::Class& class_info) -> void;
+  auto BuildVtable(const SemIR::Class& class_info) -> llvm::GlobalVariable*;
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;

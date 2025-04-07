@@ -7,7 +7,7 @@
 
 namespace Carbon::Parse {
 
-static auto HandleStatementsBlockStart(Context& context, State finish,
+static auto HandleStatementsBlockStart(Context& context, StateKind finish,
                                        NodeKind equal_greater, NodeKind starter,
                                        NodeKind complete) -> void {
   auto state = context.PopState();
@@ -43,7 +43,7 @@ static auto HandleStatementsBlockStart(Context& context, State finish,
 
   context.AddNode(starter, context.Consume(), state.has_error);
   context.PushState(state, finish);
-  context.PushState(State::StatementScopeLoop);
+  context.PushState(StateKind::StatementScopeLoop);
 }
 
 static auto EmitUnexpectedTokenAndRecover(Context& context) -> void {
@@ -59,8 +59,8 @@ static auto EmitUnexpectedTokenAndRecover(Context& context) -> void {
 auto HandleMatchIntroducer(Context& context) -> void {
   auto state = context.PopState();
   context.AddLeafNode(NodeKind::Placeholder, *context.position());
-  context.PushState(state, State::MatchConditionFinish);
-  context.PushState(State::ParenConditionAsMatch);
+  context.PushState(state, StateKind::MatchConditionFinish);
+  context.PushState(StateKind::ParenConditionAsMatch);
   context.ConsumeAndDiscard();
 }
 
@@ -94,22 +94,22 @@ auto HandleMatchConditionFinish(Context& context) -> void {
     state.has_error = true;
   }
 
-  context.PushState(state, State::MatchStatementFinish);
-  context.PushState(State::MatchCaseLoop);
+  context.PushState(state, StateKind::MatchStatementFinish);
+  context.PushState(StateKind::MatchCaseLoop);
 }
 
 auto HandleMatchCaseLoop(Context& context) -> void {
   context.PopAndDiscardState();
 
   if (context.PositionIs(Lex::TokenKind::Case)) {
-    context.PushState(State::MatchCaseLoop);
-    context.PushState(State::MatchCaseIntroducer);
+    context.PushState(StateKind::MatchCaseLoop);
+    context.PushState(StateKind::MatchCaseIntroducer);
   } else if (context.PositionIs(Lex::TokenKind::Default)) {
-    context.PushState(State::MatchCaseLoopAfterDefault);
-    context.PushState(State::MatchDefaultIntroducer);
+    context.PushState(StateKind::MatchCaseLoopAfterDefault);
+    context.PushState(StateKind::MatchDefaultIntroducer);
   } else if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
     EmitUnexpectedTokenAndRecover(context);
-    context.PushState(State::MatchCaseLoop);
+    context.PushState(StateKind::MatchCaseLoop);
   }
 }
 
@@ -124,12 +124,12 @@ auto HandleMatchCaseLoopAfterDefault(Context& context) -> void {
     context.emitter().Emit(*context.position(), UnreachableMatchCase, kind);
 
     context.ReturnErrorOnState();
-    context.PushState(State::MatchCaseLoopAfterDefault);
+    context.PushState(StateKind::MatchCaseLoopAfterDefault);
     context.SkipPastLikelyEnd(*context.position());
     return;
   } else if (kind != Lex::TokenKind::CloseCurlyBrace) {
     EmitUnexpectedTokenAndRecover(context);
-    context.PushState(State::MatchCaseLoopAfterDefault);
+    context.PushState(StateKind::MatchCaseLoopAfterDefault);
   }
 }
 
@@ -137,8 +137,8 @@ auto HandleMatchCaseIntroducer(Context& context) -> void {
   auto state = context.PopState();
 
   context.AddLeafNode(NodeKind::MatchCaseIntroducer, context.Consume());
-  context.PushState(state, State::MatchCaseAfterPattern);
-  context.PushState(State::Pattern);
+  context.PushState(state, StateKind::MatchCaseAfterPattern);
+  context.PushState(StateKind::Pattern);
 }
 
 auto HandleMatchCaseAfterPattern(Context& context) -> void {
@@ -152,14 +152,14 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
     return;
   }
 
-  context.PushState(state, State::MatchCaseStart);
+  context.PushState(state, StateKind::MatchCaseStart);
   if (context.PositionIs(Lex::TokenKind::If)) {
-    context.PushState(State::MatchCaseGuardFinish);
+    context.PushState(StateKind::MatchCaseGuardFinish);
     context.AddLeafNode(NodeKind::MatchCaseGuardIntroducer, context.Consume());
     auto open_paren = context.ConsumeIf(Lex::TokenKind::OpenParen);
     if (open_paren) {
       context.AddLeafNode(NodeKind::MatchCaseGuardStart, *open_paren);
-      context.PushState(State::Expr);
+      context.PushState(StateKind::Expr);
     } else {
       if (!state.has_error) {
         CARBON_DIAGNOSTIC(ExpectedMatchCaseGuardOpenParen, Error,
@@ -208,7 +208,7 @@ auto HandleMatchCaseGuardFinish(Context& context) -> void {
 }
 
 auto HandleMatchCaseStart(Context& context) -> void {
-  HandleStatementsBlockStart(context, State::MatchCaseFinish,
+  HandleStatementsBlockStart(context, StateKind::MatchCaseFinish,
                              NodeKind::MatchCaseEqualGreater,
                              NodeKind::MatchCaseStart, NodeKind::MatchCase);
 }
@@ -223,9 +223,10 @@ auto HandleMatchCaseFinish(Context& context) -> void {
 auto HandleMatchDefaultIntroducer(Context& context) -> void {
   context.AddLeafNode(NodeKind::MatchDefaultIntroducer, context.Consume());
 
-  HandleStatementsBlockStart(
-      context, State::MatchDefaultFinish, NodeKind::MatchDefaultEqualGreater,
-      NodeKind::MatchDefaultStart, NodeKind::MatchDefault);
+  HandleStatementsBlockStart(context, StateKind::MatchDefaultFinish,
+                             NodeKind::MatchDefaultEqualGreater,
+                             NodeKind::MatchDefaultStart,
+                             NodeKind::MatchDefault);
 }
 
 auto HandleMatchDefaultFinish(Context& context) -> void {

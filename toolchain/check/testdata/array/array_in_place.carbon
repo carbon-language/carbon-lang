@@ -100,7 +100,7 @@ fn G() {
 // CHECK:STDOUT:     %.loc14_30.1: %tuple.type.ff9 = tuple_literal (%i32.loc14_17, %i32.loc14_22, %i32.loc14_27)
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %.loc14_30.2: type = converted %.loc14_30.1, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
-// CHECK:STDOUT:     %array_type: type = array_type %int_2, %tuple.type.189 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type: type = array_type %int_2, %.loc14_30.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %array_type = bind_name v, %v.var
 // CHECK:STDOUT:   return

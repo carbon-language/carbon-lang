@@ -506,7 +506,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (!is_definition && !invalid_redeclaration &&
       context.impls().Get(impl_decl.impl_id).witness_id !=
           SemIR::ErrorInst::SingletonInstId) {
-    context.definitions_required().push_back(impl_decl_id);
+    context.definitions_required_by_decl().push_back(impl_decl_id);
   }
 
   return {impl_decl.impl_id, impl_decl_id};

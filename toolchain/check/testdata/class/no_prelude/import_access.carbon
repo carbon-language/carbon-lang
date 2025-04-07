@@ -453,7 +453,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Forward.ref: type = name_ref Forward, imports.%Test.Forward [concrete = constants.%Forward]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Forward [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Forward.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %ptr = bind_name c, %c.param
 // CHECK:STDOUT:   }

@@ -31,8 +31,8 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   auto [element_type_node_id, element_type_inst_id] =
       context.node_stack().PopExprWithNodeId();
 
-  auto element_type_id =
-      ExprAsType(context, element_type_node_id, element_type_inst_id).type_id;
+  auto element_type =
+      ExprAsType(context, element_type_node_id, element_type_inst_id);
 
   // The array bound must be a constant. Diagnose this prior to conversion
   // because conversion to `IntLiteral` will produce a generic "non-constant
@@ -50,10 +50,11 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   bound_inst_id = ConvertToValueOfType(
       context, context.insts().GetLocId(bound_inst_id), bound_inst_id,
       GetSingletonType(context, SemIR::IntLiteralType::SingletonInstId));
-  AddInstAndPush<SemIR::ArrayType>(context, node_id,
-                                   {.type_id = SemIR::TypeType::SingletonTypeId,
-                                    .bound_id = bound_inst_id,
-                                    .element_type_id = element_type_id});
+  AddInstAndPush<SemIR::ArrayType>(
+      context, node_id,
+      {.type_id = SemIR::TypeType::SingletonTypeId,
+       .bound_id = bound_inst_id,
+       .element_type_inst_id = element_type.inst_id});
   return true;
 }
 

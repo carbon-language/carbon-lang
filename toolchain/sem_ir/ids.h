@@ -876,6 +876,20 @@ struct AnyRawId : public AnyIdBase {
   constexpr explicit AnyRawId(int32_t id) : AnyIdBase(id) {}
 };
 
+// A pair of an interface and a specific for that interface.
+struct SpecificInterface {
+  InterfaceId interface_id;
+  SpecificId specific_id;
+
+  static const SpecificInterface None;
+
+  friend auto operator==(const SpecificInterface& lhs,
+                         const SpecificInterface& rhs) -> bool = default;
+};
+
+constexpr SpecificInterface SpecificInterface::None = {
+    .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IDS_H_

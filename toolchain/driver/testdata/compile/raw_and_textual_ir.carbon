@@ -77,7 +77,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst33:          {kind: FunctionDecl, arg0: function0, arg1: inst_block9, type: type(inst34)}
 // CHECK:STDOUT:     inst34:          {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst35:          {kind: StructValue, arg0: inst_block_empty, type: type(inst34)}
-// CHECK:STDOUT:     inst36:          {kind: PointerType, arg0: type(inst22), type: type(TypeType)}
+// CHECK:STDOUT:     inst36:          {kind: PointerType, arg0: inst22, type: type(TypeType)}
 // CHECK:STDOUT:     inst37:          {kind: NameRef, arg0: name1, arg1: inst17, type: type(inst14)}
 // CHECK:STDOUT:     inst38:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst14)}
 // CHECK:STDOUT:     inst39:          {kind: TupleLiteral, arg0: inst_block11, type: type(inst22)}

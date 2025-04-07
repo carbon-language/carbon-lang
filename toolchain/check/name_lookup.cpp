@@ -115,9 +115,9 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
               context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
-          SemIR::InstId result_inst_id =
-              GetAssociatedValue(context, node_id, interface.self_param_id,
-                                 target_inst_id, assoc_type->interface_type_id);
+          SemIR::InstId result_inst_id = GetAssociatedValue(
+              context, node_id, interface.self_param_id, target_inst_id,
+              assoc_type->GetSpecificInterface());
           non_lexical_result.scope_result = SemIR::ScopeLookupResult::MakeFound(
               result_inst_id, non_lexical_result.scope_result.access_kind());
         }

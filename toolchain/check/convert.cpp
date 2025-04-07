@@ -156,7 +156,8 @@ static auto ConvertAggregateElement(
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
     SemIR::TypeId target_elem_type, PendingBlock* target_block,
-    size_t src_field_index, size_t target_field_index) -> SemIR::InstId {
+    size_t src_field_index, size_t target_field_index,
+    SemIR::InstId vtable_id = SemIR::InstId::None) -> SemIR::InstId {
   // Compute the location of the source element. This goes into the current code
   // block, not into the target block.
   // TODO: Ideally we would discard this instruction if it's unused.
@@ -179,7 +180,7 @@ static auto ConvertAggregateElement(
   target.init_id = MakeElementAccessInst<TargetAccessInstT>(
       context, loc_id, target_id, target_elem_type, *target_block,
       target_field_index);
-  return Convert(context, loc_id, src_elem_id, target);
+  return Convert(context, loc_id, src_elem_id, target, vtable_id);
 }
 
 // Performs a conversion from a tuple to an array type. This function only
@@ -264,7 +265,9 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_arg_id,
-            array_type.element_type_id, target_block, i, i);
+            context.types().GetTypeIdForTypeInstId(
+                array_type.element_type_inst_id),
+            target_block, i, i);
     if (init_id == SemIR::ErrorInst::SingletonInstId) {
       return SemIR::ErrorInst::SingletonInstId;
     }
@@ -370,12 +373,10 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
 
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
 template <typename TargetAccessInstT>
-static auto ConvertStructToStructOrClass(Context& context,
-                                         SemIR::StructType src_type,
-                                         SemIR::StructType dest_type,
-                                         SemIR::InstId value_id,
-                                         ConversionTarget target)
-    -> SemIR::InstId {
+static auto ConvertStructToStructOrClass(
+    Context& context, SemIR::StructType src_type, SemIR::StructType dest_type,
+    SemIR::InstId value_id, ConversionTarget target,
+    SemIR::InstId dest_vtable_id = SemIR::InstId::None) -> SemIR::InstId {
   static_assert(std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT> ||
                 std::is_same_v<SemIR::StructAccess, TargetAccessInstT>);
   constexpr bool ToClass =
@@ -464,7 +465,8 @@ static auto ConvertStructToStructOrClass(Context& context,
                                               .base_id = target.init_id,
                                               .index = SemIR::ElementIndex(i)});
       auto vtable_ptr_id = AddInst<SemIR::VtablePtr>(
-          context, value_loc_id, {.type_id = dest_field.type_id});
+          context, value_loc_id,
+          {.type_id = dest_field.type_id, .vtable_id = dest_vtable_id});
       auto init_id =
           AddInst<SemIR::InitializeFrom>(context, value_loc_id,
                                          {.type_id = dest_field.type_id,
@@ -510,7 +512,8 @@ static auto ConvertStructToStructOrClass(Context& context,
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
             context, value_loc_id, value_id, src_field.type_id, literal_elems,
             inner_kind, target.init_id, dest_field.type_id, target.init_block,
-            src_field_index, src_field_index + dest_vptr_offset);
+            src_field_index, src_field_index + dest_vptr_offset,
+            dest_vtable_id);
     if (init_id == SemIR::ErrorInst::SingletonInstId) {
       return SemIR::ErrorInst::SingletonInstId;
     }
@@ -552,10 +555,10 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
 // Performs a conversion from a struct to a class type. This function only
 // converts the type, and does not perform a final conversion to the requested
 // expression category.
-static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
-                                 SemIR::ClassType dest_type,
-                                 SemIR::InstId value_id,
-                                 ConversionTarget target) -> SemIR::InstId {
+static auto ConvertStructToClass(
+    Context& context, SemIR::StructType src_type, SemIR::ClassType dest_type,
+    SemIR::InstId value_id, ConversionTarget target,
+    SemIR::InstId dest_vtable_id = SemIR::InstId::None) -> SemIR::InstId {
   PendingBlock target_block(&context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
   CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
@@ -578,7 +581,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   }
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
-      context, src_type, dest_struct_type, value_id, target);
+      context, src_type, dest_struct_type, value_id, target,
+      dest_vtable_id.has_value() ? dest_vtable_id : dest_class_info.vtable_id);
 
   if (need_temporary) {
     target_block.InsertHere();
@@ -660,7 +664,9 @@ static auto ConvertDerivedPointerToBasePointer(
   ptr_id = ConvertToValueExpr(context, ptr_id);
   auto ref_id = AddInst<SemIR::Deref>(
       context, loc_id,
-      {.type_id = src_ptr_type.pointee_id, .pointer_id = ptr_id});
+      {.type_id =
+           context.types().GetTypeIdForTypeInstId(src_ptr_type.pointee_id),
+       .pointer_id = ptr_id});
 
   // Convert as a reference expression.
   ref_id = ConvertDerivedToBase(context, loc_id, ref_id, path);
@@ -774,9 +780,10 @@ static auto DiagnoseConversionFailureToConstraintValue(
   }
 }
 
-static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
-                                     SemIR::InstId value_id,
-                                     ConversionTarget target) -> SemIR::InstId {
+static auto PerformBuiltinConversion(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
+    ConversionTarget target, SemIR::InstId vtable_id = SemIR::InstId::None)
+    -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto value = sem_ir.insts().Get(value_id);
   auto value_type_id = value.type_id();
@@ -948,7 +955,8 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
                .Get(target_class_type->class_id)
                .adapt_id.has_value()) {
         return ConvertStructToClass(context, *src_struct_type,
-                                    *target_class_type, value_id, target);
+                                    *target_class_type, value_id, target,
+                                    vtable_id);
       }
     }
 
@@ -964,9 +972,12 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   if (auto target_pointer_type = target_type_inst.TryAs<SemIR::PointerType>()) {
     if (auto src_pointer_type =
             sem_ir.types().TryGetAs<SemIR::PointerType>(value_type_id)) {
-      if (auto path = ComputeInheritancePath(context, loc_id,
-                                             src_pointer_type->pointee_id,
-                                             target_pointer_type->pointee_id);
+      if (auto path =
+              ComputeInheritancePath(context, loc_id,
+                                     context.types().GetTypeIdForTypeInstId(
+                                         src_pointer_type->pointee_id),
+                                     context.types().GetTypeIdForTypeInstId(
+                                         target_pointer_type->pointee_id));
           path && !path->empty()) {
         return ConvertDerivedPointerToBasePointer(
             context, loc_id, *src_pointer_type, target.type_id, value_id,
@@ -1015,13 +1026,20 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
+  if (target.type_id != value_type_id &&
+      sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
       (sem_ir.types().Is<SemIR::TypeType>(value_type_id) ||
        sem_ir.types().Is<SemIR::FacetType>(value_type_id))) {
     // The value is a type or facet value, so it has a constant value. We get
     // that to unwrap things like NameRef and get to the underlying type or
     // facet value instruction so that we can use `TryGetAs`.
     auto const_value_id = sem_ir.constant_values().GetConstantInstId(value_id);
+    // TODO: Runtime facet values should be allowed to convert based on their
+    // FacetTypes, but we assume constant values for impl lookup at the moment.
+    if (!const_value_id.has_value()) {
+      context.TODO(loc_id, "conversion of runtime facet value");
+      const_value_id = SemIR::ErrorInst::SingletonInstId;
+    }
 
     if (auto facet_access_type_inst =
             sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(const_value_id)) {
@@ -1119,7 +1137,8 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 }
 
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
-             ConversionTarget target) -> SemIR::InstId {
+             ConversionTarget target, SemIR::InstId vtable_id)
+    -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
 
@@ -1183,7 +1202,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Check whether any builtin conversion applies.
-  expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target);
+  expr_id =
+      PerformBuiltinConversion(context, loc_id, expr_id, target, vtable_id);
   if (expr_id == SemIR::ErrorInst::SingletonInstId) {
     return expr_id;
   }

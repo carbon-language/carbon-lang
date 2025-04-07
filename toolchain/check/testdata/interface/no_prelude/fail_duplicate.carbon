@@ -79,7 +79,7 @@ interface Class { }
 // CHECK:STDOUT:   %Self.719cbb.2: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type %Interface.type.d726c6.2 [concrete]
+// CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface.2 [concrete]
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.2.%F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -126,7 +126,7 @@ interface Class { }
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.719cbb.2 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type %Interface.type.d726c6.2 [concrete]
+// CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface.2 [concrete]
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.2.%F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -85,6 +85,7 @@ class File : public Printable<File> {
       -> void;
 
   // Returns array bound value from the bound instruction.
+  // TODO: Move this function elsewhere.
   auto GetArrayBoundValue(InstId bound_id) const -> std::optional<uint64_t> {
     if (auto bound = insts().TryGetAs<IntValue>(
             constant_values().GetConstantInstId(bound_id))) {
@@ -94,8 +95,10 @@ class File : public Printable<File> {
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
+  // TODO: Move this function elsewhere.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return types().GetAs<PointerType>(pointer_id).pointee_id;
+    return types().GetTypeIdForTypeInstId(
+        types().GetAs<PointerType>(pointer_id).pointee_id);
   }
 
   // Returns true if this file is an `impl`.

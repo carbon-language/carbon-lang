@@ -103,7 +103,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:       %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:       %array_type: type = array_type %int_3, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:       %array_type: type = array_type %int_3, %i32.loc13 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %array_type = bind_name b, %b.param
 // CHECK:STDOUT:   }
@@ -137,7 +137,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   %.loc19_14: type = splice_block %ptr.loc19 [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc19_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc19_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc19: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %ptr.loc19: type = ptr_type %i32.loc19_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pb: ref %ptr.235 = bind_name pb, %pb.var
 // CHECK:STDOUT:   %b.ref.loc24: %array_type = name_ref b, %b
@@ -188,7 +188,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   %.loc32_14: type = splice_block %ptr.loc32 [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc32_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc32_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc32: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %ptr.loc32: type = ptr_type %i32.loc32_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pf: ref %ptr.235 = bind_name pf, %pf.var
 // CHECK:STDOUT:   %F.ref.loc37: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]

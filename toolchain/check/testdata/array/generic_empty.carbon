@@ -52,7 +52,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %T.patt.loc11_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %array_type.loc13_22.2: type = array_type constants.%int_0, @G.%T.loc11_6.2 (%T) [symbolic = %array_type.loc13_22.2 (constants.%array_type)]
+// CHECK:STDOUT:   %array_type.loc13_22.2: type = array_type constants.%int_0, %T.loc11_6.2 [symbolic = %array_type.loc13_22.2 (constants.%array_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type.loc13_22.2 (%array_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %array: @G.%array_type.loc13_22.2 (%array_type) = tuple_value () [symbolic = %array (constants.%array)]
 // CHECK:STDOUT:
@@ -70,7 +70,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:     %.loc13_22: type = splice_block %array_type.loc13_22.1 [symbolic = %array_type.loc13_22.2 (constants.%array_type)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:       %array_type.loc13_22.1: type = array_type %int_0, %T [symbolic = %array_type.loc13_22.2 (constants.%array_type)]
+// CHECK:STDOUT:       %array_type.loc13_22.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc13_22.2 (constants.%array_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: ref @G.%array_type.loc13_22.2 (%array_type) = bind_name arr, %arr.var
 // CHECK:STDOUT:     return

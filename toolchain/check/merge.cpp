@@ -203,6 +203,9 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::InstId prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
                              bool check_self) -> bool {
+  auto orig_new_param_pattern_id = new_param_pattern_id;
+  auto orig_prev_param_pattern_id = prev_param_pattern_id;
+
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -218,9 +221,10 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                       "redeclaration differs at {0:implicit |}parameter {1}",
                       Diagnostics::BoolAsSelect, int32_t);
     context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
+        .Build(orig_new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
                param_index + 1)
-        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
+              is_implicit_param)
         .Emit();
   };
 
@@ -232,10 +236,11 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   }
 
   if (new_param_pattern.Is<SemIR::AddrPattern>()) {
-    new_param_pattern = context.insts().Get(
-        new_param_pattern.As<SemIR::AddrPattern>().inner_id);
-    prev_param_pattern = context.insts().Get(
-        prev_param_pattern.As<SemIR::AddrPattern>().inner_id);
+    new_param_pattern_id = new_param_pattern.As<SemIR::AddrPattern>().inner_id;
+    new_param_pattern = context.insts().Get(new_param_pattern_id);
+    prev_param_pattern_id =
+        prev_param_pattern.As<SemIR::AddrPattern>().inner_id;
+    prev_param_pattern = context.insts().Get(prev_param_pattern_id);
     if (new_param_pattern.kind() != prev_param_pattern.kind()) {
       emit_diagnostic();
       return false;
@@ -243,10 +248,12 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   }
 
   if (new_param_pattern.Is<SemIR::AnyParamPattern>()) {
-    new_param_pattern = context.insts().Get(
-        new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
-    prev_param_pattern = context.insts().Get(
-        prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
+    new_param_pattern_id =
+        new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id;
+    new_param_pattern = context.insts().Get(new_param_pattern_id);
+    prev_param_pattern_id =
+        prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id;
+    prev_param_pattern = context.insts().Get(prev_param_pattern_id);
     if (new_param_pattern.kind() != prev_param_pattern.kind()) {
       emit_diagnostic();
       return false;
@@ -267,8 +274,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return true;
   }
 
-  auto prev_param_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
+  auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), prev_specific_id, prev_param_pattern_id);
   if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
                                                   prev_param_type_id)) {
     if (!diagnose) {
@@ -280,9 +287,11 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                       Diagnostics::BoolAsSelect, int32_t, SemIR::TypeId,
                       SemIR::TypeId);
     context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
-               param_index + 1, prev_param_type_id, new_param_pattern.type_id())
-        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Build(orig_new_param_pattern_id, RedeclParamDiffersType,
+               is_implicit_param, param_index + 1, prev_param_type_id,
+               new_param_pattern.type_id())
+        .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
+              is_implicit_param)
         .Emit();
     return false;
   }

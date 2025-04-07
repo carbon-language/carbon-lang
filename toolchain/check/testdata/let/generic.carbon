@@ -58,7 +58,7 @@ fn F() {
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
 // CHECK:STDOUT:   %.loc13_11: type = splice_block %ptr [symbolic = constants.%ptr] {
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:     %ptr: type = ptr_type %T [symbolic = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc13 [symbolic = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT:   name_binding_decl {

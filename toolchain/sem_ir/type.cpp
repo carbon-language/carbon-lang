@@ -51,7 +51,7 @@ auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
 
 auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
   if (auto const_type = TryGetAs<ConstType>(type_id)) {
-    return const_type->inner_id;
+    return file_->types().GetTypeIdForTypeInstId(const_type->inner_id);
   }
   return type_id;
 }

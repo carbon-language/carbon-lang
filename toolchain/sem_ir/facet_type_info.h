@@ -11,19 +11,6 @@
 
 namespace Carbon::SemIR {
 
-struct SpecificInterface {
-  InterfaceId interface_id;
-  SpecificId specific_id;
-
-  static const SpecificInterface None;
-
-  friend auto operator==(const SpecificInterface& lhs,
-                         const SpecificInterface& rhs) -> bool = default;
-};
-
-constexpr SpecificInterface SpecificInterface::None = {
-    .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
-
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.

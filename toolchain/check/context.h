@@ -147,8 +147,13 @@ class Context {
     return import_ir_constant_values_;
   }
 
-  auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
-    return definitions_required_;
+  auto definitions_required_by_decl() -> llvm::SmallVector<SemIR::InstId>& {
+    return definitions_required_by_decl_;
+  }
+
+  auto definitions_required_by_use()
+      -> llvm::SmallVector<std::pair<SemIRLoc, SemIR::SpecificId>>& {
+    return definitions_required_by_use_;
   }
 
   auto global_init() -> GlobalInit& { return global_init_; }
@@ -343,7 +348,13 @@ class Context {
 
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.
-  llvm::SmallVector<SemIR::InstId> definitions_required_;
+  llvm::SmallVector<SemIR::InstId> definitions_required_by_decl_;
+
+  // Entities that should have definitions by the end of the current source
+  // file, because of a generic was used a concrete specific. This is currently
+  // only tracking specific functions that should have a definition emitted.
+  llvm::SmallVector<std::pair<SemIRLoc, SemIR::SpecificId>>
+      definitions_required_by_use_;
 
   // State for global initialization.
   GlobalInit global_init_;

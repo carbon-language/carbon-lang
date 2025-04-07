@@ -11,25 +11,25 @@ static auto ExpectAsOrTypeExpression(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::As)) {
     // as <expression> ...
     context.AddLeafNode(NodeKind::DefaultSelfImplAs, context.Consume());
-    context.PushState(State::Expr);
+    context.PushState(StateKind::Expr);
   } else {
     // <expression> as <expression>...
-    context.PushState(State::ImplBeforeAs);
+    context.PushState(StateKind::ImplBeforeAs);
     context.PushStateForExpr(PrecedenceGroup::ForImplAs());
   }
 }
 
 auto HandleImplAfterIntroducer(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::DeclOrDefinitionAsImpl;
+  state.kind = StateKind::DeclOrDefinitionAsImpl;
   context.PushState(state);
 
   if (context.PositionIs(Lex::TokenKind::Forall)) {
     // forall [<implicit parameter list>] ...
-    context.PushState(State::ImplAfterForall);
+    context.PushState(StateKind::ImplAfterForall);
     context.AddLeafNode(NodeKind::Forall, context.Consume());
     if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
-      context.PushState(State::PatternListAsImplicit);
+      context.PushState(StateKind::PatternListAsImplicit);
     } else {
       CARBON_DIAGNOSTIC(ImplExpectedAfterForall, Error,
                         "expected `[` after `forall` in `impl` declaration");
@@ -63,7 +63,7 @@ auto HandleImplBeforeAs(Context& context) -> void {
   auto state = context.PopState();
   if (auto as = context.ConsumeIf(Lex::TokenKind::As)) {
     context.AddNode(NodeKind::TypeImplAs, *as, state.has_error);
-    context.PushState(State::Expr);
+    context.PushState(StateKind::Expr);
   } else {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ImplExpectedAs, Error,

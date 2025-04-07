@@ -8,28 +8,28 @@
 namespace Carbon::Parse {
 
 // Handles VarAs(Decl|Returned).
-static auto HandleVar(Context& context, State finish_state,
+static auto HandleVar(Context& context, StateKind finish_state_kind,
                       Lex::TokenIndex returned_token = Lex::TokenIndex::None)
     -> void {
   auto state = context.PopState();
 
   // The finished variable declaration will start at the `var` or `returned`.
-  context.PushState(state, finish_state);
+  context.PushState(state, finish_state_kind);
 
   // TODO: is there a cleaner way to give VarAfterPattern access to the `var`
   // token?
   state.token = *(context.position() - 1);
-  context.PushState(state, State::VarAfterPattern);
+  context.PushState(state, StateKind::VarAfterPattern);
 
   if (returned_token.has_value()) {
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 
-  context.PushStateForPattern(State::Pattern, /*in_var_pattern=*/true);
+  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true);
 }
 
 auto HandleVarAsDecl(Context& context) -> void {
-  HandleVar(context, State::VarFinishAsDecl);
+  HandleVar(context, StateKind::VarFinishAsDecl);
 }
 
 auto HandleVarAsReturned(Context& context) -> void {
@@ -47,16 +47,16 @@ auto HandleVarAsReturned(Context& context) -> void {
   }
 
   context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
-  HandleVar(context, State::VarFinishAsDecl, returned_token);
+  HandleVar(context, StateKind::VarFinishAsDecl, returned_token);
 }
 
 auto HandleVarAsFor(Context& context) -> void {
   auto state = context.PopState();
 
   // The finished variable declaration will start at the `var`.
-  context.PushState(state, State::VarFinishAsFor);
+  context.PushState(state, StateKind::VarFinishAsFor);
 
-  context.PushState(State::Pattern);
+  context.PushState(StateKind::Pattern);
 }
 
 auto HandleVarAfterPattern(Context& context) -> void {
@@ -74,7 +74,7 @@ auto HandleVarAfterPattern(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::VariableInitializer,
                         context.ConsumeChecked(Lex::TokenKind::Equal));
-    context.PushState(State::Expr);
+    context.PushState(StateKind::Expr);
   }
 }
 
@@ -124,10 +124,10 @@ auto HandleVariablePattern(Context& context) -> void {
     context.emitter().Emit(*context.position(), NestedVar);
     state.has_error = true;
   }
-  context.PushState(State::FinishVariablePattern);
+  context.PushState(StateKind::FinishVariablePattern);
   context.ConsumeChecked(Lex::TokenKind::Var);
 
-  context.PushStateForPattern(State::Pattern, /*in_var_pattern=*/true);
+  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true);
 }
 
 auto HandleFinishVariablePattern(Context& context) -> void {

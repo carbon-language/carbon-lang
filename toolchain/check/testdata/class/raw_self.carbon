@@ -65,7 +65,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.param.loc17_21: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc17_27: type = splice_block %ptr.loc17 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc17: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr.loc17: type = ptr_type %Self.ref.loc17 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc17_17: %ptr.e71 = bind_name self, %self.param.loc17_21
 // CHECK:STDOUT:     %self.param.loc17_36: %i32 = value_param call_param1
@@ -114,7 +114,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.param.loc12_17: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc12_23: type = splice_block %ptr.loc12 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Self.ref.loc12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc12: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr.loc12: type = ptr_type %Self.ref.loc12 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc12_13: %ptr.e71 = bind_name self, %self.param.loc12_17
 // CHECK:STDOUT:     %self.param.loc12_32: %i32 = value_param call_param1

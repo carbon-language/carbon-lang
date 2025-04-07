@@ -28,7 +28,7 @@ class X {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %B.type.1c3: type = fn_type @B.1 [concrete]
 // CHECK:STDOUT:   %B.b08: %B.type.1c3 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type %A.type [concrete]
+// CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B.decl [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%B.decl) [concrete]

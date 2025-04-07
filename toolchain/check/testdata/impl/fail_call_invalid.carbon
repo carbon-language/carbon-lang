@@ -32,8 +32,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Self.as_type.716: type = facet_access_type %Self.3c9 [symbolic]
 // CHECK:STDOUT:   %G.type.b60: type = fn_type @G.1 [concrete]
 // CHECK:STDOUT:   %G.cb0: %G.type.b60 = struct_value () [concrete]
-// CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type %Simple.type [concrete]
-// CHECK:STDOUT:   %assoc0.45f: %Simple.assoc_type = assoc_entity element0, @Simple.%G.decl [concrete]
+// CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
+// CHECK:STDOUT:   %assoc0.db2: %Simple.assoc_type = assoc_entity element0, @Simple.%G.decl [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %impl_witness.85b: <witness> = impl_witness (<error>) [concrete]
@@ -95,7 +95,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type.716) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0.45f]
+// CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0.db2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -132,7 +132,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
-// CHECK:STDOUT:   %G.ref: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [concrete = constants.%assoc0.45f]
+// CHECK:STDOUT:   %G.ref: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [concrete = constants.%assoc0.db2]
 // CHECK:STDOUT:   %impl.elem0: %.e92 = impl_witness_access constants.%impl_witness.85b, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

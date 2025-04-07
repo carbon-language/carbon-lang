@@ -96,26 +96,36 @@ class EvalContext {
 
     // While resolving a specific, map from previous instructions in the eval
     // block into their evaluated values. These values won't be present on the
-    // specific itself yet, so `GetConstantInSpecific` won't be able to find
-    // them.
-    if (specific_eval_info_) {
-      const auto& symbolic_info =
-          constant_values().GetSymbolicConstant(const_id);
-      if (symbolic_info.index.has_value() &&
-          symbolic_info.generic_id ==
-              specifics().Get(specific_id_).generic_id &&
-          symbolic_info.index.region() == specific_eval_info_->region) {
+    // specific itself yet, so `GetConstantValueInSpecific` won't be able to
+    // find them.
+    const auto& symbolic_info = constant_values().GetSymbolicConstant(const_id);
+    if (specific_eval_info_ && symbolic_info.index.has_value()) {
+      CARBON_CHECK(
+          symbolic_info.generic_id == specifics().Get(specific_id_).generic_id,
+          "Instruction has constant operand in wrong generic");
+      if (symbolic_info.index.region() == specific_eval_info_->region) {
         auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
         CARBON_CHECK(inst_id.has_value(),
                      "Forward reference in eval block: index {0} referenced "
                      "before evaluation",
                      symbolic_info.index.index());
         return constant_values().Get(inst_id);
+      } else {
+        // TODO: Eliminate this call. This is the only place where we get a
+        // value from a specific without using an InstId. There are three ways
+        // we can get here:
+        // 1) From GetConstantValue(InstId): these can use
+        //    GetConstantValueInSpecific.
+        // 2) From GetConstantValue(TypeId): for these, we could change
+        //    instructions so they store InstIds instead of TypeIds.
+        // 3) From GetConstantFacetTypeInfo: for these, we could store an
+        //    InstId instead of a ConstantId in rewrite_constraints.
+        return GetConstantInSpecific(sem_ir(), specific_id_, const_id);
       }
     }
 
     // Map from a specific constant value to the canonical value.
-    return GetConstantInSpecific(sem_ir(), specific_id_, const_id);
+    return constant_values().Get(symbolic_info.inst_id);
   }
 
   // Gets the constant value of the specified instruction in this context.

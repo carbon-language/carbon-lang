@@ -128,11 +128,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Self.ccd: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.826: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %I.type [concrete]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%Second [concrete]
 // CHECK:STDOUT:   %.Self.258: %I.type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I_where.type.cad: type = facet_type <@I where TODO> [concrete]
 // CHECK:STDOUT:   %U: %I_where.type.cad = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %I_where.type.cad = symbolic_binding_pattern U, 0 [symbolic]
@@ -315,7 +315,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Self.bcc: %M.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
 // CHECK:STDOUT:   %Self.09f: %K.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type %K.type [concrete]
+// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type @K [concrete]
 // CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.%Associated [concrete]
 // CHECK:STDOUT:   %.Self: %K.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
@@ -612,8 +612,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//state_constraints, inst22 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.e88 = import_ref Main//state_constraints, loc7_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.4ae = import_ref Main//state_constraints, loc8_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.ce7 = import_ref Main//state_constraints, loc7_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.731 = import_ref Main//state_constraints, loc8_13, unloaded
 // CHECK:STDOUT:   %Main.Member = import_ref Main//state_constraints, Member, unloaded
 // CHECK:STDOUT:   %Main.Second = import_ref Main//state_constraints, Second, unloaded
 // CHECK:STDOUT:   %Main.import_ref.d1a: %J_where.type = import_ref Main//state_constraints, loc13_10, loaded [symbolic = @Impls.%V (constants.%V)]
@@ -650,8 +650,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: interface @I [from "state_constraints.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
-// CHECK:STDOUT:   .Member = imports.%Main.import_ref.e88
-// CHECK:STDOUT:   .Second = imports.%Main.import_ref.4ae
+// CHECK:STDOUT:   .Member = imports.%Main.import_ref.ce7
+// CHECK:STDOUT:   .Second = imports.%Main.import_ref.731
 // CHECK:STDOUT:   witness = (imports.%Main.Member, imports.%Main.Second)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

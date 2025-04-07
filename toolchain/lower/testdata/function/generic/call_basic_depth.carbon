@@ -12,10 +12,7 @@ fn F[T:! type](x: T) {
 }
 
 fn H[T:! type](x: T) -> T {
-  // This call crashes because check/eval does not emit a definition for H.
-  // In G below, the call to H can be typechecked without needing a definition.
-  // TODO: this needs to be resolved in check/eval.
-  // F(x);
+  F(x);
   return x;
 }
 
@@ -45,10 +42,10 @@ fn M() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %m.var), !dbg !7
-// CHECK:STDOUT:   %.loc32 = load i32, ptr %n.var, align 4, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc32), !dbg !9
-// CHECK:STDOUT:   %.loc33 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %.loc33), !dbg !11
+// CHECK:STDOUT:   %.loc29 = load i32, ptr %n.var, align 4, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc29), !dbg !9
+// CHECK:STDOUT:   %.loc30 = load i32, ptr %n.var, align 4, !dbg !10
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %.loc30), !dbg !11
 // CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
@@ -70,7 +67,8 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CH.Main.b88d1103f417c6d4(i32 %x) !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !21
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !21
+// CHECK:STDOUT:   ret i32 %x, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -85,21 +83,22 @@ fn M() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_basic_depth.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 29, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 32, column: 5, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 32, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 33, column: 9, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 33, column: 7, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 33, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 28, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 26, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 29, column: 5, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 29, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 30, column: 9, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 30, column: 7, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 30, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 25, column: 1, scope: !4)
 // CHECK:STDOUT: !14 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !15 = !DILocation(line: 11, column: 1, scope: !14)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b88d1103f417c6d4", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !17 = !DILocation(line: 23, column: 3, scope: !16)
-// CHECK:STDOUT: !18 = !DILocation(line: 24, column: 3, scope: !16)
-// CHECK:STDOUT: !19 = !DILocation(line: 25, column: 3, scope: !16)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b88d1103f417c6d4", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = !DILocation(line: 20, column: 3, scope: !16)
+// CHECK:STDOUT: !18 = !DILocation(line: 21, column: 3, scope: !16)
+// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 3, scope: !16)
 // CHECK:STDOUT: !20 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.b88d1103f417c6d4", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !21 = !DILocation(line: 19, column: 3, scope: !20)
+// CHECK:STDOUT: !21 = !DILocation(line: 15, column: 3, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 16, column: 3, scope: !20)

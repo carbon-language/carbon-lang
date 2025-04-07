@@ -122,7 +122,7 @@ class ExplorerFileTest : public FileTestBase {
 auto GetFileTestManifest() -> llvm::SmallVector<std::string> {
   llvm::SmallVector<std::string> manifest;
   auto content = ReadFile(absl::GetFlag(FLAGS_explorer_test_targets_file));
-  for (const auto& line : absl::StrSplit(*content, "\n", absl::SkipEmpty())) {
+  for (const auto& line : absl::StrSplit(*content, '\n', absl::SkipEmpty())) {
     manifest.push_back(std::string(line));
   }
   return manifest;

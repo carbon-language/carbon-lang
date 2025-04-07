@@ -252,7 +252,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.else.loc23:
 // CHECK:STDOUT:   %int_32.loc23_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc23_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %ptr.loc23: type = ptr_type %i32 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %ptr.loc23: type = ptr_type %i32.loc23_32 [concrete = constants.%ptr]
 // CHECK:STDOUT:   br !if.expr.result.loc23(%ptr.loc23)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc23:
@@ -283,7 +283,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.else.loc24:
 // CHECK:STDOUT:   %int_32.loc24_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc24_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %ptr.loc24: type = ptr_type %i32 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %ptr.loc24: type = ptr_type %i32.loc24_33 [concrete = constants.%ptr]
 // CHECK:STDOUT:   br !if.expr.result.loc24(%ptr.loc24)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc24:
@@ -356,7 +356,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.else.loc30:
 // CHECK:STDOUT:   %int_32.loc30: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc30: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32.loc30 [concrete = constants.%ptr]
 // CHECK:STDOUT:   br !if.expr.result.loc30(%ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc30:

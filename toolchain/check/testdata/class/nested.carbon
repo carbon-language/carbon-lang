@@ -96,7 +96,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %a.param: %ptr.5df = value_param call_param0
 // CHECK:STDOUT:     %.loc41: type = splice_block %ptr.loc41 [concrete = constants.%ptr.5df] {
 // CHECK:STDOUT:       %Outer.ref.loc41: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
-// CHECK:STDOUT:       %ptr.loc41: type = ptr_type %Outer [concrete = constants.%ptr.5df]
+// CHECK:STDOUT:       %ptr.loc41: type = ptr_type %Outer.ref.loc41 [concrete = constants.%ptr.5df]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %ptr.5df = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -234,7 +234,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %.loc42_21: type = splice_block %ptr.loc42 [concrete = constants.%ptr.36a] {
 // CHECK:STDOUT:     %Outer.ref.loc42: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
-// CHECK:STDOUT:     %ptr.loc42: type = ptr_type %Inner [concrete = constants.%ptr.36a]
+// CHECK:STDOUT:     %ptr.loc42: type = ptr_type %Inner.ref [concrete = constants.%ptr.36a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr.36a = bind_name b, %.loc42_29
 // CHECK:STDOUT:   %a.ref.loc44_3: %ptr.5df = name_ref a, %a

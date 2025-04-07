@@ -189,8 +189,6 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                   context, SemIR::SpecificFunctionType::SingletonInstId),
               .callee_id = generic_callee_id,
               .specific_id = *callee_specific_id});
-      // TODO: Add to `definitions_required` when evaluating the
-      // `SpecificImplFunction`.
     } else {
       // This is a regular generic function. The callee is the specific function
       // we deduced.
@@ -201,9 +199,6 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                   context, SemIR::SpecificFunctionType::SingletonInstId),
               .callee_id = generic_callee_id,
               .specific_id = *callee_specific_id});
-      // TODO: The specific function could be a symbolic constant. Delay doing
-      // this until we form a concrete `SpecificFunction` constant.
-      context.definitions_required().push_back(callee_id);
     }
 
     // Add the `self` argument back if there was one.

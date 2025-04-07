@@ -64,7 +64,7 @@ fn Run() {
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var a
 // CHECK:STDOUT:   %.loc6_19: type = splice_block %struct_type.b [concrete = constants.%struct_type.b] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, %Cycle.decl.loc4 [concrete = constants.%Cycle]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %ptr} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %struct_type.b = bind_name a, %a.var

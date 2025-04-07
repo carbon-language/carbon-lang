@@ -499,25 +499,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        auto facet_type =
-            sem_ir_->types().TryGetAs<FacetType>(inst.interface_type_id);
-        if (!facet_type) {
-          // Should never happen, but we don't want the instruction namer to
-          // crash on bad IR.
-          add_inst_name("<invalid interface>");
-          continue;
-        }
-        const auto& facet_type_info =
-            sem_ir_->facet_types().Get(facet_type->facet_type_id);
-        auto interface = facet_type_info.TryAsSingleInterface();
-        if (!interface) {
-          // Should never happen, but we don't want the instruction namer to
-          // crash on bad IR.
-          add_inst_name("<invalid interface>");
-          continue;
-        }
         const auto& interface_info =
-            sem_ir_->interfaces().Get(interface->interface_id);
+            sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".assoc_type");
         continue;
       }

@@ -243,7 +243,7 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::ArrayType array_type): {
           AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType());
-          Push(array_type.element_type_id);
+          PushInstId(array_type.element_type_inst_id);
           PushInstId(array_type.bound_id);
           break;
         }
@@ -261,13 +261,13 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::ConstType const_type): {
           // We don't put the `const` into the type structure since it is a
           // modifier; just move to the inner type.
-          Push(const_type.inner_id);
+          PushInstId(const_type.inner_id);
           break;
         }
         case CARBON_KIND(SemIR::PointerType pointer_type): {
           AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType());
-          Push(pointer_type.pointee_id);
+          PushInstId(pointer_type.pointee_id);
           break;
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {

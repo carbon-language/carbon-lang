@@ -14,7 +14,7 @@ auto HandleBindingPattern(Context& context) -> void {
   // An `addr` pattern may wrap the binding, and becomes the parent of the
   // `BindingPattern`.
   if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
-    context.PushState({.state = State::BindingPatternAddr,
+    context.PushState({.kind = StateKind::BindingPatternAddr,
                        .in_var_pattern = state.in_var_pattern,
                        .token = *token,
                        .subtree_start = state.subtree_start});
@@ -56,11 +56,12 @@ auto HandleBindingPattern(Context& context) -> void {
                         *context.position(), /*has_error=*/true);
     on_error(/*expected_name=*/true);
   }
-  if (auto kind = context.PositionKind();
-      kind == Lex::TokenKind::Colon || kind == Lex::TokenKind::ColonExclaim) {
+  if (auto token_kind = context.PositionKind();
+      token_kind == Lex::TokenKind::Colon ||
+      token_kind == Lex::TokenKind::ColonExclaim) {
     // Add the wrapper node for the `template` keyword if present.
     if (template_token) {
-      if (kind != Lex::TokenKind::ColonExclaim && !state.has_error) {
+      if (token_kind != Lex::TokenKind::ColonExclaim && !state.has_error) {
         CARBON_DIAGNOSTIC(ExpectedGenericBindingPatternAfterTemplate, Error,
                           "expected `:!` binding after `template`");
         context.emitter().Emit(*template_token,
@@ -71,9 +72,9 @@ auto HandleBindingPattern(Context& context) -> void {
                       state.has_error);
     }
 
-    state.state = kind == Lex::TokenKind::Colon
-                      ? State::BindingPatternFinishAsRegular
-                      : State::BindingPatternFinishAsGeneric;
+    state.kind = token_kind == Lex::TokenKind::Colon
+                     ? StateKind::BindingPatternFinishAsRegular
+                     : StateKind::BindingPatternFinishAsGeneric;
     // Use the `:` or `:!` for the root node.
     state.token = context.Consume();
     context.PushState(state);
@@ -82,7 +83,7 @@ auto HandleBindingPattern(Context& context) -> void {
     on_error(/*expected_name=*/false);
     // Add a substitute for a type node.
     context.AddInvalidParse(*context.position());
-    context.PushState(state, State::BindingPatternFinishAsRegular);
+    context.PushState(state, StateKind::BindingPatternFinishAsRegular);
   }
 }
 

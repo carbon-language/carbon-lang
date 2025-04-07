@@ -157,11 +157,11 @@ auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                 InstId inst_id) -> ConstantId;
 
-// Gets the substituted value of a potentially generic type within a specific.
-// Note that this does not perform substitution, and will return `None` if
-// the substituted type is not yet known.
-auto GetTypeInSpecific(const File& sem_ir, SpecificId specific_id,
-                       TypeId type_id) -> TypeId;
+// Gets the substituted type of an instruction within a specific. Note that this
+// does not perform substitution, and will return `None` if the substituted type
+// is not yet known.
+auto GetTypeOfInstInSpecific(const File& sem_ir, SpecificId specific_id,
+                             InstId inst_id) -> TypeId;
 
 }  // namespace Carbon::SemIR
 

@@ -275,7 +275,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
-    context.definitions_required().push_back(class_decl_id);
+    context.definitions_required_by_decl().push_back(class_decl_id);
   }
 
   return {class_decl.class_id, class_decl_id};
@@ -754,9 +754,8 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   if (defining_vptr) {
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
-         .type_id = GetPointerType(
-             context,
-             GetSingletonType(context, SemIR::VtableType::SingletonInstId))});
+         .type_id =
+             GetPointerType(context, SemIR::VtableType::SingletonInstId)});
   }
   if (base_type_id.has_value()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);

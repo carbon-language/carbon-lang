@@ -30,7 +30,7 @@ class A {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Make.type.068: type = fn_type @Make.1 [concrete]
 // CHECK:STDOUT:   %Make.606: %Make.type.068 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultConstructible.assoc_type: type = assoc_entity_type %DefaultConstructible.type [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.assoc_type: type = assoc_entity_type @DefaultConstructible [concrete]
 // CHECK:STDOUT:   %assoc0: %DefaultConstructible.assoc_type = assoc_entity element0, @DefaultConstructible.%Make.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
