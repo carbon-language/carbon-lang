@@ -2475,7 +2475,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  SemIR::FacetTypeInfo new_info = {.other_requirements =
+  SemIR::FacetTypeInfo local_facet_type_info = {.other_requirements =
                                        facet_type_info.other_requirements};
   new_info.extend_constraints.reserve(
       facet_type_info.extend_constraints.size());

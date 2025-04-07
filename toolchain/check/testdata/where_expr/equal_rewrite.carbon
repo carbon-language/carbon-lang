@@ -147,7 +147,7 @@ library "[[@TEST_NAME]]";
 interface A {}
 class D {}
 impl D as A {}
-// TODO: This should be a compile-time binding, once that is supported.
+// TODO: This should be a compile-time binding, once that is supported at file scope.
 let B: type where .Self impls A = D;
 
 fn F() {
