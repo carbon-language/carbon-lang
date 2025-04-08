@@ -46,7 +46,7 @@ auto StartClassDefinition(Context& context, SemIR::Class& class_info,
 static auto CheckCompleteAdapterClassType(
     Context& context, Parse::NodeId node_id, SemIR::ClassId class_id,
     llvm::ArrayRef<SemIR::InstId> field_decls,
-    llvm::ArrayRef<SemIR::InstId> inst_block) -> SemIR::InstId {
+    llvm::ArrayRef<SemIR::InstId> inst_block_contents) -> SemIR::InstId {
   const auto& class_info = context.classes().Get(class_id);
   if (class_info.base_id.has_value()) {
     CARBON_DIAGNOSTIC(AdaptWithBase, Error, "adapter with base class");
@@ -69,7 +69,7 @@ static auto CheckCompleteAdapterClassType(
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  for (auto inst_id : inst_block) {
+  for (auto inst_id : inst_block_contents) {
     if (auto function_decl =
             context.insts().TryGetAs<SemIR::FunctionDecl>(inst_id)) {
       auto& function = context.functions().Get(function_decl->function_id);

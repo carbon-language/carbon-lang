@@ -25,7 +25,8 @@ auto ComputeClassObjectRepr(Context& context, Parse::NodeId node_id,
                             SemIR::ClassId class_id,
                             llvm::ArrayRef<SemIR::InstId> field_decls,
                             llvm::ArrayRef<SemIR::InstId> vtable_contents,
-                            llvm::ArrayRef<SemIR::InstId> inst_block) -> void;
+                            llvm::ArrayRef<SemIR::InstId> inst_block_contents)
+    -> void;
 
 }  // namespace Carbon::Check
 
