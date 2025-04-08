@@ -30,7 +30,9 @@ class TypeStructure : public Printable<TypeStructure> {
 
   // Ordering of type structures. A lower value is a better match.
   // TODO: switch to operator<=> once we can depend on
-  // std::lexicographical_compare_three_way
+  // std::lexicographical_compare_three_way (in particular, once we can
+  // require clang-17 or newer, including in places like the GitHub test
+  // runners).
   friend auto operator<(const TypeStructure& lhs, const TypeStructure& rhs)
       -> bool {
     return std::lexicographical_compare(
