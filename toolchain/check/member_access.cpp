@@ -384,8 +384,10 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
           context.types().TryGetAs<SemIR::UnboundElementType>(
               context.insts().Get(member_id).type_id())) {
     // Convert the base to the type of the element if necessary.
-    base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
-                                        unbound_element_type->class_type_id);
+    base_id = ConvertToValueOrRefOfType(
+        context, loc_id, base_id,
+        context.types().GetTypeIdForTypeInstId(
+            unbound_element_type->class_type_inst_id));
 
     // Find the specified element, which could be either a field or a base
     // class, and build an element access expression.
@@ -396,7 +398,8 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
     auto index = GetClassElementIndex(context, element_id);
     auto access_id = GetOrAddInst<SemIR::ClassElementAccess>(
         context, loc_id,
-        {.type_id = unbound_element_type->element_type_id,
+        {.type_id = context.types().GetTypeIdForTypeInstId(
+             unbound_element_type->element_type_inst_id),
          .base_id = base_id,
          .index = index});
     if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==

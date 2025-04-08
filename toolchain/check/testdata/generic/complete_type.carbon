@@ -150,7 +150,7 @@ fn G() { F(B); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%T.loc6_9.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_9.2) [symbolic = %A (constants.%A.130)]
-// CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.130), @A.%T.loc6_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.1ce)]
+// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %T.loc6_9.2 [symbolic = %A.elem (constants.%A.elem.1ce)]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_9.2 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.ff1)]
 // CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.ff1) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:

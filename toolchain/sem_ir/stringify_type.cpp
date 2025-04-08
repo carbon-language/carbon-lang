@@ -638,7 +638,7 @@ class Stringifier {
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, UnboundElementType inst)
       -> void {
     *out_ << "<unbound element of class ";
-    step_stack_->Push(inst.class_type_id, ">");
+    step_stack_->Push(inst.class_type_inst_id, ">");
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, VtablePtr /*inst*/)

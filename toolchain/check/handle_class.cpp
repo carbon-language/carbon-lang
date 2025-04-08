@@ -545,8 +545,9 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
-  auto field_type_id = GetUnboundElementType(context, class_info.self_type_id,
-                                             base_info.type_id);
+  auto field_type_id = GetUnboundElementType(
+      context, context.types().GetInstId(class_info.self_type_id),
+      base_info.inst_id);
   class_info.base_id =
       AddInst<SemIR::BaseDecl>(context, node_id,
                                {.type_id = field_type_id,
@@ -658,7 +659,8 @@ static auto AddStructTypeFields(
             field_decl.type_id);
     struct_type_fields.push_back(
         {.name_id = field_decl.name_id,
-         .type_id = unbound_element_type.element_type_id});
+         .type_id = context.types().GetTypeIdForTypeInstId(
+             unbound_element_type.element_type_inst_id)});
   }
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);

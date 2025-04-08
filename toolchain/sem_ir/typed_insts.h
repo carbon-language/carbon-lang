@@ -1721,10 +1721,10 @@ struct UnboundElementType {
        .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
-  // The class that a value of this type is an element of.
-  TypeId class_type_id;
+  // The `ClassType` that a value of this type is an element of.
+  InstId class_type_inst_id;
   // The type of the element.
-  TypeId element_type_id;
+  InstId element_type_inst_id;
 };
 
 // Converts from a value expression to an ephemeral reference expression, in
