@@ -222,7 +222,7 @@ static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
 // Returns a block id for the explicit parameters of the given function
 // declaration. If the function declaration has no parameters, it returns
 // `SemIR::InstBlockId::Empty`. In the case of an unsupported parameter type, it
-// returns `std::nullopt`.
+// returns `SemIR::InstBlockId::None`.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const clang::FunctionDecl* clang_decl)
     -> SemIR::InstBlockId {
