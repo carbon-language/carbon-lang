@@ -126,12 +126,8 @@ fn Var5() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract1: type = class_type @Abstract1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
-// CHECK:STDOUT:   %tuple.type.f19: type = tuple_type (%Abstract1) [concrete]
-// CHECK:STDOUT:   %Contains.elem: type = unbound_element_type %Contains, %tuple.type.f19 [concrete]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %tuple.type.f19} [concrete]
-// CHECK:STDOUT:   %complete_type.90b: <witness> = complete_type_witness %struct_type.a [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -144,7 +140,7 @@ fn Var5() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract1 {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -152,12 +148,12 @@ fn Var5() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %.loc13_8: %Contains.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc13_8: <error> = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc13_3: %Contains.elem = var_pattern %.loc13_8
+// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Contains.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.90b]
+// CHECK:STDOUT:   %.var: ref <error> = var <none>
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

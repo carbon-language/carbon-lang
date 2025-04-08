@@ -16,6 +16,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -127,7 +128,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // add a proper diagnostic.
       context.TODO(node_id, "_ used as field name");
     }
-    RequireConcreteType(
+    cast_type_id = AsConcreteType(
         context, cast_type_id, type_node,
         [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Error,
@@ -141,6 +142,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           return context.emitter().Build(type_node, AbstractTypeInFieldDecl,
                                          cast_type_id);
         });
+    if (cast_type_id == SemIR::ErrorInst::SingletonTypeId) {
+      cast_type_inst_id = SemIR::ErrorInst::SingletonInstId;
+    }
     auto binding_id =
         context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
     auto& class_info = context.classes().Get(parent_class_decl->class_id);
