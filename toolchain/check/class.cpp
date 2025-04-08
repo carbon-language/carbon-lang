@@ -24,11 +24,7 @@ auto TryGetAsClass(Context& context, SemIR::TypeId type_id) -> SemIR::Class* {
 auto SetClassSelfType(Context& context, SemIR::ClassId class_id) -> void {
   auto& class_info = context.classes().Get(class_id);
   auto specific_id = context.generics().GetSelfSpecific(class_info.generic_id);
-  class_info.self_type_id = context.types().GetTypeIdForTypeConstantId(
-      TryEvalInst(context, SemIR::InstId::None,
-                  SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
-                                   .class_id = class_id,
-                                   .specific_id = specific_id}));
+  class_info.self_type_id = GetClassType(context, class_id, specific_id);
 }
 
 auto StartClassDefinition(Context& context, SemIR::Class& class_info,
