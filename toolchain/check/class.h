@@ -21,11 +21,11 @@ auto TrackClassDefinition(Context& context, SemIR::ClassId class_id,
                           SemIR::InstId class_decl_id) -> SemIR::Class&;
 
 // Compute object representation for a fully defined class.
-auto ComputeClassObjectRepresentation(
-    Context& context, Parse::NodeId node_id, SemIR::ClassId class_id,
-    llvm::ArrayRef<SemIR::InstId> field_decls,
-    llvm::ArrayRef<SemIR::InstId> vtable_contents,
-    llvm::ArrayRef<SemIR::InstId> inst_block) -> void;
+auto ComputeClassObjectRepr(Context& context, Parse::NodeId node_id,
+                            SemIR::ClassId class_id,
+                            llvm::ArrayRef<SemIR::InstId> field_decls,
+                            llvm::ArrayRef<SemIR::InstId> vtable_contents,
+                            llvm::ArrayRef<SemIR::InstId> inst_block) -> void;
 
 }  // namespace Carbon::Check
 

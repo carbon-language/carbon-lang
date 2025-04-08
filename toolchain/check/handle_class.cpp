@@ -556,10 +556,10 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
 
   // The class type is now fully defined. Compute its object representation.
-  ComputeClassObjectRepresentation(
-      context, node_id, class_id, context.field_decls_stack().PeekArray(),
-      context.vtable_stack().PeekCurrentBlockContents(),
-      context.inst_block_stack().PeekCurrentBlockContents());
+  ComputeClassObjectRepr(context, node_id, class_id,
+                         context.field_decls_stack().PeekArray(),
+                         context.vtable_stack().PeekCurrentBlockContents(),
+                         context.inst_block_stack().PeekCurrentBlockContents());
 
   context.inst_block_stack().Pop();
   context.field_decls_stack().PopArray();

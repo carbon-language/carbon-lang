@@ -361,16 +361,15 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
       BuildClassDefinition(context, parent_scope_id, name_id, clang_def);
 
   // The class type is now fully defined. Compute its object representation.
-  ComputeClassObjectRepresentation(
-      context,
-      // TODO: Consider having a proper location here.
-      Parse::NodeId::None, class_id,
-      // TODO: Set fields.
-      /*field_decls=*/{},
-      // TODO: Set vtable.
-      /*vtable_contents=*/{},
-      // TODO: Set block.
-      /*inst_block=*/{});
+  ComputeClassObjectRepr(context,
+                         // TODO: Consider having a proper location here.
+                         Parse::NodeId::None, class_id,
+                         // TODO: Set fields.
+                         /*field_decls=*/{},
+                         // TODO: Set vtable.
+                         /*vtable_contents=*/{},
+                         // TODO: Set block.
+                         /*inst_block=*/{});
 
   return class_def_id;
 }

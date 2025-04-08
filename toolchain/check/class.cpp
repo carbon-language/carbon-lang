@@ -254,11 +254,11 @@ static auto CheckCompleteClassType(
            AddStructTypeFields(context, struct_type_fields, field_decls))});
 }
 
-auto ComputeClassObjectRepresentation(
-    Context& context, Parse::NodeId node_id, SemIR::ClassId class_id,
-    llvm::ArrayRef<SemIR::InstId> field_decls,
-    llvm::ArrayRef<SemIR::InstId> vtable_contents,
-    llvm::ArrayRef<SemIR::InstId> inst_block) -> void {
+auto ComputeClassObjectRepr(Context& context, Parse::NodeId node_id,
+                            SemIR::ClassId class_id,
+                            llvm::ArrayRef<SemIR::InstId> field_decls,
+                            llvm::ArrayRef<SemIR::InstId> vtable_contents,
+                            llvm::ArrayRef<SemIR::InstId> inst_block) -> void {
   // The class type is now fully defined. Compute its object representation.
   auto complete_type_witness_id = CheckCompleteClassType(
       context, node_id, class_id, field_decls, vtable_contents, inst_block);
