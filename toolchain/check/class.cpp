@@ -32,14 +32,14 @@ auto SetNewClassSelfTypeId(Context& context, SemIR::ClassId class_id) -> void {
 }
 
 auto StartClassDefinition(Context& context, SemIR::ClassId class_id,
-                          SemIR::InstId class_decl_id) -> SemIR::Class& {
+                          SemIR::InstId definition_id) -> SemIR::Class& {
   auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.
   CARBON_CHECK(!class_info.has_definition_started());
-  class_info.definition_id = class_decl_id;
+  class_info.definition_id = definition_id;
   class_info.scope_id = context.name_scopes().Add(
-      class_decl_id, SemIR::NameId::None, class_info.parent_scope_id);
+      definition_id, SemIR::NameId::None, class_info.parent_scope_id);
 
   // Introduce `Self`.
   context.name_scopes().AddRequiredName(
