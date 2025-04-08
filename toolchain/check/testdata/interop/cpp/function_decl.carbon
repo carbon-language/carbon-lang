@@ -104,6 +104,26 @@ fn F() {
   Cpp.foo(1);
 }
 
+// --- int_default_param_function_decl.h
+
+auto foo(int a = 0) -> void;
+
+// --- fail_int_default_param_function_decl.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_default_param_function_decl.h";
+
+fn F() {
+  // CHECK:STDERR: fail_int_default_param_function_decl.carbon:[[@LINE+5]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+  // CHECK:STDERR:   Cpp.foo();
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_int_default_param_function_decl.carbon: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:
+  Cpp.foo();
+}
+
+
 // --- int_ref_param_function_decl.h
 
 auto foo(int& a) -> int;
@@ -115,7 +135,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "int_ref_param_function_decl.h";
 
 fn F() {
-  var a : i32 = 1;
+  var a: i32 = 1;
   // CHECK:STDERR: fail_int_ref_param_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: int &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
@@ -137,7 +157,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "int_pointer_param_function_decl.h";
 
 fn F() {
-  var a : i32 = 1;
+  var a: i32 = 1;
   // CHECK:STDERR: fail_int_pointer_param_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: int *` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(&a);
   // CHECK:STDERR:   ^~~~~~~
@@ -647,6 +667,54 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo[](%_.param_patt: %i32);
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_int_default_param_function_decl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = @F.%foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "int_default_param_function_decl.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, %foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @foo[](%a.param_patt: %i32);
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_ref_param_function_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -709,7 +777,7 @@ fn F() {
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc7_3.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc7_3.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   assign %a.var, %.loc7_3.2
-// CHECK:STDOUT:   %.loc7_11: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc7_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -783,7 +851,7 @@ fn F() {
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc7_3.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc7_3.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   assign %a.var, %.loc7_3.2
-// CHECK:STDOUT:   %.loc7_11: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc7_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }

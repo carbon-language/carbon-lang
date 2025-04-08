@@ -207,8 +207,7 @@ static auto MakeIntType(Context& context, IntId size_id) -> TypeExpr {
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
-// Maps a C++ type to a Carbon type.
-// Currently only int 32 is supported.
+// Maps a C++ type to a Carbon type. Currently only 32-bit `int` is supported.
 // TODO: Support more types.
 static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
   const auto* builtin_type = dyn_cast<clang::BuiltinType>(type);
@@ -221,32 +220,32 @@ static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
 }
 
 // Returns a block id for the explicit parameters of the given function
-// declaration.
-// If the function declaration has no parameters, it returns
-// `SemIR::InstBlockId::Empty`.
-// In case of unsupported parameter type, it returns `std::nullopt`.
-static auto GetParamPatternsBlockId(Context& context, SemIRLoc loc_id,
-                                    const clang::FunctionDecl* clang_decl)
-    -> std::optional<SemIR::InstBlockId> {
+// declaration. If the function declaration has no parameters, it returns
+// `SemIR::InstBlockId::Empty`. In the case of an unsupported parameter type, it
+// returns `std::nullopt`.
+static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
+                                     const clang::FunctionDecl* clang_decl)
+    -> SemIR::InstBlockId {
   if (clang_decl->parameters().empty()) {
     return SemIR::InstBlockId::Empty;
   }
   SemIR::CallParamIndex next_index(0);
   llvm::SmallVector<SemIR::InstId> params;
+  params.reserve(clang_decl->parameters().size());
   for (clang::ParmVarDecl* param : clang_decl->parameters()) {
     clang::QualType param_type = param->getType().getCanonicalType();
     SemIR::TypeId type_id = MapType(context, param_type).type_id;
     if (type_id == SemIR::ErrorInst::SingletonTypeId) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
                                          param_type.getAsString()));
-      return std::nullopt;
+      return SemIR::InstBlockId::None;
     }
     llvm::StringRef param_name = param->getName();
     SemIR::EntityNameId entity_name_id = context.entity_names().Add(
         {.name_id =
              (param_name.empty())
-                 // Translate unnamed parameter to an underscore to
-                 // match Carbon's naming of unnamed/unused function params
+                 // Translate an unnamed parameter to an underscore to
+                 // match Carbon's naming of unnamed/unused function params.
                  ? SemIR::NameId::Underscore
                  : SemIR::NameId::ForIdentifier(
                        context.sem_ir().identifiers().Add(param_name)),
@@ -265,8 +264,7 @@ static auto GetParamPatternsBlockId(Context& context, SemIRLoc loc_id,
     ++next_index.index;
     params.push_back(var_pattern_id);
   }
-  SemIR::InstBlockId param_patterns_id = context.inst_blocks().Add(params);
-  return param_patterns_id;
+  return context.inst_blocks().Add(params);
 }
 
 // Returns the return type of the given function declaration.
@@ -317,8 +315,9 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, "Unsupported: Template function");
     return SemIR::ErrorInst::SingletonInstId;
   }
-  auto param_patterns_id = GetParamPatternsBlockId(context, loc_id, clang_decl);
-  if (!param_patterns_id) {
+  auto param_patterns_id =
+      MakeParamPatternsBlockId(context, loc_id, clang_decl);
+  if (SemIR::InstBlockId::None == param_patterns_id) {
     return SemIR::ErrorInst::SingletonInstId;
   }
   auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
@@ -339,7 +338,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .last_param_node_id = Parse::NodeId::None,
        .pattern_block_id = SemIR::InstBlockId::Empty,
        .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
-       .param_patterns_id = *param_patterns_id,
+       .param_patterns_id = param_patterns_id,
        .is_extern = false,
        .extern_library_id = SemIR::LibraryNameId::None,
        .non_owning_decl_id = SemIR::InstId::None,
