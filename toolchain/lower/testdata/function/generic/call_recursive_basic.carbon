@@ -10,7 +10,8 @@
 
 class C {}
 
-// The two specifics for recursive function F when T is a ptr could be deduplicated.
+// The two specifics for recursive function F, when T is a pointer, could be
+// deduplicated.
 fn F[T:! type](x: T, count: i32) -> T {
   if (count > 0) {
     return x;

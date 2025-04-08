@@ -8,9 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_basic_depth.carbon
 
-// Builds on `call_basic.carbon`. Checks definitions are emitted with deeper call
-// stack, i.e. when functions can be typed without looking at the specific
-// calling context.
+// Builds on `call_basic.carbon`. Checks definitions are emitted with deeper
+// call stack, i.e., when functions can be type checked without looking at the
+// specific calling context.
 fn F[T:! type](x: T) {
 }
 

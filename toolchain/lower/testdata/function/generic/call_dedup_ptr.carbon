@@ -14,8 +14,8 @@ fn F[T:! type](x: T) -> T {
 
 fn M() {
   // TODO: The definitions of F for these calls lower to different identical
-  // functions taking a ptr param and returning a ptr. The three specifics
-  // could be deduplicated.
+  // functions taking a pointer param and returning a pointer. The three
+  // specifics could be deduplicated.
   var ptr_i32 : i32*;
   F(ptr_i32);
   var ptr_f64 : f64*;

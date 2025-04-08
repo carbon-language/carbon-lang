@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_specific_in_class.carbon
 
-// Builds on `call_basic.carbon`.
-// Checks different specific definitions are emitted when calling a generic function for an object,
-// from a generic context.
+// Builds on `call_basic.carbon`. Checks different specific definitions are
+// emitted for a generic function defined inside a class, when calling that
+// generic function for an object, from a generic context.
+// The specifics with a pointer type could be deduplicated here.
 class C {
   fn Cfn[self: Self, T:! type](x: T) -> T {
     return x;

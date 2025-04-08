@@ -16,12 +16,15 @@ fn D[T:! type](x: T, count: i32) -> T;
 fn E[T:! type](x: T, count: i32) -> T;
 fn F[T:! type](x: T, count: i32) -> T;
 
-// Builds on `call_recursive_mutual.carbon` and call_recursive_diamond.carbon`
-// B-C form a mutually recursive SCC, D-E-F-G form a diamond SCC.
-// The two specifics for each of A, B, C, D, E, F, G with a ptr type could be deduplicated.
-// E and F are also equivalent in the diamond, even though they are different generics.
-// Potential front-end ICF (identical code folding) optimization, when the
-// function fingerprint may infer deduplication without the generic_id.
+// Builds on `call_recursive_mutual.carbon` and `call_recursive_diamond.carbon`
+// B-C form a mutually recursive SCC (strongly connected component), D-E-F-G
+// form a diamond SCC.
+// The two specifics for each of A, B, C, D, E, F, G with a pointer type could
+// be deduplicated.
+// E and F are also equivalent in the diamond, even though they are different
+// generics. There is potential front-end ICF (identical code folding)
+// optimization here, if the function fingerprint may infer deduplication
+// when not including the two different generic_ids.
 
 fn A[T:! type](x: T, count: i32) -> T {
   B(x, count);

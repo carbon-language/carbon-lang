@@ -14,8 +14,8 @@ fn B[T:! type](x: T, count: i32) -> T;
 fn C[T:! type](x: T, count: i32) -> T;
 fn D[T:! type](x: T, count: i32) -> T;
 
-// Builds on `call_recursive_mutual.carbon`
-// The two specifics for each of A, B, C, D with a ptr type could be deduplicated.
+// Builds on `call_recursive_mutual.carbon`. The two specifics for each of:
+// A, B, C, D with a pointer type could be deduplicated.
 fn A[T:! type](x: T, count: i32) -> T {
   if (count > 4) {
     return x;

@@ -9,7 +9,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_recursive_mutual.carbon
 
 // Builds on `call_recursive_basic.carbon`.
-// The two specifics for mutual recursive functions F and G, when T is a ptr, could be deduplicated.
+// The two specifics for mutual recursive functions F and G,
+// when T is a pointer, could be deduplicated.
 fn G[T:! type](x: T, count: i32) -> T;
 
 fn F[T:! type](x: T, count: i32) -> T {
@@ -34,7 +35,6 @@ fn M() {
 
   F(n, 0);
   F(m, 0);
-  // The two specifics for F and G with a ptr type could be deduplicated.
   F(ptr_i32, 0);
   F(ptr_f64, 0);
 }
