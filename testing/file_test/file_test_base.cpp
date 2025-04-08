@@ -303,12 +303,12 @@ static auto RegisterTests(FileTestFactory* test_factory,
 
   // Amend entries with factory functions.
   for (auto& test : tests) {
-    llvm::StringRef test_name = test.test_name;
-    test.factory_fn = [test_factory, exe_path, test_name]() {
+    const std::string& test_name = test.test_name;
+    test.factory_fn = [test_factory, exe_path, &test_name]() {
       return test_factory->factory_fn(exe_path, test_name);
     };
     test.registered_test = testing::RegisterTest(
-        test_factory->name, test_name.data(), nullptr, test_name.data(),
+        test_factory->name, test_name.c_str(), nullptr, test_name.c_str(),
         __FILE__, __LINE__, [&test]() { return new FileTestCase(&test); });
   }
   return Success();
