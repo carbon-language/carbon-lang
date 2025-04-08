@@ -166,10 +166,10 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
   int scope_depth = scope_stack_.size() - 1;
   if (scope_index.has_value()) {
     scope_depth =
-        std::lower_bound(scope_stack_.begin(), scope_stack_.end(), scope_index,
-                         [](const ScopeStackEntry& entry, ScopeIndex index) {
-                           return entry.index < index;
-                         }) -
+        llvm::lower_bound(scope_stack_, scope_index,
+                          [](const ScopeStackEntry& entry, ScopeIndex index) {
+                            return entry.index < index;
+                          }) -
         scope_stack_.begin();
     CARBON_CHECK(scope_stack_[scope_depth].index == scope_index,
                  "Declaring name in scope that has already ended");
