@@ -485,6 +485,6 @@ fn F(T:! Z(C)) -> T.(Z(C).X) {
 }
 
 fn G() {
-    // This won't compile if the first impl is selected.
+    // This won't typecheck if the first impl is selected.
     let a: () = F(C);
 }
