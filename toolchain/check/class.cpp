@@ -31,7 +31,7 @@ auto SetNewClassSelfTypeId(Context& context, SemIR::ClassId class_id) -> void {
                                    .specific_id = specific_id}));
 }
 
-auto TrackClassDefinition(Context& context, SemIR::ClassId class_id,
+auto StartClassDefinition(Context& context, SemIR::ClassId class_id,
                           SemIR::InstId class_decl_id) -> SemIR::Class& {
   auto& class_info = context.classes().Get(class_id);
 

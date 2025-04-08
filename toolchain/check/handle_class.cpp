@@ -271,7 +271,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
     -> bool {
   auto [class_id, class_decl_id] =
       BuildClassDecl(context, node_id, /*is_definition=*/true);
-  auto& class_info = TrackClassDefinition(context, class_id, class_decl_id);
+  auto& class_info = StartClassDefinition(context, class_id, class_decl_id);
 
   // Enter the class scope.
   context.scope_stack().Push(

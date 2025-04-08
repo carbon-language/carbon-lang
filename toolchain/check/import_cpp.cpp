@@ -329,7 +329,7 @@ static auto BuildClassDefinition(Context& context,
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto [class_id, class_decl_id] =
       BuildClassDecl(context, parent_scope_id, name_id);
-  auto& class_info = TrackClassDefinition(context, class_id, class_decl_id);
+  auto& class_info = StartClassDefinition(context, class_id, class_decl_id);
 
   context.name_scopes()
       .Get(class_info.scope_id)
