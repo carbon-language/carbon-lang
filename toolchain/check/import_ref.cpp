@@ -2550,18 +2550,19 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+  auto witness_table_id =
+      GetLocalConstantInstId(resolver, inst.witness_table_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::ImplWitness>(
       resolver,
       {.type_id = GetSingletonType(resolver.local_context(),
                                    SemIR::WitnessType::SingletonInstId),
-       .elements_id = elements_id,
+       .witness_table_id = witness_table_id,
        .specific_id = specific_id});
 }
 
@@ -2580,6 +2581,28 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
        .witness_id = witness_id,
        .index = inst.index});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ImplWitnessTable inst) -> ResolveResult {
+  const auto& import_impl = resolver.import_impls().Get(inst.impl_id);
+  auto import_decl_inst_id = import_impl.first_decl_id();
+  auto local_decl_inst_id =
+      GetLocalConstantInstId(resolver, import_decl_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto impl_decl =
+      resolver.local_insts().GetAs<SemIR::ImplDecl>(local_decl_inst_id);
+  auto impl_id = impl_decl.impl_id;
+  auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
+  return ResolveAs<SemIR::ImplWitnessTable>(
+      resolver,
+      {.type_id = GetSingletonType(resolver.local_context(),
+                                   SemIR::WitnessType::SingletonInstId),
+       .elements_id = elements_id,
+       .impl_id = impl_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2946,6 +2969,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitnessAccess inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ImplWitnessTable inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImportRefLoaded inst): {

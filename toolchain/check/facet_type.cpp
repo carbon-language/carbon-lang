@@ -76,11 +76,17 @@ auto InitialFacetTypeImplWitness(
   auto facet_type_info = context.facet_types().Get(facet_type.facet_type_id);
 
   if (!is_definition && facet_type_info.rewrite_constraints.empty()) {
-    return AddInst<SemIR::ImplWitness>(
+    auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
         context, witness_loc_id,
         {.type_id =
              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
          .elements_id = context.inst_blocks().AddPlaceholder(),
+         .impl_id = SemIR::ImplId::None});
+    return AddInst<SemIR::ImplWitness>(
+        context, witness_loc_id,
+        {.type_id =
+             GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+         .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
   }
 
@@ -107,17 +113,26 @@ auto InitialFacetTypeImplWitness(
   SemIR::InstId witness_inst_id = SemIR::InstId::None;
   llvm::MutableArrayRef<SemIR::InstId> table;
   {
-    llvm::SmallVector<SemIR::InstId> empty_table(
-        assoc_entities.size(),
-        SemIR::ImplWitnessTablePlaceholder::SingletonInstId);
-    auto table_id = context.inst_blocks().Add(empty_table);
-    table = context.inst_blocks().GetMutable(table_id);
+    auto elements_id =
+        context.inst_blocks().Add(llvm::SmallVector<SemIR::InstId>(
+            assoc_entities.size(),
+            SemIR::ImplWitnessTablePlaceholder::SingletonInstId));
+
+    auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
+        context, witness_loc_id,
+        {.type_id =
+             GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+         .elements_id = elements_id,
+         .impl_id = SemIR::ImplId::None});
+
     witness_inst_id = AddInst<SemIR::ImplWitness>(
         context, witness_loc_id,
         {.type_id =
              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
-         .elements_id = table_id,
+         .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
+
+    table = context.inst_blocks().GetMutable(elements_id);
   }
 
   for (auto rewrite : facet_type_info.rewrite_constraints) {

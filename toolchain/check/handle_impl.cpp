@@ -425,6 +425,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
 
+    AssignImplIdInWitness(context, impl_decl.impl_id, impl_info.witness_id);
+
     // Looking to see if there are any generic bindings on the `impl`
     // declaration that are not deducible. If so, and the `impl` does not
     // actually use all its generic bindings, and will never be matched. This

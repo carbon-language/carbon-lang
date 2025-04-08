@@ -471,6 +471,17 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       return NameId::None;
     };
+    auto impl_witness_table_name_id =
+        [&](InstId impl_witness_table_inst_id) -> NameId {
+      auto witness_table = sem_ir_->insts().GetAs<SemIR::ImplWitnessTable>(
+          impl_witness_table_inst_id);
+      if (witness_table.impl_id.has_value()) {
+        const auto& impl = sem_ir_->impls().Get(witness_table.impl_id);
+        return sem_ir_->interfaces().Get(impl.interface.interface_id).name_id;
+      } else {
+        return NameId::None;
+      }
+    };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
       AddBlockLabel(scope_id, sem_ir_->insts().GetLocId(inst_id), *branch);
@@ -688,10 +699,16 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             ".lookup_impl_witness");
         continue;
       }
-      case ImplWitness::Kind: {
-        // TODO: Include name of interface (is this available from the
-        // specific?).
-        add_inst_name("impl_witness");
+      case CARBON_KIND(ImplWitness inst): {
+        if (auto name_id = impl_witness_table_name_id(inst.witness_table_id);
+            name_id.has_value()) {
+          add_inst_name_id(name_id, ".impl_witness");
+        } else {
+          // TODO: The witness comes from a facet value. Can we get the
+          // interface names from it? Store the facet value instruction in the
+          // table?
+          add_inst_name("impl_witness");
+        }
         continue;
       }
       case CARBON_KIND(ImplWitnessAccess inst): {
@@ -703,6 +720,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case ImplWitnessAssociatedConstant::Kind: {
         add_inst_name("impl_witness_assoc_constant");
+        continue;
+      }
+      case ImplWitnessTable::Kind: {
+        if (auto name_id = impl_witness_table_name_id(inst_id);
+            name_id.has_value()) {
+          add_inst_name_id(name_id, ".impl_witness_table");
+        } else {
+          // TODO: The witness comes from a facet value. Can we get the
+          // interface names from it? Store the facet value instruction in the
+          // table?
+          add_inst_name("impl_witness_table");
+        }
         continue;
       }
       case ImportCppDecl::Kind: {

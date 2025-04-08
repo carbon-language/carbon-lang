@@ -11,6 +11,7 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
@@ -108,14 +109,17 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     return;
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
-  auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
-  // `witness.elements_id` will be `SemIR::InstBlockId::Empty` when the
+  auto witness_table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  auto witness_block =
+      context.inst_blocks().GetMutable(witness_table.elements_id);
+  // `witness_table.elements_id` will be `SemIR::InstBlockId::Empty` when the
   // definition is the first declaration and the interface has no members. The
   // other case where `witness_block` will be empty is when we are using a
   // placeholder witness. This happens when there is a forward declaration of
   // the impl and the facet type has no rewrite constraints and so it wasn't
   // required to be complete.
-  if (witness.elements_id != SemIR::InstBlockId::Empty &&
+  if (witness_table.elements_id != SemIR::InstBlockId::Empty &&
       witness_block.empty()) {
     if (!RequireCompleteFacetTypeForImplDefinition(
             context, impl.latest_decl_id(), impl.constraint_id)) {
@@ -123,8 +127,8 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     }
 
     AllocateFacetTypeImplWitness(context, impl.interface.interface_id,
-                                 witness.elements_id);
-    witness_block = context.inst_blocks().GetMutable(witness.elements_id);
+                                 witness_table.elements_id);
+    witness_block = context.inst_blocks().GetMutable(witness_table.elements_id);
   }
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
   auto assoc_entities =
@@ -171,7 +175,10 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
     return;
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
-  auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
+  auto witness_table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  auto witness_block =
+      context.inst_blocks().GetMutable(witness_table.elements_id);
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
   auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
@@ -240,13 +247,32 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
   if (impl.witness_id.has_value() &&
       impl.witness_id != SemIR::ErrorInst::SingletonInstId) {
     auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
-    auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
+    auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
+        witness.witness_table_id);
+    auto witness_block =
+        context.inst_blocks().GetMutable(witness_table.elements_id);
     for (auto& elem : witness_block) {
       if (elem == SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
         elem = SemIR::ErrorInst::SingletonInstId;
       }
     }
   }
+}
+
+auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,
+                           SemIR::InstId witness_id) -> void {
+  if (witness_id == SemIR::ErrorInst::SingletonInstId) {
+    return;
+  }
+  auto witness = context.insts().GetAs<SemIR::ImplWitness>(witness_id);
+  auto witness_table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  witness_table.impl_id = impl_id;
+  // Note: The `ImplWitnessTable` instruction is `Unique`, so while this marks
+  // the instruction as being a dependent instruction of a generic impl, it will
+  // not be substituted into the eval block.
+  ReplaceInstBeforeConstantUse(context, witness.witness_table_id,
+                               witness_table);
 }
 
 auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool {
