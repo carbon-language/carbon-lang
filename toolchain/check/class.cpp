@@ -31,10 +31,8 @@ auto SetClassSelfType(Context& context, SemIR::ClassId class_id) -> void {
                                    .specific_id = specific_id}));
 }
 
-auto StartClassDefinition(Context& context, SemIR::ClassId class_id,
-                          SemIR::InstId definition_id) -> SemIR::Class& {
-  auto& class_info = context.classes().Get(class_id);
-
+auto StartClassDefinition(Context& context, SemIR::Class& class_info,
+                          SemIR::InstId definition_id) -> void {
   // Track that this declaration is the definition.
   CARBON_CHECK(!class_info.has_definition_started());
   class_info.definition_id = definition_id;
@@ -45,8 +43,6 @@ auto StartClassDefinition(Context& context, SemIR::ClassId class_id,
   context.name_scopes().AddRequiredName(
       class_info.scope_id, SemIR::NameId::SelfType,
       context.types().GetInstId(class_info.self_type_id));
-
-  return class_info;
 }
 
 // Checks that the specified finished adapter definition is valid and builds and

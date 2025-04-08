@@ -17,8 +17,8 @@ auto TryGetAsClass(Context& context, SemIR::TypeId type_id) -> SemIR::Class*;
 auto SetClassSelfType(Context& context, SemIR::ClassId class_id) -> void;
 
 // Starts the class definition, adding `Self` to name lookup.
-auto StartClassDefinition(Context& context, SemIR::ClassId class_id,
-                          SemIR::InstId definition_id) -> SemIR::Class&;
+auto StartClassDefinition(Context& context, SemIR::Class& class_info,
+                          SemIR::InstId definition_id) -> void;
 
 // Computes the object representation for a fully defined class.
 auto ComputeClassObjectRepr(Context& context, Parse::NodeId node_id,
