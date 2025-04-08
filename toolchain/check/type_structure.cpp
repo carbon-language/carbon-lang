@@ -131,6 +131,8 @@ class TypeStructureBuilder {
     PushInstId(self_inst_id);
     BuildTypeStructure();
 
+    // TODO: This requires 4 SmallVector moves (two here and two in the
+    // constructor). Find a way to reduce that.
     return TypeStructure(std::exchange(structure_, {}),
                          std::exchange(symbolic_type_indices_, {}));
   }

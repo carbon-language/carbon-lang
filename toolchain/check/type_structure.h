@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_TYPE_STRUCTURE_H_
 #define CARBON_TOOLCHAIN_CHECK_TYPE_STRUCTURE_H_
 
-#include <compare>
+#include <algorithm>
 
 #include "common/ostream.h"
 #include "toolchain/check/context.h"
