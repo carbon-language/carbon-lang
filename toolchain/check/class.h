@@ -20,7 +20,7 @@ auto SetNewClassSelfTypeId(Context& context, SemIR::ClassId class_id) -> void;
 auto StartClassDefinition(Context& context, SemIR::ClassId class_id,
                           SemIR::InstId definition_id) -> SemIR::Class&;
 
-// Compute object representation for a fully defined class.
+// Computes the object representation for a fully defined class.
 auto ComputeClassObjectRepr(Context& context, Parse::NodeId node_id,
                             SemIR::ClassId class_id,
                             llvm::ArrayRef<SemIR::InstId> field_decls,
