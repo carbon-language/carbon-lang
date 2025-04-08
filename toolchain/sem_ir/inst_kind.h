@@ -208,6 +208,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     return definition_info(*this).deduce_through;
   }
 
+  // Returns true if this instruction has scoped cleanup associated, typically a
+  // destructor.
+  constexpr auto has_cleanup() const -> bool {
+    return definition_info(*this).has_cleanup;
+  }
+
  private:
   // Returns the DefinitionInfo for the kind.
   static auto definition_info(InstKind kind) -> const DefinitionInfo&;

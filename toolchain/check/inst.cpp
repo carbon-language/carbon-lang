@@ -101,14 +101,15 @@ auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 
 auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
-  auto handle_constant_id =
-      [&](SemIR::ConstantId const_id) -> std::optional<SemIR::InstId> {
+  CARBON_CHECK(!loc_id_and_inst.inst.kind().has_cleanup());
+
+  auto handle_constant_id = [&](SemIR::ConstantId const_id) -> SemIR::InstId {
     CARBON_CHECK(const_id.has_value());
 
     // If we didn't produce a constant value for the instruction, we have to add
     // the instruction.
     if (!const_id.is_constant()) {
-      return std::nullopt;
+      return SemIR::InstId::None;
     }
 
     CARBON_VLOG_TO(context.vlog_stream(), "GetOrAddInst: constant: {0}\n",
@@ -124,8 +125,9 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
         // Evaluation doesn't need an InstId. Just do it.
         auto const_id = TryEvalInstUnsafe(context, SemIR::InstId::None,
                                           loc_id_and_inst.inst);
-        if (auto result_inst_id = handle_constant_id(const_id)) {
-          return *result_inst_id;
+        if (auto result_inst_id = handle_constant_id(const_id);
+            result_inst_id.has_value()) {
+          return result_inst_id;
         }
         break;
       }
@@ -134,10 +136,13 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
         // Evaluation temporarily needs an InstId. Add one for now.
         auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
         auto const_id = context.constant_values().Get(inst_id);
-        if (auto result_inst_id = handle_constant_id(const_id)) {
-          // TODO: We didn't end up needing the instruction. Consider removing
-          // it from `insts` if it's still the most recently added instruction.
-          return *result_inst_id;
+        if (auto result_inst_id = handle_constant_id(const_id);
+            result_inst_id.has_value()) {
+          // TODO: We didn't end up needing the `inst_id` instruction. Consider
+          // removing it from `insts` if it's still the most recently added
+          // instruction.
+          CARBON_CHECK(result_inst_id != inst_id);
+          return result_inst_id;
         }
         context.inst_block_stack().AddInstId(inst_id);
         return inst_id;
@@ -156,6 +161,8 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 
 auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::ConstantId {
+  CARBON_CHECK(!loc_id_and_inst.inst.kind().has_cleanup());
+
   switch (loc_id_and_inst.inst.kind().constant_needs_inst_id()) {
     case SemIR::InstConstantNeedsInstIdKind::No: {
       // Evaluation doesn't need an InstId. Just do it.
@@ -166,6 +173,8 @@ auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     case SemIR::InstConstantNeedsInstIdKind::DuringEvaluation: {
       // Evaluation temporarily needs an InstId. Add one for now.
       auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
+      // TODO: Consider removing `inst_id` from `insts` if it's still the most
+      // recently added instruction.
       return context.constant_values().Get(inst_id);
     }
 
