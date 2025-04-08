@@ -13,8 +13,8 @@ namespace Carbon::Check {
 // Otherwise returns `nullptr`.
 auto TryGetAsClass(Context& context, SemIR::TypeId type_id) -> SemIR::Class*;
 
-// Builds the `Self` type using the resulting type constant.
-auto SetNewClassSelfTypeId(Context& context, SemIR::ClassId class_id) -> void;
+// Sets the `Self` type for the class.
+auto SetClassSelfType(Context& context, SemIR::ClassId class_id) -> void;
 
 // Starts the class definition, adding `Self` to name lookup.
 auto StartClassDefinition(Context& context, SemIR::ClassId class_id,

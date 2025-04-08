@@ -251,7 +251,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   if (is_new_class) {
     // TODO: Form this as part of building the definition, not as part of the
     // declaration.
-    SetNewClassSelfTypeId(context, class_decl.class_id);
+    SetClassSelfType(context, class_decl.class_id);
   }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {

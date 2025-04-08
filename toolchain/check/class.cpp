@@ -21,7 +21,7 @@ auto TryGetAsClass(Context& context, SemIR::TypeId type_id) -> SemIR::Class* {
   return &context.classes().Get(class_type->class_id);
 }
 
-auto SetNewClassSelfTypeId(Context& context, SemIR::ClassId class_id) -> void {
+auto SetClassSelfType(Context& context, SemIR::ClassId class_id) -> void {
   auto& class_info = context.classes().Get(class_id);
   auto specific_id = context.generics().GetSelfSpecific(class_info.generic_id);
   class_info.self_type_id = context.types().GetTypeIdForTypeConstantId(

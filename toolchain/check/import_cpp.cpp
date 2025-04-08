@@ -313,7 +313,7 @@ static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
   // Write the class ID into the ClassDecl.
   ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
 
-  SetNewClassSelfTypeId(context, class_decl.class_id);
+  SetClassSelfType(context, class_decl.class_id);
 
   return {class_decl.class_id, class_decl_id};
 }
