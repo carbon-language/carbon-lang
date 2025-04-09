@@ -27,7 +27,8 @@ struct TokenIndex : public IndexBase<TokenIndex> {
   // The number of bits which must be allotted for `TokenIndex`.
   static constexpr int Bits = 23;
   // The maximum number of tokens that can be stored, including the FileStart
-  // and FileEnd tokens.
+  // and FileEnd tokens. Uses that would exceed this are validated by the
+  // `TooManyTokens` diagnostic.
   static constexpr int Max = 1 << Bits;
 
   static constexpr llvm::StringLiteral Label = "token";
@@ -35,9 +36,7 @@ struct TokenIndex : public IndexBase<TokenIndex> {
   // Comments aren't tokenized, so this is the first token after FileStart.
   static const TokenIndex FirstNonCommentToken;
 
-  constexpr explicit TokenIndex(int32_t index) : IndexBase(index) {
-    CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
-  }
+  using IndexBase::IndexBase;
 };
 
 constexpr TokenIndex TokenIndex::None(TokenIndex::NoneIndex);
