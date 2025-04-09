@@ -21,7 +21,6 @@ using ::testing::AllOf;
 using ::testing::Contains;
 using ::testing::Each;
 using ::testing::ElementsAre;
-using ::testing::Ge;
 using ::testing::IsEmpty;
 using ::testing::MatchesRegex;
 using ::testing::Pair;
