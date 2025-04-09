@@ -2463,8 +2463,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     GetLocalSpecificInterfaceData(resolver, interface);
   }
   for (auto rewrite : import_facet_type_info.rewrite_constraints) {
-    GetLocalConstantId(resolver, rewrite.lhs_const_id);
-    GetLocalConstantId(resolver, rewrite.rhs_const_id);
+    GetLocalConstantInstId(resolver, rewrite.lhs_id);
+    GetLocalConstantInstId(resolver, rewrite.rhs_id);
   }
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -2490,8 +2490,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       import_facet_type_info.rewrite_constraints.size());
   for (auto rewrite : import_facet_type_info.rewrite_constraints) {
     local_facet_type_info.rewrite_constraints.push_back(
-        {.lhs_const_id = GetLocalConstantId(resolver, rewrite.lhs_const_id),
-         .rhs_const_id = GetLocalConstantId(resolver, rewrite.rhs_const_id)});
+        {.lhs_id = GetLocalConstantInstId(resolver, rewrite.lhs_id),
+         .rhs_id = GetLocalConstantInstId(resolver, rewrite.rhs_id)});
   }
   // TODO: Also process the other requirements.
   SemIR::FacetTypeId facet_type_id =
