@@ -223,7 +223,6 @@ auto InitialFacetTypeImplWitness(
         context, witness_loc_id,
         {.type_id = context.insts().Get(rewrite_inst_id).type_id(),
          .inst_id = rewrite_inst_id});
-    table_entry = context.constant_values().GetInstId(rewrite_value);
   }
   return witness_inst_id;
 }
