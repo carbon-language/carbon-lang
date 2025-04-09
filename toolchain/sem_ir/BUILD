@@ -45,6 +45,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "ids_test",
+    srcs = ["ids_test.cpp"],
+    deps = [
+        ":typed_insts",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
 cc_library(
     name = "inst",
     srcs = ["inst.cpp"],

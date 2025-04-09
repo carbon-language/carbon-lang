@@ -34,7 +34,10 @@ struct TokenIndex : public IndexBase<TokenIndex> {
   static const TokenIndex None;
   // Comments aren't tokenized, so this is the first token after FileStart.
   static const TokenIndex FirstNonCommentToken;
-  using IndexBase::IndexBase;
+
+  constexpr explicit TokenIndex(int32_t index) : IndexBase(index) {
+    CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
+  }
 };
 
 constexpr TokenIndex TokenIndex::None(TokenIndex::NoneIndex);

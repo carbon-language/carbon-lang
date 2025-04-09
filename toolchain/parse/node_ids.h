@@ -22,10 +22,20 @@ struct NoneNodeId {};
 struct NodeId : public IdBase<NodeId> {
   static constexpr llvm::StringLiteral Label = "node";
 
+  // We give NodeId a bit in addition to TokenIndex in order to account for
+  // virtual nodes, where a token may produce two nodes.
+  static constexpr int32_t Bits = Lex::TokenIndex::Bits + 1;
+
+  // The maximum ID, non-inclusive.
+  static constexpr int Max = 1 << Bits;
+
   // A node ID with no value.
   static constexpr NoneNodeId None;
 
-  using IdBase::IdBase;
+  constexpr explicit NodeId(int32_t index) : IdBase(index) {
+    CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
+  }
+
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr NodeId(NoneNodeId /*none*/) : IdBase(NoneIndex) {}
 };
