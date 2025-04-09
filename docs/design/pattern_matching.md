@@ -22,21 +22,23 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`auto` and type deduction](#auto-and-type-deduction)
         -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
+        -   [Alternatives considered](#alternatives-considered-3)
     -   [Tuple patterns](#tuple-patterns)
     -   [Struct patterns](#struct-patterns)
-        -   [Alternatives considered](#alternatives-considered-3)
+        -   [Alternatives considered](#alternatives-considered-4)
     -   [Alternative patterns](#alternative-patterns)
     -   [Templates](#templates)
     -   [Refutability, overlap, usefulness, and exhaustiveness](#refutability-overlap-usefulness-and-exhaustiveness)
-        -   [Alternatives considered](#alternatives-considered-4)
+        -   [Alternatives considered](#alternatives-considered-5)
 -   [Pattern usage](#pattern-usage)
     -   [Pattern match control flow](#pattern-match-control-flow)
+        -   [Alternatives considered](#alternatives-considered-6)
         -   [Guards](#guards)
     -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
 -   [Open questions](#open-questions)
     -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
     -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
--   [Alternatives considered](#alternatives-considered-5)
+-   [Alternatives considered](#alternatives-considered-7)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -331,6 +333,12 @@ fn G() {
 A `var` pattern cannot be nested within another `var` pattern. The declaration
 syntax `var` _pattern_ `=` _expresson_ `;` is equivalent to `let` `var`
 _pattern_ `=` _expression_ `;`.
+
+#### Alternatives considered
+
+-   [Treat all bindings under `var` as variable bindings](/proposals/p5164.md#treat-all-bindings-under-var-as-variable-bindings)
+-   [Make `var` a binding pattern modifier](/proposals/p5164.md#make-var-a-binding-pattern-modifier)
+-   [Initialize storage once pattern matching succeeds](/proposals/p5164.md#initialize-storage-once-pattern-matching-succeeds)
 
 ### Tuple patterns
 
@@ -645,12 +653,12 @@ We will diagnose the following situations:
 
 ## Pattern usage
 
-This section is a skeletal design, added to support [the overview](README.md).
-It should not be treated as accepted by the core team; rather, it is a
-placeholder until we have more time to examine this detail. Please feel welcome
-to rewrite and update as appropriate.
-
 ### Pattern match control flow
+
+`match` is a skeletal design, added to support [the overview](README.md). Aside
+from [guards](#guards), it should not be treated as accepted by the core team;
+rather, it is a placeholder until we have more time to examine this detail.
+Please feel welcome to rewrite and update as appropriate.
 
 The most powerful form and easiest to explain form of pattern matching is a
 dedicated control flow construct that subsumes the `switch` of C and C++ into
@@ -703,6 +711,14 @@ composed of the following:
 In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
+
+Any initializing expressions in the scrutinee of a `match` statement are
+[materialized](values.md#temporary-materialization) before pattern matching
+begins, so that the result can be reused by multiple `case`s.
+
+#### Alternatives considered
+
+-   [Allow variable binding patterns to alias across `case`s](/proposals/p5164.md#allow-variable-binding-patterns-to-alias-across-cases)
 
 #### Guards
 
