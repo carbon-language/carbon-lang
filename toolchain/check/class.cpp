@@ -46,7 +46,7 @@ auto StartClassDefinition(Context& context, SemIR::Class& class_info,
 static auto CheckCompleteAdapterClassType(
     Context& context, Parse::NodeId node_id, SemIR::ClassId class_id,
     llvm::ArrayRef<SemIR::InstId> field_decls,
-    llvm::ArrayRef<SemIR::InstId> inst_block_contents) -> SemIR::InstId {
+    llvm::ArrayRef<SemIR::InstId> body) -> SemIR::InstId {
   const auto& class_info = context.classes().Get(class_id);
   if (class_info.base_id.has_value()) {
     CARBON_DIAGNOSTIC(AdaptWithBase, Error, "adapter with base class");
@@ -69,7 +69,7 @@ static auto CheckCompleteAdapterClassType(
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  for (auto inst_id : inst_block_contents) {
+  for (auto inst_id : body) {
     if (auto function_decl =
             context.insts().TryGetAs<SemIR::FunctionDecl>(inst_id)) {
       auto& function = context.functions().Get(function_decl->function_id);
@@ -191,11 +191,11 @@ static auto CheckCompleteClassType(
     Context& context, Parse::NodeId node_id, SemIR::ClassId class_id,
     llvm::ArrayRef<SemIR::InstId> field_decls,
     llvm::ArrayRef<SemIR::InstId> vtable_contents,
-    llvm::ArrayRef<SemIR::InstId> inst_block) -> SemIR::InstId {
+    llvm::ArrayRef<SemIR::InstId> body) -> SemIR::InstId {
   auto& class_info = context.classes().Get(class_id);
   if (class_info.adapt_id.has_value()) {
     return CheckCompleteAdapterClassType(context, node_id, class_id,
-                                         field_decls, inst_block);
+                                         field_decls, body);
   }
 
   bool defining_vptr = class_info.is_dynamic;
@@ -250,9 +250,9 @@ auto ComputeClassObjectRepr(Context& context, Parse::NodeId node_id,
                             SemIR::ClassId class_id,
                             llvm::ArrayRef<SemIR::InstId> field_decls,
                             llvm::ArrayRef<SemIR::InstId> vtable_contents,
-                            llvm::ArrayRef<SemIR::InstId> inst_block) -> void {
+                            llvm::ArrayRef<SemIR::InstId> body) -> void {
   auto complete_type_witness_id = CheckCompleteClassType(
-      context, node_id, class_id, field_decls, vtable_contents, inst_block);
+      context, node_id, class_id, field_decls, vtable_contents, body);
   auto& class_info = context.classes().Get(class_id);
   class_info.complete_type_witness_id = complete_type_witness_id;
 }

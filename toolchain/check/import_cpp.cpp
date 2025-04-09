@@ -372,7 +372,7 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
                          // TODO: Set vtable.
                          /*vtable_contents=*/{},
                          // TODO: Set block.
-                         /*inst_block=*/{});
+                         /*body=*/{});
 
   return class_def_id;
 }
