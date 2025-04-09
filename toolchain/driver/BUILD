@@ -2,8 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -39,7 +38,6 @@ cc_test(
     name = "clang_runner_test",
     size = "small",
     srcs = ["clang_runner_test.cpp"],
-    env = cc_env(),
     deps = [
         ":clang_runner",
         "//common:all_llvm_targets",
@@ -155,7 +153,6 @@ cc_test(
     name = "driver_test",
     size = "small",
     srcs = ["driver_test.cpp"],
-    env = cc_env(),
     deps = [
         ":driver",
         "//common:all_llvm_targets",
@@ -208,7 +205,6 @@ cc_test(
     name = "lld_runner_test",
     size = "small",
     srcs = ["lld_runner_test.cpp"],
-    env = cc_env(),
     deps = [
         ":clang_runner",
         ":lld_runner",
@@ -248,7 +244,6 @@ cc_test(
     name = "llvm_runner_test",
     size = "small",
     srcs = ["llvm_runner_test.cpp"],
-    env = cc_env(),
     deps = [
         ":llvm_runner",
         "//common:all_llvm_targets",
