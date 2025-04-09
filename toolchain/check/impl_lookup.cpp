@@ -464,7 +464,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 static auto QueryIsConcrete(Context& context, SemIR::ConstantId self_const_id,
                             SemIR::SpecificInterface& specific_interface)
     -> bool {
-  if (self_const_id.has_value() && !self_const_id.is_concrete()) {
+  if (!self_const_id.is_concrete()) {
     return false;
   }
   if (!specific_interface.specific_id.has_value()) {
