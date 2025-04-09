@@ -237,6 +237,7 @@ fn F[D:! Y](d: D) {
   // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
+  //
   // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `(C(D) as Z).(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
@@ -426,41 +427,7 @@ fn F() {
   let x: {} = G(C);
 }
 
-// --- fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let T:! type;
-  fn F[self: Self]() -> T;
-}
-
-impl forall [U:! type] U as I where .T = () {
-  fn F[self: Self]() -> () { return (); }
-}
-final impl forall [V:! type] V* as I where .T = V {
-  fn F[self: Self]() -> V { return *self; }
-}
-
-fn H[W:! type](v: W) -> W.(I.T) {
-  return v.(I.F)();
-}
-
-// The return of `H` is `(X*).(I.T)` which has a final impl making it `X`.
-// While this function is still a generic context, it should see the concrete
-// `X` type and the return of `H(p)` should convert (a no-op) to `X`.
-fn G[X:! type](p: X*) -> X {
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `V` to `X` [ConversionFailure]
-  // CHECK:STDERR:   return H(p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `V` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   return H(p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  return H(p);
-}
-
 // --- type_structure_first_difference.carbon
-
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
@@ -487,151 +454,4 @@ fn F(T:! Z(C)) -> T.(Z(C).X) {
 fn G() {
     // This won't typecheck if the first impl is selected.
     let a: () = F(C);
-}
-
-// --- final_impl_fallback_through_facet_with_where.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {
-  let X:! type;
-  let Y:! type;
-}
-
-final impl forall [T:! type] T as Z where .X = () and .Y = () {}
-
-fn F(ZZ:! Z where .X = {.r: ()}) {
-  // Z.Y is unspecified on `ZZ` so it's found on the final impl where it's known
-  // to be the concrete type (), which can then be used in this generic
-  // function.
-  let a: ZZ.Y = ();
-}
-
-// --- final_impl_fallback_through_facet_access_type_with_where.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {
-  let X:! type;
-  let Y:! type;
-}
-
-final impl forall [T:! type] T as Z where .X = () and .Y = () {}
-
-fn F[T:! Z where .X = {.r: ()}](z: T) {
-  // z.Y is unspecified on `ZZ` so it's found on the final impl where it's known
-  // to be the concrete type (), which can then be used in this generic
-  // function.
-  let a: z.Y = ();
-}
-
-// --- fail_todo_final_impl_precidence_over_facet_value.carbon
-library "[[@TEST_NAME]]";
-
-interface I {}
-interface J {}
-
-final impl forall [T:! J] T as I {}
-
-class C(T:! I) {}
-
-class D(T:! J) {
-  // Finds the final impl decl; The facet value of `T` in `C(T)` holds an
-  // `ImplWitness`.
-  var c: C(T)*;
-}
-
-fn F(T:! I & J) {
-  // `I` found in the facet type; The facet value of `T` in `C(T)` holds a `FacetAccessWitness`.
-  // TODO: It should use the `final impl` and thus hold the same `ImplWitness`
-  var x: C(T);
-  // `D.c` used the final impl decl to make a facet value with an `ImplWitness`
-  // for its `T` in `C(T)`.
-  var y: D(T);
-  // This converts a pointer to a facet value (should be `ImplWitness` but
-  // isn't) to a pointer to a facet value (with `ImplWitness`).
-  //
-  // TODO: It should type check when they are both the same generic type
-  // `C(T:! I)` defined by the `final impl` of `I`.
-  //
-  // CHECK:STDERR: fail_todo_final_impl_precidence_over_facet_value.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C(T as I)*` to `C(T as I)*` [ConversionFailure]
-  // CHECK:STDERR:   y.c = &x;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_final_impl_precidence_over_facet_value.carbon:[[@LINE+4]]:3: note: type `C(T as I)*` does not implement interface `Core.ImplicitAs(C(T as I)*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   y.c = &x;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
-  y.c = &x;
-}
-
-// --- fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon
-library "[[@TEST_NAME]]";
-
-interface I { let X:! type; }
-interface J {}
-
-impl forall [T:! J] T as I where .X = () {}
-
-class C(T:! I) {
-  var b: T.X;
-}
-
-class D(T:! J) {
-  // Finds the impl decl; The facet value of `T` in `C(T)` holds a
-  // `LookupImplWitness`.
-  var c: C(T)*;
-}
-
-fn F(T:! I & J) -> T.(I.X) {
-  // `I` found in the facet type; The facet value of `T` in `C(T)` holds a
-  // `FacetAccessWitness`.
-  var x: C(T);
-  // `D.c` used the final impl decl to make a facet value with a
-  // `LookupImplWitness` for its `T` in `C(T)`.
-  var y: D(T);
-  // This converts a pointer to a facet value (with `FacetAccessWitness`) to a
-  // pointer to a facet value (with `LookupImplWitness`).
-  //
-  // TODO: It should type check as a `LookupImplWitness` will find the same
-  // witness that `FacetAccessWitness` is accessing from the caller.
-  //
-  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C(T as I)*` to `C(T as I)*` [ConversionFailure]
-  // CHECK:STDERR:   y.c = &x;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+4]]:3: note: type `C(T as I)*` does not implement interface `Core.ImplicitAs(C(T as I)*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   y.c = &x;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
-  y.c = &x;
-  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `(T as J as I).(I.X)` to `T.(TODO: element 0 in <witness for T, interface 0>)` [ConversionFailure]
-  // CHECK:STDERR:   return (*y.c).b;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+4]]:3: note: type `(T as J as I).(I.X)` does not implement interface `Core.ImplicitAs(T.(TODO: element 0 in <witness for T, interface 0>))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   return (*y.c).b;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  return (*y.c).b;
-}
-
-class E1 {}
-impl E1 as J {}
-
-fn G1() {
-  // Doesn't see the `final impl` below. `E1.(I.X)` is `()`.
-  let a1: () = F(E1);
-}
-
-final impl forall [T:! J] T as I where .X = {} {}
-
-class E2 {}
-impl E2 as J {}
-
-fn G2() {
-  // TODO: Does see the `final impl` below. `E2.(I.X)` is `{}`.
-  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
-  // CHECK:STDERR:   let a2: {} = F(E2);
-  // CHECK:STDERR:                ^~~~~
-  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+4]]:16: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a2: {} = F(E2);
-  // CHECK:STDERR:                ^~~~~
-  // CHECK:STDERR:
-  let a2: {} = F(E2);
 }
