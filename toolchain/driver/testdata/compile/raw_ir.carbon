@@ -59,8 +59,6 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     'type(symbolic_constant5)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constant6)}
-// CHECK:STDOUT:   type_blocks:
-// CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst15:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<none>, type: type(TypeType)}

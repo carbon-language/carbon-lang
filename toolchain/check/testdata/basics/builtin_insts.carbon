@@ -32,8 +32,6 @@
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:   type_blocks:
-// CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst(TypeType)':  {kind: TypeType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(AutoType)':  {kind: AutoType, type: type(TypeType)}

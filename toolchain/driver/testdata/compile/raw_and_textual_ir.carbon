@@ -48,8 +48,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst37)}
 // CHECK:STDOUT:     'type(inst37)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst37)}
-// CHECK:STDOUT:   type_blocks:
-// CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst15:          {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}

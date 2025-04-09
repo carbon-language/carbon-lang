@@ -288,9 +288,6 @@ class ImportContext {
   auto import_struct_type_fields() -> decltype(auto) {
     return import_ir().struct_type_fields();
   }
-  auto import_type_blocks() -> decltype(auto) {
-    return import_ir().type_blocks();
-  }
   auto import_types() -> decltype(auto) { return import_ir().types(); }
 
   // Returns the local file's import ID for the IR we are importing from.

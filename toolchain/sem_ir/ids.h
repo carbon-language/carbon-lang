@@ -732,22 +732,6 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-// The ID of a type block.
-struct TypeBlockId : public IdBase<TypeBlockId> {
-  static constexpr llvm::StringLiteral Label = "type_block";
-  // Types for BlockValueStore<TypeBlockId>.
-  using ElementType = TypeId;
-  using ValueType = llvm::MutableArrayRef<ElementType>;
-
-  // The canonical empty block, reused to avoid allocating empty vectors. Always
-  // the 0-index block.
-  static const TypeBlockId Empty;
-
-  using IdBase::IdBase;
-};
-
-constexpr TypeBlockId TypeBlockId::Empty = TypeBlockId(0);
-
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase<ElementIndex> {
   static constexpr llvm::StringLiteral Label = "element";

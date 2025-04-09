@@ -361,22 +361,6 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, TypeBlockId type_block_id)
-    -> std::string {
-  RawStringOstream out;
-  out << type_block_id;
-  if (!type_block_id.has_value()) {
-    return out.TakeStr();
-  }
-
-  out << ":";
-  auto type_block = file.type_blocks().Get(type_block_id);
-  for (auto type_id : type_block) {
-    out << "\n  - " << Dump(file, type_id);
-  }
-  return out.TakeStr();
-}
-
 LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
   RawStringOstream out;
   out << type_id;
@@ -439,9 +423,6 @@ LLVM_DUMP_METHOD static auto MakeSpecificInterfaceId(int id)
 LLVM_DUMP_METHOD static auto MakeStructTypeFieldsId(int id)
     -> StructTypeFieldsId {
   return StructTypeFieldsId(id);
-}
-LLVM_DUMP_METHOD static auto MakeTypeBlockId(int id) -> TypeBlockId {
-  return TypeBlockId(id);
 }
 LLVM_DUMP_METHOD static auto MakeTypeId(int id) -> TypeId { return TypeId(id); }
 

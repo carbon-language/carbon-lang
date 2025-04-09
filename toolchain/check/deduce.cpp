@@ -113,12 +113,6 @@ class DeductionWorklist {
            context_->inst_blocks().Get(args), needs_substitution);
   }
 
-  auto AddAll(SemIR::TypeBlockId params, SemIR::TypeBlockId args,
-              bool needs_substitution) -> void {
-    AddAll(context_->type_blocks().Get(params),
-           context_->type_blocks().Get(args), needs_substitution);
-  }
-
   // Adds a (param, arg) pair for an instruction argument, given its kind.
   auto AddInstArg(SemIR::Inst::ArgAndKind param, int32_t arg,
                   bool needs_substitution) -> void {
