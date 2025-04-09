@@ -103,7 +103,7 @@ static auto GetCanonicalImportIRInst(Context& context,
     // Step through an instruction with an imported location to the imported
     // instruction.
     auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
-    if (loc_id.is_import_ir_inst_id()) {
+    if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
       auto import_ir_inst =
           cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
       cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
@@ -598,7 +598,7 @@ class ImportRefResolver : public ImportContext {
 
     while (true) {
       auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
-      if (!loc_id.is_import_ir_inst_id()) {
+      if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
         return result;
       }
       auto ir_inst =

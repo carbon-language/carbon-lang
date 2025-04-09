@@ -571,7 +571,7 @@ class FormatterImpl {
     // that IR in the output before the `{` or `;`.
     if (first_owning_decl_id.has_value()) {
       auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
-      if (loc_id.is_import_ir_inst_id()) {
+      if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
         auto import_ir_id =
             sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
         const auto* import_file =
@@ -1142,20 +1142,27 @@ class FormatterImpl {
       // instruction as a last resort.
       const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id);
       auto loc_id = import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id);
-      if (!loc_id.has_value()) {
-        out_ << import_ir_inst.inst_id << " [no loc]";
-      } else if (loc_id.is_import_ir_inst_id()) {
-        // TODO: Probably don't want to format each indirection, but maybe reuse
-        // GetCanonicalImportIRInst?
-        out_ << import_ir_inst.inst_id << " [indirect]";
-      } else if (loc_id.is_node_id()) {
-        // Formats a NodeId from the import.
-        const auto& tree = import_ir.sem_ir->parse_tree();
-        auto token = tree.node_token(loc_id.node_id());
-        out_ << "loc" << tree.tokens().GetLineNumber(token) << "_"
-             << tree.tokens().GetColumnNumber(token);
-      } else {
-        CARBON_FATAL("Unexpected LocId: {0}", loc_id);
+      switch (loc_id.kind()) {
+        case SemIR::LocId::Kind::None: {
+          out_ << import_ir_inst.inst_id << " [no loc]";
+          break;
+        }
+        case SemIR::LocId::Kind::ImportIRInstId: {
+          // TODO: Probably don't want to format each indirection, but maybe
+          // reuse GetCanonicalImportIRInst?
+          out_ << import_ir_inst.inst_id << " [indirect]";
+          break;
+        }
+        case SemIR::LocId::Kind::NodeId: {
+          // Formats a NodeId from the import.
+          const auto& tree = import_ir.sem_ir->parse_tree();
+          auto token = tree.node_token(loc_id.node_id());
+          out_ << "loc" << tree.tokens().GetLineNumber(token) << "_"
+               << tree.tokens().GetColumnNumber(token);
+          break;
+        }
+        case SemIR::LocId::Kind::InstId:
+          CARBON_FATAL("Unexpected LocId: {0}", loc_id);
       }
     }
     out_ << ", " << loaded_label;
