@@ -224,15 +224,15 @@ static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
 // `SemIR::InstBlockId::Empty`. In the case of an unsupported parameter type, it
 // returns `SemIR::InstBlockId::None`.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
-                                     const clang::FunctionDecl* clang_decl)
+                                     const clang::FunctionDecl& clang_decl)
     -> SemIR::InstBlockId {
-  if (clang_decl->parameters().empty()) {
+  if (clang_decl.parameters().empty()) {
     return SemIR::InstBlockId::Empty;
   }
   SemIR::CallParamIndex next_index(0);
   llvm::SmallVector<SemIR::InstId> params;
-  params.reserve(clang_decl->parameters().size());
-  for (clang::ParmVarDecl* param : clang_decl->parameters()) {
+  params.reserve(clang_decl.parameters().size());
+  for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
     clang::QualType param_type = param->getType().getCanonicalType();
     SemIR::TypeId type_id = MapType(context, param_type).type_id;
     if (type_id == SemIR::ErrorInst::SingletonTypeId) {
@@ -316,8 +316,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
   auto param_patterns_id =
-      MakeParamPatternsBlockId(context, loc_id, clang_decl);
-  if (SemIR::InstBlockId::None == param_patterns_id) {
+      MakeParamPatternsBlockId(context, loc_id, *clang_decl);
+  if (!param_patterns_id.has_value()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
   auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
