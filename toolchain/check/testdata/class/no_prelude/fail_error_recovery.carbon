@@ -64,6 +64,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:       %self: <error> = bind_name self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc9: <vtable> = vtable (%Foo.decl) [concrete = <error>]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -79,6 +80,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, @F.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc12: <error> = base_decl %C.ref, element0 [concrete]
+// CHECK:STDOUT:     %struct_type.base: type = struct_type {.base: %C} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.1d0]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:

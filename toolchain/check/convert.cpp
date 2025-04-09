@@ -152,12 +152,17 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
     Context& context, SemIR::LocId loc_id, SemIR::InstId src_id,
-    SemIR::TypeId src_elem_type,
+    SemIR::InstId src_elem_type_inst,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
-    SemIR::TypeId target_elem_type, PendingBlock* target_block,
+    SemIR::InstId target_elem_type_inst, PendingBlock* target_block,
     size_t src_field_index, size_t target_field_index,
     SemIR::InstId vtable_id = SemIR::InstId::None) -> SemIR::InstId {
+  auto src_elem_type =
+      context.types().GetTypeIdForTypeInstId(src_elem_type_inst);
+  auto target_elem_type =
+      context.types().GetTypeIdForTypeInstId(target_elem_type_inst);
+
   // Compute the location of the source element. This goes into the current code
   // block, not into the target block.
   // TODO: Ideally we would discard this instruction if it's unused.
@@ -191,7 +196,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                 SemIR::InstId value_id, ConversionTarget target)
     -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
-  auto tuple_elem_types = sem_ir.type_blocks().Get(tuple_type.elements_id);
+  auto tuple_elem_types = sem_ir.inst_blocks().Get(tuple_type.elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -258,16 +263,14 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // if initializing from a tuple literal.
   llvm::SmallVector<SemIR::InstId> inits;
   inits.reserve(*array_bound + 1);
-  for (auto [i, src_type_id] : llvm::enumerate(tuple_elem_types)) {
+  for (auto [i, src_type_inst_id] : llvm::enumerate(tuple_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
-            context, value_loc_id, value_id, src_type_id, literal_elems,
+            context, value_loc_id, value_id, src_type_inst_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_arg_id,
-            context.types().GetTypeIdForTypeInstId(
-                array_type.element_type_inst_id),
-            target_block, i, i);
+            array_type.element_type_inst_id, target_block, i, i);
     if (init_id == SemIR::ErrorInst::SingletonInstId) {
       return SemIR::ErrorInst::SingletonInstId;
     }
@@ -291,8 +294,8 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
                                 SemIR::InstId value_id, ConversionTarget target)
     -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
-  auto src_elem_types = sem_ir.type_blocks().Get(src_type.elements_id);
-  auto dest_elem_types = sem_ir.type_blocks().Get(dest_type.elements_id);
+  auto src_elem_types = sem_ir.inst_blocks().Get(src_type.elements_id);
+  auto dest_elem_types = sem_ir.inst_blocks().Get(dest_type.elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -344,14 +347,15 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
           : SemIR::CopyOnWriteInstBlock(
                 &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
                              src_elem_types.size()});
-  for (auto [i, src_type_id, dest_type_id] :
+  for (auto [i, src_type_inst_id, dest_type_inst_id] :
        llvm::enumerate(src_elem_types, dest_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::TupleAccess>(
-            context, value_loc_id, value_id, src_type_id, literal_elems,
-            inner_kind, target.init_id, dest_type_id, target.init_block, i, i);
+            context, value_loc_id, value_id, src_type_inst_id, literal_elems,
+            inner_kind, target.init_id, dest_type_inst_id, target.init_block, i,
+            i);
     if (init_id == SemIR::ErrorInst::SingletonInstId) {
       return SemIR::ErrorInst::SingletonInstId;
     }
@@ -459,19 +463,20 @@ static auto ConvertStructToStructOrClass(
         CARBON_FATAL("Only classes should have vptrs.");
       }
       target.init_block->InsertHere();
+      auto vptr_type_id =
+          context.types().GetTypeIdForTypeInstId(dest_field.type_inst_id);
       auto dest_id =
           AddInst<SemIR::ClassElementAccess>(context, value_loc_id,
-                                             {.type_id = dest_field.type_id,
+                                             {.type_id = vptr_type_id,
                                               .base_id = target.init_id,
                                               .index = SemIR::ElementIndex(i)});
       auto vtable_ptr_id = AddInst<SemIR::VtablePtr>(
           context, value_loc_id,
-          {.type_id = dest_field.type_id, .vtable_id = dest_vtable_id});
-      auto init_id =
-          AddInst<SemIR::InitializeFrom>(context, value_loc_id,
-                                         {.type_id = dest_field.type_id,
-                                          .src_id = vtable_ptr_id,
-                                          .dest_id = dest_id});
+          {.type_id = vptr_type_id, .vtable_id = dest_vtable_id});
+      auto init_id = AddInst<SemIR::InitializeFrom>(context, value_loc_id,
+                                                    {.type_id = vptr_type_id,
+                                                     .src_id = vtable_ptr_id,
+                                                     .dest_id = dest_id});
       new_block.Set(i, init_id);
       continue;
     }
@@ -510,10 +515,10 @@ static auto ConvertStructToStructOrClass(
     // approach.
     auto init_id =
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
-            context, value_loc_id, value_id, src_field.type_id, literal_elems,
-            inner_kind, target.init_id, dest_field.type_id, target.init_block,
-            src_field_index, src_field_index + dest_vptr_offset,
-            dest_vtable_id);
+            context, value_loc_id, value_id, src_field.type_inst_id,
+            literal_elems, inner_kind, target.init_id, dest_field.type_inst_id,
+            target.init_block, src_field_index,
+            src_field_index + dest_vptr_offset, dest_vtable_id);
     if (init_id == SemIR::ErrorInst::SingletonInstId) {
       return SemIR::ErrorInst::SingletonInstId;
     }
@@ -990,16 +995,18 @@ static auto PerformBuiltinConversion(
     // A tuple of types converts to type `type`.
     // TODO: This should apply even for non-literal tuples.
     if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
-      llvm::SmallVector<SemIR::TypeId> type_ids;
+      llvm::SmallVector<SemIR::InstId> type_inst_ids;
       for (auto tuple_inst_id :
            sem_ir.inst_blocks().Get(tuple_literal->elements_id)) {
         // TODO: This call recurses back into conversion. Switch to an
         // iterative approach.
-        type_ids.push_back(
+        type_inst_ids.push_back(
             ExprAsType(context, loc_id, tuple_inst_id, target.diagnose)
-                .type_id);
+                .inst_id);
       }
-      auto tuple_type_id = GetTupleType(context, type_ids);
+      // TODO: Should we add this as an instruction? It will contain references
+      // to local InstIds.
+      auto tuple_type_id = GetTupleType(context, type_inst_ids);
       return sem_ir.types().GetInstId(tuple_type_id);
     }
 
@@ -1131,9 +1138,10 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::ConvertToValueAction action) -> SemIR::InstId {
-  return Convert(
-      context, loc_id, action.inst_id,
-      {.kind = ConversionTarget::Value, .type_id = action.target_type_id});
+  return Convert(context, loc_id, action.inst_id,
+                 {.kind = ConversionTarget::Value,
+                  .type_id = context.types().GetTypeIdForTypeInstId(
+                      action.target_type_inst_id)});
 }
 
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
@@ -1220,12 +1228,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       target.kind == ConversionTarget::Value &&
       (OperandIsDependent(context, expr_id) ||
        OperandIsDependent(context, target.type_id))) {
+    auto target_type_inst_id = context.types().GetInstId(target.type_id);
     return AddDependentActionSplice(
         context, loc_id,
         SemIR::ConvertToValueAction{.type_id = SemIR::InstType::SingletonTypeId,
                                     .inst_id = expr_id,
-                                    .target_type_id = target.type_id},
-        target.type_id);
+                                    .target_type_inst_id = target_type_inst_id},
+        target_type_inst_id);
   }
 
   // If this is not a builtin conversion, try an `ImplicitAs` conversion.

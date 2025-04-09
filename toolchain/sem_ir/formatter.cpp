@@ -354,7 +354,7 @@ class FormatterImpl {
     out_ << " ";
     FormatName(assoc_const.name_id);
     out_ << ":! ";
-    FormatArg(sem_ir_->insts().Get(assoc_const.decl_id).type_id());
+    FormatTypeOfInst(assoc_const.decl_id);
     if (assoc_const.default_value_id.has_value()) {
       out_ << " = ";
       FormatArg(assoc_const.default_value_id);
@@ -447,7 +447,7 @@ class FormatterImpl {
         FormatName(fn.return_slot_pattern_id);
         out_ << ": ";
       }
-      FormatType(sem_ir_->insts().Get(fn.return_slot_pattern_id).type_id());
+      FormatTypeOfInst(fn.return_slot_pattern_id);
     }
 
     if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
@@ -637,7 +637,7 @@ class FormatterImpl {
       }
       FormatName(param_id);
       out_ << ": ";
-      FormatType(sem_ir_->insts().Get(param_id).type_id());
+      FormatTypeOfInst(param_id);
     }
 
     out_ << (is_implicit ? "]" : ")");
@@ -861,7 +861,7 @@ class FormatterImpl {
             out_ << "init ";
             break;
         }
-        FormatType(inst.type_id());
+        FormatTypeOfInst(inst_id);
         out_ << " = ";
         break;
       case InstValueKind::None:
@@ -1199,7 +1199,7 @@ class FormatterImpl {
       out_ << sep << ".";
       FormatName(field.name_id);
       out_ << ": ";
-      FormatType(field.type_id);
+      FormatInstAsType(field.type_inst_id);
     }
     out_ << "}";
   }
@@ -1347,18 +1347,6 @@ class FormatterImpl {
          << '"';
   }
 
-  auto FormatArg(TypeId id) -> void { FormatType(id); }
-
-  auto FormatArg(TypeBlockId id) -> void {
-    out_ << '(';
-    llvm::ListSeparator sep;
-    for (auto type_id : sem_ir_->type_blocks().Get(id)) {
-      out_ << sep;
-      FormatArg(type_id);
-    }
-    out_ << ')';
-  }
-
   auto FormatReturnSlotArg(InstId dest_id) -> void {
     out_ << " to ";
     FormatArg(dest_id);
@@ -1441,15 +1429,36 @@ class FormatterImpl {
     FormatName(sem_ir_->constant_values().GetInstId(id));
   }
 
-  auto FormatType(TypeId id) -> void {
+  auto FormatInstAsType(InstId id) -> void {
     if (!id.has_value()) {
       out_ << "invalid";
-    } else {
-      // Types are formatted in the `constants` scope because they only refer to
-      // constants.
-      llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
-      FormatConstant(sem_ir_->types().GetConstantId(id));
+      return;
     }
+
+    // Types are formatted in the `constants` scope because they typically refer
+    // to constants.
+    llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
+    if (auto const_id = sem_ir_->constant_values().Get(id);
+        const_id.has_value()) {
+      FormatConstant(const_id);
+    } else {
+      // Type instruction didn't have a constant value. Fall back to printing
+      // the instruction name.
+      FormatArg(id);
+    }
+  }
+
+  auto FormatTypeOfInst(InstId id) -> void {
+    auto type_id = sem_ir_->insts().Get(id).type_id();
+    if (!type_id.has_value()) {
+      out_ << "invalid";
+      return;
+    }
+
+    // Types are formatted in the `constants` scope because they typically refer
+    // to constants.
+    llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
+    FormatConstant(sem_ir_->types().GetConstantId(type_id));
   }
 
   // Returns the label for the indicated IR.

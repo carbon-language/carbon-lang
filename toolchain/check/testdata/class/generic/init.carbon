@@ -129,11 +129,11 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_13.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc4_13.2 [symbolic = %Class.elem (constants.%Class.elem.e26)]
-// CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k.b21)]
-// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Class.%struct_type.k (%struct_type.k.b21) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
+// CHECK:STDOUT:   %struct_type.k.loc6_1.2: type = struct_type {.k: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.k.loc6_1.2 (constants.%struct_type.k.b21)]
+// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.k.loc6_1.2 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc5_8: @Class.%Class.elem (%Class.elem.e26) = field_decl k, element0 [concrete]
@@ -141,7 +141,8 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:       %.loc5_3: @Class.%Class.elem (%Class.elem.e26) = var_pattern %.loc5_8
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem.e26) = var <none>
-// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.k.b21 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
+// CHECK:STDOUT:     %struct_type.k.loc6_1.1: type = struct_type {.k: %T} [symbolic = %struct_type.k.loc6_1.2 (constants.%struct_type.k.b21)]
+// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.k.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -156,9 +157,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc8_26.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_26.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type @InitFromStructGeneric.%T.loc8_26.2 (%T) [symbolic = %require_complete.loc8 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type %T.loc8_26.2 [symbolic = %require_complete.loc8 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class.loc9_17.2: type = class_type @Class, @Class(%T.loc8_26.2) [symbolic = %Class.loc9_17.2 (constants.%Class.fe1)]
-// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) [symbolic = %require_complete.loc9 (constants.%require_complete.4f8)]
+// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %Class.loc9_17.2 [symbolic = %require_complete.loc9 (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @InitFromStructGeneric.%T.loc8_26.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k.b21)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc9_17.2, %T.loc8_26.2 [symbolic = %Class.elem (constants.%Class.elem.e26)]
 // CHECK:STDOUT:
@@ -226,7 +227,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class.fe1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e26
-// CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k.b21
+// CHECK:STDOUT:   %struct_type.k.loc6_1.2 => constants.%struct_type.k.b21
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.b9e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -247,7 +248,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Class => constants.%Class.247
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2d8
-// CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k.0bf
+// CHECK:STDOUT:   %struct_type.k.loc6_1.2 => constants.%struct_type.k.0bf
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.954
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -334,13 +335,13 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Adapt.%T.loc4_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Adapt.%T.loc4_13.2 (%T) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.f87)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_13.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %T.loc4_13.2 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.f87)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     adapt_decl %T.ref [concrete]
-// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %T [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.f87)]
+// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness constants.%T [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.f87)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -354,9 +355,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc8_27.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_27.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) [symbolic = %require_complete.loc8 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type %T.loc8_27.2 [symbolic = %require_complete.loc8 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Adapt.loc9_23.2: type = class_type @Adapt, @Adapt(%T.loc8_27.2) [symbolic = %Adapt.loc9_23.2 (constants.%Adapt.2e4)]
-// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @InitFromAdaptedGeneric.%Adapt.loc9_23.2 (%Adapt.2e4) [symbolic = %require_complete.loc9 (constants.%require_complete.26c)]
+// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %Adapt.loc9_23.2 [symbolic = %require_complete.loc9 (constants.%require_complete.26c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc8_27.1: type, %x.param_patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T)) -> @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) {
 // CHECK:STDOUT:   !entry:

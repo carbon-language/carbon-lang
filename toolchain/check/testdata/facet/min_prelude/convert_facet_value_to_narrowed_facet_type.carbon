@@ -237,7 +237,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%T) [symbolic = %Op.type (constants.%Op.type.f99)]
 // CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type.f99) = struct_value () [symbolic = %Op (constants.%Op.05a)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%T (%T.8b3) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
 // CHECK:STDOUT:   !members:
@@ -251,7 +251,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %T.as_type.loc6_22.2: type = facet_access_type %T.loc6_9.2 [symbolic = %T.as_type.loc6_22.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Feed.%T.as_type.loc6_22.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete.c75)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc6_22.2 [symbolic = %require_complete (constants.%require_complete.c75)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc6_9.1: %Eats.type](%e.param_patt: @Feed.%T.as_type.loc6_22.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -280,7 +280,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %U.as_type.loc8_39.2: type = facet_access_type %U.loc8_17.2 [symbolic = %U.as_type.loc8_39.2 (constants.%U.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleAnimal.%U.as_type.loc8_39.2 (%U.as_type) [symbolic = %require_complete (constants.%require_complete.680)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.as_type.loc8_39.2 [symbolic = %require_complete (constants.%require_complete.680)]
 // CHECK:STDOUT:   %U.as_wit.iface0.loc8_50.3: <witness> = facet_access_witness %U.loc8_17.2, element0 [symbolic = %U.as_wit.iface0.loc8_50.3 (constants.%U.as_wit.iface0)]
 // CHECK:STDOUT:   %Eats.facet.loc8_50.3: %Eats.type = facet_value %U.as_type.loc8_39.2, (%U.as_wit.iface0.loc8_50.3) [symbolic = %Eats.facet.loc8_50.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc8_44.2: <specific function> = specific_function constants.%Feed, @Feed(%Eats.facet.loc8_50.3) [symbolic = %Feed.specific_fn.loc8_44.2 (constants.%Feed.specific_fn)]
@@ -544,7 +544,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%T) [symbolic = %Op.type (constants.%Op.type.f99)]
 // CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type.f99) = struct_value () [symbolic = %Op (constants.%Op.05a)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
 // CHECK:STDOUT:   !members:
@@ -573,7 +573,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %V.as_type.loc7_33.2: type = facet_access_type %V.loc7_13.2 [symbolic = %V.as_type.loc7_33.2 (constants.%V.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @FeedTame.%V.as_type.loc7_33.2 (%V.as_type) [symbolic = %require_complete (constants.%require_complete.940)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %V.as_type.loc7_33.2 [symbolic = %require_complete (constants.%require_complete.940)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%V.patt.loc7_13.1: %facet_type.6ff](%v.param_patt: @FeedTame.%V.as_type.loc7_33.2 (%V.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -587,7 +587,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %W.as_type.loc9_50.2: type = facet_access_type %W.loc9_21.2 [symbolic = %W.as_type.loc9_50.2 (constants.%W.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleTameAnimal.%W.as_type.loc9_50.2 (%W.as_type) [symbolic = %require_complete (constants.%require_complete.40f)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %W.as_type.loc9_50.2 [symbolic = %require_complete (constants.%require_complete.40f)]
 // CHECK:STDOUT:   %W.as_wit.iface0.loc10_13.3: <witness> = facet_access_witness %W.loc9_21.2, element0 [symbolic = %W.as_wit.iface0.loc10_13.3 (constants.%W.as_wit.iface0)]
 // CHECK:STDOUT:   %W.as_wit.iface2.loc10_13.3: <witness> = facet_access_witness %W.loc9_21.2, element2 [symbolic = %W.as_wit.iface2.loc10_13.3 (constants.%W.as_wit.iface2)]
 // CHECK:STDOUT:   %facet_value.loc10_13.3: %facet_type.6ff = facet_value %W.as_type.loc9_50.2, (%W.as_wit.iface0.loc10_13.3, %W.as_wit.iface2.loc10_13.3) [symbolic = %facet_value.loc10_13.3 (constants.%facet_value)]
@@ -875,7 +875,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl.f92(%T) [symbolic = %Op.type (constants.%Op.type.f99)]
 // CHECK:STDOUT:   %Op: @impl.f92.%Op.type (%Op.type.f99) = struct_value () [symbolic = %Op (constants.%Op.05a)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.f92.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
 // CHECK:STDOUT:   !members:
@@ -904,7 +904,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %V.as_type.loc9_34.2: type = facet_access_type %V.loc9_14.2 [symbolic = %V.as_type.loc9_34.2 (constants.%V.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @FeedTame2.%V.as_type.loc9_34.2 (%V.as_type) [symbolic = %require_complete (constants.%require_complete.940)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %V.as_type.loc9_34.2 [symbolic = %require_complete (constants.%require_complete.940)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%V.patt.loc9_14.1: %facet_type.6ff](%v.param_patt: @FeedTame2.%V.as_type.loc9_34.2 (%V.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -918,7 +918,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %W.as_type.loc11_44.2: type = facet_access_type %W.loc11_22.2 [symbolic = %W.as_type.loc11_44.2 (constants.%W.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleTameAnimal2.%W.as_type.loc11_44.2 (%W.as_type) [symbolic = %require_complete (constants.%require_complete.ba9)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %W.as_type.loc11_44.2 [symbolic = %require_complete (constants.%require_complete.ba9)]
 // CHECK:STDOUT:   %W.as_wit.iface0: <witness> = facet_access_witness %W.loc11_22.2, element0 [symbolic = %W.as_wit.iface0 (constants.%W.as_wit.iface0)]
 // CHECK:STDOUT:   %Animal.facet.loc12_14.3: %Animal.type = facet_value %W.as_type.loc11_44.2, (%W.as_wit.iface0) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_22.2, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
@@ -1118,7 +1118,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %T.as_type.loc7_21.2: type = facet_access_type %T.loc7_11.2 [symbolic = %T.as_type.loc7_21.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @TakesA.%T.as_type.loc7_21.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete.cf45b7.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc7_21.2 [symbolic = %require_complete (constants.%require_complete.cf45b7.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc7_11.1: %A.type](%x.param_patt: @TakesA.%T.as_type.loc7_21.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -1132,7 +1132,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %U.as_type.loc9_52.2: type = facet_access_type %U.loc9_19.2 [symbolic = %U.as_type.loc9_52.2 (constants.%U.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @WithExtraWhere.%U.as_type.loc9_52.2 (%U.as_type) [symbolic = %require_complete (constants.%require_complete.cf45b7.2)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.as_type.loc9_52.2 [symbolic = %require_complete (constants.%require_complete.cf45b7.2)]
 // CHECK:STDOUT:   %TakesA.specific_fn.loc10_3.2: <specific function> = specific_function constants.%TakesA, @TakesA(%U.loc9_19.2) [symbolic = %TakesA.specific_fn.loc10_3.2 (constants.%TakesA.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%U.patt.loc9_19.1: %A.type](%y.param_patt: @WithExtraWhere.%U.as_type.loc9_52.2 (%U.as_type)) {
@@ -1265,7 +1265,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %T.patt.loc3_21.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_21.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @TakesTypeDeduced.%T.loc3_21.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc3_21.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc3_21.1: type](%x.param_patt: @TakesTypeDeduced.%T.loc3_21.2 (%T)) {
 // CHECK:STDOUT:   !entry:
@@ -1279,7 +1279,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %U.as_type.loc4_60.2: type = facet_access_type %U.loc4_24.2 [symbolic = %U.as_type.loc4_60.2 (constants.%U.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallsWithExtraWhere.%U.as_type.loc4_60.2 (%U.as_type) [symbolic = %require_complete (constants.%require_complete.5eb)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.as_type.loc4_60.2 [symbolic = %require_complete (constants.%require_complete.5eb)]
 // CHECK:STDOUT:   %TakesTypeDeduced.specific_fn.loc5_3.2: <specific function> = specific_function constants.%TakesTypeDeduced, @TakesTypeDeduced(%U.as_type.loc4_60.2) [symbolic = %TakesTypeDeduced.specific_fn.loc5_3.2 (constants.%TakesTypeDeduced.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%U.patt.loc4_24.1: %type](%y.param_patt: @CallsWithExtraWhere.%U.as_type.loc4_60.2 (%U.as_type)) {
@@ -1461,7 +1461,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %T.as_type.loc3_63.2: type = facet_access_type %T.loc3_27.2 [symbolic = %T.as_type.loc3_63.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @TakesExtraWhereDeduced.%T.as_type.loc3_63.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete.5eb)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc3_63.2 [symbolic = %require_complete (constants.%require_complete.5eb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc3_27.1: %type](%x.param_patt: @TakesExtraWhereDeduced.%T.as_type.loc3_63.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -1474,7 +1474,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %U.patt.loc4_18.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc4_18.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallsWithType.%U.loc4_18.2 (%U) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.loc4_18.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %facet_value.loc5_27.3: %type = facet_value %U.loc4_18.2, () [symbolic = %facet_value.loc5_27.3 (constants.%facet_value)]
 // CHECK:STDOUT:   %TakesExtraWhereDeduced.specific_fn.loc5_3.2: <specific function> = specific_function constants.%TakesExtraWhereDeduced, @TakesExtraWhereDeduced(%facet_value.loc5_27.3) [symbolic = %TakesExtraWhereDeduced.specific_fn.loc5_3.2 (constants.%TakesExtraWhereDeduced.specific_fn)]
 // CHECK:STDOUT:
@@ -1761,7 +1761,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%T.loc21_14.2) [symbolic = %Op.type (constants.%Op.type.28d)]
 // CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type.28d) = struct_value () [symbolic = %Op (constants.%Op.902)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%T.loc21_14.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc21_14.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %BitAnd.ref {
 // CHECK:STDOUT:     %Op.decl: @impl.%Op.type (%Op.type.28d) = fn_decl @Op.2 [symbolic = @impl.%Op (constants.%Op.902)] {

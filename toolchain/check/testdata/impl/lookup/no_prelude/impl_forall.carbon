@@ -240,7 +240,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %V.patt.loc11_14.2: type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc11_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:   %A.loc11_27.2: type = class_type @A, @A(%V.loc11_14.2) [symbolic = %A.loc11_27.2 (constants.%A.13025a.2)]
 // CHECK:STDOUT:   %I.type.loc11_35.2: type = facet_type <@I, @I(%V.loc11_14.2)> [symbolic = %I.type.loc11_35.2 (constants.%I.type.325e65.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%I.type.loc11_35.2 (%I.type.325e65.2) [symbolic = %require_complete (constants.%require_complete.cfebb2.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc11_35.2 [symbolic = %require_complete (constants.%require_complete.cfebb2.1)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%F.decl), @impl(%V.loc11_14.2) [symbolic = %impl_witness (constants.%impl_witness.ab3b51.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -274,11 +274,11 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc3_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%T.loc3_9.2 (%T) [symbolic = %require_complete (constants.%require_complete.4aeca8.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc3_9.2 [symbolic = %require_complete (constants.%require_complete.4aeca8.1)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc3_9.2) [symbolic = %A (constants.%A.13025a.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %T.loc3_9.2 [symbolic = %A.elem (constants.%A.elem.1ceb36.1)]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @A.%T.loc3_9.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n.848971.1)]
-// CHECK:STDOUT:   %complete_type.loc5_1.2: <witness> = complete_type_witness @A.%struct_type.n (%struct_type.n.848971.1) [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
+// CHECK:STDOUT:   %struct_type.n.loc5_1.2: type = struct_type {.n: @A.%T.loc3_9.2 (%T)} [symbolic = %struct_type.n.loc5_1.2 (constants.%struct_type.n.848971.1)]
+// CHECK:STDOUT:   %complete_type.loc5_1.2: <witness> = complete_type_witness %struct_type.n.loc5_1.2 [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc4_8: @A.%A.elem (%A.elem.1ceb36.1) = field_decl n, element0 [concrete]
@@ -286,7 +286,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:       %.loc4_3: @A.%A.elem (%A.elem.1ceb36.1) = var_pattern %.loc4_8
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @A.%A.elem (%A.elem.1ceb36.1) = var <none>
-// CHECK:STDOUT:     %complete_type.loc5_1.1: <witness> = complete_type_witness %struct_type.n.848971.1 [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
+// CHECK:STDOUT:     %struct_type.n.loc5_1.1: type = struct_type {.n: %T} [symbolic = %struct_type.n.loc5_1.2 (constants.%struct_type.n.848971.1)]
+// CHECK:STDOUT:     %complete_type.loc5_1.1: <witness> = complete_type_witness %struct_type.n.loc5_1.1 [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc5_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -310,8 +311,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%V) [symbolic = %A (constants.%A.13025a.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc12_22: <witness> = require_complete_type @F.2.%V (%V) [symbolic = %require_complete.loc12_22 (constants.%require_complete.4aeca8.2)]
-// CHECK:STDOUT:   %require_complete.loc12_12: <witness> = require_complete_type @F.2.%A (%A.13025a.2) [symbolic = %require_complete.loc12_12 (constants.%require_complete.5b8aee.1)]
+// CHECK:STDOUT:   %require_complete.loc12_22: <witness> = require_complete_type %V [symbolic = %require_complete.loc12_22 (constants.%require_complete.4aeca8.2)]
+// CHECK:STDOUT:   %require_complete.loc12_12: <witness> = require_complete_type %A [symbolic = %require_complete.loc12_12 (constants.%require_complete.5b8aee.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %V [symbolic = %A.elem (constants.%A.elem.1ceb36.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%A (%A.13025a.2)]() -> @F.2.%V (%V) {
@@ -330,10 +331,10 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.loc17_32.2: type = class_type @A, @A(%W.loc17_16.2) [symbolic = %A.loc17_32.2 (constants.%A.13025a.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc17_35: <witness> = require_complete_type @TestGeneric.%W.loc17_16.2 (%W) [symbolic = %require_complete.loc17_35 (constants.%require_complete.4aeca8.3)]
-// CHECK:STDOUT:   %require_complete.loc17_27: <witness> = require_complete_type @TestGeneric.%A.loc17_32.2 (%A.13025a.3) [symbolic = %require_complete.loc17_27 (constants.%require_complete.5b8aee.2)]
+// CHECK:STDOUT:   %require_complete.loc17_35: <witness> = require_complete_type %W.loc17_16.2 [symbolic = %require_complete.loc17_35 (constants.%require_complete.4aeca8.3)]
+// CHECK:STDOUT:   %require_complete.loc17_27: <witness> = require_complete_type %A.loc17_32.2 [symbolic = %require_complete.loc17_27 (constants.%require_complete.5b8aee.2)]
 // CHECK:STDOUT:   %I.type.loc18_16.2: type = facet_type <@I, @I(%W.loc17_16.2)> [symbolic = %I.type.loc18_16.2 (constants.%I.type.325e65.3)]
-// CHECK:STDOUT:   %require_complete.loc18: <witness> = require_complete_type @TestGeneric.%I.type.loc18_16.2 (%I.type.325e65.3) [symbolic = %require_complete.loc18 (constants.%require_complete.cfebb2.2)]
+// CHECK:STDOUT:   %require_complete.loc18: <witness> = require_complete_type %I.type.loc18_16.2 [symbolic = %require_complete.loc18 (constants.%require_complete.cfebb2.2)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%W.loc17_16.2) [symbolic = %I.assoc_type (constants.%I.assoc_type.1e5078.3)]
 // CHECK:STDOUT:   %assoc0: @TestGeneric.%I.assoc_type (%I.assoc_type.1e5078.3) = assoc_entity element0, @I.%F.decl [symbolic = %assoc0 (constants.%assoc0.8f0422.3)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %A.loc17_32.2, @I, @I(%W.loc17_16.2) [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
@@ -414,7 +415,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.2
 // CHECK:STDOUT:   %A => constants.%A.13025a.2
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.1ceb36.2
-// CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.848971.2
+// CHECK:STDOUT:   %struct_type.n.loc5_1.2 => constants.%struct_type.n.848971.2
 // CHECK:STDOUT:   %complete_type.loc5_1.2 => constants.%complete_type.84bb3d.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -472,7 +473,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.3
 // CHECK:STDOUT:   %A => constants.%A.13025a.3
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.1ceb36.3
-// CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.848971.3
+// CHECK:STDOUT:   %struct_type.n.loc5_1.2 => constants.%struct_type.n.848971.3
 // CHECK:STDOUT:   %complete_type.loc5_1.2 => constants.%complete_type.84bb3d.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,7 +530,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.357
 // CHECK:STDOUT:   %A => constants.%A.235
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.2af
-// CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.91c
+// CHECK:STDOUT:   %struct_type.n.loc5_1.2 => constants.%struct_type.n.91c
 // CHECK:STDOUT:   %complete_type.loc5_1.2 => constants.%complete_type.0a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

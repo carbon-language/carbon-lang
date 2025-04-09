@@ -141,7 +141,8 @@ class Derived {
 // CHECK:STDOUT:     %.loc4_3: %Base.elem = var_pattern %.loc4_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Base.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b.0a3 [concrete = constants.%complete_type.ba8]
+// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b.0a3]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [concrete = constants.%complete_type.ba8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -157,7 +158,8 @@ class Derived {
 // CHECK:STDOUT:     %.loc10_3: %Derived.elem.344 = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Derived.elem.344 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.f8f [concrete = constants.%complete_type.da6]
+// CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Base, .d: %i32} [concrete = constants.%struct_type.base.d.f8f]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d [concrete = constants.%complete_type.da6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -255,6 +257,7 @@ class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -269,6 +272,7 @@ class Derived {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Derived.elem = var <none>
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
+// CHECK:STDOUT:   %struct_type.d: type = struct_type {.d: %i32} [concrete = constants.%struct_type.d]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d [concrete = constants.%complete_type.860]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

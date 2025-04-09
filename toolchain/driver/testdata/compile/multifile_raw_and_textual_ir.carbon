@@ -59,7 +59,7 @@ fn B() {
 // CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst15:          {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(inst16)}
 // CHECK:STDOUT:     inst16:          {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst17:          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
+// CHECK:STDOUT:     inst17:          {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst18:          {kind: StructValue, arg0: inst_block_empty, type: type(inst16)}
 // CHECK:STDOUT:     inst19:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
@@ -145,7 +145,7 @@ fn B() {
 // CHECK:STDOUT:     inst16:          {kind: Namespace, arg0: name_scope1, arg1: inst15, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst17:          {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(inst18)}
 // CHECK:STDOUT:     inst18:          {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst19:          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
+// CHECK:STDOUT:     inst19:          {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst20:          {kind: StructValue, arg0: inst_block_empty, type: type(inst18)}
 // CHECK:STDOUT:     inst21:          {kind: NameRef, arg0: name1, arg1: inst16, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst22:          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst24)}

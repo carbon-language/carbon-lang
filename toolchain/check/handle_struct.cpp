@@ -54,9 +54,10 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   // Store the name for the type.
-  auto value_type_id = context.insts().Get(value_inst_id).type_id();
+  auto value_type_inst_id =
+      context.types().GetInstId(context.insts().Get(value_inst_id).type_id());
   context.struct_type_fields_stack().AppendToTop(
-      {.name_id = name_id, .type_id = value_type_id});
+      {.name_id = name_id, .type_inst_id = value_type_inst_id});
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(node_id, value_inst_id);
@@ -66,12 +67,13 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
 auto HandleParseNode(Context& context,
                      Parse::StructTypeLiteralFieldId /*node_id*/) -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithNodeId();
-  SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id).type_id;
+  SemIR::InstId cast_type_inst_id =
+      ExprAsType(context, type_node, type_id).inst_id;
   // Get the name while leaving it on the stack.
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   context.struct_type_fields_stack().AppendToTop(
-      {.name_id = name_id, .type_id = cast_type_id});
+      {.name_id = name_id, .type_inst_id = cast_type_inst_id});
   return true;
 }
 

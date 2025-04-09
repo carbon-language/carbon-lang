@@ -561,7 +561,7 @@ class Stringifier {
     step_stack_->PushString("}");
     llvm::ListSeparator sep;
     for (auto field : llvm::reverse(fields)) {
-      step_stack_->Push(".", field.name_id, ": ", field.type_id, &sep);
+      step_stack_->Push(".", field.name_id, ": ", field.type_inst_id, &sep);
     }
   }
 
@@ -588,7 +588,7 @@ class Stringifier {
   }
 
   auto StringifyTypeInst(SemIR::InstId /*inst_id*/, TupleType inst) -> void {
-    auto refs = sem_ir_->type_blocks().Get(inst.elements_id);
+    auto refs = sem_ir_->inst_blocks().Get(inst.elements_id);
     if (refs.empty()) {
       *out_ << "()";
       return;

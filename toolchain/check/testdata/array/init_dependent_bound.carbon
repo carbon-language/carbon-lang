@@ -98,7 +98,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %bound_method.loc9_23.3: <bound method> = bound_method %N.loc4_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc9_23.3 (constants.%bound_method)]
 // CHECK:STDOUT:   %int.convert_checked.loc9_23.2: init Core.IntLiteral = call %bound_method.loc9_23.3(%N.loc4_6.2) [symbolic = %int.convert_checked.loc9_23.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %array_type.loc9_24.2: type = array_type %int.convert_checked.loc9_23.2, constants.%i32 [symbolic = %array_type.loc9_24.2 (constants.%array_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc9_24.2 (%array_type) [symbolic = %require_complete (constants.%require_complete.7cb)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc9_24.2 [symbolic = %require_complete (constants.%require_complete.7cb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.patt.loc4_6.1: %i32) {
 // CHECK:STDOUT:   !entry:

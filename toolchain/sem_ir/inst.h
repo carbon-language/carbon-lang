@@ -265,9 +265,6 @@ class Inst : public Printable<Inst> {
   auto arg1() const -> int32_t { return arg1_; }
 
   // Returns arguments with their IdKind.
-  auto type_id_and_kind() const -> ArgAndKind {
-    return ArgAndKind(SemIR::IdKind::For<SemIR::TypeId>, type_id_.index);
-  }
   auto arg0_and_kind() const -> ArgAndKind {
     return ArgAndKind(ArgKindTable[kind_].first, arg0_);
   }

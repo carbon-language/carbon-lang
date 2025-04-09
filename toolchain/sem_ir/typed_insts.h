@@ -599,7 +599,7 @@ struct CompleteTypeWitness {
   // Always the builtin witness type.
   TypeId type_id;
   // The type that is used as the object representation of this type.
-  TypeId object_repr_id;
+  InstId object_repr_type_inst_id;
 };
 
 // Indicates `const` on a type, such as `var x: const i32`.
@@ -626,7 +626,7 @@ struct ConvertToValueAction {
 
   TypeId type_id;
   MetaInstId inst_id;
-  TypeId target_type_id;
+  InstId target_type_inst_id;
 };
 
 // Records that a type conversion `original as new_type` was done, producing the
@@ -1325,7 +1325,7 @@ struct RefineTypeAction {
 
   TypeId type_id;
   MetaInstId inst_id;
-  TypeId inst_type_id;
+  InstId inst_type_inst_id;
 };
 
 // Requires a type to be complete. This is only created for generic types and
@@ -1345,7 +1345,7 @@ struct RequireCompleteType {
   // Always the builtin witness type.
   TypeId type_id;
   // The type that is required to be complete.
-  TypeId complete_type_id;
+  InstId complete_type_inst_id;
 };
 
 struct Return {
@@ -1617,12 +1617,12 @@ struct StructLiteral {
 
 // The type of a struct.
 struct StructType {
-  static constexpr auto Kind =
-      InstKind::StructType.Define<Parse::StructTypeLiteralId>(
-          {.ir_name = "struct_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible,
-           .deduce_through = true});
+  static constexpr auto Kind = InstKind::StructType.Define<
+      Parse::NodeIdOneOf<Parse::StructTypeLiteralId, Parse::ClassDefinitionId>>(
+      {.ir_name = "struct_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::WheneverPossible,
+       .deduce_through = true});
 
   TypeId type_id;
   StructTypeFieldsId fields_id;
@@ -1714,7 +1714,7 @@ struct TupleType {
        .deduce_through = true});
 
   TypeId type_id;
-  TypeBlockId elements_id;
+  InstBlockId elements_id;
 };
 
 // A tuple value.

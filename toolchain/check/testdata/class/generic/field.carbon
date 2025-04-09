@@ -147,11 +147,11 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %T.patt.loc11_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4aeca8.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc11_13.2 [symbolic = %require_complete (constants.%require_complete.4aeca8.1)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class.fe1b2d.1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc11_13.2 [symbolic = %Class.elem (constants.%Class.elem.e262de.1)]
-// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac3f0.1)]
-// CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness @Class.%struct_type.x (%struct_type.x.2ac3f0.1) [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4339b3.1)]
+// CHECK:STDOUT:   %struct_type.x.loc13_1.2: type = struct_type {.x: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.x.loc13_1.2 (constants.%struct_type.x.2ac3f0.1)]
+// CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness %struct_type.x.loc13_1.2 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4339b3.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc12_8: @Class.%Class.elem (%Class.elem.e262de.1) = field_decl x, element0 [concrete]
@@ -159,7 +159,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:       %.loc12_3: @Class.%Class.elem (%Class.elem.e262de.1) = var_pattern %.loc12_8
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem.e262de.1) = var <none>
-// CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %struct_type.x.2ac3f0.1 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4339b3.1)]
+// CHECK:STDOUT:     %struct_type.x.loc13_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc13_1.2 (constants.%struct_type.x.2ac3f0.1)]
+// CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %struct_type.x.loc13_1.1 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4339b3.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -184,9 +185,9 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.loc19_26.2: type = class_type @Class, @Class(%T.loc19_6.2) [symbolic = %Class.loc19_26.2 (constants.%Class.fe1b2d.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc19: <witness> = require_complete_type @G.%Class.loc19_26.2 (%Class.fe1b2d.1) [symbolic = %require_complete.loc19 (constants.%require_complete.4f8a42.1)]
+// CHECK:STDOUT:   %require_complete.loc19: <witness> = require_complete_type %Class.loc19_26.2 [symbolic = %require_complete.loc19 (constants.%require_complete.4f8a42.1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc19_26.2, %T.loc19_6.2 [symbolic = %Class.elem (constants.%Class.elem.e262de.1)]
-// CHECK:STDOUT:   %require_complete.loc20: <witness> = require_complete_type @G.%T.loc19_6.2 (%T) [symbolic = %require_complete.loc20 (constants.%require_complete.4aeca8.1)]
+// CHECK:STDOUT:   %require_complete.loc20: <witness> = require_complete_type %T.loc19_6.2 [symbolic = %require_complete.loc20 (constants.%require_complete.4aeca8.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc19_6.1: type, %c.param_patt: @G.%Class.loc19_26.2 (%Class.fe1b2d.1)) -> @G.%T.loc19_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -204,8 +205,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.loc23_26.2: type = class_type @Class, @Class(%U.loc23_6.2) [symbolic = %Class.loc23_26.2 (constants.%Class.fe1b2d.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc23_29: <witness> = require_complete_type @H.%U.loc23_6.2 (%U) [symbolic = %require_complete.loc23_29 (constants.%require_complete.4aeca8.2)]
-// CHECK:STDOUT:   %require_complete.loc23_17: <witness> = require_complete_type @H.%Class.loc23_26.2 (%Class.fe1b2d.2) [symbolic = %require_complete.loc23_17 (constants.%require_complete.4f8a42.2)]
+// CHECK:STDOUT:   %require_complete.loc23_29: <witness> = require_complete_type %U.loc23_6.2 [symbolic = %require_complete.loc23_29 (constants.%require_complete.4aeca8.2)]
+// CHECK:STDOUT:   %require_complete.loc23_17: <witness> = require_complete_type %Class.loc23_26.2 [symbolic = %require_complete.loc23_17 (constants.%require_complete.4f8a42.2)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc23_26.2, %U.loc23_6.2 [symbolic = %Class.elem (constants.%Class.elem.e262de.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.patt.loc23_6.1: type, %c.param_patt: @H.%Class.loc23_26.2 (%Class.fe1b2d.2)) -> @H.%U.loc23_6.2 (%U) {
@@ -226,7 +227,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.1
 // CHECK:STDOUT:   %Class => constants.%Class.fe1b2d.1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e262de.1
-// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.2ac3f0.1
+// CHECK:STDOUT:   %struct_type.x.loc13_1.2 => constants.%struct_type.x.2ac3f0.1
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type.4339b3.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -240,7 +241,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Class => constants.%Class.247
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2d8
-// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.ed6
+// CHECK:STDOUT:   %struct_type.x.loc13_1.2 => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -260,7 +261,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.2
 // CHECK:STDOUT:   %Class => constants.%Class.fe1b2d.2
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e262de.2
-// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.2ac3f0.2
+// CHECK:STDOUT:   %struct_type.x.loc13_1.2 => constants.%struct_type.x.2ac3f0.2
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type.4339b3.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

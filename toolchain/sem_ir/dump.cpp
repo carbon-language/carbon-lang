@@ -353,10 +353,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     auto block = file.struct_type_fields().Get(struct_type_fields_id);
     for (auto field : block) {
       out << "\n  - " << field << DumpNameIfValid(file, field.name_id);
-      if (field.type_id.has_value()) {
-        InstId inst_id =
-            file.constant_values().GetInstId(field.type_id.AsConstantId());
-        out << ": " << StringifyTypeExpr(file, inst_id);
+      if (field.type_inst_id.has_value()) {
+        out << ": " << StringifyTypeExpr(file, field.type_inst_id);
       }
     }
   }

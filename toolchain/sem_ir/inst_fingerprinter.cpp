@@ -144,7 +144,7 @@ struct Worklist {
 
   auto Add(StructTypeField field) -> void {
     Add(field.name_id);
-    Add(field.type_id);
+    Add(field.type_inst_id);
   }
 
   auto Add(StructTypeFieldsId struct_type_fields_id) -> void {
