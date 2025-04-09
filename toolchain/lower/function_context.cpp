@@ -10,18 +10,19 @@
 
 namespace Carbon::Lower {
 
-FunctionContext::FunctionContext(FileContext& file_context,
-                                 llvm::Function* function,
-                                 SemIR::SpecificId specific_id,
-                                 llvm::DISubprogram* di_subprogram,
-                                 llvm::raw_ostream* vlog_stream)
+FunctionContext::FunctionContext(
+    FileContext& file_context, llvm::Function* function,
+    SemIR::SpecificId specific_id, llvm::DISubprogram* di_subprogram,
+    llvm::raw_ostream* vlog_stream,
+    llvm::SmallVector<FileContext::LoweringFunctionState>* current_states)
     : file_context_(&file_context),
       function_(function),
       specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),
-      vlog_stream_(vlog_stream) {
+      vlog_stream_(vlog_stream),
+      current_states_(current_states) {
   function_->setSubprogram(di_subprogram_);
 }
 
@@ -119,6 +120,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
 #include "toolchain/sem_ir/inst_kind.def"
   }
 
+  IncrementCurrentState();
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
   if (di_subprogram_) {
     builder_.SetCurrentDebugLocation(llvm::DebugLoc());
@@ -143,6 +145,25 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
   auto* phi = llvm::PHINode::Create(GetType(type_id), NumReservedPredecessors);
   phi->insertInto(block, block->begin());
   return phi;
+}
+
+auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
+  // All builtins are types, with the same empty lowered value.
+  if (SemIR::IsSingletonInstId(inst_id)) {
+    return GetTypeAsValue();
+  }
+
+  if (auto result = locals_.Lookup(inst_id)) {
+    return result.value();
+  }
+
+  if (auto result = file_context_->global_variables().Lookup(inst_id)) {
+    return result.value();
+  }
+
+  auto* global = file_context_->GetGlobal(inst_id, specific_id_);
+  AddGlobalValueToCurrentState(global);
+  return global;
 }
 
 auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {

@@ -18,10 +18,11 @@ namespace Carbon::Lower {
 // `llvm::Function` definition.
 class FunctionContext {
  public:
-  explicit FunctionContext(FileContext& file_context, llvm::Function* function,
-                           SemIR::SpecificId specific_id,
-                           llvm::DISubprogram* di_subprogram,
-                           llvm::raw_ostream* vlog_stream);
+  explicit FunctionContext(
+      FileContext& file_context, llvm::Function* function,
+      SemIR::SpecificId specific_id, llvm::DISubprogram* di_subprogram,
+      llvm::raw_ostream* vlog_stream,
+      llvm::SmallVector<FileContext::LoweringFunctionState>* states);
 
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
@@ -45,22 +46,7 @@ class FunctionContext {
       -> llvm::PHINode*;
 
   // Returns a value for the given instruction.
-  auto GetValue(SemIR::InstId inst_id) -> llvm::Value* {
-    // All builtins are types, with the same empty lowered value.
-    if (SemIR::IsSingletonInstId(inst_id)) {
-      return GetTypeAsValue();
-    }
-
-    if (auto result = locals_.Lookup(inst_id)) {
-      return result.value();
-    }
-
-    if (auto result = file_context_->global_variables().Lookup(inst_id)) {
-      return result.value();
-    }
-
-    return file_context_->GetGlobal(inst_id, specific_id_);
-  }
+  auto GetValue(SemIR::InstId inst_id) -> llvm::Value*;
 
   // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) -> void {
@@ -126,6 +112,23 @@ class FunctionContext {
   auto FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
                   SemIR::InstId source_id) -> void;
 
+  auto AddCallToCurrentState(SemIR::FunctionId function_id,
+                             SemIR::SpecificId specific_id) {
+    if (!current_states_) {
+      return;
+    }
+    current_state_.calls.push_back({function_id, specific_id});
+    current_state_.relevant = true;
+  }
+
+  auto AddTypeToCurrentState(llvm::Type* type) {
+    if (!current_states_) {
+      return;
+    }
+    current_state_.types.push_back(type);
+    current_state_.relevant = true;
+  }
+
   auto llvm_context() -> llvm::LLVMContext& {
     return file_context_->llvm_context();
   }
@@ -181,6 +184,25 @@ class FunctionContext {
   auto CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
 
+  auto IncrementCurrentState() {
+    if (!current_states_) {
+      return;
+    }
+    if (current_state_.relevant) {
+      current_states_->push_back(current_state_);
+      current_state_ = {current_state_.inst_id_index + 1, false, {}, {}, {}};
+    } else {
+      ++current_state_.inst_id_index;
+    }
+  }
+
+  auto AddGlobalValueToCurrentState(llvm::Value* global) {
+    if (current_states_ && global) {
+      current_state_.global_values.push_back(global);
+      current_state_.relevant = true;
+    }
+  }
+
   // Context for the overall lowering process.
   FileContext* file_context_;
 
@@ -202,6 +224,13 @@ class FunctionContext {
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
+
+  // This is initialized and populated while lowering a specific function.
+  // A "state" corresponds to an inst_id. If anything specific-dependent
+  // was found, the state is added to the list of states: current_states_.
+  // The storage for current_states_ is in the file_context.
+  FileContext::LoweringFunctionState current_state_;
+  llvm::SmallVector<FileContext::LoweringFunctionState>* current_states_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
   Map<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;

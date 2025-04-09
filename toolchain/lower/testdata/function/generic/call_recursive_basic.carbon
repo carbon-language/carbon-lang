@@ -59,7 +59,7 @@ fn M() {
 // CHECK:STDOUT:   %.loc30_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !13
 // CHECK:STDOUT:   %F.call.loc30 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc30_5, i32 0), !dbg !14
 // CHECK:STDOUT:   %.loc31_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !15
-// CHECK:STDOUT:   %F.call.loc31 = call ptr @_CF.Main.04bf2edaaa84aa22(ptr %.loc31_5, i32 0), !dbg !16
+// CHECK:STDOUT:   %F.call.loc31 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc31_5, i32 0), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,22 +108,9 @@ fn M() {
 // CHECK:STDOUT:   ret ptr %F.call, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.04bf2edaaa84aa22(ptr %x, i32 %count) !dbg !39 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 0, !dbg !40
-// CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !41
-// CHECK:STDOUT:
-// CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret ptr %x, !dbg !42
-// CHECK:STDOUT:
-// CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !43
-// CHECK:STDOUT:   %F.call = call ptr @_CF.Main.04bf2edaaa84aa22(ptr %x, i32 %int.sadd), !dbg !44
-// CHECK:STDOUT:   ret ptr %F.call, !dbg !45
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CF.Main.e8193710fd35b608, { 1, 2, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
@@ -169,10 +156,3 @@ fn M() {
 // CHECK:STDOUT: !36 = !DILocation(line: 19, column: 15, scope: !32)
 // CHECK:STDOUT: !37 = !DILocation(line: 19, column: 10, scope: !32)
 // CHECK:STDOUT: !38 = !DILocation(line: 19, column: 3, scope: !32)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.04bf2edaaa84aa22", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !40 = !DILocation(line: 16, column: 7, scope: !39)
-// CHECK:STDOUT: !41 = !DILocation(line: 16, column: 6, scope: !39)
-// CHECK:STDOUT: !42 = !DILocation(line: 17, column: 5, scope: !39)
-// CHECK:STDOUT: !43 = !DILocation(line: 19, column: 15, scope: !39)
-// CHECK:STDOUT: !44 = !DILocation(line: 19, column: 10, scope: !39)
-// CHECK:STDOUT: !45 = !DILocation(line: 19, column: 3, scope: !39)

@@ -8,6 +8,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/constant.h"
@@ -105,6 +106,10 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     BuildFunctionDefinition(function_id, specific_id);
   }
 
+  // Find equivalent specifics (from the same generic), replace all uses and
+  // remove duplicately lowered function definitions.
+  CoalesceEquivalentSpecifics();
+
   // Append `__global_init` to `llvm::global_ctors` to initialize global
   // variables.
   if (sem_ir().global_ctor_id().has_value()) {
@@ -114,6 +119,166 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   }
 
   return std::move(llvm_module_);
+}
+
+auto FileContext::CoalesceEquivalentSpecifics() -> void {
+  // TODO: non-determinism check: does it matter the order of processing
+  // generic_ids? Non-issue for a given generic_id, as the order of the
+  // specifics for a generic is fixed.
+  lowered_specifics.ForEach([&](auto /* generic_id */, auto& specifics) {
+    for (unsigned i = 0; i < specifics.size() - 1; ++i) {
+      if (replaced_specifics.Contains(specifics[i])) {
+        specifics[i] = specifics[specifics.size() - 1];
+        specifics.pop_back();
+        --i;
+        continue;
+      }
+      for (unsigned j = i + 1; j < specifics.size(); ++j) {
+        if (replaced_specifics.Contains(specifics[j])) {
+          specifics[j] = specifics[specifics.size() - 1];
+          specifics.pop_back();
+          --j;
+          continue;
+        }
+        std::pair<SemIR::SpecificId, SemIR::SpecificId> test_equivalence = {
+            specifics[i], specifics[j]};
+        // The two specifics are not equivalent due to the function type info,
+        // stored in lowered_specifics_types.
+        // Mark non-equivalance in case it can be reused to short-cut another
+        // path and continue the search for other equivalences.
+        if (!CheckTypeEquivalence(specifics[i], specifics[j])) {
+          non_equivalent_specifics.Insert(test_equivalence);
+          continue;
+        }
+
+        Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>
+            visited_equivalent_specifics;
+        visited_equivalent_specifics.Insert(test_equivalence);
+        // Function type information matches, check usages inside function body
+        // that are dependent on the specific. This information has been stored
+        // in lowered_states while lowering each function body.
+        if (CheckStateEquivalence(specifics[i], specifics[j],
+                                  visited_equivalent_specifics)) {
+          visited_equivalent_specifics.ForEach([&](auto equivalent_entry) {
+            CARBON_VLOG("Found equivalent specifics: {0}, {1}",
+                        equivalent_entry.second, equivalent_entry.first);
+            equivalent_specifics.Insert(equivalent_entry);
+            replaced_specifics.Insert(equivalent_entry.second);
+            ReplaceSpecificWithSpecific(equivalent_entry.second,
+                                        equivalent_entry.first);
+          });
+
+          visited_equivalent_specifics.ForEach([&](auto equivalent_entry) {
+            DeleteFunctionSpecific(equivalent_entry.second,
+                                   equivalent_entry.first);
+          });
+
+          // Removed the replaced specific from the list of emitted specifics.
+          specifics[j] = specifics[specifics.size() - 1];
+          specifics.pop_back();
+          --j;
+        } else {
+          // Only mark non-equivalence based on state for starting specifics.
+          non_equivalent_specifics.Insert(test_equivalence);
+        }
+      }
+    }
+  });
+}
+
+auto FileContext::ReplaceSpecificWithSpecific(SemIR::SpecificId to_replace,
+                                              SemIR::SpecificId replace_with)
+    -> void {
+  specific_functions_[to_replace.index]->replaceAllUsesWith(
+      specific_functions_[replace_with.index]);
+}
+
+auto FileContext::DeleteFunctionSpecific(SemIR::SpecificId to_replace,
+                                         SemIR::SpecificId replace_with)
+    -> void {
+  specific_functions_[to_replace.index]->eraseFromParent();
+  specific_functions_[to_replace.index] =
+      specific_functions_[replace_with.index];
+}
+
+auto FileContext::CheckTypeEquivalence(SemIR::SpecificId specific_id1,
+                                       SemIR::SpecificId specific_id2) -> bool {
+  CARBON_CHECK(specific_id1.has_value() && specific_id2.has_value());
+  auto specific1_entry = lowered_specifics_types.Lookup(specific_id1);
+  auto specific2_entry = lowered_specifics_types.Lookup(specific_id2);
+  CARBON_CHECK(specific1_entry && specific2_entry,
+               "Type entries expected for specifics");
+  return specific1_entry.value().Equals(specific2_entry.value());
+}
+
+// TODO: change recursion to a worklist
+// NOLINTNEXTLINE(misc-no-recursion)
+auto FileContext::CheckStateEquivalence(
+    SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
+    Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
+        visited_equivalent_specifics) -> bool {
+  auto specific1_entry = lowered_states.Lookup(specific_id1);
+  auto specific2_entry = lowered_states.Lookup(specific_id2);
+  CARBON_CHECK(specific1_entry && specific2_entry,
+               "State entries expected for specifics");
+  llvm::SmallVector<LoweringFunctionState>& states1 = specific1_entry.value();
+  llvm::SmallVector<LoweringFunctionState>& states2 = specific2_entry.value();
+
+  if (states1.size() != states2.size()) {
+    return false;
+  }
+  std::pair<SemIR::SpecificId, SemIR::SpecificId> outer_pair = {specific_id1,
+                                                                specific_id2};
+  for (unsigned i = 0; i < states1.size(); ++i) {
+    auto& state1 = states1[i];
+    auto& state2 = states2[i];
+    if (state1.inst_id_index != state2.inst_id_index ||
+        state1.global_values.size() != state2.global_values.size() ||
+        state1.calls.size() != state2.calls.size() ||
+        state1.types.size() != state2.types.size()) {
+      return false;
+    }
+    for (unsigned i = 0; i < state1.global_values.size(); ++i) {
+      if (state1.global_values[i] != state2.global_values[i]) {
+        non_equivalent_specifics.Insert(outer_pair);
+        return false;
+      }
+    }
+    for (unsigned i = 0; i < state1.types.size(); ++i) {
+      if (state1.types[i] != state2.types[i]) {
+        non_equivalent_specifics.Insert(outer_pair);
+        return false;
+      }
+    }
+    for (unsigned i = 0; i < state1.calls.size(); ++i) {
+      auto [function_id1, specific_id1] = state1.calls[i];
+      auto [function_id2, specific_id2] = state2.calls[i];
+      if (function_id1 != function_id2) {
+        non_equivalent_specifics.Insert(outer_pair);
+        return false;
+      }
+      if (specific_id1 == specific_id2) {
+        return true;
+      }
+      std::pair<SemIR::SpecificId, SemIR::SpecificId> inner_pair = {
+          specific_id1, specific_id2};
+      if (non_equivalent_specifics.Contains(inner_pair)) {
+        return false;
+      }
+      if (equivalent_specifics.Contains(inner_pair)) {
+        continue;
+      }
+      if (!visited_equivalent_specifics.Insert(inner_pair).is_inserted()) {
+        continue;
+      }
+      if (!CheckStateEquivalence(specific_id1, specific_id2,
+                                 visited_equivalent_specifics)) {
+        return false;
+      }
+      // leave the added equivalence in place and continue
+    }
+  }
+  return true;
 }
 
 auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
@@ -323,6 +488,10 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
 
+  if (specific_id.has_value()) {
+    lowered_specifics_types.Insert(specific_id, function_type_info);
+  }
+
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
 
@@ -387,9 +556,16 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   CARBON_DCHECK(!body_block_ids.empty(),
                 "No function body blocks found during lowering.");
 
+  // Store which specifics were already lowered (with definitions) for each
+  // generic.
+  if (function.generic_id.has_value() && specific_id.has_value()) {
+    AddLoweredSpecificForGeneric(function.generic_id, specific_id);
+  }
+
   FunctionContext function_lowering(*this, llvm_function, specific_id,
                                     BuildDISubprogram(function, llvm_function),
-                                    vlog_stream_);
+                                    vlog_stream_,
+                                    CreateStateForSpecific(specific_id));
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
