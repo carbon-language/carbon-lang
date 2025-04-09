@@ -126,15 +126,28 @@ A name binding pattern is a pattern.
 -   _binding-pattern_ ::= _identifier_ `:` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
-If the binding pattern is enclosed by a `var` pattern, it is a _variable binding
-pattern_. Otherwise, it is a _value binding pattern_.
+A name binding pattern declares a _binding_ with a name specified by the
+_identifier_, which can be used as an expression. If the binding pattern is
+enclosed by a `var` pattern, it is a _reference binding pattern_, and the
+binding is a durable reference expression. Otherwise, it is a _value binding
+pattern_, and the binding is a value expression.
 
-The _identifier_ specifies the name of the _binding_. The type of the binding is
-specified by the _expression_. The scrutinee is implicitly converted to that
-type if necessary. If the pattern is a variable binding pattern, the scrutinee
-is used to initialize a complete object allocated by the pattern, and the name
-is _bound_ to that object. Otherwise, the scrutinee is converted to a value
-expression, and the name is bound to that expression.
+A _variable binding pattern_ is a special kind of reference binding pattern,
+where the enclosing `var` pattern doesn't have a tuple or struct subpattern.
+
+> **TODO:** Specify the conditions under which a binding can be moved. This is
+> expected to be the only difference between variable binding patterns and other
+> reference binding patterns.
+
+The type of the binding is specified by the _expression_. If the pattern is a
+value binding pattern, the scrutinee is implicitly converted to a value
+expression of that type if necessary, and the binding is _bound_ to the
+converted value. If the pattern is a reference binding pattern, the enclosing
+`var` pattern will ensure that the scrutinee is already a durable reference
+expression with the specified type, and the binding is bound directly to it.
+
+A use of a value binding is a value expression of the declared type, and a use
+of a reference binding is a durable reference expression of the declared type.
 
 ```carbon
 fn F() -> i32 {
@@ -293,12 +306,15 @@ specified.
 
 ### `var`
 
-A `var` prefix indicates that binding patterns within it are variable binding
-patterns rather than value binding patterns.
+A `var` prefix indicates that a pattern provides mutable storage for the
+scrutinee.
 
 -   _proper-pattern_ ::= `var` _proper-pattern_
 
-A `var` pattern matches when its nested pattern matches.
+A `var` pattern matches when its nested pattern matches. The type of the storage
+is the resolved type of the nested _pattern_. Any binding patterns within the
+nested pattern are reference binding patterns, and their bindings refer to
+portions of the corresponding storage rather than to the scrutinee.
 
 ```carbon
 fn F(p: i32*);
@@ -306,7 +322,7 @@ fn G() {
   match ((1, 2)) {
     // `n` is a mutable `i32`.
     case (var n: i32, 1) => { F(&n); }
-    // `n` and `m` are separate mutable `i32`s.
+    // `n` and `m` are the elements of a mutable `(i32, i32)`.
     case var (n: i32, m: i32) => { F(if n then &n else &m); }
   }
 }
@@ -629,12 +645,12 @@ We will diagnose the following situations:
 
 ## Pattern usage
 
-### Pattern match control flow
+This section is a skeletal design, added to support [the overview](README.md).
+It should not be treated as accepted by the core team; rather, it is a
+placeholder until we have more time to examine this detail. Please feel welcome
+to rewrite and update as appropriate.
 
-`match` is a skeletal design, added to support [the overview](README.md). Aside
-from [guards](#guards), it should not be treated as accepted by the core team;
-rather, it is a placeholder until we have more time to examine this detail.
-Please feel welcome to rewrite and update as appropriate.
+### Pattern match control flow
 
 The most powerful form and easiest to explain form of pattern matching is a
 dedicated control flow construct that subsumes the `switch` of C and C++ into
@@ -687,10 +703,6 @@ composed of the following:
 In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
-
-Any initializing expressions in the scrutinee of a `match` statement are
-[materialized](values.md#temporary-materialization) before pattern matching
-begins, so that the result can be reused by multiple `case`s.
 
 #### Guards
 
