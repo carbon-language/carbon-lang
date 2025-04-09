@@ -341,6 +341,8 @@ static auto BuildClassDefinition(Context& context,
 
 // Imports a record declaration from Clang to Carbon. If successful, returns
 // the new Carbon class declaration `InstId`.
+// TODO: Change `clang_decl` to `const &` when lookup is using `clang::DeclID`
+// and we don't need to store the decl for lookup context.
 static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
                                 SemIR::NameScopeId parent_scope_id,
                                 SemIR::NameId name_id,
