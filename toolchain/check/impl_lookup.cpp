@@ -293,6 +293,11 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   }
 
   if (query_is_concrete || IsImplEffectivelyFinal(context, impl)) {
+    // TODO: These final results should be cached somehow. Positive (non-None)
+    // results could be cached globally, as they can not change. But
+    // negative results can change after a final impl is written, so
+    // they can only be cached in a limited way, or the cache needs to
+    // be invalidated by writing a final impl that would match.
     return EvalImplLookupResult::MakeFinal(
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), specific_id, impl.witness_id)));

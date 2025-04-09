@@ -324,6 +324,14 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           }
         }
 
+        // TODO: In `.Self` we want to find the witness through its FacetType,
+        // which is the code below this block. Instead of special-casing that
+        // here, we could have the impl lookup also include witnesses
+        // (FacetAccessWitness) from the FacetType? And even non-final results.
+        // Then we just call into lookup once here, for `.Self` or otherwise,
+        // and can drop the construction of FacetAccessWitness from this
+        // function, and resolve TODO below that for "associated entity not
+        // found in facet type".
         if (!is_lookup_in_period_self) {
           // For an associated constant value, we need to do impl lookup to try
           // find a final impl declaration. If we find one, we can use the value
@@ -333,11 +341,6 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                   result.scope_result.target_inst_id()));
           if (context.insts().Is<SemIR::AssociatedConstantDecl>(
                   assoc_entity.decl_id)) {
-            // TODO: These results should be cached somehow. Positive (non-None)
-            // results could be cached globally, as they can not change. But
-            // negative results can change after a final impl is written, so
-            // they can only be cached in a limited way, or the cache needs to
-            // be invalidated by writing a final impl that would match.
             witness_inst_id = LookupFinalImplWitnessForSpecificInterface(
                 context, loc_id, context.constant_values().Get(base_id),
                 assoc_interface);
