@@ -217,7 +217,7 @@ class FileContext {
   // Maps global variables to their lowered variant.
   Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
 
-  // Global format string for PrintInt builtin.
+  // Global format string for `printf.int.format` used by the PrintInt builtin.
   llvm::Value* printf_int_format_string_ = nullptr;
 };
 
