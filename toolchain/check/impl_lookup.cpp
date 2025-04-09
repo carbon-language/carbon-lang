@@ -496,10 +496,8 @@ static auto CollectCandidateImplsForQuery(
     -> llvm::SmallVector<CandidateImpl> {
   llvm::SmallVector<CandidateImpl> candidate_impls;
   for (auto [id, impl] : context.impls().enumerate()) {
-    if (final_only) {
-      if (!IsImplEffectivelyFinal(context, impl)) {
-        continue;
-      }
+    if (final_only && !IsImplEffectivelyFinal(context, impl)) {
+      continue;
     }
 
     // If the impl's interface_id differs from the query, then this impl can
