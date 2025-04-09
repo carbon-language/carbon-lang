@@ -397,10 +397,9 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   return member_id;
 }
 
-// Performs the instance binding step in member access. If the found member
-// is a field, forms a class member access. If the found member is an
-// instance method, forms a bound method. Otherwise, the member is returned
-// unchanged.
+// Performs the instance binding step in member access. If the found member is a
+// field, forms a class member access. If the found member is an instance
+// method, forms a bound method. Otherwise, the member is returned unchanged.
 static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
@@ -504,8 +503,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId base_id, SemIR::NameId name_id,
                                 bool required) -> SemIR::InstId {
-  // If the base is a name scope, such as a class or namespace, perform
-  // lookup into that scope.
+  // If the base is a name scope, such as a class or namespace, perform lookup
+  // into that scope.
   if (auto base_const_id = context.constant_values().Get(base_id);
       base_const_id.is_constant()) {
     llvm::SmallVector<LookupScope> lookup_scopes;
@@ -547,8 +546,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                context.struct_type_fields().Get(struct_type->fields_id))) {
         if (name_id == field.name_id) {
           // TODO: Model this as producing a lookup result, and do instance
-          // binding separately. Perhaps a struct type should be a name
-          // scope.
+          // binding separately. Perhaps a struct type should be a name scope.
           return GetOrAddInst<SemIR::StructAccess>(
               context, loc_id,
               {.type_id = field.type_id,
@@ -583,9 +581,9 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       /*lookup_in_type_of_base=*/true, /*required=*/required);
 
   // For name lookup into a facet, never perform instance binding.
-  // TODO: According to the design, this should be a "lookup in base"
-  // lookup, not a "lookup in type of base" lookup, and the facet itself
-  // should have member names that directly name members of the `impl`.
+  // TODO: According to the design, this should be a "lookup in base" lookup,
+  // not a "lookup in type of base" lookup, and the facet itself should have
+  // member names that directly name members of the `impl`.
   if (context.types().IsFacetType(base_type_id)) {
     return member_id;
   }
@@ -629,9 +627,9 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
       context,
       SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
                              .facet_value_inst_id = facet_inst_id});
-  // TODO: We should be able to lookup constant associated values from
-  // runtime facet values by using their FacetType only, but we assume
-  // constant values for impl lookup at the moment.
+  // TODO: We should be able to lookup constant associated values from runtime
+  // facet values by using their FacetType only, but we assume constant values
+  // for impl lookup at the moment.
   if (!self_type_const_id.is_constant()) {
     context.TODO(loc_id, "associated value lookup on runtime facet value");
     return SemIR::ErrorInst::SingletonInstId;
@@ -690,12 +688,11 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
   auto member_id = member_expr_id;
   auto member = context.insts().Get(member_id);
 
-  // If the member expression names an associated entity, impl lookup is
-  // always performed using the type of the base expression.
+  // If the member expression names an associated entity, impl lookup is always
+  // performed using the type of the base expression.
   if (auto assoc_type = context.types().TryGetAs<SemIR::AssociatedEntityType>(
           member.type_id())) {
-    // Step 1: figure out the type of the associated entity from the
-    // interface.
+    // Step 1: figure out the type of the associated entity from the interface.
 
     auto value_inst_id = context.constant_values().GetConstantInstId(member_id);
     // TODO: According to
@@ -722,9 +719,9 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                             member_id, missing_impl_diagnoser);
       // Next we will perform instance binding.
     } else {
-      // Step 2b: For non-instance methods and associated constants, we
-      // access the value of the associated constant, and don't do any
-      // instance binding.
+      // Step 2b: For non-instance methods and associated constants, we access
+      // the value of the associated constant, and don't do any instance
+      // binding.
       return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
                                     assoc_type->GetSpecificInterface());
     }
@@ -774,8 +771,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     context.emitter().Emit(loc_id, TupleIndexNotConstant);
     return SemIR::ErrorInst::SingletonInstId;
   };
-  // Diagnose a non-constant index prior to conversion to IntLiteral,
-  // because the conversion will fail if the index is not constant.
+  // Diagnose a non-constant index prior to conversion to IntLiteral, because
+  // the conversion will fail if the index is not constant.
   if (!context.constant_values().Get(index_inst_id).is_concrete()) {
     return diag_non_constant_index();
   }
@@ -801,8 +798,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // TODO: Handle the case when `index_val->getZExtValue()` has too many
-  // bits.
+  // TODO: Handle the case when `index_val->getZExtValue()` has too many bits.
   element_type_id = type_block[index_val->getZExtValue()];
   auto tuple_index = SemIR::ElementIndex(index_val->getZExtValue());
 
