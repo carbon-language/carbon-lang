@@ -433,6 +433,9 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     // do an O(N+M) merge instead of O(N*M) nested loops.
     auto result_witness_id =
         FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
+    // TODO: If the impl lookup finds a final impl, it should take precedence
+    // over the witness from the facet value. See the test:
+    // fail_todo_final_impl_precidence_over_facet_value.carbon.
     if (!result_witness_id.has_value()) {
       result_witness_id = GetOrAddLookupImplWitness(
           context, loc_id, query_self_const_id, interface);

@@ -522,3 +522,116 @@ fn F[T:! Z where .X = {.r: ()}](z: T) {
   // function.
   let a: z.Y = ();
 }
+
+// --- fail_todo_final_impl_precidence_over_facet_value.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+interface J {}
+
+final impl forall [T:! J] T as I {}
+
+class C(T:! I) {}
+
+class D(T:! J) {
+  // Finds the final impl decl; The facet value of `T` in `C(T)` holds an
+  // `ImplWitness`.
+  var c: C(T)*;
+}
+
+fn F(T:! I & J) {
+  // `I` found in the facet type; The facet value of `T` in `C(T)` holds a `FacetAccessWitness`.
+  // TODO: It should use the `final impl` and thus hold the same `ImplWitness`
+  var x: C(T);
+  // `D.c` used the final impl decl to make a facet value with an `ImplWitness`
+  // for its `T` in `C(T)`.
+  var y: D(T);
+  // This converts a pointer to a facet value (should be `ImplWitness` but
+  // isn't) to a pointer to a facet value (with `ImplWitness`).
+  //
+  // TODO: It should type check when they are both the same generic type
+  // `C(T:! I)` defined by the `final impl` of `I`.
+  //
+  // CHECK:STDERR: fail_todo_final_impl_precidence_over_facet_value.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C(T as I)*` to `C(T as I)*` [ConversionFailure]
+  // CHECK:STDERR:   y.c = &x;
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_todo_final_impl_precidence_over_facet_value.carbon:[[@LINE+4]]:3: note: type `C(T as I)*` does not implement interface `Core.ImplicitAs(C(T as I)*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   y.c = &x;
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  y.c = &x;
+}
+
+// --- fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let X:! type; }
+interface J {}
+
+impl forall [T:! J] T as I where .X = () {}
+
+class C(T:! I) {
+  var b: T.X;
+}
+
+class D(T:! J) {
+  // Finds the impl decl; The facet value of `T` in `C(T)` holds a
+  // `LookupImplWitness`.
+  var c: C(T)*;
+}
+
+fn F(T:! I & J) -> T.(I.X) {
+  // `I` found in the facet type; The facet value of `T` in `C(T)` holds a
+  // `FacetAccessWitness`.
+  var x: C(T);
+  // `D.c` used the final impl decl to make a facet value with a
+  // `LookupImplWitness` for its `T` in `C(T)`.
+  var y: D(T);
+  // This converts a pointer to a facet value (with `FacetAccessWitness`) to a
+  // pointer to a facet value (with `LookupImplWitness`).
+  //
+  // TODO: It should type check as a `LookupImplWitness` will find the same
+  // witness that `FacetAccessWitness` is accessing from the caller.
+  //
+  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C(T as I)*` to `C(T as I)*` [ConversionFailure]
+  // CHECK:STDERR:   y.c = &x;
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+4]]:3: note: type `C(T as I)*` does not implement interface `Core.ImplicitAs(C(T as I)*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   y.c = &x;
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  y.c = &x;
+  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `(T as J as I).(I.X)` to `T.(TODO: element 0 in <witness for T, interface 0>)` [ConversionFailure]
+  // CHECK:STDERR:   return (*y.c).b;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+4]]:3: note: type `(T as J as I).(I.X)` does not implement interface `Core.ImplicitAs(T.(TODO: element 0 in <witness for T, interface 0>))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return (*y.c).b;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  return (*y.c).b;
+}
+
+class E1 {}
+impl E1 as J {}
+
+fn G1() {
+  // Doesn't see the `final impl` below. `E1.(I.X)` is `()`.
+  let a1: () = F(E1);
+}
+
+final impl forall [T:! J] T as I where .X = {} {}
+
+class E2 {}
+impl E2 as J {}
+
+fn G2() {
+  // TODO: Does see the `final impl` below. `E2.(I.X)` is `{}`.
+  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
+  // CHECK:STDERR:   let a2: {} = F(E2);
+  // CHECK:STDERR:                ^~~~~
+  // CHECK:STDERR: fail_todo_convert_facet_value_of_facet_access_witness_to_facet_value_of_lookup_impl_witness.carbon:[[@LINE+4]]:16: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a2: {} = F(E2);
+  // CHECK:STDERR:                ^~~~~
+  // CHECK:STDERR:
+  let a2: {} = F(E2);
+}
