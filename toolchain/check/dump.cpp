@@ -115,8 +115,6 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     }
 
     case SemIR::LocId::Kind::ImportIRInstId: {
-      CARBON_CHECK(loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId);
-
       auto import_ir_id = context.sem_ir()
                               .import_ir_insts()
                               .Get(loc_id.import_ir_inst_id())

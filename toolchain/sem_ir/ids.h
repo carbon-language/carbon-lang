@@ -855,7 +855,7 @@ struct LocId : public IdBase<LocId> {
   auto ToImplicit() const -> LocId {
     // This should only be called for NodeId or ImportIRInstId, but we only set
     // the flag for NodeId.
-    CARBON_DCHECK(kind() != Kind::InstId);
+    CARBON_CHECK(kind() != Kind::InstId);
     if (kind() == Kind::NodeId) {
       return LocId(index & ~ImplicitBit);
     }
@@ -865,7 +865,7 @@ struct LocId : public IdBase<LocId> {
   // Forms an equivalent `LocId` for a token-only diagnostic location.  Requires
   // a non-`InstId` location.
   auto ToTokenOnly() const -> LocId {
-    CARBON_DCHECK(kind() != Kind::InstId);
+    CARBON_CHECK(kind() != Kind::InstId);
     if (has_value()) {
       return LocId(index & ~TokenOnlyBit);
     }
@@ -889,14 +889,14 @@ struct LocId : public IdBase<LocId> {
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
   auto is_implicit() const -> bool {
-    CARBON_DCHECK(kind() != Kind::InstId);
+    CARBON_CHECK(kind() != Kind::InstId);
     return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
   }
 
   // Returns true if the location is token-only for diagnostics. Requires a
   // non-`InstId` location.
   auto is_token_only() const -> bool {
-    CARBON_DCHECK(kind() != Kind::InstId);
+    CARBON_CHECK(kind() != Kind::InstId);
     return (index & TokenOnlyBit) == 0;
   }
 
@@ -905,13 +905,13 @@ struct LocId : public IdBase<LocId> {
     if (!has_value()) {
       return ImportIRInstId::None;
     }
-    CARBON_DCHECK(kind() == Kind::ImportIRInstId, "{0}", index);
+    CARBON_CHECK(kind() == Kind::ImportIRInstId, "{0}", index);
     return ImportIRInstId(FirstImportIRInstId - index_without_flags());
   }
 
   // Returns the equivalent `InstId` when `kind()` matches or is `None`.
   auto inst_id() const -> InstId {
-    CARBON_DCHECK(kind() == Kind::None || kind() == Kind::InstId, "{0}", index);
+    CARBON_CHECK(kind() == Kind::None || kind() == Kind::InstId, "{0}", index);
     return InstId(index);
   }
 
@@ -920,7 +920,7 @@ struct LocId : public IdBase<LocId> {
     if (!has_value()) {
       return Parse::NodeId::None;
     }
-    CARBON_DCHECK(kind() == Kind::NodeId, "{0}", index);
+    CARBON_CHECK(kind() == Kind::NodeId, "{0}", index);
     return Parse::NodeId(FirstNodeId - index_without_flags());
   }
 
