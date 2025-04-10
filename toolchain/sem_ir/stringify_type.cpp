@@ -305,11 +305,7 @@ class Stringifier {
       if (some_where) {
         step_stack_->PushString(" and");
       }
-      auto lhs_const_id =
-          sem_ir_->constant_values().GetInstId(rewrite.lhs_const_id);
-      auto rhs_const_id =
-          sem_ir_->constant_values().GetInstId(rewrite.rhs_const_id);
-      step_stack_->Push(" ", lhs_const_id, " = ", rhs_const_id);
+      step_stack_->Push(" ", rewrite.lhs_id, " = ", rewrite.rhs_id);
       some_where = true;
     }
     if (!facet_type_info.self_impls_constraints.empty()) {

@@ -183,8 +183,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       llvm::FunctionCallee printf =
           context.llvm_module().getOrInsertFunction("printf", printf_type);
 
-      llvm::Value* format_string =
-          context.builder().CreateGlobalString("%d\n", "printf.int.format");
+      llvm::Value* format_string = context.printf_int_format_string();
       llvm::Value* arg_value = context.builder().CreateSExtOrTrunc(
           context.GetValue(arg_ids[0]), i32_type);
       context.SetLocal(inst_id, context.builder().CreateCall(

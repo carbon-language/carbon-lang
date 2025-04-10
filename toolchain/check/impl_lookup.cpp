@@ -12,6 +12,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
@@ -220,6 +221,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     // DeduceImplArguments can import new impls which can invalidate any
     // pointers into `context.impls()`.
     const SemIR::Impl& impl = context.impls().Get(impl_id);
+
     if (impl.generic_id.has_value()) {
       specific_id =
           DeduceImplArguments(context, loc_id,
@@ -290,11 +292,12 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
-  bool impl_is_effectively_final =
-      // TODO: impl.is_final ||
-      (context.constant_values().Get(impl.self_id).is_concrete() &&
-       context.constant_values().Get(impl.constraint_id).is_concrete());
-  if (query_is_concrete || impl_is_effectively_final) {
+  if (query_is_concrete || IsImplEffectivelyFinal(context, impl)) {
+    // TODO: These final results should be cached somehow. Positive (non-None)
+    // results could be cached globally, as they can not change. But
+    // negative results can change after a final impl is written, so
+    // they can only be cached in a limited way, or the cache needs to
+    // be invalidated by writing a final impl that would match.
     return EvalImplLookupResult::MakeFinal(
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), specific_id, impl.witness_id)));
@@ -340,9 +343,9 @@ static auto FindWitnessInFacet(
 // if not, it will evaluate to itself as a symbolic witness to be further
 // evaluated with a more specific query when building a specific for the generic
 // context the query came from.
-static auto FindWitnessInImpls(Context& context, SemIR::LocId loc_id,
-                               SemIR::ConstantId query_self_const_id,
-                               SemIR::SpecificInterface interface)
+static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
+                                      SemIR::ConstantId query_self_const_id,
+                                      SemIR::SpecificInterface interface)
     -> SemIR::InstId {
   auto witness_const_id = EvalOrAddInst(
       context, loc_id.ToImplicit(),
@@ -434,9 +437,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     // do an O(N+M) merge instead of O(N*M) nested loops.
     auto result_witness_id =
         FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
+    // TODO: If the impl lookup finds a final impl, it should take precedence
+    // over the witness from the facet value. See the test:
+    // fail_todo_final_impl_precidence_over_facet_value.carbon.
     if (!result_witness_id.has_value()) {
-      result_witness_id =
-          FindWitnessInImpls(context, loc_id, query_self_const_id, interface);
+      result_witness_id = GetOrAddLookupImplWitness(
+          context, loc_id, query_self_const_id, interface);
     }
     if (result_witness_id.has_value()) {
       result_witness_ids.push_back(result_witness_id);
@@ -491,11 +497,16 @@ struct CandidateImpl {
 
 // Returns the list of candidates impls for lookup to select from.
 static auto CollectCandidateImplsForQuery(
-    Context& context, const TypeStructure& query_type_structure,
+    Context& context, bool final_only,
+    const TypeStructure& query_type_structure,
     SemIR::SpecificInterface& query_specific_interface)
     -> llvm::SmallVector<CandidateImpl> {
   llvm::SmallVector<CandidateImpl> candidate_impls;
   for (auto [id, impl] : context.impls().enumerate()) {
+    if (final_only && !IsImplEffectivelyFinal(context, impl)) {
+      continue;
+    }
+
     // If the impl's interface_id differs from the query, then this impl can
     // not possibly provide the queried interface.
     if (impl.interface.interface_id != query_specific_interface.interface_id) {
@@ -593,7 +604,8 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       QueryIsConcrete(context, query_self_const_id, query_specific_interface);
 
   auto candidate_impls = CollectCandidateImplsForQuery(
-      context, query_type_structure, query_specific_interface);
+      context, /*final_only=*/false, query_type_structure,
+      query_specific_interface);
 
   for (const auto& candidate : candidate_impls) {
     // In deferred lookup for a symbolic impl witness, while building a
@@ -617,6 +629,50 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     }
   }
   return EvalImplLookupResult::MakeNone();
+}
+
+auto LookupFinalImplWitnessForSpecificInterface(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
+  // This would mean we need to UnwrapFacetAccessType(query_self_const_id), but
+  // it's already done by member access, which is the one use of this function.
+  CARBON_DCHECK(!context.insts().Is<SemIR::FacetAccessType>(
+      context.constant_values().GetInstId(query_self_const_id)));
+
+  auto query_type_structure = BuildTypeStructure(
+      context, context.constant_values().GetInstId(query_self_const_id),
+      query_specific_interface);
+  bool query_is_concrete =
+      QueryIsConcrete(context, query_self_const_id, query_specific_interface);
+
+  auto candidate_impls = CollectCandidateImplsForQuery(
+      context, /*final_only=*/true, query_type_structure,
+      query_specific_interface);
+
+  for (const auto& candidate : candidate_impls) {
+    // In deferred lookup for a symbolic impl witness, while building a
+    // specific, there may be no stack yet as this may be the first lookup. If
+    // further lookups are started as a result in deduce, they will build the
+    // stack.
+    //
+    // NOTE: Don't retain a reference into the stack, it may be invalidated if
+    // we do further impl lookups when GetWitnessIdForImpl() does deduction.
+    if (!context.impl_lookup_stack().empty()) {
+      context.impl_lookup_stack().back().impl_loc = candidate.loc_inst_id;
+    }
+
+    // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls
+    // to be imported, invalidating any pointer into `context.impls()`.
+    auto result = GetWitnessIdForImpl(
+        context, loc_id, query_is_concrete, query_self_const_id,
+        query_specific_interface, candidate.impl_id);
+    if (result.has_value()) {
+      CARBON_CHECK(result.has_concrete_value());
+      return result.concrete_witness();
+    }
+  }
+  return SemIR::InstId::None;
 }
 
 }  // namespace Carbon::Check

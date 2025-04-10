@@ -129,8 +129,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
   }
   for (auto rewrite : facet_type.rewrite_constraints) {
     out << "\n"
-        << "  - " << DumpConstantSummary(file, rewrite.lhs_const_id) << "\n"
-        << "  - " << DumpConstantSummary(file, rewrite.rhs_const_id);
+        << "  - " << DumpInstSummary(file, rewrite.lhs_id) << "\n"
+        << "  - " << DumpInstSummary(file, rewrite.rhs_id);
   }
   if (auto identified_id =
           file.identified_facet_types().TryGetId(facet_type_id);

@@ -237,6 +237,7 @@ fn F[D:! Y](d: D) {
   // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
+  //
   // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `(C(D) as Z).(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
@@ -426,41 +427,7 @@ fn F() {
   let x: {} = G(C);
 }
 
-// --- fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface I {
-  let T:! type;
-  fn F[self: Self]() -> T;
-}
-
-impl forall [U:! type] U as I where .T = () {
-  fn F[self: Self]() -> () { return (); }
-}
-final impl forall [V:! type] V* as I where .T = V {
-  fn F[self: Self]() -> V { return *self; }
-}
-
-fn H[W:! type](v: W) -> W.(I.T) {
-  return v.(I.F)();
-}
-
-// The return of `H` is `(X*).(I.T)` which has a final impl making it `X`.
-// While this function is still a generic context, it should see the concrete
-// `X` type and the return of `H(p)` should convert (a no-op) to `X`.
-fn G[X:! type](p: X*) -> X {
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `(X* as I).(I.T)` to `X` [ConversionFailure]
-  // CHECK:STDERR:   return H(p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `(X* as I).(I.T)` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   return H(p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  return H(p);
-}
-
 // --- type_structure_first_difference.carbon
-
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
