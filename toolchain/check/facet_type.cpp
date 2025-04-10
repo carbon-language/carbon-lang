@@ -166,15 +166,14 @@ auto InitialFacetTypeImplWitness(
 
     if (table_entry != SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
       if (table_entry != rewrite_value) {
-        CARBON_DIAGNOSTIC(
-            AssociatedConstantWithDifferentValues, Error,
-            "associated constant {0} given two different values {1} and {2}",
-            SemIR::NameId, InstIdAsType, InstIdAsType);
+        CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
+                          "associated constant {0} given two different values",
+                          SemIR::NameId);
         auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
         context.emitter().Emit(facet_type_inst_id,
                                AssociatedConstantWithDifferentValues,
-                               assoc_const.name_id, table_entry, rewrite_value);
+                               assoc_const.name_id);
       }
       table_entry = SemIR::ErrorInst::SingletonInstId;
       continue;
@@ -206,14 +205,13 @@ auto InitialFacetTypeImplWitness(
       } else if (rewrite_value != SemIR::ErrorInst::SingletonInstId) {
         const auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
-        CARBON_DIAGNOSTIC(
-            AssociatedConstantNotConstantAfterConversion, Error,
-            "associated constant {0} given value {1} that is not constant "
-            "after conversion to {2}",
-            SemIR::NameId, InstIdAsType, SemIR::TypeId);
-        context.emitter().Emit(
-            facet_type_inst_id, AssociatedConstantNotConstantAfterConversion,
-            assoc_const.name_id, rewrite_value, assoc_const_type_id);
+        CARBON_DIAGNOSTIC(AssociatedConstantNotConstantAfterConversion, Error,
+                          "associated constant {0} given value that is not "
+                          "constant after conversion to {1}",
+                          SemIR::NameId, SemIR::TypeId);
+        context.emitter().Emit(facet_type_inst_id,
+                               AssociatedConstantNotConstantAfterConversion,
+                               assoc_const.name_id, assoc_const_type_id);
         rewrite_value = SemIR::ErrorInst::SingletonInstId;
       }
     }
