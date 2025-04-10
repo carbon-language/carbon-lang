@@ -55,14 +55,14 @@ auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
 
 auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
-  self_id = ExprAsType(context, self_node, self_id).inst_id;
-  context.node_stack().Push(node_id, self_id);
+  auto self_type_inst_id = ExprAsType(context, self_node, self_id).inst_id;
+  context.node_stack().Push(node_id, self_type_inst_id);
 
   // Introduce `Self`. Note that we add this name lexically rather than adding
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  AddNameToLookup(context, SemIR::NameId::SelfType, self_id);
+  AddNameToLookup(context, SemIR::NameId::SelfType, self_type_inst_id);
   return true;
 }
 
@@ -117,7 +117,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
 
   // There's no need to push `Self` into scope here, because we can find it in
   // the parent class scope.
-  context.node_stack().Push(node_id, self_inst_id);
+  context.node_stack().Push(node_id, SemIR::TypeInstId(context, self_inst_id));
   return true;
 }
 
@@ -351,15 +351,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
-  auto [self_type_node, self_inst_id] =
+  auto [self_type_node, self_type_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
+  auto self_type_id = context.types().GetTypeIdForTypeInstId(self_type_inst_id);
   // Pop the `impl` introducer and any `forall` parameters as a "name".
   auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
-  // Convert the self and constraint expressions to types.
-  auto [self_type_inst_id, self_type_id] =
-      ExprAsType(context, node_id, self_inst_id);
+  // Convert the constraint expression to a type.
   auto [constraint_type_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
 
