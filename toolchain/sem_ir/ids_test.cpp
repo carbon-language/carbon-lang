@@ -14,6 +14,24 @@ namespace {
 
 using ::testing::Eq;
 
+TEST(IdsTest, LocIdValues) {
+  // This testing should match the ranges documented on LocId.
+  EXPECT_THAT(static_cast<LocId>(Parse::NodeId::None).index, Eq(-1));
+
+  EXPECT_THAT(static_cast<LocId>(InstId(0)).index, Eq(0));
+  EXPECT_THAT(
+      static_cast<LocId>(InstId(std::numeric_limits<int32_t>::max())).index,
+      Eq(std::numeric_limits<int32_t>::max()));
+
+  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(0)).index, Eq(-2));
+  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1)).index,
+              Eq(-2 - (1 << 24) + 1));
+
+  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 24)));
+  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1)).index,
+              Eq(-(1 << 29) + 1));
+}
+
 // A standard parameterized test for (implicit, token_only, index).
 class IdsTestWithParam
     : public testing::TestWithParam<std::tuple<bool, bool, int32_t>> {
@@ -70,24 +88,6 @@ TEST_P(LocIdAsNoneTestWithParam, Test) {
   EXPECT_THAT(loc_id.node_id(),
               // The actual type is NoneNodeId, so cast to NodeId.
               Eq<Parse::NodeId>(Parse::NodeId::None));
-}
-
-TEST(IdsTest, LocIdValues) {
-  // This testing should match the ranges documented on LocId.
-  EXPECT_THAT(static_cast<LocId>(Parse::NodeId::None).index, Eq(-1));
-
-  EXPECT_THAT(static_cast<LocId>(InstId(0)).index, Eq(0));
-  EXPECT_THAT(
-      static_cast<LocId>(InstId(std::numeric_limits<int32_t>::max())).index,
-      Eq(std::numeric_limits<int32_t>::max()));
-
-  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(0)).index, Eq(-2));
-  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1)).index,
-              Eq(-2 - (1 << 24) + 1));
-
-  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 24)));
-  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1)).index,
-              Eq(-(1 << 29) + 1));
 }
 
 class LocIdAsImportIRInstIdTest : public IdsTestWithParam {};
