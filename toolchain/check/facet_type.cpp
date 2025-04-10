@@ -201,11 +201,13 @@ auto InitialFacetTypeImplWitness(
           context, context.insts().GetLocId(facet_type_inst_id),
           context.constant_values().GetInstId(rewrite_value),
           assoc_const_type_id);
-      rewrite_value = context.constant_values().Get(converted_inst_id);
+      auto new_rewrite_value = context.constant_values().Get(converted_inst_id);
       // The result of conversion can be non-constant even if the original
       // value was constant.
-      if (!rewrite_value.is_constant() &&
-          rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
+      if (new_rewrite_value.is_constant() ||
+          new_rewrite_value == SemIR::ErrorInst::SingletonConstantId) {
+        rewrite_value = new_rewrite_value;
+      } else {
         const auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
         CARBON_DIAGNOSTIC(

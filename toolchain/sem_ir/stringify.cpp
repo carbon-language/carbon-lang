@@ -669,7 +669,7 @@ static auto Stringify(const SemIR::File& sem_ir, StepStack& step_stack)
         step,
         [&](InstId inst_id) {
           if (!inst_id.has_value()) {
-            out << "<invalid type>";
+            out << "<invalid>";
             return;
           }
           auto untyped_inst = sem_ir.insts().Get(inst_id);
