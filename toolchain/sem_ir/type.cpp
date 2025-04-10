@@ -27,11 +27,19 @@ auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
 }
 
 auto TypeStore::GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
-  return GetTypeIdForTypeConstantId(file_->constant_values().Get(inst_id));
+  auto constant_id = file_->constant_values().Get(inst_id);
+  CheckConstantValueIsTypeType(*file_, constant_id);
+  return TypeId::ForTypeConstant(constant_id);
+}
+
+auto TypeStore::GetTypeIdForTypeInstId(TypeInstId inst_id) const -> TypeId {
+  auto constant_id = file_->constant_values().Get(inst_id);
+  return TypeId::ForTypeConstant(constant_id);
 }
 
 auto TypeStore::GetAsTypeInstId(InstId inst_id) const -> TypeInstId {
-  CheckConstantValueIsTypeType(*file_, file_->constant_values().Get(inst_id));
+  auto constant_id = file_->constant_values().Get(inst_id);
+  CheckConstantValueIsTypeType(*file_, constant_id);
   return TypeInstId::UnsafeMake(inst_id);
 }
 

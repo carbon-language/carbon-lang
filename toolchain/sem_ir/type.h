@@ -50,6 +50,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // an `as type` conversion, such as to a `FacetAccessType` instruction whose
   // value is of type `TypeType`.
   auto GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId;
+  auto GetTypeIdForTypeInstId(TypeInstId inst_id) const -> TypeId;
 
   // Converts an `InstId` to a `TypeInstId` of the same id value. This process
   // involves checking that the type of the instruction's value is `TypeType`,
