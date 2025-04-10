@@ -53,7 +53,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto GetTypeIdForTypeInstId(SemIR::InstId inst_id) const -> SemIR::TypeId;
 
   // Returns the ID of the instruction used to define the specified type.
-  auto GetInstId(TypeId type_id) const -> InstId;
+  auto GetInstId(TypeId type_id) const -> TypeInstId;
 
   // Returns the instruction used to define the specified type.
   auto GetAsInst(TypeId type_id) const -> Inst;

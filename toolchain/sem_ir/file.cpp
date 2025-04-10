@@ -18,6 +18,22 @@
 
 namespace Carbon::SemIR {
 
+static auto CheckInstIdValueIsTypeFn(File& sem_ir, InstId id) -> void {
+  if (!id.has_value()) {
+    return;
+  }
+  auto const_inst_id = sem_ir.constant_values().GetConstantInstId(id);
+  CARBON_CHECK(const_inst_id.has_value());
+  auto type_id = sem_ir.insts().Get(const_inst_id).type_id();
+  CARBON_CHECK(type_id == SemIR::TypeType::SingletonTypeId ||
+               type_id == SemIR::ErrorInst::SingletonTypeId);
+}
+
+auto set_check_inst_id_value_is_type = [] {
+  SetCheckInstIdValueIsType(CheckInstIdValueIsTypeFn);
+  return 0;
+}();
+
 File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
            const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
            SharedValueStores& value_stores, std::string filename)

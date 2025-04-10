@@ -130,7 +130,7 @@ class X {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %Self.ref as %I.ref {
+// CHECK:STDOUT: impl @impl: <error> as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -178,7 +178,7 @@ class X {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %Self.ref as %J.ref {
+// CHECK:STDOUT: impl @impl: <error> as %J.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -283,7 +283,7 @@ class X {
 // CHECK:STDOUT:   %Method.type: type = fn_type @Method.2, @impl.6b5(%Self) [symbolic = %Method.type (constants.%Method.type.163)]
 // CHECK:STDOUT:   %Method: @impl.6b5.%Method.type (%Method.type.163) = struct_value () [symbolic = %Method (constants.%Method.84d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %Self.ref as %Z.ref {
+// CHECK:STDOUT:   impl: <error> as %Z.ref {
 // CHECK:STDOUT:     %Zero.decl: @impl.6b5.%Zero.type (%Zero.type.db4) = fn_decl @Zero.2 [symbolic = @impl.6b5.%Zero (constants.%Zero.8fb)] {} {}
 // CHECK:STDOUT:     %Method.decl: @impl.6b5.%Method.type (%Method.type.163) = fn_decl @Method.2 [symbolic = @impl.6b5.%Method (constants.%Method.84d)] {
 // CHECK:STDOUT:       %self.patt: @Method.2.%Self.as_type.loc13_21.1 (%Self.as_type) = binding_pattern self
@@ -505,7 +505,7 @@ class X {
 // CHECK:STDOUT:   witness = @X.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4cc: %Self.ref as %C.ref {
+// CHECK:STDOUT: impl @impl.4cc: <error> as %C.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

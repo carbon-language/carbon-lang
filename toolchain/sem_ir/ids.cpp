@@ -10,12 +10,18 @@
 
 namespace Carbon::SemIR {
 
+static CheckInstIdValueIsType check_inst_id_value_is_type = nullptr;
+
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
   } else {
     IdBase::Print(out);
   }
+}
+
+TypeInstId::TypeInstId(File& sem_ir, InstId id) : InstId(id) {
+  check_inst_id_value_is_type(sem_ir, id);
 }
 
 auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
@@ -172,6 +178,10 @@ auto LocId::Print(llvm::raw_ostream& out) const -> void {
   } else {
     out << import_ir_inst_id();
   }
+}
+
+void SetCheckInstIdValueIsType(CheckInstIdValueIsType fn) {
+  check_inst_id_value_is_type = fn;
 }
 
 }  // namespace Carbon::SemIR

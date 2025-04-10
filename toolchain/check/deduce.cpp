@@ -136,6 +136,10 @@ class DeductionWorklist {
         Add(inst_id, SemIR::InstId(arg), needs_substitution);
         break;
       }
+      case CARBON_KIND(SemIR::TypeInstId inst_id): {
+        Add(inst_id, SemIR::InstId(arg), needs_substitution);
+        break;
+      }
       case CARBON_KIND(SemIR::TypeId type_id): {
         Add(type_id, SemIR::TypeId(arg), needs_substitution);
         break;

@@ -28,8 +28,10 @@ auto TypeStore::GetTypeIdForTypeInstId(SemIR::InstId inst_id) const
   return GetTypeIdForTypeConstantId(file_->constant_values().Get(inst_id));
 }
 
-auto TypeStore::GetInstId(TypeId type_id) const -> InstId {
-  return file_->constant_values().GetInstId(GetConstantId(type_id));
+auto TypeStore::GetInstId(TypeId type_id) const -> TypeInstId {
+  // The instruction for a TypeId has a value of that TypeId.
+  return TypeInstId::UnsafeMake(
+      file_->constant_values().GetInstId(GetConstantId(type_id)));
 }
 
 auto TypeStore::GetAsInst(TypeId type_id) const -> Inst {

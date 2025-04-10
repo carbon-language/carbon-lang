@@ -181,6 +181,7 @@ using IdKind = TypeEnum<
     SpecificInterfaceId,
     StructTypeFieldsId,
     TypeBlockId,
+    TypeInstId,
     TypeId>;
 // clang-format on
 

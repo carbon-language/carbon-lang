@@ -197,7 +197,7 @@ fn F() {
 // CHECK:STDOUT:   %Zero.type: type = fn_type @Zero.2, @impl.6b5(%Self) [symbolic = %Zero.type (constants.%Zero.type.db4)]
 // CHECK:STDOUT:   %Zero: @impl.6b5.%Zero.type (%Zero.type.db4) = struct_value () [symbolic = %Zero (constants.%Zero.8fb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %Self.ref as %Z.ref {
+// CHECK:STDOUT:   impl: <error> as %Z.ref {
 // CHECK:STDOUT:     %Zero.decl: @impl.6b5.%Zero.type (%Zero.type.db4) = fn_decl @Zero.2 [symbolic = @impl.6b5.%Zero (constants.%Zero.8fb)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

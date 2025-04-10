@@ -52,6 +52,33 @@ struct InstId : public IdBase<InstId> {
 
 constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 
+// And InstId whose value is a type. The fact it's a type is CHECKed on
+// construction, and this allows that check to be represented in the type
+// system.
+struct TypeInstId : public InstId {
+  explicit TypeInstId(File& sem_ir, InstId id);
+
+  // Ergonomic helper for `Check::Context`, which is not visible from SemIR.
+  template <class Context>
+  explicit TypeInstId(Context& context, InstId id)
+      : TypeInstId(context.sem_ir(), id) {}
+
+  using InstId::InstId;
+
+  static const TypeInstId None;
+
+  static constexpr auto UnsafeMake(InstId id) -> TypeInstId {
+    return TypeInstId(UnsafeCtor(), id);
+  }
+
+ private:
+  struct UnsafeCtor {};
+  explicit constexpr TypeInstId(UnsafeCtor /*unsafe*/, InstId id)
+      : InstId(id) {}
+};
+
+constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
+
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction
 // class.
@@ -897,6 +924,11 @@ struct SpecificInterface {
 
 constexpr SpecificInterface SpecificInterface::None = {
     .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
+
+using CheckInstIdValueIsType = auto (*)(File& sem_ir, InstId id) -> void;
+// Set a function that can verify an InstId is a type. This breaks the
+// dependency cycle between the `typed_inst` and `file` build targets.
+void SetCheckInstIdValueIsType(CheckInstIdValueIsType fn);
 
 }  // namespace Carbon::SemIR
 

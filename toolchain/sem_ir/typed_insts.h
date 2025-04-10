@@ -81,7 +81,7 @@ struct AnyFoundationDecl {
   static constexpr InstKind Kinds[] = {InstKind::AdaptDecl, InstKind::BaseDecl};
 
   InstKind kind;
-  InstId foundation_type_inst_id;
+  TypeInstId foundation_type_inst_id;
   // Kind-specific data.
   AnyRawId arg1;
 };
@@ -94,7 +94,7 @@ struct AdaptDecl {
        .is_lowered = false});
 
   // No type_id; this is not a value.
-  InstId adapted_type_inst_id;
+  TypeInstId adapted_type_inst_id;
 };
 
 // Takes the address of a reference expression, such as for the `&` address-of
@@ -193,7 +193,7 @@ struct ArrayType {
 
   TypeId type_id;
   InstId bound_id;
-  InstId element_type_inst_id;
+  TypeInstId element_type_inst_id;
 };
 
 // Perform a no-op conversion to a compatible type.
@@ -287,7 +287,7 @@ struct BaseDecl {
       {.ir_name = "base_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;
-  InstId base_type_inst_id;
+  TypeInstId base_type_inst_id;
   ElementIndex index;
 };
 
@@ -665,6 +665,8 @@ struct ErrorInst {
       ConstantId::ForConcreteConstant(SingletonInstId);
   static constexpr auto SingletonTypeId =
       TypeId::ForTypeConstant(SingletonConstantId);
+  static constexpr auto SingletonTypeInstId =
+      TypeInstId::UnsafeMake(SingletonInstId);
 
   TypeId type_id;
 };
@@ -736,7 +738,7 @@ struct FacetValue {
   // A `FacetType`.
   TypeId type_id;
   // The type that you will get if you cast this value to `type`.
-  InstId type_inst_id;
+  TypeInstId type_inst_id;
   // The set of `ImplWitness` instructions for a `FacetType`. The witnesses are
   // in the same order as the set of `required_interfaces` in the
   // `IdentifiedFacetType` of the `FacetType` from `type_id`, so that an index
@@ -1387,7 +1389,7 @@ struct ReturnSlot {
   // The function return type as originally written by the user. For diagnostics
   // only; this has no semantic significance, and is not preserved across
   // imports.
-  InstId type_inst_id;
+  TypeInstId type_inst_id;
 
   // The storage that will be initialized by the function.
   InstId storage_id;
@@ -1410,7 +1412,7 @@ struct ReturnSlotPattern {
   // The function return type as originally written by the user. For diagnostics
   // only; this has no semantic significance, and is not preserved across
   // imports.
-  InstId type_inst_id;
+  TypeInstId type_inst_id;
 };
 
 // An `expr == expr` clause in a `where` expression or `require` declaration.
@@ -1782,9 +1784,9 @@ struct UnboundElementType {
 
   TypeId type_id;
   // The `ClassType` that a value of this type is an element of.
-  InstId class_type_inst_id;
+  TypeInstId class_type_inst_id;
   // The type of the element.
-  InstId element_type_inst_id;
+  TypeInstId element_type_inst_id;
 };
 
 // Converts from a value expression to an ephemeral reference expression, in

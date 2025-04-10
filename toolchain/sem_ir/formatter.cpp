@@ -1410,6 +1410,10 @@ class FormatterImpl {
     }
   }
 
+  auto FormatName(TypeInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
+  }
+
   auto FormatLabel(InstBlockId id) -> void {
     out_ << inst_namer_->GetLabelFor(scope_, id);
   }
