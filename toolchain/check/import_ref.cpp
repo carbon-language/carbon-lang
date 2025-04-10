@@ -705,7 +705,8 @@ static auto GetLocalConstantInstId(ImportRefResolver& resolver,
 // Returns the local constant InstId for an imported InstId.
 static auto GetLocalTypeInstId(ImportRefResolver& resolver,
                                SemIR::TypeInstId inst_id) -> SemIR::TypeInstId {
-  // The input inst was a TypeInstId, so we know the inst's type is TypeType.
+  // The input instruction is a TypeInstId, and import does not change types, so
+  // the result is also a valid TypeInstId.
   return SemIR::TypeInstId::UnsafeMake(
       GetLocalConstantInstId(resolver, static_cast<SemIR::InstId>(inst_id)));
 }
@@ -1411,8 +1412,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  auto adapted_type_inst_id = SemIR::TypeInstId(
-      resolver.local_ir(),
+  auto adapted_type_inst_id = resolver.local_ir().types().GetAsTypeInstId(
       AddLoadedImportRef(resolver, SemIR::TypeType::SingletonTypeId,
                          inst.adapted_type_inst_id, adapted_type_const_id));
 
@@ -1571,8 +1571,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  auto base_type_inst_id = SemIR::TypeInstId(
-      resolver.local_ir(),
+  auto base_type_inst_id = resolver.local_ir().types().GetAsTypeInstId(
       AddLoadedImportRef(resolver, SemIR::TypeType::SingletonTypeId,
                          inst.base_type_inst_id, base_type_const_id));
 
@@ -2241,12 +2240,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   // Create instructions for self and constraint to hold the symbolic constant
   // value for a generic impl.
-  new_impl.self_id = SemIR::TypeInstId(
-      resolver.local_ir(),
+  new_impl.self_id = resolver.local_ir().types().GetAsTypeInstId(
       AddLoadedImportRef(resolver, SemIR::TypeType::SingletonTypeId,
                          import_impl.self_id, self_const_id));
-  new_impl.constraint_id = SemIR::TypeInstId(
-      resolver.local_ir(),
+  new_impl.constraint_id = resolver.local_ir().types().GetAsTypeInstId(
       AddLoadedImportRef(resolver, SemIR::TypeType::SingletonTypeId,
                          import_impl.constraint_id, constraint_const_id));
   new_impl.interface = GetLocalSpecificInterface(
