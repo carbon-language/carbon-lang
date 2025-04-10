@@ -148,6 +148,9 @@ and the language:
 -   An under-development [compiler and toolchain](/toolchain/) that will compile
     Carbon (and eventually C++ code as well) into standard executable code. This
     is where most of our current implementation efforts are directed.
+    -   Historically, there was also a prototype
+        [explorer](https://github.com/carbon-language/explorer) interpreter that
+        is no longer under development, and has been archived.
 
 If you're interested in contributing, we're currently focused on developing the
 Carbon toolchain until it can
