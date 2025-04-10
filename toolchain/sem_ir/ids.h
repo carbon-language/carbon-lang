@@ -56,16 +56,9 @@ constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 // construction, and this allows that check to be represented in the type
 // system.
 struct TypeInstId : public InstId {
-  explicit TypeInstId(File& sem_ir, InstId id);
-
-  // Ergonomic helper for `Check::Context`, which is not visible from SemIR.
-  template <class Context>
-  explicit TypeInstId(Context& context, InstId id)
-      : TypeInstId(context.sem_ir(), id) {}
+  static const TypeInstId None;
 
   using InstId::InstId;
-
-  static const TypeInstId None;
 
   static constexpr auto UnsafeMake(InstId id) -> TypeInstId {
     return TypeInstId(UnsafeCtor(), id);
@@ -924,11 +917,6 @@ struct SpecificInterface {
 
 constexpr SpecificInterface SpecificInterface::None = {
     .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
-
-using CheckInstIdValueIsType = auto (*)(File& sem_ir, InstId id) -> void;
-// Set a function that can verify an InstId is a type. This breaks the
-// dependency cycle between the `typed_inst` and `file` build targets.
-void SetCheckInstIdValueIsType(CheckInstIdValueIsType fn);
 
 }  // namespace Carbon::SemIR
 
