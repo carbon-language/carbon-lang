@@ -35,7 +35,6 @@ fn Run() {
 // CHECK:STDOUT: source_filename = "call_different_impls.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @printf.int.format = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.1 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @"_CF.X.Main:I.Main"() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -45,7 +44,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @"_CF.Y.Main:I.Main"() !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.1, i32 2), !dbg !10
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

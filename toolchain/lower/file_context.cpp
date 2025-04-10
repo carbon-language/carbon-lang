@@ -154,9 +154,9 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
     return const_value;
   }
 
-  // If we want a pointer to the constant, materialize a global to hold it.
-  // TODO: We could reuse the same global if the constant is used more than
-  // once.
+  if (auto result = global_variables().Lookup(const_inst_id)) {
+    return result.value();
+  }
 
   // Include both the name of the constant, if any, and the point of use in
   // the name of the variable.
@@ -177,10 +177,13 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
   }
   llvm::StringRef sep = (use_name[0] == '.') ? "" : ".";
 
-  return new llvm::GlobalVariable(
+  auto* global_variable = new llvm::GlobalVariable(
       llvm_module(), GetType(sem_ir().GetPointeeType(value_rep.type_id)),
       /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage, const_value,
       const_name + sep + use_name);
+
+  global_variables_.Insert(const_inst_id, global_variable);
+  return global_variable;
 }
 
 auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,

@@ -273,10 +273,10 @@ interface C {
 // CHECK:STDOUT:   %impl.elem0.71d: type = impl_witness_access %.Self.as_wit.iface0, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I2_where.type: type = facet_type <@I2 where %impl.elem0.71d = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %impl_witness.ec95d0.1: <witness> = impl_witness (%empty_tuple.type), @impl(%V) [symbolic]
+// CHECK:STDOUT:   %impl_witness.6f03c8.1: <witness> = impl_witness (file.%impl_witness_assoc_constant), @impl(%V) [symbolic]
 // CHECK:STDOUT:   %Self.541: %J2.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.541 [symbolic]
-// CHECK:STDOUT:   %impl_witness.ec95d0.2: <witness> = impl_witness (%empty_tuple.type), @impl(%Self.541) [symbolic]
+// CHECK:STDOUT:   %impl_witness.6f03c8.2: <witness> = impl_witness (file.%impl_witness_assoc_constant), @impl(%Self.541) [symbolic]
 // CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self.541, @I2 [symbolic]
 // CHECK:STDOUT:   %I2.facet.758: %I2.type = facet_value %Self.as_type, (%I2.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.7c7: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic]
@@ -323,7 +323,7 @@ interface C {
 // CHECK:STDOUT:     %J2.ref: type = name_ref J2, file.%J2.decl.loc9 [concrete = constants.%J2.type]
 // CHECK:STDOUT:     %V.loc11_14.1: %J2.type = bind_symbolic_name V, 0 [symbolic = %V.loc11_14.2 (constants.%V)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_tuple.type), @impl(constants.%V) [symbolic = @impl.%impl_witness (constants.%impl_witness.ec95d0.1)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%impl_witness_assoc_constant), @impl(constants.%V) [symbolic = @impl.%impl_witness (constants.%impl_witness.6f03c8.1)]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %J2.decl.loc13: type = interface_decl @J2 [concrete = constants.%J2.type] {} {}
 // CHECK:STDOUT: }
@@ -382,7 +382,7 @@ interface C {
 // CHECK:STDOUT:   %V.loc11_14.2: %J2.type = bind_symbolic_name V, 0 [symbolic = %V.loc11_14.2 (constants.%V)]
 // CHECK:STDOUT:   %V.patt.loc11_14.2: %J2.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc11_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:   %V.as_type.loc11_22.2: type = facet_access_type %V.loc11_14.2 [symbolic = %V.as_type.loc11_22.2 (constants.%V.as_type)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_tuple.type), @impl(%V.loc11_14.2) [symbolic = %impl_witness (constants.%impl_witness.ec95d0.1)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (file.%impl_witness_assoc_constant), @impl(%V.loc11_14.2) [symbolic = %impl_witness (constants.%impl_witness.6f03c8.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -410,7 +410,7 @@ interface C {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%V
 // CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc11_22.2 => constants.%V.as_type
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.ec95d0.1
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.6f03c8.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%V.loc11_14.2) {}
@@ -419,7 +419,7 @@ interface C {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%Self.541
 // CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc11_22.2 => constants.%Self.as_type
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.ec95d0.2
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.6f03c8.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

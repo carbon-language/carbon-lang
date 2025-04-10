@@ -97,6 +97,14 @@ class FileContext {
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
   }
+  auto printf_int_format_string() -> llvm::Value* {
+    return printf_int_format_string_;
+  }
+  auto SetPrintfIntFormatString(llvm::Value* printf_int_format_string) {
+    CARBON_CHECK(!printf_int_format_string_,
+                 "PrintInt formatting string already generated");
+    printf_int_format_string_ = printf_int_format_string;
+  }
 
  private:
   struct FunctionTypeInfo {
@@ -208,6 +216,9 @@ class FileContext {
 
   // Maps global variables to their lowered variant.
   Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
+
+  // Global format string for `printf.int.format` used by the PrintInt builtin.
+  llvm::Value* printf_int_format_string_ = nullptr;
 };
 
 }  // namespace Carbon::Lower

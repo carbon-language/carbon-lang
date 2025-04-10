@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
@@ -26,6 +27,7 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -254,6 +256,74 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
   return lookup;
 }
 
+// Creates an integer type of the given size.
+static auto MakeIntType(Context& context, IntId size_id) -> TypeExpr {
+  // TODO: Fill in a location for the type once available.
+  auto type_inst_id = MakeIntTypeLiteral(context, Parse::NodeId::None,
+                                         SemIR::IntKind::Signed, size_id);
+  return ExprAsType(context, Parse::NodeId::None, type_inst_id);
+}
+
+// Maps a C++ type to a Carbon type. Currently only 32-bit `int` is supported.
+// TODO: Support more types.
+static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
+  const auto* builtin_type = dyn_cast<clang::BuiltinType>(type);
+  if (builtin_type && builtin_type->getKind() == clang::BuiltinType::Int &&
+      context.ast_context().getTypeSize(type) == 32) {
+    return MakeIntType(context, context.ints().Add(32));
+  }
+  return {.inst_id = SemIR::ErrorInst::SingletonInstId,
+          .type_id = SemIR::ErrorInst::SingletonTypeId};
+}
+
+// Returns a block id for the explicit parameters of the given function
+// declaration. If the function declaration has no parameters, it returns
+// `SemIR::InstBlockId::Empty`. In the case of an unsupported parameter type, it
+// returns `SemIR::InstBlockId::None`.
+static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
+                                     const clang::FunctionDecl& clang_decl)
+    -> SemIR::InstBlockId {
+  if (clang_decl.parameters().empty()) {
+    return SemIR::InstBlockId::Empty;
+  }
+  SemIR::CallParamIndex next_index(0);
+  llvm::SmallVector<SemIR::InstId> params;
+  params.reserve(clang_decl.parameters().size());
+  for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
+    clang::QualType param_type = param->getType().getCanonicalType();
+    SemIR::TypeId type_id = MapType(context, param_type).type_id;
+    if (type_id == SemIR::ErrorInst::SingletonTypeId) {
+      context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
+                                         param_type.getAsString()));
+      return SemIR::InstBlockId::None;
+    }
+    llvm::StringRef param_name = param->getName();
+    SemIR::EntityNameId entity_name_id = context.entity_names().Add(
+        {.name_id =
+             (param_name.empty())
+                 // Translate an unnamed parameter to an underscore to
+                 // match Carbon's naming of unnamed/unused function params.
+                 ? SemIR::NameId::Underscore
+                 : SemIR::NameId::ForIdentifier(
+                       context.sem_ir().identifiers().Add(param_name)),
+         .parent_scope_id = SemIR::NameScopeId::None});
+    SemIR::InstId binding_pattern_id = AddInstInNoBlock(
+        // TODO: Fill in a location once available.
+        context, SemIR::LocIdAndInst::NoLoc(SemIR::BindingPattern(
+                     {.type_id = type_id, .entity_name_id = entity_name_id})));
+    SemIR::InstId var_pattern_id = AddInstInNoBlock(
+        context,
+        // TODO: Fill in a location once available.
+        SemIR::LocIdAndInst::NoLoc(SemIR::ValueParamPattern(
+            {.type_id = context.insts().Get(binding_pattern_id).type_id(),
+             .subpattern_id = binding_pattern_id,
+             .index = next_index})));
+    ++next_index.index;
+    params.push_back(var_pattern_id);
+  }
+  return context.inst_blocks().Add(params);
+}
+
 // Returns the return type of the given function declaration.
 // Currently only void and 32-bit int are supported.
 // TODO: Support more return types.
@@ -264,40 +334,23 @@ static auto GetReturnType(Context& context, SemIRLoc loc_id,
   if (ret_type->isVoidType()) {
     return SemIR::InstId::None;
   }
-  if (const auto* builtin_type = dyn_cast<clang::BuiltinType>(ret_type);
-      builtin_type && builtin_type->getKind() == clang::BuiltinType::Int) {
-    constexpr int SupportedIntWidth = 32;
-    uint64_t int_size = context.ast_context().getTypeSize(ret_type);
-    if (int_size != SupportedIntWidth) {
-      // TODO: Add tests for this case.
-      context.TODO(loc_id,
-                   llvm::formatv("Unsupported: return type: {0}, size: {1}",
-                                 ret_type.getAsString(), int_size));
-      return SemIR::ErrorInst::SingletonInstId;
-    }
-    IntId size_id = context.ints().Add(int_size);
-    // TODO: Fill in a location for the type once available.
-    SemIR::TypeId type_id = MakeIntType(context, Parse::NodeId::None,
-                                        SemIR::IntKind::Signed, size_id);
-    // TODO: Fill in a location for the type once available.
-    SemIR::InstId type_inst_id = MakeIntTypeLiteral(
-        context, Parse::NodeId::None, SemIR::IntKind::Signed, size_id);
-
-    SemIR::InstId return_slot_pattern_id = AddInstInNoBlock(
-        // TODO: Fill in a location for the return type once available.
-        context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
-                     {.type_id = type_id, .type_inst_id = type_inst_id})));
-    SemIR::InstId param_pattern_id = AddInstInNoBlock(
-        // TODO: Fill in a location for the return type once available.
-        context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
-                     {.type_id = type_id,
-                      .subpattern_id = return_slot_pattern_id,
-                      .index = SemIR::CallParamIndex::None})));
-    return param_pattern_id;
+  auto [type_inst_id, type_id] = MapType(context, ret_type);
+  if (type_id == SemIR::ErrorInst::SingletonTypeId) {
+    context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
+                                       ret_type.getAsString()));
+    return SemIR::ErrorInst::SingletonInstId;
   }
-  context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
-                                     ret_type.getAsString()));
-  return SemIR::ErrorInst::SingletonInstId;
+  SemIR::InstId return_slot_pattern_id = AddInstInNoBlock(
+      // TODO: Fill in a location for the return type once available.
+      context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
+                   {.type_id = type_id, .type_inst_id = type_inst_id})));
+  SemIR::InstId param_pattern_id = AddInstInNoBlock(
+      // TODO: Fill in a location for the return type once available.
+      context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
+                   {.type_id = type_id,
+                    .subpattern_id = return_slot_pattern_id,
+                    .index = SemIR::CallParamIndex::None})));
+  return param_pattern_id;
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
@@ -319,11 +372,11 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, "Unsupported: Template function");
     return SemIR::ErrorInst::SingletonInstId;
   }
-  if (!clang_decl->param_empty()) {
-    context.TODO(loc_id, "Unsupported: Function with parameters");
+  auto param_patterns_id =
+      MakeParamPatternsBlockId(context, loc_id, *clang_decl);
+  if (!param_patterns_id.has_value()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
-
   auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
   if (SemIR::ErrorInst::SingletonInstId == return_slot_pattern_id) {
     return SemIR::ErrorInst::SingletonInstId;
@@ -342,7 +395,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .last_param_node_id = Parse::NodeId::None,
        .pattern_block_id = SemIR::InstBlockId::Empty,
        .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
-       .param_patterns_id = SemIR::InstBlockId::Empty,
+       .param_patterns_id = param_patterns_id,
        .is_extern = false,
        .extern_library_id = SemIR::LibraryNameId::None,
        .non_owning_decl_id = SemIR::InstId::None,
