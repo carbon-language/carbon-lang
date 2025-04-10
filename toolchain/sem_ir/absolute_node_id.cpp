@@ -22,6 +22,9 @@ static auto FollowImportRef(
 
   auto import_loc_id = cursor_ir->insts().GetLocId(import_ir.decl_id);
   switch (import_loc_id.kind()) {
+    case SemIR::LocId::Kind::None:
+      break;
+
     case SemIR::LocId::Kind::ImportIRInstId: {
       // For implicit imports, we need to unravel the location a little
       // further.
@@ -39,16 +42,15 @@ static auto FollowImportRef(
       break;
     }
 
+    case SemIR::LocId::Kind::InstId:
+      CARBON_FATAL("Unexpected LocId: {0}", import_loc_id);
+
     case SemIR::LocId::Kind::NodeId: {
       // For imports in the current file, the location is simple.
       absolute_node_ids.push_back({.check_ir_id = cursor_ir->check_ir_id(),
                                    .node_id = import_loc_id.node_id()});
       break;
     }
-
-    case SemIR::LocId::Kind::None:
-    case SemIR::LocId::Kind::InstId:
-      CARBON_FATAL("Unexpected LocId: {0}", import_loc_id);
   }
 
   cursor_ir = import_ir.sem_ir;

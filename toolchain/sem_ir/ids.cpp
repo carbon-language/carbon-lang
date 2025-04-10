@@ -168,7 +168,7 @@ auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
 auto LocId::Print(llvm::raw_ostream& out) const -> void {
   switch (kind()) {
     case Kind::None:
-      out << *this;
+      IdBase::Print(out);
       break;
     case Kind::ImportIRInstId:
       out << Label << "_" << import_ir_inst_id();
