@@ -127,8 +127,7 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
-  // Associates an argument (usually arg0 or arg1, potentially type_id) with its
-  // IdKind.
+  // Associates an argument (arg0 or arg1) with its IdKind.
   class ArgAndKind {
    public:
     explicit ArgAndKind(IdKind kind, int32_t value)
