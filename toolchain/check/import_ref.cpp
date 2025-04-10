@@ -705,8 +705,8 @@ static auto GetLocalConstantInstId(ImportRefResolver& resolver,
 // Returns the local constant InstId for an imported InstId.
 static auto GetLocalTypeInstId(ImportRefResolver& resolver,
                                SemIR::TypeInstId inst_id) -> SemIR::TypeInstId {
-  // The input instruction is a TypeInstId, and import does not produce values
-  // of different types, so the result is also a valid TypeInstId.
+  // The input instruction is a TypeInstId, and import does not change the type
+  // of instructions, so the result is also a valid TypeInstId.
   return SemIR::TypeInstId::UnsafeMake(
       GetLocalConstantInstId(resolver, static_cast<SemIR::InstId>(inst_id)));
 }

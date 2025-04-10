@@ -9,7 +9,7 @@
 namespace Carbon::SemIR {
 
 // Verify that the constant value's type is `TypeType` (or an error).
-static void CheckConstantTypeIsTypeType(File& file, ConstantId constant_id) {
+static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
   CARBON_CHECK(constant_id.is_constant(),
                "Canonicalizing non-constant type: {0}", constant_id);
   auto type_id =
@@ -22,13 +22,13 @@ static void CheckConstantTypeIsTypeType(File& file, ConstantId constant_id) {
 
 auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
     -> TypeId {
-  CheckConstantTypeIsTypeType(*file_, constant_id);
+  CheckTypeOfConstantIsTypeType(*file_, constant_id);
   return TypeId::ForTypeConstant(constant_id);
 }
 
 auto TypeStore::GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
   auto constant_id = file_->constant_values().Get(inst_id);
-  CheckConstantTypeIsTypeType(*file_, constant_id);
+  CheckTypeOfConstantIsTypeType(*file_, constant_id);
   return TypeId::ForTypeConstant(constant_id);
 }
 
@@ -39,7 +39,7 @@ auto TypeStore::GetTypeIdForTypeInstId(TypeInstId inst_id) const -> TypeId {
 
 auto TypeStore::GetAsTypeInstId(InstId inst_id) const -> TypeInstId {
   auto constant_id = file_->constant_values().Get(inst_id);
-  CheckConstantTypeIsTypeType(*file_, constant_id);
+  CheckTypeOfConstantIsTypeType(*file_, constant_id);
   return TypeInstId::UnsafeMake(inst_id);
 }
 
