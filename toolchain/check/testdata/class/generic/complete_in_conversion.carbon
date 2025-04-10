@@ -146,7 +146,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %.loc15_12.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:       %.loc15_12.2: %i32 = converted %int_0, %.loc15_12.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%int_0.6a9) [concrete = constants.%A.6fc]
-// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %A.6fc [concrete = constants.%ptr.b65]
+// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %A [concrete = constants.%ptr.b65]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %ptr.b65 = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -168,13 +168,13 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%N.loc6_9.2) [symbolic = %A (constants.%A.dd3)]
-// CHECK:STDOUT:   %A.elem.loc7: type = unbound_element_type @A.%A (%A.dd3), %B [symbolic = %A.elem.loc7 (constants.%A.elem.500)]
+// CHECK:STDOUT:   %A.elem.loc7: type = unbound_element_type %A, constants.%B [symbolic = %A.elem.loc7 (constants.%A.elem.500)]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc6_9.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound.588)]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %N.loc6_9.2, constants.%Convert.specific_fn.8a8 [symbolic = %bound_method (constants.%bound_method.f9c)]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %bound_method(%N.loc6_9.2) [symbolic = %int.convert_checked (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %iN.builtin: type = int_type signed, %int.convert_checked [symbolic = %iN.builtin (constants.%iN.builtin.8fe)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%iN.builtin (%iN.builtin.8fe) [symbolic = %require_complete (constants.%require_complete.e34)]
-// CHECK:STDOUT:   %A.elem.loc12: type = unbound_element_type @A.%A (%A.dd3), @A.%iN.builtin (%iN.builtin.8fe) [symbolic = %A.elem.loc12 (constants.%A.elem.07f)]
+// CHECK:STDOUT:   %A.elem.loc12: type = unbound_element_type %A, %iN.builtin [symbolic = %A.elem.loc12 (constants.%A.elem.07f)]
 // CHECK:STDOUT:   %struct_type.base.n: type = struct_type {.base: %B, .n: @A.%iN.builtin (%iN.builtin.8fe)} [symbolic = %struct_type.base.n (constants.%struct_type.base.n)]
 // CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness @A.%struct_type.base.n (%struct_type.base.n) [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.beb)]
 // CHECK:STDOUT:
@@ -210,7 +210,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %a.ref: %ptr.b65 = name_ref a, %a
 // CHECK:STDOUT:   %.loc20_11: type = splice_block %ptr.loc20 [concrete = constants.%ptr.e79] {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B [concrete = constants.%ptr.e79]
+// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B.ref [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20_15.1: ref %A.6fc = deref %a.ref
 // CHECK:STDOUT:   %.loc20_15.2: ref %B = class_element_access %.loc20_15.1, element0
@@ -222,14 +222,14 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc6_9.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc6_9.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc6_9.2 => constants.%N.patt.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(%N.loc6_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%int_0.6a9) {
 // CHECK:STDOUT:   %N.loc6_9.2 => constants.%int_0.6a9
-// CHECK:STDOUT:   %N.patt.loc6_9.2 => constants.%int_0.6a9
+// CHECK:STDOUT:   %N.patt.loc6_9.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A => constants.%A.6fc

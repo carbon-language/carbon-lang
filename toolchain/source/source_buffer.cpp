@@ -11,7 +11,7 @@
 
 namespace Carbon {
 
-auto SourceBuffer::MakeFromStdin(DiagnosticConsumer& consumer)
+auto SourceBuffer::MakeFromStdin(Diagnostics::Consumer& consumer)
     -> std::optional<SourceBuffer> {
   return MakeFromMemoryBuffer(llvm::MemoryBuffer::getSTDIN(), "<stdin>",
                               /*is_regular_file=*/false, consumer);
@@ -19,9 +19,9 @@ auto SourceBuffer::MakeFromStdin(DiagnosticConsumer& consumer)
 
 auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
                                 llvm::StringRef filename,
-                                DiagnosticConsumer& consumer)
+                                Diagnostics::Consumer& consumer)
     -> std::optional<SourceBuffer> {
-  FileDiagnosticEmitter emitter(&consumer);
+  Diagnostics::FileEmitter emitter(&consumer);
 
   llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>> file =
       fs.openFileForRead(filename);
@@ -53,7 +53,7 @@ auto SourceBuffer::MakeFromFile(llvm::vfs::FileSystem& fs,
 
 auto SourceBuffer::MakeFromStringCopy(llvm::StringRef filename,
                                       llvm::StringRef text,
-                                      DiagnosticConsumer& consumer)
+                                      Diagnostics::Consumer& consumer)
     -> std::optional<SourceBuffer> {
   return MakeFromMemoryBuffer(
       llvm::MemoryBuffer::getMemBufferCopy(text, filename), filename,
@@ -63,8 +63,8 @@ auto SourceBuffer::MakeFromStringCopy(llvm::StringRef filename,
 auto SourceBuffer::MakeFromMemoryBuffer(
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer,
     llvm::StringRef filename, bool is_regular_file,
-    DiagnosticConsumer& consumer) -> std::optional<SourceBuffer> {
-  FileDiagnosticEmitter emitter(&consumer);
+    Diagnostics::Consumer& consumer) -> std::optional<SourceBuffer> {
+  Diagnostics::FileEmitter emitter(&consumer);
 
   if (buffer.getError()) {
     CARBON_DIAGNOSTIC(ErrorReadingFile, Error, "error reading file: {0}",

@@ -11,37 +11,37 @@
 ABSL_FLAG(std::string, testdata_manifest, "",
           "A path to a file containing repo-relative names of test files.");
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 namespace {
 
-constexpr DiagnosticKind DiagnosticKinds[] = {
-#define CARBON_DIAGNOSTIC_KIND(Name) DiagnosticKind::Name,
+constexpr Kind Kinds[] = {
+#define CARBON_DIAGNOSTIC_KIND(Name) Kind::Name,
 #include "toolchain/diagnostics/diagnostic_kind.def"
 };
 
-constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
+constexpr Kind UntestedKinds[] = {
     // These exist only for unit tests.
-    DiagnosticKind::TestDiagnostic,
-    DiagnosticKind::TestDiagnosticNote,
+    Kind::TestDiagnostic,
+    Kind::TestDiagnosticNote,
 
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.
-    DiagnosticKind::CompilePreludeManifestError,
-    DiagnosticKind::DriverInstallInvalid,
+    Kind::CompilePreludeManifestError,
+    Kind::DriverInstallInvalid,
 
     // These diagnose filesystem issues that are hard to unit test.
-    DiagnosticKind::ErrorReadingFile,
-    DiagnosticKind::ErrorStattingFile,
-    DiagnosticKind::FileTooLarge,
+    Kind::ErrorReadingFile,
+    Kind::ErrorStattingFile,
+    Kind::FileTooLarge,
 
     // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.
-    DiagnosticKind::TooManyTokens,
-    DiagnosticKind::UnsupportedCrLineEnding,
-    DiagnosticKind::UnsupportedLfCrLineEnding,
+    Kind::TooManyTokens,
+    Kind::UnsupportedCrLineEnding,
+    Kind::UnsupportedLfCrLineEnding,
 
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
-    DiagnosticKind::TooManyDigits,
+    Kind::TooManyDigits,
 
     // TODO: This can only fire if the first message in a diagnostic is rooted
     // in a file other than the file being compiled. The language server
@@ -50,16 +50,16 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     //   in the current file.
     // - Require all diagnostics produced by compiling have their first location
     //   be in the file being compiled, never an import.
-    DiagnosticKind::LanguageServerDiagnosticInWrongFile,
+    Kind::LanguageServerDiagnosticInWrongFile,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.
-TEST(Coverage, DiagnosticKind) {
+TEST(Coverage, Kind) {
   Testing::TestKindCoverage(absl::GetFlag(FLAGS_testdata_manifest),
                             R"(^ *// CHECK:STDERR: .* \[(\w+)\]$)",
-                            llvm::ArrayRef(DiagnosticKinds),
-                            llvm::ArrayRef(UntestedDiagnosticKinds));
+                            llvm::ArrayRef(Kinds),
+                            llvm::ArrayRef(UntestedKinds));
 }
 
 }  // namespace
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics

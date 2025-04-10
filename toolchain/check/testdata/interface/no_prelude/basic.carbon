@@ -26,7 +26,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   %Self.efa: %ForwardDeclared.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type %ForwardDeclared.type [concrete]
+// CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type @ForwardDeclared [concrete]
 // CHECK:STDOUT:   %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

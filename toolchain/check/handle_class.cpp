@@ -212,8 +212,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
                        .class_id = SemIR::ClassId::None,
                        .decl_block_id = decl_block_id};
-  auto class_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, class_decl));
+  auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   // TODO: Store state regarding is_extern.
   SemIR::Class class_info = {
@@ -242,7 +241,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
           context, class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
   } else {
-    FinishGenericRedecl(context, class_decl_id, class_info.generic_id);
+    auto prev_decl_generic_id =
+        context.classes().Get(class_decl.class_id).generic_id;
+    FinishGenericRedecl(context, prev_decl_generic_id);
   }
 
   // Write the class ID into the ClassDecl.
@@ -255,7 +256,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
-    context.definitions_required().push_back(class_decl_id);
+    context.definitions_required_by_decl().push_back(class_decl_id);
   }
 
   return {class_decl.class_id, class_decl_id};
@@ -519,8 +520,9 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
-  auto field_type_id = GetUnboundElementType(context, class_info.self_type_id,
-                                             base_info.type_id);
+  auto field_type_id = GetUnboundElementType(
+      context, context.types().GetInstId(class_info.self_type_id),
+      base_info.inst_id);
   class_info.base_id =
       AddInst<SemIR::BaseDecl>(context, node_id,
                                {.type_id = field_type_id,

@@ -38,8 +38,7 @@ auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
 
 // Merge a redeclaration of an entity that might be a generic into the original
 // declaration.
-auto FinishGenericRedecl(Context& context, SemIR::InstId decl_id,
-                         SemIR::GenericId generic_id) -> void;
+auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id) -> void;
 
 // Finish processing a potentially generic definition.
 auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
@@ -82,11 +81,6 @@ auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
 // block in the specific. Returns false if a definition is not available.
 auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
                                SemIR::SpecificId specific_id) -> bool;
-
-// Returns an instruction describing the entity named by the given specific.
-// This is used to name the entity in diagnostics.
-auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
-    -> SemIR::InstId;
 
 // Diagnoses if an entity has implicit parameters, indicating it's generic, but
 // is missing explicit parameters.

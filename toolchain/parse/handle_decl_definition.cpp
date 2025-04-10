@@ -11,7 +11,7 @@ namespace Carbon::Parse {
 // definition.
 static auto HandleDeclOrDefinition(Context& context, NodeKind decl_kind,
                                    NodeKind definition_start_kind,
-                                   State definition_finish_state) -> void {
+                                   StateKind definition_finish_state) -> void {
   auto state = context.PopState();
 
   if (state.has_error || !context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
@@ -22,32 +22,32 @@ static auto HandleDeclOrDefinition(Context& context, NodeKind decl_kind,
   }
 
   context.PushState(state, definition_finish_state);
-  context.PushState(State::DeclScopeLoop);
+  context.PushState(StateKind::DeclScopeLoop);
   context.AddNode(definition_start_kind, context.Consume(), state.has_error);
 }
 
 auto HandleDeclOrDefinitionAsClass(Context& context) -> void {
   HandleDeclOrDefinition(context, NodeKind::ClassDecl,
                          NodeKind::ClassDefinitionStart,
-                         State::DeclDefinitionFinishAsClass);
+                         StateKind::DeclDefinitionFinishAsClass);
 }
 
 auto HandleDeclOrDefinitionAsImpl(Context& context) -> void {
   HandleDeclOrDefinition(context, NodeKind::ImplDecl,
                          NodeKind::ImplDefinitionStart,
-                         State::DeclDefinitionFinishAsImpl);
+                         StateKind::DeclDefinitionFinishAsImpl);
 }
 
 auto HandleDeclOrDefinitionAsInterface(Context& context) -> void {
   HandleDeclOrDefinition(context, NodeKind::InterfaceDecl,
                          NodeKind::InterfaceDefinitionStart,
-                         State::DeclDefinitionFinishAsInterface);
+                         StateKind::DeclDefinitionFinishAsInterface);
 }
 
 auto HandleDeclOrDefinitionAsNamedConstraint(Context& context) -> void {
   HandleDeclOrDefinition(context, NodeKind::NamedConstraintDecl,
                          NodeKind::NamedConstraintDefinitionStart,
-                         State::DeclDefinitionFinishAsNamedConstraint);
+                         StateKind::DeclDefinitionFinishAsNamedConstraint);
 }
 
 // Handles parsing after the declaration scope of a type.

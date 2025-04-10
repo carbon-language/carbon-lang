@@ -17,7 +17,7 @@ auto HandleInvalid(Context& context) -> void {
                context.PopState());
 }
 
-auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
+auto Parse(Lex::TokenizedBuffer& tokens, Diagnostics::Consumer& consumer,
            llvm::raw_ostream* vlog_stream) -> Tree {
   // Delegate to the parser.
   Tree tree(tokens);
@@ -28,12 +28,12 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   context.AddLeafNode(NodeKind::FileStart,
                       context.ConsumeChecked(Lex::TokenKind::FileStart));
 
-  context.PushState(State::DeclScopeLoop);
+  context.PushState(StateKind::DeclScopeLoop);
 
   while (!context.state_stack().empty()) {
-    switch (context.state_stack().back().state) {
+    switch (context.state_stack().back().kind) {
 #define CARBON_PARSE_STATE(Name) \
-  case State::Name:              \
+  case StateKind::Name:          \
     Handle##Name(context);       \
     break;
 #include "toolchain/parse/state.def"

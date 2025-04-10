@@ -50,8 +50,11 @@ class InstNamer {
             index += sem_ir_->associated_constants().size();
             if constexpr (!std::same_as<ImplId, IdT>) {
               index += sem_ir_->impls().size();
-              static_assert(std::same_as<NumberOfScopesTag, IdT>,
-                            "Unknown ID kind for scope");
+              if constexpr (!std::same_as<SpecificInterfaceId, IdT>) {
+                index += sem_ir_->specific_interfaces().size();
+                static_assert(std::same_as<NumberOfScopesTag, IdT>,
+                              "Unknown ID kind for scope");
+              }
             }
           }
         }

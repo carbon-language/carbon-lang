@@ -10,7 +10,7 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `[Incomplete; 1]` in name binding declaration [IncompleteTypeInBindingDecl]
+// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `array(Incomplete, 1)` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var a: array(Incomplete, 1);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
@@ -55,7 +55,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %.loc20_27: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %array_type: type = array_type %int_1, %Incomplete [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type: type = array_type %int_1, %Incomplete.ref.loc20 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
@@ -65,7 +65,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
 // CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc22 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT: }

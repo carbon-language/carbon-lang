@@ -567,14 +567,18 @@ static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
   return true;
 }
 
-static auto TryConsumeIncludeFile(llvm::StringRef line_trimmed,
-                                  llvm::SmallVector<std::string>* include_files)
-    -> ErrorOr<bool> {
+static auto TryConsumeIncludeFile(
+    llvm::StringRef line_trimmed,
+    llvm::SmallVector<TestFile::Split>* include_files) -> ErrorOr<bool> {
   if (!line_trimmed.consume_front("// INCLUDE-FILE: ")) {
     return false;
   }
 
-  include_files->push_back(std::string(line_trimmed));
+  std::filesystem::path path = std::string(line_trimmed);
+  CARBON_ASSIGN_OR_RETURN(std::string content, ReadFile(path));
+  include_files->push_back(
+      {.filename = std::filesystem::path("include_files") / path.filename(),
+       .content = content});
   return true;
 }
 
@@ -686,7 +690,7 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
     }
     CARBON_ASSIGN_OR_RETURN(
         is_consumed,
-        TryConsumeIncludeFile(line_trimmed, &test_file.include_files));
+        TryConsumeIncludeFile(line_trimmed, &test_file.include_file_splits));
     if (is_consumed) {
       continue;
     }

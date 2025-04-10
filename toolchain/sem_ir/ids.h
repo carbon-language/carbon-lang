@@ -25,8 +25,9 @@ struct ExprRegion;
 struct FacetTypeInfo;
 struct Function;
 struct Generic;
-struct CompleteFacetType;
+struct IdentifiedFacetType;
 struct Specific;
+struct SpecificInterface;
 struct ImportCpp;
 struct ImportIR;
 struct ImportIRInst;
@@ -274,9 +275,9 @@ struct FacetTypeId : public IdBase<FacetTypeId> {
 };
 
 // The ID of an resolved facet type value.
-struct CompleteFacetTypeId : public IdBase<CompleteFacetTypeId> {
-  static constexpr llvm::StringLiteral Label = "complete_facet_type";
-  using ValueType = CompleteFacetType;
+struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
+  static constexpr llvm::StringLiteral Label = "identified_facet_type";
+  using ValueType = IdentifiedFacetType;
 
   using IdBase::IdBase;
 };
@@ -300,8 +301,18 @@ struct GenericId : public IdBase<GenericId> {
 // The ID of a specific, which is the result of specifying the generic arguments
 // for a generic.
 struct SpecificId : public IdBase<SpecificId> {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   static constexpr llvm::StringLiteral Label = "specific";
   using ValueType = Specific;
+
+  using IdBase::IdBase;
+};
+
+// The ID of a SpecificInterface, which is an interface and a specific pair.
+struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
+  static constexpr llvm::StringLiteral Label = "specific_interface";
+  using ValueType = SpecificInterface;
 
   using IdBase::IdBase;
 };
@@ -470,7 +481,7 @@ struct NameId : public IdBase<NameId> {
   static constexpr llvm::StringLiteral Label = "name";
 
   // names().GetFormatted() is used for diagnostics.
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   // An enum of special names.
   enum class SpecialNameId : uint8_t {
@@ -699,7 +710,7 @@ struct TypeId : public IdBase<TypeId> {
   // `StringifyTypeExpr` is used for diagnostics. However, where possible, an
   // `InstId` describing how the type was written should be preferred, using
   // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   using IdBase::IdBase;
 
@@ -746,7 +757,7 @@ struct ElementIndex : public IndexBase<ElementIndex> {
 // The ID of a library name. This is either a string literal or `default`.
 struct LibraryNameId : public IdBase<LibraryNameId> {
   static constexpr llvm::StringLiteral Label = "library_name";
-  using DiagnosticType = DiagnosticTypeInfo<std::string>;
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   // The name of `default`.
   static const LibraryNameId Default;
@@ -776,7 +787,15 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
   using ValueType = ImportIRInst;
 
-  using IdBase::IdBase;
+  // ImportIRInstId is restricted so that it can fit into LocId.
+  static constexpr int32_t Bits = 29;
+
+  // The maximum ID, non-inclusive.
+  static constexpr int Max = 1 << Bits;
+
+  constexpr explicit ImportIRInstId(int32_t index) : IdBase(index) {
+    CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
+  }
 };
 
 // A SemIR location used as the location of instructions.
@@ -799,15 +818,15 @@ struct LocId : public IdBase<LocId> {
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NodeId node_id) : IdBase(node_id.index) {
-    CARBON_CHECK(node_id.has_value() == has_value());
-    CARBON_CHECK(!is_implicit());
+    CARBON_CHECK(node_id.has_value() == has_value(), "{0}", index);
+    CARBON_CHECK(!is_implicit(), "{0}", index);
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(ImportIRInstId inst_id)
       : IdBase(NoneIndex + ImportIRInstId::NoneIndex - inst_id.index) {
-    CARBON_CHECK(inst_id.has_value() == has_value());
-    CARBON_CHECK(index & ImplicitBit);
+    CARBON_CHECK(inst_id.has_value() == has_value(), "{0}", index);
+    CARBON_CHECK(index & ImplicitBit, "{0}", index);
   }
 
   // Forms an equivalent LocId for an implicit location.
@@ -864,6 +883,20 @@ struct AnyRawId : public AnyIdBase {
   constexpr explicit AnyRawId() : AnyIdBase(AnyIdBase::NoneIndex) {}
   constexpr explicit AnyRawId(int32_t id) : AnyIdBase(id) {}
 };
+
+// A pair of an interface and a specific for that interface.
+struct SpecificInterface {
+  InterfaceId interface_id;
+  SpecificId specific_id;
+
+  static const SpecificInterface None;
+
+  friend auto operator==(const SpecificInterface& lhs,
+                         const SpecificInterface& rhs) -> bool = default;
+};
+
+constexpr SpecificInterface SpecificInterface::None = {
+    .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
 
 }  // namespace Carbon::SemIR
 

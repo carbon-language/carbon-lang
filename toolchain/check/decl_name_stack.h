@@ -273,7 +273,7 @@ class DeclNameStack {
   // the name doesn't resolve to a scope.
   auto ResolveAsScope(const NameContext& name_context,
                       const NameComponent& name) const
-      -> std::pair<SemIR::NameScopeId, SemIR::SpecificId>;
+      -> std::pair<SemIR::NameScopeId, SemIR::GenericId>;
 
   // The linked context.
   Context* context_;

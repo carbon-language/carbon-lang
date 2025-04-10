@@ -121,7 +121,8 @@ static auto AddStructTypeFields(
             field_decl.type_id);
     struct_type_fields.push_back(
         {.name_id = field_decl.name_id,
-         .type_id = unbound_element_type.element_type_id});
+         .type_id = context.types().GetTypeIdForTypeInstId(
+             unbound_element_type.element_type_inst_id)});
   }
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);
@@ -217,9 +218,8 @@ static auto CheckCompleteClassType(
   if (defining_vptr) {
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
-         .type_id = GetPointerType(
-             context,
-             GetSingletonType(context, SemIR::VtableType::SingletonInstId))});
+         .type_id =
+             GetPointerType(context, SemIR::VtableType::SingletonInstId)});
   }
   if (base_type_id.has_value()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);

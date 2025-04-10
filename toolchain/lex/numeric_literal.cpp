@@ -88,7 +88,7 @@ auto NumericLiteral::Lex(llvm::StringRef source_text,
 // either diagnosing or extracting its meaning.
 class NumericLiteral::Parser {
  public:
-  Parser(DiagnosticEmitter<const char*>& emitter, NumericLiteral literal);
+  Parser(Diagnostics::Emitter<const char*>& emitter, NumericLiteral literal);
 
   auto IsInt() -> bool {
     return literal_.radix_point_ == static_cast<int>(literal_.text_.size());
@@ -124,7 +124,7 @@ class NumericLiteral::Parser {
   auto CheckFractionalPart() -> bool;
   auto CheckExponentPart() -> bool;
 
-  DiagnosticEmitter<const char*>& emitter_;
+  Diagnostics::Emitter<const char*>& emitter_;
   NumericLiteral literal_;
 
   // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
@@ -147,7 +147,7 @@ class NumericLiteral::Parser {
   bool exponent_is_negative_ = false;
 };
 
-NumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
+NumericLiteral::Parser::Parser(Diagnostics::Emitter<const char*>& emitter,
                                NumericLiteral literal)
     : emitter_(emitter), literal_(literal) {
   int_part_ = literal.text_.substr(0, literal.radix_point_);
@@ -292,7 +292,7 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
         InvalidDigit, Error,
         "invalid digit '{0}' in {1:=2:binary|=10:decimal|=16:hexadecimal} "
         "numeric literal",
-        char, IntAsSelect);
+        char, Diagnostics::IntAsSelect);
     emitter_.Emit(text.begin() + i, InvalidDigit, c, static_cast<int>(radix));
     return {.ok = false};
   }
@@ -374,8 +374,8 @@ auto NumericLiteral::Parser::CheckExponentPart() -> bool {
 }
 
 // Parse the token and compute its value.
-auto NumericLiteral::ComputeValue(DiagnosticEmitter<const char*>& emitter) const
-    -> Value {
+auto NumericLiteral::ComputeValue(
+    Diagnostics::Emitter<const char*>& emitter) const -> Value {
   Parser parser(emitter, *this);
 
   if (!parser.Check()) {

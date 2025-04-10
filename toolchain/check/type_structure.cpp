@@ -115,23 +115,28 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
 // that represents its self type and interface.
 class TypeStructureBuilder {
  public:
-  explicit TypeStructureBuilder(Context& context) : context_(context) {}
+  // `context` must not be null.
+  explicit TypeStructureBuilder(Context* context) : context_(context) {}
 
   auto Run(SemIR::InstId self_inst_id,
            SemIR::SpecificInterface interface_constraint) -> TypeStructure {
     CARBON_CHECK(work_list_.empty());
 
-    first_symbolic_distance_ = TypeStructure::InfiniteDistance;
+    symbolic_type_indices_.clear();
     structure_.clear();
 
     // The self type comes first in the type structure, so we push it last, as
     // the queue works from the back.
     Push(interface_constraint);
-    PushInstId(self_inst_id);
+    if (self_inst_id.has_value()) {
+      PushInstId(self_inst_id);
+    }
     BuildTypeStructure();
 
+    // TODO: This requires 4 SmallVector moves (two here and two in the
+    // constructor). Find a way to reduce that.
     return TypeStructure(std::exchange(structure_, {}),
-                         first_symbolic_distance_);
+                         std::exchange(symbolic_type_indices_, {}));
   }
 
  private:
@@ -174,14 +179,23 @@ class TypeStructureBuilder {
       }
 
       SemIR::TypeId next_type_id = std::get<SemIR::TypeId>(next);
-      auto inst_id = context_.types().GetInstId(next_type_id);
-      auto inst = context_.insts().Get(inst_id);
+      auto inst_id = context_->types().GetInstId(next_type_id);
+      auto inst = context_->insts().Get(inst_id);
       CARBON_KIND_SWITCH(inst) {
           // ==== Symbolic types ====
 
         case SemIR::BindSymbolicName::Kind:
         case SemIR::SymbolicBindingPattern::Kind:
         case SemIR::FacetAccessType::Kind: {
+          Push(SymbolicType());
+          break;
+        }
+        case SemIR::TypeOfInst::Kind: {
+          // TODO: For a template value with a fixed type, such as `template n:!
+          // i32`, we could look at the type of the value to see if it's
+          // template-dependent (which it's not here) and add that type to the
+          // type structure?
+          // https://github.com/carbon-language/carbon-lang/pull/5124#discussion_r2006617038
           Push(SymbolicType());
           break;
         }
@@ -197,7 +211,8 @@ class TypeStructureBuilder {
         case SemIR::IntLiteralType::Kind:
         case SemIR::LegacyFloatType::Kind:
         case SemIR::StringType::Kind:
-        case SemIR::TypeType::Kind: {
+        case SemIR::TypeType::Kind:
+        case SemIR::WitnessType::Kind: {
           AppendStructural(TypeStructure::Structural::Concrete);
           break;
         }
@@ -217,7 +232,7 @@ class TypeStructureBuilder {
           break;
         }
         case CARBON_KIND(SemIR::IntType int_type): {
-          if (context_.constant_values().Get(inst_id).is_concrete()) {
+          if (context_->constant_values().Get(inst_id).is_concrete()) {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
@@ -232,7 +247,7 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::ArrayType array_type): {
           AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType());
-          Push(array_type.element_type_id);
+          PushInstId(array_type.element_type_inst_id);
           PushInstId(array_type.bound_id);
           break;
         }
@@ -250,24 +265,29 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::ConstType const_type): {
           // We don't put the `const` into the type structure since it is a
           // modifier; just move to the inner type.
-          Push(const_type.inner_id);
+          PushInstId(const_type.inner_id);
+          break;
+        }
+        case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
+          Push(assoc.type_id);
           break;
         }
         case CARBON_KIND(SemIR::PointerType pointer_type): {
           AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType());
-          Push(pointer_type.pointee_id);
+          PushInstId(pointer_type.pointee_id);
           break;
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {
-          auto inner_types = context_.type_blocks().Get(tuple_type.elements_id);
+          auto inner_types =
+              context_->type_blocks().Get(tuple_type.elements_id);
           if (inner_types.empty()) {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType());
             for (auto type :
-                 context_.type_blocks().Get(tuple_type.elements_id)) {
+                 context_->type_blocks().Get(tuple_type.elements_id)) {
               Push(type);
             }
           }
@@ -275,7 +295,7 @@ class TypeStructureBuilder {
         }
         case CARBON_KIND(SemIR::StructType struct_type): {
           auto fields =
-              context_.struct_type_fields().Get(struct_type.fields_id);
+              context_->struct_type_fields().Get(struct_type.fields_id);
           if (fields.empty()) {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
@@ -285,36 +305,6 @@ class TypeStructureBuilder {
               Push(field.type_id);
             }
           }
-          break;
-        }
-        case CARBON_KIND(SemIR::TypeOfInst type_of): {
-          (void)type_of;
-          auto const_id = context_.constant_values().Get(inst_id);
-          // TODO: TypeOfInst should not be encountered in impl lookup with a
-          // template-dependent value, since impl lookup on such values should
-          // be deferred to type-checking the specific. So this should become a
-          // CARBON_FATAL code path. For now it is possible, though, to reach
-          // here and it results in a diagnostic.
-          //
-          // However, TypeOfInst can be determined to be a concrete value for a
-          // template value with a non-template dependent type. This currently
-          // does not happen though, the TypeOfInst is always template
-          // dependent. If it does in the future then we will want to use the
-          // concrete constant value instruction of `inst_id` in the type
-          // structure:
-          //   if (const_id.is_concrete()) {
-          //     PushInstId(context_.constant_values().GetInstId(const_id));
-          //   }
-          //
-          // If TypeOfInst was used for more general metaprogramming then we may
-          // need to handle both concrete and perhaps symbolic (non-template)
-          // values of TypeOfInst.
-          CARBON_CHECK(const_id.is_symbolic());
-          auto sym = context_.constant_values().GetSymbolicConstant(const_id);
-          CARBON_CHECK(sym.dependence == SemIR::ConstantDependence::Template,
-                       "TypeOfInst with non-template symbolic value?");
-          context_.TODO(context_.insts().GetLocId(inst_id),
-                        "Impl lookup on template-dependent type value");
           break;
         }
         default:
@@ -342,11 +332,11 @@ class TypeStructureBuilder {
   auto TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
       -> std::variant<SemIR::TypeId, SymbolicType> {
     if (auto facet_value =
-            context_.insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
+            context_->insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
       inst_id = facet_value->type_inst_id;
     }
 
-    auto type_id_of_inst_id = context_.insts().Get(inst_id).type_id();
+    auto type_id_of_inst_id = context_->insts().Get(inst_id).type_id();
     // All instructions of type FacetType are symbolic except for FacetValue:
     // - In non-generic code, values of type FacetType are only created through
     //   conversion to a FacetType (e.g. `Class as Iface`), which produces a
@@ -362,14 +352,14 @@ class TypeStructureBuilder {
     // them. That type instruction is never of type FacetType. If it refers to a
     // FacetType it does so through a FacetAccessType, which is of type TypeType
     // and thus does not match here.
-    if (context_.types().Is<SemIR::FacetType>(type_id_of_inst_id)) {
+    if (context_->types().Is<SemIR::FacetType>(type_id_of_inst_id)) {
       return SymbolicType();
     }
     // Non-type values are concrete, only types are symbolic.
     if (type_id_of_inst_id != SemIR::TypeType::SingletonTypeId) {
       return SemIR::TypeId::None;
     }
-    return context_.types().GetTypeIdForTypeInstId(inst_id);
+    return context_->types().GetTypeIdForTypeInstId(inst_id);
   }
 
   // Get the instructions in the specific's instruction block as an ArrayRef.
@@ -378,8 +368,8 @@ class TypeStructureBuilder {
     if (specific_id == SemIR::SpecificId::None) {
       return {};
     }
-    auto specific = context_.specifics().Get(specific_id);
-    return context_.inst_blocks().Get(specific.args_id);
+    auto specific = context_->specifics().Get(specific_id);
+    return context_->inst_blocks().Get(specific.args_id);
   }
 
   // Push all arguments from the array into the work queue.
@@ -409,24 +399,20 @@ class TypeStructureBuilder {
   // Append a structural element to the TypeStructure being built.
   auto AppendStructural(TypeStructure::Structural structural) -> void {
     if (structural == TypeStructure::Structural::Symbolic) {
-      // Sets the `distance` in `first_symbolic_distance_` if it does not
-      // already have a non-infinite value.
-      if (first_symbolic_distance_ == TypeStructure::InfiniteDistance) {
-        first_symbolic_distance_ = structure_.size();
-      }
+      symbolic_type_indices_.push_back(structure_.size());
     }
     structure_.push_back(structural);
   }
 
-  Context& context_;
+  Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
-  int first_symbolic_distance_;
+  llvm::SmallVector<int> symbolic_type_indices_;
   llvm::SmallVector<TypeStructure::Structural> structure_;
 };
 
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,
                         SemIR::SpecificInterface interface) -> TypeStructure {
-  TypeStructureBuilder builder(context);
+  TypeStructureBuilder builder(&context);
   return builder.Run(self_inst_id, interface);
 }
 

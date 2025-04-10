@@ -29,6 +29,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -464,8 +465,7 @@ static auto BuildFunctionDecl(Context& context,
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
                                        SemIR::FunctionId::None,
                                        context.inst_block_stack().Pop()};
-  auto decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, function_decl));
+  auto decl_id = AddPlaceholderInst(context, node_id, function_decl);
   RequestVtableIfVirtual(context, node_id, virtual_modifier, parent_scope_inst,
                          decl_id);
 
@@ -504,7 +504,9 @@ static auto BuildFunctionDecl(Context& context,
         GetFunctionType(context, function_decl.function_id,
                         context.scope_stack().PeekSpecificId());
   } else {
-    FinishGenericRedecl(context, decl_id, function_info.generic_id);
+    auto prev_decl_generic_id =
+        context.functions().Get(function_decl.function_id).generic_id;
+    FinishGenericRedecl(context, prev_decl_generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
 
@@ -529,7 +531,7 @@ static auto BuildFunctionDecl(Context& context,
                         function_info);
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
-    context.definitions_required().push_back(decl_id);
+    context.definitions_required_by_decl().push_back(decl_id);
   }
 
   return {function_decl.function_id, decl_id};
@@ -640,7 +642,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
           "missing `return` at end of function with declared return type");
       context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
     } else {
-      AddInst<SemIR::Return>(context, node_id, {});
+      AddReturnCleanupBlock(context, node_id);
     }
   }
 

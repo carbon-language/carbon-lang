@@ -135,6 +135,17 @@ class FunctionContext {
   auto builder() -> llvm::IRBuilderBase& { return builder_; }
   auto sem_ir() -> const SemIR::File& { return file_context_->sem_ir(); }
 
+  // TODO: could template on BuiltinFunctionKind if more format
+  // globals are eventually needed.
+  auto printf_int_format_string() -> llvm::Value* {
+    auto* format_string = file_context_->printf_int_format_string();
+    if (!format_string) {
+      format_string = builder().CreateGlobalString("%d\n", "printf.int.format");
+      file_context_->SetPrintfIntFormatString(format_string);
+    }
+    return format_string;
+  }
+
  private:
   // Custom instruction inserter for our IR builder. Automatically names
   // instructions.

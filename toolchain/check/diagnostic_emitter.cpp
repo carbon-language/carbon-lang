@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
+#include "toolchain/check/diagnostic_emitter.h"
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
@@ -10,9 +10,8 @@
 
 namespace Carbon::Check {
 
-auto SemIRLocDiagnosticEmitter::ConvertLoc(SemIRLoc loc,
-                                           ContextFnT context_fn) const
-    -> ConvertedDiagnosticLoc {
+auto DiagnosticEmitter::ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
+    -> Diagnostics::ConvertedLoc {
   auto converted = ConvertLocImpl(loc, context_fn);
 
   // Use the token when possible, but -1 is the default value.
@@ -33,9 +32,9 @@ auto SemIRLocDiagnosticEmitter::ConvertLoc(SemIRLoc loc,
   return converted;
 }
 
-auto SemIRLocDiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
-                                               ContextFnT context_fn) const
-    -> ConvertedDiagnosticLoc {
+auto DiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
+                                       ContextFnT context_fn) const
+    -> Diagnostics::ConvertedLoc {
   llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
       loc.is_inst_id_ ? SemIR::GetAbsoluteNodeId(sem_ir_, loc.inst_id_)
                       : SemIR::GetAbsoluteNodeId(sem_ir_, loc.loc_id_);
@@ -57,16 +56,17 @@ auto SemIRLocDiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
   return ConvertLocInFile(final_node_id, loc.token_only_, context_fn);
 }
 
-auto SemIRLocDiagnosticEmitter::ConvertLocInFile(
-    SemIR::AbsoluteNodeId absolute_node_id, bool token_only,
-    ContextFnT /*context_fn*/) const -> ConvertedDiagnosticLoc {
+auto DiagnosticEmitter::ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id,
+                                         bool token_only,
+                                         ContextFnT /*context_fn*/) const
+    -> Diagnostics::ConvertedLoc {
   const auto& tree_and_subtrees =
       tree_and_subtrees_getters_[absolute_node_id.check_ir_id.index]();
   return tree_and_subtrees.NodeToDiagnosticLoc(absolute_node_id.node_id,
                                                token_only);
 }
 
-auto SemIRLocDiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
+auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   if (auto* library_name_id = llvm::any_cast<SemIR::LibraryNameId>(&arg)) {
     std::string library_name;
     if (*library_name_id == SemIR::LibraryNameId::Default) {
@@ -114,11 +114,14 @@ auto SemIRLocDiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
            StringifyTypeExpr(*sem_ir_, sem_ir_->types().GetInstId(*type_id)) +
            "`";
   }
+  if (auto* specific_id = llvm::any_cast<SemIR::SpecificId>(&arg)) {
+    return "`" + StringifySpecific(*sem_ir_, *specific_id) + "`";
+  }
   if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
     return llvm::APSInt(typed_int->value,
                         !sem_ir_->types().IsSignedInt(typed_int->type));
   }
-  return DiagnosticEmitter<SemIRLoc>::ConvertArg(arg);
+  return DiagnosticEmitterBase::ConvertArg(arg);
 }
 
 }  // namespace Carbon::Check

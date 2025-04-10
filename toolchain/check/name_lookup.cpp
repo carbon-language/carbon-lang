@@ -115,9 +115,9 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
               context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
-          SemIR::InstId result_inst_id =
-              GetAssociatedValue(context, node_id, interface.self_param_id,
-                                 target_inst_id, assoc_type->interface_type_id);
+          SemIR::InstId result_inst_id = GetAssociatedValue(
+              context, node_id, interface.self_param_id, target_inst_id,
+              assoc_type->GetSpecificInterface());
           non_lexical_result.scope_result = SemIR::ScopeLookupResult::MakeFound(
               result_inst_id, non_lexical_result.scope_result.access_kind());
         }
@@ -225,7 +225,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   CARBON_DIAGNOSTIC(
       ClassInvalidMemberAccess, Error,
       "cannot access {0:private|protected} member `{1}` of type {2}",
-      BoolAsSelect, SemIR::NameId, SemIR::TypeId);
+      Diagnostics::BoolAsSelect, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
   context.emitter()
       .Build(loc, ClassInvalidMemberAccess,
@@ -291,6 +291,8 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
+    // TODO: Allow name lookup into classes that are being defined even if they
+    // are not complete.
     RequireCompleteType(
         context, context.types().GetTypeIdForTypeConstantId(base_const_id),
         loc_id, [&] {
@@ -306,18 +308,22 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    auto complete_id = RequireCompleteFacetType(
-        context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-        loc_id, *base_as_facet_type, [&] {
-          CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
-                            "member access into incomplete facet type {0}",
-                            InstIdAsType);
-          return context.emitter().Build(
-              loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
-        });
-    if (complete_id.has_value()) {
-      const auto& resolved = context.complete_facet_types().Get(complete_id);
-      for (const auto& interface : resolved.required_interfaces) {
+    // TODO: Allow name lookup into facet types that are being defined even if
+    // they are not complete.
+    if (RequireCompleteType(
+            context, context.types().GetTypeIdForTypeConstantId(base_const_id),
+            loc_id, [&] {
+              CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
+                                "member access into incomplete facet type {0}",
+                                InstIdAsType);
+              return context.emitter().Build(
+                  loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
+            })) {
+      auto facet_type_info =
+          context.facet_types().Get(base_as_facet_type->facet_type_id);
+      // Name lookup into "extend" constraints but not "self impls" constraints.
+      // TODO: Include named constraints, once they are supported.
+      for (const auto& interface : facet_type_info.extend_constraints) {
         auto& interface_info = context.interfaces().Get(interface.interface_id);
         scopes->push_back({.name_scope_id = interface_info.scope_id,
                            .specific_id = interface.specific_id});
@@ -349,17 +355,23 @@ static auto DiagnoseMemberNameNotFound(
     llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
   if (lookup_scopes.size() == 1 &&
       lookup_scopes.front().name_scope_id.has_value()) {
-    auto specific_id = lookup_scopes.front().specific_id;
-    auto scope_inst_id = specific_id.has_value()
-                             ? GetInstForSpecific(context, specific_id)
-                             : context.name_scopes()
-                                   .Get(lookup_scopes.front().name_scope_id)
-                                   .inst_id();
-    CARBON_DIAGNOSTIC(MemberNameNotFoundInScope, Error,
-                      "member name `{0}` not found in {1}", SemIR::NameId,
-                      InstIdAsType);
-    context.emitter().Emit(loc, MemberNameNotFoundInScope, name_id,
-                           scope_inst_id);
+    if (auto specific_id = lookup_scopes.front().specific_id;
+        specific_id.has_value()) {
+      CARBON_DIAGNOSTIC(MemberNameNotFoundInSpecificScope, Error,
+                        "member name `{0}` not found in {1}", SemIR::NameId,
+                        SemIR::SpecificId);
+      context.emitter().Emit(loc, MemberNameNotFoundInSpecificScope, name_id,
+                             specific_id);
+    } else {
+      auto scope_inst_id = context.name_scopes()
+                               .Get(lookup_scopes.front().name_scope_id)
+                               .inst_id();
+      CARBON_DIAGNOSTIC(MemberNameNotFoundInInstScope, Error,
+                        "member name `{0}` not found in {1}", SemIR::NameId,
+                        InstIdAsType);
+      context.emitter().Emit(loc, MemberNameNotFoundInInstScope, name_id,
+                             scope_inst_id);
+    }
     return;
   }
 
@@ -424,12 +436,6 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         SemIR::ConstantId const_id = GetConstantValueInSpecific(
             context.sem_ir(), specific_id, extended_id);
 
-        DiagnosticAnnotationScope annotate_diagnostics(
-            &context.emitter(), [&](auto& builder) {
-              CARBON_DIAGNOSTIC(FromExtendHere, Note,
-                                "declared as an extended scope here");
-              builder.Note(extended_id, FromExtendHere);
-            });
         if (!AppendLookupScopesForConstant(context, loc_id, const_id,
                                            &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should

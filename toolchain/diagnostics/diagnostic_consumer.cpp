@@ -7,9 +7,9 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
-auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
+auto StreamConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
   if (printed_diagnostic_) {
     *stream_ << "\n";
   } else {
@@ -19,16 +19,16 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
   for (const auto& message : diagnostic.messages) {
     message.loc.FormatLocation(*stream_);
     switch (message.level) {
-      case DiagnosticLevel::Error:
+      case Level::Error:
         *stream_ << "error: ";
         break;
-      case DiagnosticLevel::Warning:
+      case Level::Warning:
         *stream_ << "warning: ";
         break;
-      case DiagnosticLevel::Note:
+      case Level::Note:
         *stream_ << "note: ";
         break;
-      case DiagnosticLevel::LocationInfo:
+      case Level::LocationInfo:
         break;
     }
     *stream_ << message.Format();
@@ -39,15 +39,15 @@ auto StreamDiagnosticConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
     // Don't include a snippet for location information to keep this diagnostic
     // more visually associated with the following diagnostic that it describes
     // and to better match C++ compilers.
-    if (message.level != DiagnosticLevel::LocationInfo) {
+    if (message.level != Level::LocationInfo) {
       message.loc.FormatSnippet(*stream_);
     }
   }
 }
 
-auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
-  static auto* consumer = new StreamDiagnosticConsumer(&llvm::errs());
+auto ConsoleConsumer() -> Consumer& {
+  static auto* consumer = new StreamConsumer(&llvm::errs());
   return *consumer;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics

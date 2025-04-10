@@ -104,7 +104,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc4_21.2 => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a.loc4_22.2 => constants.%struct_type.a
 // CHECK:STDOUT: }
@@ -135,7 +135,7 @@ fn B() {
 // CHECK:STDOUT:     import Lib//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Lib.Z: type = import_ref Lib//default, Z, loaded [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Lib.import_ref.f88 = import_ref Lib//default, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Lib.import_ref.f88 = import_ref Lib//default, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Lib.A: %A.type.fad = import_ref Lib//default, A, loaded [concrete = constants.%A.7a0]
 // CHECK:STDOUT:   %Lib.import_ref.be7: %Z.type = import_ref Lib//default, loc4_6, loaded [symbolic = @A.2.%T (constants.%T)]
 // CHECK:STDOUT: }
@@ -216,14 +216,14 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc4_25.2 => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a.loc4_26.2 => constants.%struct_type.a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
 // CHECK:STDOUT: }

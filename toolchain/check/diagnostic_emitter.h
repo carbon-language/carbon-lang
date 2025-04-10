@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_
-#define CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_EMITTER_H_
+#define CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_EMITTER_H_
 
 #include "llvm/ADT/ArrayRef.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -17,13 +17,13 @@
 namespace Carbon::Check {
 
 // Handles the transformation of a SemIRLoc to a DiagnosticLoc.
-class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
+class DiagnosticEmitter : public DiagnosticEmitterBase {
  public:
-  explicit SemIRLocDiagnosticEmitter(
-      DiagnosticConsumer* consumer,
+  explicit DiagnosticEmitter(
+      Diagnostics::Consumer* consumer,
       llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
       const SemIR::File* sem_ir)
-      : DiagnosticEmitter(consumer),
+      : DiagnosticEmitterBase(consumer),
         tree_and_subtrees_getters_(tree_and_subtrees_getters),
         sem_ir_(sem_ir) {}
 
@@ -44,17 +44,18 @@ class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
   // locations, or `loc` if it's in the same file and (for whatever reason)
   // later.
   auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
-      -> ConvertedDiagnosticLoc override;
+      -> Diagnostics::ConvertedLoc override;
 
  private:
   // Implements `ConvertLoc`, but without `last_token_` applied.
   auto ConvertLocImpl(SemIRLoc loc, ContextFnT context_fn) const
-      -> ConvertedDiagnosticLoc;
+      -> Diagnostics::ConvertedLoc;
 
   // Converts a node_id corresponding to a specific sem_ir to a diagnostic
   // location.
   auto ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id, bool token_only,
-                        ContextFnT context_fn) const -> ConvertedDiagnosticLoc;
+                        ContextFnT context_fn) const
+      -> Diagnostics::ConvertedLoc;
 
   // Converters for each SemIR.
   llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
@@ -68,4 +69,4 @@ class SemIRLocDiagnosticEmitter : public DiagnosticEmitter<SemIRLoc> {
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_SEM_IR_LOC_DIAGNOSTIC_EMITTER_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_EMITTER_H_

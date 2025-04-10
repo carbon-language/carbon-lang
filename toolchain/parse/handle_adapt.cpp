@@ -10,9 +10,9 @@ namespace Carbon::Parse {
 // Handles processing of a complete `adapt T` declaration.
 auto HandleAdaptAfterIntroducer(Context& context) -> void {
   auto state = context.PopState();
-  state.state = State::AdaptDecl;
+  state.kind = StateKind::AdaptDecl;
   context.PushState(state);
-  context.PushState(State::Expr);
+  context.PushState(StateKind::Expr);
 }
 
 // Handles processing of a complete `adapt T` declaration.

@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_type_mismatch.carbon
 
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert value of type `String` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `String` to `i32` [ConversionFailure]
 // CHECK:STDERR: var a: array(i32, 3) = (1, "Hello", "World");
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:24: note: type `String` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
@@ -18,7 +18,7 @@
 var a: array(i32, 3) = (1, "Hello", "World");
 
 var t1: (i32, String, String);
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert value of type `String` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `String` to `i32` [ConversionFailure]
 // CHECK:STDERR: var b: array(i32, 3) = t1;
 // CHECK:STDERR:                        ^~
 // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:24: note: type `String` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
@@ -100,7 +100,7 @@ var d: array(i32, 3) = t2;
 // CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3.loc18: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc18: type = array_type %int_3.loc18, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type.loc18: type = array_type %int_3.loc18, %i32.loc18 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -124,7 +124,7 @@ var d: array(i32, 3) = t2;
 // CHECK:STDOUT:     %int_32.loc28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc28: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3.loc28: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc28: type = array_type %int_3.loc28, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type.loc28: type = array_type %int_3.loc28, %i32.loc28 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %array_type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -136,7 +136,7 @@ var d: array(i32, 3) = t2;
 // CHECK:STDOUT:     %int_32.loc34: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc34: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3.loc34: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc34: type = array_type %int_3.loc34, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type.loc34: type = array_type %int_3.loc34, %i32.loc34 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %array_type = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -162,7 +162,7 @@ var d: array(i32, 3) = t2;
 // CHECK:STDOUT:     %int_32.loc41: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc41: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3.loc41: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %array_type.loc41: type = array_type %int_3.loc41, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %array_type.loc41: type = array_type %int_3.loc41, %i32.loc41 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %array_type = bind_name d, %d.var
 // CHECK:STDOUT: }

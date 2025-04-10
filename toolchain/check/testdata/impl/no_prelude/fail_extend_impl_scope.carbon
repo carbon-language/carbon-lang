@@ -38,16 +38,9 @@ library "[[@TEST_NAME]]";
 interface Z {
   fn Zero();
 
-  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+11]]:15: error: `impl as` can only be used in a class [ImplAsOutsideClass]
+  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+4]]:15: error: `impl as` can only be used in a class [ImplAsOutsideClass]
   // CHECK:STDERR:   extend impl as Z {
   // CHECK:STDERR:               ^~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE+7]]:3: error: impl as incomplete facet type `Z` [ImplAsIncompleteFacetType]
-  // CHECK:STDERR:   extend impl as Z {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_impl_self_interface.carbon:[[@LINE-10]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
-  // CHECK:STDERR: interface Z {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
   extend impl as Z {
     fn Zero() {}
@@ -154,7 +147,7 @@ fn F() {
 // CHECK:STDOUT:   %Zero.type.822: type = fn_type @Zero.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Zero.d14: %Zero.type.822 = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type %Z.type [concrete]
+// CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, @Z.%Zero.decl [concrete]
 // CHECK:STDOUT:   %Zero.type.db4: type = fn_type @Zero.2, @impl.6b5(%Self) [symbolic]
 // CHECK:STDOUT:   %Zero.8fb: %Zero.type.db4 = struct_value () [symbolic]
@@ -257,12 +250,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc32_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc25_5.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Point.ref: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %.loc32_5.2: ref %Point = temporary_storage
-// CHECK:STDOUT:   %.loc32_5.3: init %Point = class_init (), %.loc32_5.2 [concrete = constants.%Point.val]
-// CHECK:STDOUT:   %.loc32_5.4: ref %Point = temporary %.loc32_5.2, %.loc32_5.3
-// CHECK:STDOUT:   %.loc32_7: ref %Point = converted %.loc32_5.1, %.loc32_5.4
+// CHECK:STDOUT:   %.loc25_5.2: ref %Point = temporary_storage
+// CHECK:STDOUT:   %.loc25_5.3: init %Point = class_init (), %.loc25_5.2 [concrete = constants.%Point.val]
+// CHECK:STDOUT:   %.loc25_5.4: ref %Point = temporary %.loc25_5.2, %.loc25_5.3
+// CHECK:STDOUT:   %.loc25_7: ref %Point = converted %.loc25_5.1, %.loc25_5.4
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.728 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Zero.dec]
 // CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()

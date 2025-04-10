@@ -25,7 +25,7 @@ impl C as Simple {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.e2e: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.df8: %F.type.e2e = struct_value () [concrete]
-// CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type %Simple.type [concrete]
+// CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.%F.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]

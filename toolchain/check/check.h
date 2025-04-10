@@ -8,7 +8,7 @@
 #include "common/ostream.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/timings.h"
-#include "toolchain/check/sem_ir_loc_diagnostic_emitter.h"
+#include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
@@ -17,7 +17,7 @@ namespace Carbon::Check {
 
 // Checking information that's tracked per file.
 struct Unit {
-  DiagnosticConsumer* consumer;
+  Diagnostics::Consumer* consumer;
   SharedValueStores* value_stores;
   // The `timings` may be null if nothing is to be recorded.
   Timings* timings;

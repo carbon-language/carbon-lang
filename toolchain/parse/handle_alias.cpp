@@ -14,8 +14,8 @@ namespace Carbon::Parse {
 auto HandleAlias(Context& context) -> void {
   auto state = context.PopState();
 
-  context.PushState(state, State::AliasAfterName);
-  context.PushState(State::DeclNameAndParams, state.token);
+  context.PushState(state, StateKind::AliasAfterName);
+  context.PushState(StateKind::DeclNameAndParams, state.token);
 }
 
 auto HandleAliasAfterName(Context& context) -> void {
@@ -29,8 +29,8 @@ auto HandleAliasAfterName(Context& context) -> void {
 
   if (auto equal = context.ConsumeIf(Lex::TokenKind::Equal)) {
     context.AddLeafNode(NodeKind::AliasInitializer, *equal);
-    context.PushState(state, State::AliasFinish);
-    context.PushState(State::Expr);
+    context.PushState(state, StateKind::AliasFinish);
+    context.PushState(StateKind::Expr);
   } else {
     CARBON_DIAGNOSTIC(ExpectedAliasInitializer, Error,
                       "`alias` requires a `=` for the source");

@@ -21,8 +21,8 @@ auto HandleArrayExpr(Context& context) -> void {
   } else {
     state.has_error = true;
   }
-  context.PushState(state, State::ArrayExprComma);
-  context.PushState(State::Expr);
+  context.PushState(state, StateKind::ArrayExprComma);
+  context.PushState(StateKind::Expr);
 }
 
 auto HandleArrayExprComma(Context& context) -> void {
@@ -35,8 +35,8 @@ auto HandleArrayExprComma(Context& context) -> void {
     context.emitter().Emit(*context.position(), ExpectedArrayComma);
     state.has_error = true;
   }
-  context.PushState(state, State::ArrayExprFinish);
-  context.PushState(State::Expr);
+  context.PushState(state, StateKind::ArrayExprFinish);
+  context.PushState(StateKind::Expr);
 }
 
 auto HandleArrayExprFinish(Context& context) -> void {

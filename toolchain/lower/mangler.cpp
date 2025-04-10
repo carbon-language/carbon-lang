@@ -172,4 +172,17 @@ auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
   return cpp_mangled_name.TakeStr();
 }
 
+auto Mangler::MangleVTable(const SemIR::Class& class_info) -> std::string {
+  RawStringOstream os;
+  os << "_C";
+
+  os << names().GetAsStringIfIdentifier(class_info.name_id);
+
+  MangleInverseQualifiedNameScope(os, class_info.parent_scope_id);
+
+  os << ".$vtable";
+
+  return os.TakeStr();
+}
+
 }  // namespace Carbon::Lower

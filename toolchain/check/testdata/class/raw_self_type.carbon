@@ -120,7 +120,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Self.var: ref %ptr.e71 = var r#Self
 // CHECK:STDOUT:   %.loc13_21: type = splice_block %ptr.loc13 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %Self.ref.loc13 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self: ref %ptr.e71 = bind_name r#Self, %Self.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -133,7 +133,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   assign %p.var, %.loc14_20
 // CHECK:STDOUT:   %.loc14_16: type = splice_block %ptr.loc14 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:     %Self.ref.loc14_12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %Self.ref.loc14_12 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.e71 = bind_name p, %p.var
 // CHECK:STDOUT:   return

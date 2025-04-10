@@ -131,7 +131,7 @@ fn MyF() {
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_class_public_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_class_public_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -159,7 +159,7 @@ fn MyF(bar : Cpp.Bar*) {
   // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
   // CHECK:STDERR:                           ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_class_public_data_member.carbon:[[@LINE+4]]:27: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_class_public_data_member.carbon:[[@LINE+4]]:27: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
   // CHECK:STDERR:                           ^~~~~~~~
   // CHECK:STDERR:
@@ -294,7 +294,7 @@ import Cpp library "class_template.h";
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_class_template.carbon:[[@LINE+4]]:13: error: member name `Bar` not found in `Cpp` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_import_class_template.carbon:[[@LINE+4]]:13: error: member name `Bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
@@ -374,7 +374,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:       %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, %Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr = bind_name bar, %bar.param
 // CHECK:STDOUT:   }
@@ -426,7 +426,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:       %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, %Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr = bind_name bar, %bar.param
 // CHECK:STDOUT:   }
@@ -586,7 +586,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:       %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, %Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
 // CHECK:STDOUT:   }
@@ -660,7 +660,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     %Bar.ref.loc18_15: type = name_ref Bar, %Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Bar [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc18_15 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar: %ptr.f68 = bind_name bar, <error>
 // CHECK:STDOUT:   return
@@ -702,7 +702,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:       %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:       %Bar.ref.loc6: type = name_ref Bar, %Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr.loc6: type = ptr_type %Bar [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:       %ptr.loc6: type = ptr_type %Bar.ref.loc6 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
 // CHECK:STDOUT:   }
@@ -728,7 +728,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %.loc18_23: type = splice_block %ptr.loc18 [concrete = constants.%ptr.f68] {
 // CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Bar.ref.loc18: type = name_ref Bar, %Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Bar [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Bar.ref.loc18 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_bar: %ptr.f68 = bind_name foo_bar, <error>
 // CHECK:STDOUT:   return
@@ -863,7 +863,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:       %Bar1.decl: type = class_decl @Bar1 [concrete = constants.%Bar1] {} {}
 // CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:       %Bar1.ref: type = name_ref Bar1, %Bar1.decl [concrete = constants.%Bar1]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar1 [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar1.ref [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
 // CHECK:STDOUT:   }
@@ -877,7 +877,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:       %Bar2.decl: type = class_decl @Bar2 [concrete = constants.%Bar2] {} {}
 // CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:       %Bar2.ref: type = name_ref Bar2, %Bar2.decl [concrete = constants.%Bar2]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar2 [concrete = constants.%ptr.eca]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar2.ref [concrete = constants.%ptr.eca]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr.eca = bind_name bar, %bar.param
 // CHECK:STDOUT:   }

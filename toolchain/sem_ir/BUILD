@@ -45,6 +45,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "ids_test",
+    srcs = ["ids_test.cpp"],
+    deps = [
+        ":typed_insts",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
 cc_library(
     name = "inst",
     srcs = ["inst.cpp"],
@@ -143,6 +153,7 @@ cc_library(
         ":typed_insts",
         "//common:check",
         "//common:raw_string_ostream",
+        "//common:variant_helpers",
         "//toolchain/base:kind_switch",
         "@llvm-project//llvm:Support",
     ],
@@ -177,6 +188,7 @@ cc_library(
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
     deps = [
+        ":expr_info",
         ":file",
         ":inst_namer",
         ":typed_insts",
@@ -212,6 +224,18 @@ cc_library(
 )
 
 cc_library(
+    name = "expr_info",
+    srcs = ["expr_info.cpp"],
+    hdrs = ["expr_info.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//toolchain/base:kind_switch",
+    ],
+)
+
+cc_library(
     name = "dump",
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],
@@ -219,6 +243,7 @@ cc_library(
         ":file",
         ":stringify_type",
         "//common:ostream",
+        "//common:raw_string_ostream",
     ],
     # Always link dump methods so they are callable from a debugger
     # even though they are never called.

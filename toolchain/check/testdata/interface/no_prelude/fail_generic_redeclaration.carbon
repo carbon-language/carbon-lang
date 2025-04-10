@@ -105,7 +105,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %NotGeneric.type: type = facet_type <@NotGeneric.2, @NotGeneric.2(%T.loc19_22.2)> [symbolic = %NotGeneric.type (constants.%NotGeneric.type.8cb)]
-// CHECK:STDOUT:   %Self.2: %NotGeneric.type.8cb = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.c08)]
+// CHECK:STDOUT:   %Self.2: @NotGeneric.2.%NotGeneric.type (%NotGeneric.type.8cb) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.c08)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @NotGeneric.2.%NotGeneric.type (%NotGeneric.type.8cb) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.c08)]
@@ -144,7 +144,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %DifferentParams.type: type = facet_type <@DifferentParams.2, @DifferentParams.2(%T.loc39_27.2)> [symbolic = %DifferentParams.type (constants.%DifferentParams.type.12c)]
-// CHECK:STDOUT:   %Self.2: %DifferentParams.type.12c = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.8d7)]
+// CHECK:STDOUT:   %Self.2: @DifferentParams.2.%DifferentParams.type (%DifferentParams.type.12c) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.8d7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @DifferentParams.2.%DifferentParams.type (%DifferentParams.type.12c) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.8d7)]
@@ -157,24 +157,24 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NotGeneric.2(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc19_22.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc19_22.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc19_22.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NotGeneric.2(%T.loc19_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.1(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc21_19.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc21_19.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc21_19.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.1(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc31_27.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc31_27.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc31_27.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.2(constants.%T.7a6) {
 // CHECK:STDOUT:   %T.loc39_27.2 => constants.%T.7a6
-// CHECK:STDOUT:   %T.patt.loc39_27.2 => constants.%T.7a6
+// CHECK:STDOUT:   %T.patt.loc39_27.2 => constants.%T.patt.e60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.2(%T.loc39_27.2) {}

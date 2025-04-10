@@ -10,8 +10,10 @@
 #include "common/map.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
@@ -49,7 +51,7 @@ namespace Carbon::Check {
 class Context {
  public:
   // Stores references for work.
-  explicit Context(DiagnosticEmitter<SemIRLoc>* emitter,
+  explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
@@ -68,7 +70,7 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto emitter() -> DiagnosticEmitter<SemIRLoc>& { return *emitter_; }
+  auto emitter() -> DiagnosticEmitterBase& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return tree_and_subtrees_getter_();
@@ -145,8 +147,13 @@ class Context {
     return import_ir_constant_values_;
   }
 
-  auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
-    return definitions_required_;
+  auto definitions_required_by_decl() -> llvm::SmallVector<SemIR::InstId>& {
+    return definitions_required_by_decl_;
+  }
+
+  auto definitions_required_by_use()
+      -> llvm::SmallVector<std::pair<SemIRLoc, SemIR::SpecificId>>& {
+    return definitions_required_by_use_;
   }
 
   auto global_init() -> GlobalInit& { return global_init_; }
@@ -228,10 +235,14 @@ class Context {
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
   }
-  auto complete_facet_types() -> SemIR::File::CompleteFacetTypeStore& {
-    return sem_ir().complete_facet_types();
+  auto identified_facet_types() -> SemIR::File::IdentifiedFacetTypeStore& {
+    return sem_ir().identified_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
+  auto specific_interfaces()
+      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+    return sem_ir().specific_interfaces();
+  }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
@@ -239,6 +250,9 @@ class Context {
   }
   auto import_ir_insts() -> ValueStore<SemIR::ImportIRInstId>& {
     return sem_ir().import_ir_insts();
+  }
+  auto ast_context() -> clang::ASTContext& {
+    return sem_ir().cpp_ast()->getASTContext();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
@@ -268,7 +282,7 @@ class Context {
 
  private:
   // Handles diagnostics.
-  DiagnosticEmitter<SemIRLoc>* emitter_;
+  DiagnosticEmitterBase* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
@@ -334,7 +348,13 @@ class Context {
 
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.
-  llvm::SmallVector<SemIR::InstId> definitions_required_;
+  llvm::SmallVector<SemIR::InstId> definitions_required_by_decl_;
+
+  // Entities that should have definitions by the end of the current source
+  // file, because of a generic was used a concrete specific. This is currently
+  // only tracking specific functions that should have a definition emitted.
+  llvm::SmallVector<std::pair<SemIRLoc, SemIR::SpecificId>>
+      definitions_required_by_use_;
 
   // State for global initialization.
   GlobalInit global_init_;

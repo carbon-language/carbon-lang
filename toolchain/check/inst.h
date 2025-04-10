@@ -16,15 +16,20 @@ auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
 
 // Convenience for AddInst with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
 auto AddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
 // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
 // result.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT>
-  requires(SemIR::Internal::HasNodeId<InstT>)
+  requires(SemIR::Internal::HasNodeId<InstT> && !InstT::Kind.has_cleanup())
 auto AddInstAndPush(Context& context,
                     typename decltype(InstT::Kind)::TypedNodeId node_id,
                     InstT inst) -> void {
@@ -37,7 +42,10 @@ auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
 
 // Convenience for AddInstInNoBlock with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
 auto AddInstInNoBlock(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));
 }
@@ -48,9 +56,29 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
 
 // Convenience for GetOrAddInst with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
 auto GetOrAddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return GetOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
+}
+
+// Evaluate the given instruction, and returns the corresponding constant value.
+// Adds the instruction to the current block if it might be referenced by its
+// constant value; otherwise, does not add the instruction to an instruction
+// block.
+auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::ConstantId;
+
+// Convenience for EvalOrAddInst with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
+template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
+auto EvalOrAddInst(Context& context, LocT loc, InstT inst)
+    -> SemIR::ConstantId {
+  return EvalOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
 // Adds an instruction and enqueues it to be added to the eval block of the
@@ -76,8 +104,10 @@ auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
 
 // Convenience for AddPatternInst with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT>
-  requires(SemIR::Internal::HasNodeId<InstT>)
+  requires(SemIR::Internal::HasNodeId<InstT> && !InstT::Kind.has_cleanup())
 auto AddPatternInst(Context& context,
                     typename decltype(InstT::Kind)::TypedNodeId node_id,
                     InstT inst) -> SemIR::InstId {
@@ -90,12 +120,32 @@ auto AddPatternInst(Context& context,
 auto AddPlaceholderInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
 
+// Convenience for AddPlaceholderInst with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
+template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
+auto AddPlaceholderInst(Context& context, LocT loc, InstT inst)
+    -> SemIR::InstId {
+  return AddPlaceholderInst(context, SemIR::LocIdAndInst(loc, inst));
+}
+
 // Adds an instruction in no block, returning the produced ID. Should be used
 // rarely. The instruction is a placeholder that is expected to be replaced by
 // `ReplaceInstBeforeConstantUse`.
 auto AddPlaceholderInstInNoBlock(Context& context,
                                  SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
+
+// Convenience for AddPlaceholderInstInNoBlock with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
+template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
+auto AddPlaceholderInstInNoBlock(Context& context, LocT loc, InstT inst)
+    -> SemIR::InstId {
+  return AddPlaceholderInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));
+}
 
 // Replaces the instruction at `inst_id` with `loc_id_and_inst`. The
 // instruction is required to not have been used in any constant evaluation,

@@ -312,33 +312,33 @@ class Foo[T:! type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_24.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_24.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_24.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericNoParams(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.2(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc10_26.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc10_26.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc10_26.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(%T.loc8_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.1(constants.%X) {
 // CHECK:STDOUT:   %T.loc6_24.2 => constants.%X
-// CHECK:STDOUT:   %T.patt.loc6_24.2 => constants.%X
+// CHECK:STDOUT:   %T.patt.loc6_24.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
 // CHECK:STDOUT:   %T.loc8_9.2 => constants.%X
-// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%X
+// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.c20
@@ -347,7 +347,7 @@ class Foo[T:! type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.2(constants.%X, constants.%X) {
 // CHECK:STDOUT:   %U.loc10_26.2 => constants.%X
-// CHECK:STDOUT:   %U.patt.loc10_26.2 => constants.%X
+// CHECK:STDOUT:   %U.patt.loc10_26.2 => constants.%U.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -429,7 +429,7 @@ class Foo[T:! type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit_params_only_empty.carbon
@@ -477,6 +477,6 @@ class Foo[T:! type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_11.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_11.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc8_11.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

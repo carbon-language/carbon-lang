@@ -58,8 +58,8 @@ struct ExprRegion {
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
-  using CompleteFacetTypeStore =
-      RelationalValueStore<SemIR::FacetTypeId, SemIR::CompleteFacetTypeId>;
+  using IdentifiedFacetTypeStore =
+      RelationalValueStore<SemIR::FacetTypeId, SemIR::IdentifiedFacetTypeId>;
 
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
@@ -85,6 +85,7 @@ class File : public Printable<File> {
       -> void;
 
   // Returns array bound value from the bound instruction.
+  // TODO: Move this function elsewhere.
   auto GetArrayBoundValue(InstId bound_id) const -> std::optional<uint64_t> {
     if (auto bound = insts().TryGetAs<IntValue>(
             constant_values().GetConstantInstId(bound_id))) {
@@ -94,8 +95,10 @@ class File : public Printable<File> {
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
+  // TODO: Move this function elsewhere.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return types().GetAs<PointerType>(pointer_id).pointee_id;
+    return types().GetTypeIdForTypeInstId(
+        types().GetAs<PointerType>(pointer_id).pointee_id);
   }
 
   // Returns true if this file is an `impl`.
@@ -161,14 +164,21 @@ class File : public Printable<File> {
   auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
   }
-  auto complete_facet_types() -> CompleteFacetTypeStore& {
-    return complete_facet_types_;
+  auto identified_facet_types() -> IdentifiedFacetTypeStore& {
+    return identified_facet_types_;
   }
-  auto complete_facet_types() const -> const CompleteFacetTypeStore& {
-    return complete_facet_types_;
+  auto identified_facet_types() const -> const IdentifiedFacetTypeStore& {
+    return identified_facet_types_;
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
+  auto specific_interfaces() -> CanonicalValueStore<SpecificInterfaceId>& {
+    return specific_interfaces_;
+  }
+  auto specific_interfaces() const
+      -> const CanonicalValueStore<SpecificInterfaceId>& {
+    return specific_interfaces_;
+  }
   auto generics() -> GenericStore& { return generics_; }
   auto generics() const -> const GenericStore& { return generics_; }
   auto specifics() -> SpecificStore& { return specifics_; }
@@ -285,11 +295,15 @@ class File : public Printable<File> {
   // Storage for facet types.
   CanonicalValueStore<FacetTypeId> facet_types_;
 
-  // Storage for complete facet types.
-  CompleteFacetTypeStore complete_facet_types_;
+  // Storage for identified facet types.
+  IdentifiedFacetTypeStore identified_facet_types_;
 
   // Storage for impls.
   ImplStore impls_;
+
+  // Storage for specific interfaces, which are an individual unit of impl
+  // lookup for a single interface.
+  CanonicalValueStore<SpecificInterfaceId> specific_interfaces_;
 
   // Storage for generics.
   GenericStore generics_;
@@ -349,36 +363,6 @@ class File : public Printable<File> {
   // they represent expressions.
   ValueStore<ExprRegionId> expr_regions_;
 };
-
-// The expression category of a sem_ir instruction. See /docs/design/values.md
-// for details.
-enum class ExprCategory : int8_t {
-  // This instruction does not correspond to an expression, and as such has no
-  // category.
-  NotExpr,
-  // The category of this instruction is not known due to an error.
-  Error,
-  // This instruction represents a value expression.
-  Value,
-  // This instruction represents a durable reference expression, that denotes an
-  // object that outlives the current full expression context.
-  DurableRef,
-  // This instruction represents an ephemeral reference expression, that denotes
-  // an object that does not outlive the current full expression context.
-  EphemeralRef,
-  // This instruction represents an initializing expression, that describes how
-  // to initialize an object.
-  Initializing,
-  // This instruction represents a syntactic combination of expressions that are
-  // permitted to have different expression categories. This is used for tuple
-  // and struct literals, where the subexpressions for different elements can
-  // have different categories.
-  Mixed,
-  Last = Mixed
-};
-
-// Returns the expression category for an instruction.
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 }  // namespace Carbon::SemIR
 

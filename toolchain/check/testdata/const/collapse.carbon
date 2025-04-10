@@ -51,17 +51,17 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc16_38: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16_38: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc16_32: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:     %const.loc16_25: type = const_type %const [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr.loc16_42: type = ptr_type %const [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:     %ptr.loc16_43: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
+// CHECK:STDOUT:     %const.loc16_32: type = const_type %i32.loc16_38 [concrete = constants.%const]
+// CHECK:STDOUT:     %const.loc16_25: type = const_type %const.loc16_32 [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr.loc16_42: type = ptr_type %const.loc16_25 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:     %ptr.loc16_43: type = ptr_type %ptr.loc16_42 [concrete = constants.%ptr.3bc]
 // CHECK:STDOUT:     %p.param: %ptr.3bc = value_param call_param0
 // CHECK:STDOUT:     %.loc16: type = splice_block %ptr.loc16_19 [concrete = constants.%ptr.3bc] {
 // CHECK:STDOUT:       %int_32.loc16_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc16_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc16_9: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:       %ptr.loc16_18: type = ptr_type %const [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:       %ptr.loc16_19: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
+// CHECK:STDOUT:       %const.loc16_9: type = const_type %i32.loc16_15 [concrete = constants.%const]
+// CHECK:STDOUT:       %ptr.loc16_18: type = ptr_type %const.loc16_9 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:       %ptr.loc16_19: type = ptr_type %ptr.loc16_18 [concrete = constants.%ptr.3bc]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.3bc = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.3bc = out_param call_param1

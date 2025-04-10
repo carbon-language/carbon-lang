@@ -203,24 +203,28 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::InstId prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
                              bool check_self) -> bool {
+  auto orig_new_param_pattern_id = new_param_pattern_id;
+  auto orig_prev_param_pattern_id = prev_param_pattern_id;
+
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
   CARBON_DIAGNOSTIC(
       RedeclParamPrevious, Note,
       "previous declaration's corresponding {0:implicit |}parameter here",
-      BoolAsSelect);
+      Diagnostics::BoolAsSelect);
   auto emit_diagnostic = [&]() {
     if (!diagnose) {
       return;
     }
     CARBON_DIAGNOSTIC(RedeclParamDiffers, Error,
                       "redeclaration differs at {0:implicit |}parameter {1}",
-                      BoolAsSelect, int32_t);
+                      Diagnostics::BoolAsSelect, int32_t);
     context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
+        .Build(orig_new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
                param_index + 1)
-        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
+              is_implicit_param)
         .Emit();
   };
 
@@ -232,10 +236,11 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   }
 
   if (new_param_pattern.Is<SemIR::AddrPattern>()) {
-    new_param_pattern = context.insts().Get(
-        new_param_pattern.As<SemIR::AddrPattern>().inner_id);
-    prev_param_pattern = context.insts().Get(
-        prev_param_pattern.As<SemIR::AddrPattern>().inner_id);
+    new_param_pattern_id = new_param_pattern.As<SemIR::AddrPattern>().inner_id;
+    new_param_pattern = context.insts().Get(new_param_pattern_id);
+    prev_param_pattern_id =
+        prev_param_pattern.As<SemIR::AddrPattern>().inner_id;
+    prev_param_pattern = context.insts().Get(prev_param_pattern_id);
     if (new_param_pattern.kind() != prev_param_pattern.kind()) {
       emit_diagnostic();
       return false;
@@ -243,10 +248,12 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   }
 
   if (new_param_pattern.Is<SemIR::AnyParamPattern>()) {
-    new_param_pattern = context.insts().Get(
-        new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
-    prev_param_pattern = context.insts().Get(
-        prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
+    new_param_pattern_id =
+        new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id;
+    new_param_pattern = context.insts().Get(new_param_pattern_id);
+    prev_param_pattern_id =
+        prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id;
+    prev_param_pattern = context.insts().Get(prev_param_pattern_id);
     if (new_param_pattern.kind() != prev_param_pattern.kind()) {
       emit_diagnostic();
       return false;
@@ -267,8 +274,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return true;
   }
 
-  auto prev_param_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
+  auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), prev_specific_id, prev_param_pattern_id);
   if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
                                                   prev_param_type_id)) {
     if (!diagnose) {
@@ -277,11 +284,14 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
                       "type {3} of {0:implicit |}parameter {1} in "
                       "redeclaration differs from previous parameter type {2}",
-                      BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
+                      Diagnostics::BoolAsSelect, int32_t, SemIR::TypeId,
+                      SemIR::TypeId);
     context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
-               param_index + 1, prev_param_type_id, new_param_pattern.type_id())
-        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Build(orig_new_param_pattern_id, RedeclParamDiffersType,
+               is_implicit_param, param_index + 1, prev_param_type_id,
+               new_param_pattern.type_id())
+        .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
+              is_implicit_param)
         .Emit();
     return false;
   }
@@ -315,11 +325,11 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     CARBON_DIAGNOSTIC(RedeclParamListDiffers, Error,
                       "redeclaration differs because of "
                       "{1:|missing }{0:implicit |}parameter list",
-                      BoolAsSelect, BoolAsSelect);
+                      Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
     CARBON_DIAGNOSTIC(RedeclParamListPrevious, Note,
                       "previously declared "
                       "{1:with|without} {0:implicit |}parameter list",
-                      BoolAsSelect, BoolAsSelect);
+                      Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
     context.emitter()
         .Build(new_decl_loc, RedeclParamListDiffers, is_implicit_param,
                new_param_patterns_id.has_value())
@@ -342,11 +352,11 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     CARBON_DIAGNOSTIC(
         RedeclParamCountDiffers, Error,
         "redeclaration differs because of {0:implicit |}parameter count of {1}",
-        BoolAsSelect, int32_t);
+        Diagnostics::BoolAsSelect, int32_t);
     CARBON_DIAGNOSTIC(
         RedeclParamCountPrevious, Note,
         "previously declared with {0:implicit |}parameter count of {1}",
-        BoolAsSelect, int32_t);
+        Diagnostics::BoolAsSelect, int32_t);
     context.emitter()
         .Build(new_decl_loc, RedeclParamCountDiffers, is_implicit_param,
                new_param_pattern_ids.size())

@@ -23,10 +23,8 @@
 
 namespace Carbon::Parse {
 
-auto DumpNoNewline(const Tree& tree, NodeId node_id) -> void;
-
-auto Dump(const Tree& tree, Lex::TokenIndex token) -> void;
-auto Dump(const Tree& tree, NodeId node_id) -> void;
+auto Dump(const Tree& tree, Lex::TokenIndex token) -> std::string;
+auto Dump(const Tree& tree, NodeId node_id) -> std::string;
 
 }  // namespace Carbon::Parse
 

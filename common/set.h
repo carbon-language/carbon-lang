@@ -6,6 +6,7 @@
 #define CARBON_COMMON_SET_H_
 
 #include <concepts>
+#include <type_traits>
 
 #include "common/check.h"
 #include "common/hashtable_key_context.h"
@@ -78,7 +79,7 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 
   // Enable implicit conversions that add `const`-ness to the key type.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SetView(SetView<std::remove_const_t<KeyT>, KeyContextT> other_view)
+  SetView(const SetView<std::remove_const_t<KeyT>, KeyContextT>& other_view)
     requires(!std::same_as<KeyT, std::remove_const_t<KeyT>>)
       : ImplT(other_view) {}
 

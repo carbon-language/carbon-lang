@@ -62,13 +62,6 @@ class ValueStore
     return id;
   }
 
-  // Adds a default constructed value and returns an ID to reference it.
-  auto AddDefaultValue() -> IdT {
-    IdT id(values_.size());
-    values_.resize(id.index + 1);
-    return id;
-  }
-
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);

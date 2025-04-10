@@ -9,12 +9,12 @@
 
 #include "common/enum_base.h"
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
 // Although this currently fits into int8_t, it shouldn't be expected to
 // long-term.
 // NOLINTNEXTLINE(performance-enum-size)
-CARBON_DEFINE_RAW_ENUM_CLASS(DiagnosticKind, uint16_t) {
+CARBON_DEFINE_RAW_ENUM_CLASS(Kind, uint16_t) {
 #define CARBON_DIAGNOSTIC_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/diagnostics/diagnostic_kind.def"
 };
@@ -27,19 +27,18 @@ CARBON_DEFINE_RAW_ENUM_CLASS(DiagnosticKind, uint16_t) {
 // definitions centrally is expected to create a compilation bottleneck
 // long-term, and we also see value to keeping diagnostic format strings close
 // to the consuming code.
-class DiagnosticKind : public CARBON_ENUM_BASE(DiagnosticKind) {
+class Kind : public CARBON_ENUM_BASE(Kind) {
  public:
 #define CARBON_DIAGNOSTIC_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/diagnostics/diagnostic_kind.def"
 };
 
-#define CARBON_DIAGNOSTIC_KIND(Name) \
-  CARBON_ENUM_CONSTANT_DEFINITION(DiagnosticKind, Name)
+#define CARBON_DIAGNOSTIC_KIND(Name) CARBON_ENUM_CONSTANT_DEFINITION(Kind, Name)
 #include "toolchain/diagnostics/diagnostic_kind.def"
 
-// We expect DiagnosticKind to fit into 2 bits.
-static_assert(sizeof(DiagnosticKind) == 2, "DiagnosticKind includes padding!");
+// We expect Kind to fit into 2 bits.
+static_assert(sizeof(Kind) == 2, "Kind includes padding!");
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics
 
 #endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_KIND_H_

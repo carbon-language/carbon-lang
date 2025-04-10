@@ -15,6 +15,7 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -379,7 +380,7 @@ class FormatterImpl {
     out_ << " as ";
     FormatName(impl_info.constraint_id);
 
-    if (impl_info.is_defined()) {
+    if (impl_info.is_complete()) {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(impl_info.body_block_id);
@@ -1244,10 +1245,10 @@ class FormatterImpl {
     out_ << "<";
 
     llvm::ListSeparator sep(" & ");
-    if (info.impls_constraints.empty()) {
+    if (info.extend_constraints.empty()) {
       out_ << "type";
     } else {
-      for (auto interface : info.impls_constraints) {
+      for (auto interface : info.extend_constraints) {
         out_ << sep;
         FormatName(interface.interface_id);
         if (interface.specific_id.has_value()) {
@@ -1257,15 +1258,27 @@ class FormatterImpl {
       }
     }
 
-    if (info.other_requirements || !info.rewrite_constraints.empty()) {
-      // TODO: Include specifics.
+    if (info.other_requirements || !info.self_impls_constraints.empty() ||
+        !info.rewrite_constraints.empty()) {
       out_ << " where ";
       llvm::ListSeparator and_sep(" and ");
+      if (!info.self_impls_constraints.empty()) {
+        out_ << and_sep << ".Self impls ";
+        llvm::ListSeparator amp_sep(" & ");
+        for (auto interface : info.self_impls_constraints) {
+          out_ << amp_sep;
+          FormatName(interface.interface_id);
+          if (interface.specific_id.has_value()) {
+            out_ << ", ";
+            FormatName(interface.specific_id);
+          }
+        }
+      }
       for (auto rewrite : info.rewrite_constraints) {
         out_ << and_sep;
-        FormatConstant(rewrite.lhs_const_id);
+        FormatArg(rewrite.lhs_id);
         out_ << " = ";
-        FormatConstant(rewrite.rhs_const_id);
+        FormatArg(rewrite.rhs_id);
       }
       if (info.other_requirements) {
         out_ << and_sep << "TODO";
@@ -1386,6 +1399,15 @@ class FormatterImpl {
     const auto& specific = sem_ir_->specifics().Get(id);
     FormatName(specific.generic_id);
     FormatArg(specific.args_id);
+  }
+
+  auto FormatName(SpecificInterfaceId id) -> void {
+    const auto& interface = sem_ir_->specific_interfaces().Get(id);
+    FormatName(interface.interface_id);
+    if (interface.specific_id.has_value()) {
+      out_ << ", ";
+      FormatArg(interface.specific_id);
+    }
   }
 
   auto FormatLabel(InstBlockId id) -> void {

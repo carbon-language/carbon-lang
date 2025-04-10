@@ -67,7 +67,7 @@ namespace N;
 fn N.F1() -> C;
 
 // Use `N.C` which was poisoned and not declared.
-// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:14: error: member name `C` not found in `N` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:14: error: member name `C` not found in `N` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn N.F2() -> N.C;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR:
@@ -94,7 +94,7 @@ fn N.F1(x: C);
 class N.C;
 
 // Failure: `N.C` used after declaration failed.
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:12: error: member name `C` not found in `N` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:12: error: member name `C` not found in `N` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn N.F2(x: N.C);
 // CHECK:STDERR:            ^~~
 // CHECK:STDERR:

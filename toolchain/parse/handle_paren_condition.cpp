@@ -9,7 +9,7 @@ namespace Carbon::Parse {
 
 // Handles ParenConditionAs(If|While|Match).
 static auto HandleParenCondition(Context& context, NodeKind start_kind,
-                                 State finish_state) -> void {
+                                 StateKind finish_state_kind) -> void {
   auto state = context.PopState();
 
   std::optional<Lex::TokenIndex> open_paren =
@@ -17,7 +17,7 @@ static auto HandleParenCondition(Context& context, NodeKind start_kind,
   if (open_paren) {
     state.token = *open_paren;
   }
-  context.PushState(state, finish_state);
+  context.PushState(state, finish_state_kind);
 
   if (!open_paren && context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     // For an open curly, assume the condition was completely omitted.
@@ -25,23 +25,23 @@ static auto HandleParenCondition(Context& context, NodeKind start_kind,
     // a code block and just emit an invalid parse.
     context.AddInvalidParse(*context.position());
   } else {
-    context.PushState(State::Expr);
+    context.PushState(StateKind::Expr);
   }
 }
 
 auto HandleParenConditionAsIf(Context& context) -> void {
   HandleParenCondition(context, NodeKind::IfConditionStart,
-                       State::ParenConditionFinishAsIf);
+                       StateKind::ParenConditionFinishAsIf);
 }
 
 auto HandleParenConditionAsWhile(Context& context) -> void {
   HandleParenCondition(context, NodeKind::WhileConditionStart,
-                       State::ParenConditionFinishAsWhile);
+                       StateKind::ParenConditionFinishAsWhile);
 }
 
 auto HandleParenConditionAsMatch(Context& context) -> void {
   HandleParenCondition(context, NodeKind::MatchConditionStart,
-                       State::ParenConditionFinishAsMatch);
+                       StateKind::ParenConditionFinishAsMatch);
 }
 
 auto HandleParenConditionFinishAsIf(Context& context) -> void {

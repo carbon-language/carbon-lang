@@ -15,7 +15,7 @@ library "[[@TEST_NAME]]";
 class B;
 
 class A(T:! type) {
-  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+6]]:10: error: type `B` is incomplete [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+6]]:10: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   var v: T;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
@@ -61,7 +61,7 @@ library "[[@TEST_NAME]]";
 class B;
 
 fn F(T:! type) {
-  // CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+6]]:10: error: type `B` is incomplete [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+6]]:10: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   var v: T;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
@@ -150,7 +150,7 @@ fn G() { F(B); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%T.loc6_9.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_9.2) [symbolic = %A (constants.%A.130)]
-// CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.130), @A.%T.loc6_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.1ce)]
+// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %T.loc6_9.2 [symbolic = %A.elem (constants.%A.elem.1ce)]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_9.2 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.ff1)]
 // CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.ff1) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:
@@ -177,14 +177,14 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(%T.loc6_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%B) {
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%B
-// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%B
+// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => <error>
@@ -275,12 +275,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%B) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%B
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%B
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
@@ -358,12 +358,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%B) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%B
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%B
+// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => <error>

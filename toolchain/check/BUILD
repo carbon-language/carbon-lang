@@ -105,6 +105,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
+        "//toolchain/base:value_store",
         "//toolchain/check:generic_region_stack",
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -113,6 +114,7 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:inst",
@@ -131,6 +133,7 @@ cc_library(
         ":context",
         "//common:check",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//toolchain/lex:dump",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:dump",
@@ -161,10 +164,10 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":diagnostic_emitter",
         ":dump",
         ":impl",
         ":pointer_dereference",
-        ":sem_ir_loc_diagnostic_emitter",
         "//common:check",
         "//common:error",
         "//common:map",
@@ -183,6 +186,7 @@ cc_library(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:entry_point",
+        "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
@@ -288,9 +292,9 @@ cc_library(
 )
 
 cc_library(
-    name = "sem_ir_loc_diagnostic_emitter",
-    srcs = ["sem_ir_loc_diagnostic_emitter.cpp"],
-    hdrs = ["sem_ir_loc_diagnostic_emitter.h"],
+    name = "diagnostic_emitter",
+    srcs = ["diagnostic_emitter.cpp"],
+    hdrs = ["diagnostic_emitter.h"],
     deps = [
         ":context",
         "//common:raw_string_ostream",

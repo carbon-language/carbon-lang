@@ -10,16 +10,12 @@
 
 interface I {
   class C {
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+11]]:5: error: impl as incomplete facet type `I` [ImplAsIncompleteFacetType]
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+7]]:5: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
     // CHECK:STDERR:     extend impl as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
     // CHECK:STDERR: interface I {
     // CHECK:STDERR: ^~~~~~~~~~~~~
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+4]]:5: error: impl declared but not defined [ImplMissingDefinition]
-    // CHECK:STDERR:     extend impl as I;
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     extend impl as I;
   }
@@ -32,6 +28,7 @@ interface I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C.f28: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.6b4: type = class_type @C, @C(%Self) [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -66,6 +63,7 @@ interface I {
 // CHECK:STDOUT: generic impl @impl(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.6b4)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl(%Self) [symbolic = %impl_witness (constants.%impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %I.ref;
 // CHECK:STDOUT: }
@@ -78,14 +76,14 @@ interface I {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C.6b4 [symbolic = %C (constants.%C.6b4)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc24: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [concrete = constants.%I.type]
+// CHECK:STDOUT:     %impl_witness: <witness> = impl_witness (), @impl(constants.%Self) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:     %.loc20: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [concrete = constants.%I.type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.6b4
 // CHECK:STDOUT:     .I = <poisoned>
-// CHECK:STDOUT:     extend %.loc24
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -95,7 +93,10 @@ interface I {
 // CHECK:STDOUT: specific @impl(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C.6b4
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(@impl.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl(%Self) {}
 // CHECK:STDOUT:

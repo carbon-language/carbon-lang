@@ -55,8 +55,7 @@ static auto BuildInterfaceDecl(Context& context,
   auto interface_decl =
       SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
                            SemIR::InterfaceId::None, decl_block_id};
-  auto interface_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst(node_id, interface_decl));
+  auto interface_decl_id = AddPlaceholderInst(context, node_id, interface_decl);
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
       name, interface_decl_id, /*is_extern=*/false,
@@ -127,9 +126,9 @@ static auto BuildInterfaceDecl(Context& context,
                                   context.scope_stack().PeekSpecificId());
     }
   } else {
-    FinishGenericRedecl(
-        context, interface_decl_id,
-        context.interfaces().Get(interface_decl.interface_id).generic_id);
+    auto prev_decl_generic_id =
+        context.interfaces().Get(interface_decl.interface_id).generic_id;
+    FinishGenericRedecl(context, prev_decl_generic_id);
   }
 
   // Write the interface ID into the InterfaceDecl.
@@ -172,10 +171,8 @@ auto HandleParseNode(Context& context,
   context.args_type_info_stack().Push();
 
   // Declare and introduce `Self`.
-  SemIR::FacetType facet_type =
-      FacetTypeFromInterface(context, interface_id, self_specific_id);
-  SemIR::TypeId self_type_id = context.types().GetTypeIdForTypeConstantId(
-      TryEvalInst(context, SemIR::InstId::None, facet_type));
+  SemIR::TypeId self_type_id =
+      GetInterfaceType(context, interface_id, self_specific_id);
 
   // We model `Self` as a symbolic binding whose type is the interface.
   // Because there is no equivalent non-symbolic value, we use `None` as

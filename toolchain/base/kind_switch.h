@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_
 #define CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_
 
+#include <type_traits>
+
 #include "llvm/ADT/STLExtras.h"
 
 // This library provides switch-like behaviors for Carbon's kind-based types.
@@ -37,19 +39,21 @@
 // requirements should change.
 namespace Carbon::Internal::Kind {
 
-// Given `CARBON_KIND_SWITCH(value)` this handles calling `value.kind()`.
-template <typename T>
-auto SwitchOn(T&& switch_value) -> auto {
+// Given `CARBON_KIND_SWITCH(value)` this returns `value.kind()` to switch on.
+template <typename SwitchT>
+auto SwitchOn(SwitchT&& switch_value) -> auto {
   return switch_value.kind();
 }
 
 // Given `CARBON_KIND(CaseT name)` this generates `CaseT::Kind`. It explicitly
 // returns `KindT` because that may differ from `CaseT::Kind`, and may not be
 // copyable.
-template <typename FnT>
+template <typename SwitchT, typename CaseFnT>
 consteval auto ForCase() -> auto {
-  using ArgT = llvm::function_traits<FnT>::template arg_t<0>;
-  return static_cast<decltype(ArgT::Kind)::RawEnumType>(ArgT::Kind);
+  using KindT = llvm::function_traits<
+      decltype(&std::remove_cvref_t<SwitchT>::kind)>::result_t;
+  using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;
+  return static_cast<KindT::RawEnumType>(KindT::template For<CaseT>);
 }
 
 // Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this
@@ -80,6 +84,7 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
 // name, making it look more like a typical `case`.
 #define CARBON_KIND(typed_variable_decl)                                \
   ::Carbon::Internal::Kind::ForCase<                                    \
+      decltype(carbon_internal_kind_switch_value),                      \
       decltype([]([[maybe_unused]] typed_variable_decl) {})>()          \
       : if (typed_variable_decl = ::Carbon::Internal::Kind::Cast<       \
                 decltype([]([[maybe_unused]] typed_variable_decl) {})>( \

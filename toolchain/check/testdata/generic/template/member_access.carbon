@@ -33,7 +33,7 @@ fn Test2(x: {.m: i32, .n: i32}) {
 library "[[@TEST_NAME]]";
 
 fn F[template T:! type](x: T) -> i32 {
-  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE+3]]:10: error: member name `n` not found in `D` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE+3]]:10: error: member name `n` not found in `D` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   return x.n;
   // CHECK:STDERR:          ^~~
   return x.n;
@@ -56,7 +56,7 @@ fn Test(d: D) {
 library "[[@TEST_NAME]]";
 
 fn F[template T:! type](x: T) -> i32 {
-  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+6]]:3: error: cannot implicitly convert value of type `F` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+6]]:3: error: cannot implicitly convert expression of type `F` to `i32` [ConversionFailure]
   // CHECK:STDERR:   return x.n;
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+3]]:3: note: type `F` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
@@ -237,12 +237,12 @@ fn Test(e: E) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%C
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.54b
@@ -254,7 +254,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%struct_type.m.n) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%struct_type.m.n
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%struct_type.m.n
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.622
@@ -382,12 +382,12 @@ fn Test(e: E) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%D) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%D
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%D
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.218
@@ -534,12 +534,12 @@ fn Test(e: E) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%E) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%E
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%E
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.5ba

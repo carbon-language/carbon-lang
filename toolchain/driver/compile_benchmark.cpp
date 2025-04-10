@@ -34,10 +34,10 @@ class CompileBenchmark {
   auto SetUpFiles(llvm::ArrayRef<std::string> sources)
       -> llvm::OwningArrayRef<std::string> {
     llvm::OwningArrayRef<std::string> file_names(sources.size());
-    for (ssize_t i : llvm::seq<ssize_t>(sources.size())) {
-      file_names[i] = llvm::formatv("file_{0}.carbon", i).str();
-      fs_->addFile(file_names[i], /*ModificationTime=*/0,
-                   llvm::MemoryBuffer::getMemBuffer(sources[i]));
+    for (auto [i, source, file_name] : llvm::enumerate(sources, file_names)) {
+      file_name = llvm::formatv("file_{0}.carbon", i).str();
+      fs_->addFile(file_name, /*ModificationTime=*/0,
+                   llvm::MemoryBuffer::getMemBuffer(source));
     }
     return file_names;
   }

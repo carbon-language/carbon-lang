@@ -93,7 +93,7 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %.loc12_14.1: type = value_of_initializer %float.make_type [concrete = f64]
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %float.make_type, %.loc12_14.1 [concrete = f64]
-// CHECK:STDOUT:     %array_type.loc12: type = array_type %int_2, f64 [concrete = constants.%array_type.ce7]
+// CHECK:STDOUT:     %array_type.loc12: type = array_type %int_2, %.loc12_14.2 [concrete = constants.%array_type.ce7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %array_type.ce7 = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -105,7 +105,7 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:     %.loc13_15.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:     %.loc13_15.2: type = converted %.loc13_15.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %array_type.loc13: type = array_type %int_5, %empty_tuple.type [concrete = constants.%array_type.c13]
+// CHECK:STDOUT:     %array_type.loc13: type = array_type %int_5, %.loc13_15.2 [concrete = constants.%array_type.c13]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %array_type.c13 = bind_name c, %c.var
 // CHECK:STDOUT: }

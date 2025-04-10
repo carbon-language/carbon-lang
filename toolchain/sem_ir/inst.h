@@ -127,6 +127,37 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
+  // Associates an argument (usually arg0 or arg1, potentially type_id) with its
+  // IdKind.
+  class ArgAndKind {
+   public:
+    explicit ArgAndKind(IdKind kind, int32_t value)
+        : kind_(kind), value_(value) {}
+
+    // Converts to `IdT`, validating the `kind` matches.
+    template <typename IdT>
+    auto As() const -> IdT {
+      CARBON_DCHECK(kind_ == SemIR::IdKind::For<IdT>);
+      return IdT(value_);
+    }
+
+    // Converts to `IdT`, returning nullopt if the kind is incorrect.
+    template <typename IdT>
+    auto TryAs() const -> std::optional<IdT> {
+      if (kind_ != SemIR::IdKind::For<IdT>) {
+        return std::nullopt;
+      }
+      return IdT(value_);
+    }
+
+    auto kind() const -> IdKind { return kind_; }
+    auto value() const -> int32_t { return value_; }
+
+   private:
+    IdKind kind_;
+    int32_t value_;
+  };
+
   // Makes an instruction for a singleton. This exists to support simple
   // construction of all singletons by File.
   static auto MakeSingleton(InstKind kind) -> Inst {
@@ -225,20 +256,6 @@ class Inst : public Printable<Inst> {
   // Gets the type of the value produced by evaluating this instruction.
   auto type_id() const -> TypeId { return type_id_; }
 
-  // Gets the kinds of IDs used for arg0 and arg1 of the specified kind of
-  // instruction.
-  //
-  // TODO: This would ideally live on InstKind, but can't be there for layering
-  // reasons.
-  static auto ArgKinds(InstKind kind) -> std::pair<IdKind, IdKind> {
-    return ArgKindTable[kind.AsInt()];
-  }
-
-  // Gets the kinds of IDs used for arg0 and arg1 of this instruction.
-  auto ArgKinds() const -> std::pair<IdKind, IdKind> {
-    return ArgKinds(kind());
-  }
-
   // Gets the first argument of the instruction. NoneIndex if there is no such
   // argument.
   auto arg0() const -> int32_t { return arg0_; }
@@ -246,6 +263,17 @@ class Inst : public Printable<Inst> {
   // Gets the second argument of the instruction. NoneIndex if there is no such
   // argument.
   auto arg1() const -> int32_t { return arg1_; }
+
+  // Returns arguments with their IdKind.
+  auto type_id_and_kind() const -> ArgAndKind {
+    return ArgAndKind(SemIR::IdKind::For<SemIR::TypeId>, type_id_.index);
+  }
+  auto arg0_and_kind() const -> ArgAndKind {
+    return ArgAndKind(ArgKindTable[kind_].first, arg0_);
+  }
+  auto arg1_and_kind() const -> ArgAndKind {
+    return ArgAndKind(ArgKindTable[kind_].second, arg1_);
+  }
 
   // Sets the type of this instruction.
   auto SetType(TypeId type_id) -> void { type_id_ = type_id; }
@@ -281,6 +309,9 @@ class Inst : public Printable<Inst> {
   friend class InstTestHelper;
 
   // Table mapping instruction kinds to their argument kinds.
+  //
+  // TODO: ArgKindTable would ideally live on InstKind, but can't be there for
+  // layering reasons.
   static const std::pair<IdKind, IdKind> ArgKindTable[];
 
   // Raw constructor, used for testing.
@@ -452,22 +483,35 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
  public:
   using BaseType = BlockValueStore<InstBlockId>;
 
-  using BaseType::AddDefaultValue;
-  using BaseType::AddUninitialized;
-
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
       : BaseType(allocator) {
-    auto exports_id = AddDefaultValue();
+    auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
-    auto import_refs_id = AddDefaultValue();
+    auto import_refs_id = AddPlaceholder();
     CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
-    auto global_init_id = AddDefaultValue();
+    auto global_init_id = AddPlaceholder();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }
 
-  auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {
-    CARBON_CHECK(block_id != InstBlockId::Unreachable);
-    BlockValueStore<InstBlockId>::SetContent(block_id, content);
+  // Adds an uninitialized block of the given size. The caller is expected to
+  // modify values.
+  auto AddUninitialized(size_t size) -> InstBlockId {
+    return values().Add(AllocateUninitialized(size));
+  }
+
+  // Reserves and returns a block ID. The contents of the block should be
+  // specified by calling ReplacePlaceholder.
+  auto AddPlaceholder() -> InstBlockId {
+    return values().Add(llvm::MutableArrayRef<ElementType>());
+  }
+
+  // Sets the contents of a placeholder block to the given content.
+  auto ReplacePlaceholder(InstBlockId block_id, llvm::ArrayRef<InstId> content)
+      -> void {
+    CARBON_CHECK(block_id != SemIR::InstBlockId::Empty);
+    CARBON_CHECK(Get(block_id).empty(),
+                 "inst block content set more than once");
+    values().Get(block_id) = AllocateCopy(content);
   }
 
   // Returns the contents of the specified block, or an empty array if the block

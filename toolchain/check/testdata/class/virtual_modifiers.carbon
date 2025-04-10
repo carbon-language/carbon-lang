@@ -33,6 +33,10 @@ class Derived {
   impl fn H[self: Self]();
 }
 
+fn Use() {
+  var d: Derived = {.base = {}};
+}
+
 // --- todo_fail_later_base.carbon
 
 library "[[@TEST_NAME]]";
@@ -83,6 +87,12 @@ base class B2 {
 class C {
   extend base: B2;
   impl fn F[self: Self]();
+}
+
+fn Use() {
+  var b1: B1 = {};
+  var b2: B2 = {.base = {}};
+  var c: C = {.base = {.base = {}}};
 }
 
 // --- fail_modifiers.carbon
@@ -384,8 +394,12 @@ class T2 {
 // CHECK:STDOUT:   %H.type.dba: type = fn_type @H.1 [concrete]
 // CHECK:STDOUT:   %H.bce: %H.type.dba = struct_value () [concrete]
 // CHECK:STDOUT:   %.dce: <vtable> = vtable (%H.bce) [concrete]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete]
-// CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base [concrete]
+// CHECK:STDOUT:   %struct_type.base.96c: type = struct_type {.base: %Base} [concrete]
+// CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base.96c [concrete]
+// CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
+// CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -399,7 +413,7 @@ class T2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -408,10 +422,12 @@ class T2 {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Modifiers = imports.%Modifiers
 // CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Modifiers.import = import Modifiers
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -427,7 +443,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9: <vtable> = vtable (%H.decl) [concrete = constants.%.dce]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.0e2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.96c [concrete = constants.%complete_type.0e2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -449,6 +465,29 @@ class T2 {
 // CHECK:STDOUT: impl fn @H.1[%self.param_patt: %Derived]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H.2[%self.param_patt: %Base]() [from "modifiers.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Use() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
+// CHECK:STDOUT:     %.loc12_3.1: %Derived = var_pattern %d.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %d.var: ref %Derived = var d
+// CHECK:STDOUT:   %.loc12_30.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc12_31.1: %struct_type.base.f5e = struct_literal (%.loc12_30.1)
+// CHECK:STDOUT:   %.loc12_31.2: ref %Base = class_element_access %d.var, element0
+// CHECK:STDOUT:   %.loc12_30.2: ref %ptr.454 = class_element_access %.loc12_31.2, element0
+// CHECK:STDOUT:   %.loc12_30.3: ref %ptr.454 = vtable_ptr @Derived.%.loc9
+// CHECK:STDOUT:   %.loc12_30.4: init %ptr.454 = initialize_from %.loc12_30.3 to %.loc12_30.2
+// CHECK:STDOUT:   %.loc12_30.5: init %Base = class_init (%.loc12_30.4), %.loc12_31.2
+// CHECK:STDOUT:   %.loc12_31.3: init %Base = converted %.loc12_30.1, %.loc12_30.5
+// CHECK:STDOUT:   %.loc12_31.4: init %Derived = class_init (%.loc12_31.3), %d.var
+// CHECK:STDOUT:   %.loc12_3.2: init %Derived = converted %.loc12_31.1, %.loc12_31.4
+// CHECK:STDOUT:   assign %d.var, %.loc12_3.2
+// CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %d: ref %Derived = bind_name d, %d.var
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_later_base.carbon
 // CHECK:STDOUT:
@@ -479,7 +518,7 @@ class T2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -552,8 +591,9 @@ class T2 {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
+// CHECK:STDOUT:   %Modifiers.import_ref.ace = import_ref Modifiers//default, loc6_1, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -585,7 +625,7 @@ class T2 {
 // CHECK:STDOUT:   %v.var: ref %Base = var v
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_28.2: ref %ptr.454 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %.loc7_28.3: ref %ptr.454 = vtable_ptr
+// CHECK:STDOUT:   %.loc7_28.3: ref %ptr.454 = vtable_ptr imports.%Modifiers.import_ref.ace
 // CHECK:STDOUT:   %.loc7_28.4: init %ptr.454 = initialize_from %.loc7_28.3 to %.loc7_28.2
 // CHECK:STDOUT:   %.loc7_28.5: init %Base = class_init (%.loc7_28.4), %v.var
 // CHECK:STDOUT:   %.loc7_3.2: init %Base = converted %.loc7_28.1, %.loc7_28.5
@@ -704,6 +744,11 @@ class T2 {
 // CHECK:STDOUT:   %.5f6: <vtable> = vtable (%F.437) [concrete]
 // CHECK:STDOUT:   %struct_type.base.421: type = struct_type {.base: %B2} [concrete]
 // CHECK:STDOUT:   %complete_type.066: <witness> = complete_type_witness %struct_type.base.421 [concrete]
+// CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
+// CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %struct_type.base.a0c: type = struct_type {.base: %struct_type.base.f5e} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -719,11 +764,13 @@ class T2 {
 // CHECK:STDOUT:     .B1 = %B1.decl
 // CHECK:STDOUT:     .B2 = %B2.decl
 // CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %B1.decl: type = class_decl @B1 [concrete = constants.%B1] {} {}
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [concrete = constants.%B2] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
@@ -795,6 +842,65 @@ class T2 {
 // CHECK:STDOUT: impl fn @F.2[%self.param_patt: %B2]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F.3[%self.param_patt: %C]();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Use() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b1.patt: %B1 = binding_pattern b1
+// CHECK:STDOUT:     %.loc19_3.1: %B1 = var_pattern %b1.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b1.var: ref %B1 = var b1
+// CHECK:STDOUT:   %.loc19_17.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc19_17.2: ref %ptr.454 = class_element_access %b1.var, element0
+// CHECK:STDOUT:   %.loc19_17.3: ref %ptr.454 = vtable_ptr @B1.%.loc6
+// CHECK:STDOUT:   %.loc19_17.4: init %ptr.454 = initialize_from %.loc19_17.3 to %.loc19_17.2
+// CHECK:STDOUT:   %.loc19_17.5: init %B1 = class_init (%.loc19_17.4), %b1.var
+// CHECK:STDOUT:   %.loc19_3.2: init %B1 = converted %.loc19_17.1, %.loc19_17.5
+// CHECK:STDOUT:   assign %b1.var, %.loc19_3.2
+// CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
+// CHECK:STDOUT:   %b1: ref %B1 = bind_name b1, %b1.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b2.patt: %B2 = binding_pattern b2
+// CHECK:STDOUT:     %.loc20_3.1: %B2 = var_pattern %b2.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b2.var: ref %B2 = var b2
+// CHECK:STDOUT:   %.loc20_26.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc20_27.1: %struct_type.base.f5e = struct_literal (%.loc20_26.1)
+// CHECK:STDOUT:   %.loc20_27.2: ref %B1 = class_element_access %b2.var, element0
+// CHECK:STDOUT:   %.loc20_26.2: ref %ptr.454 = class_element_access %.loc20_27.2, element0
+// CHECK:STDOUT:   %.loc20_26.3: ref %ptr.454 = vtable_ptr @B2.%.loc11
+// CHECK:STDOUT:   %.loc20_26.4: init %ptr.454 = initialize_from %.loc20_26.3 to %.loc20_26.2
+// CHECK:STDOUT:   %.loc20_26.5: init %B1 = class_init (%.loc20_26.4), %.loc20_27.2
+// CHECK:STDOUT:   %.loc20_27.3: init %B1 = converted %.loc20_26.1, %.loc20_26.5
+// CHECK:STDOUT:   %.loc20_27.4: init %B2 = class_init (%.loc20_27.3), %b2.var
+// CHECK:STDOUT:   %.loc20_3.2: init %B2 = converted %.loc20_27.1, %.loc20_27.4
+// CHECK:STDOUT:   assign %b2.var, %.loc20_3.2
+// CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
+// CHECK:STDOUT:   %b2: ref %B2 = bind_name b2, %b2.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc21_3.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc21_33.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc21_34.1: %struct_type.base.f5e = struct_literal (%.loc21_33.1)
+// CHECK:STDOUT:   %.loc21_35.1: %struct_type.base.a0c = struct_literal (%.loc21_34.1)
+// CHECK:STDOUT:   %.loc21_35.2: ref %B2 = class_element_access %c.var, element0
+// CHECK:STDOUT:   %.loc21_34.2: ref %B1 = class_element_access %.loc21_35.2, element0
+// CHECK:STDOUT:   %.loc21_33.2: ref %ptr.454 = class_element_access %.loc21_34.2, element0
+// CHECK:STDOUT:   %.loc21_33.3: ref %ptr.454 = vtable_ptr @C.%.loc16
+// CHECK:STDOUT:   %.loc21_33.4: init %ptr.454 = initialize_from %.loc21_33.3 to %.loc21_33.2
+// CHECK:STDOUT:   %.loc21_33.5: init %B1 = class_init (%.loc21_33.4), %.loc21_34.2
+// CHECK:STDOUT:   %.loc21_34.3: init %B1 = converted %.loc21_33.1, %.loc21_33.5
+// CHECK:STDOUT:   %.loc21_34.4: init %B2 = class_init (%.loc21_34.3), %.loc21_35.2
+// CHECK:STDOUT:   %.loc21_35.3: init %B2 = converted %.loc21_34.1, %.loc21_34.4
+// CHECK:STDOUT:   %.loc21_35.4: init %C = class_init (%.loc21_35.3), %c.var
+// CHECK:STDOUT:   %.loc21_3.2: init %C = converted %.loc21_35.1, %.loc21_35.4
+// CHECK:STDOUT:   assign %c.var, %.loc21_3.2
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_modifiers.carbon
 // CHECK:STDOUT:
@@ -964,7 +1070,7 @@ class T2 {
 // CHECK:STDOUT:   %i.ref.loc14_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.68c = struct_literal (%i.ref.loc14_25, %i.ref.loc14_34)
 // CHECK:STDOUT:   %.loc14_35.2: ref %ptr.454 = class_element_access %b1.var, element0
-// CHECK:STDOUT:   %.loc14_35.3: ref %ptr.454 = vtable_ptr
+// CHECK:STDOUT:   %.loc14_35.3: ref %ptr.454 = vtable_ptr @Base.%.loc9
 // CHECK:STDOUT:   %.loc14_35.4: init %ptr.454 = initialize_from %.loc14_35.3 to %.loc14_35.2
 // CHECK:STDOUT:   %.loc14_34: %i32 = bind_value %i.ref.loc14_34
 // CHECK:STDOUT:   %.loc14_35.5: ref %i32 = class_element_access %b1.var, element2
@@ -986,7 +1092,7 @@ class T2 {
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc15_35.1: %struct_type.m2.m1.5f2 = struct_literal (%int_3.loc15, %int_5)
 // CHECK:STDOUT:   %.loc15_35.2: ref %ptr.454 = class_element_access %b2.var, element0
-// CHECK:STDOUT:   %.loc15_35.3: ref %ptr.454 = vtable_ptr
+// CHECK:STDOUT:   %.loc15_35.3: ref %ptr.454 = vtable_ptr @Base.%.loc9
 // CHECK:STDOUT:   %.loc15_35.4: init %ptr.454 = initialize_from %.loc15_35.3 to %.loc15_35.2
 // CHECK:STDOUT:   %impl.elem0.loc15_35.1: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [concrete = constants.%Convert.bound.4e6]
@@ -1694,7 +1800,7 @@ class T2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {
@@ -1708,7 +1814,7 @@ class T2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T1
-// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T1
+// CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.d82
@@ -1832,7 +1938,7 @@ class T2 {
 // CHECK:STDOUT:     %self.param: %ptr.87b = value_param call_param0
 // CHECK:STDOUT:     %.loc5: type = splice_block %ptr [concrete = constants.%ptr.87b] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%T1 [concrete = constants.%T1]
-// CHECK:STDOUT:       %ptr: type = ptr_type %T1 [concrete = constants.%ptr.87b]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.87b]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.87b = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -1856,7 +1962,7 @@ class T2 {
 // CHECK:STDOUT:     %self.param: %ptr.63e = value_param call_param0
 // CHECK:STDOUT:     %.loc17_29: type = splice_block %ptr [concrete = constants.%ptr.63e] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%T2 [concrete = constants.%T2]
-// CHECK:STDOUT:       %ptr: type = ptr_type %T2 [concrete = constants.%ptr.63e]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.63e]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.63e = bind_name self, %self.param
 // CHECK:STDOUT:   }

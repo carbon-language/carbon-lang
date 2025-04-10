@@ -24,9 +24,9 @@ auto HandleBaseAfterIntroducer(Context& context) -> void {
     return;
   }
 
-  state.state = State::BaseDecl;
+  state.kind = StateKind::BaseDecl;
   context.PushState(state);
-  context.PushState(State::Expr);
+  context.PushState(StateKind::Expr);
 }
 
 // Handles processing of a complete `base: B` declaration.

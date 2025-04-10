@@ -74,7 +74,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %next.param: %ptr.e71 = value_param call_param1
 // CHECK:STDOUT:     %.loc16_28: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref.loc16_23: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc16_23 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %next: %ptr.e71 = bind_name next, %next.param
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param2
@@ -98,7 +98,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %next.param: %ptr.e71 = value_param call_param1
 // CHECK:STDOUT:     %.loc20_35: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref.loc20_30: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc20_30 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %next: %ptr.e71 = bind_name next, %next.param
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param2

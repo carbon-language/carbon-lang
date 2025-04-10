@@ -14,6 +14,7 @@
 #include "toolchain/check/operator.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -152,11 +153,12 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       }
       // Constant evaluation will perform a bounds check on this array indexing
       // if the index is constant.
-      auto elem_id =
-          AddInst<SemIR::ArrayIndex>(context, node_id,
-                                     {.type_id = array_type.element_type_id,
-                                      .array_id = operand_inst_id,
-                                      .index_id = cast_index_id});
+      auto elem_id = AddInst<SemIR::ArrayIndex>(
+          context, node_id,
+          {.type_id = context.types().GetTypeIdForTypeInstId(
+               array_type.element_type_inst_id),
+           .array_id = operand_inst_id,
+           .index_id = cast_index_id});
       if (array_cat != SemIR::ExprCategory::DurableRef) {
         // Indexing a durable reference gives a durable reference expression.
         // Indexing anything else gives a value expression.

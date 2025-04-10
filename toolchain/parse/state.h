@@ -11,22 +11,23 @@
 
 namespace Carbon::Parse {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(State, uint8_t) {
+CARBON_DEFINE_RAW_ENUM_CLASS(StateKind, uint8_t) {
 #define CARBON_PARSE_STATE(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/parse/state.def"
 };
 
-class State : public CARBON_ENUM_BASE(State) {
+class StateKind : public CARBON_ENUM_BASE(StateKind) {
  public:
 #define CARBON_PARSE_STATE(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/parse/state.def"
 };
 
-#define CARBON_PARSE_STATE(Name) CARBON_ENUM_CONSTANT_DEFINITION(State, Name)
+#define CARBON_PARSE_STATE(Name) \
+  CARBON_ENUM_CONSTANT_DEFINITION(StateKind, Name)
 #include "toolchain/parse/state.def"
 
 // We expect State to fit compactly into 8 bits.
-static_assert(sizeof(State) == 1, "State includes padding!");
+static_assert(sizeof(StateKind) == 1, "State includes padding!");
 
 }  // namespace Carbon::Parse
 

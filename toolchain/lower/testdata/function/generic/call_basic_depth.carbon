@@ -8,14 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_basic_depth.carbon
 
+// Builds on `call_basic.carbon`. Checks definitions are emitted with deeper
+// call stack, i.e., when functions can be type checked without looking at the
+// specific calling context.
 fn F[T:! type](x: T) {
 }
 
 fn H[T:! type](x: T) -> T {
-  // This call crashes because check/eval does not emit a definition for H.
-  // In G below, the call to H can be typechecked without needing a definition.
-  // TODO: this needs to be resolved in check/eval.
-  // F(x);
+  F(x);
   return x;
 }
 
@@ -31,8 +31,6 @@ fn M() {
 
   F(n);
   m = G(n);
-  // Adding something like this makes check/eval emit a definition for H, hence no crash.
-  // m = H(n);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'call_basic_depth.carbon'
@@ -70,7 +68,8 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CH.Main.b88d1103f417c6d4(i32 %x) !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !21
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !21
+// CHECK:STDOUT:   ret i32 %x, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -95,11 +94,12 @@ fn M() {
 // CHECK:STDOUT: !11 = !DILocation(line: 33, column: 7, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 33, column: 3, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 28, column: 1, scope: !4)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !15 = !DILocation(line: 11, column: 1, scope: !14)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = !DILocation(line: 14, column: 1, scope: !14)
 // CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b88d1103f417c6d4", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !17 = !DILocation(line: 23, column: 3, scope: !16)
 // CHECK:STDOUT: !18 = !DILocation(line: 24, column: 3, scope: !16)
 // CHECK:STDOUT: !19 = !DILocation(line: 25, column: 3, scope: !16)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.b88d1103f417c6d4", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !21 = !DILocation(line: 19, column: 3, scope: !20)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.b88d1103f417c6d4", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 3, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 19, column: 3, scope: !20)

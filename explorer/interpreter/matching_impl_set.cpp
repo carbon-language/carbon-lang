@@ -50,7 +50,7 @@ class MatchingImplSet::LeafCollector {
 
   void VisitValue(const StructType* struct_type) {
     Collect(Label::StructType);
-    for (auto [name, type] : struct_type->fields()) {
+    for (const auto& [name, type] : struct_type->fields()) {
       Collect(type);
     }
   }

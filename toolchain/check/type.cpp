@@ -72,10 +72,8 @@ auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
-  // TODO: Remove inst_id parameter from TryEvalInst.
   InstT inst = {SemIR::TypeType::SingletonTypeId, each_arg...};
-  return context.types().GetTypeIdForTypeConstantId(
-      TryEvalInst(context, SemIR::InstId::None, inst));
+  return context.types().GetTypeIdForTypeConstantId(TryEvalInst(context, inst));
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments,
@@ -100,9 +98,11 @@ auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::TypeId> type_ids)
       context, context.type_blocks().AddCanonical(type_ids));
 }
 
-auto GetAssociatedEntityType(Context& context, SemIR::TypeId interface_type_id)
+auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
+                             SemIR::SpecificId interface_specific_id)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::AssociatedEntityType>(context, interface_type_id);
+  return GetTypeImpl<SemIR::AssociatedEntityType>(context, interface_id,
+                                                  interface_specific_id);
 }
 
 auto GetSingletonType(Context& context, SemIR::InstId singleton_id)
@@ -152,13 +152,13 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
       FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
 }
 
-auto GetPointerType(Context& context, SemIR::TypeId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
-auto GetUnboundElementType(Context& context, SemIR::TypeId class_type_id,
-                           SemIR::TypeId element_type_id) -> SemIR::TypeId {
+auto GetUnboundElementType(Context& context, SemIR::InstId class_type_id,
+                           SemIR::InstId element_type_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(context, class_type_id,
                                                 element_type_id);
 }

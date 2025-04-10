@@ -183,8 +183,6 @@ fn F() {
   // The specialization of `Z(C)` should match in preference to the blanket
   // impls of `Z(T)`. If a blanket impl is chosen, then `a` will have type `()`
   // which will fail to typecheck here when constructed from a `C` value.
-  //
-  // TODO: C(T) is C(()) so this should work?
   let a: C(()).(Z(()).X) = {} as C(());
 }
 
@@ -217,7 +215,7 @@ fn F() {
   let a: C(D(E), D(E)).(Z.X) = {} as C(E, E);
 }
 
-// --- specialized_class_with_symbolic_facet_value_param.carbon
+// --- fail_specialized_class_with_symbolic_facet_value_param.carbon
 
 interface Z {
   let X:! type;
@@ -239,10 +237,13 @@ fn F[D:! Y](d: D) {
   // The FacetValue deduced for the param of `C` will be a symbolic FacetValue
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
-  //
-  // TODO: The type of `.X` should actually be symbolic here, unless the impl is
-  // effectively final (since the lookup query uses a symbolic `D` in its
-  // input). But we don't have support for either of those yet.
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `(C(D) as Z).(Z.X)` [ConversionFailure]
+  // CHECK:STDERR:   let a: C(D).(Z.X) = ();
+  // CHECK:STDERR:                       ^~
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs((C(D) as Z).(Z.X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: C(D).(Z.X) = ();
+  // CHECK:STDERR:                       ^~
+  // CHECK:STDERR:
   let a: C(D).(Z.X) = ();
 }
 
@@ -304,4 +305,186 @@ impl C(()) as Z where .X = C(()) {}
 
 fn F() {
   let a: C(()).(Z.X) = {} as C(());
+}
+
+// --- fail_todo_final_specialization_before_generic_use_of_type_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+class C {}
+
+impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
+
+// TODO: Make this `final`.
+impl forall [T:! type] T as Z(C) where .X = C {}
+
+fn F[U:! type](T:! Z(C)) {
+  // TODO: The value of `.X` can be known to be `C` here when the impl `T as Z(C)` is
+  // final.
+  // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
+  // CHECK:STDERR:   let a: T.X = {} as C;
+  // CHECK:STDERR:                ^~~~~~~
+  // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+4]]:16: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: T.X = {} as C;
+  // CHECK:STDERR:                ^~~~~~~
+  // CHECK:STDERR:
+  let a: T.X = {} as C;
+}
+
+// --- fail_specialization_written_after_generic_use_of_type_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+class C {}
+
+impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
+
+fn F[U:! type](T:! Z(C)) {
+  // The value of `.X` is symbolic, it can't be assigned a value of type `C`.
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
+  // CHECK:STDERR:   let a: T.X = {} as C;
+  // CHECK:STDERR:                ^~~~~~~
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+4]]:16: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let a: T.X = {} as C;
+  // CHECK:STDERR:                ^~~~~~~
+  // CHECK:STDERR:
+  let a: T.X = {} as C;
+}
+
+// TODO: Make this `final`.
+impl forall [T:! type] T as Z(C) where .X = C {}
+
+// --- specialization_written_after_generic_use.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let V:! type;
+  fn ZZ() -> V;
+}
+
+interface Y {}
+impl forall [T:! Y] T as Z where .V = () {
+  fn ZZ() -> () { return (); }
+}
+
+fn H(W:! Z, X: W.(Z.V)) -> W.(Z.V) {
+  return X;
+}
+
+fn G(U:! Y) -> U.(Z.V) {
+  return H(U, U.(Z.ZZ)());
+}
+
+class C {
+  impl as Y {}
+}
+
+impl C as Z where .V = {} {
+  fn ZZ() -> {} { return {}; }
+}
+
+fn F() {
+  let x: {} = G(C);
+}
+
+// --- specialization_written_after_generic_use_with_generic_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let V:! type;
+  fn ZZ() -> V;
+}
+
+interface Y {}
+impl forall [T:! Y] T as Z(T) where .V = () {
+  fn ZZ() -> () { return (); }
+}
+
+fn H(U:! Y, W:! Y & Z(U), X: W.(Z(U).V)) -> W.(Z(U).V) {
+  return X;
+}
+
+fn G(U:! Y) -> U.(Z(U).V) {
+  return H(U, U, U.(Z(U).ZZ)());
+}
+
+class C {
+  impl as Y {}
+}
+
+impl C as Z(C) where .V = {} {
+  fn ZZ() -> {} { return {}; }
+}
+
+fn F() {
+  let x: {} = G(C);
+}
+
+// --- fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let T:! type;
+  fn F[self: Self]() -> T;
+}
+
+impl forall [U:! type] U as I where .T = () {
+  fn F[self: Self]() -> () { return (); }
+}
+final impl forall [V:! type] V* as I where .T = V {
+  fn F[self: Self]() -> V { return *self; }
+}
+
+fn H[W:! type](v: W) -> W.(I.T) {
+  return v.(I.F)();
+}
+
+// The return of `H` is `(X*).(I.T)` which has a final impl making it `X`.
+// While this function is still a generic context, it should see the concrete
+// `X` type and the return of `H(p)` should convert (a no-op) to `X`.
+fn G[X:! type](p: X*) -> X {
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `(X* as I).(I.T)` to `X` [ConversionFailure]
+  // CHECK:STDERR:   return H(p);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_specialization_of_type_constant_in_generic_context_with_final_impl.carbon:[[@LINE+4]]:3: note: type `(X* as I).(I.T)` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return H(p);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  return H(p);
+}
+
+// --- type_structure_first_difference.carbon
+
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+    let X:! type;
+    fn MakeX() -> X;
+}
+
+class C {}
+
+// Type structure: "?(?)"
+impl forall [T:! type] T as Z(T) where .X = {.less_good: ()} {
+    fn MakeX() -> {.less_good: ()} { return {.less_good = ()}; }
+}
+
+// Type structure: "?(c)". Should outrank the previous impl.
+impl forall [T:! type] T as Z(C) where .X = () {
+    fn MakeX() -> () { return (); }
+}
+
+fn F(T:! Z(C)) -> T.(Z(C).X) {
+    return T.MakeX();
+}
+
+fn G() {
+    // This won't typecheck if the first impl is selected.
+    let a: () = F(C);
 }
