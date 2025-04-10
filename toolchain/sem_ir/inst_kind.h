@@ -86,6 +86,19 @@ enum class InstConstantKind : int8_t {
   Unique,
 };
 
+// Whether constant evaluation of an instruction needs the instruction to have
+// been created and allocated an InstId, or only needs the instruction operands.
+enum class InstConstantNeedsInstIdKind : int8_t {
+  // This instruction kind doesn't need an InstId to be evaluated.
+  No,
+  // This instruction needs an InstId during evaluation, but doesn't need the
+  // instruction to persist after evaluation.
+  DuringEvaluation,
+  // This instruction needs a permanent instruction ID, for example because that
+  // instruction ID can appear in the constant result of evaluation.
+  Permanent,
+};
+
 // Whether an instruction is a terminator or part of the terminator sequence.
 // The instructions in a block appear in the order NotTerminator, then
 // TerminatorSequence, then Terminator, which is also the numerical order of
@@ -123,7 +136,10 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     llvm::StringLiteral ir_name;
     InstIsType is_type = InstIsType::Never;
     InstConstantKind constant_kind = InstConstantKind::Indirect;
-    bool constant_needs_inst_id = constant_kind == InstConstantKind::Unique;
+    InstConstantNeedsInstIdKind constant_needs_inst_id =
+        constant_kind == InstConstantKind::Unique
+            ? InstConstantNeedsInstIdKind::Permanent
+            : InstConstantNeedsInstIdKind::No;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
@@ -173,7 +189,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // location, for example for diagnostics or for newly-created instructions,
   // and for instructions whose evaluation needs to inspect the original form of
   // its operands.
-  auto constant_needs_inst_id() const -> bool {
+  auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
     return definition_info(*this).constant_needs_inst_id;
   }
 
@@ -190,6 +206,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // conclude `A` == `B`.
   auto deduce_through() const -> bool {
     return definition_info(*this).deduce_through;
+  }
+
+  // Returns true if this instruction has scoped cleanup associated, typically a
+  // destructor.
+  constexpr auto has_cleanup() const -> bool {
+    return definition_info(*this).has_cleanup;
   }
 
  private:
@@ -232,7 +254,7 @@ class InstKind::Definition : public InstKind {
   }
 
   // Returns whether constant evaluation of this instruction needs an InstId.
-  constexpr auto constant_needs_inst_id() const -> bool {
+  constexpr auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
     return info_.constant_needs_inst_id;
   }
 

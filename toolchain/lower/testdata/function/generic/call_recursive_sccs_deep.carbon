@@ -80,15 +80,11 @@ fn M() {
   A(ptr_f64, 0);
 }
 
-// TODO: Duplicate printf int format constants
 
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_sccs_deep.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_sccs_deep.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @printf.int.format = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.1 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.2 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.3 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CM.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -289,7 +285,7 @@ fn M() {
 // CHECK:STDOUT:   br i1 %int.less_eq, label %if.then, label %if.else, !dbg !102
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.1, i32 %count), !dbg !103
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 %count), !dbg !103
 // CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !104
 // CHECK:STDOUT:   call void @_CB.Main.66be507887ceee78(double %x, i32 %int.sadd), !dbg !105
 // CHECK:STDOUT:   br label %if.else, !dbg !106
@@ -316,7 +312,7 @@ fn M() {
 // CHECK:STDOUT:   br i1 %int.less_eq, label %if.then, label %if.else, !dbg !116
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.2, i32 %count), !dbg !117
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 %count), !dbg !117
 // CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !118
 // CHECK:STDOUT:   call void @_CB.Main.e8193710fd35b608(ptr %x, i32 %int.sadd), !dbg !119
 // CHECK:STDOUT:   br label %if.else, !dbg !120
@@ -343,7 +339,7 @@ fn M() {
 // CHECK:STDOUT:   br i1 %int.less_eq, label %if.then, label %if.else, !dbg !130
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.3, i32 %count), !dbg !131
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 %count), !dbg !131
 // CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !132
 // CHECK:STDOUT:   call void @_CB.Main.04bf2edaaa84aa22(ptr %x, i32 %int.sadd), !dbg !133
 // CHECK:STDOUT:   br label %if.else, !dbg !134

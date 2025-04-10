@@ -140,7 +140,8 @@ template <typename InstT>
 using FunctionTypeForEvalConstantInst =
     typename FunctionTypeForEvalConstantInstImpl<
         InstT, ConstantKindHasEvalConstantInst(InstT::Kind.constant_kind()),
-        InstT::Kind.constant_needs_inst_id()>::Type;
+        InstT::Kind.constant_needs_inst_id() !=
+            SemIR::InstConstantNeedsInstIdKind::No>::Type;
 
 }  // namespace Internal
 

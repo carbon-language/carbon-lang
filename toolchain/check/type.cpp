@@ -157,8 +157,8 @@ auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
-auto GetUnboundElementType(Context& context, SemIR::TypeId class_type_id,
-                           SemIR::TypeId element_type_id) -> SemIR::TypeId {
+auto GetUnboundElementType(Context& context, SemIR::InstId class_type_id,
+                           SemIR::InstId element_type_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(context, class_type_id,
                                                 element_type_id);
 }

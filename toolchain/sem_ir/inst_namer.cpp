@@ -928,7 +928,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(UnboundElementType inst): {
         if (auto class_ty =
-                sem_ir_->types().TryGetAs<ClassType>(inst.class_type_id)) {
+                sem_ir_->insts().TryGetAs<ClassType>(inst.class_type_inst_id)) {
           add_inst_name_id(sem_ir_->classes().Get(class_ty->class_id).name_id,
                            ".elem");
         } else {

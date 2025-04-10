@@ -110,8 +110,6 @@ fn Use() {
 // CHECK:STDOUT: @"_CIntermediate.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @"_CDerived.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @Base.val.loc7_3.2 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @Base.val.loc8_44.6 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @Base.val.loc9_48.6 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Create() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -125,13 +123,13 @@ fn Use() {
 // CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   store ptr @"_CIntermediate.Classes.$vtable", ptr %.loc8_44.2.vptr, align 8, !dbg !8
 // CHECK:STDOUT:   %.loc8_44.5.base = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc8_44.5.base, ptr align 1 @Base.val.loc8_44.6, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc8_44.5.base, ptr align 1 @Base.val.loc7_3.2, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %d.var), !dbg !7
 // CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %d.var, i32 0, i32 0, !dbg !9
 // CHECK:STDOUT:   %.loc9_48.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   store ptr @"_CDerived.Classes.$vtable", ptr %.loc9_48.2.vptr, align 8, !dbg !10
 // CHECK:STDOUT:   %.loc9_48.5.base = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc9_48.5.base, ptr align 1 @Base.val.loc9_48.6, i64 0, i1 false), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc9_48.5.base, ptr align 1 @Base.val.loc7_3.2, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %d2.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }

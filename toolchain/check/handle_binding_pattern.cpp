@@ -16,6 +16,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -141,11 +142,15 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           return context.emitter().Build(type_node, AbstractTypeInFieldDecl,
                                          cast_type_id);
         });
+    if (cast_type_id == SemIR::ErrorInst::SingletonTypeId) {
+      cast_type_inst_id = SemIR::ErrorInst::SingletonInstId;
+    }
     auto binding_id =
         context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
     auto& class_info = context.classes().Get(parent_class_decl->class_id);
-    auto field_type_id =
-        GetUnboundElementType(context, class_info.self_type_id, cast_type_id);
+    auto field_type_id = GetUnboundElementType(
+        context, context.types().GetInstId(class_info.self_type_id),
+        cast_type_inst_id);
     auto field_id =
         AddInst<SemIR::FieldDecl>(context, binding_id,
                                   {.type_id = field_type_id,

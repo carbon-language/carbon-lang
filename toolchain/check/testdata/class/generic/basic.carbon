@@ -85,7 +85,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue: @Class.%GetValue.type (%GetValue.type) = struct_value () [symbolic = %GetValue (constants.%GetValue)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.loc11_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc11_13.2 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k)]
 // CHECK:STDOUT:   %complete_type.loc22_1.2: <witness> = complete_type_witness @Class.%struct_type.k (%struct_type.k) [symbolic = %complete_type.loc22_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
@@ -159,7 +159,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %require_complete.loc12_34: <witness> = require_complete_type @GetAddr.%ptr.loc12_38.1 (%ptr.79f) [symbolic = %require_complete.loc12_34 (constants.%require_complete.6e5)]
 // CHECK:STDOUT:   %require_complete.loc12_23: <witness> = require_complete_type @GetAddr.%ptr.loc12_29.1 (%ptr.955) [symbolic = %require_complete.loc12_23 (constants.%require_complete.2ae)]
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @GetAddr.%Class (%Class) [symbolic = %require_complete.loc13 (constants.%require_complete.4f8)]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type @GetAddr.%Class (%Class), @GetAddr.%T (%T) [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self.param_patt: @GetAddr.%ptr.loc12_29.1 (%ptr.955)]() -> @GetAddr.%ptr.loc12_38.1 (%ptr.79f) {
 // CHECK:STDOUT:   !entry:
@@ -178,7 +178,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type @GetValue.%Class (%Class) [symbolic = %require_complete.loc17 (constants.%require_complete.4f8)]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type @GetValue.%Class (%Class), @GetValue.%T (%T) [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc18: <witness> = require_complete_type @GetValue.%T (%T) [symbolic = %require_complete.loc18 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @GetValue.%Class (%Class)]() -> @GetValue.%T (%T) {

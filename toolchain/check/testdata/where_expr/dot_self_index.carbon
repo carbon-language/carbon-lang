@@ -193,7 +193,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %.Self.as_wit.iface0.loc18_34.2: <witness> = facet_access_witness %.Self.2, element0 [symbolic = %.Self.as_wit.iface0.loc18_34.2 (constants.%.Self.as_wit.iface0.663)]
 // CHECK:STDOUT:   %impl.elem0.loc18_34.2: type = impl_witness_access %.Self.as_wit.iface0.loc18_34.2, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.d0b)]
 // CHECK:STDOUT:   %ptr.loc18_40.2: type = ptr_type %T.loc18_6.2 [symbolic = %ptr.loc18_40.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc18_6.2) where %impl.elem0.loc18_34.2 (constants.%impl.elem0.d0b) = %ptr.loc18_40.2 (constants.%ptr.79f)> [symbolic = %Empty_where.type (constants.%Empty_where.type.5a8)]
+// CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc18_6.2) where %impl.elem0.loc18_34.2 = %ptr.loc18_40.2> [symbolic = %Empty_where.type (constants.%Empty_where.type.5a8)]
 // CHECK:STDOUT:   %V.loc18_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc18_43.2 (constants.%V)]
 // CHECK:STDOUT:   %V.patt.loc18_43.2: type = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:

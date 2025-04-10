@@ -106,7 +106,7 @@ class C(C:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%T.loc5_11.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc5_11.2) [symbolic = %C (constants.%C.f06)]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type @C.%C (%C.f06), @C.%T.loc5_11.2 (%T) [symbolic = %C.elem (constants.%C.elem.cca)]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc5_11.2 [symbolic = %C.elem (constants.%C.elem.cca)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc5_11.2 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.2ac) [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
 // CHECK:STDOUT:

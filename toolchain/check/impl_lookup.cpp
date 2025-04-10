@@ -347,8 +347,8 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
                                       SemIR::ConstantId query_self_const_id,
                                       SemIR::SpecificInterface interface)
     -> SemIR::InstId {
-  auto witness_id = AddInstInNoBlock(
-      context, loc_id,
+  auto witness_const_id = EvalOrAddInst(
+      context, loc_id.ToImplicit(),
       SemIR::LookupImplWitness{
           .type_id =
               GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
@@ -359,7 +359,6 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
       });
   // We use a NotConstant result from eval to communicate back an impl
   // lookup failure. See `EvalConstantInst()` for `LookupImplWitness`.
-  auto witness_const_id = context.constant_values().Get(witness_id);
   if (!witness_const_id.is_constant()) {
     return SemIR::InstId::None;
   }

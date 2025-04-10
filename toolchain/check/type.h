@@ -83,8 +83,8 @@ auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::TypeId> type_ids)
     -> SemIR::TypeId;
 
 // Returns an unbound element type.
-auto GetUnboundElementType(Context& context, SemIR::TypeId class_type_id,
-                           SemIR::TypeId element_type_id) -> SemIR::TypeId;
+auto GetUnboundElementType(Context& context, SemIR::InstId class_type_id,
+                           SemIR::InstId element_type_id) -> SemIR::TypeId;
 
 }  // namespace Carbon::Check
 

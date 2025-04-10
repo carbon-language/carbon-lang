@@ -54,19 +54,10 @@ fn M() {
   A(ptr_f64, 0);
 }
 
-// TODO: Duplicate printf int format constants
-
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_diamond.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_diamond.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @printf.int.format = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.1 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.2 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.3 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.4 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.5 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.6 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-// CHECK:STDOUT: @printf.int.format.7 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CM.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -191,49 +182,49 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CC.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.1, i32 2), !dbg !63
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !63
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.b88d1103f417c6d4(i32 %x, i32 %count), !dbg !64
 // CHECK:STDOUT:   ret i32 %D.call, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @_CB.Main.66be507887ceee78(double %x, i32 %count) !dbg !66 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.2, i32 1), !dbg !67
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !67
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.66be507887ceee78(double %x, i32 %count), !dbg !68
 // CHECK:STDOUT:   ret double %D.call, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @_CC.Main.66be507887ceee78(double %x, i32 %count) !dbg !70 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.3, i32 2), !dbg !71
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !71
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.66be507887ceee78(double %x, i32 %count), !dbg !72
 // CHECK:STDOUT:   ret double %D.call, !dbg !73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @_CB.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !74 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.4, i32 1), !dbg !75
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !75
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.e8193710fd35b608(ptr %x, i32 %count), !dbg !76
 // CHECK:STDOUT:   ret ptr %D.call, !dbg !77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @_CC.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !78 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.5, i32 2), !dbg !79
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !79
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.e8193710fd35b608(ptr %x, i32 %count), !dbg !80
 // CHECK:STDOUT:   ret ptr %D.call, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @_CB.Main.04bf2edaaa84aa22(ptr %x, i32 %count) !dbg !82 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.6, i32 1), !dbg !83
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !83
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.04bf2edaaa84aa22(ptr %x, i32 %count), !dbg !84
 // CHECK:STDOUT:   ret ptr %D.call, !dbg !85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @_CC.Main.04bf2edaaa84aa22(ptr %x, i32 %count) !dbg !86 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format.7, i32 2), !dbg !87
+// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !87
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.04bf2edaaa84aa22(ptr %x, i32 %count), !dbg !88
 // CHECK:STDOUT:   ret ptr %D.call, !dbg !89
 // CHECK:STDOUT: }

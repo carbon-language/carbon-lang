@@ -129,12 +129,8 @@ static auto PushOperand(Context& context, Worklist& worklist,
         push_specific(interface.specific_id);
       }
       for (auto rewrite : facet_type_info.rewrite_constraints) {
-        auto lhs_inst_id =
-            context.constant_values().GetInstId(rewrite.lhs_const_id);
-        auto rhs_inst_id =
-            context.constant_values().GetInstId(rewrite.rhs_const_id);
-        worklist.Push(lhs_inst_id);
-        worklist.Push(rhs_inst_id);
+        worklist.Push(rewrite.lhs_id);
+        worklist.Push(rewrite.rhs_id);
       }
       // TODO: Process other requirements as well.
       break;
@@ -242,9 +238,9 @@ static auto PopOperand(Context& context, Worklist& worklist,
           SemIR::FacetTypeInfo::RewriteConstraint::None);
       for (auto& new_constraint :
            llvm::reverse(new_facet_type_info.rewrite_constraints)) {
-        auto rhs_id = context.constant_values().Get(worklist.Pop());
-        auto lhs_id = context.constant_values().Get(worklist.Pop());
-        new_constraint = {.lhs_const_id = lhs_id, .rhs_const_id = rhs_id};
+        auto rhs_id = worklist.Pop();
+        auto lhs_id = worklist.Pop();
+        new_constraint = {.lhs_id = lhs_id, .rhs_id = rhs_id};
       }
       new_facet_type_info.self_impls_constraints.resize(
           old_facet_type_info.self_impls_constraints.size(),
@@ -405,15 +401,13 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   // Rebuilds an instruction by building a new constant.
   auto Rebuild(SemIR::InstId old_inst_id, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
-    auto result_id = GetOrAddInst(
+    auto const_id = EvalOrAddInst(
         *context_,
         SemIR::LocIdAndInst::UncheckedLoc(
             context_->insts().GetLocId(old_inst_id).ToImplicit(), new_inst));
-    auto const_inst_id =
-        context_->constant_values().GetConstantInstId(result_id);
-    CARBON_CHECK(const_inst_id.has_value(),
+    CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");
-    return const_inst_id;
+    return context_->constant_values().GetInstId(const_id);
   }
 
  private:

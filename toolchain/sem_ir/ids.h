@@ -787,7 +787,15 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
   using ValueType = ImportIRInst;
 
-  using IdBase::IdBase;
+  // ImportIRInstId is restricted so that it can fit into LocId.
+  static constexpr int32_t Bits = 29;
+
+  // The maximum ID, non-inclusive.
+  static constexpr int Max = 1 << Bits;
+
+  constexpr explicit ImportIRInstId(int32_t index) : IdBase(index) {
+    CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
+  }
 };
 
 // A SemIR location used as the location of instructions.
@@ -810,15 +818,15 @@ struct LocId : public IdBase<LocId> {
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NodeId node_id) : IdBase(node_id.index) {
-    CARBON_CHECK(node_id.has_value() == has_value());
-    CARBON_CHECK(!is_implicit());
+    CARBON_CHECK(node_id.has_value() == has_value(), "{0}", index);
+    CARBON_CHECK(!is_implicit(), "{0}", index);
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(ImportIRInstId inst_id)
       : IdBase(NoneIndex + ImportIRInstId::NoneIndex - inst_id.index) {
-    CARBON_CHECK(inst_id.has_value() == has_value());
-    CARBON_CHECK(index & ImplicitBit);
+    CARBON_CHECK(inst_id.has_value() == has_value(), "{0}", index);
+    CARBON_CHECK(index & ImplicitBit, "{0}", index);
   }
 
   // Forms an equivalent LocId for an implicit location.

@@ -121,8 +121,8 @@ auto InitialFacetTypeImplWitness(
   }
 
   for (auto rewrite : facet_type_info.rewrite_constraints) {
-    auto inst_id = context.constant_values().GetInstId(rewrite.lhs_const_id);
-    auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(inst_id);
+    auto access =
+        context.insts().GetAs<SemIR::ImplWitnessAccess>(rewrite.lhs_id);
     if (!WitnessAccessMatchesInterface(context, access.witness_id,
                                        interface_to_witness)) {
       continue;
@@ -134,8 +134,8 @@ auto InitialFacetTypeImplWitness(
       // for it to use to attempt recovery.
       continue;
     }
-    auto rewrite_value = rewrite.rhs_const_id;
-    if (rewrite_value == SemIR::ErrorInst::SingletonConstantId) {
+    auto rewrite_value = rewrite.rhs_id;
+    if (rewrite_value == SemIR::ErrorInst::SingletonInstId) {
       table_entry = SemIR::ErrorInst::SingletonInstId;
       continue;
     }
@@ -165,7 +165,7 @@ auto InitialFacetTypeImplWitness(
     }
 
     if (table_entry != SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
-      if (context.constant_values().Get(table_entry) != rewrite_value) {
+      if (table_entry != rewrite_value) {
         // TODO: Figure out how to print the two different values
         // `const_id` & `rewrite_value` in the diagnostic
         // message.
@@ -196,14 +196,16 @@ auto InitialFacetTypeImplWitness(
       // forming the facet type because the type of the associated constant
       // was symbolic.
       auto converted_inst_id = ConvertToValueOfType(
-          context, context.insts().GetLocId(facet_type_inst_id),
-          context.constant_values().GetInstId(rewrite_value),
+          context, context.insts().GetLocId(facet_type_inst_id), rewrite_value,
           assoc_const_type_id);
-      rewrite_value = context.constant_values().Get(converted_inst_id);
+      // Canonicalize the converted constant value.
+      converted_inst_id =
+          context.constant_values().GetConstantInstId(converted_inst_id);
       // The result of conversion can be non-constant even if the original
       // value was constant.
-      if (!rewrite_value.is_constant() &&
-          rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
+      if (converted_inst_id.has_value()) {
+        rewrite_value = converted_inst_id;
+      } else if (rewrite_value != SemIR::ErrorInst::SingletonInstId) {
         const auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
         CARBON_DIAGNOSTIC(
@@ -214,15 +216,18 @@ auto InitialFacetTypeImplWitness(
         context.emitter().Emit(facet_type_inst_id,
                                AssociatedConstantNotConstantAfterConversion,
                                assoc_const.name_id, assoc_const_type_id);
-        rewrite_value = SemIR::ErrorInst::SingletonConstantId;
+        rewrite_value = SemIR::ErrorInst::SingletonInstId;
       }
     }
 
-    auto rewrite_inst_id = context.constant_values().GetInstId(rewrite_value);
+    CARBON_CHECK(rewrite_value ==
+                     context.constant_values().GetConstantInstId(rewrite_value),
+                 "Rewritten value for associated constant is not canonical.");
+
     table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
         context, witness_loc_id,
-        {.type_id = context.insts().Get(rewrite_inst_id).type_id(),
-         .inst_id = rewrite_inst_id});
+        {.type_id = context.insts().Get(rewrite_value).type_id(),
+         .inst_id = rewrite_value});
   }
   return witness_inst_id;
 }

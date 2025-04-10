@@ -2463,8 +2463,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     GetLocalSpecificInterfaceData(resolver, interface);
   }
   for (auto rewrite : import_facet_type_info.rewrite_constraints) {
-    GetLocalConstantId(resolver, rewrite.lhs_const_id);
-    GetLocalConstantId(resolver, rewrite.rhs_const_id);
+    GetLocalConstantInstId(resolver, rewrite.lhs_id);
+    GetLocalConstantInstId(resolver, rewrite.rhs_id);
   }
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -2490,8 +2490,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       import_facet_type_info.rewrite_constraints.size());
   for (auto rewrite : import_facet_type_info.rewrite_constraints) {
     local_facet_type_info.rewrite_constraints.push_back(
-        {.lhs_const_id = GetLocalConstantId(resolver, rewrite.lhs_const_id),
-         .rhs_const_id = GetLocalConstantId(resolver, rewrite.rhs_const_id)});
+        {.lhs_id = GetLocalConstantInstId(resolver, rewrite.lhs_id),
+         .rhs_id = GetLocalConstantInstId(resolver, rewrite.rhs_id)});
   }
   // TODO: Also process the other requirements.
   SemIR::FacetTypeId facet_type_id =
@@ -2823,21 +2823,18 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::UnboundElementType inst)
     -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
-  auto class_const_id = GetLocalConstantId(resolver, inst.class_type_id);
-  auto elem_const_id = GetLocalConstantId(resolver, inst.element_type_id);
+  auto class_const_inst_id =
+      GetLocalConstantInstId(resolver, inst.class_type_inst_id);
+  auto elem_const_inst_id =
+      GetLocalConstantInstId(resolver, inst.element_type_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
   return ResolveAs<SemIR::UnboundElementType>(
-      resolver,
-      {.type_id = SemIR::TypeType::SingletonTypeId,
-       .class_type_id =
-           resolver.local_context().types().GetTypeIdForTypeConstantId(
-               class_const_id),
-       .element_type_id =
-           resolver.local_context().types().GetTypeIdForTypeConstantId(
-               elem_const_id)});
+      resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
+                 .class_type_inst_id = class_const_inst_id,
+                 .element_type_inst_id = elem_const_inst_id});
 }
 
 // Tries to resolve the InstId, returning a canonical constant when ready, or
