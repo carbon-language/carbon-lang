@@ -114,9 +114,11 @@ auto InitialFacetTypeImplWitness(
   llvm::MutableArrayRef<SemIR::InstId> table;
   {
     auto elements_id =
-        context.inst_blocks().Add(llvm::SmallVector<SemIR::InstId>(
-            assoc_entities.size(),
-            SemIR::ImplWitnessTablePlaceholder::SingletonInstId));
+        context.inst_blocks().AddUninitialized(assoc_entities.size());
+    table = context.inst_blocks().GetMutable(elements_id);
+    for (auto& uninit : table) {
+      uninit = SemIR::ImplWitnessTablePlaceholder::SingletonInstId;
+    }
 
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
         context, witness_loc_id,
@@ -131,8 +133,6 @@ auto InitialFacetTypeImplWitness(
              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
          .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
-
-    table = context.inst_blocks().GetMutable(elements_id);
   }
 
   for (auto rewrite : facet_type_info.rewrite_constraints) {

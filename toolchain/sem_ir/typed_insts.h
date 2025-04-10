@@ -901,9 +901,7 @@ struct ImplWitness {
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
-  // An `ImplWitnessTable` instruction, which holds the witness table, as well
-  // as a back-reference to the impl of the interface which the witness entries
-  // come from for diagnostics/debugging.
+  // An `ImplWitnessTable` instruction.
   InstId witness_table_id;
   // The specific to be applied to instructions from the witness table to get
   // their constant values.
@@ -946,14 +944,13 @@ struct ImplWitnessAssociatedConstant {
   InstId inst_id;
 };
 
-// The witness table with an instruction for each associated constant and
-// function in the impl declaration (and definition, if seen). The specific_id
+// The witness table contains an instruction for each associated constant and
+// function in the impl declaration (and definition, if seen). The `specific_id`
 // from the `ImplWitness` should be applied to those instructions. Instructions
 // will be `ImplWitnessTablePlaceholder` until a value is seen for them.
 //
-// This is split off from the `ImplWitness` to make import more efficient. We
-// can import many `ImplWitness` instructions but only need to import the table
-// for them a single time.
+// An `ImplWitnessTable` can be shared by multiple `ImplWitness` instructions,
+// to avoid the work of importing the full table with each witness.
 //
 // The instruction uses `constant_kind` of `Unique` to ensure the table is not
 // substituted or re-evaluated in a generic context. The table is built up
@@ -965,7 +962,7 @@ struct ImplWitnessAssociatedConstant {
 // Since the table itself is unique and not re-evaluated into the generic eval
 // block, it is imperative that any symbolic instructions found in the table,
 // for a generic impl, have an instruction in the generic's eval block. See
-// ImplWitnessAssociatedConstant which serves this purpose for associated
+// `ImplWitnessAssociatedConstant` which serves this purpose for associated
 // constant values.
 struct ImplWitnessTable {
   static constexpr auto Kind = InstKind::ImplWitnessTable.Define<Parse::NodeId>(
@@ -977,6 +974,7 @@ struct ImplWitnessTable {
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
+
   // The witness table of instructions.
   //
   // We use AbsoluteInstBlockId since this block on import will contain
@@ -984,6 +982,7 @@ struct ImplWitnessTable {
   // ImportRefLoaded instructions so that we can lazily load only the witness
   // table entries that are used.
   AbsoluteInstBlockId elements_id;
+
   // The `Impl` which this table is constructed for. This may be `None` in the
   // future if the witness was constructed from a facet value directly.
   //
@@ -1382,7 +1381,7 @@ struct RequireCompleteType {
            .constant_needs_inst_id =
                InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
-  // Always the builtin witness type.
+  // Always the builtin `WitnessType` type.
   TypeId type_id;
   // The type that is required to be complete.
   TypeId complete_type_id;
@@ -1925,7 +1924,7 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness` and `ImplSymbolicType` instructions. The latter
+// The type of `ImplWitness` and `LookupImplWitness` instructions. The latter
 // will evaluate at some point during specific computation into the former, and
 // their types should not change in the process.
 //

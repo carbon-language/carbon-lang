@@ -462,6 +462,24 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       out << suffix;
       add_inst_name(out.TakeStr());
     };
+    auto add_witness_table_name = [&](InstId witness_table_inst_id,
+                                      std::string name) {
+      auto witness_table = sem_ir_->insts().GetAs<SemIR::ImplWitnessTable>(
+          witness_table_inst_id);
+      if (!witness_table.impl_id.has_value()) {
+        // TODO: The witness comes from a facet value. Can we get the
+        // interface names from it? Store the facet value instruction in the
+        // table?
+        add_inst_name(name);
+        return;
+      }
+      const auto& impl = sem_ir_->impls().Get(witness_table.impl_id);
+      auto name_id =
+          sem_ir_->interfaces().Get(impl.interface.interface_id).name_id;
+
+      std::string suffix = llvm::formatv(".{}", name);
+      add_inst_name_id(name_id, suffix);
+    };
     auto facet_access_name_id = [&](InstId facet_value_inst_id) -> NameId {
       if (auto name = sem_ir_->insts().TryGetAs<NameRef>(facet_value_inst_id)) {
         return name->name_id;
@@ -470,17 +488,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         return sem_ir_->entity_names().Get(symbolic->entity_name_id).name_id;
       }
       return NameId::None;
-    };
-    auto impl_witness_table_name_id =
-        [&](InstId impl_witness_table_inst_id) -> NameId {
-      auto witness_table = sem_ir_->insts().GetAs<SemIR::ImplWitnessTable>(
-          impl_witness_table_inst_id);
-      if (witness_table.impl_id.has_value()) {
-        const auto& impl = sem_ir_->impls().Get(witness_table.impl_id);
-        return sem_ir_->interfaces().Get(impl.interface.interface_id).name_id;
-      } else {
-        return NameId::None;
-      }
     };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
@@ -700,15 +707,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(ImplWitness inst): {
-        if (auto name_id = impl_witness_table_name_id(inst.witness_table_id);
-            name_id.has_value()) {
-          add_inst_name_id(name_id, ".impl_witness");
-        } else {
-          // TODO: The witness comes from a facet value. Can we get the
-          // interface names from it? Store the facet value instruction in the
-          // table?
-          add_inst_name("impl_witness");
-        }
+        add_witness_table_name(inst.witness_table_id, "impl_witness");
         continue;
       }
       case CARBON_KIND(ImplWitnessAccess inst): {
@@ -723,15 +722,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case ImplWitnessTable::Kind: {
-        if (auto name_id = impl_witness_table_name_id(inst_id);
-            name_id.has_value()) {
-          add_inst_name_id(name_id, ".impl_witness_table");
-        } else {
-          // TODO: The witness comes from a facet value. Can we get the
-          // interface names from it? Store the facet value instruction in the
-          // table?
-          add_inst_name("impl_witness_table");
-        }
+        add_witness_table_name(inst_id, "impl_witness_table");
         continue;
       }
       case ImportCppDecl::Kind: {
