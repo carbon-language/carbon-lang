@@ -707,8 +707,8 @@ constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
 struct TypeId : public IdBase<TypeId> {
   static constexpr llvm::StringLiteral Label = "type";
 
-  // `StringifyTypeExpr` is used for diagnostics. However, where possible, an
-  // `InstId` describing how the type was written should be preferred, using
+  // `StringifyConstantInst` is used for diagnostics. However, where possible,
+  // an `InstId` describing how the type was written should be preferred, using
   // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 

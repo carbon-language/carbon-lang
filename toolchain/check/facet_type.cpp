@@ -169,14 +169,15 @@ auto InitialFacetTypeImplWitness(
         // TODO: Figure out how to print the two different values
         // `const_id` & `rewrite_inst_id` in the diagnostic
         // message.
-        CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
-                          "associated constant {0} given two different values",
-                          SemIR::NameId);
+        CARBON_DIAGNOSTIC(
+            AssociatedConstantWithDifferentValues, Error,
+            "associated constant {0} given two different values {1} and {2}",
+            SemIR::NameId, InstIdAsConstant, InstIdAsConstant);
         auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
-        context.emitter().Emit(facet_type_inst_id,
-                               AssociatedConstantWithDifferentValues,
-                               assoc_const.name_id);
+        context.emitter().Emit(
+            facet_type_inst_id, AssociatedConstantWithDifferentValues,
+            assoc_const.name_id, table_entry, rewrite_inst_id);
       }
       table_entry = SemIR::ErrorInst::SingletonInstId;
       continue;
@@ -205,17 +206,17 @@ auto InitialFacetTypeImplWitness(
       // value was constant.
       if (converted_inst_id.has_value()) {
         rewrite_inst_id = converted_inst_id;
-      } else if (rewrite_inst_id != SemIR::ErrorInst::SingletonInstId) {
+      } else {
         const auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
         CARBON_DIAGNOSTIC(
             AssociatedConstantNotConstantAfterConversion, Error,
-            "associated constant {0} given value that is not constant "
-            "after conversion to {1}",
-            SemIR::NameId, SemIR::TypeId);
-        context.emitter().Emit(facet_type_inst_id,
-                               AssociatedConstantNotConstantAfterConversion,
-                               assoc_const.name_id, assoc_const_type_id);
+            "associated constant {0} given value {1} that is not constant "
+            "after conversion to {2}",
+            SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
+        context.emitter().Emit(
+            facet_type_inst_id, AssociatedConstantNotConstantAfterConversion,
+            assoc_const.name_id, rewrite_inst_id, assoc_const_type_id);
         rewrite_inst_id = SemIR::ErrorInst::SingletonInstId;
       }
     }

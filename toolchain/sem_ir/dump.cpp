@@ -7,7 +7,7 @@
 #include "toolchain/sem_ir/dump.h"
 
 #include "common/raw_string_ostream.h"
-#include "toolchain/sem_ir/stringify_type.h"
+#include "toolchain/sem_ir/stringify.h"
 
 namespace Carbon::SemIR {
 
@@ -354,7 +354,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     for (auto field : block) {
       out << "\n  - " << field << DumpNameIfValid(file, field.name_id);
       if (field.type_inst_id.has_value()) {
-        out << ": " << StringifyTypeExpr(file, field.type_inst_id);
+        out << ": " << StringifyConstantInst(file, field.type_inst_id);
       }
     }
   }
@@ -368,8 +368,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
     return out.TakeStr();
   }
 
-  InstId inst_id = file.constant_values().GetInstId(type_id.AsConstantId());
-  out << ": " << StringifyTypeExpr(file, inst_id) << "; "
+  InstId inst_id = file.types().GetInstId(type_id);
+  out << ": " << StringifyConstantInst(file, inst_id) << "; "
       << file.insts().Get(inst_id);
   return out.TakeStr();
 }

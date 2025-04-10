@@ -117,7 +117,7 @@ import library "interface";
 
 class C7 { }
 
-// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant T given two different values [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant T given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl C7 as I where .T = {} and .T = () { }
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

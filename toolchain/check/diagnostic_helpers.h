@@ -61,6 +61,17 @@ inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
   return SemIRLoc(loc_id, true);
 }
 
+// An expression with a constant value, for rendering in a diagnostic. The
+// diagnostic rendering will include enclosing "`"s.
+struct InstIdAsConstant {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  InstIdAsConstant(SemIR::InstId inst_id) : inst_id(inst_id) {}
+
+  SemIR::InstId inst_id;
+};
+
 // An expression whose type should be rendered in a diagnostic. The diagnostic
 // rendering will include enclosing "`"s, and may also include extra information
 // about the type if it might otherwise be ambiguous or context-dependent, such
@@ -89,14 +100,12 @@ struct TypeOfInstId {
 //
 // This should be used when the source expression used to construct a type is
 // available.
-struct InstIdAsType {
-  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  InstIdAsType(SemIR::InstId inst_id) : inst_id(inst_id) {}
-
-  SemIR::InstId inst_id;
-};
+//
+// Note that this is currently an alias for InstIdAsConstant. However, using
+// InstIdAsType is clearer when defining CARBON_DIAGNOSTICs, and we may wish to
+// distinguish type arguments in diagnostics from more general constants in some
+// way in the future.
+using InstIdAsType = InstIdAsConstant;
 
 // A type expression, for rendering in a diagnostic as a raw type. When
 // formatting as a raw type in a diagnostic, the type will be formatted as a

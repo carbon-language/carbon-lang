@@ -51,7 +51,7 @@ impl () as Core.ImplicitAs(C) {
   fn Convert[self: ()]() -> C { return {}; }
 }
 
-// CHECK:STDERR: fail_assoc_const_not_constant_after_conversion.carbon:[[@LINE+4]]:11: error: associated constant V given value that is not constant after conversion to `C` [AssociatedConstantNotConstantAfterConversion]
+// CHECK:STDERR: fail_assoc_const_not_constant_after_conversion.carbon:[[@LINE+4]]:11: error: associated constant V given value `()` that is not constant after conversion to `C` [AssociatedConstantNotConstantAfterConversion]
 // CHECK:STDERR: impl C as I where .V = () {}
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~
 // CHECK:STDERR:

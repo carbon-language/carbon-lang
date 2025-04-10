@@ -100,7 +100,7 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant W given two different values [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant W given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L where .W = {} and .W = () {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
