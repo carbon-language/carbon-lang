@@ -102,9 +102,6 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   if (auto* expr = llvm::any_cast<InstIdAsConstant>(&arg)) {
     return "`" + StringifyConstantInst(*sem_ir_, expr->inst_id) + "`";
   }
-  if (auto* type_expr = llvm::any_cast<InstIdAsType>(&arg)) {
-    return "`" + StringifyConstantInst(*sem_ir_, type_expr->inst_id) + "`";
-  }
   if (auto* type_expr = llvm::any_cast<InstIdAsRawType>(&arg)) {
     return StringifyConstantInst(*sem_ir_, type_expr->inst_id);
   }
