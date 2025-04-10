@@ -219,7 +219,7 @@ fn CallF() {
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.826)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.b70)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @V.%Self.as_type (%Self.as_type.b70) [symbolic = %require_complete (constants.%require_complete.9b1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic = %require_complete (constants.%require_complete.9b1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   assoc_const V:! @V.%Self.as_type (%Self.as_type.b70);
 // CHECK:STDOUT: }
@@ -332,7 +332,7 @@ fn CallF() {
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.826)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.b70)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @V.%Self.as_type (%Self.as_type.b70) [symbolic = %require_complete (constants.%require_complete.9b1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic = %require_complete (constants.%require_complete.9b1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   assoc_const V:! @V.%Self.as_type (%Self.as_type.b70);
 // CHECK:STDOUT: }
@@ -466,7 +466,7 @@ fn CallF() {
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.826)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.b70)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @V.%Self.as_type (%Self.as_type.b70) [symbolic = %require_complete (constants.%require_complete.9b1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic = %require_complete (constants.%require_complete.9b1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   assoc_const V:! @V.%Self.as_type (%Self.as_type.b70);
 // CHECK:STDOUT: }
@@ -501,6 +501,7 @@ fn CallF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -656,7 +657,7 @@ fn CallF() {
 // CHECK:STDOUT:   %Self: @V.%I.type (%I.type.8a1) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3a0)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.72b)]
 // CHECK:STDOUT:   %array_type: type = array_type %N, %Self.as_type [symbolic = %array_type (constants.%array_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @V.%array_type (%array_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   assoc_const V:! @V.%array_type (%array_type);
 // CHECK:STDOUT: }
@@ -799,7 +800,7 @@ fn CallF() {
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.826)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.b70)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @V.%Self.as_type (%Self.as_type.b70) [symbolic = %require_complete (constants.%require_complete.9b1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic = %require_complete (constants.%require_complete.9b1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   assoc_const V:! @V.%Self.as_type (%Self.as_type.b70);
 // CHECK:STDOUT: }

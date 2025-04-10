@@ -80,6 +80,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %.loc13_3: %C.elem = var_pattern %.loc13_12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %ptr.019} [concrete = constants.%struct_type.field]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

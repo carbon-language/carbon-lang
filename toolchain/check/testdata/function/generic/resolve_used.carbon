@@ -95,7 +95,7 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Int.loc12_20.2: type = class_type @Int, @Int(%N.loc4_19.2) [symbolic = %Int.loc12_20.2 (constants.%Int)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @ErrorIfNIsZero.%Int.loc12_20.2 (%Int) [symbolic = %require_complete (constants.%require_complete.b4f)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc12_20.2 [symbolic = %require_complete (constants.%require_complete.b4f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.patt.loc4_19.1: Core.IntLiteral) {
 // CHECK:STDOUT:   !entry:

@@ -150,6 +150,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -162,7 +163,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %T.patt.loc4_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Function.%T.loc4_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_13.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc4_13.1: type, %x.param_patt: @Function.%T.loc4_13.2 (%T)) -> @Function.%T.loc4_13.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -176,7 +177,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %T.patt.loc8_16.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGeneric.%T.loc8_16.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc8_16.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Function.specific_fn.loc9_10.2: <specific function> = specific_function constants.%Function, @Function(%T.loc8_16.2) [symbolic = %Function.specific_fn.loc9_10.2 (constants.%Function.specific_fn.46f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc8_16.1: type, %x.param_patt: @CallGeneric.%T.loc8_16.2 (%T)) -> @CallGeneric.%T.loc8_16.2 (%T) {
@@ -198,7 +199,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %ptr.loc12_33.2: type = ptr_type %T.loc12_19.2 [symbolic = %ptr.loc12_33.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGenericPtr.%ptr.loc12_33.2 (%ptr.79f) [symbolic = %require_complete (constants.%require_complete.6e5)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc12_33.2 [symbolic = %require_complete (constants.%require_complete.6e5)]
 // CHECK:STDOUT:   %Function.specific_fn.loc13_10.2: <specific function> = specific_function constants.%Function, @Function(%ptr.loc12_33.2) [symbolic = %Function.specific_fn.loc13_10.2 (constants.%Function.specific_fn.4d7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc12_19.1: type, %x.param_patt: @CallGenericPtr.%ptr.loc12_33.2 (%ptr.79f)) -> @CallGenericPtr.%ptr.loc12_33.2 (%ptr.79f) {
@@ -363,6 +364,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -375,7 +377,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %T.patt.loc4_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Function.%T.loc4_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_13.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc4_13.1: type](%x.param_patt: @Function.%T.loc4_13.2 (%T)) -> @Function.%T.loc4_13.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -389,7 +391,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %T.patt.loc8_16.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGeneric.%T.loc8_16.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc8_16.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Function.specific_fn.loc9_10.2: <specific function> = specific_function constants.%Function, @Function(%T.loc8_16.2) [symbolic = %Function.specific_fn.loc9_10.2 (constants.%Function.specific_fn.46f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc8_16.1: type, %x.param_patt: @CallGeneric.%T.loc8_16.2 (%T)) -> @CallGeneric.%T.loc8_16.2 (%T) {
@@ -410,7 +412,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %ptr.loc12_33.2: type = ptr_type %T.loc12_19.2 [symbolic = %ptr.loc12_33.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGenericPtr.%ptr.loc12_33.2 (%ptr.79f) [symbolic = %require_complete (constants.%require_complete.6e5)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc12_33.2 [symbolic = %require_complete (constants.%require_complete.6e5)]
 // CHECK:STDOUT:   %Function.specific_fn.loc13_10.2: <specific function> = specific_function constants.%Function, @Function(%ptr.loc12_33.2) [symbolic = %Function.specific_fn.loc13_10.2 (constants.%Function.specific_fn.4d7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc12_19.1: type, %x.param_patt: @CallGenericPtr.%ptr.loc12_33.2 (%ptr.79f)) -> @CallGenericPtr.%ptr.loc12_33.2 (%ptr.79f) {

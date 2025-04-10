@@ -170,12 +170,6 @@ LLVM_DUMP_METHOD static auto Dump(
   return SemIR::Dump(context.sem_ir(), struct_type_fields_id);
 }
 
-LLVM_DUMP_METHOD static auto Dump(const Context& context,
-                                  SemIR::TypeBlockId type_block_id)
-    -> std::string {
-  return SemIR::Dump(context.sem_ir(), type_block_id);
-}
-
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::TypeId type_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), type_id);

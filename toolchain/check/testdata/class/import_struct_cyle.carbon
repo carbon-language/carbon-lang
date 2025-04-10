@@ -77,6 +77,7 @@ fn Run() {
 // CHECK:STDOUT:     %.loc10_3: %Cycle.elem = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Cycle.elem = var <none>
+// CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

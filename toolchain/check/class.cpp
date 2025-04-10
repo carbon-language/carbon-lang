@@ -10,6 +10,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Check {
 
@@ -98,7 +99,8 @@ static auto CheckCompleteAdapterClassType(
       context, node_id,
       {.type_id =
            GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
-       .object_repr_id = object_repr_id});
+       // TODO: Use InstId from the adapt declaration.
+       .object_repr_type_inst_id = context.types().GetInstId(object_repr_id)});
 }
 
 static auto AddStructTypeFields(
@@ -113,7 +115,7 @@ static auto AddStructTypeFields(
     if (field_decl.type_id == SemIR::ErrorInst::SingletonTypeId) {
       struct_type_fields.push_back(
           {.name_id = field_decl.name_id,
-           .type_id = SemIR::ErrorInst::SingletonTypeId});
+           .type_inst_id = SemIR::ErrorInst::SingletonInstId});
       continue;
     }
     auto unbound_element_type =
@@ -121,8 +123,7 @@ static auto AddStructTypeFields(
             field_decl.type_id);
     struct_type_fields.push_back(
         {.name_id = field_decl.name_id,
-         .type_id = context.types().GetTypeIdForTypeInstId(
-             unbound_element_type.element_type_inst_id)});
+         .type_inst_id = unbound_element_type.element_type_inst_id});
   }
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);
@@ -189,7 +190,7 @@ static auto BuildVtable(Context& context, Parse::NodeId node_id,
 // Checks that the specified finished class definition is valid and builds and
 // returns a corresponding complete type witness instruction.
 static auto CheckCompleteClassType(
-    Context& context, Parse::NodeId node_id, SemIR::ClassId class_id,
+    Context& context, Parse::ClassDefinitionId node_id, SemIR::ClassId class_id,
     llvm::ArrayRef<SemIR::InstId> field_decls,
     llvm::ArrayRef<SemIR::InstId> vtable_contents,
     llvm::ArrayRef<SemIR::InstId> body) -> SemIR::InstId {
@@ -202,6 +203,8 @@ static auto CheckCompleteClassType(
   bool defining_vptr = class_info.is_dynamic;
   auto base_type_id =
       class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::None);
+  // TODO: Use InstId from base declaration.
+  auto base_type_inst_id = context.types().GetInstId(base_type_id);
   SemIR::Class* base_class_info = nullptr;
   if (base_type_id.has_value()) {
     // TODO: If the base class is template dependent, we will need to decide
@@ -218,8 +221,8 @@ static auto CheckCompleteClassType(
   if (defining_vptr) {
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
-         .type_id =
-             GetPointerType(context, SemIR::VtableType::SingletonInstId)});
+         .type_inst_id = context.types().GetInstId(
+             GetPointerType(context, SemIR::VtableType::SingletonInstId))});
   }
   if (base_type_id.has_value()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
@@ -227,7 +230,7 @@ static auto CheckCompleteClassType(
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     ReplaceInstPreservingConstantValue(context, class_info.base_id, base_decl);
     struct_type_fields.push_back(
-        {.name_id = SemIR::NameId::Base, .type_id = base_type_id});
+        {.name_id = SemIR::NameId::Base, .type_inst_id = base_type_inst_id});
   }
 
   if (class_info.is_dynamic) {
@@ -237,16 +240,20 @@ static auto CheckCompleteClassType(
         vtable_contents);
   }
 
+  auto struct_type_inst_id = AddInst<SemIR::StructType>(
+      context, node_id,
+      {.type_id = SemIR::TypeType::SingletonTypeId,
+       .fields_id =
+           AddStructTypeFields(context, struct_type_fields, field_decls)});
+
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
       {.type_id =
            GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
-       .object_repr_id = GetStructType(
-           context,
-           AddStructTypeFields(context, struct_type_fields, field_decls))});
+       .object_repr_type_inst_id = struct_type_inst_id});
 }
 
-auto ComputeClassObjectRepr(Context& context, Parse::NodeId node_id,
+auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
                             SemIR::ClassId class_id,
                             llvm::ArrayRef<SemIR::InstId> field_decls,
                             llvm::ArrayRef<SemIR::InstId> vtable_contents,

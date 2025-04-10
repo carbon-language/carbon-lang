@@ -527,7 +527,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc18_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc18_11: type = converted %.loc18_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc18_11 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -787,6 +787,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1184,6 +1185,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%impl_witness_assoc_constant, @impl.2dd.%F.decl, @impl.2dd.%G.decl) [concrete = constants.%impl_witness.d67]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1370,8 +1372,8 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0.loc24_34.2: type = impl_witness_access %T.as_wit.iface0.loc24_34.2, element0 [symbolic = %impl.elem0.loc24_34.2 (constants.%impl.elem0.d9c3a6.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc24_38: <witness> = require_complete_type @GenericCallF.%impl.elem0.loc24_34.2 (%impl.elem0.d9c3a6.2) [symbolic = %require_complete.loc24_38 (constants.%require_complete.d9a)]
-// CHECK:STDOUT:   %require_complete.loc24_25: <witness> = require_complete_type @GenericCallF.%T.as_type.loc24_27.2 (%T.as_type) [symbolic = %require_complete.loc24_25 (constants.%require_complete.2a5)]
+// CHECK:STDOUT:   %require_complete.loc24_38: <witness> = require_complete_type %impl.elem0.loc24_34.2 [symbolic = %require_complete.loc24_38 (constants.%require_complete.d9a)]
+// CHECK:STDOUT:   %require_complete.loc24_25: <witness> = require_complete_type %T.as_type.loc24_27.2 [symbolic = %require_complete.loc24_25 (constants.%require_complete.2a5)]
 // CHECK:STDOUT:   %J.facet: %J.type = facet_value %T.as_type.loc24_27.2, (%T.as_wit.iface0.loc24_34.2) [symbolic = %J.facet (constants.%J.facet.085e97.2)]
 // CHECK:STDOUT:   %.loc25_11.2: type = fn_type_with_self_type constants.%F.type.c14, %J.facet [symbolic = %.loc25_11.2 (constants.%.4d2)]
 // CHECK:STDOUT:   %impl.elem1.loc25_11.2: @GenericCallF.%.loc25_11.2 (%.4d2) = impl_witness_access %T.as_wit.iface0.loc24_34.2, element1 [symbolic = %impl.elem1.loc25_11.2 (constants.%impl.elem1)]
@@ -1639,8 +1641,8 @@ fn F() {
 // CHECK:STDOUT:   %as_type.loc8_38.2: type = facet_access_type %impl.elem0.loc8_38.2 [symbolic = %as_type.loc8_38.2 (constants.%as_type.6b96b1.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8_42: <witness> = require_complete_type @GenericAddResult.%as_type.loc8_38.2 (%as_type.6b96b1.2) [symbolic = %require_complete.loc8_42 (constants.%require_complete.ec7)]
-// CHECK:STDOUT:   %require_complete.loc8_29: <witness> = require_complete_type @GenericAddResult.%T.as_type.loc8_31.2 (%T.as_type) [symbolic = %require_complete.loc8_29 (constants.%require_complete.2a5)]
+// CHECK:STDOUT:   %require_complete.loc8_42: <witness> = require_complete_type %as_type.loc8_38.2 [symbolic = %require_complete.loc8_42 (constants.%require_complete.ec7)]
+// CHECK:STDOUT:   %require_complete.loc8_29: <witness> = require_complete_type %T.as_type.loc8_31.2 [symbolic = %require_complete.loc8_29 (constants.%require_complete.2a5)]
 // CHECK:STDOUT:   %J.facet: %J.type = facet_value %T.as_type.loc8_31.2, (%T.as_wit.iface0.loc8_38.2) [symbolic = %J.facet (constants.%J.facet.085e97.2)]
 // CHECK:STDOUT:   %.loc9_11.2: type = fn_type_with_self_type constants.%F.type, %J.facet [symbolic = %.loc9_11.2 (constants.%.4d2)]
 // CHECK:STDOUT:   %impl.elem1.loc9_11.2: @GenericAddResult.%.loc9_11.2 (%.4d2) = impl_witness_access %T.as_wit.iface0.loc8_38.2, element1 [symbolic = %impl.elem1.loc9_11.2 (constants.%impl.elem1)]
@@ -1870,8 +1872,8 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0.loc8_51.2: type = impl_witness_access %T.as_wit.iface0.loc8_51.2, element0 [symbolic = %impl.elem0.loc8_51.2 (constants.%impl.elem0.d9c3a6.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8_55: <witness> = require_complete_type @GenericCallInterfaceQualified.%impl.elem0.loc8_51.2 (%impl.elem0.d9c3a6.2) [symbolic = %require_complete.loc8_55 (constants.%require_complete.d9a)]
-// CHECK:STDOUT:   %require_complete.loc8_42: <witness> = require_complete_type @GenericCallInterfaceQualified.%T.as_type.loc8_44.2 (%T.as_type) [symbolic = %require_complete.loc8_42 (constants.%require_complete.2a5)]
+// CHECK:STDOUT:   %require_complete.loc8_55: <witness> = require_complete_type %impl.elem0.loc8_51.2 [symbolic = %require_complete.loc8_55 (constants.%require_complete.d9a)]
+// CHECK:STDOUT:   %require_complete.loc8_42: <witness> = require_complete_type %T.as_type.loc8_44.2 [symbolic = %require_complete.loc8_42 (constants.%require_complete.2a5)]
 // CHECK:STDOUT:   %J.facet: %J.type = facet_value %T.as_type.loc8_44.2, (%T.as_wit.iface0.loc8_51.2) [symbolic = %J.facet (constants.%J.facet.085e97.2)]
 // CHECK:STDOUT:   %.loc9_11: type = fn_type_with_self_type constants.%G.type, %J.facet [symbolic = %.loc9_11 (constants.%.9ac)]
 // CHECK:STDOUT:   %impl.elem1.loc9_11.2: @GenericCallInterfaceQualified.%.loc9_11 (%.9ac) = impl_witness_access %T.as_wit.iface0.loc8_51.2, element1 [symbolic = %impl.elem1.loc9_11.2 (constants.%impl.elem1)]
@@ -2070,16 +2072,16 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.loc8_45.2: type = facet_access_type %T.loc8_20.2 [symbolic = %T.as_type.loc8_45.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type @GenericCallFI32.%T.as_type.loc8_45.2 (%T.as_type) [symbolic = %require_complete.loc8 (constants.%require_complete.3e7)]
+// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type %T.as_type.loc8_45.2 [symbolic = %require_complete.loc8 (constants.%require_complete.3e7)]
 // CHECK:STDOUT:   %T.as_wit.iface0.loc26_11.2: <witness> = facet_access_witness %T.loc8_20.2, element0 [symbolic = %T.as_wit.iface0.loc26_11.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:   %J.facet: %J.type = facet_value %T.as_type.loc8_45.2, (%T.as_wit.iface0.loc26_11.2) [symbolic = %J.facet (constants.%J.facet.869)]
 // CHECK:STDOUT:   %.loc26_11.2: type = fn_type_with_self_type constants.%F.type, %J.facet [symbolic = %.loc26_11.2 (constants.%.861)]
 // CHECK:STDOUT:   %impl.elem1.loc26_11.2: @GenericCallFI32.%.loc26_11.2 (%.861) = impl_witness_access %T.as_wit.iface0.loc26_11.2, element1 [symbolic = %impl.elem1.loc26_11.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:   %impl.elem0.1: type = impl_witness_access %T.as_wit.iface0.loc26_11.2, element0 [symbolic = %impl.elem0.1 (constants.%impl.elem0.37e)]
 // CHECK:STDOUT:   %specific_impl_fn.loc26_11.2: <specific function> = specific_impl_function %impl.elem1.loc26_11.2, @F(%J.facet) [symbolic = %specific_impl_fn.loc26_11.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:   %require_complete.loc26_15: <witness> = require_complete_type @GenericCallFI32.%impl.elem0.1 (%impl.elem0.37e) [symbolic = %require_complete.loc26_15 (constants.%require_complete.8bd)]
+// CHECK:STDOUT:   %require_complete.loc26_15: <witness> = require_complete_type %impl.elem0.1 [symbolic = %require_complete.loc26_15 (constants.%require_complete.8bd)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%impl.elem0.1)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.820)]
-// CHECK:STDOUT:   %require_complete.loc26_14: <witness> = require_complete_type @GenericCallFI32.%ImplicitAs.type (%ImplicitAs.type.820) [symbolic = %require_complete.loc26_14 (constants.%require_complete.1ce)]
+// CHECK:STDOUT:   %require_complete.loc26_14: <witness> = require_complete_type %ImplicitAs.type [symbolic = %require_complete.loc26_14 (constants.%require_complete.1ce)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc8_20.1: %J_where.type](%t.param_patt: @GenericCallFI32.%T.as_type.loc8_45.2 (%T.as_type)) -> %i32 {
 // CHECK:STDOUT:   !entry:
@@ -2258,6 +2260,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%impl_witness_assoc_constant, <error>) [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -2487,7 +2490,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc28_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc28_11: type = converted %.loc28_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc28_11 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -3022,6 +3025,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -3432,7 +3436,7 @@ fn F() {
 // CHECK:STDOUT:   %T.patt.loc9_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %C.loc9_45.2: type = class_type @C, @C(%T.loc9_14.2) [symbolic = %C.loc9_45.2 (constants.%C.f2e)]
 // CHECK:STDOUT:   %Z_where.type: type = facet_type <@Z where constants.%impl.elem0 = %C.loc9_45.2> [symbolic = %Z_where.type (constants.%Z_where.type.b30)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%Z_where.type (%Z_where.type.b30) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Z_where.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (file.%impl_witness_assoc_constant), @impl(%T.loc9_14.2) [symbolic = %impl_witness (constants.%impl_witness.017)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -3450,6 +3454,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -3459,6 +3464,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

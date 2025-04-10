@@ -78,6 +78,7 @@ interface I {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %impl_witness: <witness> = impl_witness (), @impl(constants.%Self) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
 // CHECK:STDOUT:     %.loc20: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [concrete = constants.%I.type]
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:

@@ -240,7 +240,8 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %Circle = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Circle = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.radius.251 [concrete = constants.%complete_type.5a5]
+// CHECK:STDOUT:   %struct_type.radius: type = struct_type {.radius: %i32} [concrete = constants.%struct_type.radius.251]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.radius [concrete = constants.%complete_type.5a5]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -352,6 +353,7 @@ class A {
 // CHECK:STDOUT:     %.loc5_13: %A.elem = var_pattern %.loc5_18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %A.elem = var <none>
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [concrete = constants.%struct_type.x]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -465,6 +467,7 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %struct_type.radius: type = struct_type {.radius: %i32} [concrete = constants.%struct_type.radius]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.radius [concrete = constants.%complete_type.5a5]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -574,6 +577,7 @@ class A {
 // CHECK:STDOUT:   %.loc5_16.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc5_16.2: %i32 = converted %int_5, %.loc5_16.1 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %x: %i32 = bind_name x, %.loc5_16.2
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -680,6 +684,7 @@ class A {
 // CHECK:STDOUT:   %.loc6_24.1: %i32 = value_of_initializer %int.convert_checked.loc6 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc6_24.2: %i32 = converted %int_5.loc6, %.loc6_24.1 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %y: %i32 = bind_name y, %.loc6_24.2
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -730,6 +735,7 @@ class A {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

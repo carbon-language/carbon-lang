@@ -612,7 +612,8 @@ static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(fields.size());
   for (auto field : fields) {
-    subtypes.push_back(context.GetType(field.type_id));
+    subtypes.push_back(context.GetType(
+        context.sem_ir().types().GetTypeIdForTypeInstId(field.type_inst_id)));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }
@@ -623,11 +624,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   // can be collectively replaced with LLVM's void, particularly around
   // function returns. LLVM doesn't allow declaring variables with a void
   // type, so that may require significant special casing.
-  auto elements = context.sem_ir().type_blocks().Get(inst.elements_id);
+  auto elements = context.sem_ir().inst_blocks().Get(inst.elements_id);
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(elements.size());
   for (auto element_id : elements) {
-    subtypes.push_back(context.GetType(element_id));
+    subtypes.push_back(context.GetType(
+        context.sem_ir().types().GetTypeIdForTypeInstId(element_id)));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }

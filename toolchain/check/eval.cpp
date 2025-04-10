@@ -172,9 +172,6 @@ class EvalContext {
   auto specifics() -> const SemIR::SpecificStore& {
     return sem_ir().specifics();
   }
-  auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
-    return sem_ir().type_blocks();
-  }
   auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto inst_blocks() -> SemIR::InstBlockStore& {
     return sem_ir().inst_blocks();
@@ -499,8 +496,9 @@ static auto GetConstantValue(EvalContext& eval_context,
   auto fields = eval_context.context().struct_type_fields().Get(fields_id);
   llvm::SmallVector<SemIR::StructTypeField> new_fields;
   for (auto field : fields) {
-    auto new_type_id = GetConstantValue(eval_context, field.type_id, phase);
-    if (!new_type_id.has_value()) {
+    auto new_type_inst_id =
+        GetConstantValue(eval_context, field.type_inst_id, phase);
+    if (!new_type_inst_id.has_value()) {
       return SemIR::StructTypeFieldsId::None;
     }
 
@@ -511,41 +509,12 @@ static auto GetConstantValue(EvalContext& eval_context,
       new_fields.reserve(fields.size());
     }
 
-    new_fields.push_back({.name_id = field.name_id, .type_id = new_type_id});
+    new_fields.push_back(
+        {.name_id = field.name_id, .type_inst_id = new_type_inst_id});
   }
   // TODO: If the new block is identical to the original block, and we know the
   // old ID was canonical, return the original ID.
   return eval_context.context().struct_type_fields().AddCanonical(new_fields);
-}
-
-// Compute the constant value of a type block. This may be different from the
-// input type block if we have known generic arguments.
-static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::TypeBlockId type_block_id, Phase* phase)
-    -> SemIR::TypeBlockId {
-  if (!type_block_id.has_value()) {
-    return SemIR::TypeBlockId::None;
-  }
-  auto types = eval_context.type_blocks().Get(type_block_id);
-  llvm::SmallVector<SemIR::TypeId> new_types;
-  for (auto type_id : types) {
-    auto new_type_id = GetConstantValue(eval_context, type_id, phase);
-    if (!new_type_id.has_value()) {
-      return SemIR::TypeBlockId::None;
-    }
-
-    // Once we leave the small buffer, we know the first few elements are all
-    // constant, so it's likely that the entire block is constant. Resize to the
-    // target size given that we're going to allocate memory now anyway.
-    if (new_types.size() == new_types.capacity()) {
-      new_types.reserve(types.size());
-    }
-
-    new_types.push_back(new_type_id);
-  }
-  // TODO: If the new block is identical to the original block, and we know the
-  // old ID was canonical, return the original ID.
-  return eval_context.type_blocks().AddCanonical(new_types);
 }
 
 // The constant value of a specific is the specific with the corresponding
@@ -749,8 +718,7 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
 static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
                                                SemIR::Inst* inst, Phase* phase)
     -> bool {
-  auto type_id = SemIR::TypeId(
-      GetConstantValueForArg(eval_context, inst->type_id_and_kind(), phase));
+  auto type_id = GetConstantValue(eval_context, inst->type_id(), phase);
   inst->SetType(type_id);
   if (!IsConstant(*phase)) {
     return false;

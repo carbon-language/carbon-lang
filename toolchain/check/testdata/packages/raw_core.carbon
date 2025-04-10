@@ -246,6 +246,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:     %.loc3_3: %Core.elem = var_pattern %.loc3_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Core.elem = var <none>
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

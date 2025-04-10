@@ -136,6 +136,7 @@ fn G() { F(B); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -148,11 +149,11 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %T.patt.loc6_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%T.loc6_9.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc6_9.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_9.2) [symbolic = %A (constants.%A.130)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %T.loc6_9.2 [symbolic = %A.elem (constants.%A.elem.1ce)]
-// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_9.2 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.ff1)]
-// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.ff1) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
+// CHECK:STDOUT:   %struct_type.v.loc14_1.2: type = struct_type {.v: @A.%T.loc6_9.2 (%T)} [symbolic = %struct_type.v.loc14_1.2 (constants.%struct_type.v.ff1)]
+// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness %struct_type.v.loc14_1.2 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc13_8: @A.%A.elem (%A.elem.1ce) = field_decl v, element0 [concrete]
@@ -160,7 +161,8 @@ fn G() { F(B); }
 // CHECK:STDOUT:       %.loc13_3: @A.%A.elem (%A.elem.1ce) = var_pattern %.loc13_8
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @A.%A.elem (%A.elem.1ce) = var <none>
-// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.v.ff1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
+// CHECK:STDOUT:     %struct_type.v.loc14_1.1: type = struct_type {.v: %T} [symbolic = %struct_type.v.loc14_1.2 (constants.%struct_type.v.ff1)]
+// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.v.loc14_1.1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -190,7 +192,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %require_complete => <error>
 // CHECK:STDOUT:   %A => constants.%A.1d4
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.4ce
-// CHECK:STDOUT:   %struct_type.v => constants.%struct_type.v.d45
+// CHECK:STDOUT:   %struct_type.v.loc14_1.2 => constants.%struct_type.v.d45
 // CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type.1df
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -237,6 +239,7 @@ fn G() { F(B); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -249,7 +252,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %T.patt.loc6_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc6_6.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc6_6.1: type) {
 // CHECK:STDOUT:   !entry:
@@ -332,7 +335,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %T.patt.loc6_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc6_6.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc6_6.1: type) {
 // CHECK:STDOUT:   !entry:

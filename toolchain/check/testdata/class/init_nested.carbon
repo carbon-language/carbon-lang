@@ -91,6 +91,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     %.loc13_3: %Inner.elem = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc13: ref %Inner.elem = var <none>
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -111,7 +112,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     %.loc20_3: %Outer.elem = var_pattern %.loc20_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc20: ref %Outer.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.d.dce [concrete = constants.%complete_type.8b6]
+// CHECK:STDOUT:   %struct_type.c.d: type = struct_type {.c: %Inner, .d: %Inner} [concrete = constants.%struct_type.c.d.dce]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.d [concrete = constants.%complete_type.8b6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

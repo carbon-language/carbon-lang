@@ -524,7 +524,7 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
   // The class type is now fully defined. Compute its object representation.
   ComputeClassObjectRepr(context,
                          // TODO: Consider having a proper location here.
-                         Parse::NodeId::None, class_id,
+                         Parse::ClassDefinitionId::None, class_id,
                          // TODO: Set fields.
                          /*field_decls=*/{},
                          // TODO: Set vtable.

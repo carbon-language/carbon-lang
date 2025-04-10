@@ -94,6 +94,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %return: ref @MakeClass.%Class.loc15_28.1 (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {} {}
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -112,7 +113,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @MakeSelf.%Class (%Class) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Class.val: @MakeSelf.%Class (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param_patt: @MakeSelf.%Class (%Class) {
@@ -129,7 +130,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.loc15_28.1: type = class_type @Class, @Class(%T) [symbolic = %Class.loc15_28.1 (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @MakeClass.%Class.loc15_28.1 (%Class) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc15_28.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Class.val: @MakeClass.%Class.loc15_28.1 (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param_patt: @MakeClass.%Class.loc15_28.1 (%Class) {
@@ -145,7 +146,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class.loc17_19.2: type = class_type @Class, @Class(%T) [symbolic = %Class.loc17_19.2 (constants.%Class)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%Class.loc17_19.2 (%Class) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc17_19.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %MakeSelf.type: type = fn_type @MakeSelf, @Class(%T) [symbolic = %MakeSelf.type (constants.%MakeSelf.type)]
 // CHECK:STDOUT:   %MakeSelf: @F.%MakeSelf.type (%MakeSelf.type) = struct_value () [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:   %MakeSelf.specific_fn.loc17_23.2: <specific function> = specific_function %MakeSelf, @MakeSelf(%T) [symbolic = %MakeSelf.specific_fn.loc17_23.2 (constants.%MakeSelf.specific_fn)]

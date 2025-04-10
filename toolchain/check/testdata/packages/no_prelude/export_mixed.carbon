@@ -143,6 +143,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:     %.loc5_3: %C.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete = constants.%struct_type.x]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete = constants.%complete_type.9be]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -157,6 +158,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:     %.loc9_3: %D.elem = var_pattern %.loc9_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %D.elem = var <none>
+// CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete = constants.%struct_type.y]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [concrete = constants.%complete_type.9f4]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -534,7 +536,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export_import_then_name, inst24 [indirect], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f67 = import_ref Main//export_import_then_name, inst25 [indirect], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc10_1, loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//base, inst29 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//base, inst30 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.950 = import_ref Main//base, loc9_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -104,6 +104,7 @@ fn G() {
 // CHECK:STDOUT:       %return.param: ref @Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -120,7 +121,8 @@ fn G() {
 // CHECK:STDOUT:     %.loc15_11: %C.elem = var_pattern %.loc15_18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr.5f2 [concrete = constants.%complete_type.22a]
+// CHECK:STDOUT:   %struct_type.arr: type = struct_type {.arr: %array_type} [concrete = constants.%struct_type.arr.5f2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr [concrete = constants.%complete_type.22a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -132,7 +134,7 @@ fn G() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Make.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T) [symbolic = %Make.type (constants.%Make.type.652)]
 // CHECK:STDOUT:   %Make: @Make.%Make.type (%Make.type.652) = struct_value () [symbolic = %Make (constants.%Make.eb2)]
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2: <specific function> = specific_function %Make, @Make(%T) [symbolic = %Make.specific_fn.loc12_27.2 (constants.%Make.specific_fn.bf1)]
