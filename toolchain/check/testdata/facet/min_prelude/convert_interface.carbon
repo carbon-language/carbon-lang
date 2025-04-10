@@ -58,7 +58,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Eats.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %Eats.type = binding_pattern e

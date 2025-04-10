@@ -109,7 +109,7 @@ fn G() {
 // CHECK:STDOUT:     %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
 // CHECK:STDOUT:     %Generic.type: type = facet_type <@Generic, @Generic(constants.%GenericParam)> [concrete = constants.%Generic.type.769]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Generic.impl_witness_table: <witness> = impl_witness_table (@impl.%F.decl), @impl [concrete]
+// CHECK:STDOUT:   impl_witness_table (@impl.%F.decl), @impl [concrete]
 // CHECK:STDOUT:   %Generic.impl_witness: <witness> = impl_witness %Generic.impl_witness_table [concrete = constants.%Generic.impl_witness]
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
 // CHECK:STDOUT:     %T.patt.loc26_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc26_22.2 (constants.%T.patt)]

@@ -42,7 +42,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, (%Simple.impl_witness) [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.348: type = fn_type_with_self_type %G.type.b60, %Simple.facet [concrete]
+// CHECK:STDOUT:   %.0aa: type = fn_type_with_self_type %G.type.b60, %Simple.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,7 +67,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table: <witness> = impl_witness_table (<error>), @impl.006 [concrete]
+// CHECK:STDOUT:   impl_witness_table (<error>), @impl.006 [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
@@ -134,7 +134,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   %G.ref: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [concrete = constants.%assoc0.db2]
-// CHECK:STDOUT:   %impl.elem0: %.348 = impl_witness_access constants.%Simple.impl_witness, element0 [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: %.0aa = impl_witness_access constants.%Simple.impl_witness, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -142,7 +142,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [concrete = constants.%AddWith.type.e8e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddWith.impl_witness_table: <witness> = impl_witness_table (@impl.%F.decl), @impl [concrete]
+// CHECK:STDOUT:   impl_witness_table (@impl.%F.decl), @impl [concrete]
 // CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness %AddWith.impl_witness_table [concrete = constants.%AddWith.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
