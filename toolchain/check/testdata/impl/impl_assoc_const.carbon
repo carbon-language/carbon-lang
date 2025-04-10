@@ -86,7 +86,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %Op.553: %Op.type.c38 = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.bound.2e7: <bound method> = bound_method %int_4, %Op.553 [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %struct> [concrete]
-// CHECK:STDOUT:   %impl_witness.7b4: <witness> = impl_witness (%struct) [concrete]
+// CHECK:STDOUT:   %impl_witness.f56: <witness> = impl_witness (file.%impl_witness_assoc_constant) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -189,7 +189,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc6_54, %.loc6_95.3
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%struct) [concrete = constants.%impl_witness.7b4]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%impl_witness_assoc_constant) [concrete = constants.%impl_witness.f56]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: %struct_type.a.b.fe2 = impl_witness_assoc_constant constants.%struct [concrete = constants.%struct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

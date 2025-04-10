@@ -26,6 +26,10 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void;
 // Sets all unset members of the witness for `impl` to the error instruction.
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
 
+// Returns whether the impl is either `final` explicitly, or implicitly due to
+// being concrete.
+auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPL_H_

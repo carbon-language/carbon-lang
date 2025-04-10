@@ -118,8 +118,6 @@ class EvalContext {
         //    GetConstantValueInSpecific.
         // 2) From GetConstantValue(TypeId): for these, we could change
         //    instructions so they store InstIds instead of TypeIds.
-        // 3) From GetConstantFacetTypeInfo: for these, we could store an
-        //    InstId instead of a ConstantId in rewrite_constraints.
         return GetConstantInSpecific(sem_ir(), specific_id_, const_id);
       }
     }
@@ -272,21 +270,6 @@ static auto LatestPhase(Phase a, Phase b) -> Phase {
       std::max(static_cast<uint8_t>(a), static_cast<uint8_t>(b)));
 }
 
-// `where` expressions using `.Self` should not be considered symbolic
-// - `Interface where .Self impls I and .A = bool` -> concrete
-// - `T:! type` ... `Interface where .A = T` -> symbolic, since uses `T` which
-//   is symbolic and not due to `.Self`.
-static auto UpdatePhaseIgnorePeriodSelf(EvalContext& eval_context,
-                                        SemIR::ConstantId constant_id,
-                                        Phase* phase) {
-  Phase constant_phase = GetPhase(eval_context.constant_values(), constant_id);
-  // Since LatestPhase(x, Phase::Concrete) == x, this is equivalent to replacing
-  // Phase::PeriodSelfSymbolic with Phase::Concrete.
-  if (constant_phase != Phase::PeriodSelfSymbolic) {
-    *phase = LatestPhase(*phase, constant_phase);
-  }
-}
-
 // Forms a `constant_id` describing a given evaluation result.
 static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
     -> SemIR::ConstantId {
@@ -379,6 +362,30 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
   auto const_id = eval_context.GetConstantValue(inst_id);
   *phase =
       LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
+  return eval_context.constant_values().GetInstId(const_id);
+}
+
+// If the given instruction is constant, returns its constant value. When
+// determining the phase of the result, ignore any dependence on `.Self`.
+//
+// This is used when evaluating facet types, for which `where` expressions using
+// `.Self` should not be considered symbolic
+// - `Interface where .Self impls I and .A = bool` -> concrete
+// - `T:! type` ... `Interface where .A = T` -> symbolic, since uses `T` which
+//   is symbolic and not due to `.Self`.
+static auto GetConstantValueIgnoringPeriodSelf(EvalContext& eval_context,
+                                               SemIR::InstId inst_id,
+                                               Phase* phase) -> SemIR::InstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+  auto const_id = eval_context.GetConstantValue(inst_id);
+  Phase constant_phase = GetPhase(eval_context.constant_values(), const_id);
+  // Since LatestPhase(x, Phase::Concrete) == x, this is equivalent to replacing
+  // Phase::PeriodSelfSymbolic with Phase::Concrete.
+  if (constant_phase != Phase::PeriodSelfSymbolic) {
+    *phase = LatestPhase(*phase, constant_phase);
+  }
   return eval_context.constant_values().GetInstId(const_id);
 }
 
@@ -608,13 +615,12 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   }
   info.rewrite_constraints.reserve(orig.rewrite_constraints.size());
   for (const auto& rewrite : orig.rewrite_constraints) {
-    auto lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
-    auto rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
-    // `where` requirements using `.Self` should not be considered symbolic
-    UpdatePhaseIgnorePeriodSelf(eval_context, lhs_const_id, phase);
-    UpdatePhaseIgnorePeriodSelf(eval_context, rhs_const_id, phase);
-    info.rewrite_constraints.push_back(
-        {.lhs_const_id = lhs_const_id, .rhs_const_id = rhs_const_id});
+    // `where` requirements using `.Self` should not be considered symbolic.
+    auto lhs_id =
+        GetConstantValueIgnoringPeriodSelf(eval_context, rewrite.lhs_id, phase);
+    auto rhs_id =
+        GetConstantValueIgnoringPeriodSelf(eval_context, rewrite.rhs_id, phase);
+    info.rewrite_constraints.push_back({.lhs_id = lhs_id, .rhs_id = rhs_id});
   }
   // TODO: Process other requirements.
   info.other_requirements = orig.other_requirements;
@@ -1887,14 +1893,14 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
       if (auto rewrite =
               eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
                   inst_id)) {
-        SemIR::ConstantId lhs = eval_context.GetConstantValue(rewrite->lhs_id);
-        SemIR::ConstantId rhs = eval_context.GetConstantValue(rewrite->rhs_id);
         // `where` requirements using `.Self` should not be considered
-        // symbolic
-        UpdatePhaseIgnorePeriodSelf(eval_context, lhs, &phase);
-        UpdatePhaseIgnorePeriodSelf(eval_context, rhs, &phase);
+        // symbolic.
+        auto lhs_id = GetConstantValueIgnoringPeriodSelf(
+            eval_context, rewrite->lhs_id, &phase);
+        auto rhs_id = GetConstantValueIgnoringPeriodSelf(
+            eval_context, rewrite->rhs_id, &phase);
         info.rewrite_constraints.push_back(
-            {.lhs_const_id = lhs, .rhs_const_id = rhs});
+            {.lhs_id = lhs_id, .rhs_id = rhs_id});
       } else if (auto impls =
                      eval_context.insts().TryGetAs<SemIR::RequirementImpls>(
                          inst_id)) {

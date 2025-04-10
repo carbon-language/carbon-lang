@@ -1276,9 +1276,9 @@ class FormatterImpl {
       }
       for (auto rewrite : info.rewrite_constraints) {
         out_ << and_sep;
-        FormatConstant(rewrite.lhs_const_id);
+        FormatArg(rewrite.lhs_id);
         out_ << " = ";
-        FormatConstant(rewrite.rhs_const_id);
+        FormatArg(rewrite.rhs_id);
       }
       if (info.other_requirements) {
         out_ << and_sep << "TODO";

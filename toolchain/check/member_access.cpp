@@ -176,6 +176,27 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
                                                  .index = assoc_entity->index});
 }
 
+// For an impl lookup query with a single interface in it, we can convert the
+// result to a single witness InstId.
+//
+// This CHECKs that the result (and thus the query) was a single interface. This
+// generally only makes sense in member access, where the lookup query's
+// interface is found through name lookup, and we don't have an arbitrary
+// `FacetType`.
+static auto GetWitnessFromSingleImplLookupResult(
+    Context& context, SemIR::InstBlockIdOrError lookup_result)
+    -> SemIR::InstId {
+  auto witness_id = SemIR::InstId::None;
+  if (lookup_result.has_error_value()) {
+    witness_id = SemIR::ErrorInst::SingletonInstId;
+  } else {
+    auto witnesses = context.inst_blocks().Get(lookup_result.inst_block_id());
+    CARBON_CHECK(witnesses.size() == 1);
+    witness_id = witnesses[0];
+  }
+  return witness_id;
+}
+
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(
@@ -210,18 +231,8 @@ static auto PerformImplLookup(
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // The query facet type given to `LookupImplWitness()` had only a single
-  // interface in it, so the returned witness set will have the same. Convert
-  // from the InstBlockId to the single ImplWitness instruction.
-  auto witness_id = SemIR::InstId::None;
-  if (lookup_result.has_error_value()) {
-    witness_id = SemIR::ErrorInst::SingletonInstId;
-  } else {
-    auto witnesses = context.inst_blocks().Get(lookup_result.inst_block_id());
-    CARBON_CHECK(witnesses.size() == 1);
-    witness_id = witnesses[0];
-  }
-
+  auto witness_id =
+      GetWitnessFromSingleImplLookupResult(context, lookup_result);
   return AccessMemberOfImplWitness(context, loc_id, self_type_id, witness_id,
                                    assoc_type.interface_specific_id, member_id);
 }
@@ -303,26 +314,59 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
 
         auto assoc_interface = assoc_type->GetSpecificInterface();
 
-        // First look for `assoc_interface` in the type of the base. If it is
-        // found, get the witness that the interface is implemented from
-        // `base_id`.
-        auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
-        const auto& identified =
-            context.identified_facet_types().Get(identified_id);
         // Witness that `T` implements the `assoc_interface`.
         SemIR::InstId witness_inst_id = SemIR::InstId::None;
-        for (auto [index, base_interface] :
-             llvm::enumerate(identified.required_interfaces())) {
-          // Get the witness that `T` implements `base_type_id`.
-          if (base_interface == assoc_interface) {
-            witness_inst_id = GetOrAddInst(
-                context, loc_id,
-                SemIR::FacetAccessWitness{
-                    .type_id = GetSingletonType(
-                        context, SemIR::WitnessType::SingletonInstId),
-                    .facet_value_inst_id = base_id,
-                    .index = SemIR::ElementIndex(index)});
-            break;
+
+        bool is_lookup_in_period_self = false;
+        if (auto name = context.insts().TryGetAs<SemIR::NameRef>(base_id)) {
+          if (name->name_id == SemIR::NameId::PeriodSelf) {
+            is_lookup_in_period_self = true;
+          }
+        }
+
+        // TODO: In `.Self` we want to find the witness through its FacetType,
+        // which is the code below this block. Instead of special-casing that
+        // here, we could have the impl lookup also include witnesses
+        // (FacetAccessWitness) from the FacetType? And even non-final results.
+        // Then we just call into lookup once here, for `.Self` or otherwise,
+        // and can drop the construction of FacetAccessWitness from this
+        // function, and resolve TODO below that for "associated entity not
+        // found in facet type".
+        if (!is_lookup_in_period_self) {
+          // For an associated constant value, we need to do impl lookup to try
+          // find a final impl declaration. If we find one, we can use the value
+          // assigned to the constant there, instead of its symbolic value.
+          auto assoc_entity = context.insts().GetAs<SemIR::AssociatedEntity>(
+              context.constant_values().GetConstantInstId(
+                  result.scope_result.target_inst_id()));
+          if (context.insts().Is<SemIR::AssociatedConstantDecl>(
+                  assoc_entity.decl_id)) {
+            witness_inst_id = LookupFinalImplWitnessForSpecificInterface(
+                context, loc_id, context.constant_values().Get(base_id),
+                assoc_interface);
+          }
+        }
+
+        if (!witness_inst_id.has_value()) {
+          // First look for `assoc_interface` in the type of the base. If it is
+          // found, get the witness that the interface is implemented from
+          // `base_id`.
+          auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
+          const auto& identified =
+              context.identified_facet_types().Get(identified_id);
+          for (auto [index, base_interface] :
+               llvm::enumerate(identified.required_interfaces())) {
+            // Get the witness that `T` implements `base_type_id`.
+            if (base_interface == assoc_interface) {
+              witness_inst_id = GetOrAddInst(
+                  context, loc_id,
+                  SemIR::FacetAccessWitness{
+                      .type_id = GetSingletonType(
+                          context, SemIR::WitnessType::SingletonInstId),
+                      .facet_value_inst_id = base_id,
+                      .index = SemIR::ElementIndex(index)});
+              break;
+            }
           }
         }
         // TODO: If that fails, would need to do impl lookup to see if the facet

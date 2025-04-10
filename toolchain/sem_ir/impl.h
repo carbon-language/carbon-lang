@@ -39,6 +39,9 @@ struct ImplFields {
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::None;
 
+  // Whether the impl declaration is marked `final`.
+  bool is_final;
+
   // The following members are set at the `}` of the impl definition.
   bool defined = false;
 };

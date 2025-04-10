@@ -364,10 +364,11 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
-  // TODO: Handle `final` modifier.
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Impl>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::ImplDecl);
+
+  bool is_final = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Final);
 
   // Finish processing the name, which should be empty, but might have
   // parameters.
@@ -387,7 +388,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                            {.self_id = self_inst_id,
                             .constraint_id = constraint_inst_id,
                             .interface = CheckConstraintIsInterface(
-                                context, impl_decl_id, constraint_inst_id)}};
+                                context, impl_decl_id, constraint_inst_id),
+                            .is_final = is_final}};
   // Add the impl declaration.
   bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);

@@ -121,8 +121,8 @@ auto InitialFacetTypeImplWitness(
   }
 
   for (auto rewrite : facet_type_info.rewrite_constraints) {
-    auto inst_id = context.constant_values().GetInstId(rewrite.lhs_const_id);
-    auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(inst_id);
+    auto access =
+        context.insts().GetAs<SemIR::ImplWitnessAccess>(rewrite.lhs_id);
     if (!WitnessAccessMatchesInterface(context, access.witness_id,
                                        interface_to_witness)) {
       continue;
@@ -134,8 +134,8 @@ auto InitialFacetTypeImplWitness(
       // for it to use to attempt recovery.
       continue;
     }
-    auto rewrite_value = rewrite.rhs_const_id;
-    if (rewrite_value == SemIR::ErrorInst::SingletonConstantId) {
+    auto rewrite_inst_id = rewrite.rhs_id;
+    if (rewrite_inst_id == SemIR::ErrorInst::SingletonInstId) {
       table_entry = SemIR::ErrorInst::SingletonInstId;
       continue;
     }
@@ -165,9 +165,9 @@ auto InitialFacetTypeImplWitness(
     }
 
     if (table_entry != SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
-      if (context.constant_values().Get(table_entry) != rewrite_value) {
+      if (table_entry != rewrite_inst_id) {
         // TODO: Figure out how to print the two different values
-        // `const_id` & `rewrite_value` in the diagnostic
+        // `const_id` & `rewrite_inst_id` in the diagnostic
         // message.
         CARBON_DIAGNOSTIC(
             AssociatedConstantWithDifferentValues, Error,
@@ -177,8 +177,7 @@ auto InitialFacetTypeImplWitness(
             assoc_constant_decl->assoc_const_id);
         context.emitter().Emit(
             facet_type_inst_id, AssociatedConstantWithDifferentValues,
-            assoc_const.name_id, table_entry,
-            context.constant_values().GetInstId(rewrite_value));
+            assoc_const.name_id, table_entry, rewrite_inst_id);
       }
       table_entry = SemIR::ErrorInst::SingletonInstId;
       continue;
@@ -199,14 +198,14 @@ auto InitialFacetTypeImplWitness(
       // was symbolic.
       auto converted_inst_id = ConvertToValueOfType(
           context, context.insts().GetLocId(facet_type_inst_id),
-          context.constant_values().GetInstId(rewrite_value),
-          assoc_const_type_id);
-      auto new_rewrite_value = context.constant_values().Get(converted_inst_id);
+          rewrite_inst_id, assoc_const_type_id);
+      // Canonicalize the converted constant value.
+      converted_inst_id =
+          context.constant_values().GetConstantInstId(converted_inst_id);
       // The result of conversion can be non-constant even if the original
       // value was constant.
-      if (new_rewrite_value.is_constant() ||
-          new_rewrite_value == SemIR::ErrorInst::SingletonConstantId) {
-        rewrite_value = new_rewrite_value;
+      if (converted_inst_id.has_value()) {
+        rewrite_inst_id = converted_inst_id;
       } else {
         const auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
@@ -217,19 +216,19 @@ auto InitialFacetTypeImplWitness(
             SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
         context.emitter().Emit(
             facet_type_inst_id, AssociatedConstantNotConstantAfterConversion,
-            assoc_const.name_id,
-            context.constant_values().GetInstId(rewrite_value),
-            assoc_const_type_id);
-        rewrite_value = SemIR::ErrorInst::SingletonConstantId;
+            assoc_const.name_id, rewrite_inst_id, assoc_const_type_id);
+        rewrite_inst_id = SemIR::ErrorInst::SingletonInstId;
       }
     }
 
-    auto rewrite_inst_id = context.constant_values().GetInstId(rewrite_value);
+    CARBON_CHECK(rewrite_inst_id == context.constant_values().GetConstantInstId(
+                                        rewrite_inst_id),
+                 "Rewritten value for associated constant is not canonical.");
+
     table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
         context, witness_loc_id,
         {.type_id = context.insts().Get(rewrite_inst_id).type_id(),
          .inst_id = rewrite_inst_id});
-    table_entry = context.constant_values().GetInstId(rewrite_value);
   }
   return witness_inst_id;
 }
