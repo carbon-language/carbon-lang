@@ -166,6 +166,9 @@ auto InitialFacetTypeImplWitness(
 
     if (table_entry != SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
       if (table_entry != rewrite_value) {
+        // TODO: Figure out how to print the two different values
+        // `const_id` & `rewrite_value` in the diagnostic
+        // message.
         CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
                           "associated constant {0} given two different values",
                           SemIR::NameId);
@@ -205,10 +208,11 @@ auto InitialFacetTypeImplWitness(
       } else if (rewrite_value != SemIR::ErrorInst::SingletonInstId) {
         const auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
-        CARBON_DIAGNOSTIC(AssociatedConstantNotConstantAfterConversion, Error,
-                          "associated constant {0} given value that is not "
-                          "constant after conversion to {1}",
-                          SemIR::NameId, SemIR::TypeId);
+        CARBON_DIAGNOSTIC(
+            AssociatedConstantNotConstantAfterConversion, Error,
+            "associated constant {0} given value that is not constant "
+            "after conversion to {1}",
+            SemIR::NameId, SemIR::TypeId);
         context.emitter().Emit(facet_type_inst_id,
                                AssociatedConstantNotConstantAfterConversion,
                                assoc_const.name_id, assoc_const_type_id);
