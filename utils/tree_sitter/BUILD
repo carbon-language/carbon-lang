@@ -71,7 +71,7 @@ cc_binary(
 # these tests to work on improving support, but also, it may be worth improving
 # the test setup to:
 # - Support file_test's split files.
-# - Better understand when the toolchain doesn't a test file to parse.
+# - Better understand when the toolchain doesn't expect a test file to parse.
 cc_test(
     name = "toolchain_testdata_tests",
     size = "small",
