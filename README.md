@@ -150,7 +150,8 @@ and the language:
     is where most of our current implementation efforts are directed.
     -   Historically, there was also a prototype
         [explorer](https://github.com/carbon-language/explorer) interpreter that
-        is no longer under development, and has been archived.
+        implemented an older version of the Carbon language design, but is no
+        longer under development and has been archived.
 
 If you're interested in contributing, we're currently focused on developing the
 Carbon toolchain until it can
