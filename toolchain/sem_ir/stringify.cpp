@@ -690,7 +690,7 @@ static auto Stringify(const SemIR::File& sem_ir, StepStack& step_stack)
   return out.TakeStr();
 }
 
-auto StringifyConst(const SemIR::File& sem_ir, InstId outer_inst_id)
+auto StringifyConstantInst(const SemIR::File& sem_ir, InstId outer_inst_id)
     -> std::string {
   StepStack step_stack(&sem_ir);
   step_stack.PushInstId(outer_inst_id);

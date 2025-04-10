@@ -355,7 +355,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
       out << "\n  - " << field << DumpNameIfValid(file, field.name_id);
       if (field.type_id.has_value()) {
         InstId inst_id = file.types().GetInstId(field.type_id);
-        out << ": " << StringifyConst(file, inst_id);
+        out << ": " << StringifyConstantInst(file, inst_id);
       }
     }
   }
@@ -386,7 +386,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
   }
 
   InstId inst_id = file.types().GetInstId(type_id);
-  out << ": " << StringifyConst(file, inst_id) << "; "
+  out << ": " << StringifyConstantInst(file, inst_id) << "; "
       << file.insts().Get(inst_id);
   return out.TakeStr();
 }

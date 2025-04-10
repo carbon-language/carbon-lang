@@ -172,7 +172,7 @@ auto InitialFacetTypeImplWitness(
         CARBON_DIAGNOSTIC(
             AssociatedConstantWithDifferentValues, Error,
             "associated constant {0} given two different values {1} and {2}",
-            SemIR::NameId, InstIdAsConst, InstIdAsConst);
+            SemIR::NameId, InstIdAsConstant, InstIdAsConstant);
         auto& assoc_const = context.associated_constants().Get(
             assoc_constant_decl->assoc_const_id);
         context.emitter().Emit(
@@ -212,7 +212,7 @@ auto InitialFacetTypeImplWitness(
             AssociatedConstantNotConstantAfterConversion, Error,
             "associated constant {0} given value {1} that is not constant "
             "after conversion to {2}",
-            SemIR::NameId, InstIdAsConst, SemIR::TypeId);
+            SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
         context.emitter().Emit(
             facet_type_inst_id, AssociatedConstantNotConstantAfterConversion,
             assoc_const.name_id,

@@ -63,11 +63,11 @@ inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
 
 // An expression with a constant value, for rendering in a diagnostic. The
 // diagnostic rendering will include enclosing "`"s.
-struct InstIdAsConst {
+struct InstIdAsConstant {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  InstIdAsConst(SemIR::InstId inst_id) : inst_id(inst_id) {}
+  InstIdAsConstant(SemIR::InstId inst_id) : inst_id(inst_id) {}
 
   SemIR::InstId inst_id;
 };

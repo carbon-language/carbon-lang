@@ -10,13 +10,14 @@
 
 namespace Carbon::SemIR {
 
-// Produces a string version of an expression with a constant value. Generally,
+// Produces a string version of an instruction with a constant value. Generally,
 // this should not be called directly. To format a constant value into a
-// diagnostic, use a diagnostic parameter of type `InstIdAsConst`. When the
+// diagnostic, use a diagnostic parameter of type `InstIdAsConstant`. When the
 // constant value is a type, use `InstIdAsType`, `InstIdAsRawType`, or
 // `TypeOfInstId` where possible, or of type `TypeId` or `TypeIdAsRawType` if
 // you don't have an expression describing the type.
-auto StringifyConst(const File& sem_ir, InstId outer_inst_id) -> std::string;
+auto StringifyConstantInst(const File& sem_ir, InstId outer_inst_id)
+    -> std::string;
 
 // Produces a string version of the name of a specific. Generally, this should
 // not be called directly. To format a string into a diagnostic, use a

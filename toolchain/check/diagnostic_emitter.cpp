@@ -93,27 +93,30 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     // TODO: Where possible, produce a better description of the type based on
     // the expression.
     return "`" +
-           StringifyConst(
+           StringifyConstantInst(
                *sem_ir_,
                sem_ir_->types().GetInstId(
                    sem_ir_->insts().Get(type_of_expr->inst_id).type_id())) +
            "`";
   }
-  if (auto* expr = llvm::any_cast<InstIdAsConst>(&arg)) {
-    return "`" + StringifyConst(*sem_ir_, expr->inst_id) + "`";
+  if (auto* expr = llvm::any_cast<InstIdAsConstant>(&arg)) {
+    return "`" + StringifyConstantInst(*sem_ir_, expr->inst_id) + "`";
   }
   if (auto* type_expr = llvm::any_cast<InstIdAsType>(&arg)) {
-    return "`" + StringifyConst(*sem_ir_, type_expr->inst_id) + "`";
+    return "`" + StringifyConstantInst(*sem_ir_, type_expr->inst_id) + "`";
   }
   if (auto* type_expr = llvm::any_cast<InstIdAsRawType>(&arg)) {
-    return StringifyConst(*sem_ir_, type_expr->inst_id);
+    return StringifyConstantInst(*sem_ir_, type_expr->inst_id);
   }
   if (auto* type = llvm::any_cast<TypeIdAsRawType>(&arg)) {
-    return StringifyConst(*sem_ir_, sem_ir_->types().GetInstId(type->type_id));
+    return StringifyConstantInst(*sem_ir_,
+                                 sem_ir_->types().GetInstId(type->type_id));
   }
   if (auto* type_id = llvm::any_cast<SemIR::TypeId>(&arg)) {
     return "`" +
-           StringifyConst(*sem_ir_, sem_ir_->types().GetInstId(*type_id)) + "`";
+           StringifyConstantInst(*sem_ir_,
+                                 sem_ir_->types().GetInstId(*type_id)) +
+           "`";
   }
   if (auto* specific_id = llvm::any_cast<SemIR::SpecificId>(&arg)) {
     return "`" + StringifySpecific(*sem_ir_, *specific_id) + "`";
