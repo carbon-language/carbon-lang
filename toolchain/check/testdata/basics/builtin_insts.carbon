@@ -17,7 +17,7 @@
 // CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst15, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
@@ -49,8 +49,7 @@
 // CHECK:STDOUT:     'inst(StringType)': {kind: StringType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
-// CHECK:STDOUT:     'inst(WitnessTableType)': {kind: WitnessTableType, type: type(TypeType)}
-// CHECK:STDOUT:     inst15:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst(TypeType)':  concrete_constant(inst(TypeType))
 // CHECK:STDOUT:     'inst(AutoType)':  concrete_constant(inst(AutoType))
@@ -66,8 +65,7 @@
 // CHECK:STDOUT:     'inst(StringType)': concrete_constant(inst(StringType))
 // CHECK:STDOUT:     'inst(VtableType)': concrete_constant(inst(VtableType))
 // CHECK:STDOUT:     'inst(WitnessType)': concrete_constant(inst(WitnessType))
-// CHECK:STDOUT:     'inst(WitnessTableType)': concrete_constant(inst(WitnessTableType))
-// CHECK:STDOUT:     inst15:          concrete_constant(inst15)
+// CHECK:STDOUT:     inst14:          concrete_constant(inst14)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
@@ -75,5 +73,5 @@
 // CHECK:STDOUT:     import_refs:     {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:
-// CHECK:STDOUT:       0:               inst15
+// CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT: ...

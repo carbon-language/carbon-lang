@@ -972,7 +972,7 @@ struct ImplWitnessTable {
        // constants.
        .is_lowered = false});
 
-  // Always the type of the builtin `WitnessTableType` singleton instruction.
+  // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
 
   // The witness table of instructions.
@@ -1936,18 +1936,6 @@ struct WitnessType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-
-  TypeId type_id;
-};
-
-// The type of `ImplWitnessTable` instructions.
-struct WitnessTableType {
-  static constexpr auto Kind =
-      InstKind::WitnessTableType.Define<Parse::NoneNodeId>(
-          {.ir_name = "<witness table>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;

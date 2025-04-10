@@ -100,16 +100,16 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %Ordered.facet: %Ordered.type = facet_value %C, (%Ordered.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [concrete]
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.a87: type = fn_type_with_self_type %Less.type.341, %Ordered.facet [concrete]
+// CHECK:STDOUT:   %.bc6: type = fn_type_with_self_type %Less.type.341, %Ordered.facet [concrete]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [concrete]
 // CHECK:STDOUT:   %TestLessEqual: %TestLessEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.9f9: type = fn_type_with_self_type %LessOrEquivalent.type.859, %Ordered.facet [concrete]
+// CHECK:STDOUT:   %.77a: type = fn_type_with_self_type %LessOrEquivalent.type.859, %Ordered.facet [concrete]
 // CHECK:STDOUT:   %TestGreater.type: type = fn_type @TestGreater [concrete]
 // CHECK:STDOUT:   %TestGreater: %TestGreater.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.4e7: type = fn_type_with_self_type %Greater.type.270, %Ordered.facet [concrete]
+// CHECK:STDOUT:   %.3ad: type = fn_type_with_self_type %Greater.type.270, %Ordered.facet [concrete]
 // CHECK:STDOUT:   %TestGreaterEqual.type: type = fn_type @TestGreaterEqual [concrete]
 // CHECK:STDOUT:   %TestGreaterEqual: %TestGreaterEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.feb: type = fn_type_with_self_type %GreaterOrEquivalent.type.8af, %Ordered.facet [concrete]
+// CHECK:STDOUT:   %.484: type = fn_type_with_self_type %GreaterOrEquivalent.type.8af, %Ordered.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -138,7 +138,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, imports.%Core.Ordered [concrete = constants.%Ordered.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Ordered.impl_witness_table: <witness table> = impl_witness_table (@impl.d54.%Less.decl, @impl.d54.%LessOrEquivalent.decl, @impl.d54.%Greater.decl, @impl.d54.%GreaterOrEquivalent.decl), @impl.d54 [concrete]
+// CHECK:STDOUT:   %Ordered.impl_witness_table: <witness> = impl_witness_table (@impl.d54.%Less.decl, @impl.d54.%LessOrEquivalent.decl, @impl.d54.%Greater.decl, @impl.d54.%GreaterOrEquivalent.decl), @impl.d54 [concrete]
 // CHECK:STDOUT:   %Ordered.impl_witness: <witness> = impl_witness %Ordered.impl_witness_table [concrete = constants.%Ordered.impl_witness]
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [concrete = constants.%TestLess] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
@@ -333,7 +333,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.a87 = impl_witness_access constants.%Ordered.impl_witness, element0 [concrete = constants.%Less.738]
+// CHECK:STDOUT:   %impl.elem0: %.bc6 = impl_witness_access constants.%Ordered.impl_witness, element0 [concrete = constants.%Less.738]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %Less.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc14_15.1: bool = value_of_initializer %Less.call
@@ -345,7 +345,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.9f9 = impl_witness_access constants.%Ordered.impl_witness, element1 [concrete = constants.%LessOrEquivalent.010]
+// CHECK:STDOUT:   %impl.elem1: %.77a = impl_witness_access constants.%Ordered.impl_witness, element1 [concrete = constants.%LessOrEquivalent.010]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %LessOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %LessOrEquivalent.call
@@ -357,7 +357,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem2: %.4e7 = impl_witness_access constants.%Ordered.impl_witness, element2 [concrete = constants.%Greater.afe]
+// CHECK:STDOUT:   %impl.elem2: %.3ad = impl_witness_access constants.%Ordered.impl_witness, element2 [concrete = constants.%Greater.afe]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem2
 // CHECK:STDOUT:   %Greater.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc22_15.1: bool = value_of_initializer %Greater.call
@@ -369,7 +369,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem3: %.feb = impl_witness_access constants.%Ordered.impl_witness, element3 [concrete = constants.%GreaterOrEquivalent.03b]
+// CHECK:STDOUT:   %impl.elem3: %.484 = impl_witness_access constants.%Ordered.impl_witness, element3 [concrete = constants.%GreaterOrEquivalent.03b]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem3
 // CHECK:STDOUT:   %GreaterOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc26_16.1: bool = value_of_initializer %GreaterOrEquivalent.call

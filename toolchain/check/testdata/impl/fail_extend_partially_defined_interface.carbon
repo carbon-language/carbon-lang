@@ -76,7 +76,7 @@ interface I {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C.6b4 [symbolic = %C (constants.%C.6b4)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %I.impl_witness_table: <witness table> = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:     %I.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @impl(constants.%Self) [symbolic = @impl.%I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:     %.loc20: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [concrete = constants.%I.type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]

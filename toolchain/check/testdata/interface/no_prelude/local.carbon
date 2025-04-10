@@ -35,7 +35,7 @@ fn F() {
 // CHECK:STDOUT:   %G.type.c84: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.5a2: %G.type.c84 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %.92b: type = fn_type_with_self_type %G.type.bff, %I.facet [concrete]
+// CHECK:STDOUT:   %.9bc: type = fn_type_with_self_type %G.type.bff, %I.facet [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -91,12 +91,12 @@ fn F() {
 // CHECK:STDOUT:     %.loc15_9.2: type = converted %.loc15_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @F.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table: <witness table> = impl_witness_table (@impl.%G.decl), @impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table: <witness> = impl_witness_table (@impl.%G.decl), @impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %.loc18_4.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %G.ref: %I.assoc_type = name_ref G, @I.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.92b = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%G.5a2]
+// CHECK:STDOUT:   %impl.elem0: %.9bc = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%G.5a2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc18_4.1, %impl.elem0
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_4.2: %empty_tuple.type = converted %.loc18_4.1, %empty_tuple [concrete = constants.%empty_tuple]

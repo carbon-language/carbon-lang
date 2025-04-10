@@ -54,7 +54,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:     %T.loc15_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table: <witness table> = impl_witness_table (@impl.%F.decl), @impl [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness_table: <witness> = impl_witness_table (@impl.%F.decl), @impl [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table, @impl(constants.%T) [symbolic = @impl.%Simple.impl_witness (constants.%Simple.impl_witness)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -229,9 +229,9 @@ class X {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.ad1: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
+// CHECK:STDOUT:   %.429: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.28d: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
+// CHECK:STDOUT:   %.5ab: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -327,7 +327,7 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Z.impl_witness_table: <witness table> = impl_witness_table (@impl.c94.%Zero.decl, @impl.c94.%Method.decl), @impl.c94 [concrete]
+// CHECK:STDOUT:   %Z.impl_witness_table: <witness> = impl_witness_table (@impl.c94.%Zero.decl, @impl.c94.%Method.decl), @impl.c94 [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -388,7 +388,7 @@ class X {
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%Point, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %.loc28: %Z.type = converted %Point.ref.loc28, %Z.facet [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %as_wit.iface0: <witness> = facet_access_witness %.loc28, element0 [concrete = constants.%Z.impl_witness]
-// CHECK:STDOUT:   %impl.elem0: %.ad1 = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%Zero.dec]
+// CHECK:STDOUT:   %impl.elem0: %.429 = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%Zero.dec]
 // CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   %.loc29_5.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Point.ref.loc29: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
@@ -398,7 +398,7 @@ class X {
 // CHECK:STDOUT:   %.loc29_7.1: ref %Point = converted %.loc29_5.1, %.loc29_5.4
 // CHECK:STDOUT:   %Z.ref.loc29: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Method.ref: %Z.assoc_type = name_ref Method, @Z.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %impl.elem1: %.28d = impl_witness_access constants.%Z.impl_witness, element1 [concrete = constants.%Method.2c2]
+// CHECK:STDOUT:   %impl.elem1: %.5ab = impl_witness_access constants.%Z.impl_witness, element1 [concrete = constants.%Method.2c2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc29_7.1, %impl.elem1
 // CHECK:STDOUT:   %.loc29_7.2: %Point = bind_value %.loc29_7.1
 // CHECK:STDOUT:   %Method.call: init %empty_tuple.type = call %bound_method(%.loc29_7.2)
@@ -516,7 +516,7 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.impl_witness_table: <witness table> = impl_witness_table (@impl.3b4.%B.decl), @impl.3b4 [concrete]
+// CHECK:STDOUT:   %A.impl_witness_table: <witness> = impl_witness_table (@impl.3b4.%B.decl), @impl.3b4 [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

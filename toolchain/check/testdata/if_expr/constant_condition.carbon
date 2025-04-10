@@ -41,12 +41,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f66: <witness table> = impl_witness_table (imports.%Core.import_ref.a5b), @impl.4f9 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.94e: <witness> = impl_witness %ImplicitAs.impl_witness_table.f66, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1b9: <witness> = impl_witness_table (imports.%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.eb8: <witness> = impl_witness %ImplicitAs.impl_witness_table.1b9, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.94e) [concrete]
-// CHECK:STDOUT:   %.946: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.eb8) [concrete]
+// CHECK:STDOUT:   %.06a: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
@@ -153,7 +153,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @A() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0: %.946 = impl_witness_access constants.%ImplicitAs.impl_witness.94e, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.06a = impl_witness_access constants.%ImplicitAs.impl_witness.eb8, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_25.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_25.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]
@@ -166,7 +166,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @B() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0: %.946 = impl_witness_access constants.%ImplicitAs.impl_witness.94e, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.06a = impl_witness_access constants.%ImplicitAs.impl_witness.eb8, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc12_25.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Convert.bound.ef9]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_25.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method.b92]
@@ -232,7 +232,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0: %.946 = impl_witness_access constants.%ImplicitAs.impl_witness.94e, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.06a = impl_witness_access constants.%ImplicitAs.impl_witness.eb8, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc23_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]
@@ -308,7 +308,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0: %.946 = impl_witness_access constants.%ImplicitAs.impl_witness.94e, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.06a = impl_witness_access constants.%ImplicitAs.impl_witness.eb8, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc29_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc29_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]

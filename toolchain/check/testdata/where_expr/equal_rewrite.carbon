@@ -1218,11 +1218,11 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.169 = import_ref Main//equal_constraint, inst20 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.169 = import_ref Main//equal_constraint, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.56b = import_ref Main//equal_constraint, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.P = import_ref Main//equal_constraint, P, unloaded
 // CHECK:STDOUT:   %Main.import_ref.3bc: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.1.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.b61 = import_ref Main//nested_rewrites, inst20 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b61 = import_ref Main//nested_rewrites, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.38f = import_ref Main//nested_rewrites, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.30f = import_ref Main//nested_rewrites, loc6_8, unloaded
 // CHECK:STDOUT:   %Main.B = import_ref Main//nested_rewrites, B, unloaded
@@ -1414,7 +1414,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.impl_witness_table: <witness table> = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %type_where = binding_pattern B
@@ -1515,7 +1515,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.impl_witness_table: <witness table> = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %type_where = binding_pattern B
