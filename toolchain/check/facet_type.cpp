@@ -220,11 +220,10 @@ auto InitialFacetTypeImplWitness(
                      context.constant_values().GetConstantInstId(rewrite_value),
                  "Rewritten value for associated constant is not canonical.");
 
-    auto rewrite_inst_id = rewrite_value;
     table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
         context, witness_loc_id,
-        {.type_id = context.insts().Get(rewrite_inst_id).type_id(),
-         .inst_id = rewrite_inst_id});
+        {.type_id = context.insts().Get(rewrite_value).type_id(),
+         .inst_id = rewrite_value});
   }
   return witness_inst_id;
 }
