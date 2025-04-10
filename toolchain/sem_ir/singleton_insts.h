@@ -27,6 +27,7 @@ static constexpr std::array SingletonInstKinds = {
     InstKind::StringType,
     InstKind::VtableType,
     InstKind::WitnessType,
+    InstKind::WitnessTableType,
 };
 
 // Returns true if the InstKind is a singleton.

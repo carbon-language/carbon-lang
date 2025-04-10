@@ -891,7 +891,7 @@ interface J {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table: <witness> = impl_witness_table (%impl_witness_assoc_constant), @impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table: <witness table> = impl_witness_table (%impl_witness_assoc_constant), @impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   name_binding_decl {
@@ -1175,10 +1175,10 @@ interface J {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//to_import, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//to_import, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.33a = import_ref Main//to_import, loc4_8, unloaded
 // CHECK:STDOUT:   %Main.T = import_ref Main//to_import, T, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//to_import, inst17 [no loc], loaded [symbolic = constants.%Self.826]
+// CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//to_import, inst18 [no loc], loaded [symbolic = constants.%Self.826]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

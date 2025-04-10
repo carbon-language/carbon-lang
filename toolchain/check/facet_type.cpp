@@ -78,8 +78,8 @@ auto InitialFacetTypeImplWitness(
   if (!is_definition && facet_type_info.rewrite_constraints.empty()) {
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
         context, witness_loc_id,
-        {.type_id =
-             GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+        {.type_id = GetSingletonType(context,
+                                     SemIR::WitnessTableType::SingletonInstId),
          .elements_id = context.inst_blocks().AddPlaceholder(),
          .impl_id = SemIR::ImplId::None});
     return AddInst<SemIR::ImplWitness>(
@@ -122,8 +122,8 @@ auto InitialFacetTypeImplWitness(
 
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
         context, witness_loc_id,
-        {.type_id =
-             GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+        {.type_id = GetSingletonType(context,
+                                     SemIR::WitnessTableType::SingletonInstId),
          .elements_id = elements_id,
          .impl_id = SemIR::ImplId::None});
 

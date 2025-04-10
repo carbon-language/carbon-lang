@@ -610,8 +610,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst19 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//state_constraints, inst23 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst20 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//state_constraints, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.ce7 = import_ref Main//state_constraints, loc7_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.731 = import_ref Main//state_constraints, loc8_13, unloaded
 // CHECK:STDOUT:   %Main.Member = import_ref Main//state_constraints, Member, unloaded
@@ -637,7 +637,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %J.impl_witness_table: <witness table> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [concrete = constants.%DoesNotImplI] {} {}
 // CHECK:STDOUT: }
@@ -716,7 +716,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref = import_ref Main//state_constraints, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref = import_ref Main//state_constraints, inst20 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -738,7 +738,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %J.impl_witness_table: <witness table> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [concrete = constants.%EmptyStruct] {
 // CHECK:STDOUT:     %Y.patt.loc9_16.1: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc9_16.2 (constants.%Y.patt)]
