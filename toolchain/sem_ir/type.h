@@ -67,7 +67,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Converts an ArrayRef of `InstId`s to a range of `TypeInstId`s via
   // GetAsTypeInstId().
   auto GetBlockAsTypeInstIds(llvm::ArrayRef<InstId> array
-                             [[clang::lifetimebound]]) const {
+                             [[clang::lifetimebound]]) const -> auto {
     return llvm::map_range(array, [&](SemIR::InstId type_inst_id) {
       return GetAsTypeInstId(type_inst_id);
     });
@@ -76,7 +76,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Converts an ArrayRef of `InstId`s to a range of `TypeId`s via
   // GetTypeIdForTypeInstId().
   auto GetBlockAsTypeIds(llvm::ArrayRef<InstId> array
-                         [[clang::lifetimebound]]) const {
+                         [[clang::lifetimebound]]) const -> auto {
     return llvm::map_range(array, [&](SemIR::InstId type_inst_id) {
       return GetTypeIdForTypeInstId(type_inst_id);
     });
