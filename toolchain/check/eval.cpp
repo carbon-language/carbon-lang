@@ -739,11 +739,19 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
 static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
                                                SemIR::Inst* inst, Phase* phase)
     -> bool {
-  auto type_id = SemIR::TypeId(
-      GetConstantValueForArg(eval_context, inst->type_id_and_kind(), phase));
-  inst->SetType(type_id);
-  if (!IsConstant(*phase)) {
-    return false;
+  switch (inst->kind().value_kind()) {
+    case SemIR::InstValueKind::Typed: {
+      auto type_id = SemIR::TypeId(GetConstantValueForArg(
+          eval_context, inst->type_id_and_kind(), phase));
+      inst->SetType(type_id);
+      if (!IsConstant(*phase)) {
+        return false;
+      }
+      break;
+    }
+    // Some typed instructions omit a `TypeId` field.
+    case SemIR::InstValueKind::None:
+      CARBON_CHECK(!inst->type_id().has_value());
   }
 
   auto arg0 =

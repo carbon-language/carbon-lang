@@ -2591,9 +2591,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitnessTable inst) -> ResolveResult {
-  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
-               SemIR::WitnessType::SingletonInstId);
-
   const auto& import_impl = resolver.import_impls().Get(inst.impl_id);
   auto import_decl_inst_id = import_impl.first_decl_id();
   auto local_decl_inst_id =
@@ -2607,11 +2604,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto impl_id = impl_decl.impl_id;
   auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
   return ResolveAs<SemIR::ImplWitnessTable>(
-      resolver,
-      {.type_id = GetSingletonType(resolver.local_context(),
-                                   SemIR::WitnessType::SingletonInstId),
-       .elements_id = elements_id,
-       .impl_id = impl_id});
+      resolver, {.elements_id = elements_id, .impl_id = impl_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

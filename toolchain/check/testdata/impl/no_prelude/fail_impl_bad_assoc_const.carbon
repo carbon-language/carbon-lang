@@ -40,7 +40,7 @@ impl () as I {}
 // CHECK:STDOUT:     %.loc20_7.2: type = converted %.loc20_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table: <witness> = impl_witness_table (<error>), @impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

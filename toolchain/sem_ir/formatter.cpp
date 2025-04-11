@@ -888,6 +888,12 @@ class FormatterImpl {
     out_ << " = ";
   }
 
+  // Format ImplWitnessTable with its name even though it lacks a type_id.
+  auto FormatInstLhs(InstId inst_id, ImplWitnessTable /*inst*/) -> void {
+    FormatName(inst_id);
+    out_ << " = ";
+  }
+
   template <typename InstT>
   auto FormatInstRhs(InstT inst) -> void {
     // By default, an instruction has a comma-separated argument list.

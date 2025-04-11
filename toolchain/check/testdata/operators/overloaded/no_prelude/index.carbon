@@ -281,7 +281,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.e1e: %IndexWith.assoc_type.290 = assoc_entity element0, imports.%Core.import_ref.981 [symbolic]
-// CHECK:STDOUT:   %.de3: type = fn_type_with_self_type %At.type.969, %IndexWith.facet [concrete]
+// CHECK:STDOUT:   %.ffc: type = fn_type_with_self_type %At.type.969, %IndexWith.facet [concrete]
 // CHECK:STDOUT:   %At.bound: <bound method> = bound_method %empty_tuple, %At.7c4 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -315,7 +315,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     %.loc6_29: type = converted %.loc6_28, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%empty_tuple.type)> [concrete = constants.%IndexWith.type.a51]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.impl_witness_table: <witness> = impl_witness_table (@impl.%At.decl), @impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@impl.%At.decl), @impl [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -394,7 +394,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.loc12_11.2: %empty_tuple.type = converted %.loc12_11.1, %empty_tuple.loc12_11 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc12_14: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_15: %empty_tuple.type = converted %.loc12_14, %empty_tuple.loc12_14 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %impl.elem0: %.de3 = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%At.7c4]
+// CHECK:STDOUT:   %impl.elem0: %.ffc = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%At.7c4]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12_11.2, %impl.elem0 [concrete = constants.%At.bound]
 // CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %bound_method(%.loc12_11.2, %.loc12_15)
 // CHECK:STDOUT:   return

@@ -137,7 +137,7 @@ class C {
 // CHECK:STDOUT:     %GenericInterface.type.loc20_54.1: type = facet_type <@GenericInterface, @GenericInterface(constants.%T)> [symbolic = %GenericInterface.type.loc20_54.2 (constants.%GenericInterface.type.3fe)]
 // CHECK:STDOUT:     %T.loc20_23.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc20_23.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GenericInterface.impl_witness_table: <witness> = impl_witness_table (<error>), @impl [concrete]
+// CHECK:STDOUT:   %GenericInterface.impl_witness_table = impl_witness_table (<error>), @impl [concrete]
 // CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness %GenericInterface.impl_witness_table, @impl(constants.%T) [symbolic = @impl.%GenericInterface.impl_witness (constants.%GenericInterface.impl_witness)]
 // CHECK:STDOUT:   %.loc20: type = specific_constant @impl.%GenericInterface.type.loc20_54.1, @impl(constants.%T) [symbolic = constants.%GenericInterface.type.3fe]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]

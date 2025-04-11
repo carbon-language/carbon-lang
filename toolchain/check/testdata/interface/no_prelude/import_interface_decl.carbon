@@ -75,7 +75,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     %.loc7_7.2: type = converted %.loc7_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %B.impl_witness_table = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness %B.impl_witness_table [concrete = constants.%B.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

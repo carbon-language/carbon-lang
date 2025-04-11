@@ -189,8 +189,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.935: type = fn_type_with_self_type %F.type.b7b, %HasF.facet [concrete]
-// CHECK:STDOUT:   %.5af: type = fn_type_with_self_type %G.type.d27, %HasG.facet [concrete]
+// CHECK:STDOUT:   %.a44: type = fn_type_with_self_type %F.type.b7b, %HasF.facet [concrete]
+// CHECK:STDOUT:   %.521: type = fn_type_with_self_type %G.type.d27, %HasG.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -268,13 +268,13 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasF.impl_witness_table: <witness> = impl_witness_table (@impl.670.%F.decl), @impl.670 [concrete]
+// CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (@impl.670.%F.decl), @impl.670 [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.096 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %HasG.ref: type = name_ref HasG, file.%HasG.decl [concrete = constants.%HasG.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasG.impl_witness_table: <witness> = impl_witness_table (@impl.096.%G.decl), @impl.096 [concrete]
+// CHECK:STDOUT:   %HasG.impl_witness_table = impl_witness_table (@impl.096.%G.decl), @impl.096 [concrete]
 // CHECK:STDOUT:   %HasG.impl_witness: <witness> = impl_witness %HasG.impl_witness_table [concrete = constants.%HasG.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -311,19 +311,19 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0.97a]
-// CHECK:STDOUT:   %impl.elem0.loc22: %.935 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%F.ad8]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.a44 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%F.ad8]
 // CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %impl.elem0.loc22()
 // CHECK:STDOUT:   %c.ref.loc23: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc23: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0.97a]
-// CHECK:STDOUT:   %impl.elem0.loc23: %.935 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%F.ad8]
+// CHECK:STDOUT:   %impl.elem0.loc23: %.a44 = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%F.ad8]
 // CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %impl.elem0.loc23()
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %HasG.assoc_type = name_ref G, @HasG.%assoc0 [concrete = constants.%assoc0.319]
-// CHECK:STDOUT:   %impl.elem0.loc24: %.5af = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%G.957]
+// CHECK:STDOUT:   %impl.elem0.loc24: %.521 = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%G.957]
 // CHECK:STDOUT:   %G.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %c.ref.loc25: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc25: %HasG.assoc_type = name_ref G, @HasG.%assoc0 [concrete = constants.%assoc0.319]
-// CHECK:STDOUT:   %impl.elem0.loc25: %.5af = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%G.957]
+// CHECK:STDOUT:   %impl.elem0.loc25: %.521 = impl_witness_access constants.%HasG.impl_witness, element0 [concrete = constants.%G.957]
 // CHECK:STDOUT:   %G.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -439,13 +439,13 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:     %HasA1.ref: type = name_ref HasA1, file.%HasA1.decl [concrete = constants.%HasA1.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasA1.impl_witness_table: <witness> = impl_witness_table (@impl.909.%A.decl), @impl.909 [concrete]
+// CHECK:STDOUT:   %HasA1.impl_witness_table = impl_witness_table (@impl.909.%A.decl), @impl.909 [concrete]
 // CHECK:STDOUT:   %HasA1.impl_witness: <witness> = impl_witness %HasA1.impl_witness_table [concrete = constants.%HasA1.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.390 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:     %HasA2.ref: type = name_ref HasA2, file.%HasA2.decl [concrete = constants.%HasA2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasA2.impl_witness_table: <witness> = impl_witness_table (@impl.390.%A.decl), @impl.390 [concrete]
+// CHECK:STDOUT:   %HasA2.impl_witness_table = impl_witness_table (@impl.390.%A.decl), @impl.390 [concrete]
 // CHECK:STDOUT:   %HasA2.impl_witness: <witness> = impl_witness %HasA2.impl_witness_table [concrete = constants.%HasA2.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -519,7 +519,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base.0ff [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.96b: type = fn_type_with_self_type %I.type.9bd, %HasI.facet [concrete]
+// CHECK:STDOUT:   %.06f: type = fn_type_with_self_type %I.type.9bd, %HasI.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -590,7 +590,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
 // CHECK:STDOUT:     %HasI.ref: type = name_ref HasI, file.%HasI.decl [concrete = constants.%HasI.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasI.impl_witness_table: <witness> = impl_witness_table (@impl.%I.decl), @impl [concrete]
+// CHECK:STDOUT:   %HasI.impl_witness_table = impl_witness_table (@impl.%I.decl), @impl [concrete]
 // CHECK:STDOUT:   %HasI.impl_witness: <witness> = impl_witness %HasI.impl_witness_table [concrete = constants.%HasI.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.0ff [concrete = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -624,11 +624,11 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   %I.ref.loc20: %HasI.assoc_type = name_ref I, @HasI.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc20: %.96b = impl_witness_access constants.%HasI.impl_witness, element0 [concrete = constants.%I.e74]
+// CHECK:STDOUT:   %impl.elem0.loc20: %.06f = impl_witness_access constants.%HasI.impl_witness, element0 [concrete = constants.%I.e74]
 // CHECK:STDOUT:   %I.call.loc20: init %empty_tuple.type = call %impl.elem0.loc20()
 // CHECK:STDOUT:   %e.ref.loc21: %E = name_ref e, %e
 // CHECK:STDOUT:   %I.ref.loc21: %HasI.assoc_type = name_ref I, @HasI.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc21: %.96b = impl_witness_access constants.%HasI.impl_witness, element0 [concrete = constants.%I.e74]
+// CHECK:STDOUT:   %impl.elem0.loc21: %.06f = impl_witness_access constants.%HasI.impl_witness, element0 [concrete = constants.%I.e74]
 // CHECK:STDOUT:   %I.call.loc21: init %empty_tuple.type = call %impl.elem0.loc21()
 // CHECK:STDOUT:   %E.ref.loc22: type = name_ref E, file.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   %J.ref.loc22: %J.type = name_ref J, @B.%J.decl [concrete = constants.%J]
@@ -735,7 +735,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%L [concrete = constants.%L]
 // CHECK:STDOUT:     %HasK.ref: type = name_ref HasK, file.%HasK.decl [concrete = constants.%HasK.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasK.impl_witness_table: <witness> = impl_witness_table (@impl.%K.decl), @impl [concrete]
+// CHECK:STDOUT:   %HasK.impl_witness_table = impl_witness_table (@impl.%K.decl), @impl [concrete]
 // CHECK:STDOUT:   %HasK.impl_witness: <witness> = impl_witness %HasK.impl_witness_table [concrete = constants.%HasK.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b1e [concrete = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -905,13 +905,13 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [concrete = constants.%O]
 // CHECK:STDOUT:     %HasN1.ref: type = name_ref HasN1, file.%HasN1.decl [concrete = constants.%HasN1.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasN1.impl_witness_table: <witness> = impl_witness_table (@impl.968.%N.decl), @impl.968 [concrete]
+// CHECK:STDOUT:   %HasN1.impl_witness_table = impl_witness_table (@impl.968.%N.decl), @impl.968 [concrete]
 // CHECK:STDOUT:   %HasN1.impl_witness: <witness> = impl_witness %HasN1.impl_witness_table [concrete = constants.%HasN1.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.117 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [concrete = constants.%O]
 // CHECK:STDOUT:     %HasN2.ref: type = name_ref HasN2, file.%HasN2.decl [concrete = constants.%HasN2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasN2.impl_witness_table: <witness> = impl_witness_table (@impl.117.%N.decl), @impl.117 [concrete]
+// CHECK:STDOUT:   %HasN2.impl_witness_table = impl_witness_table (@impl.117.%N.decl), @impl.117 [concrete]
 // CHECK:STDOUT:   %HasN2.impl_witness: <witness> = impl_witness %HasN2.impl_witness_table [concrete = constants.%HasN2.impl_witness]
 // CHECK:STDOUT:   %N.decl: %N.type.8b4 = fn_decl @N.6 [concrete = constants.%N.cc3] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.9c6 [concrete = constants.%complete_type.121]
