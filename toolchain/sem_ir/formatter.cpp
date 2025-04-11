@@ -747,7 +747,7 @@ class FormatterImpl {
       return;
     }
 
-    FormatInst(inst_id, sem_ir_->insts().Get(inst_id));
+    FormatInst(inst_id, sem_ir_->insts().GetWithAttachedType(inst_id));
   }
 
   auto FormatInst(InstId inst_id, Inst inst) -> void {
@@ -1436,9 +1436,14 @@ class FormatterImpl {
       if (symbolic_constant.generic_id.has_value()) {
         const auto& generic =
             sem_ir_->generics().Get(symbolic_constant.generic_id);
-        FormatName(sem_ir_->inst_blocks().Get(generic.GetEvalBlock(
-            symbolic_constant.index
-                .region()))[symbolic_constant.index.index()]);
+        if (auto eval_block_id =
+                generic.GetEvalBlock(symbolic_constant.index.region());
+            eval_block_id.has_value()) {
+          FormatName(sem_ir_->inst_blocks().Get(
+              eval_block_id)[symbolic_constant.index.index()]);
+        } else {
+          out_ << "<missing eval block>";
+        }
         out_ << " (";
         FormatName(sem_ir_->constant_values().GetInstId(id));
         out_ << ")";
@@ -1469,7 +1474,7 @@ class FormatterImpl {
   }
 
   auto FormatTypeOfInst(InstId id) -> void {
-    auto type_id = sem_ir_->insts().Get(id).type_id();
+    auto type_id = sem_ir_->insts().GetAttachedType(id);
     if (!type_id.has_value()) {
       out_ << "invalid";
       return;

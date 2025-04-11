@@ -118,6 +118,15 @@ class ConstantValueStore {
     return GetInstId(Get(inst_id));
   }
 
+  // Given a symbolic constant, returns the unattached form of that constant.
+  // For any other constant ID, returns the ID unchanged.
+  auto GetUnattachedConstant(ConstantId const_id) const -> ConstantId {
+    if (const_id.is_symbolic()) {
+      return Get(GetSymbolicConstant(const_id).inst_id);
+    }
+    return const_id;
+  }
+
   auto AddSymbolicConstant(SymbolicConstant constant) -> ConstantId {
     symbolic_constants_.push_back(constant);
     return ConstantId::ForSymbolicConstantIndex(symbolic_constants_.size() - 1);

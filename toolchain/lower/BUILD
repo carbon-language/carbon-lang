@@ -54,7 +54,6 @@ cc_library(
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_namer",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:ast",

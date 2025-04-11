@@ -225,6 +225,29 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
                            SemIR::ConstantId const_id) -> ResolveResult;
 
 namespace {
+// Wrapper around InstStore that always retrieves instructions with their
+// attached types. This is what we want when importing, but usually not what we
+// want in other contexts.
+class ImportInstStore {
+ public:
+  explicit ImportInstStore(const SemIR::InstStore* store) : store_(store) {}
+
+  auto Get(SemIR::InstId inst_id) const -> SemIR::Inst {
+    return store_->GetWithAttachedType(inst_id);
+  }
+  template <typename InstT>
+  auto GetAs(SemIR::InstId inst_id) const -> InstT {
+    return Get(inst_id).As<InstT>();
+  }
+  template <typename InstT>
+  auto TryGetAs(SemIR::InstId inst_id) const -> std::optional<InstT> {
+    return Get(inst_id).TryAs<InstT>();
+  }
+
+ private:
+  const SemIR::InstStore* store_;
+};
+
 // A context within which we are performing an import. Tracks information about
 // the source and destination. This provides a restricted interface compared to
 // ImportResolver: in particular, it does not have access to a work list.
@@ -275,7 +298,9 @@ class ImportContext {
   auto import_inst_blocks() -> decltype(auto) {
     return import_ir().inst_blocks();
   }
-  auto import_insts() -> decltype(auto) { return import_ir().insts(); }
+  auto import_insts() -> ImportInstStore {
+    return ImportInstStore(&import_ir().insts());
+  }
   auto import_interfaces() -> decltype(auto) {
     return import_ir().interfaces();
   }
@@ -966,6 +991,12 @@ static auto GetLocalGenericId(ImportContext& context,
     case CARBON_KIND(SemIR::ImplDecl impl_decl): {
       return context.local_impls().Get(impl_decl.impl_id).generic_id;
     }
+    #if 0
+    case SemIR::ErrorInst::Kind: {
+      // TODO: This should eventually not be reachable.
+      return SemIR::GenericId::None;
+    }
+    #endif
     default: {
       CARBON_FATAL("Unexpected inst for generic declaration: {0}", inst);
     }
@@ -3289,7 +3320,8 @@ static auto GetInstForLoad(Context& context,
   const auto* cursor_ir = context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
 
   while (true) {
-    auto cursor_inst = cursor_ir->insts().Get(import_ir_inst.inst_id);
+    auto cursor_inst =
+        cursor_ir->insts().GetWithAttachedType(import_ir_inst.inst_id);
 
     auto import_ref = cursor_inst.TryAs<SemIR::ImportRefUnloaded>();
     if (!import_ref) {

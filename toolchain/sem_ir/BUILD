@@ -56,25 +56,6 @@ cc_test(
 )
 
 cc_library(
-    name = "inst",
-    srcs = ["inst.cpp"],
-    hdrs = ["inst.h"],
-    deps = [
-        ":block_value_store",
-        ":typed_insts",
-        "//common:check",
-        "//common:hashing",
-        "//common:ostream",
-        "//common:raw_string_ostream",
-        "//common:struct_reflection",
-        "//toolchain/base:index_base",
-        "//toolchain/base:int",
-        "//toolchain/base:value_store",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "file",
     srcs = [
         "builtin_function_kind.cpp",
@@ -85,6 +66,7 @@ cc_library(
         "function.cpp",
         "generic.cpp",
         "impl.cpp",
+        "inst.cpp",
         "name.cpp",
         "name_scope.cpp",
         "pattern.cpp",
@@ -106,6 +88,7 @@ cc_library(
         "impl.h",
         "import_cpp.h",
         "import_ir.h",
+        "inst.h",
         "interface.h",
         "name.h",
         "name_scope.h",
@@ -119,7 +102,6 @@ cc_library(
     ],
     deps = [
         ":block_value_store",
-        ":inst",
         ":typed_insts",
         "//common:check",
         "//common:enum_base",
@@ -266,7 +248,7 @@ cc_test(
     size = "small",
     srcs = ["typed_insts_test.cpp"],
     deps = [
-        ":inst",
+        ":file",
         ":typed_insts",
         "//testing/base:gtest_main",
         "@googletest//:gtest",

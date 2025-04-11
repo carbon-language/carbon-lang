@@ -64,6 +64,9 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Returns the instruction used to define the specified type.
   auto GetAsInst(TypeId type_id) const -> Inst;
 
+  // Returns the unattached form of the given type.
+  auto GetUnattachedType(TypeId type_id) const -> TypeId;
+
   // Converts an ArrayRef of `InstId`s to a range of `TypeInstId`s via
   // GetAsTypeInstId().
   auto GetBlockAsTypeInstIds(llvm::ArrayRef<InstId> array

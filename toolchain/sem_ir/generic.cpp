@@ -52,25 +52,25 @@ auto SpecificStore::CollectMemUsage(MemUsage& mem_usage,
                     lookup_table_, KeyContext(specifics_.array_ref()));
 }
 
-auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
-                           ConstantId const_id) -> ConstantId {
+static auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
+                                  ConstantId const_id) -> ConstantId {
   if (!const_id.is_symbolic()) {
-    // Type does not depend on a generic parameter.
+    // The constant does not depend on a generic parameter.
     return const_id;
   }
 
   const auto& symbolic = sem_ir.constant_values().GetSymbolicConstant(const_id);
   if (!symbolic.generic_id.has_value()) {
-    // Constant is an abstract symbolic constant, not associated with some
+    // The constant is an unattached symbolic constant, not associated with some
     // particular generic.
     return const_id;
   }
 
   if (!specific_id.has_value()) {
-    // We have a generic constant but no specific. We treat as a request for the
-    // value that should be used within the generic itself, which is the generic
-    // constant.
-    return const_id;
+    // We have a generic constant but no specific. We treat this as a request
+    // for the value that should be used within the generic itself, which is the
+    // unattached constant.
+    return sem_ir.constant_values().Get(symbolic.inst_id);
   }
 
   const auto& specific = sem_ir.specifics().Get(specific_id);
@@ -78,11 +78,17 @@ auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
                "Given a specific for the wrong generic");
 
   auto value_block_id = specific.GetValueBlock(symbolic.index.region());
-  CARBON_CHECK(
-      value_block_id.has_value(),
-      "Queried {0} in {1} for {2} before it was resolved.", symbolic.index,
-      specific_id,
-      sem_ir.insts().Get(sem_ir.generics().Get(specific.generic_id).decl_id));
+  if (!value_block_id.has_value()) {
+    // For the self specific, we can see queries before the definition is
+    // resolved. Return the unattached constant value.
+    CARBON_CHECK(sem_ir.generics().GetSelfSpecific(symbolic.generic_id) == specific_id,
+        "Queried {0} in {1} for {2} before it was resolved.", symbolic.index,
+        specific_id,
+        sem_ir.insts().Get(sem_ir.generics().Get(specific.generic_id).decl_id));
+    // TODO: Make sure this is the same value that we put in the self specific
+    // when it's resolved. Consider not building value blocks a self specific.
+    return sem_ir.constant_values().Get(symbolic.inst_id);
+  }
   return sem_ir.constant_values().Get(
       sem_ir.inst_blocks().Get(value_block_id)[symbolic.index.index()]);
 }
@@ -95,7 +101,7 @@ auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
 
 auto GetTypeOfInstInSpecific(const File& sem_ir, SpecificId specific_id,
                              InstId inst_id) -> TypeId {
-  auto type_id = sem_ir.insts().Get(inst_id).type_id();
+  auto type_id = sem_ir.insts().GetAttachedType(inst_id);
   auto const_id = sem_ir.types().GetConstantId(type_id);
   auto specific_const_id = GetConstantInSpecific(sem_ir, specific_id, const_id);
   return TypeId::ForTypeConstant(specific_const_id);

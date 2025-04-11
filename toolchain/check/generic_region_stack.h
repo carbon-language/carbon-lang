@@ -60,7 +60,14 @@ class GenericRegionStack {
     pending_generic_ids_.back().generic_id = generic_id;
   }
 
-  // Adds an instruction to the eval block for the current pneding generic.
+  // Adds an instruction to the list of instructions whose type or value depends
+  // on something in the current pending generic.
+  auto AddDependentInst(SemIR::InstId inst_id) -> void {
+    CARBON_CHECK(!Empty());
+    dependent_inst_stack_.AppendToTop(inst_id);
+  }
+
+  // Adds an instruction to the eval block for the current pending generic.
   auto AddInstToEvalBlock(SemIR::InstId inst_id) -> void {
     CARBON_CHECK(!Empty());
     pending_eval_block_stack_.AppendToTop(inst_id);
@@ -72,7 +79,13 @@ class GenericRegionStack {
     return pending_generic_ids_.back();
   }
 
-  // Returns the contents of the eval block for the current generic.
+  // Returns the list of dependent instructions in the current generic region.
+  auto PeekDependentInsts() -> llvm::ArrayRef<SemIR::InstId> {
+    CARBON_CHECK(!Empty());
+    return dependent_inst_stack_.PeekArray();
+  }
+
+  // Returns the contents of the eval block for the current generic region.
   auto PeekEvalBlock() -> llvm::ArrayRef<SemIR::InstId> {
     CARBON_CHECK(!Empty());
     return pending_eval_block_stack_.PeekArray();
@@ -98,6 +111,9 @@ class GenericRegionStack {
 
   // Contents of eval blocks for pending generics.
   ArrayStack<SemIR::InstId> pending_eval_block_stack_;
+
+  // Instructions that depend on the current generic.
+  ArrayStack<SemIR::InstId> dependent_inst_stack_;
 
   // Mapping from constant InstIds to the corresponding InstIds in the eval
   // blocks for each enclosing generic. We reserve this to a suitable size in

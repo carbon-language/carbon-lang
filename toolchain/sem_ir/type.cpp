@@ -55,6 +55,11 @@ auto TypeStore::GetAsInst(TypeId type_id) const -> Inst {
   return file_->insts().Get(GetInstId(type_id));
 }
 
+auto TypeStore::GetUnattachedType(TypeId type_id) const -> TypeId {
+  return TypeId::ForTypeConstant(
+      file_->constant_values().GetUnattachedConstant(type_id.AsConstantId()));
+}
+
 auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
   type_id = GetUnqualifiedType(type_id);
   auto class_type = TryGetAs<ClassType>(type_id);

@@ -304,6 +304,8 @@ auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void {
   // TODO
   const bool inside_redeclaration = false;
 
+  context.generic_region_stack().AddDependentInst(dependent_inst.inst_id);
+
   auto [inst_id, dep_kind] = dependent_inst;
   auto [generic_id, region] =
       context.generic_region_stack().PeekPendingGeneric();
@@ -423,6 +425,30 @@ auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id) -> vo
 }
 
 auto DiscardGenericDecl(Context& context) -> void {
+  // Unattach any types and constant values we might have created in the
+  // generic.
+  // TODO: We should re-evaluate the contents of the eval block in a synthesized
+  // specific to form these values, in order to propagate the values of local
+  // `let :!` bindings.
+  for (auto inst_id : context.generic_region_stack().PeekDependentInsts()) {
+    // Note that `Get` returns an instruction with an unattached type.
+    context.sem_ir().insts().Set(inst_id, context.insts().Get(inst_id));
+    // TODO: Shouldn't need to call GetUnattachedConstant here.
+    context.constant_values().Set(
+        inst_id, context.constant_values().GetUnattachedConstant(
+                     context.constant_values().Get(inst_id)));
+  }
+  #if 0
+  // Note that we may leak a GenericId here, if one was allocated.
+  if (auto generic_id = context.generic_region_stack().PeekPendingGeneric()
+                               .generic_id;
+      generic_id.has_value()) {
+    // TODO: This shouldn't be necessary because the generic should be
+    // unreferenced.
+    context.generics().Get(generic_id).decl_id =
+        SemIR::ErrorInst::SingletonInstId;
+  }
+  #endif
   context.generic_region_stack().Pop();
 }
 
@@ -437,7 +463,7 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
                  context.insts().Get(
                      context.generic_region_stack().PeekEvalBlock().front()),
                  context.insts().Get(decl_id));
-    context.generic_region_stack().Pop();
+    DiscardGenericDecl(context);
     return SemIR::GenericId::None;
   }
 
@@ -497,32 +523,26 @@ auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
 auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
     -> void {
   if (!generic_id.has_value()) {
-    context.generic_region_stack().Pop();
+    DiscardGenericDecl(context);
     return;
   }
 
   // TODO: Compare the current eval block to the existing eval block for
-  // `generic_id`, and somehow replace all references to the new eval block with
+  // `generic_id`, and replace all references to the new eval block with
   // references to `generic_id` instead.
-
-  context.generic_region_stack().Pop();
+  DiscardGenericDecl(context);
 }
 
 auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
     -> void {
   if (!generic_id.has_value()) {
-    // TODO: We can have symbolic constants in a context that had a non-generic
-    // declaration, for example if there's a local generic let binding in a
-    // function definition. Handle this case somehow -- perhaps by forming
-    // substituted constant values now.
-    context.generic_region_stack().Pop();
+    DiscardGenericDecl(context);
     return;
   }
 
   auto definition_block_id = MakeGenericEvalBlock(context);
-  context.generics().Get(generic_id).definition_block_id = definition_block_id;
-
   context.generic_region_stack().Pop();
+  context.generics().Get(generic_id).definition_block_id = definition_block_id;
 }
 
 auto ResolveSpecificDeclaration(Context& context, SemIR::LocId loc_id,
