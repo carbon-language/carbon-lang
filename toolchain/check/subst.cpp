@@ -89,6 +89,12 @@ static auto PushOperand(Context& context, Worklist& worklist,
       }
       break;
     }
+    case CARBON_KIND(SemIR::TypeInstId inst_id): {
+      if (inst_id.has_value()) {
+        worklist.Push(inst_id);
+      }
+      break;
+    }
     case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
       push_block(inst_block_id);
       break;
@@ -170,6 +176,12 @@ static auto PopOperand(Context& context, Worklist& worklist,
       return worklist.Pop().index;
     }
     case CARBON_KIND(SemIR::MetaInstId inst_id): {
+      if (!inst_id.has_value()) {
+        return arg.value();
+      }
+      return worklist.Pop().index;
+    }
+    case CARBON_KIND(SemIR::TypeInstId inst_id): {
       if (!inst_id.has_value()) {
         return arg.value();
       }

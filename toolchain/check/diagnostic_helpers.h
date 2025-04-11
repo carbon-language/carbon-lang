@@ -11,40 +11,13 @@
 
 namespace Carbon::Check {
 
-// Tracks a location for diagnostic use, which is either a parse node or an inst
-// ID which can be translated to a parse node. Used when code needs to support
-// multiple possible ways of reporting a diagnostic location.
-class SemIRLoc {
- public:
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLoc(SemIR::InstId inst_id)
-      : inst_id_(inst_id), is_inst_id_(true), token_only_(false) {}
+// TODO: Update code to use LocId directly.
+using SemIRLoc = SemIR::LocId;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLoc(Parse::NodeId node_id) : SemIRLoc(node_id, false) {}
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLoc(SemIR::LocId loc_id) : SemIRLoc(loc_id, false) {}
-
-  // If `token_only` is true, refers to the specific node; otherwise, refers to
-  // the node and its children.
-  explicit SemIRLoc(SemIR::LocId loc_id, bool token_only)
-      : loc_id_(loc_id), is_inst_id_(false), token_only_(token_only) {}
-
- private:
-  // Only allow member access for diagnostics.
-  friend class DiagnosticEmitter;
-  // And also for eval to unwrap a LocId for calling into the rest of Check.
-  friend class UnwrapSemIRLoc;
-
-  union {
-    SemIR::InstId inst_id_;
-    SemIR::LocId loc_id_;
-  };
-
-  bool is_inst_id_;
-  bool token_only_;
-};
+// TODO: Consider instead changing calls to `SemIR::LocId::TokenOnly(...)`.
+inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
+  return loc_id.ToTokenOnly();
+}
 
 // We define the emitter separately for dependencies, so only provide a base
 // here.
@@ -56,10 +29,6 @@ using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 // DiagnosticBuilder is returned rather than emitted so that the caller
 // can add contextual notes as appropriate.
 using MakeDiagnosticBuilderFn = llvm::function_ref<auto()->DiagnosticBuilder>;
-
-inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
-  return SemIRLoc(loc_id, true);
-}
 
 // An expression with a constant value, for rendering in a diagnostic. The
 // diagnostic rendering will include enclosing "`"s.

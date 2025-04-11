@@ -1076,16 +1076,16 @@ static auto PerformBuiltinConversion(
         // `FacetValue`, which requires an instruction of type `TypeType`. So if
         // we are converting from a facet value, we get its `type` via an extra
         // `FacetAccessType` instruction.
-        auto type_inst_id = SemIR::InstId::None;
+        auto type_inst_id = SemIR::TypeInstId::None;
         if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
-          type_inst_id =
+          type_inst_id = context.types().GetAsTypeInstId(
               AddInst(context, loc_id,
                       SemIR::FacetAccessType{
                           .type_id = SemIR::TypeType::SingletonTypeId,
                           .facet_value_inst_id = const_value_id,
-                      });
+                      }));
         } else {
-          type_inst_id = const_value_id;
+          type_inst_id = context.types().GetAsTypeInstId(const_value_id);
         }
         return AddInst<SemIR::FacetValue>(
             context, loc_id,
@@ -1470,7 +1470,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
   auto type_inst_id = ConvertToValueOfType(context, loc_id, value_id,
                                            SemIR::TypeType::SingletonTypeId);
   if (type_inst_id == SemIR::ErrorInst::SingletonInstId) {
-    return {.inst_id = type_inst_id,
+    return {.inst_id = SemIR::ErrorInst::SingletonTypeInstId,
             .type_id = SemIR::ErrorInst::SingletonTypeId};
   }
 
@@ -1481,11 +1481,11 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                         "cannot evaluate type expression");
       context.emitter().Emit(loc_id, TypeExprEvaluationFailure);
     }
-    return {.inst_id = SemIR::ErrorInst::SingletonInstId,
+    return {.inst_id = SemIR::ErrorInst::SingletonTypeInstId,
             .type_id = SemIR::ErrorInst::SingletonTypeId};
   }
 
-  return {.inst_id = type_inst_id,
+  return {.inst_id = context.types().GetAsTypeInstId(type_inst_id),
           .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 

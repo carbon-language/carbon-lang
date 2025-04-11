@@ -421,6 +421,16 @@ static auto GetConstantValue(EvalContext& eval_context,
   return inst_id;
 }
 
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::TypeInstId inst_id, Phase* phase)
+    -> SemIR::TypeInstId {
+  // The input instruction is a TypeInstId, and eval does not change concrete
+  // types (like TypeType which TypeInstId implies), so the result is also a
+  // valid TypeInstId.
+  return SemIR::TypeInstId::UnsafeMake(GetConstantValue(
+      eval_context, static_cast<SemIR::InstId>(inst_id), phase));
+}
+
 // Explicitly discard a `DestInstId`, because we should not be using the
 // destination as part of evaluation.
 static auto GetConstantValue(EvalContext& /*eval_context*/,

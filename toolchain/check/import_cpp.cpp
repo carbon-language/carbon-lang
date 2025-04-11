@@ -272,7 +272,7 @@ static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
       context.ast_context().getTypeSize(type) == 32) {
     return MakeIntType(context, context.ints().Add(32));
   }
-  return {.inst_id = SemIR::ErrorInst::SingletonInstId,
+  return {.inst_id = SemIR::ErrorInst::SingletonTypeInstId,
           .type_id = SemIR::ErrorInst::SingletonTypeId};
 }
 

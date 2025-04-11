@@ -77,11 +77,11 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst28:          {kind: Converted, arg0: inst25, arg1: inst24, type: type(TypeType)}
 // CHECK:STDOUT:     inst29:          {kind: TupleType, arg0: inst_block11, type: type(TypeType)}
 // CHECK:STDOUT:     inst30:          {kind: Converted, arg0: inst27, arg1: inst29, type: type(TypeType)}
-// CHECK:STDOUT:     inst31:          {kind: ReturnSlotPattern, arg0: inst27, type: type(symbolic_constant5)}
+// CHECK:STDOUT:     inst31:          {kind: ReturnSlotPattern, arg0: inst30, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst32:          {kind: OutParamPattern, arg0: inst31, arg1: call_param1, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst33:          {kind: ValueParam, arg0: call_param0, arg1: name2, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     inst34:          {kind: OutParam, arg0: call_param1, arg1: name(ReturnSlot), type: type(symbolic_constant5)}
-// CHECK:STDOUT:     inst35:          {kind: ReturnSlot, arg0: inst27, arg1: inst34, type: type(symbolic_constant5)}
+// CHECK:STDOUT:     inst35:          {kind: ReturnSlot, arg0: inst30, arg1: inst34, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst36:          {kind: FunctionDecl, arg0: function0, arg1: inst_block14, type: type(inst40)}
 // CHECK:STDOUT:     inst37:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst38:          {kind: SymbolicBindingPattern, arg0: entity_name0, type: type(TypeType)}

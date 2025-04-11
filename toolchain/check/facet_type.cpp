@@ -39,7 +39,7 @@ static auto WitnessAccessMatchesInterface(
 }
 
 static auto IncompleteFacetTypeDiagnosticBuilder(
-    Context& context, SemIRLoc loc, SemIR::InstId facet_type_inst_id,
+    Context& context, SemIRLoc loc, SemIR::TypeInstId facet_type_inst_id,
     bool is_definition) -> DiagnosticBuilder {
   if (is_definition) {
     CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
@@ -59,7 +59,7 @@ static auto IncompleteFacetTypeDiagnosticBuilder(
 
 auto InitialFacetTypeImplWitness(
     Context& context, SemIR::LocId witness_loc_id,
-    SemIR::InstId facet_type_inst_id, SemIR::InstId self_type_inst_id,
+    SemIR::TypeInstId facet_type_inst_id, SemIR::TypeInstId self_type_inst_id,
     const SemIR::SpecificInterface& interface_to_witness,
     SemIR::SpecificId self_specific_id, bool is_definition) -> SemIR::InstId {
   // TODO: Finish facet type resolution. This code currently only handles
@@ -233,8 +233,8 @@ auto InitialFacetTypeImplWitness(
   return witness_inst_id;
 }
 
-auto RequireCompleteFacetTypeForImplDefinition(Context& context, SemIRLoc loc,
-                                               SemIR::InstId facet_type_inst_id)
+auto RequireCompleteFacetTypeForImplDefinition(
+    Context& context, SemIRLoc loc, SemIR::TypeInstId facet_type_inst_id)
     -> bool {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
