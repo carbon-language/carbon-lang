@@ -24,6 +24,15 @@ auto AddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
+// Like AddInst, but for instructions with a type_id of `TypeType`, which is
+// encoded in the return type of `TypeInstId`.
+template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
+auto AddTypeInst(Context& context, LocT loc, InstT inst) -> SemIR::TypeInstId {
+  return context.types().GetAsTypeInstId(
+      AddInst(context, SemIR::LocIdAndInst(loc, inst)));
+}
+
 // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
 // result.
 //

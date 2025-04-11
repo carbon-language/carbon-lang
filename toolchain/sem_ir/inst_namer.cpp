@@ -909,7 +909,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(TupleType inst): {
-        if (inst.elements_id == InstBlockId::Empty) {
+        if (inst.type_elements_id == InstBlockId::Empty) {
           add_inst_name("empty_tuple.type");
         } else {
           add_inst_name("tuple.type");

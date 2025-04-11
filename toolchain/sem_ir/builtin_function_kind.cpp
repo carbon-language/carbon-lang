@@ -72,7 +72,7 @@ struct NoReturn {
     if (!tuple) {
       return false;
     }
-    return sem_ir.inst_blocks().Get(tuple->elements_id).empty();
+    return sem_ir.inst_blocks().Get(tuple->type_elements_id).empty();
   }
 };
 

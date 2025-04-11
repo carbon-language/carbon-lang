@@ -152,10 +152,10 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
     Context& context, SemIR::LocId loc_id, SemIR::InstId src_id,
-    SemIR::InstId src_elem_type_inst,
+    SemIR::TypeInstId src_elem_type_inst,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
-    SemIR::InstId target_elem_type_inst, PendingBlock* target_block,
+    SemIR::TypeInstId target_elem_type_inst, PendingBlock* target_block,
     size_t src_field_index, size_t target_field_index,
     SemIR::InstId vtable_id = SemIR::InstId::None) -> SemIR::InstId {
   auto src_elem_type =
@@ -196,7 +196,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                 SemIR::InstId value_id, ConversionTarget target)
     -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
-  auto tuple_elem_types = sem_ir.inst_blocks().Get(tuple_type.elements_id);
+  auto tuple_elem_types = sem_ir.inst_blocks().Get(tuple_type.type_elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -263,7 +263,8 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // if initializing from a tuple literal.
   llvm::SmallVector<SemIR::InstId> inits;
   inits.reserve(*array_bound + 1);
-  for (auto [i, src_type_inst_id] : llvm::enumerate(tuple_elem_types)) {
+  for (auto [i, src_type_inst_id] : llvm::enumerate(
+           context.types().GetBlockAsTypeInstIds(tuple_elem_types))) {
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
     auto init_id =
@@ -294,8 +295,8 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
                                 SemIR::InstId value_id, ConversionTarget target)
     -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
-  auto src_elem_types = sem_ir.inst_blocks().Get(src_type.elements_id);
-  auto dest_elem_types = sem_ir.inst_blocks().Get(dest_type.elements_id);
+  auto src_elem_types = sem_ir.inst_blocks().Get(src_type.type_elements_id);
+  auto dest_elem_types = sem_ir.inst_blocks().Get(dest_type.type_elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -347,8 +348,9 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
           : SemIR::CopyOnWriteInstBlock(
                 &sem_ir, SemIR::CopyOnWriteInstBlock::UninitializedBlock{
                              src_elem_types.size()});
-  for (auto [i, src_type_inst_id, dest_type_inst_id] :
-       llvm::enumerate(src_elem_types, dest_elem_types)) {
+  for (auto [i, src_type_inst_id, dest_type_inst_id] : llvm::enumerate(
+           context.types().GetBlockAsTypeInstIds(src_elem_types),
+           context.types().GetBlockAsTypeInstIds(dest_elem_types))) {
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.
     auto init_id =
@@ -1078,12 +1080,12 @@ static auto PerformBuiltinConversion(
         // `FacetAccessType` instruction.
         auto type_inst_id = SemIR::TypeInstId::None;
         if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
-          type_inst_id = context.types().GetAsTypeInstId(
-              AddInst(context, loc_id,
-                      SemIR::FacetAccessType{
-                          .type_id = SemIR::TypeType::SingletonTypeId,
-                          .facet_value_inst_id = const_value_id,
-                      }));
+          type_inst_id =
+              AddTypeInst(context, loc_id,
+                          SemIR::FacetAccessType{
+                              .type_id = SemIR::TypeType::SingletonTypeId,
+                              .facet_value_inst_id = const_value_id,
+                          });
         } else {
           type_inst_id = context.types().GetAsTypeInstId(const_value_id);
         }

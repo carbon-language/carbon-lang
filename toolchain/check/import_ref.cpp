@@ -1897,7 +1897,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
                SemIR::WitnessType::SingletonInstId);
   auto object_repr_type_inst_id =
-      GetLocalConstantInstId(resolver, inst.object_repr_type_inst_id);
+      GetLocalTypeInstId(resolver, inst.object_repr_type_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2682,7 +2682,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                SemIR::WitnessType::SingletonInstId);
 
   auto complete_type_inst_id =
-      GetLocalConstantInstId(resolver, inst.complete_type_inst_id);
+      GetLocalTypeInstId(resolver, inst.complete_type_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2734,11 +2734,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::StructType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
   auto orig_fields = resolver.import_struct_type_fields().Get(inst.fields_id);
-  llvm::SmallVector<SemIR::InstId> field_type_inst_ids;
+  llvm::SmallVector<SemIR::TypeInstId> field_type_inst_ids;
   field_type_inst_ids.reserve(orig_fields.size());
   for (auto field : orig_fields) {
     field_type_inst_ids.push_back(
-        GetLocalConstantInstId(resolver, field.type_inst_id));
+        GetLocalTypeInstId(resolver, field.type_inst_id));
   }
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -2780,11 +2780,15 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::TupleType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
 
-  auto orig_element_ids = resolver.import_inst_blocks().Get(inst.elements_id);
-  llvm::SmallVector<SemIR::InstId> element_ids;
-  element_ids.reserve(orig_element_ids.size());
-  for (auto elem_type_inst_id : orig_element_ids) {
-    element_ids.push_back(GetLocalConstantInstId(resolver, elem_type_inst_id));
+  auto orig_type_inst_ids =
+      resolver.import_inst_blocks().Get(inst.type_elements_id);
+  // TODO: It might be nice to make the `InstBlock` in `TupleType` record in the
+  // type system that its holding `TypeInstId` elements.
+  llvm::SmallVector<SemIR::InstId> type_inst_ids;
+  type_inst_ids.reserve(orig_type_inst_ids.size());
+  for (auto elem_type_inst_id :
+       resolver.import_ir().types().GetBlockAsTypeInstIds(orig_type_inst_ids)) {
+    type_inst_ids.push_back(GetLocalTypeInstId(resolver, elem_type_inst_id));
   }
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -2792,8 +2796,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   return ResolveAs<SemIR::TupleType>(
       resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
-                 .elements_id = GetLocalCanonicalInstBlockId(
-                     resolver, inst.elements_id, element_ids)});
+                 .type_elements_id = GetLocalCanonicalInstBlockId(
+                     resolver, inst.type_elements_id, type_inst_ids)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

@@ -280,13 +280,13 @@ class TypeStructureBuilder {
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {
           auto inner_types =
-              context_->inst_blocks().Get(tuple_type.elements_id);
+              context_->inst_blocks().Get(tuple_type.type_elements_id);
           if (inner_types.empty()) {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType());
-            PushArgs(context_->inst_blocks().Get(tuple_type.elements_id));
+            PushArgs(context_->inst_blocks().Get(tuple_type.type_elements_id));
           }
           break;
         }

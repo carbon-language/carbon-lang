@@ -195,8 +195,10 @@ static auto PopOperand(Context& context, Worklist& worklist,
       SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(&context.sem_ir(),
                                                          old_fields_id);
       for (auto i : llvm::reverse(llvm::seq(old_fields.size()))) {
-        new_fields.Set(i, {.name_id = old_fields[i].name_id,
-                           .type_inst_id = worklist.Pop()});
+        new_fields.Set(
+            i,
+            {.name_id = old_fields[i].name_id,
+             .type_inst_id = context.types().GetAsTypeInstId(worklist.Pop())});
       }
       return new_fields.GetCanonical().index;
     }

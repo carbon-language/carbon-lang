@@ -109,11 +109,11 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   // is a class and found its `Self`, so additionally performing an unqualified
   // name lookup would be redundant work, but would avoid duplicating the
   // handling of the `Self` expression.
-  auto self_inst_id = context.types().GetAsTypeInstId(AddInst(
+  auto self_inst_id = AddTypeInst(
       context, node_id,
       SemIR::NameRef{.type_id = SemIR::TypeType::SingletonTypeId,
                      .name_id = SemIR::NameId::SelfType,
-                     .value_id = context.types().GetInstId(self_type_id)}));
+                     .value_id = context.types().GetInstId(self_type_id)});
 
   // There's no need to push `Self` into scope here, because we can find it in
   // the parent class scope.
@@ -486,13 +486,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     if (impl_info.generic_id.has_value()) {
-      constraint_type_inst_id =
-          context.types().GetAsTypeInstId(AddInst<SemIR::SpecificConstant>(
-              context, context.insts().GetLocId(constraint_type_inst_id),
-              {.type_id = SemIR::TypeType::SingletonTypeId,
-               .inst_id = constraint_type_inst_id,
-               .specific_id =
-                   context.generics().GetSelfSpecific(impl_info.generic_id)}));
+      constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
+          context, context.insts().GetLocId(constraint_type_inst_id),
+          {.type_id = SemIR::TypeType::SingletonTypeId,
+           .inst_id = constraint_type_inst_id,
+           .specific_id =
+               context.generics().GetSelfSpecific(impl_info.generic_id)});
     }
     if (!ExtendImpl(context, extend_node, node_id, impl_decl.impl_id,
                     self_type_node, self_type_id, name.implicit_params_loc_id,

@@ -21,7 +21,7 @@ struct StructTypeField : Printable<StructTypeField> {
   }
 
   NameId name_id;
-  InstId type_inst_id;
+  TypeInstId type_inst_id;
 };
 
 using StructTypeFieldsStore = BlockValueStore<StructTypeFieldsId>;

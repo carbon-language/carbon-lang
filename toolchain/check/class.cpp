@@ -115,7 +115,7 @@ static auto AddStructTypeFields(
     if (field_decl.type_id == SemIR::ErrorInst::SingletonTypeId) {
       struct_type_fields.push_back(
           {.name_id = field_decl.name_id,
-           .type_inst_id = SemIR::ErrorInst::SingletonInstId});
+           .type_inst_id = SemIR::ErrorInst::SingletonTypeInstId});
       continue;
     }
     auto unbound_element_type =
@@ -240,7 +240,7 @@ static auto CheckCompleteClassType(
         vtable_contents);
   }
 
-  auto struct_type_inst_id = AddInst<SemIR::StructType>(
+  auto struct_type_inst_id = AddTypeInst<SemIR::StructType>(
       context, node_id,
       {.type_id = SemIR::TypeType::SingletonTypeId,
        .fields_id =

@@ -599,7 +599,7 @@ struct CompleteTypeWitness {
   // Always the builtin witness type.
   TypeId type_id;
   // The type that is used as the object representation of this type.
-  InstId object_repr_type_inst_id;
+  TypeInstId object_repr_type_inst_id;
 };
 
 // Indicates `const` on a type, such as `var x: const i32`.
@@ -626,7 +626,7 @@ struct ConvertToValueAction {
 
   TypeId type_id;
   MetaInstId inst_id;
-  InstId target_type_inst_id;
+  TypeInstId target_type_inst_id;
 };
 
 // Records that a type conversion `original as new_type` was done, producing the
@@ -1327,7 +1327,7 @@ struct RefineTypeAction {
 
   TypeId type_id;
   MetaInstId inst_id;
-  InstId inst_type_inst_id;
+  TypeInstId inst_type_inst_id;
 };
 
 // Requires a type to be complete. This is only created for generic types and
@@ -1347,7 +1347,7 @@ struct RequireCompleteType {
   // Always the builtin witness type.
   TypeId type_id;
   // The type that is required to be complete.
-  InstId complete_type_inst_id;
+  TypeInstId complete_type_inst_id;
 };
 
 struct Return {
@@ -1716,7 +1716,7 @@ struct TupleType {
        .deduce_through = true});
 
   TypeId type_id;
-  InstBlockId elements_id;
+  InstBlockId type_elements_id;
 };
 
 // A tuple value.

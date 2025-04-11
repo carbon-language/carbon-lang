@@ -798,7 +798,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
 
   auto index_literal = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(index_const_id));
-  auto type_block = context.inst_blocks().Get(tuple_type->elements_id);
+  auto type_block = context.inst_blocks().Get(tuple_type->type_elements_id);
   std::optional<llvm::APInt> index_val = ValidateTupleIndex(
       context, loc_id, tuple_inst_id, index_literal, type_block.size());
   if (!index_val) {

@@ -258,7 +258,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     }
     case CARBON_KIND(SemIR::TupleType inst): {
       for (auto element_type_id :
-           context_->inst_blocks().Get(inst.elements_id)) {
+           context_->inst_blocks().Get(inst.type_elements_id)) {
         Push(context_->types().GetTypeIdForTypeInstId(element_type_id));
       }
       break;
@@ -430,7 +430,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                                      SemIR::TupleType tuple_type) const
     -> SemIR::CompleteTypeInfo {
   // TODO: Share more code with structs.
-  auto elements = context_->inst_blocks().Get(tuple_type.elements_id);
+  auto elements = context_->inst_blocks().Get(tuple_type.type_elements_id);
   if (elements.empty()) {
     return {.value_repr = MakeEmptyValueRepr()};
   }
@@ -441,9 +441,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   value_rep_elements.reserve(elements.size());
   bool same_as_object_rep = true;
   SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
-  for (auto element_type_inst_id : elements) {
-    auto element_type_id =
-        context_->types().GetTypeIdForTypeInstId(element_type_inst_id);
+  for (auto element_type_id : context_->types().GetBlockAsTypeIds(elements)) {
     auto element_info = GetNestedInfo(element_type_id);
     if (!element_info.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
                                                     element_type_id)) {

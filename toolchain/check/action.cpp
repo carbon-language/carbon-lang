@@ -47,14 +47,25 @@ auto OperandIsDependent(Context& context, SemIR::InstId inst_id) -> bool {
          OperandIsDependent(context, context.constant_values().Get(inst_id));
 }
 
+auto OperandIsDependent(Context& context, SemIR::TypeInstId inst_id) -> bool {
+  // An instruction operand makes the instruction dependent if its type or
+  // constant value is dependent. TypeInstId has type `TypeType` which is
+  // concrete, so we only need to look at the constant value.
+  return OperandIsDependent(context, context.constant_values().Get(inst_id));
+}
+
 static auto OperandIsDependent(Context& context, SemIR::Inst::ArgAndKind arg)
     -> bool {
   CARBON_KIND_SWITCH(arg) {
+    case CARBON_KIND(SemIR::InstId inst_id): {
+      return OperandIsDependent(context, inst_id);
+    }
+
     case CARBON_KIND(SemIR::MetaInstId inst_id): {
       return OperandIsDependent(context, inst_id);
     }
 
-    case CARBON_KIND(SemIR::InstId inst_id): {
+    case CARBON_KIND(SemIR::TypeInstId inst_id): {
       return OperandIsDependent(context, inst_id);
     }
 
