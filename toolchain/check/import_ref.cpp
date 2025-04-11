@@ -525,8 +525,8 @@ class ImportRefResolver : public ImportContext {
         import_ir().types().GetConstantId(import_type_id);
     CARBON_CHECK(import_type_const_id.has_value());
 
-    if (auto import_type_inst_id =
-            import_ir().constant_values().GetInstId(import_type_const_id);
+    if (auto import_type_inst_id = import_ir().types().GetAsTypeInstId(
+            import_ir().constant_values().GetInstId(import_type_const_id));
         SemIR::IsSingletonInstId(import_type_inst_id)) {
       // Builtins don't require constant resolution; we can use them directly.
       return GetSingletonType(local_context(), import_type_inst_id);
@@ -1911,7 +1911,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ConstType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
-  auto inner_id = GetLocalConstantInstId(resolver, inst.inner_id);
+  auto inner_id = GetLocalTypeInstId(resolver, inst.inner_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2079,7 +2079,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
   auto interface_function_type_id =
-      GetLocalConstantInstId(resolver, inst.interface_function_type_id);
+      GetLocalTypeInstId(resolver, inst.interface_function_type_id);
   auto self_id = GetLocalConstantInstId(resolver, inst.self_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -2665,7 +2665,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::PointerType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
-  auto pointee_id = GetLocalConstantInstId(resolver, inst.pointee_id);
+  auto pointee_id = GetLocalTypeInstId(resolver, inst.pointee_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }

@@ -339,6 +339,12 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
   return worklist.back().inst_id;
 }
 
+auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
+               const SubstInstCallbacks& callbacks) -> SemIR::TypeInstId {
+  return context.types().GetAsTypeInstId(
+      SubstInst(context, static_cast<SemIR::InstId>(inst_id), callbacks));
+}
+
 namespace {
 // Callbacks for performing substitution of a set of Substitutions into a
 // symbolic constant.

@@ -46,6 +46,8 @@ class SubstInstCallbacks {
 // is used to build a new instruction with the substituted operands.
 auto SubstInst(Context& context, SemIR::InstId inst_id,
                const SubstInstCallbacks& callbacks) -> SemIR::InstId;
+auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
+               const SubstInstCallbacks& callbacks) -> SemIR::TypeInstId;
 
 // A substitution that is being performed.
 struct Substitution {

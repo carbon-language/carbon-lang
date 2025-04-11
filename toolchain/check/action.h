@@ -47,13 +47,13 @@ auto OperandIsDependent(Context& context, SemIR::TypeId type_id) -> bool;
 // Adds an instruction to the current block to splice in the result of
 // performing a dependent action.
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
-                              SemIR::InstId result_type_inst_id)
+                              SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId;
 
 // Convenience wrapper for `AddDependentActionSplice`.
 template <typename LocT, typename InstT>
 auto AddDependentActionSplice(Context& context, LocT loc, InstT inst,
-                              SemIR::InstId result_type_inst_id)
+                              SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId {
   return AddDependentActionSplice(context, SemIR::LocIdAndInst(loc, inst),
                                   result_type_inst_id);
@@ -64,8 +64,8 @@ auto AddDependentActionSplice(Context& context, LocT loc, InstT inst,
 // block and creates an instruction to splice in the result of the action.
 template <typename ActionT>
 auto HandleAction(Context& context, SemIR::LocId loc_id, ActionT action_inst,
-                  SemIR::InstId result_type_inst_id = SemIR::InstId::None)
-    -> SemIR::InstId {
+                  SemIR::TypeInstId result_type_inst_id =
+                      SemIR::TypeInstId::None) -> SemIR::InstId {
   if (ActionIsDependent(context, action_inst) ||
       (result_type_inst_id.has_value() &&
        OperandIsDependent(context, result_type_inst_id))) {

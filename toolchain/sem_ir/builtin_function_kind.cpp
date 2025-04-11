@@ -55,7 +55,7 @@ struct TypeParam {
 
 // Constraint that a type is a specific builtin. See ValidateSignature for
 // details.
-template <const InstId& BuiltinId>
+template <const TypeInstId& BuiltinId>
 struct BuiltinType {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
                     TypeId type_id) -> bool {

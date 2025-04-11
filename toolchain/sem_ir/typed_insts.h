@@ -612,7 +612,7 @@ struct ConstType {
            .deduce_through = true});
 
   TypeId type_id;
-  InstId inner_id;
+  TypeInstId inner_id;
 };
 
 // An action that performs simple conversion to a value expression of a given
@@ -660,7 +660,7 @@ struct ErrorInst {
       {.ir_name = "<error>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr InstId SingletonInstId = MakeSingletonInstId<Kind>();
   static constexpr auto SingletonConstantId =
       ConstantId::ForConcreteConstant(SingletonInstId);
   static constexpr auto SingletonTypeId =
@@ -841,8 +841,9 @@ struct FunctionTypeWithSelfType {
   // The type of the function within the interface. This includes the
   // interface's SpecificId if applicable. This will be a `FunctionType` except
   // in error cases.
-  InstId interface_function_type_id;
-  // The value to use for `Self` in this function.
+  TypeInstId interface_function_type_id;
+  // The value to use for `Self` in this function. May be a type or a facet
+  // value.
   InstId self_id;
 };
 
@@ -1314,7 +1315,7 @@ struct PointerType {
            .deduce_through = true});
 
   TypeId type_id;
-  InstId pointee_id;
+  TypeInstId pointee_id;
 };
 
 // An action that performs type refinement for an instruction, by creating an

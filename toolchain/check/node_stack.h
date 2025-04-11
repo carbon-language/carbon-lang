@@ -100,6 +100,18 @@ class NodeStack {
     stack_.push_back({.node_id = node_id, .id = Id(id)});
   }
 
+  // TODO: Most parse nodes don't know about TypeInstId, so downgrade TypeInstId
+  // to InstId to match expectations. We should teach parse nodes that will
+  // receive a TypeInstId to expect it, and this function can go away.
+  auto Push(Parse::NodeId node_id, SemIR::TypeInstId id) -> void {
+    auto kind = parse_tree_->node_kind(node_id);
+    if (NodeKindToIdKind(kind) == Id::KindFor<SemIR::InstId>()) {
+      Push<SemIR::InstId>(node_id, id);
+    } else {
+      Push<SemIR::TypeInstId>(node_id, id);
+    }
+  }
+
   // Returns whether there is a node of the specified kind on top of the stack.
   auto PeekIs(Parse::NodeKind kind) const -> bool {
     return !stack_.empty() && PeekNodeKind() == kind;

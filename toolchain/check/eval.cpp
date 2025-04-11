@@ -1381,11 +1381,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context, SemIRLoc loc,
       CARBON_CHECK(arg_ids.size() == 2);
       auto lhs_facet_type_id = SemIR::FacetTypeId::None;
       auto rhs_facet_type_id = SemIR::FacetTypeId::None;
-      for (auto [facet_type_id, arg_id] :
+      for (auto [facet_type_id, type_arg_id] :
            llvm::zip(std::to_array({&lhs_facet_type_id, &rhs_facet_type_id}),
-                     arg_ids)) {
+                     context.types().GetBlockAsTypeInstIds(arg_ids))) {
         if (auto facet_type =
-                context.insts().TryGetAs<SemIR::FacetType>(arg_id)) {
+                context.insts().TryGetAs<SemIR::FacetType>(type_arg_id)) {
           *facet_type_id = facet_type->facet_type_id;
         } else {
           CARBON_DIAGNOSTIC(FacetTypeRequiredForTypeAndOperator, Error,
@@ -1397,7 +1397,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context, SemIRLoc loc,
           // The `arg_id` instruction has no location in it for some reason.
           context.emitter().Emit(
               loc, FacetTypeRequiredForTypeAndOperator,
-              context.types().GetTypeIdForTypeInstId(arg_id));
+              context.types().GetTypeIdForTypeInstId(type_arg_id));
         }
       }
       // Allow errors to be diagnosed for both sides of the operator before

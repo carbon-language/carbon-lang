@@ -96,11 +96,11 @@ auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
 
 static auto AddDependentActionSpliceImpl(Context& context,
                                          SemIR::LocIdAndInst action,
-                                         SemIR::InstId result_type_inst_id)
+                                         SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId {
   auto inst_id = AddDependentActionInst(context, action);
   if (!result_type_inst_id.has_value()) {
-    result_type_inst_id = AddDependentActionInst(
+    result_type_inst_id = AddDependentActionTypeInst(
         context, action.loc_id,
         SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
                           .inst_id = inst_id});
@@ -160,7 +160,7 @@ static auto RefineOperands(Context& context, SemIR::LocId loc_id,
 }
 
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
-                              SemIR::InstId result_type_inst_id)
+                              SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId {
   action.inst = RefineOperands(context, action.loc_id, action.inst);
   return AddDependentActionSpliceImpl(context, action, result_type_inst_id);

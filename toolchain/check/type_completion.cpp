@@ -257,9 +257,9 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::TupleType inst): {
-      for (auto element_type_id :
-           context_->inst_blocks().Get(inst.type_elements_id)) {
-        Push(context_->types().GetTypeIdForTypeInstId(element_type_id));
+      for (auto element_type_id : context_->types().GetBlockAsTypeIds(
+               context_->inst_blocks().Get(inst.type_elements_id))) {
+        Push(element_type_id);
       }
       break;
     }

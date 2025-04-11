@@ -100,9 +100,17 @@ auto AddDependentActionInst(Context& context,
 // Convenience wrapper for AddDependentActionInst.
 template <typename InstT, typename LocT>
 auto AddDependentActionInst(Context& context, LocT loc, InstT inst)
-    -> decltype(AddDependentActionInst(context,
-                                       SemIR::LocIdAndInst(loc, inst))) {
+    -> SemIR::InstId {
   return AddDependentActionInst(context, SemIR::LocIdAndInst(loc, inst));
+}
+
+// Like AddDependentActionInst, but for instructions with a type_id of
+// `TypeType`, which is encoded in the return type of `TypeInstId`.
+template <typename InstT, typename LocT>
+auto AddDependentActionTypeInst(Context& context, LocT loc, InstT inst)
+    -> SemIR::TypeInstId {
+  return context.types().GetAsTypeInstId(
+      AddDependentActionInst(context, loc, inst));
 }
 
 // Adds an instruction to the current pattern block, returning the produced

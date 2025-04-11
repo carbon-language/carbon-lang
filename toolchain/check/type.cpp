@@ -105,7 +105,7 @@ auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
                                                   interface_specific_id);
 }
 
-auto GetSingletonType(Context& context, SemIR::InstId singleton_id)
+auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
     -> SemIR::TypeId {
   CARBON_CHECK(SemIR::IsSingletonInstId(singleton_id));
   auto type_id = context.types().GetTypeIdForTypeInstId(singleton_id);
@@ -125,7 +125,7 @@ auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
 }
 
 auto GetFunctionTypeWithSelfType(Context& context,
-                                 SemIR::InstId interface_function_type_id,
+                                 SemIR::TypeInstId interface_function_type_id,
                                  SemIR::InstId self_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::FunctionTypeWithSelfType>(
       context, interface_function_type_id, self_id);
@@ -152,7 +152,7 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
       FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
 }
 
-auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }

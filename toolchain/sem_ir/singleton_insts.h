@@ -36,7 +36,7 @@ constexpr auto IsSingletonInstKind(InstKind kind) -> bool;
 // `InstT::SingletonInstId` in `typed_insts.h`.
 template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
-constexpr auto MakeSingletonInstId() -> InstId;
+constexpr auto MakeSingletonInstId() -> TypeInstId;
 
 // Returns true if the InstId corresponds to a singleton inst.
 constexpr auto IsSingletonInstId(InstId id) -> bool {
@@ -67,9 +67,9 @@ constexpr auto IsSingletonInstKind(InstKind kind) -> bool {
 
 template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
-constexpr auto MakeSingletonInstId() -> InstId {
+constexpr auto MakeSingletonInstId() -> TypeInstId {
   auto index = Internal::GetSingletonInstIndex(InstKind::Make(Kind));
-  return InstId(index);
+  return TypeInstId(index);
 }
 
 }  // namespace Carbon::SemIR

@@ -97,7 +97,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, generic_class,
                           EntityKind::GenericClass, enclosing_specific_id,
-                          /*self_type_id=*/SemIR::InstId::None,
+                          /*self_type_id=*/SemIR::TypeInstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
@@ -119,7 +119,7 @@ static auto PerformCallToGenericInterface(
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, interface,
                           EntityKind::GenericInterface, enclosing_specific_id,
-                          /*self_type_id=*/SemIR::InstId::None,
+                          /*self_type_id=*/SemIR::TypeInstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::SingletonInstId;
