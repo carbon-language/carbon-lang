@@ -80,6 +80,12 @@ static auto FindAssociatedImportIRs(Context& context,
           }
           break;
         }
+        case CARBON_KIND(SemIR::TypeInstId inst_id): {
+          if (inst_id.has_value()) {
+            worklist.push_back(inst_id);
+          }
+          break;
+        }
         case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
           push_block(inst_block_id);
           break;

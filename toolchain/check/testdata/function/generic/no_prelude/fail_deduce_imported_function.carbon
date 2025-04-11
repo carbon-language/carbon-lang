@@ -73,7 +73,7 @@ fn B() {
 // CHECK:STDOUT:       %T.ref: %Z.type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc4_21.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc4_21.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc4_21: type = converted %T.ref, %T.as_type.loc4_21.1 [symbolic = %T.as_type.loc4_21.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %struct_type.a.loc4_22.1: type = struct_type {.a: %T.as_type} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:       %struct_type.a.loc4_22.1: type = struct_type {.a: @A.%T.as_type.loc4_21.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @A.%struct_type.a.loc4_22.2 (%struct_type.a) = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -94,7 +94,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a.loc4_22.2: type = struct_type {.a: @A.%T.as_type.loc4_21.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%struct_type.a.loc4_22.2 (%struct_type.a) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_22.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc4_6.1: %Z.type](%x.param_patt: @A.%struct_type.a.loc4_22.2 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
@@ -162,7 +162,7 @@ fn B() {
 // CHECK:STDOUT:       %T.ref: %Z.type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc4_25.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc4_25.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc4_25: type = converted %T.ref, %T.as_type.loc4_25.1 [symbolic = %T.as_type.loc4_25.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %struct_type.a.loc4_26.1: type = struct_type {.a: %T.as_type} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:       %struct_type.a.loc4_26.1: type = struct_type {.a: @A.1.%T.as_type.loc4_25.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a) = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -182,7 +182,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a.loc4_26.2: type = struct_type {.a: @A.1.%T.as_type.loc4_25.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.1.%struct_type.a.loc4_26.2 (%struct_type.a) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_26.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc4_6.1: %Z.type](%x.param_patt: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
@@ -209,7 +209,7 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @A.2.%T.as_type (%T.as_type)} [symbolic = %struct_type.a (constants.%struct_type.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.2.%struct_type.a (%struct_type.a) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.1: %Z.type](%x.param_patt: @A.2.%struct_type.a (%struct_type.a));
 // CHECK:STDOUT: }

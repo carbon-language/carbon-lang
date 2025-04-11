@@ -187,7 +187,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table.loc8, @impl.084(%T.loc8_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness.1a9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.084.%I.type.loc8_32.2 (%I.type.325) [symbolic = %require_complete (constants.%require_complete.cfe)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc8_32.2 [symbolic = %require_complete (constants.%require_complete.cfe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref.loc8 as %I.type.loc8_32.1 {
 // CHECK:STDOUT:   !members:
@@ -200,7 +200,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %T.patt.loc12_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr.loc12_32.2: type = ptr_type %T.loc12_14.2 [symbolic = %ptr.loc12_32.2 (constants.%ptr)]
 // CHECK:STDOUT:   %I.type.loc12_33.2: type = facet_type <@I, @I(%ptr.loc12_32.2)> [symbolic = %I.type.loc12_33.2 (constants.%I.type.0e2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.cd2.%I.type.loc12_33.2 (%I.type.0e2) [symbolic = %require_complete (constants.%require_complete.0e6)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc12_33.2 [symbolic = %require_complete (constants.%require_complete.0e6)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table.loc12, @impl.cd2(%T.loc12_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness.6ad)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -212,6 +212,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -294,7 +295,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//import_generic, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.I: %I.type.dac = import_ref Main//import_generic, I, loaded [concrete = constants.%I.generic]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//import_generic, loc5_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.884 = import_ref Main//import_generic, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.884 = import_ref Main//import_generic, inst32 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.cc6 = import_ref Main//import_generic, loc8_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//import_generic, inst16 [no loc], unloaded
@@ -384,7 +385,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness constants.%I.impl_witness_table.028, @impl.08450a.1(%T) [symbolic = %I.impl_witness (constants.%I.impl_witness.1a9ed3.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.08450a.1.%I.type (%I.type.325) [symbolic = %require_complete (constants.%require_complete.cfe)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete.cfe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.29aca8.1 as imports.%Main.import_ref.4be {
 // CHECK:STDOUT:   !members:
@@ -397,7 +398,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic = %ptr (constants.%ptr)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%ptr)> [symbolic = %I.type (constants.%I.type.0e2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.cd2fdc.1.%I.type (%I.type.0e2) [symbolic = %require_complete (constants.%require_complete.0e6)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete.0e6)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness constants.%I.impl_witness_table.e14, @impl.cd2fdc.1(%T) [symbolic = %I.impl_witness (constants.%I.impl_witness.6ad3bf.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -421,7 +422,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %T.loc14_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc14_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %I.type.loc14_32.2: type = facet_type <@I, @I(%T.loc14_14.2)> [symbolic = %I.type.loc14_32.2 (constants.%I.type.325)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.08450a.3.%I.type.loc14_32.2 (%I.type.325) [symbolic = %require_complete (constants.%require_complete.cfe)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc14_32.2 [symbolic = %require_complete (constants.%require_complete.cfe)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table.loc14, @impl.08450a.3(%T.loc14_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness.1a9ed3.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -447,7 +448,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %T.patt.loc26_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc26_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr.loc26_32.2: type = ptr_type %T.loc26_14.2 [symbolic = %ptr.loc26_32.2 (constants.%ptr)]
 // CHECK:STDOUT:   %I.type.loc26_33.2: type = facet_type <@I, @I(%ptr.loc26_32.2)> [symbolic = %I.type.loc26_33.2 (constants.%I.type.0e2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.cd2fdc.3.%I.type.loc26_33.2 (%I.type.0e2) [symbolic = %require_complete (constants.%require_complete.0e6)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc26_33.2 [symbolic = %require_complete (constants.%require_complete.0e6)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table.loc26, @impl.cd2fdc.3(%T.loc26_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness.6ad3bf.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -648,6 +649,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -721,7 +723,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//import_generic_decl, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.J: %J.type.2b8 = import_ref Main//import_generic_decl, J, loaded [concrete = constants.%J.generic]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//import_generic_decl, loc5_13, loaded [symbolic = @J.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.ff5 = import_ref Main//import_generic_decl, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ff5 = import_ref Main//import_generic_decl, inst32 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic_decl, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//import_generic_decl, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//import_generic_decl, loc11_14, loaded [symbolic = @impl.199bba.1.%T (constants.%T)]
@@ -834,7 +836,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %T.loc14_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc14_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %J.type.loc14_32.2: type = facet_type <@J, @J(%T.loc14_14.2)> [symbolic = %J.type.loc14_32.2 (constants.%J.type.b72)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.199bba.3.%J.type.loc14_32.2 (%J.type.b72) [symbolic = %require_complete (constants.%require_complete.287)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %J.type.loc14_32.2 [symbolic = %require_complete (constants.%require_complete.287)]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table.loc14, @impl.199bba.3(%T.loc14_14.2) [symbolic = %J.impl_witness (constants.%J.impl_witness.80964e.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -860,7 +862,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %T.patt.loc26_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc26_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr.loc26_32.2: type = ptr_type %T.loc26_14.2 [symbolic = %ptr.loc26_32.2 (constants.%ptr)]
 // CHECK:STDOUT:   %J.type.loc26_33.2: type = facet_type <@J, @J(%ptr.loc26_32.2)> [symbolic = %J.type.loc26_33.2 (constants.%J.type.628)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.dfd2f7.3.%J.type.loc26_33.2 (%J.type.628) [symbolic = %require_complete (constants.%require_complete.c60)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %J.type.loc26_33.2 [symbolic = %require_complete (constants.%require_complete.c60)]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table.loc26, @impl.dfd2f7.3(%T.loc26_14.2) [symbolic = %J.impl_witness (constants.%J.impl_witness.5a859e.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

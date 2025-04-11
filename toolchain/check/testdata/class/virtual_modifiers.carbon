@@ -341,6 +341,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%H.decl) [concrete = constants.%.c3d]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -367,6 +368,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Abstract = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: <vtable> = vtable (%J.decl, %K.decl) [concrete = constants.%.2b2]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -443,7 +445,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9: <vtable> = vtable (%H.decl) [concrete = constants.%.dce]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.96c [concrete = constants.%complete_type.0e2]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base.96c]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.0e2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -546,6 +549,7 @@ class T2 {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Modifiers.Base [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %.loc9: <vtable> = vtable (constants.%H, %F.decl) [concrete = constants.%.02f]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.0e2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -685,6 +689,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %A1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.593]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -705,6 +710,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %A2 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: <vtable> = vtable (%F.decl) [concrete = constants.%.943]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.a6f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -783,6 +789,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %B1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.bc5]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -803,7 +810,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %B2 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: <vtable> = vtable (%F.decl) [concrete = constants.%.579]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.508 [concrete = constants.%complete_type.5ac]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B1} [concrete = constants.%struct_type.base.508]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.5ac]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -826,7 +834,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: <vtable> = vtable (%F.decl) [concrete = constants.%.5f6]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.421 [concrete = constants.%complete_type.066]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B2} [concrete = constants.%struct_type.base.421]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.066]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -940,6 +949,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10: <vtable> = vtable () [concrete = constants.%.f2b]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1030,6 +1040,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9: <vtable> = vtable (%F.decl) [concrete = constants.%.5ee]
+// CHECK:STDOUT:   %struct_type.vptr.m1.m2: type = struct_type {.<vptr>: %ptr.454, .m1: %i32, .m2: %i32} [concrete = constants.%struct_type.vptr.m1.m2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [concrete = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1165,6 +1176,7 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1184,6 +1196,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10: <vtable> = vtable () [concrete = constants.%.f2b]
+// CHECK:STDOUT:   %struct_type.vptr.base: type = struct_type {.<vptr>: %ptr.454, .base: %Base} [concrete = constants.%struct_type.vptr.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.base [concrete = constants.%complete_type.336]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1250,6 +1263,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %AbstractBase = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.6ec]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1262,7 +1276,8 @@ class T2 {
 // CHECK:STDOUT:   %AbstractBase.ref: type = name_ref AbstractBase, file.%AbstractBase.decl [concrete = constants.%AbstractBase]
 // CHECK:STDOUT:   %.loc9: %AbstractIntermediate.elem = base_decl %AbstractBase.ref, element0 [concrete]
 // CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.6e9) [concrete = constants.%.6ec]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.efd [concrete = constants.%complete_type.2d3]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %AbstractBase} [concrete = constants.%struct_type.base.efd]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.2d3]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1284,7 +1299,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.da5 [concrete = constants.%complete_type.f8c]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %AbstractIntermediate} [concrete = constants.%struct_type.base.da5]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.f8c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1352,6 +1368,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %VirtualBase = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.def]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1364,7 +1381,8 @@ class T2 {
 // CHECK:STDOUT:   %VirtualBase.ref: type = name_ref VirtualBase, file.%VirtualBase.decl [concrete = constants.%VirtualBase]
 // CHECK:STDOUT:   %.loc9: %VirtualIntermediate.elem = base_decl %VirtualBase.ref, element0 [concrete]
 // CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.3e7) [concrete = constants.%.def]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.61e [concrete = constants.%complete_type.f09]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %VirtualBase} [concrete = constants.%struct_type.base.61e]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.f09]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1386,7 +1404,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.43c [concrete = constants.%complete_type.fa6]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %VirtualIntermediate} [concrete = constants.%struct_type.base.43c]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.fa6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1451,6 +1470,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.5ee]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1479,6 +1499,7 @@ class T2 {
 // CHECK:STDOUT:     %v: %i32 = bind_name v, %v.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1579,6 +1600,7 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1587,6 +1609,7 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T2 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1609,6 +1632,7 @@ class T2 {
 // CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F.decl) [concrete = constants.%.5ee]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1636,6 +1660,7 @@ class T2 {
 // CHECK:STDOUT:     %return: ref %T2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc30: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1715,6 +1740,7 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1749,6 +1775,7 @@ class T2 {
 // CHECK:STDOUT:       %t: @F.1.%T (%T) = bind_name t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc9_1.1: <vtable> = vtable (%F.decl) [symbolic = %.loc9_1.2 (constants.%.f89)]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1779,6 +1806,7 @@ class T2 {
 // CHECK:STDOUT:     %t: %T1 = bind_name t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base.ea5} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.65a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1863,6 +1891,7 @@ class T2 {
 // CHECK:STDOUT: class @T1 {
 // CHECK:STDOUT:   %F.decl: %F.type.ba7 = fn_decl @F.1 [concrete = constants.%F.1a5] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1876,6 +1905,7 @@ class T2 {
 // CHECK:STDOUT:   %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:   %.loc18: %T2.elem = base_decl %T1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.834 = fn_decl @F.2 [concrete = constants.%F.a48] {} {}
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.e14]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1945,6 +1975,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %ptr.87b = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F1.decl) [concrete = constants.%.278]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1969,6 +2000,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %ptr.63e = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F1.decl) [concrete = constants.%.20a]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.e14]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

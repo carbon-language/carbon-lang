@@ -272,7 +272,7 @@ static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
       context.ast_context().getTypeSize(type) == 32) {
     return MakeIntType(context, context.ints().Add(32));
   }
-  return {.inst_id = SemIR::ErrorInst::SingletonInstId,
+  return {.inst_id = SemIR::ErrorInst::SingletonTypeInstId,
           .type_id = SemIR::ErrorInst::SingletonTypeId};
 }
 
@@ -524,7 +524,7 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
   // The class type is now fully defined. Compute its object representation.
   ComputeClassObjectRepr(context,
                          // TODO: Consider having a proper location here.
-                         Parse::NodeId::None, class_id,
+                         Parse::ClassDefinitionId::None, class_id,
                          // TODO: Set fields.
                          /*field_decls=*/{},
                          // TODO: Set vtable.

@@ -99,13 +99,13 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T.patt.loc11_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc11_13.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc11_13.2 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @Class(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type.6d6)]
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type.6d6) = struct_value () [symbolic = %F (constants.%F.cca)]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.a (constants.%struct_type.a)]
-// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @Class.%struct_type.a (%struct_type.a) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.f1b)]
+// CHECK:STDOUT:   %struct_type.a.loc14_1.2: type = struct_type {.a: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.a.loc14_1.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness %struct_type.a.loc14_1.2 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.f1b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc12_8: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [concrete]
@@ -129,7 +129,8 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %n: @F.1.%T (%T) = bind_name n, %n.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.f1b)]
+// CHECK:STDOUT:     %struct_type.a.loc14_1.1: type = struct_type {.a: %T} [symbolic = %struct_type.a.loc14_1.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.a.loc14_1.1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.f1b)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

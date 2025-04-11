@@ -318,6 +318,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -326,6 +327,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -334,6 +336,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -448,7 +451,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.C = import_ref Main//action, C, unloaded
 // CHECK:STDOUT:   %Main.F = import_ref Main//action, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//action, loc9_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst60 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst61 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c55: @Action.%Action.assoc_type (%Action.assoc_type.32e) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.f18741.2)]
@@ -622,7 +625,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//action, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.F = import_ref Main//action, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//action, loc9_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst60 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst61 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c55: @Action.%Action.assoc_type (%Action.assoc_type.32e) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.f18)]
@@ -637,7 +640,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.835: @Action.%Action.type (%Action.type.cca) = import_ref Main//action, inst26 [no loc], loaded [symbolic = @Action.%Self (constants.%Self.e98)]
 // CHECK:STDOUT:   %Main.import_ref.1f6: @Action.%Op.type (%Op.type.036) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%Op (constants.%Op.6ed)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst63 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst65 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -917,6 +920,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -925,6 +929,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1050,7 +1055,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.A: type = import_ref Main//factory, A, loaded [concrete = constants.%A]
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//factory, B, loaded [concrete = constants.%B]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc12_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst79 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst80 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.46c: @Factory.%Factory.assoc_type (%Factory.assoc_type.207) = import_ref Main//factory, loc6_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.46d25f.2)]
@@ -1293,7 +1298,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc12_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst79 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst80 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.46c: @Factory.%Factory.assoc_type (%Factory.assoc_type.207) = import_ref Main//factory, loc6_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.46d)]
@@ -1398,6 +1403,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

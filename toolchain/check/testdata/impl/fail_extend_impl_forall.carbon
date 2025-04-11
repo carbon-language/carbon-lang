@@ -103,7 +103,7 @@ class C {
 // CHECK:STDOUT:   %T.loc20_23.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc20_23.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc20_23.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_23.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %GenericInterface.type.loc20_54.2: type = facet_type <@GenericInterface, @GenericInterface(%T.loc20_23.2)> [symbolic = %GenericInterface.type.loc20_54.2 (constants.%GenericInterface.type.3fe)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%GenericInterface.type.loc20_54.2 (%GenericInterface.type.3fe) [symbolic = %require_complete (constants.%require_complete.70f)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericInterface.type.loc20_54.2 [symbolic = %require_complete (constants.%require_complete.70f)]
 // CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness @C.%GenericInterface.impl_witness_table, @impl(%T.loc20_23.2) [symbolic = %GenericInterface.impl_witness (constants.%GenericInterface.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -140,6 +140,7 @@ class C {
 // CHECK:STDOUT:   %GenericInterface.impl_witness_table = impl_witness_table (<error>), @impl [concrete]
 // CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness %GenericInterface.impl_witness_table, @impl(constants.%T) [symbolic = @impl.%GenericInterface.impl_witness (constants.%GenericInterface.impl_witness)]
 // CHECK:STDOUT:   %.loc20: type = specific_constant @impl.%GenericInterface.type.loc20_54.1, @impl(constants.%T) [symbolic = constants.%GenericInterface.type.3fe]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -159,7 +160,7 @@ class C {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.2.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param_patt: @F.2.%T (%T)) {
 // CHECK:STDOUT:   !entry:

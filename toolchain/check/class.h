@@ -21,7 +21,7 @@ auto StartClassDefinition(Context& context, SemIR::Class& class_info,
                           SemIR::InstId definition_id) -> void;
 
 // Computes the object representation for a fully defined class.
-auto ComputeClassObjectRepr(Context& context, Parse::NodeId node_id,
+auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
                             SemIR::ClassId class_id,
                             llvm::ArrayRef<SemIR::InstId> field_decls,
                             llvm::ArrayRef<SemIR::InstId> vtable_contents,

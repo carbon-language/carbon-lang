@@ -79,8 +79,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %ptr.loc4_29.2 [template = %ptr.loc4_30.2 (constants.%ptr.a13)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc4_33: <witness> = require_complete_type @F.%ptr.loc4_29.2 (%ptr.79f) [template = %require_complete.loc4_33 (constants.%require_complete.6e5)]
-// CHECK:STDOUT:   %require_complete.loc4_26: <witness> = require_complete_type @F.%ptr.loc4_30.2 (%ptr.a13) [template = %require_complete.loc4_26 (constants.%require_complete.132)]
+// CHECK:STDOUT:   %require_complete.loc4_33: <witness> = require_complete_type %ptr.loc4_29.2 [template = %require_complete.loc4_33 (constants.%require_complete.6e5)]
+// CHECK:STDOUT:   %require_complete.loc4_26: <witness> = require_complete_type %ptr.loc4_30.2 [template = %require_complete.loc4_26 (constants.%require_complete.132)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%ptr.loc4_30.2 (%ptr.a13)) -> @F.%ptr.loc4_29.2 (%ptr.79f) {
 // CHECK:STDOUT:   !entry:
@@ -150,13 +150,13 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %U.loc4_25.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_25.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc4_25.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_25.2 (constants.%U.patt)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%T.loc4_15.2 (%T), @F.%U.loc4_25.2 (%U)) [template = %tuple.type (constants.%tuple.type.30b)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc4_15.2, %U.loc4_25.2) [template = %tuple.type (constants.%tuple.type.30b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc4: <witness> = require_complete_type @F.%tuple.type (%tuple.type.30b) [template = %require_complete.loc4 (constants.%require_complete.fe1)]
+// CHECK:STDOUT:   %require_complete.loc4: <witness> = require_complete_type %tuple.type [template = %require_complete.loc4 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:   %F.specific_fn.loc5_10.2: <specific function> = specific_function constants.%F, @F(%T.loc4_15.2, %U.loc4_25.2) [template = %F.specific_fn.loc5_10.2 (constants.%F.specific_fn)]
-// CHECK:STDOUT:   %require_complete.loc5_16.1: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete.loc5_16.1 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %require_complete.loc5_16.2: <witness> = require_complete_type @F.%U.loc4_25.2 (%U) [symbolic = %require_complete.loc5_16.2 (constants.%require_complete.b54)]
+// CHECK:STDOUT:   %require_complete.loc5_16.1: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete.loc5_16.1 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc5_16.2: <witness> = require_complete_type %U.loc4_25.2 [symbolic = %require_complete.loc5_16.2 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc4_15.1: type, %U.patt.loc4_25.1: type) -> %return.param_patt: @F.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:

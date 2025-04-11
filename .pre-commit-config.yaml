@@ -89,13 +89,6 @@ repos:
         language: python
         args: ['-i']
         additional_dependencies: ['clang-format==17.0.1']
-      - id: explorer-format-grammar
-        name: Format the explorer grammar file
-        entry: explorer/syntax/format_grammar.py
-        language: python
-        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
-        pass_filenames: false
-        additional_dependencies: ['clang-format==17.0.1']
 
   - repo: local
     hooks:

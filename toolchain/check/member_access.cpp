@@ -555,7 +555,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
           // binding separately. Perhaps a struct type should be a name scope.
           return GetOrAddInst<SemIR::StructAccess>(
               context, loc_id,
-              {.type_id = field.type_id,
+              {.type_id =
+                   context.types().GetTypeIdForTypeInstId(field.type_inst_id),
                .struct_id = base_id,
                .index = SemIR::ElementIndex(i)});
         }
@@ -797,7 +798,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
 
   auto index_literal = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(index_const_id));
-  auto type_block = context.type_blocks().Get(tuple_type->elements_id);
+  auto type_block = context.inst_blocks().Get(tuple_type->elements_id);
   std::optional<llvm::APInt> index_val = ValidateTupleIndex(
       context, loc_id, tuple_inst_id, index_literal, type_block.size());
   if (!index_val) {
@@ -805,7 +806,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   }
 
   // TODO: Handle the case when `index_val->getZExtValue()` has too many bits.
-  element_type_id = type_block[index_val->getZExtValue()];
+  element_type_id = context.types().GetTypeIdForTypeInstId(
+      type_block[index_val->getZExtValue()]);
   auto tuple_index = SemIR::ElementIndex(index_val->getZExtValue());
 
   return GetOrAddInst<SemIR::TupleAccess>(context, loc_id,

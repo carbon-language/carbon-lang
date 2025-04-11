@@ -170,6 +170,7 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT: class @BaseDecl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAbstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -178,6 +179,7 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Virtual {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -186,6 +188,7 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongOrder {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -194,6 +197,7 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -219,6 +223,7 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:     %self.loc91: %AbstractWithDefinition = bind_name self, %self.param.loc91
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc92: <vtable> = vtable (%F.decl, %G.decl) [concrete = constants.%.9a5]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

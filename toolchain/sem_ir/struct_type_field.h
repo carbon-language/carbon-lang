@@ -13,7 +13,7 @@ namespace Carbon::SemIR {
 // A field in a struct's type, such as `.a: i32` in `{.a: i32}`.
 struct StructTypeField : Printable<StructTypeField> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name_id: " << name_id << ", type_id: " << type_id << "}";
+    out << "{name_id: " << name_id << ", type_inst_id: " << type_inst_id << "}";
   }
 
   friend auto operator==(StructTypeField lhs, StructTypeField rhs) -> bool {
@@ -21,7 +21,7 @@ struct StructTypeField : Printable<StructTypeField> {
   }
 
   NameId name_id;
-  TypeId type_id;
+  InstId type_inst_id;
 };
 
 using StructTypeFieldsStore = BlockValueStore<StructTypeFieldsId>;

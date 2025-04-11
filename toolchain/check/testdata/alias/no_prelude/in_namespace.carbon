@@ -79,6 +79,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:     %.loc11_11: %C.elem = var_pattern %.loc11_16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

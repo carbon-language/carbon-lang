@@ -43,12 +43,12 @@ class DiagnosticEmitter : public DiagnosticEmitterBase {
   // For the last byte offset, this uses `last_token_` exclusively for imported
   // locations, or `loc` if it's in the same file and (for whatever reason)
   // later.
-  auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
+  auto ConvertLoc(SemIR::LocId loc_id, ContextFnT context_fn) const
       -> Diagnostics::ConvertedLoc override;
 
  private:
   // Implements `ConvertLoc`, but without `last_token_` applied.
-  auto ConvertLocImpl(SemIRLoc loc, ContextFnT context_fn) const
+  auto ConvertLocImpl(SemIR::LocId loc_id, ContextFnT context_fn) const
       -> Diagnostics::ConvertedLoc;
 
   // Converts a node_id corresponding to a specific sem_ir to a diagnostic

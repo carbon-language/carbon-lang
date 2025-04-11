@@ -215,10 +215,6 @@ class File : public Printable<File> {
   }
   auto types() -> TypeStore& { return types_; }
   auto types() const -> const TypeStore& { return types_; }
-  auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
-  auto type_blocks() const -> const BlockValueStore<TypeBlockId>& {
-    return type_blocks_;
-  }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
   auto constant_values() -> ConstantValueStore& { return constant_values_; }
@@ -324,10 +320,6 @@ class File : public Printable<File> {
   // The Clang AST to use when looking up `Cpp` names. Null if there are no
   // `Cpp` imports.
   clang::ASTUnit* cpp_ast_ = nullptr;
-
-  // Type blocks within the IR. These reference entries in types_. Storage for
-  // the data is provided by allocator_.
-  BlockValueStore<TypeBlockId> type_blocks_;
 
   // All instructions. The first entries will always be the singleton
   // instructions.

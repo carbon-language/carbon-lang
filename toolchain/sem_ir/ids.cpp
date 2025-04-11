@@ -166,11 +166,19 @@ auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto LocId::Print(llvm::raw_ostream& out) const -> void {
-  out << Label << "_";
-  if (is_node_id() || !has_value()) {
-    out << node_id();
-  } else {
-    out << import_ir_inst_id();
+  switch (kind()) {
+    case Kind::None:
+      IdBase::Print(out);
+      break;
+    case Kind::ImportIRInstId:
+      out << Label << "_" << import_ir_inst_id();
+      break;
+    case Kind::InstId:
+      out << Label << "_" << inst_id();
+      break;
+    case Kind::NodeId:
+      out << Label << "_" << node_id();
+      break;
   }
 }
 

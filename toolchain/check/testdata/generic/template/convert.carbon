@@ -212,6 +212,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@impl.4e3.%Convert.decl), @impl.4e3 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness.96d]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -225,9 +226,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc5_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc4_15.2 (%T) [template]
-// CHECK:STDOUT:   %.loc5_11.4: <instruction> = convert_to_value_action %.loc5_11.1, %i32 [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc5_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.2 [template]
+// CHECK:STDOUT:   %.loc5_11.4: <instruction> = convert_to_value_action %.loc5_11.1, constants.%i32 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
@@ -371,6 +372,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -383,9 +385,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc4_15.2 (%T) [template]
-// CHECK:STDOUT:   %.loc11_11.4: <instruction> = convert_to_value_action %.loc11_11.1, %i32 [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.2 [template]
+// CHECK:STDOUT:   %.loc11_11.4: <instruction> = convert_to_value_action %.loc11_11.1, constants.%i32 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:

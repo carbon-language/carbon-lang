@@ -92,10 +92,10 @@ auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)
   return GetTypeImpl<SemIR::StructType>(context, fields_id);
 }
 
-auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::TypeId> type_ids)
+auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::TupleType>(
-      context, context.type_blocks().AddCanonical(type_ids));
+      context, context.inst_blocks().AddCanonical(type_inst_ids));
 }
 
 auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
@@ -157,8 +157,8 @@ auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
-auto GetUnboundElementType(Context& context, SemIR::InstId class_type_id,
-                           SemIR::InstId element_type_id) -> SemIR::TypeId {
+auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
+                           SemIR::TypeInstId element_type_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(context, class_type_id,
                                                 element_type_id);
 }

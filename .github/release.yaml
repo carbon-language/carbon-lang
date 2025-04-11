@@ -18,7 +18,6 @@ changelog:
     - title: 'Toolchain and implementation changes :hammer_and_wrench:'
       labels:
         - toolchain
-        - explorer
       exclude.labels:
         - bot
     - title: 'Documentation changes :memo:'

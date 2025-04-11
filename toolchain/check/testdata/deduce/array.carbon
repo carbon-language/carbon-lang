@@ -210,6 +210,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -223,8 +224,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.loc6_29.2: type = array_type constants.%int_3, %T.loc6_6.2 [symbolic = %array_type.loc6_29.2 (constants.%array_type.743)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete.loc6_32 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_29.2 (%array_type.743) [symbolic = %require_complete.loc6_17 (constants.%require_complete.06f)]
+// CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type %T.loc6_6.2 [symbolic = %require_complete.loc6_32 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %array_type.loc6_29.2 [symbolic = %require_complete.loc6_17 (constants.%require_complete.06f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc6_6.1: type](%a.param_patt: @F.%array_type.loc6_29.2 (%array_type.743)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -407,6 +408,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -420,7 +422,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.loc6_42.2: type = array_type %N.loc6_6.2, constants.%C [symbolic = %array_type.loc6_42.2 (constants.%array_type.6a2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_42.2 (%array_type.6a2) [symbolic = %require_complete (constants.%require_complete.d82)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc6_42.2 [symbolic = %require_complete (constants.%require_complete.d82)]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.956 [symbolic = %Convert.bound (constants.%Convert.bound.41f)]
 // CHECK:STDOUT:   %bound_method.loc6_62.3: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc6_62.3 (constants.%bound_method.ad4)]
 // CHECK:STDOUT:   %int.convert_checked.loc6_62.2: init %i32 = call %bound_method.loc6_62.3(%N.loc6_6.2) [symbolic = %int.convert_checked.loc6_62.2 (constants.%int.convert_checked)]
@@ -575,6 +577,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -590,7 +593,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.loc6_52.2: type = array_type %N.loc6_16.2, %T.loc6_6.2 [symbolic = %array_type.loc6_52.2 (constants.%array_type.bb5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_52.2 (%array_type.bb5) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc6_52.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc6_6.1: type, %N.patt.loc6_16.1: Core.IntLiteral](%a.param_patt: @F.%array_type.loc6_52.2 (%array_type.bb5)) {
 // CHECK:STDOUT:   !entry:
@@ -747,6 +750,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -760,8 +764,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.loc6_29.2: type = array_type constants.%int_2, %T.loc6_6.2 [symbolic = %array_type.loc6_29.2 (constants.%array_type.9d4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete.loc6_32 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_29.2 (%array_type.9d4) [symbolic = %require_complete.loc6_17 (constants.%require_complete.d11)]
+// CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type %T.loc6_6.2 [symbolic = %require_complete.loc6_32 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %array_type.loc6_29.2 [symbolic = %require_complete.loc6_17 (constants.%require_complete.d11)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc6_6.1: type](%a.param_patt: @F.%array_type.loc6_29.2 (%array_type.9d4)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -948,6 +952,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -956,6 +961,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -969,7 +975,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.loc7_42.2: type = array_type %N.loc7_6.2, constants.%C [symbolic = %array_type.loc7_42.2 (constants.%array_type.6a2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc7_42.2 (%array_type.6a2) [symbolic = %require_complete (constants.%require_complete.d82)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc7_42.2 [symbolic = %require_complete (constants.%require_complete.d82)]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc7_6.2, constants.%Convert.956 [symbolic = %Convert.bound (constants.%Convert.bound.41f)]
 // CHECK:STDOUT:   %bound_method.loc7_62.3: <bound method> = bound_method %N.loc7_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc7_62.3 (constants.%bound_method.ad4)]
 // CHECK:STDOUT:   %int.convert_checked.loc7_62.2: init %i32 = call %bound_method.loc7_62.3(%N.loc7_6.2) [symbolic = %int.convert_checked.loc7_62.2 (constants.%int.convert_checked)]
@@ -1147,6 +1153,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1163,7 +1170,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.loc6_28.2: type = array_type %int.convert_checked.loc6_27.2, constants.%C [symbolic = %array_type.loc6_28.2 (constants.%array_type.b2f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_28.2 (%array_type.b2f) [symbolic = %require_complete (constants.%require_complete.cde)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc6_28.2 [symbolic = %require_complete (constants.%require_complete.cde)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.patt.loc6_6.1: %i32](%a.param_patt: @F.%array_type.loc6_28.2 (%array_type.b2f)) -> %i32 {
 // CHECK:STDOUT:   !entry:

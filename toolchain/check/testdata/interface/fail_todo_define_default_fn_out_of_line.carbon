@@ -292,6 +292,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:       %return.param.loc14: ref @F.%U.loc14_22.1 (%U) = out_param call_param2
 // CHECK:STDOUT:       %return.loc14: ref @F.%U.loc14_22.1 (%U) = return_slot %return.param.loc14
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -308,8 +309,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %U.patt.loc14: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc20_46: <witness> = require_complete_type @F.%U.loc14_22.1 (%U) [symbolic = %require_complete.loc20_46 (constants.%require_complete.b54)]
-// CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type @F.%C (%C.7e5) [symbolic = %require_complete.loc20_22 (constants.%require_complete.e44)]
+// CHECK:STDOUT:   %require_complete.loc20_46: <witness> = require_complete_type %U.loc14_22.1 [symbolic = %require_complete.loc20_46 (constants.%require_complete.b54)]
+// CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type %C [symbolic = %require_complete.loc20_22 (constants.%require_complete.e44)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.%C (%C.7e5)](%U.patt.loc20: type, %u.param_patt: @F.%U.loc14_22.1 (%U)) -> @F.%U.loc14_22.1 (%U) {
 // CHECK:STDOUT:   !entry:

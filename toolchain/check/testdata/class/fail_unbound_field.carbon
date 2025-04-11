@@ -84,6 +84,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %i32} [concrete = constants.%struct_type.field]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [concrete = constants.%complete_type.d48]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

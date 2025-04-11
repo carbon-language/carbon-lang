@@ -201,7 +201,6 @@ def main() -> None:
     label_subdir(
         "toolchain/docs", next(nav_order), parent_title="Implementation"
     )
-    label_subdir("explorer", next(nav_order), parent_title="Implementation")
     label_subdir("testing", next(nav_order), parent_title="Implementation")
 
 

@@ -370,7 +370,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto [adapted_inst_id, adapted_type_id] =
+  auto [adapted_type_inst_id, adapted_type_id] =
       ExprAsType(context, node_id, adapted_type_expr_id);
   adapted_type_id = AsConcreteType(
       context, adapted_type_id, node_id,
@@ -379,26 +379,26 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
                           "adapted type {0} is an incomplete type",
                           InstIdAsType);
         return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
-                                       adapted_inst_id);
+                                       adapted_type_inst_id);
       },
       [&] {
         CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
                           "adapted type {0} is an abstract type", InstIdAsType);
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
-                                       adapted_inst_id);
+                                       adapted_type_inst_id);
       });
   if (adapted_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    adapted_inst_id = SemIR::ErrorInst::SingletonInstId;
+    adapted_type_inst_id = SemIR::ErrorInst::SingletonTypeInstId;
   }
 
   // Build a SemIR representation for the declaration.
   class_info.adapt_id = AddInst<SemIR::AdaptDecl>(
-      context, node_id, {.adapted_type_inst_id = adapted_inst_id});
+      context, node_id, {.adapted_type_inst_id = adapted_type_inst_id});
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    class_scope.AddExtendedScope(adapted_inst_id);
+    class_scope.AddExtendedScope(adapted_type_inst_id);
   }
   return true;
 }
@@ -422,17 +422,17 @@ struct BaseInfo {
 
   SemIR::TypeId type_id;
   SemIR::NameScopeId scope_id;
-  SemIR::InstId inst_id;
+  SemIR::TypeInstId inst_id;
 };
 constexpr BaseInfo BaseInfo::Error = {
     .type_id = SemIR::ErrorInst::SingletonTypeId,
     .scope_id = SemIR::NameScopeId::None,
-    .inst_id = SemIR::ErrorInst::SingletonInstId};
+    .inst_id = SemIR::ErrorInst::SingletonTypeInstId};
 }  // namespace
 
 // Diagnoses an attempt to derive from a final type.
 static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
-                                SemIR::InstId base_type_inst_id) -> void {
+                                SemIR::TypeInstId base_type_inst_id) -> void {
   CARBON_DIAGNOSTIC(BaseIsFinal, Error,
                     "deriving from final type {0}; base type must be an "
                     "`abstract` or `base` class",

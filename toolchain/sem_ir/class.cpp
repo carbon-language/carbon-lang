@@ -44,9 +44,11 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
   if (witness_id == ErrorInst::SingletonConstantId) {
     return ErrorInst::SingletonTypeId;
   }
-  return file.insts()
-      .GetAs<CompleteTypeWitness>(file.constant_values().GetInstId(witness_id))
-      .object_repr_id;
+  return file.types().GetTypeIdForTypeInstId(
+      file.insts()
+          .GetAs<CompleteTypeWitness>(
+              file.constant_values().GetInstId(witness_id))
+          .object_repr_type_inst_id);
 }
 
 }  // namespace Carbon::SemIR

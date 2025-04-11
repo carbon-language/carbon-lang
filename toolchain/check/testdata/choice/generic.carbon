@@ -54,11 +54,11 @@ choice Always(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Always: type = class_type @Always, @Always(%T.loc11_15.2) [symbolic = %Always (constants.%Always)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Always.%Always (%Always) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Always.val: @Always.%Always (%Always) = struct_value (constants.%empty_tuple) [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type]
 // CHECK:STDOUT:     %.loc13_1.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_1.2: %empty_tuple.type = converted %.loc13_1.1, %empty_tuple [concrete = constants.%empty_tuple]
