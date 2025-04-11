@@ -1380,34 +1380,17 @@ static auto RetryOrDone(ImportRefResolver& resolver, SemIR::ConstantId const_id)
 // not for instructions that represent declarations. For a declaration, we need
 // an associated location, so AddInstInNoBlock should be used instead. Requires
 // that there is no new work.
-//
-// For instructions that do not have a leading TypeId field, use
-// ResolveAsUntyped.
-static auto ResolveAsInst(ImportContext& context, SemIR::Inst inst)
+static auto ResolveAsUntyped(ImportContext& context, SemIR::Inst inst)
     -> ResolveResult {
   auto result = AddImportedConstant(context.local_context(), inst);
   CARBON_CHECK(result.is_constant(), "{0} is not constant", inst);
   return ResolveResult::Done(result);
 }
 
-// Same as ResolveAsInst, but with an explicit type for convenience.
+// Same as ResolveAsUntyped, but with an explicit type for convenience.
 template <typename InstT>
 static auto ResolveAs(ImportContext& context, InstT inst) -> ResolveResult {
-  return ResolveAsInst(context, inst);
-}
-
-// Like ResolveAs, for instructions that do not have a leading type_id field,
-// and thus their `type_id()` is `None`.
-template <typename InstT>
-static auto ResolveAsUntyped(ImportContext& context,
-                             SemIR::InstId import_inst_id, InstT inst)
-    -> ResolveResult {
-  auto inst_id = AddInstInNoBlock(
-      context.local_context(),
-      MakeImportedLocIdAndInst(context.local_context(),
-                               AddImportIRInst(context, import_inst_id), inst));
-  return ResolveResult::Done(context.local_constant_values().Get(inst_id),
-                             inst_id);
+  return ResolveAsUntyped(context, inst);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -1424,8 +1407,14 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       AddLoadedImportRef(resolver, SemIR::TypeType::SingletonTypeId,
                          inst.adapted_type_inst_id, adapted_type_const_id);
 
-  return ResolveAsUntyped<SemIR::AdaptDecl>(
-      resolver, import_inst_id, {.adapted_type_inst_id = adapted_type_inst_id});
+  // Create a corresponding instruction to represent the declaration.
+  auto inst_id = AddInstInNoBlock(
+      resolver.local_context(),
+      MakeImportedLocIdAndInst<SemIR::AdaptDecl>(
+          resolver.local_context(), AddImportIRInst(resolver, import_inst_id),
+          {.adapted_type_inst_id = adapted_type_inst_id}));
+  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
+                             inst_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2601,8 +2590,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ImplWitnessTable inst,
-                                SemIR::InstId import_inst_id) -> ResolveResult {
+                                SemIR::ImplWitnessTable inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::WitnessType::SingletonInstId);
+
   const auto& import_impl = resolver.import_impls().Get(inst.impl_id);
   auto import_decl_inst_id = import_impl.first_decl_id();
   auto local_decl_inst_id =
@@ -2615,9 +2606,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_insts().GetAs<SemIR::ImplDecl>(local_decl_inst_id);
   auto impl_id = impl_decl.impl_id;
   auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
-  return ResolveAsUntyped<SemIR::ImplWitnessTable>(
-      resolver, import_inst_id,
-      {.elements_id = elements_id, .impl_id = impl_id});
+  return ResolveAs<SemIR::ImplWitnessTable>(
+      resolver,
+      {.type_id = GetSingletonType(resolver.local_context(),
+                                   SemIR::WitnessType::SingletonInstId),
+       .elements_id = elements_id,
+       .impl_id = impl_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2987,7 +2981,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitnessTable inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImportRefLoaded inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);

@@ -43,7 +43,7 @@ class C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.e5b: type = fn_type_with_self_type %F.type.0b5, %I.facet [concrete]
+// CHECK:STDOUT:   %.c32: type = fn_type_with_self_type %F.type.0b5, %I.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -98,7 +98,7 @@ class C {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (@impl.%F.decl), @impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table: <witness> = impl_witness_table (@impl.%F.decl), @impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -132,7 +132,7 @@ class C {
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0: %.e5b = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%F.eb2]
+// CHECK:STDOUT:     %impl.elem0: %.c32 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%F.eb2]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:     %.loc17: %C = bind_value %c.ref
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %bound_method(%.loc17)

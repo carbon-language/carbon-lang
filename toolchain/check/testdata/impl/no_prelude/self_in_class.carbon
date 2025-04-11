@@ -102,7 +102,7 @@ class A {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [concrete = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (@impl.%Make.decl), @impl [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.impl_witness_table: <witness> = impl_witness_table (@impl.%Make.decl), @impl [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness %DefaultConstructible.impl_witness_table [concrete = constants.%DefaultConstructible.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

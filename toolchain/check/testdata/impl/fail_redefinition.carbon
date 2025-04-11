@@ -28,8 +28,8 @@ impl i32 as I {}
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %I.impl_witness.684cdb.1: <witness> = impl_witness file.%I.impl_witness_table.loc13 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.684cdb.2: <witness> = impl_witness file.%I.impl_witness_table.loc22 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.bcf5e4.1: <witness> = impl_witness file.%I.impl_witness_table.loc13 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.bcf5e4.2: <witness> = impl_witness file.%I.impl_witness_table.loc22 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,15 +52,15 @@ impl i32 as I {}
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (), @impl.a9ac64.1 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc13: <witness> = impl_witness %I.impl_witness_table.loc13 [concrete = constants.%I.impl_witness.684cdb.1]
+// CHECK:STDOUT:   %I.impl_witness_table.loc13: <witness> = impl_witness_table (), @impl.a9ac64.1 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.loc13: <witness> = impl_witness %I.impl_witness_table.loc13 [concrete = constants.%I.impl_witness.bcf5e4.1]
 // CHECK:STDOUT:   impl_decl @impl.a9ac64.2 [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (), @impl.a9ac64.2 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc22: <witness> = impl_witness %I.impl_witness_table.loc22 [concrete = constants.%I.impl_witness.684cdb.2]
+// CHECK:STDOUT:   %I.impl_witness_table.loc22: <witness> = impl_witness_table (), @impl.a9ac64.2 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.loc22: <witness> = impl_witness %I.impl_witness_table.loc22 [concrete = constants.%I.impl_witness.bcf5e4.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

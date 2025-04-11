@@ -39,7 +39,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.365: type = fn_type_with_self_type %Op.type.e42, %Negate.facet [concrete]
+// CHECK:STDOUT:   %.003: type = fn_type_with_self_type %Op.type.e42, %Negate.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -64,7 +64,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Negate.ref: type = name_ref Negate, imports.%Core.Negate [concrete = constants.%Negate.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (@impl.c34.%Op.decl), @impl.c34 [concrete]
+// CHECK:STDOUT:   %Negate.impl_witness_table: <witness> = impl_witness_table (@impl.c34.%Op.decl), @impl.c34 [concrete]
 // CHECK:STDOUT:   %Negate.impl_witness: <witness> = impl_witness %Negate.impl_witness_table [concrete = constants.%Negate.impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
@@ -121,7 +121,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %.365 = impl_witness_access constants.%Negate.impl_witness, element0 [concrete = constants.%Op.64c]
+// CHECK:STDOUT:   %impl.elem0: %.003 = impl_witness_access constants.%Negate.impl_witness, element0 [concrete = constants.%Op.64c]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref) to %.loc23

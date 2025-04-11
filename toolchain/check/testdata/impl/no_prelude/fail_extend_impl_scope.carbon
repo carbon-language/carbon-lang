@@ -79,7 +79,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc9_14.2: type = converted %.loc9_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -136,7 +136,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_16.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %J.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -163,7 +163,7 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.766: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
+// CHECK:STDOUT:   %.048: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -221,7 +221,7 @@ fn F() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (@impl.c94.%Zero.decl), @impl.c94 [concrete]
+// CHECK:STDOUT:   %Z.impl_witness_table: <witness> = impl_witness_table (@impl.c94.%Zero.decl), @impl.c94 [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -260,7 +260,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_5.4: ref %Point = temporary %.loc25_5.2, %.loc25_5.3
 // CHECK:STDOUT:   %.loc25_7: ref %Point = converted %.loc25_5.1, %.loc25_5.4
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.766 = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Zero.dec]
+// CHECK:STDOUT:   %impl.elem0: %.048 = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Zero.dec]
 // CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

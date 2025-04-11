@@ -1414,7 +1414,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %type_where = binding_pattern B
@@ -1515,7 +1515,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness_table: <witness> = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %type_where = binding_pattern B

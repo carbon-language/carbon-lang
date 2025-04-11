@@ -253,7 +253,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [concrete = constants.%Simple.type.51f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (), @impl.763 [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness_table: <witness> = impl_witness_table (), @impl.763 [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.90b [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
@@ -261,7 +261,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.type: type = facet_type <@WithAssocFn, @WithAssocFn(constants.%C)> [concrete = constants.%WithAssocFn.type.683]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_witness_table (@impl.90b.%F.decl), @impl.90b [concrete]
+// CHECK:STDOUT:   %WithAssocFn.impl_witness_table: <witness> = impl_witness_table (@impl.90b.%F.decl), @impl.90b [concrete]
 // CHECK:STDOUT:   %WithAssocFn.impl_witness: <witness> = impl_witness %WithAssocFn.impl_witness_table [concrete = constants.%WithAssocFn.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

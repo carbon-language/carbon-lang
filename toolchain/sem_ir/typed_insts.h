@@ -972,6 +972,9 @@ struct ImplWitnessTable {
        // constants.
        .is_lowered = false});
 
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+
   // The witness table of instructions.
   //
   // We use AbsoluteInstBlockId since this block on import will contain
