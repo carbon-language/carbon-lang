@@ -285,8 +285,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::VarStorage inst) -> void {
-  auto* type = context.GetType(inst.type_id);
+                SemIR::VarStorage /* inst */) -> void {
+  auto* type = context.GetType(SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), context.specific_id(), inst_id));
 
   // Position the first alloca right before the start of the executable code in
   // the function.
