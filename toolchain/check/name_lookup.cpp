@@ -191,12 +191,10 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
 }
 
 // Prints diagnostics on invalid qualified name access.
-static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
-                                               SemIR::InstId scope_result_id,
-                                               SemIR::NameId name_id,
-                                               SemIR::AccessKind access_kind,
-                                               bool is_parent_access,
-                                               AccessInfo access_info) -> void {
+static auto DiagnoseInvalidQualifiedNameAccess(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId scope_result_id,
+    SemIR::NameId name_id, SemIR::AccessKind access_kind, bool is_parent_access,
+    AccessInfo access_info) -> void {
   auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
       context.constant_values().GetInstId(access_info.constant_id));
   if (!class_type) {
@@ -228,7 +226,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
       Diagnostics::BoolAsSelect, SemIR::NameId, SemIR::TypeId);
   CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
   context.emitter()
-      .Build(loc, ClassInvalidMemberAccess,
+      .Build(loc_id, ClassInvalidMemberAccess,
              access_kind == SemIR::AccessKind::Private, name_id, parent_type_id)
       .Note(scope_result_id, ClassMemberDeclaration)
       .Emit();
@@ -351,7 +349,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
 
 // Prints a diagnostic for a missing qualified name.
 static auto DiagnoseMemberNameNotFound(
-    Context& context, SemIRLoc loc, SemIR::NameId name_id,
+    Context& context, SemIR::LocId loc_id, SemIR::NameId name_id,
     llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
   if (lookup_scopes.size() == 1 &&
       lookup_scopes.front().name_scope_id.has_value()) {
@@ -360,7 +358,7 @@ static auto DiagnoseMemberNameNotFound(
       CARBON_DIAGNOSTIC(MemberNameNotFoundInSpecificScope, Error,
                         "member name `{0}` not found in {1}", SemIR::NameId,
                         SemIR::SpecificId);
-      context.emitter().Emit(loc, MemberNameNotFoundInSpecificScope, name_id,
+      context.emitter().Emit(loc_id, MemberNameNotFoundInSpecificScope, name_id,
                              specific_id);
     } else {
       auto scope_inst_id = context.name_scopes()
@@ -369,7 +367,7 @@ static auto DiagnoseMemberNameNotFound(
       CARBON_DIAGNOSTIC(MemberNameNotFoundInInstScope, Error,
                         "member name `{0}` not found in {1}", SemIR::NameId,
                         InstIdAsType);
-      context.emitter().Emit(loc, MemberNameNotFoundInInstScope, name_id,
+      context.emitter().Emit(loc_id, MemberNameNotFoundInInstScope, name_id,
                              scope_inst_id);
     }
     return;
@@ -377,7 +375,7 @@ static auto DiagnoseMemberNameNotFound(
 
   CARBON_DIAGNOSTIC(MemberNameNotFound, Error, "member name `{0}` not found",
                     SemIR::NameId);
-  context.emitter().Emit(loc, MemberNameNotFound, name_id);
+  context.emitter().Emit(loc_id, MemberNameNotFound, name_id);
 }
 
 auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
@@ -547,7 +545,8 @@ auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
 }
 
 auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,
-                           SemIRLoc dup_def, SemIRLoc prev_def) -> void {
+                           SemIR::LocId dup_def, SemIR::LocId prev_def)
+    -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "duplicate name `{0}` being declared in the same scope",
                     SemIR::NameId);
@@ -572,10 +571,10 @@ auto DiagnosePoisonedName(Context& context, SemIR::NameId name_id,
       .Emit();
 }
 
-auto DiagnoseNameNotFound(Context& context, SemIRLoc loc, SemIR::NameId name_id)
-    -> void {
+auto DiagnoseNameNotFound(Context& context, SemIR::LocId loc_id,
+                          SemIR::NameId name_id) -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "name `{0}` not found", SemIR::NameId);
-  context.emitter().Emit(loc, NameNotFound, name_id);
+  context.emitter().Emit(loc_id, NameNotFound, name_id);
 }
 
 }  // namespace Carbon::Check

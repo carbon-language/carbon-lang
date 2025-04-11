@@ -608,7 +608,7 @@ static auto AddNamespaceFromOtherPackage(Context& context,
 }
 
 auto ImportNameFromOtherPackage(
-    Context& context, SemIRLoc loc, SemIR::NameScopeId scope_id,
+    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
     llvm::ArrayRef<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>>
         import_ir_scopes,
     SemIR::NameId name_id) -> SemIR::InstId {
@@ -626,7 +626,7 @@ auto ImportNameFromOtherPackage(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InNameLookup, Note, "in name lookup for `{0}`",
                           SemIR::NameId);
-        builder.Note(loc, InNameLookup, name_id);
+        builder.Note(loc_id, InNameLookup, name_id);
       });
 
   // Although we track the result here and look in each IR, we pretty much use

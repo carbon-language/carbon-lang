@@ -609,14 +609,14 @@ using InheritancePath =
 
 // Computes the inheritance path from class `derived_id` to class `base_id`.
 // Returns nullopt if `derived_id` is not a class derived from `base_id`.
-static auto ComputeInheritancePath(Context& context, SemIRLoc loc,
+static auto ComputeInheritancePath(Context& context, SemIR::LocId loc_id,
                                    SemIR::TypeId derived_id,
                                    SemIR::TypeId base_id)
     -> std::optional<InheritancePath> {
   // We intend for NRVO to be applied to `result`. All `return` statements in
   // this function should `return result;`.
   std::optional<InheritancePath> result(std::in_place);
-  if (!TryToCompleteType(context, derived_id, loc)) {
+  if (!TryToCompleteType(context, derived_id, loc_id)) {
     // TODO: Should we give an error here? If we don't, and there is an
     // inheritance path when the class is defined, we may have a coherence
     // problem.

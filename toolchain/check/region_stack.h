@@ -17,7 +17,7 @@ namespace Carbon::Check {
 class RegionStack {
  public:
   // A callback for Context::TODO.
-  using TodoFn = std::function<auto(SemIRLoc, std::string)->void>;
+  using TodoFn = std::function<auto(SemIR::LocId, std::string)->void>;
 
   explicit RegionStack(TodoFn todo_fn) : todo_fn_(std::move(todo_fn)) {}
 

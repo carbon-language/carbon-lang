@@ -125,10 +125,10 @@ static auto GetGenericArgsWithSelfType(Context& context,
 }
 
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
-    Context& context, SemIRLoc loc, SemIR::SpecificId interface_specific_id,
-    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id,
-    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id)
-    -> SemIR::SpecificId {
+    Context& context, SemIR::LocId loc_id,
+    SemIR::SpecificId interface_specific_id, SemIR::GenericId generic_id,
+    SemIR::SpecificId enclosing_specific_id, SemIR::TypeId self_type_id,
+    SemIR::InstId witness_inst_id) -> SemIR::SpecificId {
   const auto& generic = context.generics().Get(generic_id);
   auto self_specific_args = context.inst_blocks().Get(
       context.specifics().Get(generic.self_specific_id).args_id);
@@ -169,10 +169,10 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
     arg_ids.push_back(new_arg_id);
   }
 
-  return MakeSpecific(context, loc, generic_id, arg_ids);
+  return MakeSpecific(context, loc_id, generic_id, arg_ids);
 }
 
-auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
+auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
                                         SemIR::SpecificId interface_specific_id,
                                         SemIR::InstId decl_id,
                                         SemIR::TypeId self_type_id,
@@ -189,7 +189,7 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
     auto arg_ids =
         GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
                                    self_type_id, self_witness_id);
-    auto const_specific_id = MakeSpecific(context, loc, generic_id, arg_ids);
+    auto const_specific_id = MakeSpecific(context, loc_id, generic_id, arg_ids);
     return SemIR::GetTypeOfInstInSpecific(context.sem_ir(), const_specific_id,
                                           decl_id);
   } else if (auto fn = context.types().TryGetAs<SemIR::FunctionType>(

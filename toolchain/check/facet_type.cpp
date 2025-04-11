@@ -39,20 +39,20 @@ static auto WitnessAccessMatchesInterface(
 }
 
 static auto IncompleteFacetTypeDiagnosticBuilder(
-    Context& context, SemIRLoc loc, SemIR::TypeInstId facet_type_inst_id,
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id,
     bool is_definition) -> DiagnosticBuilder {
   if (is_definition) {
     CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
                       "definition of impl as incomplete facet type {0}",
                       InstIdAsType);
-    return context.emitter().Build(loc, ImplAsIncompleteFacetTypeDefinition,
+    return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeDefinition,
                                    facet_type_inst_id);
   } else {
     CARBON_DIAGNOSTIC(
         ImplAsIncompleteFacetTypeRewrites, Error,
         "declaration of impl as incomplete facet type {0} with rewrites",
         InstIdAsType);
-    return context.emitter().Build(loc, ImplAsIncompleteFacetTypeRewrites,
+    return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeRewrites,
                                    facet_type_inst_id);
   }
 }
@@ -244,14 +244,14 @@ auto InitialFacetTypeImplWitness(
 }
 
 auto RequireCompleteFacetTypeForImplDefinition(
-    Context& context, SemIRLoc loc, SemIR::TypeInstId facet_type_inst_id)
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id)
     -> bool {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
   return RequireCompleteType(context, facet_type_id,
                              context.insts().GetLocId(facet_type_inst_id), [&] {
                                return IncompleteFacetTypeDiagnosticBuilder(
-                                   context, loc, facet_type_inst_id,
+                                   context, loc_id, facet_type_inst_id,
                                    /*is_definition=*/true);
                              });
 }

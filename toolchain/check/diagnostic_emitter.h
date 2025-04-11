@@ -16,7 +16,7 @@
 
 namespace Carbon::Check {
 
-// Handles the transformation of a SemIRLoc to a DiagnosticLoc.
+// Handles the transformation of a SemIR::LocId to a DiagnosticLoc.
 class DiagnosticEmitter : public DiagnosticEmitterBase {
  public:
   explicit DiagnosticEmitter(

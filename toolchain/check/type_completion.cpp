@@ -30,9 +30,9 @@ namespace {
 class TypeCompleter {
  public:
   // `context` mut not be null.
-  TypeCompleter(Context* context, SemIRLoc loc,
+  TypeCompleter(Context* context, SemIR::LocId loc_id,
                 MakeDiagnosticBuilderFn diagnoser)
-      : context_(context), loc_(loc), diagnoser_(diagnoser) {}
+      : context_(context), loc_id_(loc_id), diagnoser_(diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
   // false if it could not be completed.
@@ -165,7 +165,7 @@ class TypeCompleter {
 
   Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
-  SemIRLoc loc_;
+  SemIR::LocId loc_id_;
   MakeDiagnosticBuilderFn diagnoser_;
 };
 }  // namespace
@@ -274,7 +274,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         return false;
       }
       if (inst.specific_id.has_value()) {
-        ResolveSpecificDefinition(*context_, loc_, inst.specific_id);
+        ResolveSpecificDefinition(*context_, loc_id_, inst.specific_id);
       }
       if (auto adapted_type_id =
               class_info.GetAdaptedType(context_->sem_ir(), inst.specific_id);
@@ -307,7 +307,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         }
 
         if (req_interface.specific_id.has_value()) {
-          ResolveSpecificDefinition(*context_, loc_, req_interface.specific_id);
+          ResolveSpecificDefinition(*context_, loc_id_,
+                                    req_interface.specific_id);
         }
       }
       break;
@@ -531,9 +532,10 @@ auto TypeCompleter::BuildInfo(SemIR::TypeId type_id, SemIR::Inst inst) const
   }
 }
 
-auto TryToCompleteType(Context& context, SemIR::TypeId type_id, SemIRLoc loc,
-                       MakeDiagnosticBuilderFn diagnoser) -> bool {
-  return TypeCompleter(&context, loc, diagnoser).Complete(type_id);
+auto TryToCompleteType(Context& context, SemIR::TypeId type_id,
+                       SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
+    -> bool {
+  return TypeCompleter(&context, loc_id, diagnoser).Complete(type_id);
 }
 
 auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void {
