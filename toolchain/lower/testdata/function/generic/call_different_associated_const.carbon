@@ -13,28 +13,21 @@
 
 interface I {
   let T:! type;
-  // TODO: An interface with multiple constraints is not yet implemented in mangling.
-  // fn F() -> T;
+  // TODO: An interface with multiple associated entities is not yet
+  // implemented in mangling.
 }
 
 fn G(U:! I) {
   var x: U.T;
-  // let x: U.T = U.F();
 }
 
 class C {}
 
 impl C as I where .T = bool {
-  // fn F() -> bool {
-    // return true;
-  // }
 }
 
 class D {}
 impl D as I where .T = i32 {
-  // fn F() -> i32 {
-    // return 7;
-  // }
 }
 
 fn H() {
@@ -82,12 +75,12 @@ fn H() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_different_associated_const.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 40, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 41, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 42, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 40, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 34, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 35, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 33, column: 1, scope: !4)
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.20b39d5926c2f995", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DILocation(line: 21, column: 3, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 20, column: 1, scope: !10)
