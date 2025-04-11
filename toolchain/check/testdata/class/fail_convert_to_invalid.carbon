@@ -62,7 +62,8 @@ fn Make() -> C {
 // CHECK:STDOUT:     %.loc16_3: <error> = var_pattern %.loc16_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref <error> = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: <error>} [concrete = <error>]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

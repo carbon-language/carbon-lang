@@ -29,12 +29,13 @@ auto HandleParseNode(Context& context, Parse::TupleLiteralId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::TupleLiteralStart>();
   const auto& inst_block = context.inst_blocks().Get(refs_id);
-  llvm::SmallVector<SemIR::TypeId> type_ids;
-  type_ids.reserve(inst_block.size());
+  llvm::SmallVector<SemIR::InstId> type_inst_ids;
+  type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
-    type_ids.push_back(context.insts().Get(inst).type_id());
+    type_inst_ids.push_back(
+        context.types().GetInstId(context.insts().Get(inst).type_id()));
   }
-  auto type_id = GetTupleType(context, type_ids);
+  auto type_id = GetTupleType(context, type_inst_ids);
 
   auto value_id = AddInst<SemIR::TupleLiteral>(
       context, node_id, {.type_id = type_id, .elements_id = refs_id});

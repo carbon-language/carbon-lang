@@ -113,6 +113,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [concrete = constants.%FinalClass]
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -139,6 +140,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [concrete = constants.%AbstractClass]
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -157,6 +159,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [concrete = constants.%BaseClass]
 // CHECK:STDOUT:     %self: %BaseClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

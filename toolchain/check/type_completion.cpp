@@ -252,14 +252,14 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     }
     case CARBON_KIND(SemIR::StructType inst): {
       for (auto field : context_->struct_type_fields().Get(inst.fields_id)) {
-        Push(field.type_id);
+        Push(context_->types().GetTypeIdForTypeInstId(field.type_inst_id));
       }
       break;
     }
     case CARBON_KIND(SemIR::TupleType inst): {
       for (auto element_type_id :
-           context_->type_blocks().Get(inst.elements_id)) {
-        Push(element_type_id);
+           context_->inst_blocks().Get(inst.elements_id)) {
+        Push(context_->types().GetTypeIdForTypeInstId(element_type_id));
       }
       break;
     }
@@ -398,11 +398,14 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   bool same_as_object_rep = true;
   SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
   for (auto field : fields) {
-    auto field_info = GetNestedInfo(field.type_id);
+    auto field_type_id =
+        context_->types().GetTypeIdForTypeInstId(field.type_inst_id);
+    auto field_info = GetNestedInfo(field_type_id);
     if (!field_info.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
-                                                  field.type_id)) {
+                                                  field_type_id)) {
       same_as_object_rep = false;
-      field.type_id = field_info.value_repr.type_id;
+      field.type_inst_id =
+          context_->types().GetInstId(field_info.value_repr.type_id);
     }
     value_rep_fields.push_back(field);
     // Take the first non-None abstract_class_id, if any.
@@ -427,24 +430,27 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                                      SemIR::TupleType tuple_type) const
     -> SemIR::CompleteTypeInfo {
   // TODO: Share more code with structs.
-  auto elements = context_->type_blocks().Get(tuple_type.elements_id);
+  auto elements = context_->inst_blocks().Get(tuple_type.elements_id);
   if (elements.empty()) {
     return {.value_repr = MakeEmptyValueRepr()};
   }
 
   // Find the value representation for each element, and construct a tuple
   // of value representations.
-  llvm::SmallVector<SemIR::TypeId> value_rep_elements;
+  llvm::SmallVector<SemIR::InstId> value_rep_elements;
   value_rep_elements.reserve(elements.size());
   bool same_as_object_rep = true;
   SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
-  for (auto element_type_id : elements) {
+  for (auto element_type_inst_id : elements) {
+    auto element_type_id =
+        context_->types().GetTypeIdForTypeInstId(element_type_inst_id);
     auto element_info = GetNestedInfo(element_type_id);
     if (!element_info.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
                                                     element_type_id)) {
       same_as_object_rep = false;
     }
-    value_rep_elements.push_back(element_info.value_repr.type_id);
+    value_rep_elements.push_back(
+        context_->types().GetInstId(element_info.value_repr.type_id));
     // Take the first non-None abstract_class_id, if any.
     if (element_info.abstract_class_id.has_value() &&
         !abstract_class_id.has_value()) {
@@ -552,11 +558,12 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   // specific type to be complete.
   if (type_id.is_symbolic()) {
     // TODO: Deduplicate these.
-    AddInstInNoBlock(context, loc_id,
-                     SemIR::RequireCompleteType{
-                         .type_id = GetSingletonType(
-                             context, SemIR::WitnessType::SingletonInstId),
-                         .complete_type_id = type_id});
+    AddInstInNoBlock(
+        context, loc_id,
+        SemIR::RequireCompleteType{
+            .type_id =
+                GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+            .complete_type_inst_id = context.types().GetInstId(type_id)});
   }
 
   return true;

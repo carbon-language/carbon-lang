@@ -249,4 +249,10 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
   }
 }
 
+auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool {
+  return impl.is_final ||
+         (context.constant_values().Get(impl.self_id).is_concrete() &&
+          context.constant_values().Get(impl.constraint_id).is_concrete());
+}
+
 }  // namespace Carbon::Check

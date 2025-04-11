@@ -153,6 +153,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -173,10 +174,10 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %N.loc6_9.2, constants.%Convert.specific_fn.8a8 [symbolic = %bound_method (constants.%bound_method.f9c)]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %bound_method(%N.loc6_9.2) [symbolic = %int.convert_checked (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %iN.builtin: type = int_type signed, %int.convert_checked [symbolic = %iN.builtin (constants.%iN.builtin.8fe)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%iN.builtin (%iN.builtin.8fe) [symbolic = %require_complete (constants.%require_complete.e34)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %iN.builtin [symbolic = %require_complete (constants.%require_complete.e34)]
 // CHECK:STDOUT:   %A.elem.loc12: type = unbound_element_type %A, %iN.builtin [symbolic = %A.elem.loc12 (constants.%A.elem.07f)]
-// CHECK:STDOUT:   %struct_type.base.n: type = struct_type {.base: %B, .n: @A.%iN.builtin (%iN.builtin.8fe)} [symbolic = %struct_type.base.n (constants.%struct_type.base.n)]
-// CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness @A.%struct_type.base.n (%struct_type.base.n) [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.beb)]
+// CHECK:STDOUT:   %struct_type.base.n.loc13_1.2: type = struct_type {.base: %B, .n: @A.%iN.builtin (%iN.builtin.8fe)} [symbolic = %struct_type.base.n.loc13_1.2 (constants.%struct_type.base.n)]
+// CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness %struct_type.base.n.loc13_1.2 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.beb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
@@ -186,7 +187,8 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %.loc12_3: @A.%A.elem.loc12 (%A.elem.07f) = var_pattern %.loc12_8
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @A.%A.elem.loc12 (%A.elem.07f) = var <none>
-// CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %struct_type.base.n [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.beb)]
+// CHECK:STDOUT:     %struct_type.base.n.loc13_1.1: type = struct_type {.base: %B, .n: %iN.builtin.8fe} [symbolic = %struct_type.base.n.loc13_1.2 (constants.%struct_type.base.n)]
+// CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %struct_type.base.n.loc13_1.1 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.beb)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -240,7 +242,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %iN.builtin => <error>
 // CHECK:STDOUT:   %require_complete => <error>
 // CHECK:STDOUT:   %A.elem.loc12 => <error>
-// CHECK:STDOUT:   %struct_type.base.n => <error>
+// CHECK:STDOUT:   %struct_type.base.n.loc13_1.2 => <error>
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -208,6 +208,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -221,7 +222,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %.loc15_3: <error> = var_pattern %.loc15_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref <error> = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: <error>} [concrete = <error>]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -250,6 +252,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -296,6 +299,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -333,6 +337,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -390,6 +395,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -442,6 +448,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -457,7 +464,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %.loc10_3: %Derived.elem.ad9 = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Derived.elem.ad9 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.c06 [concrete = constants.%complete_type.b4a]
+// CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Abstract, .d: %empty_struct_type} [concrete = constants.%struct_type.base.d.c06]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d [concrete = constants.%complete_type.b4a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -515,6 +523,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -530,6 +539,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %.loc10_3: %Derived.elem.ad9 = var_pattern %.loc10_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Derived.elem.ad9 = var <none>
+// CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Abstract, .d: %empty_struct_type} [concrete = constants.%struct_type.base.d]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d [concrete = constants.%complete_type.b4a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -594,7 +604,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %.loc5_3: %Abstract.elem = var_pattern %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Abstract.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.225 [concrete = constants.%complete_type.8c6]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_struct_type} [concrete = constants.%struct_type.a.225]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.8c6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -610,7 +621,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %.loc11_3: %Derived.elem.ad9 = var_pattern %.loc11_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Derived.elem.ad9 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.c06 [concrete = constants.%complete_type.b4a]
+// CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Abstract, .d: %empty_struct_type} [concrete = constants.%struct_type.base.d.c06]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d [concrete = constants.%complete_type.b4a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -650,6 +662,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -699,6 +712,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

@@ -14,49 +14,124 @@ namespace {
 
 using ::testing::Eq;
 
-TEST(IdsTest, LocIdIsNone) {
-  LocId loc_id = Parse::NodeId::None;
+TEST(IdsTest, LocIdValues) {
+  // This testing should match the ranges documented on LocId.
+  EXPECT_THAT(static_cast<LocId>(Parse::NodeId::None).index, Eq(-1));
+
+  EXPECT_THAT(static_cast<LocId>(InstId(0)).index, Eq(0));
+  EXPECT_THAT(
+      static_cast<LocId>(InstId(std::numeric_limits<int32_t>::max())).index,
+      Eq(std::numeric_limits<int32_t>::max()));
+
+  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(0)).index, Eq(-2));
+  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1)).index,
+              Eq(-2 - (1 << 24) + 1));
+
+  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 24)));
+  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1)).index,
+              Eq(-(1 << 29) + 1));
+}
+
+// A standard parameterized test for (implicit, token_only, index).
+class IdsTestWithParam
+    : public testing::TestWithParam<std::tuple<bool, bool, int32_t>> {
+ public:
+  explicit IdsTestWithParam() {
+    llvm::errs() << "implicit=" << is_implicit()
+                 << ", token_only=" << is_token_only()
+                 << ", index=" << std::get<2>(GetParam()) << "\n";
+  }
+
+  // Returns IdT with its matching LocId form. Sets flags based on test
+  // parameters.
+  template <typename IdT>
+  auto BuildIdAndLocId() -> std::pair<IdT, LocId> {
+    auto [implicit, token_only, index] = GetParam();
+    IdT id(index);
+    LocId loc_id = id;
+    if (implicit) {
+      loc_id = loc_id.ToImplicit();
+    }
+    if (token_only) {
+      loc_id = loc_id.ToTokenOnly();
+    }
+    return {id, loc_id};
+  }
+
+  auto is_implicit() -> bool { return std::get<0>(GetParam()); }
+  auto is_token_only() -> bool { return std::get<1>(GetParam()); }
+};
+
+// Returns a test case generator for edge-case values.
+static auto GetValueRange(int32_t max) -> auto {
+  return testing::Values(0, 1, max - 2, max - 1);
+}
+
+// Returns a test case generator for `IdsTestWithParam` uses.
+static auto CombineWithFlags(auto value_range) -> auto {
+  return testing::Combine(testing::Bool(), testing::Bool(), value_range);
+}
+
+class LocIdAsNoneTestWithParam : public IdsTestWithParam {};
+
+INSTANTIATE_TEST_SUITE_P(
+    LocIdAsNoneTest, LocIdAsNoneTestWithParam,
+    CombineWithFlags(testing::Values(Parse::NodeId::NoneIndex)));
+
+TEST_P(LocIdAsNoneTestWithParam, Test) {
+  auto [_, loc_id] = BuildIdAndLocId<Parse::NodeId>();
   EXPECT_FALSE(loc_id.has_value());
-  EXPECT_FALSE(loc_id.is_node_id());
-  EXPECT_FALSE(loc_id.is_import_ir_inst_id());
+  EXPECT_THAT(loc_id.kind(), Eq(SemIR::LocId::Kind::None));
   EXPECT_FALSE(loc_id.is_implicit());
+  EXPECT_THAT(loc_id.import_ir_inst_id(), Eq(ImportIRInstId::None));
+  EXPECT_THAT(loc_id.inst_id(), Eq(InstId::None));
   EXPECT_THAT(loc_id.node_id(),
               // The actual type is NoneNodeId, so cast to NodeId.
               Eq<Parse::NodeId>(Parse::NodeId::None));
-  EXPECT_THAT(loc_id.import_ir_inst_id(), Eq(ImportIRInstId::None));
 }
 
-TEST(IdsTest, LocIdIsNodeId) {
-  for (auto index : {0, 1, Parse::NodeId::Max - 2, Parse::NodeId::Max - 1}) {
-    SCOPED_TRACE(llvm::formatv("Index: {0}", index));
-    Parse::NodeId node_id(index);
-    LocId loc_id = node_id;
-    EXPECT_TRUE(loc_id.has_value());
-    EXPECT_TRUE(loc_id.is_node_id());
-    EXPECT_FALSE(loc_id.is_import_ir_inst_id());
-    EXPECT_FALSE(loc_id.is_implicit());
-    EXPECT_THAT(loc_id.node_id(), node_id);
+class LocIdAsImportIRInstIdTest : public IdsTestWithParam {};
 
-    loc_id = loc_id.ToImplicit();
-    EXPECT_TRUE(loc_id.has_value());
-    EXPECT_TRUE(loc_id.is_node_id());
-    EXPECT_FALSE(loc_id.is_import_ir_inst_id());
-    EXPECT_TRUE(loc_id.is_implicit());
-    EXPECT_THAT(loc_id.node_id(), node_id);
-  }
+INSTANTIATE_TEST_SUITE_P(Test, LocIdAsImportIRInstIdTest,
+                         CombineWithFlags(GetValueRange(ImportIRInstId::Max)));
+
+TEST_P(LocIdAsImportIRInstIdTest, Test) {
+  auto [import_ir_inst_id, loc_id] = BuildIdAndLocId<ImportIRInstId>();
+  EXPECT_TRUE(loc_id.has_value());
+  ASSERT_THAT(loc_id.kind(), Eq(SemIR::LocId::Kind::ImportIRInstId));
+  EXPECT_THAT(loc_id.import_ir_inst_id(), import_ir_inst_id);
+  EXPECT_FALSE(loc_id.is_implicit());
+  EXPECT_THAT(loc_id.is_token_only(), Eq(is_token_only()));
 }
 
-TEST(IdsTest, LocIdIsImportIRInstId) {
-  for (auto index : {0, 1, ImportIRInstId::Max - 2, ImportIRInstId::Max - 1}) {
-    SCOPED_TRACE(llvm::formatv("Index: {0}", index));
-    ImportIRInstId import_ir_inst_id(index);
-    LocId loc_id = import_ir_inst_id;
-    EXPECT_TRUE(loc_id.has_value());
-    EXPECT_FALSE(loc_id.is_node_id());
-    EXPECT_TRUE(loc_id.is_import_ir_inst_id());
-    EXPECT_FALSE(loc_id.is_implicit());
-    EXPECT_THAT(loc_id.import_ir_inst_id(), import_ir_inst_id);
-  }
+class LocIdAsInstIdTest : public IdsTestWithParam {};
+
+INSTANTIATE_TEST_SUITE_P(
+    Test, LocIdAsInstIdTest,
+    testing::Combine(testing::Values(false), testing::Values(false),
+                     GetValueRange(std::numeric_limits<int32_t>::max())));
+
+TEST_P(LocIdAsInstIdTest, Test) {
+  auto [inst_id, loc_id] = BuildIdAndLocId<InstId>();
+  EXPECT_TRUE(loc_id.has_value());
+  ASSERT_THAT(loc_id.kind(), Eq(SemIR::LocId::Kind::InstId));
+  EXPECT_THAT(loc_id.inst_id(), inst_id);
+  // Note that `is_implicit` and `is_token_only` are invalid to use with
+  // `InstId`.
+}
+
+class LocIdAsNodeIdTest : public IdsTestWithParam {};
+
+INSTANTIATE_TEST_SUITE_P(Test, LocIdAsNodeIdTest,
+                         CombineWithFlags(GetValueRange(Parse::NodeId::Max)));
+
+TEST_P(LocIdAsNodeIdTest, Test) {
+  auto [node_id, loc_id] = BuildIdAndLocId<Parse::NodeId>();
+  EXPECT_TRUE(loc_id.has_value());
+  ASSERT_THAT(loc_id.kind(), Eq(SemIR::LocId::Kind::NodeId));
+  EXPECT_THAT(loc_id.node_id(), node_id);
+  EXPECT_THAT(loc_id.is_implicit(), Eq(is_implicit()));
+  EXPECT_THAT(loc_id.is_token_only(), Eq(is_token_only()));
 }
 
 }  // namespace

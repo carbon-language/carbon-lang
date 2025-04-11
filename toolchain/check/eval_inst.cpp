@@ -7,6 +7,7 @@
 #include <variant>
 
 #include "toolchain/check/action.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/impl_lookup.h"
@@ -312,24 +313,26 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       GetSingletonType(context, SemIR::WitnessType::SingletonInstId);
 
   // If the type is a concrete constant, require it to be complete now.
-  auto complete_type_id = inst.complete_type_id;
-  if (context.types().GetConstantId(complete_type_id).is_concrete()) {
+  auto complete_type_id =
+      context.types().GetTypeIdForTypeInstId(inst.complete_type_inst_id);
+  if (complete_type_id.is_concrete()) {
     if (!TryToCompleteType(context, complete_type_id, inst_id, [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
                             "{0} evaluates to incomplete type {1}",
-                            SemIR::TypeId, SemIR::TypeId);
+                            InstIdAsType, InstIdAsType);
           return context.emitter().Build(
               inst_id, IncompleteTypeInMonomorphization,
               context.insts()
                   .GetAs<SemIR::RequireCompleteType>(inst_id)
-                  .complete_type_id,
-              complete_type_id);
+                  .complete_type_inst_id,
+              inst.complete_type_inst_id);
         })) {
       return ConstantEvalResult::Error;
     }
     return ConstantEvalResult::NewSamePhase(SemIR::CompleteTypeWitness{
         .type_id = witness_type_id,
-        .object_repr_id = context.types().GetObjectRepr(complete_type_id)});
+        .object_repr_type_inst_id = context.types().GetInstId(
+            context.types().GetObjectRepr(complete_type_id))});
   }
 
   // If it's not a concrete constant, require it to be complete once it

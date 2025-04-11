@@ -180,7 +180,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %return.param.loc15: ref %MyInt32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc15: ref %MyInt32 = return_slot %return.param.loc15
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32.builtin [concrete = constants.%complete_type.ec2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%i32.builtin [concrete = constants.%complete_type.ec2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -259,7 +259,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %.loc5_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc5_11: type = converted %.loc5_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc5_11 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

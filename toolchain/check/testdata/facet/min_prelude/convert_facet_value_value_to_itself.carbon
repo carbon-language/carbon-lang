@@ -121,6 +121,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -134,7 +135,7 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.loc16_30.2: type = facet_access_type %T.loc16_15.2 [symbolic = %T.as_type.loc16_30.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @FeedAnimal.%T.as_type.loc16_30.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc16_30.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc16_15.1: %Animal.type](%a.param_patt: @FeedAnimal.%T.as_type.loc16_30.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -148,7 +149,7 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.loc18_32.2: type = facet_access_type %T.loc18_17.2 [symbolic = %T.as_type.loc18_32.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleAnimal.%T.as_type.loc18_32.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc18_32.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %FeedAnimal.specific_fn.loc18_37.2: <specific function> = specific_function constants.%FeedAnimal, @FeedAnimal(%T.loc18_17.2) [symbolic = %FeedAnimal.specific_fn.loc18_37.2 (constants.%FeedAnimal.specific_fn.ec8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc18_17.1: %Animal.type](%a.param_patt: @HandleAnimal.%T.as_type.loc18_32.2 (%T.as_type)) {

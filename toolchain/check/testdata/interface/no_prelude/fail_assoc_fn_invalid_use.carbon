@@ -99,7 +99,7 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc13_4.2, (%T.as_wit.iface0.loc13_4.2) [symbolic = %I.facet (constants.%I.facet)]
 // CHECK:STDOUT:   %.loc13_4.2: type = fn_type_with_self_type constants.%F.type, %I.facet [symbolic = %.loc13_4.2 (constants.%.3d7)]
 // CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.3d7) = impl_witness_access %T.as_wit.iface0.loc13_4.2, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%.loc13_4.2 (%.3d7) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc13_4.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc8_8.1: %I.type) {
 // CHECK:STDOUT:   !entry:

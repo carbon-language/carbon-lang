@@ -82,6 +82,7 @@ fn Test() {
 // CHECK:STDOUT:     %.loc13_3: %Class.elem = var_pattern %.loc13_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc13: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %struct_type.j.k: type = struct_type {.j: %i32, .k: %i32} [concrete = constants.%struct_type.j.k]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [concrete = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

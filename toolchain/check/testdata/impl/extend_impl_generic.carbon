@@ -188,7 +188,8 @@ class X(U:! type) {
 // CHECK:STDOUT:     %.loc9_3: %Param.elem = var_pattern %.loc9_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Param.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.ed6 [concrete = constants.%complete_type.1ec]
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [concrete = constants.%struct_type.x.ed6]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -204,6 +205,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     %HasF.type: type = facet_type <@HasF, @HasF(constants.%Param)> [concrete = constants.%HasF.type.b18]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.3b1.%F.decl) [concrete = constants.%impl_witness.9bf]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -418,7 +420,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %I.type.loc9_21.2: type = facet_type <@I, @I(%U)> [symbolic = %I.type.loc9_21.2 (constants.%I.type.325e65.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%I.type.loc9_21.2 (%I.type.325e65.2) [symbolic = %require_complete (constants.%require_complete.cfe)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc9_21.2 [symbolic = %require_complete (constants.%require_complete.cfe)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%F.decl), @impl(%U) [symbolic = %impl_witness (constants.%impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -456,7 +458,7 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%U.loc8_9.2)> [symbolic = %I.type (constants.%I.type.325e65.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @X.%I.type (%I.type.325e65.2) [symbolic = %require_complete (constants.%require_complete.cfe)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type [symbolic = %require_complete (constants.%require_complete.cfe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     impl_decl @impl [concrete] {} {
@@ -467,6 +469,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(constants.%U) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
 // CHECK:STDOUT:     %.loc9: type = specific_constant @impl.%I.type.loc9_21.1, @impl(constants.%U) [symbolic = %I.type (constants.%I.type.325e65.2)]
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -491,11 +494,11 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%U)> [symbolic = %I.type (constants.%I.type.325e65.2)]
-// CHECK:STDOUT:   %require_complete.loc10_25: <witness> = require_complete_type @F.2.%I.type (%I.type.325e65.2) [symbolic = %require_complete.loc10_25 (constants.%require_complete.cfe)]
+// CHECK:STDOUT:   %require_complete.loc10_25: <witness> = require_complete_type %I.type [symbolic = %require_complete.loc10_25 (constants.%require_complete.cfe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc10_14: <witness> = require_complete_type @F.2.%X (%X) [symbolic = %require_complete.loc10_14 (constants.%require_complete.441)]
-// CHECK:STDOUT:   %require_complete.loc10_23: <witness> = require_complete_type @F.2.%U (%U) [symbolic = %require_complete.loc10_23 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc10_14: <witness> = require_complete_type %X [symbolic = %require_complete.loc10_14 (constants.%require_complete.441)]
+// CHECK:STDOUT:   %require_complete.loc10_23: <witness> = require_complete_type %U [symbolic = %require_complete.loc10_23 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%X (%X)](%t.param_patt: @F.2.%U (%U)) {
 // CHECK:STDOUT:   !entry:

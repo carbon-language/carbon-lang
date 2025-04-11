@@ -41,14 +41,14 @@ auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
 // `Self` type.
 auto InitialFacetTypeImplWitness(
     Context& context, SemIR::LocId witness_loc_id,
-    SemIR::InstId facet_type_inst_id, SemIR::InstId self_type_inst_id,
+    SemIR::TypeInstId facet_type_inst_id, SemIR::TypeInstId self_type_inst_id,
     const SemIR::SpecificInterface& interface_to_witness,
     SemIR::SpecificId self_specific_id, bool is_definition) -> SemIR::InstId;
 
 // Returns `true` if the facet type is complete. Otherwise issues a diagnostic
 // and returns `false`.
-auto RequireCompleteFacetTypeForImplDefinition(Context& context, SemIRLoc loc,
-                                               SemIR::InstId facet_type_inst_id)
+auto RequireCompleteFacetTypeForImplDefinition(
+    Context& context, SemIRLoc loc, SemIR::TypeInstId facet_type_inst_id)
     -> bool;
 
 // Replaces the placeholder created by `InitialFacetTypeImplWitness` with an

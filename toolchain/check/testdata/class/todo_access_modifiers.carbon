@@ -64,6 +64,7 @@ class Access {
 // CHECK:STDOUT:     %.loc19_13: %Access.elem = var_pattern %.loc19_18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc19: ref %Access.elem = var <none>
+// CHECK:STDOUT:   %struct_type.k.l: type = struct_type {.k: %i32, .l: %i32} [concrete = constants.%struct_type.k.l]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.l [concrete = constants.%complete_type.48a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

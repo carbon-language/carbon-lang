@@ -53,7 +53,7 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
-  auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
+  auto as_type = ExprAsType(context, type_node_id, type_inst_id);
 
   // If the previous node was `IdentifierNameBeforeParams`, then it would have
   // caused these entries to be pushed to the pattern stacks. But it's possible
@@ -69,10 +69,11 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   }
 
   auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
-      context, node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
+      context, node_id,
+      {.type_id = as_type.type_id, .type_inst_id = as_type.inst_id});
   auto param_pattern_id = AddPatternInst<SemIR::OutParamPattern>(
       context, node_id,
-      {.type_id = type_id,
+      {.type_id = as_type.type_id,
        .subpattern_id = return_slot_pattern_id,
        .index = SemIR::CallParamIndex::None});
   context.node_stack().Push(node_id, param_pattern_id);

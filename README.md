@@ -145,12 +145,13 @@ and the language:
     -   Operator overloading
     -   Lexical and syntactic structure
     -   Code organization and modular structure
--   A prototype interpreter demo that can both run isolated examples and gives a
-    detailed analysis of the specific semantic model and abstract machine of
-    Carbon. We call this the [Carbon Explorer](/explorer/).
 -   An under-development [compiler and toolchain](/toolchain/) that will compile
     Carbon (and eventually C++ code as well) into standard executable code. This
     is where most of our current implementation efforts are directed.
+    -   Historically, there was also a prototype
+        [explorer](https://github.com/carbon-language/explorer) interpreter that
+        implemented an older version of the Carbon language design, but is no
+        longer under development and has been archived.
 
 If you're interested in contributing, we're currently focused on developing the
 Carbon toolchain until it can
@@ -353,7 +354,6 @@ Learn more about the Carbon project:
 
 -   [Project goals](/docs/project/goals.md)
 -   [Language design overview](/docs/design)
--   [Carbon Explorer](/explorer)
 -   [Carbon Toolchain](/toolchain)
 -   [FAQ](/docs/project/faq.md)
 

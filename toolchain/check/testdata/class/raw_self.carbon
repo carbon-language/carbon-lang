@@ -155,6 +155,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %.loc14_3: %Class.elem = var_pattern %.loc14_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

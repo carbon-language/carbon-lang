@@ -526,6 +526,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc9_3: %tuple.type = var_pattern %.loc9_20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %tuple.type = var <none>
+// CHECK:STDOUT:   %struct_type.x.y: type = struct_type {.x: %empty_struct_type, .y: %empty_struct_type} [concrete = constants.%struct_type.x.y]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

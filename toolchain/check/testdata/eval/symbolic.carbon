@@ -96,12 +96,12 @@ fn G(N:! i32) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr.loc13_12.2: type = ptr_type %T.loc12_6.2 [symbolic = %ptr.loc13_12.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:   %const.loc13_15.2: type = const_type %T.loc12_6.2 [symbolic = %const.loc13_15.2 (constants.%const)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%ptr.loc13_12.2 (%ptr.79f), @F.%const.loc13_15.2 (%const)) [symbolic = %tuple.type (constants.%tuple.type.4f2)]
-// CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @F.%tuple.type (%tuple.type.4f2) [symbolic = %require_complete.loc13 (constants.%require_complete.155)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc13_12.2, %const.loc13_15.2) [symbolic = %tuple.type (constants.%tuple.type.4f2)]
+// CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc13 (constants.%require_complete.155)]
 // CHECK:STDOUT:   %struct_type.a.loc14_16.2: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)]
-// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type @F.%struct_type.a.loc14_16.2 (%struct_type.a) [symbolic = %require_complete.loc14 (constants.%require_complete.28a)]
+// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %struct_type.a.loc14_16.2 [symbolic = %require_complete.loc14 (constants.%require_complete.28a)]
 // CHECK:STDOUT:   %array_type.loc15_20.2: type = array_type constants.%int_5, %T.loc12_6.2 [symbolic = %array_type.loc15_20.2 (constants.%array_type.ec2)]
-// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @F.%array_type.loc15_20.2 (%array_type.ec2) [symbolic = %require_complete.loc15 (constants.%require_complete.fe1)]
+// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %array_type.loc15_20.2 [symbolic = %require_complete.loc15 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc12_6.1: type) {
 // CHECK:STDOUT:   !entry:
@@ -126,7 +126,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %v.var: ref @F.%struct_type.a.loc14_16.2 (%struct_type.a) = var v
 // CHECK:STDOUT:     %.loc14_16: type = splice_block %struct_type.a.loc14_16.1 [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)] {
 // CHECK:STDOUT:       %T.ref.loc14: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
-// CHECK:STDOUT:       %struct_type.a.loc14_16.1: type = struct_type {.a: %T} [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:       %struct_type.a.loc14_16.1: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc14_16.2 (%struct_type.a) = bind_name v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
@@ -153,7 +153,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %bound_method.loc19_21.3: <bound method> = bound_method %N.loc18_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc19_21.3 (constants.%bound_method)]
 // CHECK:STDOUT:   %int.convert_checked.loc19_21.2: init Core.IntLiteral = call %bound_method.loc19_21.3(%N.loc18_6.2) [symbolic = %int.convert_checked.loc19_21.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %array_type.loc19_22.2: type = array_type %int.convert_checked.loc19_21.2, constants.%i32 [symbolic = %array_type.loc19_22.2 (constants.%array_type.c7c)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type.loc19_22.2 (%array_type.c7c) [symbolic = %require_complete (constants.%require_complete.7cb)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc19_22.2 [symbolic = %require_complete (constants.%require_complete.7cb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.patt.loc18_6.1: %i32) {
 // CHECK:STDOUT:   !entry:

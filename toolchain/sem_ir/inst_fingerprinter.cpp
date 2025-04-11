@@ -134,17 +134,9 @@ struct Worklist {
     AddBlock(sem_ir->inst_blocks().Get(inst_block_id));
   }
 
-  auto Add(TypeBlockId type_block_id) -> void {
-    if (!type_block_id.has_value()) {
-      AddInvalid();
-      return;
-    }
-    AddBlock(sem_ir->type_blocks().Get(type_block_id));
-  }
-
   auto Add(StructTypeField field) -> void {
     Add(field.name_id);
-    Add(field.type_id);
+    Add(field.type_inst_id);
   }
 
   auto Add(StructTypeFieldsId struct_type_fields_id) -> void {

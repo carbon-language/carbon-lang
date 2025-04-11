@@ -99,6 +99,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -112,7 +113,7 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.loc16_30.2: type = facet_access_type %T.loc16_15.2 [symbolic = %T.as_type.loc16_30.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @WalkAnimal.%T.as_type.loc16_30.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc16_30.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc16_15.1: %Animal.type](%a.param_patt: @WalkAnimal.%T.as_type.loc16_30.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:

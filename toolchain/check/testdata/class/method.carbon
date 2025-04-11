@@ -293,7 +293,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc17_3: %Class.elem = var_pattern %.loc17_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.0bf [concrete = constants.%complete_type.954]
+// CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: %i32} [concrete = constants.%struct_type.k.0bf]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [concrete = constants.%complete_type.954]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

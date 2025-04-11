@@ -10,7 +10,7 @@ package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testdata",
-    data = glob([
+    srcs = glob([
         "testdata/**/*.carbon",
         "testdata/**/*.cpp",
     ]),

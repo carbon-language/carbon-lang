@@ -260,6 +260,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -268,6 +269,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -276,6 +278,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Z {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -289,9 +292,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
 // CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(%T)> [symbolic = %A.type (constants.%A.type.75a)]
 // CHECK:STDOUT:   %Self: @F.1.%A.type (%A.type.75a) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.753)]
-// CHECK:STDOUT:   %tuple.type.loc6_38.1: type = tuple_type (type, @F.1.%A.type (%A.type.75a), type) [symbolic = %tuple.type.loc6_38.1 (constants.%tuple.type.e59)]
+// CHECK:STDOUT:   %tuple.type.loc6_38.1: type = tuple_type (type, %A.type, type) [symbolic = %tuple.type.loc6_38.1 (constants.%tuple.type.e59)]
 // CHECK:STDOUT:   %Self.as_type.loc6_38.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc6_38.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %tuple.type.loc6_38.2: type = tuple_type (@F.1.%T (%T.8b3), @F.1.%Self.as_type.loc6_38.1 (%Self.as_type), @F.1.%U.loc6_8.1 (%U.2cb)) [symbolic = %tuple.type.loc6_38.2 (constants.%tuple.type.bd2)]
+// CHECK:STDOUT:   %tuple.type.loc6_38.2: type = tuple_type (%T, %Self.as_type.loc6_38.1, %U.loc6_8.1) [symbolic = %tuple.type.loc6_38.2 (constants.%tuple.type.bd2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.patt.loc6_8.1: type, %u.param_patt: @F.1.%U.loc6_8.1 (%U.2cb)) -> @F.1.%tuple.type.loc6_38.2 (%tuple.type.bd2);
 // CHECK:STDOUT: }
@@ -299,12 +302,12 @@ fn CallIndirect() {
 // CHECK:STDOUT: generic fn @F.2(%U.loc16_8.2: type) {
 // CHECK:STDOUT:   %U.loc16_8.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc16_8.1 (constants.%U.8b3)]
 // CHECK:STDOUT:   %U.patt.loc16_8.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc16_8.2 (constants.%U.patt.e01)]
-// CHECK:STDOUT:   %tuple.type.loc16: type = tuple_type (%X, %Y, @F.2.%U.loc16_8.1 (%U.8b3)) [symbolic = %tuple.type.loc16 (constants.%tuple.type.765)]
+// CHECK:STDOUT:   %tuple.type.loc16: type = tuple_type (constants.%X, constants.%Y, %U.loc16_8.1) [symbolic = %tuple.type.loc16 (constants.%tuple.type.765)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc16_24: <witness> = require_complete_type @F.2.%tuple.type.loc16 (%tuple.type.765) [symbolic = %require_complete.loc16_24 (constants.%require_complete.816)]
-// CHECK:STDOUT:   %require_complete.loc16_19: <witness> = require_complete_type @F.2.%U.loc16_8.1 (%U.8b3) [symbolic = %require_complete.loc16_19 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %tuple.type.loc17: type = tuple_type (%empty_struct_type, %empty_struct_type, @F.2.%U.loc16_8.1 (%U.8b3)) [symbolic = %tuple.type.loc17 (constants.%tuple.type.a41)]
+// CHECK:STDOUT:   %require_complete.loc16_24: <witness> = require_complete_type %tuple.type.loc16 [symbolic = %require_complete.loc16_24 (constants.%require_complete.816)]
+// CHECK:STDOUT:   %require_complete.loc16_19: <witness> = require_complete_type %U.loc16_8.1 [symbolic = %require_complete.loc16_19 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %tuple.type.loc17: type = tuple_type (constants.%empty_struct_type, constants.%empty_struct_type, %U.loc16_8.1) [symbolic = %tuple.type.loc17 (constants.%tuple.type.a41)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.patt.loc16_8.1: type, %u.param_patt: @F.2.%U.loc16_8.1 (%U.8b3)) -> %return.param_patt: @F.2.%tuple.type.loc16 (%tuple.type.765) {
 // CHECK:STDOUT:   !entry:
@@ -365,8 +368,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %.loc26_4.3: type = fn_type_with_self_type constants.%F.type.13d, %A.facet [symbolic = %.loc26_4.3 (constants.%.591)]
 // CHECK:STDOUT:   %impl.elem0.loc26_4.2: @CallGeneric.%.loc26_4.3 (%.591) = impl_witness_access %T.as_wit.iface0.loc26_4.2, element0 [symbolic = %impl.elem0.loc26_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc26_4.2: <specific function> = specific_impl_function %impl.elem0.loc26_4.2, @F.1(constants.%X, %A.facet, constants.%Z) [symbolic = %specific_impl_fn.loc26_4.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%X, @CallGeneric.%T.as_type.loc26_4.2 (%T.as_type), %Z) [symbolic = %tuple.type (constants.%tuple.type.e28)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGeneric.%tuple.type (%tuple.type.e28) [symbolic = %require_complete (constants.%require_complete.500)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (constants.%X, %T.as_type.loc26_4.2, constants.%Z) [symbolic = %tuple.type (constants.%tuple.type.e28)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete.500)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc25_16.1: %A.type.91f) {
 // CHECK:STDOUT:   !entry:
@@ -706,9 +709,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %V2.patt.loc14_25.2: type = symbolic_binding_pattern V2, 1 [symbolic = %V2.patt.loc14_25.2 (constants.%V2.patt)]
 // CHECK:STDOUT:   %W.loc14_36.2: type = bind_symbolic_name W, 2 [symbolic = %W.loc14_36.2 (constants.%W)]
 // CHECK:STDOUT:   %W.patt.loc14_36.2: type = symbolic_binding_pattern W, 2 [symbolic = %W.patt.loc14_36.2 (constants.%W.patt)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (@impl.%V1.loc14_14.2 (%V1), @impl.%V2.loc14_25.2 (%V2)) [symbolic = %tuple.type (constants.%tuple.type.30b)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%V1.loc14_14.2, %V2.loc14_25.2) [symbolic = %tuple.type (constants.%tuple.type.30b)]
 // CHECK:STDOUT:   %A.type.loc14_61.2: type = facet_type <@A, @A(%W.loc14_36.2)> [symbolic = %A.type.loc14_61.2 (constants.%A.type.f21)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%A.type.loc14_61.2 (%A.type.f21) [symbolic = %require_complete (constants.%require_complete.796)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %A.type.loc14_61.2 [symbolic = %require_complete (constants.%require_complete.796)]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%F.decl), @impl(%V1.loc14_14.2, %V2.loc14_25.2, %W.loc14_36.2) [symbolic = %impl_witness (constants.%impl_witness.0d8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -749,6 +752,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -757,6 +761,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y1 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -765,6 +770,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y2 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -773,6 +779,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Z {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -786,9 +793,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
 // CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(%T)> [symbolic = %A.type (constants.%A.type.75a)]
 // CHECK:STDOUT:   %Self: @F.1.%A.type (%A.type.75a) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.753)]
-// CHECK:STDOUT:   %tuple.type.loc6_38.1: type = tuple_type (type, @F.1.%A.type (%A.type.75a), type) [symbolic = %tuple.type.loc6_38.1 (constants.%tuple.type.e59)]
+// CHECK:STDOUT:   %tuple.type.loc6_38.1: type = tuple_type (type, %A.type, type) [symbolic = %tuple.type.loc6_38.1 (constants.%tuple.type.e59)]
 // CHECK:STDOUT:   %Self.as_type.loc6_38.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc6_38.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %tuple.type.loc6_38.2: type = tuple_type (@F.1.%T (%T.8b3), @F.1.%Self.as_type.loc6_38.1 (%Self.as_type), @F.1.%U.loc6_8.1 (%U.2cb)) [symbolic = %tuple.type.loc6_38.2 (constants.%tuple.type.bd2)]
+// CHECK:STDOUT:   %tuple.type.loc6_38.2: type = tuple_type (%T, %Self.as_type.loc6_38.1, %U.loc6_8.1) [symbolic = %tuple.type.loc6_38.2 (constants.%tuple.type.bd2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.patt.loc6_8.1: type, %u.param_patt: @F.1.%U.loc6_8.1 (%U.2cb)) -> @F.1.%tuple.type.loc6_38.2 (%tuple.type.bd2);
 // CHECK:STDOUT: }
@@ -799,19 +806,19 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %W: type = bind_symbolic_name W, 2 [symbolic = %W (constants.%W)]
 // CHECK:STDOUT:   %V1: type = bind_symbolic_name V1, 0 [symbolic = %V1 (constants.%V1)]
 // CHECK:STDOUT:   %V2: type = bind_symbolic_name V2, 1 [symbolic = %V2 (constants.%V2)]
-// CHECK:STDOUT:   %tuple.type.loc17_42.1: type = tuple_type (@F.2.%V1 (%V1), @F.2.%V2 (%V2)) [symbolic = %tuple.type.loc17_42.1 (constants.%tuple.type.30b)]
-// CHECK:STDOUT:   %tuple.type.loc17_42.2: type = tuple_type (@F.2.%W (%W), @F.2.%tuple.type.loc17_42.1 (%tuple.type.30b), @F.2.%U.loc17_8.1 (%U.753)) [symbolic = %tuple.type.loc17_42.2 (constants.%tuple.type.8ae)]
+// CHECK:STDOUT:   %tuple.type.loc17_42.1: type = tuple_type (%V1, %V2) [symbolic = %tuple.type.loc17_42.1 (constants.%tuple.type.30b)]
+// CHECK:STDOUT:   %tuple.type.loc17_42.2: type = tuple_type (%W, %tuple.type.loc17_42.1, %U.loc17_8.1) [symbolic = %tuple.type.loc17_42.2 (constants.%tuple.type.8ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc17_24: <witness> = require_complete_type @F.2.%tuple.type.loc17_42.2 (%tuple.type.8ae) [symbolic = %require_complete.loc17_24 (constants.%require_complete.d4d)]
-// CHECK:STDOUT:   %require_complete.loc17_19: <witness> = require_complete_type @F.2.%U.loc17_8.1 (%U.753) [symbolic = %require_complete.loc17_19 (constants.%require_complete.ed4)]
+// CHECK:STDOUT:   %require_complete.loc17_24: <witness> = require_complete_type %tuple.type.loc17_42.2 [symbolic = %require_complete.loc17_24 (constants.%require_complete.d4d)]
+// CHECK:STDOUT:   %require_complete.loc17_19: <witness> = require_complete_type %U.loc17_8.1 [symbolic = %require_complete.loc17_19 (constants.%require_complete.ed4)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%V1, %V2, %W) [symbolic = %F.type (constants.%F.type.b3e)]
 // CHECK:STDOUT:   %F: @F.2.%F.type (%F.type.b3e) = struct_value () [symbolic = %F (constants.%F.d79)]
 // CHECK:STDOUT:   %F.specific_fn.loc18_12.2: <specific function> = specific_function %F, @F.2(%V1, %V2, %W, %U.loc17_8.1) [symbolic = %F.specific_fn.loc18_12.2 (constants.%F.specific_fn.7d9)]
-// CHECK:STDOUT:   %require_complete.loc18_18.1: <witness> = require_complete_type @F.2.%W (%W) [symbolic = %require_complete.loc18_18.1 (constants.%require_complete.f7f)]
-// CHECK:STDOUT:   %require_complete.loc18_18.2: <witness> = require_complete_type @F.2.%tuple.type.loc17_42.1 (%tuple.type.30b) [symbolic = %require_complete.loc18_18.2 (constants.%require_complete.fe1)]
-// CHECK:STDOUT:   %require_complete.loc18_18.3: <witness> = require_complete_type @F.2.%V1 (%V1) [symbolic = %require_complete.loc18_18.3 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %require_complete.loc18_18.4: <witness> = require_complete_type @F.2.%V2 (%V2) [symbolic = %require_complete.loc18_18.4 (constants.%require_complete.b54)]
+// CHECK:STDOUT:   %require_complete.loc18_18.1: <witness> = require_complete_type %W [symbolic = %require_complete.loc18_18.1 (constants.%require_complete.f7f)]
+// CHECK:STDOUT:   %require_complete.loc18_18.2: <witness> = require_complete_type %tuple.type.loc17_42.1 [symbolic = %require_complete.loc18_18.2 (constants.%require_complete.fe1)]
+// CHECK:STDOUT:   %require_complete.loc18_18.3: <witness> = require_complete_type %V1 [symbolic = %require_complete.loc18_18.3 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc18_18.4: <witness> = require_complete_type %V2 [symbolic = %require_complete.loc18_18.4 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.patt.loc17_8.1: type, %u.param_patt: @F.2.%U.loc17_8.1 (%U.753)) -> %return.param_patt: @F.2.%tuple.type.loc17_42.2 (%tuple.type.8ae) {
 // CHECK:STDOUT:   !entry:
@@ -891,8 +898,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %.loc28_4.3: type = fn_type_with_self_type constants.%F.type.13d, %A.facet [symbolic = %.loc28_4.3 (constants.%.591)]
 // CHECK:STDOUT:   %impl.elem0.loc28_4.2: @CallGeneric.%.loc28_4.3 (%.591) = impl_witness_access %T.as_wit.iface0.loc28_4.2, element0 [symbolic = %impl.elem0.loc28_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2: <specific function> = specific_impl_function %impl.elem0.loc28_4.2, @F.1(constants.%X, %A.facet, constants.%Z) [symbolic = %specific_impl_fn.loc28_4.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%X, @CallGeneric.%T.as_type.loc28_4.2 (%T.as_type), %Z) [symbolic = %tuple.type (constants.%tuple.type.e28)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallGeneric.%tuple.type (%tuple.type.e28) [symbolic = %require_complete (constants.%require_complete.500)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (constants.%X, %T.as_type.loc28_4.2, constants.%Z) [symbolic = %tuple.type (constants.%tuple.type.e28)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete.500)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc27_16.1: %A.type.91f) {
 // CHECK:STDOUT:   !entry:

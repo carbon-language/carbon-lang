@@ -52,8 +52,8 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr.loc12_11.2: type = ptr_type %T.loc11_6.2 [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
-// CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type @F.%ptr.loc12_11.2 (%ptr) [symbolic = %require_complete.loc12 (constants.%require_complete.6e5)]
-// CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type @F.%U.loc11_16.2 (%U) [symbolic = %require_complete.loc17 (constants.%require_complete.b54)]
+// CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type %ptr.loc12_11.2 [symbolic = %require_complete.loc12 (constants.%require_complete.6e5)]
+// CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type %U.loc11_16.2 [symbolic = %require_complete.loc17 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc11_6.1: type, %U.patt.loc11_16.1: type) {
 // CHECK:STDOUT:   !entry:

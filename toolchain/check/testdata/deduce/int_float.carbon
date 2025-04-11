@@ -136,7 +136,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Int.loc4_42.2: type = class_type @Int, @Int(%N.loc4_6.2) [symbolic = %Int.loc4_42.2 (constants.%Int)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%Int.loc4_42.2 (%Int) [symbolic = %require_complete (constants.%require_complete.b4f)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc4_42.2 [symbolic = %require_complete (constants.%require_complete.b4f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.patt.loc4_6.1: Core.IntLiteral](%n.param_patt: @F.%Int.loc4_42.2 (%Int)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:

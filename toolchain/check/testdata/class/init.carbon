@@ -117,6 +117,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %.loc13_3: %Class.elem.0c0 = var_pattern %.loc13_11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc13: ref %Class.elem.0c0 = var <none>
+// CHECK:STDOUT:   %struct_type.n.next: type = struct_type {.n: %i32, .next: %ptr.e71} [concrete = constants.%struct_type.n.next]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [concrete = constants.%complete_type.78f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

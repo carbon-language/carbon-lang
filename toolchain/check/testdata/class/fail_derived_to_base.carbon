@@ -134,6 +134,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %.loc12_3: %A1.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %A1.elem = var <none>
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -148,6 +149,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %.loc16_3: %A2.elem = var_pattern %.loc16_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %A2.elem = var <none>
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -164,7 +166,8 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %.loc21_3: %B2.elem.4b2 = var_pattern %.loc21_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %B2.elem.4b2 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.618 [concrete = constants.%complete_type.92f]
+// CHECK:STDOUT:   %struct_type.base.b: type = struct_type {.base: %A2, .b: %i32} [concrete = constants.%struct_type.base.b.618]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b [concrete = constants.%complete_type.92f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
