@@ -108,29 +108,38 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     -> std::string {
   RawStringOstream out;
-  if (!loc_id.has_value()) {
-    out << "LocId(<none>)";
-    return out.TakeStr();
-  }
+  switch (loc_id.kind()) {
+    case SemIR::LocId::Kind::None: {
+      out << "LocId(<none>)";
+      break;
+    }
 
-  if (loc_id.is_node_id()) {
-    auto token = context.parse_tree().node_token(loc_id.node_id());
-    auto line = context.tokens().GetLineNumber(token);
-    auto col = context.tokens().GetColumnNumber(token);
-    const char* implicit = loc_id.is_implicit() ? " implicit" : "";
-    out << "LocId(" << FormatEscaped(context.sem_ir().filename()) << ":" << line
-        << ":" << col << implicit << ")";
-  } else {
-    CARBON_CHECK(loc_id.is_import_ir_inst_id());
+    case SemIR::LocId::Kind::ImportIRInstId: {
+      auto import_ir_id = context.sem_ir()
+                              .import_ir_insts()
+                              .Get(loc_id.import_ir_inst_id())
+                              .ir_id;
+      const auto* import_file =
+          context.sem_ir().import_irs().Get(import_ir_id).sem_ir;
+      out << "LocId(import from \"" << FormatEscaped(import_file->filename())
+          << "\")";
+      break;
+    }
 
-    auto import_ir_id = context.sem_ir()
-                            .import_ir_insts()
-                            .Get(loc_id.import_ir_inst_id())
-                            .ir_id;
-    const auto* import_file =
-        context.sem_ir().import_irs().Get(import_ir_id).sem_ir;
-    out << "LocId(import from \"" << FormatEscaped(import_file->filename())
-        << "\")";
+    case SemIR::LocId::Kind::InstId: {
+      out << "LocId(" << SemIR::Dump(context.sem_ir(), loc_id.inst_id()) << ")";
+      break;
+    }
+
+    case SemIR::LocId::Kind::NodeId: {
+      auto token = context.parse_tree().node_token(loc_id.node_id());
+      auto line = context.tokens().GetLineNumber(token);
+      auto col = context.tokens().GetColumnNumber(token);
+      const char* implicit = loc_id.is_implicit() ? " implicit" : "";
+      out << "LocId(" << FormatEscaped(context.sem_ir().filename()) << ":"
+          << line << ":" << col << implicit << ")";
+      break;
+    }
   }
   return out.TakeStr();
 }

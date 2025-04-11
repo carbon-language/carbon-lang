@@ -17,9 +17,9 @@ struct ImplFields {
   // This following members always have values and do not change.
 
   // The type for which the impl is implementing a constraint.
-  InstId self_id;
+  TypeInstId self_id;
   // The constraint that the impl implements.
-  InstId constraint_id;
+  TypeInstId constraint_id;
 
   // The single interface to implement from `constraint_id`.
   // The members are `None` if `constraint_id` isn't complete or doesn't

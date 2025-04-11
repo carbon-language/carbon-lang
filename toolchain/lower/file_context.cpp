@@ -733,7 +733,7 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info)
 
   auto first_owning_decl_loc =
       sem_ir().insts().GetLocId(class_info.first_owning_decl_id);
-  if (first_owning_decl_loc.is_import_ir_inst_id()) {
+  if (first_owning_decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
     // Emit a declaration of an imported vtable using a(n opaque) pointer type.
     // This doesn't have to match the definition that appears elsewhere, it'll
     // still get merged correctly.

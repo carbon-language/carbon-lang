@@ -8,28 +8,45 @@
 
 namespace Carbon::SemIR {
 
-auto TypeStore::GetTypeIdForTypeConstantId(SemIR::ConstantId constant_id) const
-    -> SemIR::TypeId {
+// Verify that the constant value's type is `TypeType` (or an error).
+static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
   CARBON_CHECK(constant_id.is_constant(),
                "Canonicalizing non-constant type: {0}", constant_id);
-  auto type_id = file_->insts()
-                     .Get(file_->constant_values().GetInstId(constant_id))
-                     .type_id();
-  CARBON_CHECK(type_id == SemIR::TypeType::SingletonTypeId ||
-                   constant_id == SemIR::ErrorInst::SingletonConstantId,
+  auto type_id =
+      file.insts().Get(file.constant_values().GetInstId(constant_id)).type_id();
+  CARBON_CHECK(type_id == TypeType::SingletonTypeId ||
+                   constant_id == ErrorInst::SingletonConstantId,
                "Forming type ID for non-type constant of type {0}",
-               GetAsInst(type_id));
-
-  return SemIR::TypeId::ForTypeConstant(constant_id);
+               file.types().GetAsInst(type_id));
 }
 
-auto TypeStore::GetTypeIdForTypeInstId(SemIR::InstId inst_id) const
-    -> SemIR::TypeId {
-  return GetTypeIdForTypeConstantId(file_->constant_values().Get(inst_id));
+auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
+    -> TypeId {
+  CheckTypeOfConstantIsTypeType(*file_, constant_id);
+  return TypeId::ForTypeConstant(constant_id);
 }
 
-auto TypeStore::GetInstId(TypeId type_id) const -> InstId {
-  return file_->constant_values().GetInstId(GetConstantId(type_id));
+auto TypeStore::GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
+  auto constant_id = file_->constant_values().Get(inst_id);
+  CheckTypeOfConstantIsTypeType(*file_, constant_id);
+  return TypeId::ForTypeConstant(constant_id);
+}
+
+auto TypeStore::GetTypeIdForTypeInstId(TypeInstId inst_id) const -> TypeId {
+  auto constant_id = file_->constant_values().Get(inst_id);
+  return TypeId::ForTypeConstant(constant_id);
+}
+
+auto TypeStore::GetAsTypeInstId(InstId inst_id) const -> TypeInstId {
+  auto constant_id = file_->constant_values().Get(inst_id);
+  CheckTypeOfConstantIsTypeType(*file_, constant_id);
+  return TypeInstId::UnsafeMake(inst_id);
+}
+
+auto TypeStore::GetInstId(TypeId type_id) const -> TypeInstId {
+  // The instruction for a TypeId has a value of that TypeId.
+  return TypeInstId::UnsafeMake(
+      file_->constant_values().GetInstId(GetConstantId(type_id)));
 }
 
 auto TypeStore::GetAsInst(TypeId type_id) const -> Inst {
