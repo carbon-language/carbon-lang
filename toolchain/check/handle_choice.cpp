@@ -274,16 +274,17 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   llvm::SmallVector<SemIR::StructTypeField, 1> struct_type_fields;
   struct_type_fields.push_back({
       .name_id = SemIR::NameId::ChoiceDiscriminant,
-      .type_id = discriminant_type_id,
+      .type_inst_id = context.types().GetInstId(discriminant_type_id),
   });
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);
-  auto choice_witness_id =
-      AddInst(context, node_id,
-              SemIR::CompleteTypeWitness{
-                  .type_id = GetSingletonType(
-                      context, SemIR::WitnessType::SingletonInstId),
-                  .object_repr_id = GetStructType(context, fields_id)});
+  auto choice_witness_id = AddInst(
+      context, node_id,
+      SemIR::CompleteTypeWitness{
+          .type_id =
+              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+          .object_repr_type_inst_id =
+              context.types().GetInstId(GetStructType(context, fields_id))});
   // Note: avoid storing a reference to the returned Class, since it may be
   // invalidated by other type constructions.
   context.classes().Get(class_id).complete_type_witness_id = choice_witness_id;

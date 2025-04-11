@@ -754,6 +754,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -773,7 +774,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %.loc7_23: %D.elem = var_pattern %.loc7_28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc7_23: ref %D.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.m.566 [concrete = constants.%complete_type.682]
+// CHECK:STDOUT:   %struct_type.n.m: type = struct_type {.n: %i32.builtin, .m: %i32.builtin} [concrete = constants.%struct_type.n.m.566]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.m [concrete = constants.%complete_type.682]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1184,7 +1186,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %P.D: type = import_ref P//library, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %P.import_ref.7e5: <witness> = import_ref P//library, loc7_35, loaded [concrete = constants.%complete_type.682]
-// CHECK:STDOUT:   %P.import_ref.cab = import_ref P//library, inst47 [no loc], unloaded
+// CHECK:STDOUT:   %P.import_ref.cab = import_ref P//library, inst48 [no loc], unloaded
 // CHECK:STDOUT:   %P.import_ref.a99 = import_ref P//library, loc7_16, unloaded
 // CHECK:STDOUT:   %P.import_ref.9d2 = import_ref P//library, loc7_28, unloaded
 // CHECK:STDOUT:   %P.C: %C.type = import_ref P//library, C, loaded [concrete = constants.%C.generic]

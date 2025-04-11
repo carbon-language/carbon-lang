@@ -186,19 +186,19 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.patt.loc18_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %Empty.type.loc18_26.2: type = facet_type <@Empty, @Empty(%T.loc18_6.2)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3e5fde.2)]
 // CHECK:STDOUT:   %.Self.2: @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.c95)]
-// CHECK:STDOUT:   %require_complete.loc18_34: <witness> = require_complete_type @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2) [symbolic = %require_complete.loc18_34 (constants.%require_complete.22f)]
+// CHECK:STDOUT:   %require_complete.loc18_34: <witness> = require_complete_type %Empty.type.loc18_26.2 [symbolic = %require_complete.loc18_34 (constants.%require_complete.22f)]
 // CHECK:STDOUT:   %Empty.assoc_type: type = assoc_entity_type @Empty, @Empty(%T.loc18_6.2) [symbolic = %Empty.assoc_type (constants.%Empty.assoc_type.3cf698.2)]
 // CHECK:STDOUT:   %assoc0: @H.%Empty.assoc_type (%Empty.assoc_type.3cf698.2) = assoc_entity element0, @Empty.%A [symbolic = %assoc0 (constants.%assoc0.3715ce.2)]
 // CHECK:STDOUT:   %.Self.as_type.loc18_34.2: type = facet_access_type %.Self.2 [symbolic = %.Self.as_type.loc18_34.2 (constants.%.Self.as_type.a75)]
 // CHECK:STDOUT:   %.Self.as_wit.iface0.loc18_34.2: <witness> = facet_access_witness %.Self.2, element0 [symbolic = %.Self.as_wit.iface0.loc18_34.2 (constants.%.Self.as_wit.iface0.663)]
 // CHECK:STDOUT:   %impl.elem0.loc18_34.2: type = impl_witness_access %.Self.as_wit.iface0.loc18_34.2, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.d0b)]
 // CHECK:STDOUT:   %ptr.loc18_40.2: type = ptr_type %T.loc18_6.2 [symbolic = %ptr.loc18_40.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc18_6.2) where %impl.elem0.loc18_34.2 (constants.%impl.elem0.d0b) = %ptr.loc18_40.2 (constants.%ptr.79f)> [symbolic = %Empty_where.type (constants.%Empty_where.type.5a8)]
+// CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc18_6.2) where %impl.elem0.loc18_34.2 = %ptr.loc18_40.2> [symbolic = %Empty_where.type (constants.%Empty_where.type.5a8)]
 // CHECK:STDOUT:   %V.loc18_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc18_43.2 (constants.%V)]
 // CHECK:STDOUT:   %V.patt.loc18_43.2: type = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc18_17: <witness> = require_complete_type @H.%Empty_where.type (%Empty_where.type.5a8) [symbolic = %require_complete.loc18_17 (constants.%require_complete.796)]
+// CHECK:STDOUT:   %require_complete.loc18_17: <witness> = require_complete_type %Empty_where.type [symbolic = %require_complete.loc18_17 (constants.%require_complete.796)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.patt.loc18_6.1: type, %U.param_patt: @H.%Empty_where.type (%Empty_where.type.5a8), %V.patt.loc18_43.1: type) {
 // CHECK:STDOUT:   !entry:

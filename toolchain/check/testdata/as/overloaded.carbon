@@ -158,6 +158,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %.loc12_3: %X.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %X.elem = var <none>
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

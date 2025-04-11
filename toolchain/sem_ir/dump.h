@@ -39,7 +39,6 @@ auto Dump(const File& file, SpecificInterfaceId specific_interface_id)
     -> std::string;
 auto Dump(const File& file, StructTypeFieldsId struct_type_fields_id)
     -> std::string;
-auto Dump(const File& file, TypeBlockId type_block_id) -> std::string;
 auto Dump(const File& file, TypeId type_id) -> std::string;
 
 }  // namespace Carbon::SemIR

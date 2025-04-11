@@ -245,7 +245,7 @@ class C {
 // CHECK:STDOUT:   %.loc5_11: type = converted %.loc5_10, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   adapt_decl %.loc5_11 [concrete]
 // CHECK:STDOUT:   %.loc13: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_tuple.type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -257,7 +257,7 @@ class C {
 // CHECK:STDOUT:   %.loc17_11: type = converted %.loc17_10, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   adapt_decl %.loc17_11 [concrete]
 // CHECK:STDOUT:   %.loc25: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_tuple.type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -315,6 +315,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [concrete = constants.%I.type.e30] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

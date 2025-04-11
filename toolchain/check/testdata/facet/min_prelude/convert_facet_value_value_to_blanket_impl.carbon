@@ -146,7 +146,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %T.as_type.loc19_22.2: type = facet_access_type %T.loc19_9.2 [symbolic = %T.as_type.loc19_22.2 (constants.%T.as_type.27d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Feed.%T.as_type.loc19_22.2 (%T.as_type.27d) [symbolic = %require_complete (constants.%require_complete.c75)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc19_22.2 [symbolic = %require_complete (constants.%require_complete.c75)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc19_9.1: %Eats.type](%e.param_patt: @Feed.%T.as_type.loc19_22.2 (%T.as_type.27d)) {
 // CHECK:STDOUT:   !entry:
@@ -160,7 +160,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %T.as_type.loc21_32.2: type = facet_access_type %T.loc21_17.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @HandleAnimal.%T.as_type.loc21_32.2 (%T.as_type.2ad) [symbolic = %require_complete (constants.%require_complete.234)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc21_32.2 [symbolic = %require_complete (constants.%require_complete.234)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc21_17.2, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
 // CHECK:STDOUT:   %Eats.facet.loc21_43.3: %Eats.type = facet_value %T.as_type.loc21_32.2, (%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc21_43.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc21_37.2: <specific function> = specific_function constants.%Feed, @Feed(%Eats.facet.loc21_43.3) [symbolic = %Feed.specific_fn.loc21_37.2 (constants.%Feed.specific_fn)]

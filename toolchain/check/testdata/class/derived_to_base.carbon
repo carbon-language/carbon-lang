@@ -211,7 +211,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %.loc12_3: %A.elem = var_pattern %.loc12_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %A.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.ba9 [concrete = constants.%complete_type.fd7]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -227,7 +228,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %.loc17_3: %B.elem.5c3 = var_pattern %.loc17_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %B.elem.5c3 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.b44 [concrete = constants.%complete_type.725]
+// CHECK:STDOUT:   %struct_type.base.b: type = struct_type {.base: %A, .b: %i32} [concrete = constants.%struct_type.base.b.b44]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b [concrete = constants.%complete_type.725]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -246,7 +248,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %.loc22_3: %C.elem.646 = var_pattern %.loc22_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem.646 = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c.8e2 [concrete = constants.%complete_type.58a]
+// CHECK:STDOUT:   %struct_type.base.c: type = struct_type {.base: %B, .c: %i32} [concrete = constants.%struct_type.base.c.8e2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c [concrete = constants.%complete_type.58a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

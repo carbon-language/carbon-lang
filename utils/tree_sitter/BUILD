@@ -23,9 +23,9 @@ test_suite(
     name = "tests",
     tags = ["manual"],
     tests = [
-        ":explorer_tests",
         ":string_fail_tests",
         ":string_tests",
+        ":toolchain_testdata_tests",
     ],
 )
 
@@ -66,12 +66,18 @@ cc_binary(
     ],
 )
 
+# TODO: This test is expected to fail. tree-sitter support has fallen
+# significantly behind the toolchain. Anybody looking at this can still use
+# these tests to work on improving support, but also, it may be worth improving
+# the test setup to:
+# - Support file_test's split files.
+# - Better understand when the toolchain doesn't expect a test file to parse.
 cc_test(
-    name = "explorer_tests",
+    name = "toolchain_testdata_tests",
     size = "small",
     srcs = ["test_runner.cpp"],
-    args = ["$(locations //explorer:tree_sitter_testdata)"],
-    data = ["//explorer:tree_sitter_testdata"],
+    args = ["$(locations //toolchain/testing:all_testdata)"],
+    data = ["//toolchain/testing:all_testdata"],
     tags = ["manual"],
     deps = [
         ":parser",

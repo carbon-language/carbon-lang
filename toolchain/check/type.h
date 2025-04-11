@@ -79,12 +79,12 @@ auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)
     -> SemIR::TypeId;
 
 // Returns a tuple type with the given element types.
-auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::TypeId> type_ids)
+auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
     -> SemIR::TypeId;
 
 // Returns an unbound element type.
-auto GetUnboundElementType(Context& context, SemIR::InstId class_type_id,
-                           SemIR::InstId element_type_id) -> SemIR::TypeId;
+auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
+                           SemIR::TypeInstId element_type_id) -> SemIR::TypeId;
 
 }  // namespace Carbon::Check
 

@@ -164,8 +164,8 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     RawStringOstream out;
     out << "<unexpected>." << inst_id;
     auto loc_id = sem_ir_->insts().GetLocId(inst_id);
-    // TODO: Consider handling inst_id cases.
-    if (loc_id.is_node_id()) {
+    // TODO: Consider handling other kinds.
+    if (loc_id.kind() == SemIR::LocId::Kind::NodeId) {
       const auto& tree = sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id.node_id());
       out << ".loc" << tree.tokens().GetLineNumber(token) << "_"
@@ -255,9 +255,9 @@ auto InstNamer::Namespace::AllocateName(
   }
 
   // Append location information to try to disambiguate.
-  // TODO: Consider handling inst_id cases.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
-    if (loc_id->is_node_id()) {
+    // TODO: Consider handling other kinds.
+    if (loc_id->kind() == SemIR::LocId::Kind::NodeId) {
       const auto& tree = inst_namer.sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id->node_id());
       llvm::raw_string_ostream(name)
@@ -909,7 +909,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(TupleType inst): {
-        if (inst.elements_id == TypeBlockId::Empty) {
+        if (inst.elements_id == InstBlockId::Empty) {
           add_inst_name("empty_tuple.type");
         } else {
           add_inst_name("tuple.type");

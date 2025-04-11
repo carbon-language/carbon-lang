@@ -143,7 +143,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                          cast_type_id);
         });
     if (cast_type_id == SemIR::ErrorInst::SingletonTypeId) {
-      cast_type_inst_id = SemIR::ErrorInst::SingletonInstId;
+      cast_type_inst_id = SemIR::ErrorInst::SingletonTypeInstId;
     }
     auto binding_id =
         context.parse_tree().As<Parse::VarBindingPatternId>(node_id);

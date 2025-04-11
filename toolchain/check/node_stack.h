@@ -384,7 +384,7 @@ class NodeStack {
         Parse::NodeCategory::MemberName | Parse::NodeCategory::NonExprName,
         Id::KindFor<SemIR::NameId>());
     set_id_if_category_is(Parse::NodeCategory::ImplAs,
-                          Id::KindFor<SemIR::InstId>());
+                          Id::KindFor<SemIR::TypeInstId>());
     set_id_if_category_is(Parse::NodeCategory::Decl |
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,

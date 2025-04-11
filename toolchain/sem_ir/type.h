@@ -39,8 +39,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Facet values are of the same typishness as types, but are not themselves
   // types, so they can not be passed here. They should be converted to a type
   // through an `as type` conversion, that is, to a value of type `TypeType`.
-  auto GetTypeIdForTypeConstantId(SemIR::ConstantId constant_id) const
-      -> SemIR::TypeId;
+  auto GetTypeIdForTypeConstantId(ConstantId constant_id) const -> TypeId;
 
   // Returns the type ID for an instruction whose constant value is a type
   // value, i.e. it is a value of type `TypeType`.
@@ -50,10 +49,16 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // so they can not be passed here. They should be converted to a type through
   // an `as type` conversion, such as to a `FacetAccessType` instruction whose
   // value is of type `TypeType`.
-  auto GetTypeIdForTypeInstId(SemIR::InstId inst_id) const -> SemIR::TypeId;
+  auto GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId;
+  auto GetTypeIdForTypeInstId(TypeInstId inst_id) const -> TypeId;
+
+  // Converts an `InstId` to a `TypeInstId` of the same id value. This process
+  // involves checking that the type of the instruction's value is `TypeType`,
+  // and then this check is encoded in the type system via `TypeInstId`.
+  auto GetAsTypeInstId(InstId inst_id) const -> TypeInstId;
 
   // Returns the ID of the instruction used to define the specified type.
-  auto GetInstId(TypeId type_id) const -> InstId;
+  auto GetInstId(TypeId type_id) const -> TypeInstId;
 
   // Returns the instruction used to define the specified type.
   auto GetAsInst(TypeId type_id) const -> Inst;

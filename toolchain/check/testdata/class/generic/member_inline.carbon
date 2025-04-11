@@ -87,11 +87,11 @@ class C(T:! type) {
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T.loc4_13.2) [symbolic = %G.type (constants.%G.type)]
 // CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_13.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc4_13.2 [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n)]
-// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @Class.%struct_type.n (%struct_type.n) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:   %struct_type.n.loc14_1.2: type = struct_type {.n: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.n.loc14_1.2 (constants.%struct_type.n)]
+// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness %struct_type.n.loc14_1.2 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
@@ -128,7 +128,8 @@ class C(T:! type) {
 // CHECK:STDOUT:       %.loc13_3: @Class.%Class.elem (%Class.elem) = var_pattern %.loc13_8
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <none>
-// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:     %struct_type.n.loc14_1.1: type = struct_type {.n: %T} [symbolic = %struct_type.n.loc14_1.2 (constants.%struct_type.n)]
+// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.n.loc14_1.1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -144,7 +145,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param_patt: @F.%T (%T)) -> @F.%T (%T) {
 // CHECK:STDOUT:   !entry:
@@ -158,9 +159,9 @@ class C(T:! type) {
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @G.%Class (%Class) [symbolic = %require_complete.loc9 (constants.%require_complete.4f8)]
+// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %Class [symbolic = %require_complete.loc9 (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type @G.%T (%T) [symbolic = %require_complete.loc10 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %T [symbolic = %require_complete.loc10 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @G.%Class (%Class)]() -> @G.%T (%T) {
 // CHECK:STDOUT:   !entry:
@@ -184,7 +185,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
-// CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n
+// CHECK:STDOUT:   %struct_type.n.loc14_1.2 => constants.%struct_type.n
 // CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -254,6 +255,7 @@ class C(T:! type) {
 // CHECK:STDOUT:       %.loc12_3: @C.%C.elem (%C.elem) = var_pattern %.loc12_11
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem) = var <none>
+// CHECK:STDOUT:     %struct_type.data: type = struct_type {.data: %empty_struct_type} [concrete = constants.%struct_type.data]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.data [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:

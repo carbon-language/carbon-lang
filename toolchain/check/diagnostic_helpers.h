@@ -11,40 +11,13 @@
 
 namespace Carbon::Check {
 
-// Tracks a location for diagnostic use, which is either a parse node or an inst
-// ID which can be translated to a parse node. Used when code needs to support
-// multiple possible ways of reporting a diagnostic location.
-class SemIRLoc {
- public:
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLoc(SemIR::InstId inst_id)
-      : inst_id_(inst_id), is_inst_id_(true), token_only_(false) {}
+// TODO: Update code to use LocId directly.
+using SemIRLoc = SemIR::LocId;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLoc(Parse::NodeId node_id) : SemIRLoc(node_id, false) {}
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SemIRLoc(SemIR::LocId loc_id) : SemIRLoc(loc_id, false) {}
-
-  // If `token_only` is true, refers to the specific node; otherwise, refers to
-  // the node and its children.
-  explicit SemIRLoc(SemIR::LocId loc_id, bool token_only)
-      : loc_id_(loc_id), is_inst_id_(false), token_only_(token_only) {}
-
- private:
-  // Only allow member access for diagnostics.
-  friend class DiagnosticEmitter;
-  // And also for eval to unwrap a LocId for calling into the rest of Check.
-  friend class UnwrapSemIRLoc;
-
-  union {
-    SemIR::InstId inst_id_;
-    SemIR::LocId loc_id_;
-  };
-
-  bool is_inst_id_;
-  bool token_only_;
-};
+// TODO: Consider instead changing calls to `SemIR::LocId::TokenOnly(...)`.
+inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
+  return loc_id.ToTokenOnly();
+}
 
 // We define the emitter separately for dependencies, so only provide a base
 // here.
@@ -57,9 +30,16 @@ using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 // can add contextual notes as appropriate.
 using MakeDiagnosticBuilderFn = llvm::function_ref<auto()->DiagnosticBuilder>;
 
-inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
-  return SemIRLoc(loc_id, true);
-}
+// An expression with a constant value, for rendering in a diagnostic. The
+// diagnostic rendering will include enclosing "`"s.
+struct InstIdAsConstant {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  InstIdAsConstant(SemIR::InstId inst_id) : inst_id(inst_id) {}
+
+  SemIR::InstId inst_id;
+};
 
 // An expression whose type should be rendered in a diagnostic. The diagnostic
 // rendering will include enclosing "`"s, and may also include extra information
@@ -89,14 +69,12 @@ struct TypeOfInstId {
 //
 // This should be used when the source expression used to construct a type is
 // available.
-struct InstIdAsType {
-  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
-
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  InstIdAsType(SemIR::InstId inst_id) : inst_id(inst_id) {}
-
-  SemIR::InstId inst_id;
-};
+//
+// Note that this is currently an alias for InstIdAsConstant. However, using
+// InstIdAsType is clearer when defining CARBON_DIAGNOSTICs, and we may wish to
+// distinguish type arguments in diagnostics from more general constants in some
+// way in the future.
+using InstIdAsType = InstIdAsConstant;
 
 // A type expression, for rendering in a diagnostic as a raw type. When
 // formatting as a raw type in a diagnostic, the type will be formatted as a

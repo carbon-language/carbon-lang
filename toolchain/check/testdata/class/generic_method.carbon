@@ -74,13 +74,13 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T.patt.loc11_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc11_13.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc11_13.2 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.a (constants.%struct_type.a)]
-// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @Class.%struct_type.a (%struct_type.a) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:   %struct_type.a.loc14_1.2: type = struct_type {.a: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.a.loc14_1.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness %struct_type.a.loc14_1.2 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc12_8: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [concrete]
@@ -104,7 +104,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %T.ref.loc13: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T.loc13 (constants.%T)]
 // CHECK:STDOUT:       %n.loc13: @F.%T.loc13 (%T) = bind_name n, %n.param.loc13
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:     %struct_type.a.loc14_1.1: type = struct_type {.a: %T} [symbolic = %struct_type.a.loc14_1.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.a.loc14_1.1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -120,8 +121,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc13) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc16_26: <witness> = require_complete_type @F.%Class (%Class) [symbolic = %require_complete.loc16_26 (constants.%require_complete.4f8)]
-// CHECK:STDOUT:   %require_complete.loc16_35: <witness> = require_complete_type @F.%T.loc13 (%T) [symbolic = %require_complete.loc16_35 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc16_26: <witness> = require_complete_type %Class [symbolic = %require_complete.loc16_26 (constants.%require_complete.4f8)]
+// CHECK:STDOUT:   %require_complete.loc16_35: <witness> = require_complete_type %T.loc13 [symbolic = %require_complete.loc16_35 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.%Class (%Class)](%n.param_patt: @F.%T.loc13 (%T)) {
 // CHECK:STDOUT:   !entry:
@@ -139,7 +140,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
 // CHECK:STDOUT:   %F.type => constants.%F.type
 // CHECK:STDOUT:   %F => constants.%F
-// CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
+// CHECK:STDOUT:   %struct_type.a.loc14_1.2 => constants.%struct_type.a
 // CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

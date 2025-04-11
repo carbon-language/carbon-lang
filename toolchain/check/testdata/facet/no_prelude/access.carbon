@@ -410,7 +410,7 @@ interface J {
 // CHECK:STDOUT:   %T.as_type.loc8_18.2: type = facet_access_type %T.loc8_8.2 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%T.as_type.loc8_18.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc8_18.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %T.as_wit.iface0.loc9_11.2: <witness> = facet_access_witness %T.loc8_8.2, element0 [symbolic = %T.as_wit.iface0.loc9_11.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc8_18.2, (%T.as_wit.iface0.loc9_11.2) [symbolic = %I.facet (constants.%I.facet)]
 // CHECK:STDOUT:   %.loc9_11.2: type = fn_type_with_self_type constants.%Make.type, %I.facet [symbolic = %.loc9_11.2 (constants.%.878)]
@@ -546,7 +546,7 @@ interface J {
 // CHECK:STDOUT:   %T.as_type.loc8_18.2: type = facet_access_type %T.loc8_8.2 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%T.as_type.loc8_18.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc8_18.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %T.as_wit.iface0.loc9_11.2: <witness> = facet_access_witness %T.loc8_8.2, element0 [symbolic = %T.as_wit.iface0.loc9_11.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc8_18.2, (%T.as_wit.iface0.loc9_11.2) [symbolic = %I.facet (constants.%I.facet)]
 // CHECK:STDOUT:   %.loc9_11.2: type = fn_type_with_self_type constants.%Copy.type, %I.facet [symbolic = %.loc9_11.2 (constants.%.f63)]
@@ -656,7 +656,7 @@ interface J {
 // CHECK:STDOUT:   %T.as_type.loc8_18.2: type = facet_access_type %T.loc8_8.2 [symbolic = %T.as_type.loc8_18.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Use.%T.as_type.loc8_18.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc8_18.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %T.as_wit.iface0.loc9_4.2: <witness> = facet_access_witness %T.loc8_8.2, element0 [symbolic = %T.as_wit.iface0.loc9_4.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc8_18.2, (%T.as_wit.iface0.loc9_4.2) [symbolic = %I.facet (constants.%I.facet)]
 // CHECK:STDOUT:   %.loc9_4.2: type = fn_type_with_self_type constants.%Hello.type, %I.facet [symbolic = %.loc9_4.2 (constants.%.d6b)]
@@ -784,7 +784,7 @@ interface J {
 // CHECK:STDOUT:   %T.as_type.loc8_26.2: type = facet_access_type %T.loc8_16.2 [symbolic = %T.as_type.loc8_26.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @UseIndirect.%T.as_type.loc8_26.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc8_26.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %T.as_wit.iface0.loc9_14.2: <witness> = facet_access_witness %T.loc8_16.2, element0 [symbolic = %T.as_wit.iface0.loc9_14.2 (constants.%T.as_wit.iface0)]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc8_26.2, (%T.as_wit.iface0.loc9_14.2) [symbolic = %I.facet (constants.%I.facet)]
 // CHECK:STDOUT:   %.loc9_14.2: type = fn_type_with_self_type constants.%Copy.type, %I.facet [symbolic = %.loc9_14.2 (constants.%.f63)]
@@ -847,7 +847,7 @@ interface J {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%.Self.as_wit.iface0) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit.iface0, element0 [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (file.%impl_witness_assoc_constant) [concrete]
 // CHECK:STDOUT:   %Id.specific_fn: <specific function> = specific_function %Id, @Id(%I.assoc_type) [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %I.assoc_type [concrete]
 // CHECK:STDOUT: }
@@ -891,7 +891,7 @@ interface J {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_tuple.type) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%impl_witness_assoc_constant) [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
@@ -935,7 +935,7 @@ interface J {
 // CHECK:STDOUT:   %U.patt.loc4_7.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc4_7.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Id.%U.loc4_7.2 (%U) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.loc4_7.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%U.patt.loc4_7.1: type](%x.param_patt: @Id.%U.loc4_7.2 (%U)) -> @Id.%U.loc4_7.2 (%U) {
 // CHECK:STDOUT:   !entry:
@@ -1046,7 +1046,7 @@ interface J {
 // CHECK:STDOUT:   %U.patt.loc3_7.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc3_7.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Id.%U.loc3_7.2 (%U) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.loc3_7.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%U.patt.loc3_7.1: type](%x.param_patt: @Id.%U.loc3_7.2 (%U)) -> @Id.%U.loc3_7.2 (%U) {
 // CHECK:STDOUT:   !entry:

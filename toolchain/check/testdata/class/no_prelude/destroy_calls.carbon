@@ -155,6 +155,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%NoAddr [concrete = constants.%NoAddr]
 // CHECK:STDOUT:     %self: %NoAddr = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -188,6 +189,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -219,6 +221,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -270,11 +273,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Main.import_ref.b5b = import_ref Main//types, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst38 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst39 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b14 = import_ref Main//types, loc10_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.83a: %destroy.type.dfa = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.539]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst63 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst65 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//types, loc15_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc16_33, loaded [concrete = constants.%destroy.8d0]
 // CHECK:STDOUT: }
@@ -391,11 +394,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Main.import_ref.b5b = import_ref Main//types, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst38 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst39 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b14 = import_ref Main//types, loc10_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.83a: %destroy.type.dfa = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.539]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst63 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst65 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//types, loc15_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc16_33, loaded [concrete = constants.%destroy.8d0]
 // CHECK:STDOUT: }
@@ -533,11 +536,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Main.import_ref.784: %Make.type.bc9 = import_ref Main//types, loc5_22, loaded [concrete = constants.%Make.1be]
 // CHECK:STDOUT:   %Main.import_ref.7fe: %destroy.type.bc5 = import_ref Main//types, loc6_27, loaded [concrete = constants.%destroy.60f]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst38 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst39 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8e0: %Make.type.378 = import_ref Main//types, loc10_30, loaded [concrete = constants.%Make.960]
 // CHECK:STDOUT:   %Main.import_ref.83a: %destroy.type.dfa = import_ref Main//types, loc11_33, loaded [concrete = constants.%destroy.539]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst63 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst65 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.974: %Make.type.e14 = import_ref Main//types, loc15_24, loaded [concrete = constants.%Make.b0a]
 // CHECK:STDOUT:   %Main.import_ref.54e: %destroy.type.02f = import_ref Main//types, loc16_33, loaded [concrete = constants.%destroy.8d0]
 // CHECK:STDOUT: }
@@ -653,6 +656,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoSelf {
 // CHECK:STDOUT:   %destroy.decl: %destroy.type.d69 = fn_decl @destroy.1 [concrete = constants.%destroy.ab7] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -678,6 +682,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -767,6 +772,7 @@ fn G() { F({}); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -781,8 +787,8 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.loc7_13.2: type = class_type @C, @C(%T.loc6_15.2) [template = %C.loc7_13.2 (constants.%C.f2e)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%C.loc7_13.2 (%C.f2e) [template = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %.3: <instruction> = refine_type_action %v.var, @F.%C.loc7_13.2 (%C.f2e) [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc7_13.2 [template = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %.3: <instruction> = refine_type_action %v.var, %C.loc7_13.2 [template]
 // CHECK:STDOUT:   %.4: <instruction> = access_optional_member_action %.1, destroy [template]
 // CHECK:STDOUT:   %.5: type = type_of_inst %.4 [template]
 // CHECK:STDOUT:

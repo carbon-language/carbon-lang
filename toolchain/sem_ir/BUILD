@@ -145,9 +145,9 @@ cc_library(
 )
 
 cc_library(
-    name = "stringify_type",
-    srcs = ["stringify_type.cpp"],
-    hdrs = ["stringify_type.h"],
+    name = "stringify",
+    srcs = ["stringify.cpp"],
+    hdrs = ["stringify.h"],
     deps = [
         ":file",
         ":typed_insts",
@@ -241,7 +241,7 @@ cc_library(
     hdrs = ["dump.h"],
     deps = [
         ":file",
-        ":stringify_type",
+        ":stringify",
         "//common:ostream",
         "//common:raw_string_ostream",
     ],

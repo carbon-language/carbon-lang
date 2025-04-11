@@ -446,6 +446,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc9_3: %C.elem = var_pattern %.loc9_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %struct_type._: type = struct_type {._: %empty_tuple.type} [concrete = constants.%struct_type._]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type._ [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

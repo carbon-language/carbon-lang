@@ -33,10 +33,14 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // These are the required interfaces that are not lookup contexts.
   llvm::SmallVector<ImplsConstraint> self_impls_constraints;
 
-  // Rewrite constraints of the form `.T = U`
+  // Rewrite constraints of the form `.T = U`.
+  //
+  // The InstIds here must be canonical instructions (which come from the
+  // instruction in a constant value) in order to ensure comparison works
+  // correctly.
   struct RewriteConstraint {
-    ConstantId lhs_const_id;
-    ConstantId rhs_const_id;
+    InstId lhs_id;
+    InstId rhs_id;
 
     static const RewriteConstraint None;
 
@@ -78,8 +82,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 };
 
 constexpr FacetTypeInfo::RewriteConstraint
-    FacetTypeInfo::RewriteConstraint::None = {.lhs_const_id = ConstantId::None,
-                                              .rhs_const_id = ConstantId::None};
+    FacetTypeInfo::RewriteConstraint::None = {.lhs_id = InstId::None,
+                                              .rhs_id = InstId::None};
 
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;

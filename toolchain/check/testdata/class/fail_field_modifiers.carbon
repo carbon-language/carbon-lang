@@ -123,6 +123,7 @@ class Class {
 // CHECK:STDOUT:   %.loc35_22.1: %i32 = value_of_initializer %int.convert_checked.loc35 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc35_22.2: %i32 = converted %int_1, %.loc35_22.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc35_22.2
+// CHECK:STDOUT:   %struct_type.j.k: type = struct_type {.j: %i32, .k: %i32} [concrete = constants.%struct_type.j.k]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [concrete = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

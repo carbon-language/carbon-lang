@@ -139,7 +139,8 @@ class A {
 // CHECK:STDOUT:     %.loc46_3: %A.elem = var_pattern %.loc46_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %A.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.ba9 [concrete = constants.%complete_type.fd7]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -158,7 +159,8 @@ class A {
 // CHECK:STDOUT:     %.loc16_5: %B.elem = var_pattern %.loc16_10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %B.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b.0a3 [concrete = constants.%complete_type.ba8]
+// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b.0a3]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [concrete = constants.%complete_type.ba8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -180,7 +182,8 @@ class A {
 // CHECK:STDOUT:     %.loc42_5: %C.elem = var_pattern %.loc42_10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.b66 [concrete = constants.%complete_type.836]
+// CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c.b66]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [concrete = constants.%complete_type.836]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -203,7 +206,8 @@ class A {
 // CHECK:STDOUT:     %.loc24_7: %D.elem = var_pattern %.loc24_12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %D.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d.b7b [concrete = constants.%complete_type.860]
+// CHECK:STDOUT:   %struct_type.d: type = struct_type {.d: %i32} [concrete = constants.%struct_type.d.b7b]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d [concrete = constants.%complete_type.860]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

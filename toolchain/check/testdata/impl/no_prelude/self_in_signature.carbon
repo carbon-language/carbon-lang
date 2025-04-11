@@ -176,7 +176,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:       %.loc28_24: type = converted %Self.ref.loc28_24, %Self.as_type.loc28_24 [symbolic = %Self.as_type.loc28_16.1 (constants.%Self.as_type.e1e)]
 // CHECK:STDOUT:       %.loc28_35.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc28_35.2: type = converted %.loc28_35.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %struct_type.x.y.loc28_36.2: type = struct_type {.x: %Self.as_type.e1e, .y: %empty_tuple.type} [symbolic = %struct_type.x.y.loc28_36.1 (constants.%struct_type.x.y.270)]
+// CHECK:STDOUT:       %struct_type.x.y.loc28_36.2: type = struct_type {.x: @F.4.%Self.as_type.loc28_16.1 (%Self.as_type.e1e), .y: %empty_tuple.type} [symbolic = %struct_type.x.y.loc28_36.1 (constants.%struct_type.x.y.270)]
 // CHECK:STDOUT:       %.loc28_37.2: %tuple.type.24b = tuple_literal (%ptr.loc28_16.2, %struct_type.x.y.loc28_36.2)
 // CHECK:STDOUT:       %.loc28_37.3: type = converted %.loc28_37.2, constants.%tuple.type.46b [symbolic = %tuple.type (constants.%tuple.type.46b)]
 // CHECK:STDOUT:     }
@@ -291,6 +291,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -299,6 +300,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -334,7 +336,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self.as_type.loc28_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc28_16.1 (constants.%Self.as_type.e1e)]
 // CHECK:STDOUT:   %ptr.loc28_16.1: type = ptr_type %Self.as_type.loc28_16.1 [symbolic = %ptr.loc28_16.1 (constants.%ptr.e87)]
 // CHECK:STDOUT:   %struct_type.x.y.loc28_36.1: type = struct_type {.x: @F.4.%Self.as_type.loc28_16.1 (%Self.as_type.e1e), .y: %empty_tuple.type} [symbolic = %struct_type.x.y.loc28_36.1 (constants.%struct_type.x.y.270)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.4.%ptr.loc28_16.1 (%ptr.e87), @F.4.%struct_type.x.y.loc28_36.1 (%struct_type.x.y.270)) [symbolic = %tuple.type (constants.%tuple.type.46b)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc28_16.1, %struct_type.x.y.loc28_36.1) [symbolic = %tuple.type (constants.%tuple.type.46b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param_patt: @F.4.%tuple.type (%tuple.type.46b));
 // CHECK:STDOUT: }

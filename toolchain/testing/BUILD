@@ -9,7 +9,7 @@ package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "all_testdata",
-    data = [
+    srcs = [
         "//toolchain/check:testdata",
         "//toolchain/codegen:testdata",
         "//toolchain/diagnostics:testdata",

@@ -180,8 +180,7 @@ using IdKind = TypeEnum<
     SpecificId,
     SpecificInterfaceId,
     StructTypeFieldsId,
-    TypeBlockId,
-    TypeId>;
+    TypeInstId>;
 // clang-format on
 
 }  // namespace Carbon::SemIR
