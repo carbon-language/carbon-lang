@@ -229,6 +229,11 @@ static auto AddGenericConstantToEvalBlock(
     SemIR::GenericInstIndex::Region region,
     ConstantsInGenericMap& constants_in_generic, bool inside_redeclaration,
     SemIR::InstId inst_id) -> SemIR::ConstantId {
+  CARBON_CHECK(context.constant_values().Get(inst_id).is_symbolic(),
+               "Adding generic constant {0} with non-symbolic value {1}",
+               context.insts().Get(inst_id),
+               context.constant_values().Get(inst_id));
+
   // Substitute into the constant value and rebuild it in the eval block if
   // we've not encountered it before.
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);

@@ -773,16 +773,22 @@ auto AddImportedConstant(Context& context, SemIR::Inst inst)
   EvalContext eval_context(&context, SemIR::InstId::None);
   Phase phase = Phase::Concrete;
   switch (inst.kind().value_kind()) {
-    case SemIR::InstValueKind::Typed:
+    case SemIR::InstValueKind::Typed: {
+      phase = GetPhase(context.constant_values(),
+                       context.types().GetConstantId(inst.type_id()));
+      // TODO: Don't produce attached types when importing constants.
+      inst.SetType(context.types().GetUnattachedType(inst.type_id()));
       // TODO: Can we avoid doing this replacement? It may do things that are
       // undesirable during importing, such as resolving specifics.
       if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
         return SemIR::ConstantId::NotConstant;
       }
       break;
-    case SemIR::InstValueKind::None:
+    }
+    case SemIR::InstValueKind::None: {
       // Instructions without a type_id are not evaluated.
       break;
+    }
   }
   return MakeConstantResult(context, inst, phase);
 }
