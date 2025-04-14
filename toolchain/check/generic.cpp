@@ -273,7 +273,7 @@ static auto AddTemplateActionToEvalBlock(
   symbolic_constant.generic_id = generic_id;
   symbolic_constant.index = SemIR::GenericInstIndex(
       region, context.inst_block_stack().PeekCurrentBlockContents().size());
-  context.inst_block_stack().AddInstId(inst_id);
+  context.generic_region_stack().AddInstToEvalBlock(inst_id);
 }
 
 // Populates a map of constants in a generic from the constants in the
