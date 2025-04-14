@@ -172,7 +172,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
 
     default: {
       auto elem_id = SemIR::ErrorInst::SingletonInstId;
-      if (operand_type_id != SemIR::ErrorInst::SingletonTypeId) {
+      if (!operand_type_id.Is<SemIR::ErrorInst>()) {
         elem_id = PerformIndexWith(context, node_id, operand_inst_id,
                                    operand_type_id, index_inst_id);
       }

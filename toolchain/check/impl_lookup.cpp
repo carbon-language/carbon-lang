@@ -264,7 +264,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   auto deduced_constraint_id =
       context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
           context.sem_ir(), specific_id, impl.constraint_id));
-  if (deduced_constraint_id == SemIR::ErrorInst::SingletonInstId) {
+  if (deduced_constraint_id.Is<SemIR::ErrorInst>()) {
     return EvalImplLookupResult::MakeNone();
   }
 
@@ -375,8 +375,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
     -> SemIR::InstBlockIdOrError {
-  if (query_self_const_id == SemIR::ErrorInst::SingletonConstantId ||
-      query_facet_type_const_id == SemIR::ErrorInst::SingletonConstantId) {
+  if (query_self_const_id.Is<SemIR::ErrorInst>() ||
+      query_facet_type_const_id.Is<SemIR::ErrorInst>()) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
 
@@ -536,7 +536,7 @@ static auto CollectCandidateImplsForQuery(
     // This check comes first to avoid deduction with an invalid impl. We use
     // an error value to indicate an error during creation of the impl, such
     // as a recursive impl which will cause deduction to recurse infinitely.
-    if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+    if (impl.witness_id.Is<SemIR::ErrorInst>()) {
       continue;
     }
     CARBON_CHECK(impl.witness_id.has_value());

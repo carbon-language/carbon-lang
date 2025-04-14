@@ -150,7 +150,7 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   auto member_value_id = context.constant_values().GetConstantInstId(member_id);
   if (!member_value_id.has_value()) {
-    if (member_value_id != SemIR::ErrorInst::SingletonInstId) {
+    if (!member_value_id.Is<SemIR::ErrorInst>()) {
       context.TODO(member_id, "non-constant associated entity");
     }
     return SemIR::ErrorInst::SingletonInstId;
@@ -573,7 +573,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       }
     }
 
-    if (base_type_id != SemIR::ErrorInst::SingletonTypeId) {
+    if (!base_type_id.Is<SemIR::ErrorInst>()) {
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                         "type {0} does not support qualified expressions",
                         TypeOfInstId);
@@ -625,7 +625,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
       GetInterfaceType(context, interface.interface_id, interface.specific_id);
   auto facet_inst_id =
       ConvertToValueOfType(context, loc_id, base_id, interface_type_id);
-  if (facet_inst_id == SemIR::ErrorInst::SingletonInstId) {
+  if (facet_inst_id.Is<SemIR::ErrorInst>()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
   // That facet value has both the self type we need below and the witness
@@ -790,7 +790,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
       context, index_node_id, index_inst_id,
       GetSingletonType(context, SemIR::IntLiteralType::SingletonInstId));
   auto index_const_id = context.constant_values().Get(index_inst_id);
-  if (index_const_id == SemIR::ErrorInst::SingletonConstantId) {
+  if (index_const_id.Is<SemIR::ErrorInst>()) {
     return SemIR::ErrorInst::SingletonInstId;
   } else if (!index_const_id.is_concrete()) {
     return diag_non_constant_index();

@@ -142,7 +142,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           return context.emitter().Build(type_node, AbstractTypeInFieldDecl,
                                          cast_type_id);
         });
-    if (cast_type_id == SemIR::ErrorInst::SingletonTypeId) {
+    if (cast_type_id.Is<SemIR::ErrorInst>()) {
       cast_type_inst_id = SemIR::ErrorInst::SingletonTypeInstId;
     }
     auto binding_id =

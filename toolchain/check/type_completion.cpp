@@ -227,7 +227,7 @@ auto TypeCompleter::ProcessStep() -> bool {
       }
       // For a pointer representation, the pointee also needs to be complete.
       if (info.value_repr.kind == SemIR::ValueRepr::Pointer) {
-        if (info.value_repr.type_id == SemIR::ErrorInst::SingletonTypeId) {
+        if (info.value_repr.type_id.Is<SemIR::ErrorInst>()) {
           break;
         }
         auto pointee_type_id =

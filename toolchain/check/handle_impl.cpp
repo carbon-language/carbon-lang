@@ -184,7 +184,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   }
 
   const auto& impl = context.impls().Get(impl_id);
-  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+  if (impl.witness_id.Is<SemIR::ErrorInst>()) {
     parent_scope.set_has_error();
   } else {
     bool is_complete = RequireCompleteType(
@@ -321,7 +321,7 @@ static auto CheckConstraintIsInterface(Context& context,
                                        SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface {
   auto facet_type_id = context.types().GetTypeIdForTypeInstId(constraint_id);
-  if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (facet_type_id.Is<SemIR::ErrorInst>()) {
     return SemIR::SpecificInterface::None;
   }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
@@ -435,14 +435,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     if (name.implicit_param_patterns_id.has_value()) {
       for (auto inst_id :
            context.inst_blocks().Get(name.implicit_param_patterns_id)) {
-        if (inst_id == SemIR::ErrorInst::SingletonInstId) {
+        if (inst_id.Is<SemIR::ErrorInst>()) {
           has_error_in_implicit_pattern = true;
           break;
         }
       }
     }
     if (impl_info.generic_id.has_value() && !has_error_in_implicit_pattern &&
-        impl_info.witness_id != SemIR::ErrorInst::SingletonInstId) {
+        !impl_info.witness_id.Is<SemIR::ErrorInst>()) {
       context.inst_block_stack().Push();
       auto deduced_specific_id = DeduceImplArguments(
           context, node_id,
@@ -484,7 +484,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
+  if (!self_type_id.Is<SemIR::ErrorInst>() &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     if (impl_info.generic_id.has_value()) {

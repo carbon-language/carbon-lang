@@ -106,7 +106,7 @@ auto SetBlockArgResultBeforeConstantUse(Context& context,
     const_id = context.constant_values().Get(
         literal.value().value.ToBool() ? if_true : if_false);
   } else {
-    CARBON_CHECK(cond_const_id == SemIR::ErrorInst::SingletonConstantId,
+    CARBON_CHECK(cond_const_id.Is<SemIR::ErrorInst>(),
                  "Unexpected constant branch condition.");
     const_id = SemIR::ErrorInst::SingletonConstantId;
   }

@@ -16,7 +16,7 @@ static auto GetFoundationType(const File& file, SpecificId specific_id,
   if (!inst_id.has_value()) {
     return TypeId::None;
   }
-  if (inst_id == SemIR::ErrorInst::SingletonInstId) {
+  if (inst_id.Is<SemIR::ErrorInst>()) {
     return ErrorInst::SingletonTypeId;
   }
   return TypeId::ForTypeConstant(GetConstantValueInSpecific(
@@ -41,7 +41,7 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
   }
   auto witness_id =
       GetConstantValueInSpecific(file, specific_id, complete_type_witness_id);
-  if (witness_id == ErrorInst::SingletonConstantId) {
+  if (witness_id.Is<ErrorInst>()) {
     return ErrorInst::SingletonTypeId;
   }
   return file.types().GetTypeIdForTypeInstId(

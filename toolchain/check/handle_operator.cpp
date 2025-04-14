@@ -330,7 +330,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
             TokenOnly(node_id), DerefOfNonPointer, not_pointer_type_id);
 
         // TODO: Check for any facet here, rather than only a type.
-        if (not_pointer_type_id == SemIR::TypeType::SingletonTypeId) {
+        if (not_pointer_type_id.Is<SemIR::TypeType>()) {
           CARBON_DIAGNOSTIC(
               DerefOfType, Note,
               "to form a pointer type, write the `*` after the pointee type");

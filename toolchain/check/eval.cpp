@@ -246,7 +246,7 @@ static auto GetPhase(const SemIR::ConstantValueStore& constant_values,
                      SemIR::ConstantId constant_id) -> Phase {
   if (!constant_id.is_constant()) {
     return Phase::Runtime;
-  } else if (constant_id == SemIR::ErrorInst::SingletonConstantId) {
+  } else if (constant_id.Is<SemIR::ErrorInst>()) {
     return Phase::UnknownDueToError;
   }
   switch (constant_values.GetDependence(constant_id)) {
@@ -1865,10 +1865,10 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
     info = GetConstantFacetTypeInfo(eval_context, facet_type->facet_type_id,
                                     &phase);
-  } else if (base_facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  } else if (base_facet_type_id.Is<SemIR::ErrorInst>()) {
     return SemIR::ErrorInst::SingletonConstantId;
   } else {
-    CARBON_CHECK(base_facet_type_id == SemIR::TypeType::SingletonTypeId,
+    CARBON_CHECK(base_facet_type_id.Is<SemIR::TypeType>(),
                  "Unexpected type_id: {0}, inst: {1}", base_facet_type_id,
                  base_facet_inst);
   }
@@ -1891,10 +1891,9 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                          inst_id)) {
         SemIR::ConstantId lhs = eval_context.GetConstantValue(impls->lhs_id);
         SemIR::ConstantId rhs = eval_context.GetConstantValue(impls->rhs_id);
-        if (rhs != SemIR::ErrorInst::SingletonConstantId &&
-            IsPeriodSelf(eval_context, lhs)) {
+        if (!rhs.Is<SemIR::ErrorInst>() && IsPeriodSelf(eval_context, lhs)) {
           auto rhs_inst_id = eval_context.constant_values().GetInstId(rhs);
-          if (rhs_inst_id == SemIR::TypeType::SingletonInstId) {
+          if (rhs_inst_id.Is<SemIR::TypeType>()) {
             // `.Self impls type` -> nothing to do.
           } else {
             auto facet_type =

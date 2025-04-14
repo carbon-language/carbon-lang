@@ -353,7 +353,7 @@ class TypeStructureBuilder {
       return SymbolicType();
     }
     // Non-type values are concrete, only types are symbolic.
-    if (type_id_of_inst_id != SemIR::TypeType::SingletonTypeId) {
+    if (!type_id_of_inst_id.Is<SemIR::TypeType>()) {
       return SemIR::TypeId::None;
     }
     return context_->types().GetTypeIdForTypeInstId(inst_id);

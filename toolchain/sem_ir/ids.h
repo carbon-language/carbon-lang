@@ -52,6 +52,12 @@ struct InstId : public IdBase<InstId> {
 
   using IdBase::IdBase;
 
+  // Returns true if this is the ID for the provided singleton.
+  template <typename SingletonInstT>
+  auto Is() const -> bool {
+    return *this == SingletonInstT::SingletonInstId;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
@@ -173,6 +179,12 @@ struct ConstantId : public IdBase<ConstantId> {
   }
 
   using IdBase::IdBase;
+
+  // Returns true if this is the ID for the provided singleton.
+  template <typename SingletonInstT>
+  auto Is() const -> bool {
+    return *this == SingletonInstT::SingletonConstantId;
+  }
 
   // Returns whether this represents a constant. Requires has_value.
   constexpr auto is_constant() const -> bool {
@@ -748,6 +760,12 @@ struct TypeId : public IdBase<TypeId> {
 
   // Returns the constant ID that defines the type.
   auto AsConstantId() const -> ConstantId { return ConstantId(index); }
+
+  // Returns true if this is the ID for the provided singleton.
+  template <typename SingletonInstT>
+  auto Is() const -> bool {
+    return *this == SingletonInstT::SingletonTypeId;
+  }
 
   // Returns whether this represents a symbolic type. Requires has_value.
   auto is_symbolic() const -> bool { return AsConstantId().is_symbolic(); }

@@ -321,7 +321,7 @@ auto DeductionContext::Deduce() -> bool {
                                                 param_type_id)
                          : TryConvertToValueOfType(context(), loc_id_, arg_id,
                                                    param_type_id);
-      if (arg_id == SemIR::ErrorInst::SingletonInstId) {
+      if (arg_id.Is<SemIR::ErrorInst>()) {
         return false;
       }
     }

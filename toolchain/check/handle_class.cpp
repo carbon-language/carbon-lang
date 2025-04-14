@@ -387,7 +387,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
                                        adapted_type_inst_id);
       });
-  if (adapted_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (adapted_type_id.Is<SemIR::ErrorInst>()) {
     adapted_type_inst_id = SemIR::ErrorInst::SingletonTypeInstId;
   }
 
@@ -452,7 +452,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                                    base_type_inst_id);
   });
 
-  if (base_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (base_type_id.Is<SemIR::ErrorInst>()) {
     return BaseInfo::Error;
   }
 
@@ -529,7 +529,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
                                 .base_type_inst_id = base_info.inst_id,
                                 .index = SemIR::ElementIndex::None});
 
-  if (base_info.type_id != SemIR::ErrorInst::SingletonTypeId) {
+  if (!base_info.type_id.Is<SemIR::ErrorInst>()) {
     auto base_class_info = context.classes().Get(
         context.types().GetAs<SemIR::ClassType>(base_info.type_id).class_id);
     class_info.is_dynamic |= base_class_info.is_dynamic;

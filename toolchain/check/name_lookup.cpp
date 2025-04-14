@@ -336,7 +336,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     }
     return true;
   }
-  if (base_const_id == SemIR::ErrorInst::SingletonConstantId) {
+  if (base_const_id.Is<SemIR::ErrorInst>()) {
     // Lookup into this scope should fail without producing an error.
     scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
                                   .specific_id = SemIR::SpecificId::None});

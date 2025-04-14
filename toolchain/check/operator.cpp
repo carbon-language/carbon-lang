@@ -40,7 +40,7 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `operand.(Op)`.
   auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, operand_id,
                                                  op_fn, missing_impl_diagnoser);
-  if (bound_op_id == SemIR::ErrorInst::SingletonInstId) {
+  if (bound_op_id.Is<SemIR::ErrorInst>()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -58,7 +58,7 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `lhs.(Op)`.
   auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, lhs_id, op_fn,
                                                  missing_impl_diagnoser);
-  if (bound_op_id == SemIR::ErrorInst::SingletonInstId) {
+  if (bound_op_id.Is<SemIR::ErrorInst>()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 

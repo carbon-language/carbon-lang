@@ -112,7 +112,7 @@ static auto AddStructTypeFields(
     field_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     ReplaceInstPreservingConstantValue(context, field_decl_id, field_decl);
-    if (field_decl.type_id == SemIR::ErrorInst::SingletonTypeId) {
+    if (field_decl.type_id.Is<SemIR::ErrorInst>()) {
       struct_type_fields.push_back(
           {.name_id = field_decl.name_id,
            .type_inst_id = SemIR::ErrorInst::SingletonTypeInstId});
@@ -141,7 +141,7 @@ static auto BuildVtable(Context& context, Parse::NodeId node_id,
     LoadImportRef(context, base_vtable_id);
     auto canonical_base_vtable_id =
         context.constant_values().GetConstantInstId(base_vtable_id);
-    if (canonical_base_vtable_id == SemIR::ErrorInst::SingletonInstId) {
+    if (canonical_base_vtable_id.Is<SemIR::ErrorInst>()) {
       return SemIR::ErrorInst::SingletonInstId;
     }
     auto base_vtable_inst_block = context.inst_blocks().Get(

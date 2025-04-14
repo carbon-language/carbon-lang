@@ -69,7 +69,7 @@ auto InitialFacetTypeImplWitness(
 
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
-  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
+  CARBON_CHECK(!facet_type_id.Is<SemIR::ErrorInst>());
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
   // TODO: This is currently a copy because I'm not sure whether anything could
   // cause the facet type store to resize before we are done with it.
@@ -138,14 +138,14 @@ auto InitialFacetTypeImplWitness(
       continue;
     }
     auto& table_entry = table[access.index.index];
-    if (table_entry == SemIR::ErrorInst::SingletonInstId) {
+    if (table_entry.Is<SemIR::ErrorInst>()) {
       // Don't overwrite an error value. This prioritizes not generating
       // multiple errors for one associated constant over picking a value
       // for it to use to attempt recovery.
       continue;
     }
     auto rewrite_inst_id = rewrite.rhs_id;
-    if (rewrite_inst_id == SemIR::ErrorInst::SingletonInstId) {
+    if (rewrite_inst_id.Is<SemIR::ErrorInst>()) {
       table_entry = SemIR::ErrorInst::SingletonInstId;
       continue;
     }
@@ -153,7 +153,7 @@ auto InitialFacetTypeImplWitness(
     auto decl_id = context.constant_values().GetConstantInstId(
         assoc_entities[access.index.index]);
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-    if (decl_id == SemIR::ErrorInst::SingletonInstId) {
+    if (decl_id.Is<SemIR::ErrorInst>()) {
       table_entry = SemIR::ErrorInst::SingletonInstId;
       continue;
     }
@@ -174,7 +174,7 @@ auto InitialFacetTypeImplWitness(
       continue;
     }
 
-    if (table_entry != SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
+    if (!table_entry.Is<SemIR::ImplWitnessTablePlaceholder>()) {
       if (table_entry != rewrite_inst_id) {
         // TODO: Figure out how to print the two different values
         // `const_id` & `rewrite_inst_id` in the diagnostic

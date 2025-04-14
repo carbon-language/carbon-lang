@@ -272,7 +272,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
             context, value_loc_id, value_id, src_type_inst_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_arg_id,
             array_type.element_type_inst_id, target_block, i, i);
-    if (init_id == SemIR::ErrorInst::SingletonInstId) {
+    if (init_id.Is<SemIR::ErrorInst>()) {
       return SemIR::ErrorInst::SingletonInstId;
     }
     inits.push_back(init_id);
@@ -358,7 +358,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
             context, value_loc_id, value_id, src_type_inst_id, literal_elems,
             inner_kind, target.init_id, dest_type_inst_id, target.init_block, i,
             i);
-    if (init_id == SemIR::ErrorInst::SingletonInstId) {
+    if (init_id.Is<SemIR::ErrorInst>()) {
       return SemIR::ErrorInst::SingletonInstId;
     }
     new_block.Set(i, init_id);
@@ -521,7 +521,7 @@ static auto ConvertStructToStructOrClass(
             literal_elems, inner_kind, target.init_id, dest_field.type_inst_id,
             target.init_block, src_field_index,
             src_field_index + dest_vptr_offset, dest_vtable_id);
-    if (init_id == SemIR::ErrorInst::SingletonInstId) {
+    if (init_id.template Is<SemIR::ErrorInst>()) {
       return SemIR::ErrorInst::SingletonInstId;
     }
     new_block.Set(i, init_id);
@@ -571,7 +571,7 @@ static auto ConvertStructToClass(
   CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
   auto object_repr_id =
       dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
-  if (object_repr_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (object_repr_id.Is<SemIR::ErrorInst>()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
   auto dest_struct_type =
@@ -755,7 +755,7 @@ static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
 static auto DiagnoseConversionFailureToConstraintValue(
     Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::TypeId target_type_id) -> void {
-  CARBON_DCHECK(target_type_id == SemIR::TypeType::SingletonTypeId ||
+  CARBON_DCHECK(target_type_id.Is<SemIR::TypeType>() ||
                 context.types().Is<SemIR::FacetType>(target_type_id));
 
   auto type_of_expr_id = context.insts().Get(expr_id).type_id();
@@ -888,7 +888,7 @@ static auto PerformBuiltinConversion(
                                       .init_id = foundation_init_id,
                                       .init_block = target.init_block,
                                       .diagnose = target.diagnose});
-        if (foundation_value_id == SemIR::ErrorInst::SingletonInstId) {
+        if (foundation_value_id.Is<SemIR::ErrorInst>()) {
           return SemIR::ErrorInst::SingletonInstId;
         }
       }
@@ -993,7 +993,7 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  if (target.type_id == SemIR::TypeType::SingletonTypeId) {
+  if (target.type_id.Is<SemIR::TypeType>()) {
     // A tuple of types converts to type `type`.
     // TODO: This should apply even for non-literal tuples.
     if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
@@ -1118,7 +1118,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
     -> SemIR::InstId {
   auto expr = context.insts().Get(expr_id);
   auto type_id = expr.type_id();
-  if (type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (type_id.Is<SemIR::ErrorInst>()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -1156,7 +1156,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // the result is an error and we shouldn't diagnose.
   if (sem_ir.insts().Get(expr_id).type_id() ==
           SemIR::ErrorInst::SingletonTypeId ||
-      target.type_id == SemIR::ErrorInst::SingletonTypeId) {
+      target.type_id.Is<SemIR::ErrorInst>()) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -1214,7 +1214,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // Check whether any builtin conversion applies.
   expr_id =
       PerformBuiltinConversion(context, loc_id, expr_id, target, vtable_id);
-  if (expr_id == SemIR::ErrorInst::SingletonInstId) {
+  if (expr_id.Is<SemIR::ErrorInst>()) {
     return expr_id;
   }
 
@@ -1254,7 +1254,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (!target.diagnose) {
         return context.emitter().BuildSuppressed();
       }
-      if (target.type_id == SemIR::TypeType::SingletonTypeId ||
+      if (target.type_id.Is<SemIR::TypeType>() ||
           sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
         CARBON_DIAGNOSTIC(
             ConversionFailureNonTypeToFacet, Error,
@@ -1265,7 +1265,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         return context.emitter().Build(
             loc_id, ConversionFailureNonTypeToFacet,
             target.kind == ConversionTarget::ExplicitAs, expr_id,
-            target.type_id == SemIR::TypeType::SingletonTypeId, target.type_id);
+            target.type_id.Is<SemIR::TypeType>(), target.type_id);
       } else {
         CARBON_DIAGNOSTIC(ConversionFailure, Error,
                           "cannot{0:| implicitly} convert expression of type "
@@ -1280,7 +1280,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     });
 
     // Pull a value directly out of the initializer if possible and wanted.
-    if (expr_id != SemIR::ErrorInst::SingletonInstId &&
+    if (!expr_id.Is<SemIR::ErrorInst>() &&
         CanUseValueOfInitializer(sem_ir, target.type_id, target.kind)) {
       expr_id = AddInst<SemIR::ValueOfInitializer>(
           context, loc_id, {.type_id = target.type_id, .init_id = expr_id});
@@ -1471,7 +1471,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
   auto type_inst_id = ConvertToValueOfType(context, loc_id, value_id,
                                            SemIR::TypeType::SingletonTypeId);
-  if (type_inst_id == SemIR::ErrorInst::SingletonInstId) {
+  if (type_inst_id.Is<SemIR::ErrorInst>()) {
     return {.inst_id = SemIR::ErrorInst::SingletonTypeInstId,
             .type_id = SemIR::ErrorInst::SingletonTypeId};
   }

@@ -292,7 +292,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
     clang::QualType param_type = param->getType().getCanonicalType();
     SemIR::TypeId type_id = MapType(context, param_type).type_id;
-    if (type_id == SemIR::ErrorInst::SingletonTypeId) {
+    if (type_id.Is<SemIR::ErrorInst>()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
                                          param_type.getAsString()));
       return SemIR::InstBlockId::None;
@@ -335,7 +335,7 @@ static auto GetReturnType(Context& context, SemIRLoc loc_id,
     return SemIR::InstId::None;
   }
   auto [type_inst_id, type_id] = MapType(context, ret_type);
-  if (type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (type_id.Is<SemIR::ErrorInst>()) {
     context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                        ret_type.getAsString()));
     return SemIR::ErrorInst::SingletonInstId;
