@@ -130,12 +130,12 @@ static auto PerformCallToGenericInterface(
       FacetTypeFromInterface(context, interface_id, *callee_specific_id));
 }
 
-// Resolves the callee_id to handle generics and instance binding.
-static auto ResolveCalleeSpecific(Context& context, SemIR::LocId loc_id,
-                                  SemIR::InstId callee_id,
-                                  SemIR::InstId callee_function_self_type_id,
-                                  SemIR::SpecificId callee_specific_id)
-    -> SemIR::InstId {
+// Builds an appropriate specific function for the callee, also handling
+// instance binding.
+static auto BuildCalleeSpecificFunction(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
+    SemIR::InstId callee_function_self_type_id,
+    SemIR::SpecificId callee_specific_id) -> SemIR::InstId {
   auto generic_callee_id = callee_id;
 
   // Strip off a bound_method so that we can form a constant specific callee.
@@ -212,9 +212,9 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
 
   if (callee_specific_id->has_value()) {
-    callee_id = ResolveCalleeSpecific(context, loc_id, callee_id,
-                                      callee_function.self_type_id,
-                                      *callee_specific_id);
+    callee_id = BuildCalleeSpecificFunction(context, loc_id, callee_id,
+                                            callee_function.self_type_id,
+                                            *callee_specific_id);
   }
 
   // If there is a return slot, build storage for the result.
