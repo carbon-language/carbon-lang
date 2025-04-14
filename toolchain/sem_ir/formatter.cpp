@@ -1439,8 +1439,15 @@ class FormatterImpl {
         if (auto eval_block_id =
                 generic.GetEvalBlock(symbolic_constant.index.region());
             eval_block_id.has_value()) {
-          FormatName(sem_ir_->inst_blocks().Get(
-              eval_block_id)[symbolic_constant.index.index()]);
+          auto block = sem_ir_->inst_blocks().Get(eval_block_id);
+          if (symbolic_constant.index.has_value() &&
+              static_cast<size_t>(symbolic_constant.index.index()) <
+                  block.size()) {
+            FormatName(block[symbolic_constant.index.index()]);
+          } else {
+            out_ << "<missing inst for " << symbolic_constant.index
+                 << " in eval block>";
+          }
         } else {
           out_ << "<missing eval block>";
         }
