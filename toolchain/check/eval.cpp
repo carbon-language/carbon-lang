@@ -1376,6 +1376,16 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("Not a builtin function.");
 
+    case SemIR::BuiltinFunctionKind::Noop: {
+      // Return an empty tuple value.
+      auto type_id = GetTupleType(eval_context.context(), {});
+      return MakeConstantResult(
+          eval_context.context(),
+          SemIR::TupleValue{.type_id = type_id,
+                            .elements_id = SemIR::InstBlockId::Empty},
+          phase);
+    }
+
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::ReadChar: {

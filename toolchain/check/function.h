@@ -54,7 +54,7 @@ inline auto CheckFunctionTypeMatches(Context& context,
 // necessary, and returns information about how the function returns its return
 // value.
 auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
-                             SemIR::Function& function,
+                             const SemIR::Function& function,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo;
 
