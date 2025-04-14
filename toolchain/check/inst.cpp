@@ -226,10 +226,20 @@ auto ReplaceInstBeforeConstantUse(Context& context, SemIR::InstId inst_id,
 
 auto ReplaceInstPreservingConstantValue(Context& context, SemIR::InstId inst_id,
                                         SemIR::Inst inst) -> void {
-  auto old_const_id = context.constant_values().Get(inst_id);
+  // Check that the type didn't change: a change of type will change the
+  // constant value. Replace the type with the attached type.
+  auto old_type_id = context.insts().GetAttachedType(inst_id);
+  CARBON_CHECK(context.types().GetUnattachedType(old_type_id) == inst.type_id(),
+               "Given wrong type for replacement instruction");
+  inst.SetType(old_type_id);
+
+  // Update the instruction.
   context.sem_ir().insts().Set(inst_id, inst);
   CARBON_VLOG_TO(context.vlog_stream(), "ReplaceInst: {0} -> {1}\n", inst_id,
                  inst);
+
+  // Check the constant value didn't change.
+  auto old_const_id = context.constant_values().Get(inst_id);
   auto new_const_id = TryEvalInstUnsafe(context, inst_id, inst);
   CARBON_CHECK(old_const_id == new_const_id);
 }

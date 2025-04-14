@@ -272,7 +272,7 @@ static auto AddTemplateActionToEvalBlock(
       context.constant_values().Get(inst_id));
   symbolic_constant.generic_id = generic_id;
   symbolic_constant.index = SemIR::GenericInstIndex(
-      region, context.inst_block_stack().PeekCurrentBlockContents().size());
+      region, context.generic_region_stack().PeekEvalBlock().size());
   context.generic_region_stack().AddInstToEvalBlock(inst_id);
 }
 
@@ -295,11 +295,27 @@ static auto PopulateConstantsFromDeclaration(
 }
 
 auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void {
+  auto [inst_id, dep_kind] = dependent_inst;
+
+  // If we don't have a generic region here, leave the dependent instruction
+  // unattached. This happens for out-of-line redeclarations of members of
+  // dependent scopes:
+  //
+  //   class A(T:! type) {
+  //     fn F();
+  //   }
+  //   // Has generic type and constant value, but no generic region.
+  //   fn A(T:! type).F() {}
+  //
+  // TODO: Use a different instruction kind for out-of-line definitions and
+  // CHECK this doesn't happen.
   if (context.generic_region_stack().Empty()) {
-    context.TODO(dependent_inst.inst_id,
-                 "dependent inst but no enclosing generic region");
+    if ((dep_kind & DependentInst::Template) != DependentInst::None) {
+      context.inst_block_stack().AddInstId(inst_id);
+    }
     return;
   }
+
   if (context.generic_region_stack().PeekPendingGeneric().generic_id.index ==
       -2) {
     // TODO: Remove this and the corresponding custom code in import_ref.
@@ -311,7 +327,6 @@ auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void {
 
   context.generic_region_stack().AddDependentInst(dependent_inst.inst_id);
 
-  auto [inst_id, dep_kind] = dependent_inst;
   auto [generic_id, region] =
       context.generic_region_stack().PeekPendingGeneric();
   if (!generic_id.has_value()) {
