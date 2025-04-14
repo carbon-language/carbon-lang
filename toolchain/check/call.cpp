@@ -259,13 +259,17 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                  llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  // Identify the function we're calling.
+  // Try treating the callee as a function first.
   auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
+  if (callee_function.is_error) {
+    return SemIR::ErrorInst::SingletonInstId;
+  }
   if (callee_function.function_id.has_value()) {
     return PerformCallToFunction(context, loc_id, callee_id, callee_function,
                                  arg_ids);
   }
 
+  // Callee isn't a function, so try treating it as a generic type.
   auto type_inst =
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
@@ -280,11 +284,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
           generic_interface.enclosing_specific_id, arg_ids);
     }
     default: {
-      if (!callee_function.is_error) {
-        CARBON_DIAGNOSTIC(CallToNonCallable, Error,
-                          "value of type {0} is not callable", TypeOfInstId);
-        context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
-      }
+      CARBON_DIAGNOSTIC(CallToNonCallable, Error,
+                        "value of type {0} is not callable", TypeOfInstId);
+      context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
       return SemIR::ErrorInst::SingletonInstId;
     }
   }
