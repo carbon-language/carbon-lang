@@ -441,15 +441,23 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   for (const auto& interface : interfaces) {
     // TODO: Since both `interfaces` and `query_self_const_id` are sorted lists,
     // do an O(N+M) merge instead of O(N*M) nested loops.
-    auto result_witness_id =
-        FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
-    // TODO: If the impl lookup finds a final impl, it should take precedence
-    // over the witness from the facet value. See the test:
-    // fail_todo_final_impl_precidence_over_facet_value.carbon.
-    if (!result_witness_id.has_value()) {
-      result_witness_id = GetOrAddLookupImplWitness(
-          context, loc_id, query_self_const_id, interface);
+
+    auto result_witness_id = GetOrAddLookupImplWitness(
+        context, loc_id, query_self_const_id, interface);
+
+    if (!result_witness_id.has_value() ||
+        !context.insts().Is<SemIR::ImplWitness>(result_witness_id)) {
+      // If the witness is not concrete (the result is not final), then we
+      // prefer the witness from the query's facet value (if it is one), which
+      // may include rewrite rules of associated constants that can be relied
+      // on.
+      auto facet_value_witness_id =
+          FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
+      if (facet_value_witness_id.has_value()) {
+        result_witness_id = facet_value_witness_id;
+      }
     }
+
     if (result_witness_id.has_value()) {
       result_witness_ids.push_back(result_witness_id);
     } else {
