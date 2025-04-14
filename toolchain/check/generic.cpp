@@ -458,17 +458,7 @@ auto DiscardGenericDecl(Context& context) -> void {
         inst_id, context.constant_values().GetUnattachedConstant(
                      context.constant_values().Get(inst_id)));
   }
-  #if 0
   // Note that we may leak a GenericId here, if one was allocated.
-  if (auto generic_id = context.generic_region_stack().PeekPendingGeneric()
-                               .generic_id;
-      generic_id.has_value()) {
-    // TODO: This shouldn't be necessary because the generic should be
-    // unreferenced.
-    context.generics().Get(generic_id).decl_id =
-        SemIR::ErrorInst::SingletonInstId;
-  }
-  #endif
   context.generic_region_stack().Pop();
 }
 
@@ -540,6 +530,76 @@ auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
   return generic_id;
 }
 
+// Returns the first difference between the two given eval blocks.
+static auto FirstDifferenceBetweenEvalBlocks(
+    Context& context, llvm::ArrayRef<SemIR::InstId> old_eval_block,
+    llvm::ArrayRef<SemIR::InstId> new_eval_block)
+    -> std::pair<SemIR::InstId, SemIR::InstId> {
+  // Check each element of the eval block computes the same unattached constant.
+  for (auto [old_inst_id, new_inst_id] :
+       llvm::zip(old_eval_block, new_eval_block)) {
+    auto old_const_id = context.constant_values().Get(old_inst_id);
+    auto new_const_id = context.constant_values().Get(new_inst_id);
+    // TODO: Shouldn't need to call `GetUnattachedConstant` here.
+    if (context.constant_values().GetUnattachedConstant(old_const_id) !=
+        context.constant_values().GetUnattachedConstant(new_const_id)) {
+      if (old_const_id.is_symbolic() && new_const_id.is_symbolic() &&
+          context.constant_values().GetDependence(old_const_id) ==
+              SemIR::ConstantDependence::Template &&
+          context.constant_values().GetDependence(new_const_id) ==
+              SemIR::ConstantDependence::Template &&
+          context.insts().Get(old_inst_id).kind() ==
+              context.insts().Get(new_inst_id).kind()) {
+        // TODO: We don't have a good mechanism to compare template constants
+        // because they canonicalize to themselves, so just assume this is OK.
+        continue;
+      }
+
+      // These constant values differ unexpectedly.
+      return {old_inst_id, new_inst_id};
+    }
+  }
+
+  if (old_eval_block.size() < new_eval_block.size()) {
+    return {SemIR::InstId::None, new_eval_block[old_eval_block.size()]};
+  }
+  if (old_eval_block.size() > new_eval_block.size()) {
+    return {old_eval_block[new_eval_block.size()], SemIR::InstId::None};
+  }
+
+  return {SemIR::InstId::None, SemIR::InstId::None};
+}
+
+// If `constant_id` refers to a symbolic constant within the declaration region
+// of `generic_id`, remap it to refer to the constant value of the corresponding
+// element in the given eval block. Otherwise returns the ID unchanged.
+static auto ReattachConstant(Context& context, SemIR::GenericId generic_id,
+                             llvm::ArrayRef<SemIR::InstId> eval_block,
+                             SemIR::ConstantId constant_id)
+    -> SemIR::ConstantId {
+  if (!constant_id.has_value() || !constant_id.is_symbolic()) {
+    return constant_id;
+  }
+
+  auto &symbolic_const = context.constant_values().GetSymbolicConstant(constant_id);
+  if (symbolic_const.generic_id != generic_id ||
+      symbolic_const.index.region() != SemIR::GenericInstIndex::Declaration) {
+    // TODO: Should this ever happen?
+    return constant_id;
+  }
+
+  return context.constant_values().Get(
+      eval_block[symbolic_const.index.index()]);
+}
+
+// Same as `ReattachConstant` but for a type.
+static auto ReattachType(Context& context, SemIR::GenericId generic_id,
+                         llvm::ArrayRef<SemIR::InstId> eval_block,
+                         SemIR::TypeId type_id) -> SemIR::TypeId {
+  return context.types().GetTypeIdForTypeConstantId(ReattachConstant(
+      context, generic_id, eval_block, context.types().GetConstantId(type_id)));
+}
+
 auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
     -> void {
   if (!generic_id.has_value()) {
@@ -547,10 +607,55 @@ auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
     return;
   }
 
-  // TODO: Compare the current eval block to the existing eval block for
-  // `generic_id`, and replace all references to the new eval block with
-  // references to `generic_id` instead.
-  DiscardGenericDecl(context);
+  // Find the old and new eval blocks.
+  auto old_eval_block_id =
+      context.generics()
+          .Get(generic_id)
+          .GetEvalBlock(SemIR::GenericInstIndex::Declaration);
+  CARBON_CHECK(old_eval_block_id.has_value(), "Old generic is not fully declared");
+
+  auto old_eval_block = context.inst_blocks().Get(old_eval_block_id);
+  auto new_eval_block = context.generic_region_stack().PeekEvalBlock();
+
+  // Check the eval blocks are computing the same constants in the same order.
+  // This should always be the case because we have already verified they have
+  // the same parse tree, and the poisoning rules mean that all entities they
+  // refer to are also the same.
+  //
+  // Note that it's OK if the first difference is that an old instruction has no
+  // corresponding new instruction; we wouldn't have used that anyway. This
+  // happens for `ImplDecl`, for which the witness is included in the eval block
+  // of the first declaration.
+  if (auto [old_inst_id, new_inst_id] = FirstDifferenceBetweenEvalBlocks(
+          context, old_eval_block, new_eval_block);
+      new_inst_id.has_value()) {
+    context.TODO(new_inst_id,
+                 "generic redeclaration differs from previous declaration");
+    if (old_inst_id.has_value()) {
+      context.TODO(old_inst_id, "instruction in previous declaration");
+    }
+    DiscardGenericDecl(context);
+    return;
+  }
+
+  auto redecl_generic_id =
+      context.generic_region_stack().PeekPendingGeneric().generic_id;
+
+  // Reattach any instructions that depend on the redeclaration to instead refer
+  // to the original.
+  for (auto inst_id : context.generic_region_stack().PeekDependentInsts()) {
+    // Reattach the type.
+    auto inst = context.insts().GetWithAttachedType(inst_id);
+    inst.SetType(ReattachType(context, redecl_generic_id, old_eval_block,
+                              inst.type_id()));
+    context.sem_ir().insts().Set(inst_id, inst);
+
+    // Reattach the constant value.
+    context.constant_values().Set(
+        inst_id, ReattachConstant(context, redecl_generic_id, old_eval_block,
+                                  context.constant_values().Get(inst_id)));
+  }
+  context.generic_region_stack().Pop();
 }
 
 auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
