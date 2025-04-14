@@ -210,6 +210,7 @@ class TypeStructureBuilder {
         case SemIR::ImplWitnessAccess::Kind:
         case SemIR::IntLiteralType::Kind:
         case SemIR::LegacyFloatType::Kind:
+        case SemIR::NamespaceType::Kind:
         case SemIR::StringType::Kind:
         case SemIR::TypeType::Kind:
         case SemIR::WitnessType::Kind: {
