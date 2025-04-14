@@ -308,7 +308,7 @@ fn F() {
   let a: C(()).(Z.X) = {} as C(());
 }
 
-// --- fail_todo_final_specialization_before_generic_use_of_type_constant.carbon
+// --- final_specialization_before_generic_use_of_type_constant.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
@@ -319,19 +319,11 @@ class C {}
 
 impl forall [T:! type, U:! type] T as Z(U) where .X = () {}
 
-// TODO: Make this `final`.
-impl forall [T:! type] T as Z(C) where .X = C {}
+final impl forall [T:! type] T as Z(C) where .X = C {}
 
 fn F[U:! type](T:! Z(C)) {
-  // TODO: The value of `.X` can be known to be `C` here when the impl `T as Z(C)` is
+  // The value of `.X` can be known to be `C` here when the impl `T as Z(C)` is
   // final.
-  // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
-  // CHECK:STDERR:   let a: T.X = {} as C;
-  // CHECK:STDERR:                ^~~~~~~
-  // CHECK:STDERR: fail_todo_final_specialization_before_generic_use_of_type_constant.carbon:[[@LINE+4]]:16: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: T.X = {} as C;
-  // CHECK:STDERR:                ^~~~~~~
-  // CHECK:STDERR:
   let a: T.X = {} as C;
 }
 
@@ -358,8 +350,7 @@ fn F[U:! type](T:! Z(C)) {
   let a: T.X = {} as C;
 }
 
-// TODO: Make this `final`.
-impl forall [T:! type] T as Z(C) where .X = C {}
+final impl forall [T:! type] T as Z(C) where .X = C {}
 
 // --- specialization_written_after_generic_use.carbon
 library "[[@TEST_NAME]]";
