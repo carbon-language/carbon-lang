@@ -11,17 +11,14 @@
 
 namespace Carbon::Check {
 
-// TODO: Update code to use LocId directly.
-using SemIRLoc = SemIR::LocId;
-
 // TODO: Consider instead changing calls to `SemIR::LocId::TokenOnly(...)`.
-inline auto TokenOnly(SemIR::LocId loc_id) -> SemIRLoc {
+inline auto TokenOnly(SemIR::LocId loc_id) -> SemIR::LocId {
   return loc_id.ToTokenOnly();
 }
 
 // We define the emitter separately for dependencies, so only provide a base
 // here.
-using DiagnosticEmitterBase = Diagnostics::Emitter<SemIRLoc>;
+using DiagnosticEmitterBase = Diagnostics::Emitter<SemIR::LocId>;
 
 using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 

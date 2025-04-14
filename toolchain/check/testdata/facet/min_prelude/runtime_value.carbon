@@ -156,12 +156,12 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.25f [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %impl_witness.db8: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl(%T) [symbolic]
+// CHECK:STDOUT:   %BitAnd.impl_witness_table = impl_witness_table (imports.%Core.import_ref.1e6), @impl [concrete]
+// CHECK:STDOUT:   %BitAnd.impl_witness.b7b: <witness> = impl_witness %BitAnd.impl_witness_table, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %Op.type.f99: type = fn_type @Op.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %Op.05a: %Op.type.f99 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %impl_witness.3ea: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl(type) [concrete]
-// CHECK:STDOUT:   %impl_witness.b81: <witness> = impl_witness (imports.%Core.import_ref.bd4), @impl(%T) [symbolic]
+// CHECK:STDOUT:   %BitAnd.impl_witness.0e5: <witness> = impl_witness %BitAnd.impl_witness_table, @impl(type) [concrete]
 // CHECK:STDOUT:   %Op.type.eb8: type = fn_type @Op.2, @impl(type) [concrete]
 // CHECK:STDOUT:   %Op.444: %Op.type.eb8 = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.473: <witness> = complete_type_witness type [concrete]
@@ -182,11 +182,10 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:   %Core.import_ref.a46: %BitAnd.assoc_type = import_ref Core//prelude, loc18_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Core.Op = import_ref Core//prelude, Op, unloaded
 // CHECK:STDOUT:   %Core.import_ref.040: %BitAnd.type = import_ref Core//prelude, inst102 [no loc], loaded [symbolic = constants.%Self.25f]
-// CHECK:STDOUT:   %Core.import_ref.51c: <witness> = import_ref Core//prelude, loc21_36, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.b81)]
+// CHECK:STDOUT:   %Core.import_ref.140: <witness> = import_ref Core//prelude, loc21_36, loaded [symbolic = @impl.%BitAnd.impl_witness (constants.%BitAnd.impl_witness.b7b)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.import_ref.583: type = import_ref Core//prelude, loc21_24, loaded [symbolic = @impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.import_ref.9c1: type = import_ref Core//prelude, loc21_29, loaded [concrete = constants.%BitAnd.type]
-// CHECK:STDOUT:   %Core.import_ref.1e6: @impl.%Op.type (%Op.type.f99) = import_ref Core//prelude, loc22_42, loaded [symbolic = @impl.%Op (constants.%Op.05a)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//prelude, loc21_14, loaded [symbolic = @impl.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -238,7 +237,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: generic impl @impl(imports.%Core.import_ref.5ab3ec.1: type) [from "include_files/facet_types.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.1e6), @impl(%T) [symbolic = %impl_witness (constants.%impl_witness.db8)]
+// CHECK:STDOUT:   %BitAnd.impl_witness: <witness> = impl_witness constants.%BitAnd.impl_witness_table, @impl(%T) [symbolic = %BitAnd.impl_witness (constants.%BitAnd.impl_witness.b7b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%T) [symbolic = %Op.type (constants.%Op.type.f99)]
@@ -247,7 +246,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Core.import_ref.583 as imports.%Core.import_ref.9c1 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%Core.import_ref.51c
+// CHECK:STDOUT:     witness = imports.%Core.import_ref.140
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,7 +304,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.db8
+// CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness.b7b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T) {}
@@ -317,7 +316,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: specific @impl(type) {
 // CHECK:STDOUT:   %T => type
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.3ea
+// CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness.0e5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Op.type => constants.%Op.type.eb8
@@ -356,7 +355,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:   %Z.facet: %Z.type.049 = facet_value %.Self.as_type, (%.Self.as_wit.iface0) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit.iface0, element0 [symbolic_self]
 // CHECK:STDOUT:   %Z_where.type: type = facet_type <@Z, @Z(%C) where %impl.elem0 = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (file.%impl_witness_assoc_constant), @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness file.%Z.impl_witness_table, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -403,7 +402,8 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_20.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_20.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%impl_witness_assoc_constant), @impl(constants.%T) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @impl [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table, @impl(constants.%T) [symbolic = @impl.%Z.impl_witness (constants.%Z.impl_witness)]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %Z.type.049 = binding_pattern T
@@ -459,13 +459,13 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: generic impl @impl(%T.loc8_20.1: type) {
 // CHECK:STDOUT:   %T.loc8_20.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_20.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc8_20.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_20.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (file.%impl_witness_assoc_constant), @impl(%T.loc8_20.2) [symbolic = %impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness file.%Z.impl_witness_table, @impl(%T.loc8_20.2) [symbolic = %Z.impl_witness (constants.%Z.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %.loc8_40 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = file.%impl_witness
+// CHECK:STDOUT:     witness = file.%Z.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -509,7 +509,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_20.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_20.2 => constants.%T.patt
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness
+// CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc8_20.2) {}
@@ -546,11 +546,11 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:   %assoc0.220: %BitAnd.assoc_type = assoc_entity element0, @BitAnd.%Op.decl [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl), @impl(%T) [symbolic]
+// CHECK:STDOUT:   %BitAnd.impl_witness: <witness> = impl_witness file.%BitAnd.impl_witness_table, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %Op.type.28d: type = fn_type @Op.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %Op.902: %Op.type.28d = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value %T, (%impl_witness) [symbolic]
+// CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value %T, (%BitAnd.impl_witness) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -577,7 +577,8 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:     %BitAnd.ref: type = name_ref BitAnd, file.%BitAnd.decl [concrete = constants.%BitAnd.type]
 // CHECK:STDOUT:     %T.loc21_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl), @impl(constants.%T) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:   %BitAnd.impl_witness_table = impl_witness_table (@impl.%Op.decl), @impl [concrete]
+// CHECK:STDOUT:   %BitAnd.impl_witness: <witness> = impl_witness %BitAnd.impl_witness_table, @impl(constants.%T) [symbolic = @impl.%BitAnd.impl_witness (constants.%BitAnd.impl_witness)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(%Dest.loc9_14.1: type) {
@@ -705,7 +706,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: generic impl @impl(%T.loc21_14.1: type) {
 // CHECK:STDOUT:   %T.loc21_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc21_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Op.decl), @impl(%T.loc21_14.2) [symbolic = %impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:   %BitAnd.impl_witness: <witness> = impl_witness file.%BitAnd.impl_witness_table, @impl(%T.loc21_14.2) [symbolic = %BitAnd.impl_witness (constants.%BitAnd.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%T.loc21_14.2) [symbolic = %Op.type (constants.%Op.type.28d)]
@@ -734,7 +735,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Op = %Op.decl
-// CHECK:STDOUT:     witness = file.%impl_witness
+// CHECK:STDOUT:     witness = file.%BitAnd.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -811,7 +812,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc21_14.2 => constants.%T.patt
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness
+// CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc21_14.2) {}

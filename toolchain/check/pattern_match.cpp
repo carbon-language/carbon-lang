@@ -528,17 +528,16 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   auto tuple_type =
       context.types().GetAs<SemIR::TupleType>(tuple_pattern.type_id);
   auto element_type_inst_ids =
-      context.inst_blocks().Get(tuple_type.elements_id);
+      context.inst_blocks().Get(tuple_type.type_elements_id);
   llvm::SmallVector<SemIR::InstId> subscrutinee_ids;
   subscrutinee_ids.reserve(element_type_inst_ids.size());
-  for (auto [i, element_type_inst_id] :
-       llvm::enumerate(element_type_inst_ids)) {
-    subscrutinee_ids.push_back(AddInst<SemIR::TupleAccess>(
-        context, scrutinee.loc_id,
-        {.type_id =
-             context.types().GetTypeIdForTypeInstId(element_type_inst_id),
-         .tuple_id = entry.scrutinee_id,
-         .index = SemIR::ElementIndex(i)}));
+  for (auto [i, element_type_id] : llvm::enumerate(
+           context.types().GetBlockAsTypeIds(element_type_inst_ids))) {
+    subscrutinee_ids.push_back(
+        AddInst<SemIR::TupleAccess>(context, scrutinee.loc_id,
+                                    {.type_id = element_type_id,
+                                     .tuple_id = entry.scrutinee_id,
+                                     .index = SemIR::ElementIndex(i)}));
   }
   add_all_subscrutinees(subscrutinee_ids);
 }

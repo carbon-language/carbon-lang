@@ -31,12 +31,12 @@ class X {
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B.decl [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%B.decl) [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @X.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %B.type.d47: type = fn_type @B.2 [concrete]
 // CHECK:STDOUT:   %B.4af: %B.type.d47 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%A.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -68,7 +68,7 @@ class X {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = @X.%impl_witness
+// CHECK:STDOUT:   witness = @X.%A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
@@ -76,7 +76,8 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%B.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (@impl.%B.decl), @impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

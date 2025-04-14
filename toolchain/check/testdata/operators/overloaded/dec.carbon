@@ -32,15 +32,15 @@ fn TestOp() {
 // CHECK:STDOUT:   %Dec.type: type = facet_type <@Dec> [concrete]
 // CHECK:STDOUT:   %Op.type.633: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.7f9.%Op.decl) [concrete]
+// CHECK:STDOUT:   %Dec.impl_witness: <witness> = impl_witness file.%Dec.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.9e0: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.cf9: %Op.type.9e0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Dec.facet: %Dec.type = facet_value %C, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %Dec.facet: %Dec.type = facet_value %C, (%Dec.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.369: type = fn_type_with_self_type %Op.type.633, %Dec.facet [concrete]
+// CHECK:STDOUT:   %.859: type = fn_type_with_self_type %Op.type.633, %Dec.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,7 +65,8 @@ fn TestOp() {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Dec.ref: type = name_ref Dec, imports.%Core.Dec [concrete = constants.%Dec.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.7f9.%Op.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Dec.impl_witness_table = impl_witness_table (@impl.7f9.%Op.decl), @impl.7f9 [concrete]
+// CHECK:STDOUT:   %Dec.impl_witness: <witness> = impl_witness %Dec.impl_witness_table [concrete = constants.%Dec.impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -86,7 +87,7 @@ fn TestOp() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%Dec.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -114,7 +115,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %impl.elem0: %.369 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Op.cf9]
+// CHECK:STDOUT:   %impl.elem0: %.859 = impl_witness_access constants.%Dec.impl_witness, element0 [concrete = constants.%Op.cf9]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c.ref
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr)

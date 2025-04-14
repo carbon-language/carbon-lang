@@ -30,9 +30,9 @@ namespace {
 class TypeCompleter {
  public:
   // `context` mut not be null.
-  TypeCompleter(Context* context, SemIRLoc loc,
+  TypeCompleter(Context* context, SemIR::LocId loc_id,
                 MakeDiagnosticBuilderFn diagnoser)
-      : context_(context), loc_(loc), diagnoser_(diagnoser) {}
+      : context_(context), loc_id_(loc_id), diagnoser_(diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
   // false if it could not be completed.
@@ -165,7 +165,7 @@ class TypeCompleter {
 
   Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
-  SemIRLoc loc_;
+  SemIR::LocId loc_id_;
   MakeDiagnosticBuilderFn diagnoser_;
 };
 }  // namespace
@@ -257,9 +257,9 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::TupleType inst): {
-      for (auto element_type_id :
-           context_->inst_blocks().Get(inst.elements_id)) {
-        Push(context_->types().GetTypeIdForTypeInstId(element_type_id));
+      for (auto element_type_id : context_->types().GetBlockAsTypeIds(
+               context_->inst_blocks().Get(inst.type_elements_id))) {
+        Push(element_type_id);
       }
       break;
     }
@@ -274,7 +274,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         return false;
       }
       if (inst.specific_id.has_value()) {
-        ResolveSpecificDefinition(*context_, loc_, inst.specific_id);
+        ResolveSpecificDefinition(*context_, loc_id_, inst.specific_id);
       }
       if (auto adapted_type_id =
               class_info.GetAdaptedType(context_->sem_ir(), inst.specific_id);
@@ -307,7 +307,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         }
 
         if (req_interface.specific_id.has_value()) {
-          ResolveSpecificDefinition(*context_, loc_, req_interface.specific_id);
+          ResolveSpecificDefinition(*context_, loc_id_,
+                                    req_interface.specific_id);
         }
       }
       break;
@@ -430,7 +431,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                                      SemIR::TupleType tuple_type) const
     -> SemIR::CompleteTypeInfo {
   // TODO: Share more code with structs.
-  auto elements = context_->inst_blocks().Get(tuple_type.elements_id);
+  auto elements = context_->inst_blocks().Get(tuple_type.type_elements_id);
   if (elements.empty()) {
     return {.value_repr = MakeEmptyValueRepr()};
   }
@@ -441,9 +442,7 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   value_rep_elements.reserve(elements.size());
   bool same_as_object_rep = true;
   SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
-  for (auto element_type_inst_id : elements) {
-    auto element_type_id =
-        context_->types().GetTypeIdForTypeInstId(element_type_inst_id);
+  for (auto element_type_id : context_->types().GetBlockAsTypeIds(elements)) {
     auto element_info = GetNestedInfo(element_type_id);
     if (!element_info.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
                                                     element_type_id)) {
@@ -533,9 +532,10 @@ auto TypeCompleter::BuildInfo(SemIR::TypeId type_id, SemIR::Inst inst) const
   }
 }
 
-auto TryToCompleteType(Context& context, SemIR::TypeId type_id, SemIRLoc loc,
-                       MakeDiagnosticBuilderFn diagnoser) -> bool {
-  return TypeCompleter(&context, loc, diagnoser).Complete(type_id);
+auto TryToCompleteType(Context& context, SemIR::TypeId type_id,
+                       SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
+    -> bool {
+  return TypeCompleter(&context, loc_id, diagnoser).Complete(type_id);
 }
 
 auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void {

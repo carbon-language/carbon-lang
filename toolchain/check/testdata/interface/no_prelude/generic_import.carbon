@@ -112,10 +112,10 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.b58: %F.type.cd2 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.assoc_type.3f0: type = assoc_entity_type @AddWith, @AddWith(%C) [concrete]
 // CHECK:STDOUT:   %assoc0.730: %AddWith.assoc_type.3f0 = assoc_entity element0, imports.%Main.import_ref.0c5 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness file.%AddWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [concrete]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, (%AddWith.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -142,7 +142,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [concrete = constants.%AddWith.type.e8e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (@impl.%F.decl), @impl [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness %AddWith.impl_witness_table [concrete = constants.%AddWith.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(imports.%Main.import_ref.5ab3ec.1: type) [from "a.carbon"] {
@@ -170,7 +171,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%AddWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

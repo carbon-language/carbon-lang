@@ -28,7 +28,7 @@ interface I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C.f28: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.6b4: type = class_type @C, @C(%Self) [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl(%Self) [symbolic]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.%I.impl_witness_table, @impl(%Self) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -63,7 +63,7 @@ interface I {
 // CHECK:STDOUT: generic impl @impl(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.6b4)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl(%Self) [symbolic = %impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.%I.impl_witness_table, @impl(%Self) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %I.ref;
 // CHECK:STDOUT: }
@@ -76,7 +76,8 @@ interface I {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C.6b4 [symbolic = %C (constants.%C.6b4)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %impl_witness: <witness> = impl_witness (), @impl(constants.%Self) [symbolic = @impl.%impl_witness (constants.%impl_witness)]
+// CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:     %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @impl(constants.%Self) [symbolic = @impl.%I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:     %.loc20: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [concrete = constants.%I.type]
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
@@ -94,7 +95,7 @@ interface I {
 // CHECK:STDOUT: specific @impl(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C.6b4
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness
+// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(@impl.%Self) {}

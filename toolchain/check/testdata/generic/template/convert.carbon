@@ -76,10 +76,10 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.fc4: <witness> = impl_witness (@impl.4e3.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.96d: <witness> = impl_witness @C.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Convert.type.dae: type = fn_type @Convert.2 [concrete]
 // CHECK:STDOUT:   %Convert.937: %Convert.type.dae = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value %C, (%impl_witness.fc4) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value %C, (%ImplicitAs.impl_witness.96d) [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %Test2.type: type = fn_type @Test2 [concrete]
@@ -94,14 +94,14 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %inst.as_compatible.c0a: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.fbe: %C = as_compatible @F.%x.ref
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.b1f: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %inst.splice_block.76e: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.83c: %i32 = splice_block %.137 {
-// CHECK:STDOUT:       %impl.elem0: %.b1f = impl_witness_access %impl_witness.fc4, element0 [concrete = %Convert.937]
+// CHECK:STDOUT:   %.2ce: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %inst.splice_block.1fd: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.96d: %i32 = splice_block %.521 {
+// CHECK:STDOUT:       %impl.elem0: %.2ce = impl_witness_access %ImplicitAs.impl_witness.96d, element0 [concrete = %Convert.937]
 // CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.fbe, %impl.elem0
 // CHECK:STDOUT:       %Convert.call: init %i32 = call %bound_method(%.fbe)
-// CHECK:STDOUT:       %.967: %i32 = value_of_initializer %Convert.call
-// CHECK:STDOUT:       %.137: %i32 = converted %.fbe, %.967
+// CHECK:STDOUT:       %.fa7: %i32 = value_of_initializer %Convert.call
+// CHECK:STDOUT:       %.521: %i32 = converted %.fbe, %.fa7
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -193,7 +193,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Convert = %Convert.decl
-// CHECK:STDOUT:   witness = @C.%impl_witness
+// CHECK:STDOUT:   witness = @C.%ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -210,7 +210,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%i32)> [concrete = constants.%ImplicitAs.type.205]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.4e3.%Convert.decl) [concrete = constants.%impl_witness.fc4]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@impl.4e3.%Convert.decl), @impl.4e3 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness.96d]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -291,7 +292,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.54b
 // CHECK:STDOUT:   %.loc5_11.3 => constants.%inst.as_compatible.c0a
-// CHECK:STDOUT:   %.loc5_11.4 => constants.%inst.splice_block.76e
+// CHECK:STDOUT:   %.loc5_11.4 => constants.%inst.splice_block.1fd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_cannot_convert.carbon

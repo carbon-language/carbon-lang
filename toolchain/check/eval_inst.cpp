@@ -234,7 +234,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
-    auto elements = context.inst_blocks().Get(witness->elements_id);
+    auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
+        witness->witness_table_id);
+    auto elements = context.inst_blocks().Get(witness_table.elements_id);
     // `elements` can be empty if there is only a forward declaration of the
     // impl.
     if (!elements.empty()) {

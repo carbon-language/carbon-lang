@@ -67,8 +67,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
 auto HandleParseNode(Context& context,
                      Parse::StructTypeLiteralFieldId /*node_id*/) -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithNodeId();
-  SemIR::InstId cast_type_inst_id =
-      ExprAsType(context, type_node, type_id).inst_id;
+  auto cast_type_inst_id = ExprAsType(context, type_node, type_id).inst_id;
   // Get the name while leaving it on the stack.
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 

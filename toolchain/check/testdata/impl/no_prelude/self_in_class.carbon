@@ -36,10 +36,10 @@ class A {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Make.decl) [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness @A.%DefaultConstructible.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Make.type.351: type = fn_type @Make.2 [concrete]
 // CHECK:STDOUT:   %Make.b73: %Make.type.351 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, (%DefaultConstructible.impl_witness) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -86,7 +86,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   witness = @A.%impl_witness
+// CHECK:STDOUT:   witness = @A.%DefaultConstructible.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -103,7 +103,8 @@ class A {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [concrete = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Make.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %DefaultConstructible.impl_witness_table = impl_witness_table (@impl.%Make.decl), @impl [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness %DefaultConstructible.impl_witness_table [concrete = constants.%DefaultConstructible.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

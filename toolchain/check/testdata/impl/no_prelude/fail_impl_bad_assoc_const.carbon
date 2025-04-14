@@ -27,7 +27,7 @@ impl () as I {}
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -40,7 +40,8 @@ impl () as I {}
 // CHECK:STDOUT:     %.loc20_7.2: type = converted %.loc20_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -61,7 +62,7 @@ impl () as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc20_7.2 as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self) {}

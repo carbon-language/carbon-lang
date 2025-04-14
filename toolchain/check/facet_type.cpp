@@ -39,20 +39,20 @@ static auto WitnessAccessMatchesInterface(
 }
 
 static auto IncompleteFacetTypeDiagnosticBuilder(
-    Context& context, SemIRLoc loc, SemIR::TypeInstId facet_type_inst_id,
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id,
     bool is_definition) -> DiagnosticBuilder {
   if (is_definition) {
     CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
                       "definition of impl as incomplete facet type {0}",
                       InstIdAsType);
-    return context.emitter().Build(loc, ImplAsIncompleteFacetTypeDefinition,
+    return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeDefinition,
                                    facet_type_inst_id);
   } else {
     CARBON_DIAGNOSTIC(
         ImplAsIncompleteFacetTypeRewrites, Error,
         "declaration of impl as incomplete facet type {0} with rewrites",
         InstIdAsType);
-    return context.emitter().Build(loc, ImplAsIncompleteFacetTypeRewrites,
+    return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeRewrites,
                                    facet_type_inst_id);
   }
 }
@@ -76,11 +76,15 @@ auto InitialFacetTypeImplWitness(
   auto facet_type_info = context.facet_types().Get(facet_type.facet_type_id);
 
   if (!is_definition && facet_type_info.rewrite_constraints.empty()) {
+    auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
+        context, witness_loc_id,
+        {.elements_id = context.inst_blocks().AddPlaceholder(),
+         .impl_id = SemIR::ImplId::None});
     return AddInst<SemIR::ImplWitness>(
         context, witness_loc_id,
         {.type_id =
              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
-         .elements_id = context.inst_blocks().AddPlaceholder(),
+         .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
   }
 
@@ -107,16 +111,22 @@ auto InitialFacetTypeImplWitness(
   SemIR::InstId witness_inst_id = SemIR::InstId::None;
   llvm::MutableArrayRef<SemIR::InstId> table;
   {
-    llvm::SmallVector<SemIR::InstId> empty_table(
-        assoc_entities.size(),
-        SemIR::ImplWitnessTablePlaceholder::SingletonInstId);
-    auto table_id = context.inst_blocks().Add(empty_table);
-    table = context.inst_blocks().GetMutable(table_id);
+    auto elements_id =
+        context.inst_blocks().AddUninitialized(assoc_entities.size());
+    table = context.inst_blocks().GetMutable(elements_id);
+    for (auto& uninit : table) {
+      uninit = SemIR::ImplWitnessTablePlaceholder::SingletonInstId;
+    }
+
+    auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
+        context, witness_loc_id,
+        {.elements_id = elements_id, .impl_id = SemIR::ImplId::None});
+
     witness_inst_id = AddInst<SemIR::ImplWitness>(
         context, witness_loc_id,
         {.type_id =
              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
-         .elements_id = table_id,
+         .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
   }
 
@@ -234,14 +244,14 @@ auto InitialFacetTypeImplWitness(
 }
 
 auto RequireCompleteFacetTypeForImplDefinition(
-    Context& context, SemIRLoc loc, SemIR::TypeInstId facet_type_inst_id)
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id)
     -> bool {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
   return RequireCompleteType(context, facet_type_id,
                              context.insts().GetLocId(facet_type_inst_id), [&] {
                                return IncompleteFacetTypeDiagnosticBuilder(
-                                   context, loc, facet_type_inst_id,
+                                   context, loc_id, facet_type_inst_id,
                                    /*is_definition=*/true);
                              });
 }

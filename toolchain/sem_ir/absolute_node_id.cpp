@@ -118,13 +118,6 @@ static auto GetAbsoluteNodeIdImpl(
                                .node_id = Parse::NodeId::None});
 }
 
-auto GetAbsoluteNodeId(const File* sem_ir, InstId inst_id)
-    -> llvm::SmallVector<AbsoluteNodeId> {
-  llvm::SmallVector<AbsoluteNodeId> absolute_node_ids;
-  GetAbsoluteNodeIdImpl(absolute_node_ids, sem_ir, inst_id);
-  return absolute_node_ids;
-}
-
 auto GetAbsoluteNodeId(const File* sem_ir, LocId loc_id)
     -> llvm::SmallVector<AbsoluteNodeId> {
   llvm::SmallVector<AbsoluteNodeId> absolute_node_ids;
@@ -135,7 +128,7 @@ auto GetAbsoluteNodeId(const File* sem_ir, LocId loc_id)
       break;
 
     case SemIR::LocId::Kind::InstId:
-      absolute_node_ids = GetAbsoluteNodeId(sem_ir, loc_id.inst_id());
+      GetAbsoluteNodeIdImpl(absolute_node_ids, sem_ir, loc_id.inst_id());
       break;
 
     case SemIR::LocId::Kind::ImportIRInstId:

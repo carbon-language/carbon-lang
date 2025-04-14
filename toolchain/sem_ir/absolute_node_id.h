@@ -17,14 +17,10 @@ struct AbsoluteNodeId {
   Parse::NodeId node_id;
 };
 
-// Resolves the `InstId` to a series of `NodeId`s, which may be in different
+// Resolves the `LocId` to a series of `NodeId`s, which may be in different
 // files. The vector will have one entry if there were no imports, and multiple
 // entries when imports are traversed. The final entry is the actual
 // declaration.
-auto GetAbsoluteNodeId(const File* sem_ir, InstId inst_id)
-    -> llvm::SmallVector<AbsoluteNodeId>;
-
-// Similar to to above overload, but starting at a `LocId`.
 auto GetAbsoluteNodeId(const File* sem_ir, LocId loc_id)
     -> llvm::SmallVector<AbsoluteNodeId>;
 

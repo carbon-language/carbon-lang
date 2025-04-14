@@ -42,13 +42,13 @@ fn F() {
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness file.%Animal.impl_witness_table [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal, @HandleAnimal(%Animal.facet) [concrete]
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.5d0: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.82e: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -103,7 +103,8 @@ fn F() {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,7 +118,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Goat.ref as %Animal.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%Animal.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
@@ -173,9 +174,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_17.3: init %Goat = class_init (), %.loc24_17.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc24_17.4: ref %Goat = temporary %.loc24_17.2, %.loc24_17.3
 // CHECK:STDOUT:   %.loc24_19.1: ref %Goat = converted %.loc24_17.1, %.loc24_17.4
-// CHECK:STDOUT:   %Animal.facet.loc24_26.1: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet.loc24_26.1: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc24_26.1: %Animal.type = converted constants.%Goat, %Animal.facet.loc24_26.1 [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %Animal.facet.loc24_26.2: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet.loc24_26.2: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc24_26.2: %Animal.type = converted constants.%Goat, %Animal.facet.loc24_26.2 [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal.ref, @HandleAnimal(constants.%Animal.facet) [concrete = constants.%HandleAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc24_19.2: %Goat = bind_value %.loc24_19.1
@@ -207,7 +208,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc18_37.2 => constants.%FeedAnimal.specific_fn.5d0
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc18_37.2 => constants.%FeedAnimal.specific_fn.82e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {

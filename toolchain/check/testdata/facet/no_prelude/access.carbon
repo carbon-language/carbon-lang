@@ -847,7 +847,7 @@ interface J {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%.Self.as_wit.iface0) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit.iface0, element0 [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (file.%impl_witness_assoc_constant) [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Id.specific_fn: <specific function> = specific_function %Id, @Id(%I.assoc_type) [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %I.assoc_type [concrete]
 // CHECK:STDOUT: }
@@ -891,7 +891,8 @@ interface J {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%impl_witness_assoc_constant) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
@@ -927,7 +928,7 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_14 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Id(%U.loc4_7.1: type) {

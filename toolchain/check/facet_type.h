@@ -48,7 +48,7 @@ auto InitialFacetTypeImplWitness(
 // Returns `true` if the facet type is complete. Otherwise issues a diagnostic
 // and returns `false`.
 auto RequireCompleteFacetTypeForImplDefinition(
-    Context& context, SemIRLoc loc, SemIR::TypeInstId facet_type_inst_id)
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id)
     -> bool;
 
 // Replaces the placeholder created by `InitialFacetTypeImplWitness` with an

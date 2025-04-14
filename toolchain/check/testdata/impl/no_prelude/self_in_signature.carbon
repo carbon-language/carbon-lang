@@ -51,15 +51,15 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %impl_witness.9ff: <witness> = impl_witness (@impl.c4a.%F.decl) [concrete]
+// CHECK:STDOUT:   %UseSelf.impl_witness.b25: <witness> = impl_witness file.%UseSelf.impl_witness_table.loc19 [concrete]
 // CHECK:STDOUT:   %F.type.fc6: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.5e2: %F.type.fc6 = struct_value () [concrete]
-// CHECK:STDOUT:   %UseSelf.facet.692: %UseSelf.type = facet_value %C, (%impl_witness.9ff) [concrete]
+// CHECK:STDOUT:   %UseSelf.facet.727: %UseSelf.type = facet_value %C, (%UseSelf.impl_witness.b25) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.320: <witness> = impl_witness (@impl.659.%F.decl) [concrete]
+// CHECK:STDOUT:   %UseSelf.impl_witness.f90: <witness> = impl_witness file.%UseSelf.impl_witness_table.loc23 [concrete]
 // CHECK:STDOUT:   %F.type.0aa: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.f71: %F.type.0aa = struct_value () [concrete]
-// CHECK:STDOUT:   %UseSelf.facet.5ea: %UseSelf.type = facet_value %D, (%impl_witness.320) [concrete]
+// CHECK:STDOUT:   %UseSelf.facet.d11: %UseSelf.type = facet_value %D, (%UseSelf.impl_witness.f90) [concrete]
 // CHECK:STDOUT:   %D.val: %D = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfNested.type: type = facet_type <@SelfNested> [concrete]
 // CHECK:STDOUT:   %Self.2ff: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic]
@@ -72,20 +72,20 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %F.998: %F.type.6ed = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfNested.assoc_type: type = assoc_entity_type @SelfNested [concrete]
 // CHECK:STDOUT:   %assoc0.beb: %SelfNested.assoc_type = assoc_entity element0, @SelfNested.%F.decl [concrete]
-// CHECK:STDOUT:   %impl_witness.f4e: <witness> = impl_witness (@impl.730.%F.decl) [concrete]
+// CHECK:STDOUT:   %SelfNested.impl_witness.5d5: <witness> = impl_witness file.%SelfNested.impl_witness_table.loc31 [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.2f0: type = struct_type {.x: %C, .y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %tuple.type.a17: type = tuple_type (%ptr.019, %struct_type.x.y.2f0) [concrete]
 // CHECK:STDOUT:   %F.type.ef0: type = fn_type @F.5 [concrete]
 // CHECK:STDOUT:   %F.9a9: %F.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %SelfNested.facet.5ec: %SelfNested.type = facet_value %C, (%impl_witness.f4e) [concrete]
-// CHECK:STDOUT:   %impl_witness.4b5: <witness> = impl_witness (@impl.82d.%F.decl) [concrete]
+// CHECK:STDOUT:   %SelfNested.facet.2b2: %SelfNested.type = facet_value %C, (%SelfNested.impl_witness.5d5) [concrete]
+// CHECK:STDOUT:   %SelfNested.impl_witness.16b: <witness> = impl_witness file.%SelfNested.impl_witness_table.loc35 [concrete]
 // CHECK:STDOUT:   %ptr.19c: type = ptr_type %D [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.527: type = struct_type {.x: %D, .y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %tuple.type.a5f: type = tuple_type (%ptr.19c, %struct_type.x.y.527) [concrete]
 // CHECK:STDOUT:   %F.type.a9d: type = fn_type @F.6 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.a9d = struct_value () [concrete]
-// CHECK:STDOUT:   %SelfNested.facet.821: %SelfNested.type = facet_value %D, (%impl_witness.4b5) [concrete]
+// CHECK:STDOUT:   %SelfNested.facet.f2c: %SelfNested.type = facet_value %D, (%SelfNested.impl_witness.16b) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -102,23 +102,27 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %UseSelf.ref: type = name_ref UseSelf, file.%UseSelf.decl [concrete = constants.%UseSelf.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (@impl.c4a.%F.decl) [concrete = constants.%impl_witness.9ff]
+// CHECK:STDOUT:   %UseSelf.impl_witness_table.loc19 = impl_witness_table (@impl.c4a.%F.decl), @impl.c4a [concrete]
+// CHECK:STDOUT:   %UseSelf.impl_witness.loc19: <witness> = impl_witness %UseSelf.impl_witness_table.loc19 [concrete = constants.%UseSelf.impl_witness.b25]
 // CHECK:STDOUT:   impl_decl @impl.659 [concrete] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %UseSelf.ref: type = name_ref UseSelf, file.%UseSelf.decl [concrete = constants.%UseSelf.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc23: <witness> = impl_witness (@impl.659.%F.decl) [concrete = constants.%impl_witness.320]
+// CHECK:STDOUT:   %UseSelf.impl_witness_table.loc23 = impl_witness_table (@impl.659.%F.decl), @impl.659 [concrete]
+// CHECK:STDOUT:   %UseSelf.impl_witness.loc23: <witness> = impl_witness %UseSelf.impl_witness_table.loc23 [concrete = constants.%UseSelf.impl_witness.f90]
 // CHECK:STDOUT:   %SelfNested.decl: type = interface_decl @SelfNested [concrete = constants.%SelfNested.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl.730 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %SelfNested.ref: type = name_ref SelfNested, file.%SelfNested.decl [concrete = constants.%SelfNested.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc31: <witness> = impl_witness (@impl.730.%F.decl) [concrete = constants.%impl_witness.f4e]
+// CHECK:STDOUT:   %SelfNested.impl_witness_table.loc31 = impl_witness_table (@impl.730.%F.decl), @impl.730 [concrete]
+// CHECK:STDOUT:   %SelfNested.impl_witness.loc31: <witness> = impl_witness %SelfNested.impl_witness_table.loc31 [concrete = constants.%SelfNested.impl_witness.5d5]
 // CHECK:STDOUT:   impl_decl @impl.82d [concrete] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %SelfNested.ref: type = name_ref SelfNested, file.%SelfNested.decl [concrete = constants.%SelfNested.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc35: <witness> = impl_witness (@impl.82d.%F.decl) [concrete = constants.%impl_witness.4b5]
+// CHECK:STDOUT:   %SelfNested.impl_witness_table.loc35 = impl_witness_table (@impl.82d.%F.decl), @impl.82d [concrete]
+// CHECK:STDOUT:   %SelfNested.impl_witness.loc35: <witness> = impl_witness %SelfNested.impl_witness_table.loc35 [concrete = constants.%SelfNested.impl_witness.16b]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @UseSelf {
@@ -213,7 +217,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc19
+// CHECK:STDOUT:   witness = file.%UseSelf.impl_witness.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.659: %D.ref as %UseSelf.ref {
@@ -238,7 +242,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc23
+// CHECK:STDOUT:   witness = file.%UseSelf.impl_witness.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.730: %C.ref as %SelfNested.ref {
@@ -263,7 +267,7 @@ impl D as SelfNested {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc31
+// CHECK:STDOUT:   witness = file.%SelfNested.impl_witness.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.82d: %D.ref as %SelfNested.ref {
@@ -287,7 +291,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc35
+// CHECK:STDOUT:   witness = file.%SelfNested.impl_witness.loc35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -350,13 +354,13 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type.599
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.692) {
-// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.692
+// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.727) {
+// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.727
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.5ea) {
-// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.5ea
+// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.d11) {
+// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.d11
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -368,16 +372,16 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.46b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.5ec) {
-// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.5ec
+// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.2b2) {
+// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.2b2
 // CHECK:STDOUT:   %Self.as_type.loc28_16.1 => constants.%C
 // CHECK:STDOUT:   %ptr.loc28_16.1 => constants.%ptr.019
 // CHECK:STDOUT:   %struct_type.x.y.loc28_36.1 => constants.%struct_type.x.y.2f0
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.a17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.821) {
-// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.821
+// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.f2c) {
+// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.f2c
 // CHECK:STDOUT:   %Self.as_type.loc28_16.1 => constants.%D
 // CHECK:STDOUT:   %ptr.loc28_16.1 => constants.%ptr.19c
 // CHECK:STDOUT:   %struct_type.x.y.loc28_36.1 => constants.%struct_type.x.y.527

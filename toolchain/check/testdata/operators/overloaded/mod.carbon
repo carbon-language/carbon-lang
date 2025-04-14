@@ -40,24 +40,24 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Mod.type: type = facet_type <@Mod> [concrete]
 // CHECK:STDOUT:   %Op.type.860: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness.5d5: <witness> = impl_witness (@impl.f96.%Op.decl) [concrete]
+// CHECK:STDOUT:   %Mod.impl_witness: <witness> = impl_witness file.%Mod.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Op.type.fd2: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.777: %Op.type.fd2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Mod.facet: %Mod.type = facet_value %C, (%impl_witness.5d5) [concrete]
+// CHECK:STDOUT:   %Mod.facet: %Mod.type = facet_value %C, (%Mod.impl_witness) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ModAssign.type: type = facet_type <@ModAssign> [concrete]
 // CHECK:STDOUT:   %Op.type.fae: type = fn_type @Op.3 [concrete]
-// CHECK:STDOUT:   %impl_witness.5ee: <witness> = impl_witness (@impl.587.%Op.decl) [concrete]
+// CHECK:STDOUT:   %ModAssign.impl_witness: <witness> = impl_witness file.%ModAssign.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.fa2: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.d6c: %Op.type.fa2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ModAssign.facet: %ModAssign.type = facet_value %C, (%impl_witness.5ee) [concrete]
+// CHECK:STDOUT:   %ModAssign.facet: %ModAssign.type = facet_value %C, (%ModAssign.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.b64: type = fn_type_with_self_type %Op.type.860, %Mod.facet [concrete]
+// CHECK:STDOUT:   %.0c1: type = fn_type_with_self_type %Op.type.860, %Mod.facet [concrete]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [concrete]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.018: type = fn_type_with_self_type %Op.type.fae, %ModAssign.facet [concrete]
+// CHECK:STDOUT:   %.1f2: type = fn_type_with_self_type %Op.type.fae, %ModAssign.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -85,13 +85,15 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Mod.ref: type = name_ref Mod, imports.%Core.Mod [concrete = constants.%Mod.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.f96.%Op.decl) [concrete = constants.%impl_witness.5d5]
+// CHECK:STDOUT:   %Mod.impl_witness_table = impl_witness_table (@impl.f96.%Op.decl), @impl.f96 [concrete]
+// CHECK:STDOUT:   %Mod.impl_witness: <witness> = impl_witness %Mod.impl_witness_table [concrete = constants.%Mod.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.587 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %ModAssign.ref: type = name_ref ModAssign, imports.%Core.ModAssign [concrete = constants.%ModAssign.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.587.%Op.decl) [concrete = constants.%impl_witness.5ee]
+// CHECK:STDOUT:   %ModAssign.impl_witness_table = impl_witness_table (@impl.587.%Op.decl), @impl.587 [concrete]
+// CHECK:STDOUT:   %ModAssign.impl_witness: <witness> = impl_witness %ModAssign.impl_witness_table [concrete = constants.%ModAssign.impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
@@ -151,7 +153,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc17
+// CHECK:STDOUT:   witness = file.%Mod.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.587: %C.ref as %ModAssign.ref {
@@ -176,7 +178,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc22
+// CHECK:STDOUT:   witness = file.%ModAssign.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -205,7 +207,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.b64 = impl_witness_access constants.%impl_witness.5d5, element0 [concrete = constants.%Op.777]
+// CHECK:STDOUT:   %impl.elem0: %.0c1 = impl_witness_access constants.%Mod.impl_witness, element0 [concrete = constants.%Op.777]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc26: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc26
@@ -217,7 +219,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc31: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.018 = impl_witness_access constants.%impl_witness.5ee, element0 [concrete = constants.%Op.d6c]
+// CHECK:STDOUT:   %impl.elem0: %.1f2 = impl_witness_access constants.%ModAssign.impl_witness, element0 [concrete = constants.%Op.d6c]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc31, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc31
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)

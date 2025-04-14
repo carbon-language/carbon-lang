@@ -106,7 +106,7 @@ impl () as D;
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -119,7 +119,8 @@ impl () as D;
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
@@ -137,8 +138,8 @@ impl () as D;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness.1bcebf.1: <witness> = impl_witness () [concrete]
-// CHECK:STDOUT:   %impl_witness.1bcebf.2: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %A.impl_witness.b6792d.1: <witness> = impl_witness file.%A.impl_witness_table.loc8 [concrete]
+// CHECK:STDOUT:   %A.impl_witness.b6792d.2: <witness> = impl_witness file.%A.impl_witness_table.loc14 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -159,13 +160,15 @@ impl () as D;
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc8: <witness> = impl_witness () [concrete = constants.%impl_witness.1bcebf.1]
+// CHECK:STDOUT:   %A.impl_witness_table.loc8 = impl_witness_table (), @impl.064930.2 [concrete]
+// CHECK:STDOUT:   %A.impl_witness.loc8: <witness> = impl_witness %A.impl_witness_table.loc8 [concrete = constants.%A.impl_witness.b6792d.1]
 // CHECK:STDOUT:   impl_decl @impl.064930.3 [concrete] {} {
 // CHECK:STDOUT:     %.loc14_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_7.2: type = converted %.loc14_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness () [concrete = constants.%impl_witness.1bcebf.2]
+// CHECK:STDOUT:   %A.impl_witness_table.loc14 = impl_witness_table (), @impl.064930.3 [concrete]
+// CHECK:STDOUT:   %A.impl_witness.loc14: <witness> = impl_witness %A.impl_witness_table.loc14 [concrete = constants.%A.impl_witness.b6792d.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "fail_decl_in_api_definition_in_impl.carbon"] {
@@ -180,7 +183,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.064930.3: %.loc14_7.2 as %A.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness.loc14
+// CHECK:STDOUT:   witness = file.%A.impl_witness.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
@@ -209,7 +212,7 @@ impl () as D;
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
 // CHECK:STDOUT:   %Self: %B.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness file.%B.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -222,7 +225,8 @@ impl () as D;
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %B.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness %B.impl_witness_table [concrete = constants.%B.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -271,7 +275,7 @@ impl () as D;
 // CHECK:STDOUT:   %C.type: type = facet_type <@C> [concrete]
 // CHECK:STDOUT:   %Self: %C.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %C.impl_witness: <witness> = impl_witness file.%C.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -284,7 +288,8 @@ impl () as D;
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %C.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %C.impl_witness: <witness> = impl_witness %C.impl_witness_table [concrete = constants.%C.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C {
@@ -302,7 +307,7 @@ impl () as D;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = facet_type <@C> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %C.impl_witness: <witness> = impl_witness file.%C.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -323,7 +328,8 @@ impl () as D;
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %C.impl_witness_table = impl_witness_table (), @impl.590fe9.2 [concrete]
+// CHECK:STDOUT:   %C.impl_witness: <witness> = impl_witness %C.impl_witness_table [concrete = constants.%C.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C [from "fail_decl_in_api_decl_in_impl.carbon"] {
@@ -348,7 +354,7 @@ impl () as D;
 // CHECK:STDOUT:   %D.type: type = facet_type <@D> [concrete]
 // CHECK:STDOUT:   %Self: %D.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %D.impl_witness: <witness> = impl_witness file.%D.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -363,7 +369,8 @@ impl () as D;
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %D.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %D.impl_witness: <witness> = impl_witness %D.impl_witness_table [concrete = constants.%D.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @D {

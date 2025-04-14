@@ -40,24 +40,24 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %BitAnd.type: type = facet_type <@BitAnd> [concrete]
 // CHECK:STDOUT:   %Op.type.27a: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness.5af: <witness> = impl_witness (@impl.c1a.%Op.decl) [concrete]
+// CHECK:STDOUT:   %BitAnd.impl_witness: <witness> = impl_witness file.%BitAnd.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Op.type.45e: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.c43: %Op.type.45e = struct_value () [concrete]
-// CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value %C, (%impl_witness.5af) [concrete]
+// CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value %C, (%BitAnd.impl_witness) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndAssign.type: type = facet_type <@BitAndAssign> [concrete]
 // CHECK:STDOUT:   %Op.type.93f: type = fn_type @Op.3 [concrete]
-// CHECK:STDOUT:   %impl_witness.762: <witness> = impl_witness (@impl.4ac.%Op.decl) [concrete]
+// CHECK:STDOUT:   %BitAndAssign.impl_witness: <witness> = impl_witness file.%BitAndAssign.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.969: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.747: %Op.type.969 = struct_value () [concrete]
-// CHECK:STDOUT:   %BitAndAssign.facet: %BitAndAssign.type = facet_value %C, (%impl_witness.762) [concrete]
+// CHECK:STDOUT:   %BitAndAssign.facet: %BitAndAssign.type = facet_value %C, (%BitAndAssign.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.93d: type = fn_type_with_self_type %Op.type.27a, %BitAnd.facet [concrete]
+// CHECK:STDOUT:   %.670: type = fn_type_with_self_type %Op.type.27a, %BitAnd.facet [concrete]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [concrete]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.ab0: type = fn_type_with_self_type %Op.type.93f, %BitAndAssign.facet [concrete]
+// CHECK:STDOUT:   %.c09: type = fn_type_with_self_type %Op.type.93f, %BitAndAssign.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -85,13 +85,15 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %BitAnd.ref: type = name_ref BitAnd, imports.%Core.BitAnd [concrete = constants.%BitAnd.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.c1a.%Op.decl) [concrete = constants.%impl_witness.5af]
+// CHECK:STDOUT:   %BitAnd.impl_witness_table = impl_witness_table (@impl.c1a.%Op.decl), @impl.c1a [concrete]
+// CHECK:STDOUT:   %BitAnd.impl_witness: <witness> = impl_witness %BitAnd.impl_witness_table [concrete = constants.%BitAnd.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.4ac [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %BitAndAssign.ref: type = name_ref BitAndAssign, imports.%Core.BitAndAssign [concrete = constants.%BitAndAssign.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.4ac.%Op.decl) [concrete = constants.%impl_witness.762]
+// CHECK:STDOUT:   %BitAndAssign.impl_witness_table = impl_witness_table (@impl.4ac.%Op.decl), @impl.4ac [concrete]
+// CHECK:STDOUT:   %BitAndAssign.impl_witness: <witness> = impl_witness %BitAndAssign.impl_witness_table [concrete = constants.%BitAndAssign.impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
@@ -151,7 +153,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc17
+// CHECK:STDOUT:   witness = file.%BitAnd.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.4ac: %C.ref as %BitAndAssign.ref {
@@ -176,7 +178,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc22
+// CHECK:STDOUT:   witness = file.%BitAndAssign.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -205,7 +207,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.93d = impl_witness_access constants.%impl_witness.5af, element0 [concrete = constants.%Op.c43]
+// CHECK:STDOUT:   %impl.elem0: %.670 = impl_witness_access constants.%BitAnd.impl_witness, element0 [concrete = constants.%Op.c43]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc26: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc26
@@ -217,7 +219,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc31: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.ab0 = impl_witness_access constants.%impl_witness.762, element0 [concrete = constants.%Op.747]
+// CHECK:STDOUT:   %impl.elem0: %.c09 = impl_witness_access constants.%BitAndAssign.impl_witness, element0 [concrete = constants.%Op.747]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc31, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc31
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)

@@ -55,8 +55,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
   // Creates an instance with the location that triggers calling Clang.
   // `context` must not be null.
-  explicit CarbonClangDiagnosticConsumer(Context* context, SemIRLoc loc)
-      : context_(context), loc_(loc) {}
+  explicit CarbonClangDiagnosticConsumer(Context* context, SemIR::LocId loc_id)
+      : context_(context), loc_id_(loc_id) {}
 
   // Generates a Carbon warning for each Clang warning and a Carbon error for
   // each Clang error or fatal.
@@ -87,9 +87,10 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
       case clang::DiagnosticsEngine::Note:
       case clang::DiagnosticsEngine::Remark: {
         context_->TODO(
-            loc_, llvm::formatv(
-                      "Unsupported: C++ diagnostic level for diagnostic\n{0}",
-                      diagnostics_str));
+            loc_id_,
+            llvm::formatv(
+                "Unsupported: C++ diagnostic level for diagnostic\n{0}",
+                diagnostics_str));
         return;
       }
       case clang::DiagnosticsEngine::Warning:
@@ -112,7 +113,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
                        ? CppInteropParseWarning
                        : CppInteropParseError,
                    diagnostics_str)
-            .Note(loc_, InCppImport)
+            .Note(loc_id_, InCppImport)
             .Emit();
         return;
       }
@@ -124,7 +125,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   Context* context_;
 
   // The location that triggered calling Clang.
-  SemIRLoc loc_;
+  SemIR::LocId loc_id_;
 };
 
 }  // namespace
@@ -139,9 +140,9 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
   // TODO: Use all import locations by referring each Clang diagnostic to the
   // relevant import.
-  SemIRLoc loc = imports.back().node_id;
+  SemIR::LocId loc_id = imports.back().node_id;
 
-  CarbonClangDiagnosticConsumer diagnostics_consumer(&context, loc);
+  CarbonClangDiagnosticConsumer diagnostics_consumer(&context, loc_id);
 
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
@@ -327,7 +328,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 // Returns the return type of the given function declaration.
 // Currently only void and 32-bit int are supported.
 // TODO: Support more return types.
-static auto GetReturnType(Context& context, SemIRLoc loc_id,
+static auto GetReturnType(Context& context, SemIR::LocId loc_id,
                           const clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
   clang::QualType ret_type = clang_decl->getReturnType().getCanonicalType();

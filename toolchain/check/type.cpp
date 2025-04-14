@@ -11,8 +11,8 @@
 namespace Carbon::Check {
 
 // Enforces that an integer type has a valid bit width.
-auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
-    -> bool {
+auto ValidateIntType(Context& context, SemIR::LocId loc_id,
+                     SemIR::IntType result) -> bool {
   auto bit_width =
       context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);
   if (!bit_width) {
@@ -26,7 +26,7 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
     CARBON_DIAGNOSTIC(IntWidthNotPositive, Error,
                       "integer type width of {0} is not positive", TypedInt);
     context.emitter().Emit(
-        loc, IntWidthNotPositive,
+        loc_id, IntWidthNotPositive,
         {.type = bit_width->type_id, .value = bit_width_val});
     return false;
   }
@@ -35,7 +35,7 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
                       "integer type width of {0} is greater than the "
                       "maximum supported width of {1}",
                       TypedInt, int);
-    context.emitter().Emit(loc, IntWidthTooLarge,
+    context.emitter().Emit(loc_id, IntWidthTooLarge,
                            {.type = bit_width->type_id, .value = bit_width_val},
                            IntStore::MaxIntWidth);
     return false;
@@ -44,7 +44,7 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
 }
 
 // Enforces that the bit width is 64 for a float.
-auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
+auto ValidateFloatBitWidth(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId inst_id) -> bool {
   auto inst = context.insts().GetAs<SemIR::IntValue>(inst_id);
   if (context.ints().Get(inst.int_id) == 64) {
@@ -52,20 +52,20 @@ auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
   }
 
   CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error, "bit width must be 64");
-  context.emitter().Emit(loc, CompileTimeFloatBitWidth);
+  context.emitter().Emit(loc_id, CompileTimeFloatBitWidth);
   return false;
 }
 
 // Enforces that a float type has a valid bit width.
-auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
-    -> bool {
+auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
+                       SemIR::FloatType result) -> bool {
   auto bit_width =
       context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);
   if (!bit_width) {
     // Symbolic bit width.
     return true;
   }
-  return ValidateFloatBitWidth(context, loc, result.bit_width_id);
+  return ValidateFloatBitWidth(context, loc_id, result.bit_width_id);
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments.
@@ -105,7 +105,7 @@ auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
                                                   interface_specific_id);
 }
 
-auto GetSingletonType(Context& context, SemIR::InstId singleton_id)
+auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
     -> SemIR::TypeId {
   CARBON_CHECK(SemIR::IsSingletonInstId(singleton_id));
   auto type_id = context.types().GetTypeIdForTypeInstId(singleton_id);
@@ -125,7 +125,7 @@ auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
 }
 
 auto GetFunctionTypeWithSelfType(Context& context,
-                                 SemIR::InstId interface_function_type_id,
+                                 SemIR::TypeInstId interface_function_type_id,
                                  SemIR::InstId self_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::FunctionTypeWithSelfType>(
       context, interface_function_type_id, self_id);
@@ -152,7 +152,7 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
       FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
 }
 
-auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
