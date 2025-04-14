@@ -19,8 +19,8 @@
 
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(None)
 
-// A noop function definition; calls should be elided.
-CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Noop)
+// A no-op function definition; calls should be elided.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(NoOp)
 
 // Temporary builtins for primitive IO.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(PrintChar)
