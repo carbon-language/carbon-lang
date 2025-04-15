@@ -459,7 +459,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   const auto& function =
       context.sem_ir().functions().Get(callee_function.function_id);
   if (function.virtual_index != -1) {
-    CARBON_CHECK(args.size() >= 1,
+    CARBON_CHECK(!args.empty(),
                  "Virtual functions must have at least one parameter");
     auto* ptr_type =
         llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
@@ -478,7 +478,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 &context.llvm_module(), llvm::Intrinsic::load_relative,
                 {i32_type}),
             {vtable,
-             llvm::ConstantInt::get(i32_type, function.virtual_index * 4)}),
+             llvm::ConstantInt::get(
+                 i32_type, static_cast<uint64_t>(function.virtual_index) * 4)}),
         args);
   } else {
     call = context.builder().CreateCall(
