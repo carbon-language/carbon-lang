@@ -27,7 +27,6 @@ selects.config_setting_group(
 # platforms and configurations, this falls back on the system malloc.
 cc_library(
     name = "tcmalloc_if_linux_opt",
-    visibility = ["//visibility:public"],
     deps = select({
         ":linux_opt": ["@tcmalloc//tcmalloc"],
         "//conditions:default": ["@bazel_tools//tools/cpp:malloc"],
