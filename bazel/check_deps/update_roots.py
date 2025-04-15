@@ -21,7 +21,7 @@ from pathlib import Path
 os.chdir(Path(__file__).parents[2])
 
 print("Compute non-test C++ root targets...")
-non_test_cc_roots_query = subprocess.run(
+non_test_cc_roots_query = subprocess.check_output(
     [
         "./scripts/run_bazel.py",
         "query",
@@ -30,21 +30,19 @@ non_test_cc_roots_query = subprocess.run(
         "--notool_deps",
         "--output=minrank",
         (
-            'let non_tests = kind('
+            "let non_tests = kind("
             '  "(cc|pkg)_.*",'
             # Exclude tree_sitter because its @platforms dependency errors in
             # query. Note if it ends up in releases, we might want to do more,
             # but that should also be caught by check_deps.py.
-            '  attr(testonly, 0, //... except //utils/tree_sitter/...)'
+            "  attr(testonly, 0, //... except //utils/tree_sitter/...)"
             ') in kind("(cc|pkg)_.*", deps($non_tests))'
         ),
     ],
     stdout=subprocess.PIPE,
     universal_newlines=True,
 )
-ranked_targets = [
-    line.split() for line in non_test_cc_roots_query.stdout.splitlines()
-]
+ranked_targets = [line.split() for line in non_test_cc_roots_query.splitlines()]
 roots = [target for rank, target in ranked_targets if int(rank) == 0]
 print("Found roots:\n%s" % "\n".join(roots))
 
