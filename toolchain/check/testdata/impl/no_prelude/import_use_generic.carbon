@@ -275,8 +275,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.c44 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %I.facet: %I.type = facet_value constants.%C.7a7, (constants.%I.impl_witness.6bb) [concrete = constants.%I.facet]
 // CHECK:STDOUT:     %.loc25_16: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
-// CHECK:STDOUT:     %as_wit.iface0: <witness> = facet_access_witness %.loc25_16, element0 [concrete = constants.%I.impl_witness.6bb]
-// CHECK:STDOUT:     %impl.elem0: %.81d = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%F.9e6]
+// CHECK:STDOUT:     %impl.elem0: %.81d = impl_witness_access constants.%I.impl_witness.6bb, element0 [concrete = constants.%F.9e6]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %specific_fn()
 // CHECK:STDOUT:     %.loc25_23.1: ref %empty_tuple.type = temporary_storage

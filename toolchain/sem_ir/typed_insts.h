@@ -694,24 +694,6 @@ struct FacetAccessType {
   InstId facet_value_inst_id;
 };
 
-// Represents accessing the `witness` field in a facet value, which is
-// notionally a pair of a type and a witness.
-struct FacetAccessWitness {
-  static constexpr auto Kind =
-      InstKind::FacetAccessWitness.Define<Parse::NodeId>(
-          {.ir_name = "facet_access_witness",
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  // Always the builtin witness type.
-  TypeId type_id;
-  // An instruction that evaluates to a `FacetValue`.
-  InstId facet_value_inst_id;
-  // An index to a single `ImplWitness` in the witness block of the `FacetValue`
-  // from `facet_value_inst_id`.
-  ElementIndex index;
-};
-
 // A facet type value.
 struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
