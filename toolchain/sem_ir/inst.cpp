@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/sem_ir/inst.h"
+
 #include "toolchain/sem_ir/file.h"
 
 #include <utility>

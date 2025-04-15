@@ -81,7 +81,8 @@ static auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
   if (!value_block_id.has_value()) {
     // For the self specific, we can see queries before the definition is
     // resolved. Return the unattached constant value.
-    CARBON_CHECK(sem_ir.generics().GetSelfSpecific(symbolic.generic_id) == specific_id,
+    CARBON_CHECK(
+        sem_ir.generics().GetSelfSpecific(symbolic.generic_id) == specific_id,
         "Queried {0} in {1} for {2} before it was resolved.", symbolic.index,
         specific_id,
         sem_ir.insts().Get(sem_ir.generics().Get(specific.generic_id).decl_id));

@@ -993,12 +993,6 @@ static auto GetLocalGenericId(ImportContext& context,
     case CARBON_KIND(SemIR::ImplDecl impl_decl): {
       return context.local_impls().Get(impl_decl.impl_id).generic_id;
     }
-    #if 0
-    case SemIR::ErrorInst::Kind: {
-      // TODO: This should eventually not be reachable.
-      return SemIR::GenericId::None;
-    }
-    #endif
     default: {
       CARBON_FATAL("Unexpected inst for generic declaration: {0}", inst);
     }

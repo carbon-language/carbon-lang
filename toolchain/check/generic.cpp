@@ -137,12 +137,11 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) const
       -> SemIR::InstId override {
     auto inst = context().insts().Get(orig_inst_id);
-    // TODO
-//    CARBON_CHECK(
-//        inst.Is<SemIR::BindSymbolicName>() ||
-//            inst.Is<SemIR::SymbolicBindingPattern>(),
-//        "Instruction {0} has symbolic constant value but no symbolic operands",
-//        inst);
+    CARBON_CHECK(
+        inst.Is<SemIR::BindSymbolicName>() ||
+            inst.Is<SemIR::SymbolicBindingPattern>(),
+        "Instruction {0} has symbolic constant value but no symbolic operands",
+        inst);
 
     // Rebuild the instruction anyway so that it's included in the eval block.
     // TODO: Can we just reuse the instruction in this case?
@@ -391,8 +390,8 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
                              SemIR::GenericInstIndex::Region region,
                              llvm::ArrayRef<SemIR::InstId> const_ids)
     -> SemIR::InstBlockId {
-  context.generic_region_stack().Push({.generic_id = generic_id,
-                                       .region = region});
+  context.generic_region_stack().Push(
+      {.generic_id = generic_id, .region = region});
 
   auto& constants_in_generic =
       context.generic_region_stack().PeekConstantsInGenericMap();
@@ -425,7 +424,8 @@ auto StartGenericDecl(Context& context) -> void {
        .region = SemIR::GenericInstIndex::Declaration});
 }
 
-auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id) -> void {
+auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id)
+    -> void {
   // Push a generic region even if we don't have a generic_id. We might still
   // have locally-introduced generic parameters to track:
   //
@@ -578,7 +578,8 @@ static auto ReattachConstant(Context& context, SemIR::GenericId generic_id,
     return constant_id;
   }
 
-  auto &symbolic_const = context.constant_values().GetSymbolicConstant(constant_id);
+  auto& symbolic_const =
+      context.constant_values().GetSymbolicConstant(constant_id);
   if (symbolic_const.generic_id != generic_id ||
       symbolic_const.index.region() != SemIR::GenericInstIndex::Declaration) {
     // TODO: Should this ever happen?
@@ -609,7 +610,8 @@ auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
       context.generics()
           .Get(generic_id)
           .GetEvalBlock(SemIR::GenericInstIndex::Declaration);
-  CARBON_CHECK(old_eval_block_id.has_value(), "Old generic is not fully declared");
+  CARBON_CHECK(old_eval_block_id.has_value(),
+               "Old generic is not fully declared");
 
   auto old_eval_block = context.inst_blocks().Get(old_eval_block_id);
   auto new_eval_block = context.generic_region_stack().PeekEvalBlock();

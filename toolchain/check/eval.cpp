@@ -110,9 +110,9 @@ class EvalContext {
 
     auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
     CARBON_CHECK(inst_id.has_value(),
-                  "Forward reference in eval block: index {0} referenced "
-                  "before evaluation",
-                  symbolic_info.index.index());
+                 "Forward reference in eval block: index {0} referenced "
+                 "before evaluation",
+                 symbolic_info.index.index());
     return constant_values().Get(inst_id);
   }
 
@@ -757,11 +757,10 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
   return IsConstant(*phase);
 }
 
-template<typename InstT>
+template <typename InstT>
 static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
-                                         SemIR::InstId inst_id,
-                                         InstT* inst, Phase* phase)
-    -> bool {
+                                         SemIR::InstId inst_id, InstT* inst,
+                                         Phase* phase) -> bool {
   if (inst_id.has_value()) {
     inst->type_id = GetTypeOfInst(eval_context, inst_id, phase);
   }
@@ -1635,8 +1634,9 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 }
 
 // Makes a constant for a call instruction.
-static auto MakeConstantForCall(EvalContext& eval_context, SemIR::InstId inst_id,
-                                SemIR::Call call) -> SemIR::ConstantId {
+static auto MakeConstantForCall(EvalContext& eval_context,
+                                SemIR::InstId inst_id, SemIR::Call call)
+    -> SemIR::ConstantId {
   Phase phase = Phase::Concrete;
 
   // A call with an invalid argument list is used to represent an erroneous

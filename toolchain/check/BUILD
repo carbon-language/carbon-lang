@@ -214,6 +214,7 @@ cc_library(
     deps = [
         "//common:array_stack",
         "//common:check",
+        "//common:map",
         "//common:ostream",
         "//common:vlog",
         "//toolchain/sem_ir:file",

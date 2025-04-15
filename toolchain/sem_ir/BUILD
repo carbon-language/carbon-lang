@@ -111,6 +111,8 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//common:set",
+        "//common:struct_reflection",
+        "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
