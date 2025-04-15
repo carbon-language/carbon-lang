@@ -222,19 +222,35 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT: --- fail_todo_unimplemented_convert.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0, template [template]
+// CHECK:STDOUT:   %T.8b3d5d.1: type = bind_symbolic_name T, 0, template [template]
+// CHECK:STDOUT:   %T.patt.e017e3.1: type = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [template]
+// CHECK:STDOUT:   %require_complete.4aeca8.1: <witness> = require_complete_type %T.8b3d5d.1 [template]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl.49c [concrete]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.8b3d5d.1, @Destroy [template]
+// CHECK:STDOUT:   %Destroy.facet.713: %Destroy.type = facet_value %T.8b3d5d.1, (%Destroy.lookup_impl_witness) [template]
+// CHECK:STDOUT:   %.a63: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.713 [template]
+// CHECK:STDOUT:   %impl.elem0: %.a63 = impl_witness_access %Destroy.lookup_impl_witness, element0 [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.d628ce.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [template]
+// CHECK:STDOUT:   %ImplicitAs.type.d628ce.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.8b3d5d.1)> [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.64e: <witness> = impl_witness %Destroy.impl_witness_table, @impl.49c(%i32) [concrete]
+// CHECK:STDOUT:   %Op.type.a17: type = fn_type @Op.2, @impl.49c(%i32) [concrete]
+// CHECK:STDOUT:   %Op.e6a: %Op.type.a17 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet.5f7: %Destroy.type = facet_value %i32, (%Destroy.impl_witness.64e) [concrete]
+// CHECK:STDOUT:   %.ab7: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.5f7 [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.e6a, @Op.2(%i32) [concrete]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Op.1(%Destroy.facet.713) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
@@ -249,47 +265,56 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %x.patt: @F.%T.loc4_15.2 (%T) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @F.%T.loc4_15.2 (%T) = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt.e017e3.1)]
+// CHECK:STDOUT:     %x.patt: @F.%T.loc4_15.2 (%T.8b3d5d.1) = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: @F.%T.loc4_15.2 (%T.8b3d5d.1) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @F.%T.loc4_15.2 (%T) = value_param call_param0
-// CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x: @F.%T.loc4_15.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T.8b3d5d.1)]
+// CHECK:STDOUT:     %x.param: @F.%T.loc4_15.2 (%T.8b3d5d.1) = value_param call_param0
+// CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T.8b3d5d.1)]
+// CHECK:STDOUT:     %x: @F.%T.loc4_15.2 (%T.8b3d5d.1) = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
-// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T.8b3d5d.1)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt.e017e3.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4aeca8.1)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc4_15.2, @Destroy [template = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %T.loc4_15.2, (%Destroy.lookup_impl_witness) [template = %Destroy.facet (constants.%Destroy.facet.713)]
+// CHECK:STDOUT:   %.loc14_3.5: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [template = %.loc14_3.5 (constants.%.a63)]
+// CHECK:STDOUT:   %impl.elem0.loc14_3.2: @F.%.loc14_3.5 (%.a63) = impl_witness_access %Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc14_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %ImplicitAs.type.loc14_3.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc4_15.2)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
-// CHECK:STDOUT:   %.loc14_3.4: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
-// CHECK:STDOUT:   %.loc14_3.5: type = type_of_inst %.loc14_3.4 [template]
+// CHECK:STDOUT:   %.loc14_3.6: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
+// CHECK:STDOUT:   %.loc14_3.7: type = type_of_inst %.loc14_3.6 [template]
+// CHECK:STDOUT:   %specific_impl_fn.loc14_3.2: <specific function> = specific_impl_function %impl.elem0.loc14_3.2, @Op.1(%Destroy.facet) [template = %specific_impl_fn.loc14_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T.8b3d5d.1)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @F.%T.loc4_15.2 (%T) = binding_pattern v
-// CHECK:STDOUT:       %.loc14_3.1: @F.%T.loc4_15.2 (%T) = var_pattern %v.patt
+// CHECK:STDOUT:       %v.patt: @F.%T.loc4_15.2 (%T.8b3d5d.1) = binding_pattern v
+// CHECK:STDOUT:       %.loc14_3.1: @F.%T.loc4_15.2 (%T.8b3d5d.1) = var_pattern %v.patt
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @F.%T.loc4_15.2 (%T) = var v
+// CHECK:STDOUT:     %v.var: ref @F.%T.loc4_15.2 (%T.8b3d5d.1) = var v
+// CHECK:STDOUT:     %impl.elem0.loc14_3.1: @F.%.loc14_3.5 (%.a63) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [template = %impl.elem0.loc14_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc14: <bound method> = bound_method %v.var, %impl.elem0.loc14_3.1
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:     %ImplicitAs.type.loc14_3.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
-// CHECK:STDOUT:     %.loc14_3.2: @F.%.loc14_3.5 (@F.%.loc14_3.5) = splice_inst %.loc14_3.4
-// CHECK:STDOUT:     %.loc14_3.3: @F.%T.loc4_15.2 (%T) = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:     %ImplicitAs.type.loc14_3.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T.8b3d5d.1)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
+// CHECK:STDOUT:     %.loc14_3.2: @F.%.loc14_3.7 (@F.%.loc14_3.7) = splice_inst %.loc14_3.6
+// CHECK:STDOUT:     %.loc14_3.3: @F.%T.loc4_15.2 (%T.8b3d5d.1) = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %v.var, <error>
-// CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %v: ref @F.%T.loc4_15.2 (%T) = bind_name v, %v.var
+// CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T.8b3d5d.1)]
+// CHECK:STDOUT:     %v: ref @F.%T.loc4_15.2 (%T.8b3d5d.1) = bind_name v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %w.patt: %i32 = binding_pattern w
 // CHECK:STDOUT:       %.loc22_3.1: %i32 = var_pattern %w.patt
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %w.var: ref %i32 = var w
-// CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
+// CHECK:STDOUT:     %impl.elem0.loc22: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
+// CHECK:STDOUT:     %bound_method.loc22: <bound method> = bound_method %w.var, %impl.elem0.loc22
+// CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T.8b3d5d.1) = name_ref x, %x
 // CHECK:STDOUT:     %.loc22_3.2: %i32 = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %w.var, <error>
 // CHECK:STDOUT:     %.loc22_10: type = splice_block %i32 [concrete = constants.%i32] {
@@ -297,12 +322,20 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %w: ref %i32 = bind_name w, %w.var
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0.loc22, @Op.2(constants.%i32) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:     %bound_method.1: <bound method> = bound_method %w.var, %specific_fn
+// CHECK:STDOUT:     %.loc22_3.3: %i32 = bind_value %w.var
+// CHECK:STDOUT:     %no_op: init %empty_tuple.type = call %bound_method.1(%.loc22_3.3)
+// CHECK:STDOUT:     %specific_impl_fn.loc14_3.1: <specific function> = specific_impl_function %impl.elem0.loc14_3.1, @Op.1(constants.%Destroy.facet.713) [template = %specific_impl_fn.loc14_3.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc14_3.1
+// CHECK:STDOUT:     %.loc14_3.4: @F.%T.loc4_15.2 (%T.8b3d5d.1) = bind_value %v.var
+// CHECK:STDOUT:     %.1: init %empty_tuple.type = call %bound_method.2(%.loc14_3.4)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
+// CHECK:STDOUT: specific @F(constants.%T.8b3d5d.1) {
+// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T.8b3d5d.1
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt.e017e3.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

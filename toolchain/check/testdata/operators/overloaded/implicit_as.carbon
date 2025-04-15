@@ -70,15 +70,25 @@ fn Test() {
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Source.specific_fn.363: <specific function> = specific_function %Source, @Source(%X) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl.49c [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.599: <witness> = impl_witness %Destroy.impl_witness_table, @impl.49c(%X) [concrete]
+// CHECK:STDOUT:   %Op.type.9e1: type = fn_type @Op.2, @impl.49c(%X) [concrete]
+// CHECK:STDOUT:   %Op.33a: %Op.type.9e1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %X, (%Destroy.impl_witness.599) [concrete]
+// CHECK:STDOUT:   %.bfc: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %.2ea: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.bf9 [concrete]
 // CHECK:STDOUT:   %Source.specific_fn.cc7: <specific function> = specific_function %Source, @Source(%i32) [concrete]
 // CHECK:STDOUT:   %.9b4: type = fn_type_with_self_type %Convert.type.665, %ImplicitAs.facet.d80 [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.33a, @Op.2(%X) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -258,12 +268,14 @@ fn Test() {
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %Source.specific_fn.loc30: <specific function> = specific_function %Source.ref.loc30, @Source(constants.%X) [concrete = constants.%Source.specific_fn.363]
 // CHECK:STDOUT:   %.loc30_20.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %impl.elem0.loc30_20.1: %.bfc = impl_witness_access constants.%Destroy.impl_witness.599, element0 [concrete = constants.%Op.33a]
+// CHECK:STDOUT:   %bound_method.loc30_20.1: <bound method> = bound_method %.loc30_20.1, %impl.elem0.loc30_20.1
 // CHECK:STDOUT:   %Source.call.loc30: init %X = call %Source.specific_fn.loc30() to %.loc30_20.1
-// CHECK:STDOUT:   %impl.elem0.loc30: %.2ea = impl_witness_access constants.%ImplicitAs.impl_witness.b30, element0 [concrete = constants.%Convert.c7a]
-// CHECK:STDOUT:   %bound_method.loc30: <bound method> = bound_method %Source.call.loc30, %impl.elem0.loc30
+// CHECK:STDOUT:   %impl.elem0.loc30_20.2: %.2ea = impl_witness_access constants.%ImplicitAs.impl_witness.b30, element0 [concrete = constants.%Convert.c7a]
+// CHECK:STDOUT:   %bound_method.loc30_20.2: <bound method> = bound_method %Source.call.loc30, %impl.elem0.loc30_20.2
 // CHECK:STDOUT:   %.loc30_20.2: ref %X = temporary %.loc30_20.1, %Source.call.loc30
 // CHECK:STDOUT:   %.loc30_20.3: %X = bind_value %.loc30_20.2
-// CHECK:STDOUT:   %Convert.call.loc30: init %i32 = call %bound_method.loc30(%.loc30_20.3)
+// CHECK:STDOUT:   %Convert.call.loc30: init %i32 = call %bound_method.loc30_20.2(%.loc30_20.3)
 // CHECK:STDOUT:   %.loc30_20.4: %i32 = value_of_initializer %Convert.call.loc30
 // CHECK:STDOUT:   %.loc30_20.5: %i32 = converted %Source.call.loc30, %.loc30_20.4
 // CHECK:STDOUT:   %Sink_i32.call: init %empty_tuple.type = call %Sink_i32.ref(%.loc30_20.5)
@@ -273,16 +285,26 @@ fn Test() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %Source.specific_fn.loc31: <specific function> = specific_function %Source.ref.loc31, @Source(constants.%i32) [concrete = constants.%Source.specific_fn.cc7]
 // CHECK:STDOUT:   %Source.call.loc31: init %i32 = call %Source.specific_fn.loc31()
-// CHECK:STDOUT:   %impl.elem0.loc31: %.9b4 = impl_witness_access constants.%ImplicitAs.impl_witness.aa3, element0 [concrete = constants.%Convert.08a]
-// CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %Source.call.loc31, %impl.elem0.loc31
+// CHECK:STDOUT:   %impl.elem0.loc31_20.1: %.9b4 = impl_witness_access constants.%ImplicitAs.impl_witness.aa3, element0 [concrete = constants.%Convert.08a]
+// CHECK:STDOUT:   %bound_method.loc31_20.1: <bound method> = bound_method %Source.call.loc31, %impl.elem0.loc31_20.1
 // CHECK:STDOUT:   %.loc31_20.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %impl.elem0.loc31_20.2: %.bfc = impl_witness_access constants.%Destroy.impl_witness.599, element0 [concrete = constants.%Op.33a]
+// CHECK:STDOUT:   %bound_method.loc31_20.2: <bound method> = bound_method %.loc31_20.1, %impl.elem0.loc31_20.2
 // CHECK:STDOUT:   %.loc31_20.2: %i32 = value_of_initializer %Source.call.loc31
 // CHECK:STDOUT:   %.loc31_20.3: %i32 = converted %Source.call.loc31, %.loc31_20.2
-// CHECK:STDOUT:   %Convert.call.loc31: init %X = call %bound_method.loc31(%.loc31_20.3) to %.loc31_20.1
+// CHECK:STDOUT:   %Convert.call.loc31: init %X = call %bound_method.loc31_20.1(%.loc31_20.3) to %.loc31_20.1
 // CHECK:STDOUT:   %.loc31_20.4: init %X = converted %Source.call.loc31, %Convert.call.loc31
 // CHECK:STDOUT:   %.loc31_20.5: ref %X = temporary %.loc31_20.1, %.loc31_20.4
 // CHECK:STDOUT:   %.loc31_20.6: %X = bind_value %.loc31_20.5
 // CHECK:STDOUT:   %Sink_X.call: init %empty_tuple.type = call %Sink_X.ref(%.loc31_20.6)
+// CHECK:STDOUT:   %specific_fn.loc31: <specific function> = specific_function %impl.elem0.loc31_20.2, @Op.2(constants.%X) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc31_20.1, %specific_fn.loc31
+// CHECK:STDOUT:   %.loc31_20.7: %X = bind_value %.loc31_20.1
+// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc31_20.7)
+// CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30_20.1, @Op.2(constants.%X) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %.loc30_20.1, %specific_fn.loc30
+// CHECK:STDOUT:   %.loc30_20.6: %X = bind_value %.loc30_20.1
+// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc30_20.6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -25,6 +25,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.a8b: <witness> = impl_witness %Destroy.impl_witness_table, @impl(%struct_type.x.y.z) [concrete]
+// CHECK:STDOUT:   %Op.type.f60: type = fn_type @Op.2, @impl(%struct_type.x.y.z) [concrete]
+// CHECK:STDOUT:   %Op.1a4: %Op.type.f60 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %struct_type.x.y.z, (%Destroy.impl_witness.a8b) [concrete]
+// CHECK:STDOUT:   %.483: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.c.4ca: type = struct_type {.a: Core.IntLiteral, .b: %struct_type.x.y.z, .c: Core.IntLiteral} [concrete]
 // CHECK:STDOUT: }
@@ -32,6 +40,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -76,6 +85,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc14_26.1: ref %struct_type.x.y.z = temporary_storage
+// CHECK:STDOUT:   %impl.elem0: %.483 = impl_witness_access constants.%Destroy.impl_witness.a8b, element0 [concrete = constants.%Op.1a4]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc14_26.1, %impl.elem0
 // CHECK:STDOUT:   %G.call: init %struct_type.x.y.z = call %G.ref() to %.loc14_26.1
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.a.b.c.4ca = struct_literal (%int_1, %G.call, %int_3)

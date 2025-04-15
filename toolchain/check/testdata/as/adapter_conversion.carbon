@@ -884,17 +884,28 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.560: type = tuple_type (%i32, %Noncopyable) [concrete]
 // CHECK:STDOUT:   %complete_type.ce5: <witness> = complete_type_witness %tuple.type.560 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.b6e: <witness> = impl_witness %Destroy.impl_witness_table, @impl(%A) [concrete]
+// CHECK:STDOUT:   %Op.type.b96: type = fn_type @Op.2, @impl(%A) [concrete]
+// CHECK:STDOUT:   %Op.885: %Op.type.b96 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %A, (%Destroy.impl_witness.b6e) [concrete]
+// CHECK:STDOUT:   %.af1: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.885, @Op.2(%A) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -951,6 +962,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:     %.loc25_3.1: %A = var_pattern %a_init.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_init.var: ref %A = var a_init
+// CHECK:STDOUT:   %impl.elem0: %.af1 = impl_witness_access constants.%Destroy.impl_witness.b6e, element0 [concrete = constants.%Op.885]
+// CHECK:STDOUT:   %bound_method.loc25: <bound method> = bound_method %a_init.var, %impl.elem0
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -967,10 +980,21 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc25_3.3: ref %tuple.type.560 = as_compatible %a_init.var
 // CHECK:STDOUT:   %tuple.elem0.loc25_3.2: ref %i32 = tuple_access %.loc25_3.3, element0
 // CHECK:STDOUT:   %.loc25_3.4: init %i32 = initialize_from %tuple.elem0.loc25_3.1 to %tuple.elem0.loc25_3.2
-// CHECK:STDOUT:   %tuple.elem1: %Noncopyable = tuple_access %.loc25_3.2, element1
+// CHECK:STDOUT:   %tuple.elem1.loc25_3.1: %Noncopyable = tuple_access %.loc25_3.2, element1
 // CHECK:STDOUT:   assign %a_init.var, <error>
 // CHECK:STDOUT:   %A.ref.loc25_15: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a_init: ref %A = bind_name a_init, %a_init.var
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%A) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %a_init.var, %specific_fn
+// CHECK:STDOUT:   %.loc25_3.5: ref %tuple.type.560 = as_compatible %a_init.var
+// CHECK:STDOUT:   %tuple.elem0.loc25_3.3: ref %i32 = tuple_access %.loc25_3.5, element0
+// CHECK:STDOUT:   %.loc25_3.6: %i32 = bind_value %tuple.elem0.loc25_3.3
+// CHECK:STDOUT:   %tuple.elem1.loc25_3.2: ref %Noncopyable = tuple_access %.loc25_3.5, element1
+// CHECK:STDOUT:   %.loc25_3.7: %Noncopyable = bind_value %tuple.elem1.loc25_3.2
+// CHECK:STDOUT:   %tuple: %tuple.type.560 = tuple_value (%.loc25_3.6, %.loc25_3.7)
+// CHECK:STDOUT:   %.loc25_3.8: %A = as_compatible %tuple
+// CHECK:STDOUT:   %.loc25_3.9: %A = converted %a_init.var, %.loc25_3.8
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc25_3.9)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

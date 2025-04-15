@@ -59,6 +59,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -91,6 +92,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %.loc9_3: <error> = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %impl.elem0.loc9: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   br !.loc9_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_13:
@@ -128,6 +130,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %.loc14_3: <error> = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
+// CHECK:STDOUT:   %impl.elem0.loc14: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   br !.loc14_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_13:
@@ -179,6 +182,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -211,6 +215,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %.loc11_3: <error> = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %impl.elem0.loc11: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   br !.loc11_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11_13:
@@ -248,6 +253,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %.loc16_3: <error> = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref <error> = var d
+// CHECK:STDOUT:   %impl.elem0.loc16: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   br !.loc16_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_13:

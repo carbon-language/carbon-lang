@@ -6,6 +6,13 @@
 // conversions to and from them.
 package Core library "prelude";
 
+interface Destroy {
+  fn Op[self: Self]();
+}
+impl forall [T:! type] T as Destroy {
+  fn Op[self: Self]() = "no_op";
+}
+
 interface As(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }

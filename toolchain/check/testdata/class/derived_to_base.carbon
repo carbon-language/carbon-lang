@@ -43,6 +43,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.ba9: type = struct_type {.a: %i32} [concrete]
@@ -78,6 +79,14 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %struct_type.base.b.bf0: type = struct_type {.base: %struct_type.a.a6c, .b: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.base.c.136: type = struct_type {.base: %struct_type.base.b.bf0, .c: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl.49c [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.906: <witness> = impl_witness %Destroy.impl_witness_table, @impl.49c(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.2, @impl.49c(%C) [concrete]
+// CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C, (%Destroy.impl_witness.906) [concrete]
+// CHECK:STDOUT:   %.b80: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (imports.%Core.import_ref.a5b), @impl.4f9 [concrete]
@@ -99,11 +108,13 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %bound_method.047: <bound method> = bound_method %int_3.1ba, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%B.val, %int_3.822) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.2(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -324,6 +335,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %.loc38_57.1: %struct_type.base.c.136 = struct_literal (%.loc38_48.1, %int_3)
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %impl.elem0.loc38_57.1: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
+// CHECK:STDOUT:   %bound_method.loc38_57.1: <bound method> = bound_method %.loc38_57.2, %impl.elem0.loc38_57.1
 // CHECK:STDOUT:   %impl.elem0.loc38_39: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc38_39.1: <bound method> = bound_method %int_1, %impl.elem0.loc38_39 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn.loc38_39: <specific function> = specific_function %impl.elem0.loc38_39, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
@@ -347,11 +360,11 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc38_48.6: init %i32 = initialize_from %.loc38_48.4 to %.loc38_48.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc38_48.7: init %B = class_init (%.loc38_48.3, %.loc38_48.6), %.loc38_57.3 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc38_57.4: init %B = converted %.loc38_48.1, %.loc38_48.7 [concrete = constants.%B.val]
-// CHECK:STDOUT:   %impl.elem0.loc38_57: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc38_57.1: <bound method> = bound_method %int_3, %impl.elem0.loc38_57 [concrete = constants.%Convert.bound.b30]
-// CHECK:STDOUT:   %specific_fn.loc38_57: <specific function> = specific_function %impl.elem0.loc38_57, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc38_57.2: <bound method> = bound_method %int_3, %specific_fn.loc38_57 [concrete = constants.%bound_method.047]
-// CHECK:STDOUT:   %int.convert_checked.loc38_57: init %i32 = call %bound_method.loc38_57.2(%int_3) [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %impl.elem0.loc38_57.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc38_57.2: <bound method> = bound_method %int_3, %impl.elem0.loc38_57.2 [concrete = constants.%Convert.bound.b30]
+// CHECK:STDOUT:   %specific_fn.loc38_57.1: <specific function> = specific_function %impl.elem0.loc38_57.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc38_57.3: <bound method> = bound_method %int_3, %specific_fn.loc38_57.1 [concrete = constants.%bound_method.047]
+// CHECK:STDOUT:   %int.convert_checked.loc38_57: init %i32 = call %bound_method.loc38_57.3(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc38_57.5: init %i32 = converted %int_3, %int.convert_checked.loc38_57 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc38_57.6: ref %i32 = class_element_access %.loc38_57.2, element1
 // CHECK:STDOUT:   %.loc38_57.7: init %i32 = initialize_from %.loc38_57.5 to %.loc38_57.6 [concrete = constants.%int_3.822]
@@ -363,6 +376,10 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc38_59.3: ref %A = class_element_access %.loc38_59.2, element0
 // CHECK:STDOUT:   %.loc38_59.4: ref %A = converted %.loc38_59.1, %.loc38_59.3
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %.loc38_59.4
+// CHECK:STDOUT:   %specific_fn.loc38_57.2: <specific function> = specific_function %impl.elem0.loc38_57.1, @Op.2(constants.%C) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc38_57.2, %specific_fn.loc38_57.2
+// CHECK:STDOUT:   %.loc38_57.10: %C = bind_value %.loc38_57.2
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc38_57.10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

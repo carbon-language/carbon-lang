@@ -17,6 +17,12 @@ struct Operator {
   llvm::StringLiteral op_name = "Op";
 };
 
+// Checks and builds SemIR for a `Destroy` access, returning the function to
+// call. `Destroy` is atypical because it has a delayed invocation, whereas most
+// operators are immediately invoked on access.
+auto PerformDestroyOperatorAccess(Context& context, SemIR::LocId loc_id,
+                                  SemIR::InstId operand_id) -> SemIR::InstId;
+
 // Checks and builds SemIR for a unary operator expression. For example,
 // `*operand` or `operand*`. If specified, `missing_impl_diagnoser` is used to
 // build a custom error diagnostic for the case where impl lookup for the

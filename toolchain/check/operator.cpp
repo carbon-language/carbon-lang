@@ -30,6 +30,16 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
   return PerformMemberAccess(context, loc_id, interface_id, op_name_id);
 }
 
+auto PerformDestroyOperatorAccess(Context& context, SemIR::LocId loc_id,
+                                  SemIR::InstId operand_id) -> SemIR::InstId {
+  // Look up the operator function.
+  auto op_fn = GetOperatorOpFunction(context, loc_id.ToImplicit(),
+                                     {.interface_name = "Destroy"});
+
+  // Form `operand.(Op)`.
+  return PerformCompoundMemberAccess(context, loc_id, operand_id, op_fn);
+}
+
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
                         MakeDiagnosticBuilderFn missing_impl_diagnoser)

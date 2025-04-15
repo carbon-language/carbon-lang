@@ -30,6 +30,14 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.add: <witness> = impl_witness %Destroy.impl_witness_table, @impl(f64) [concrete]
+// CHECK:STDOUT:   %Op.type.3ef: type = fn_type @Op.2, @impl(f64) [concrete]
+// CHECK:STDOUT:   %Op.868: %Op.type.3ef = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value f64, (%Destroy.impl_witness.add) [concrete]
+// CHECK:STDOUT:   %.e7e: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -37,6 +45,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .Float = %Core.Float
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -66,6 +75,8 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     %.loc19_12: f64 = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref f64 = var v
+// CHECK:STDOUT:   %impl.elem0: %.e7e = impl_witness_access constants.%Destroy.impl_witness.add, element0 [concrete = constants.%Op.868]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %impl.elem0
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]
 // CHECK:STDOUT:   assign %v.var, %float
 // CHECK:STDOUT:   %.loc19_19.1: type = splice_block %.loc19_19.3 [concrete = f64] {

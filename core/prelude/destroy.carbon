@@ -2,21 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// A minimal prelude for testing conversion between types.
-package Core library "prelude";
+package Core library "prelude/destroy";
 
+// Object destruction, including running `fn destroy()`. Note this is distinct
+// from memory deallocation.
 interface Destroy {
   fn Op[self: Self]();
 }
+
+// Provide a default blanket impl for trivial destruction.
 impl forall [T:! type] T as Destroy {
   fn Op[self: Self]() = "no_op";
-}
-
-interface As(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
-}
-
-interface ImplicitAs(Dest:! type) {
-  // TODO: extend As(Dest);
-  fn Convert[self: Self]() -> Dest;
 }

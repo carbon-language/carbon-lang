@@ -35,6 +35,7 @@ fn Initializing() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Value.type: type = fn_type @Value [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Value: %Value.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %Reference.type: type = fn_type @Reference [concrete]
@@ -43,10 +44,20 @@ fn Initializing() {
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Initializing.type: type = fn_type @Initializing [concrete]
 // CHECK:STDOUT:   %Initializing: %Initializing.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.599: <witness> = impl_witness %Destroy.impl_witness_table, @impl(%X) [concrete]
+// CHECK:STDOUT:   %Op.type.9e1: type = fn_type @Op.2, @impl(%X) [concrete]
+// CHECK:STDOUT:   %Op.33a: %Op.type.9e1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %X, (%Destroy.impl_witness.599) [concrete]
+// CHECK:STDOUT:   %.bfc: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.33a, @Op.2(%X) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -140,13 +151,25 @@ fn Initializing() {
 // CHECK:STDOUT:     %.loc28_3.1: %X = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var x
+// CHECK:STDOUT:   %impl.elem0.loc28_3: %.bfc = impl_witness_access constants.%Destroy.impl_witness.599, element0 [concrete = constants.%Op.33a]
+// CHECK:STDOUT:   %bound_method.loc28_3: <bound method> = bound_method %x.var, %impl.elem0.loc28_3
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc28_3.2: ref %X = splice_block %x.var {}
+// CHECK:STDOUT:   %impl.elem0.loc28_20: %.bfc = impl_witness_access constants.%Destroy.impl_witness.599, element0 [concrete = constants.%Op.33a]
+// CHECK:STDOUT:   %bound_method.loc28_20: <bound method> = bound_method %.loc28_3.2, %impl.elem0.loc28_20
 // CHECK:STDOUT:   %Make.call: init %X = call %Make.ref() to %.loc28_3.2
 // CHECK:STDOUT:   %X.ref.loc28_25: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   assign %x.var, %Make.call
 // CHECK:STDOUT:   %X.ref.loc28_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %x: ref %X = bind_name x, %x.var
+// CHECK:STDOUT:   %specific_fn.loc28_20: <specific function> = specific_function %impl.elem0.loc28_20, @Op.2(constants.%X) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc28_3.2, %specific_fn.loc28_20
+// CHECK:STDOUT:   %.loc28_3.3: %X = bind_value %.loc28_3.2
+// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc28_3.3)
+// CHECK:STDOUT:   %specific_fn.loc28_3: <specific function> = specific_function %impl.elem0.loc28_3, @Op.2(constants.%X) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %x.var, %specific_fn.loc28_3
+// CHECK:STDOUT:   %.loc28_3.4: %X = bind_value %x.var
+// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc28_3.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

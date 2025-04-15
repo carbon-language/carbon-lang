@@ -54,12 +54,21 @@ class A {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value (%int_1.5d2) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.23 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl.49c [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.8a9: <witness> = impl_witness %Destroy.impl_witness_table, @impl.49c(%B) [concrete]
+// CHECK:STDOUT:   %Op.type.96c: type = fn_type @Op.24, @impl.49c(%B) [concrete]
+// CHECK:STDOUT:   %Op.c53: %Op.type.96c = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %B, (%Destroy.impl_witness.8a9) [concrete]
+// CHECK:STDOUT:   %.f0e: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -121,6 +130,8 @@ class A {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, @B.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc22_19.1: ref %B = temporary_storage
+// CHECK:STDOUT:   %impl.elem0: %.f0e = impl_witness_access constants.%Destroy.impl_witness.8a9, element0 [concrete = constants.%Op.c53]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc22_19.1, %impl.elem0
 // CHECK:STDOUT:   %Make.call: init %B = call %Make.ref() to %.loc22_19.1
 // CHECK:STDOUT:   %.loc22_19.2: ref %B = temporary %.loc22_19.1, %Make.call
 // CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc19 [concrete = @B.%.loc19]

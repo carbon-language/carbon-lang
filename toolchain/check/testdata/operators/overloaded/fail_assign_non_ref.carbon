@@ -64,6 +64,15 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [concrete]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.bc7: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.5 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (imports.%Core.import_ref.0b9), @impl.49c [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.906: <witness> = impl_witness %Destroy.impl_witness_table, @impl.49c(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.6, @impl.49c(%C) [concrete]
+// CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C, (%Destroy.impl_witness.906) [concrete]
+// CHECK:STDOUT:   %.b80: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.6(%C) [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.6d3: type = fn_type_with_self_type %Op.type.421, %AddAssign.facet [concrete]
@@ -73,6 +82,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Inc = %Core.Inc
 // CHECK:STDOUT:     .AddAssign = %Core.AddAssign
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -187,11 +197,17 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %.bc7 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%Op.0c9]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc30: ref %C = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc30
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %impl.elem0.loc30_3: %.bc7 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%Op.0c9]
+// CHECK:STDOUT:   %bound_method.loc30_3: <bound method> = bound_method %a.ref, %impl.elem0.loc30_3
+// CHECK:STDOUT:   %.loc30_5.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %impl.elem0.loc30_5: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
+// CHECK:STDOUT:   %bound_method.loc30_5: <bound method> = bound_method %.loc30_5.1, %impl.elem0.loc30_5
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc30_5.1
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method.loc30_3(%addr)
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc30_5, @Op.6(constants.%C) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc30_5.1, %specific_fn
+// CHECK:STDOUT:   %.loc30_5.2: %C = bind_value %.loc30_5.1
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc30_5.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -199,11 +215,17 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.6d3 = impl_witness_access constants.%AddAssign.impl_witness, element0 [concrete = constants.%Op.d8e]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc41: ref %C = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc41
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
+// CHECK:STDOUT:   %impl.elem0.loc41_5: %.6d3 = impl_witness_access constants.%AddAssign.impl_witness, element0 [concrete = constants.%Op.d8e]
+// CHECK:STDOUT:   %bound_method.loc41_5: <bound method> = bound_method %a.ref, %impl.elem0.loc41_5
+// CHECK:STDOUT:   %.loc41_3.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %impl.elem0.loc41_3: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
+// CHECK:STDOUT:   %bound_method.loc41_3: <bound method> = bound_method %.loc41_3.1, %impl.elem0.loc41_3
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc41_3.1
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method.loc41_5(%addr, %b.ref)
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc41_3, @Op.6(constants.%C) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc41_3.1, %specific_fn
+// CHECK:STDOUT:   %.loc41_3.2: %C = bind_value %.loc41_3.1
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc41_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
