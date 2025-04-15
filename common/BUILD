@@ -231,22 +231,6 @@ cc_test(
 )
 
 cc_library(
-    name = "indirect_value",
-    hdrs = ["indirect_value.h"],
-)
-
-cc_test(
-    name = "indirect_value_test",
-    size = "small",
-    srcs = ["indirect_value_test.cpp"],
-    deps = [
-        ":indirect_value",
-        "//testing/base:gtest_main",
-        "@googletest//:gtest",
-    ],
-)
-
-cc_library(
     name = "init_llvm",
     srcs = ["init_llvm.cpp"],
     hdrs = ["init_llvm.h"],
