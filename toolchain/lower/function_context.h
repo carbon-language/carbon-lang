@@ -80,6 +80,7 @@ class FunctionContext {
     return file_context_->GetOrCreateFunction(function_id, specific_id);
   }
 
+  // Builds LLVM function type information for the specified function.
   auto BuildFunctionTypeInfo(const SemIR::Function& function,
                              SemIR::SpecificId specific_id)
       -> FileContext::FunctionTypeInfo {
