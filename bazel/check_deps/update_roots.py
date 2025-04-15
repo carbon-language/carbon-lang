@@ -33,7 +33,7 @@ non_test_cc_roots_query = subprocess.check_output(
         "--noimplicit_deps",
         "--notool_deps",
         "--output=minrank",
-        query_arg
+        query_arg,
     ],
     universal_newlines=True,
 )
