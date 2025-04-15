@@ -524,7 +524,8 @@ class ImportRefResolver : public ImportContext {
         work_stack_.pop_back();
       }
     }
-    auto constant_id = local_constant_values_for_import_insts().Get(inst_id);
+    auto constant_id =
+        local_constant_values_for_import_insts().GetAttached(inst_id);
     CARBON_CHECK(constant_id.has_value());
     return constant_id;
   }
@@ -577,7 +578,8 @@ class ImportRefResolver : public ImportContext {
   // Returns the ConstantId for an InstId. Adds unresolved constants to
   // work_stack_.
   auto GetLocalConstantValueOrPush(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    auto const_id = local_constant_values_for_import_insts().Get(inst_id);
+    auto const_id =
+        local_constant_values_for_import_insts().GetAttached(inst_id);
     if (!const_id.has_value()) {
       work_stack_.push_back({.inst_id = inst_id});
     }
@@ -613,7 +615,7 @@ class ImportRefResolver : public ImportContext {
     ResolvedConstId result;
 
     if (auto existing_const_id =
-            local_constant_values_for_import_insts().Get(inst_id);
+            local_constant_values_for_import_insts().GetAttached(inst_id);
         existing_const_id.has_value()) {
       result.const_id = existing_const_id;
       return result;
@@ -651,7 +653,7 @@ class ImportRefResolver : public ImportContext {
 
       if (auto const_id = local_context()
                               .import_ir_constant_values()[cursor_ir_id.index]
-                              .Get(cursor_inst_id);
+                              .GetAttached(cursor_inst_id);
           const_id.has_value()) {
         SetResolvedConstId(inst_id, result.indirect_insts, const_id);
         result.const_id = const_id;
@@ -814,7 +816,7 @@ static auto GetLocalConstantIdChecked(ImportContext& context,
                                       SemIR::InstId inst_id)
     -> SemIR::ConstantId {
   auto result_id =
-      context.local_constant_values_for_import_insts().Get(inst_id);
+      context.local_constant_values_for_import_insts().GetAttached(inst_id);
   CARBON_CHECK(result_id.has_value());
   return result_id;
 }
@@ -1487,7 +1489,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto adapted_type_const_id = GetLocalConstantId(
       resolver,
-      resolver.import_constant_values().Get(inst.adapted_type_inst_id));
+      resolver.import_constant_values().GetAttached(inst.adapted_type_inst_id));
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1638,7 +1640,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   auto base_type_const_id = GetLocalConstantId(
-      resolver, resolver.import_constant_values().Get(inst.base_type_inst_id));
+      resolver,
+      resolver.import_constant_values().GetAttached(inst.base_type_inst_id));
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2272,10 +2275,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   LoadLocalPatternConstantIds(resolver, import_impl.implicit_param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_impl.generic_id);
   auto self_const_id = GetLocalConstantId(
-      resolver, resolver.import_constant_values().Get(import_impl.self_id));
+      resolver,
+      resolver.import_constant_values().GetAttached(import_impl.self_id));
   auto constraint_const_id = GetLocalConstantId(
       resolver,
-      resolver.import_constant_values().Get(import_impl.constraint_id));
+      resolver.import_constant_values().GetAttached(import_impl.constraint_id));
   auto& new_impl = resolver.local_impls().Get(impl_id);
 
   if (resolver.HasNewWork()) {
@@ -3097,7 +3101,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
 // TODO: Error is returned when support is missing, but that should go away.
 static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
                            SemIR::ConstantId const_id) -> ResolveResult {
-  auto inst_const_id = resolver.import_constant_values().Get(inst_id);
+  auto inst_const_id = resolver.import_constant_values().GetAttached(inst_id);
   if (!inst_const_id.has_value() || !inst_const_id.is_symbolic()) {
     return TryResolveInstCanonical(resolver, inst_id, const_id);
   }
@@ -3112,7 +3116,7 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
   if (const_id.has_value()) {
     // For the third phase, extract the constant value that
     // TryResolveInstCanonical produced previously.
-    inner_const_id = resolver.local_constant_values().Get(
+    inner_const_id = resolver.local_constant_values().GetAttached(
         resolver.local_constant_values().GetSymbolicConstant(const_id).inst_id);
   }
 
@@ -3124,8 +3128,8 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
   }
 
   if (!const_id.has_value()) {
-    // Second phase: we have created an abstract constant. Create a
-    // corresponding generic constant.
+    // Second phase: we have created an unattached constant. Create a
+    // corresponding attached constant.
     if (symbolic_const.generic_id.has_value()) {
       result.const_id = resolver.local_constant_values().AddSymbolicConstant(
           {.inst_id =
@@ -3134,8 +3138,8 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
            .index = symbolic_const.index,
            .dependence = symbolic_const.dependence});
       if (result.decl_id.has_value()) {
-        // Overwrite the abstract symbolic constant given initially to the
-        // declaration with its final concrete symbolic value.
+        // Overwrite the unattached symbolic constant given initially to the
+        // declaration with its final attached symbolic value.
         resolver.local_constant_values().Set(result.decl_id, result.const_id);
       }
     }

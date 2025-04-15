@@ -118,7 +118,7 @@ class EvalContext {
 
   // Gets the constant value of the specified instruction in this context.
   auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    auto const_id = constant_values().Get(inst_id);
+    auto const_id = constant_values().GetAttached(inst_id);
     if (!const_id.is_symbolic()) {
       return const_id;
     }

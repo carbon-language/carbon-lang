@@ -766,7 +766,7 @@ class FormatterImpl {
     Indent();
     FormatInstLhs(inst_id, inst);
     out_ << InstT::Kind.ir_name();
-    pending_constant_value_ = sem_ir_->constant_values().Get(inst_id);
+    pending_constant_value_ = sem_ir_->constant_values().GetAttached(inst_id);
     pending_constant_value_is_self_ =
         sem_ir_->constant_values().GetInstIdIfValid(pending_constant_value_) ==
         inst_id;
@@ -1470,7 +1470,7 @@ class FormatterImpl {
     // Types are formatted in the `constants` scope because they typically refer
     // to constants.
     llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
-    if (auto const_id = sem_ir_->constant_values().Get(id);
+    if (auto const_id = sem_ir_->constant_values().GetAttached(id);
         const_id.has_value()) {
       FormatConstant(const_id);
     } else {

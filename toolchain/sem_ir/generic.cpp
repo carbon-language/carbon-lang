@@ -96,7 +96,7 @@ static auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                 InstId inst_id) -> ConstantId {
   return GetConstantInSpecific(sem_ir, specific_id,
-                               sem_ir.constant_values().Get(inst_id));
+                               sem_ir.constant_values().GetAttached(inst_id));
 }
 
 auto GetTypeOfInstInSpecific(const File& sem_ir, SpecificId specific_id,
