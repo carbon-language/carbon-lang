@@ -29,15 +29,9 @@ non_test_cc_roots_query = subprocess.check_output(
         "--noimplicit_deps",
         "--notool_deps",
         "--output=minrank",
-        (
-            "let non_tests = kind("
-            '  "(cc|pkg)_.* rule",'
-            # Exclude tree_sitter because its @platforms dependency errors in
-            # query. Note if it ends up in releases, we might want to do more,
-            # but that should also be caught by check_deps.py.
-            "  attr(testonly, 0, //... except //utils/tree_sitter/...)"
-            ') in kind("(cc|pkg)_.* rule", deps($non_tests))'
-        ),
+        'let non_tests ='
+        '  attr(testonly, 0, //... except //utils/tree_sitter/...)'
+        '  in kind("(cc|pkg)_.* rule", deps($non_tests))',
     ],
     universal_newlines=True,
 )
