@@ -17,8 +17,9 @@
 //
 // - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
 //   member. These are described below.
-// - Optionally, a `SingletonInstId` if it is a singleton instruction.
-//   Similarly, there may be `SingletonConstantId` and `SingletonTypeId`.
+// - Optionally, a `InstId` if it is a singleton instruction. Similarly, there
+//   may be `ConstantId` and `TypeId`.
+//   - These are named based on the `Id` types they represent.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
