@@ -30,7 +30,7 @@ non_test_cc_roots_query = subprocess.check_output(
         "--notool_deps",
         "--output=minrank",
         "let non_tests ="
-        "  attr(testonly, 0, //... except //utils/tree_sitter/...)"
+        "    attr(testonly, 0, //... except //utils/tree_sitter/...)"
         "  in kind('(cc|pkg)_.* rule', deps($non_tests))",
     ],
     universal_newlines=True,
