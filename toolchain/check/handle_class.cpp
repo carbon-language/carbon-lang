@@ -248,6 +248,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     const auto& prev_class = context.classes().Get(class_decl.class_id);
     FinishGenericRedecl(context, prev_class.generic_id);
 
+    // Declarations after the first owning declaration use a `Redecl`
+    // instruction instead of a `ClassDecl`.
     if (prev_class.first_owning_decl_id.has_value() &&
         prev_class.first_owning_decl_id != class_decl_id) {
       first_decl_id = prev_class.first_owning_decl_id;
