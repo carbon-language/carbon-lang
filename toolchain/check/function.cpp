@@ -73,7 +73,7 @@ auto CheckFunctionTypeMatches(Context& context,
 }
 
 auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
-                             SemIR::Function& function,
+                             const SemIR::Function& function,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo {
   auto return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),

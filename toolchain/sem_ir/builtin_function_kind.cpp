@@ -218,6 +218,8 @@ using FloatT = TypeParam<0, AnyFloat>;
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
+constexpr BuiltinInfo NoOp = {"no_op", ValidateSignature<auto()->NoReturn>};
+
 // Prints a single character.
 constexpr BuiltinInfo PrintChar = {
     "print.char", ValidateSignature<auto(AnySizedInt)->AnySizedInt>};
