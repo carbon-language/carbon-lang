@@ -167,7 +167,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(SemIR::TypeId type_id) const -> bool {
-    return type_id.Is<SemIR::TypeType>() || Is<SemIR::FacetType>(type_id);
+    return type_id == SemIR::TypeType::TypeId || Is<SemIR::FacetType>(type_id);
   }
 
   // Returns a list of types that were completed in this file, in the order in

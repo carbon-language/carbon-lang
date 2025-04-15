@@ -264,7 +264,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   auto deduced_constraint_id =
       context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
           context.sem_ir(), specific_id, impl.constraint_id));
-  if (deduced_constraint_id.Is<SemIR::ErrorInst>()) {
+  if (deduced_constraint_id == SemIR::ErrorInst::InstId) {
     return EvalImplLookupResult::MakeNone();
   }
 
@@ -329,13 +329,12 @@ static auto FindWitnessInFacet(
     for (auto [index, interface] :
          llvm::enumerate(identified.required_interfaces())) {
       if (interface == specific_interface) {
-        auto witness_id =
-            GetOrAddInst(context, loc_id,
-                         SemIR::FacetAccessWitness{
-                             .type_id = GetSingletonType(
-                                 context, SemIR::WitnessType::SingletonInstId),
-                             .facet_value_inst_id = facet_inst_id,
-                             .index = SemIR::ElementIndex(index)});
+        auto witness_id = GetOrAddInst(
+            context, loc_id,
+            SemIR::FacetAccessWitness{.type_id = GetSingletonType(
+                                          context, SemIR::WitnessType::InstId),
+                                      .facet_value_inst_id = facet_inst_id,
+                                      .index = SemIR::ElementIndex(index)});
         return witness_id;
       }
     }
@@ -356,8 +355,7 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   auto witness_const_id = EvalOrAddInst(
       context, loc_id.ToImplicit(),
       SemIR::LookupImplWitness{
-          .type_id =
-              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+          .type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
           .query_self_inst_id =
               context.constant_values().GetInstId(query_self_const_id),
           .query_specific_interface_id =
@@ -375,8 +373,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
     -> SemIR::InstBlockIdOrError {
-  if (query_self_const_id.Is<SemIR::ErrorInst>() ||
-      query_facet_type_const_id.Is<SemIR::ErrorInst>()) {
+  if (query_self_const_id == SemIR::ErrorInst::ConstantId ||
+      query_facet_type_const_id == SemIR::ErrorInst::ConstantId) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
 
@@ -441,15 +439,23 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   for (const auto& interface : interfaces) {
     // TODO: Since both `interfaces` and `query_self_const_id` are sorted lists,
     // do an O(N+M) merge instead of O(N*M) nested loops.
-    auto result_witness_id =
-        FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
-    // TODO: If the impl lookup finds a final impl, it should take precedence
-    // over the witness from the facet value. See the test:
-    // fail_todo_final_impl_precidence_over_facet_value.carbon.
-    if (!result_witness_id.has_value()) {
-      result_witness_id = GetOrAddLookupImplWitness(
-          context, loc_id, query_self_const_id, interface);
+
+    auto result_witness_id = GetOrAddLookupImplWitness(
+        context, loc_id, query_self_const_id, interface);
+
+    if (!result_witness_id.has_value() ||
+        !context.insts().Is<SemIR::ImplWitness>(result_witness_id)) {
+      // If the witness is not concrete (the result is not final), then we
+      // prefer the witness from the query's facet value (if it is one), which
+      // may include rewrite rules of associated constants that can be relied
+      // on.
+      auto facet_value_witness_id =
+          FindWitnessInFacet(context, loc_id, query_self_const_id, interface);
+      if (facet_value_witness_id.has_value()) {
+        result_witness_id = facet_value_witness_id;
+      }
     }
+
     if (result_witness_id.has_value()) {
       result_witness_ids.push_back(result_witness_id);
     } else {
@@ -536,7 +542,7 @@ static auto CollectCandidateImplsForQuery(
     // This check comes first to avoid deduction with an invalid impl. We use
     // an error value to indicate an error during creation of the impl, such
     // as a recursive impl which will cause deduction to recurse infinitely.
-    if (impl.witness_id.Is<SemIR::ErrorInst>()) {
+    if (impl.witness_id == SemIR::ErrorInst::InstId) {
       continue;
     }
     CARBON_CHECK(impl.witness_id.has_value());

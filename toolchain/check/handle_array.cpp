@@ -43,16 +43,16 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   if (!context.constant_values().Get(bound_inst_id).is_constant()) {
     CARBON_DIAGNOSTIC(InvalidArrayExpr, Error, "array bound is not a constant");
     context.emitter().Emit(bound_inst_id, InvalidArrayExpr);
-    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
     return true;
   }
 
   bound_inst_id = ConvertToValueOfType(
       context, context.insts().GetLocId(bound_inst_id), bound_inst_id,
-      GetSingletonType(context, SemIR::IntLiteralType::SingletonInstId));
+      GetSingletonType(context, SemIR::IntLiteralType::InstId));
   AddInstAndPush<SemIR::ArrayType>(
       context, node_id,
-      {.type_id = SemIR::TypeType::SingletonTypeId,
+      {.type_id = SemIR::TypeType::TypeId,
        .bound_id = bound_inst_id,
        .element_type_inst_id = element_type.inst_id});
   return true;

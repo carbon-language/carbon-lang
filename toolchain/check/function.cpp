@@ -33,8 +33,8 @@ auto CheckFunctionTypeMatches(Context& context,
       new_function.GetDeclaredReturnType(context.sem_ir());
   auto prev_return_type_id =
       prev_function.GetDeclaredReturnType(context.sem_ir(), prev_specific_id);
-  if (new_return_type_id.Is<SemIR::ErrorInst>() ||
-      prev_return_type_id.Is<SemIR::ErrorInst>()) {
+  if (new_return_type_id == SemIR::ErrorInst::TypeId ||
+      prev_return_type_id == SemIR::ErrorInst::TypeId) {
     return false;
   }
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
@@ -73,7 +73,7 @@ auto CheckFunctionTypeMatches(Context& context,
 }
 
 auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
-                             SemIR::Function& function,
+                             const SemIR::Function& function,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo {
   auto return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),

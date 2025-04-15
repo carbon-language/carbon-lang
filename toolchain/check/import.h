@@ -88,7 +88,7 @@ auto ImportLibrariesFromOtherPackage(Context& context,
 // Arguments are all in the context of the current IR. Scope lookup is expected
 // to be resolved first.
 auto ImportNameFromOtherPackage(
-    Context& context, SemIRLoc loc, SemIR::NameScopeId scope_id,
+    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
     llvm::ArrayRef<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>>
         import_ir_scopes,
     SemIR::NameId name_id) -> SemIR::InstId;

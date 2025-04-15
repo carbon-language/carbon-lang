@@ -102,7 +102,7 @@ static auto AddDependentActionSpliceImpl(Context& context,
   if (!result_type_inst_id.has_value()) {
     result_type_inst_id = AddDependentActionTypeInst(
         context, action.loc_id,
-        SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
+        SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
                           .inst_id = inst_id});
   }
   return AddInst(
@@ -132,11 +132,11 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
       auto type_inst_id = context.types().GetInstId(inst.type_id());
       inst_id = AddDependentActionSpliceImpl(
           context,
-          SemIR::LocIdAndInst(loc_id,
-                              SemIR::RefineTypeAction{
-                                  .type_id = SemIR::InstType::SingletonTypeId,
-                                  .inst_id = *inst_id,
-                                  .inst_type_inst_id = type_inst_id}),
+          SemIR::LocIdAndInst(
+              loc_id,
+              SemIR::RefineTypeAction{.type_id = SemIR::InstType::TypeId,
+                                      .inst_id = *inst_id,
+                                      .inst_type_inst_id = type_inst_id}),
           type_inst_id);
     }
 

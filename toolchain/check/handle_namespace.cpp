@@ -39,9 +39,9 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Namespace>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
-  auto namespace_inst = SemIR::Namespace{
-      GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
-      SemIR::NameScopeId::None, SemIR::InstId::None};
+  auto namespace_inst =
+      SemIR::Namespace{GetSingletonType(context, SemIR::NamespaceType::InstId),
+                       SemIR::NameScopeId::None, SemIR::InstId::None};
   auto namespace_id = AddPlaceholderInst(context, node_id, namespace_inst);
 
   SemIR::ScopeLookupResult lookup_result =

@@ -706,10 +706,9 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
       // TODO: This duplicates work done in StringifyInst for ClassType.
       const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
       if (auto literal_info = NumericTypeLiteralInfo::ForType(
-              sem_ir,
-              SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
-                               .class_id = class_decl.class_id,
-                               .specific_id = specific_id});
+              sem_ir, SemIR::ClassType{.type_id = SemIR::TypeType::TypeId,
+                                       .class_id = class_decl.class_id,
+                                       .specific_id = specific_id});
           literal_info.is_valid()) {
         RawStringOstream out;
         literal_info.PrintLiteral(sem_ir, out);
