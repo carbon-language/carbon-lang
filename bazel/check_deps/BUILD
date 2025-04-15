@@ -13,7 +13,6 @@ load("@rules_python//python:defs.bzl", "py_test")
 filegroup(
     name = "non_test_cc_rules",
     data = [
-        "//bazel/malloc:tcmalloc_if_linux_opt",
         "//toolchain/install:carbon_toolchain_tar_gz_rule",
         "//toolchain/install:carbon_toolchain_tar_rule",
     ],

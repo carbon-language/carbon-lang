@@ -22,8 +22,15 @@ os.chdir(Path(__file__).parents[2])
 
 print("Compute non-test C++ root targets...")
 query_arg = (
-    "let non_tests = attr(testonly, 0, //... except //utils/tree_sitter/...)"
-    "  in kind('(cc|pkg)_.* rule', deps($non_tests))"
+    "let non_tests = attr("
+    "    testonly, 0, //..."
+    # Exclude tree_sitter because its @platforms dependency errors in
+    # query. Note if it ends up in releases, we might want to do more,
+    # but that should also be caught by check_deps.py.
+    "    except //utils/tree_sitter/..."
+    # Exclude tcmalloc for now.
+    "    except //bazel/malloc:tcmalloc_if_linux_opt"
+    ") in kind('(cc|pkg)_.* rule', deps($non_tests))"
 )
 non_test_cc_roots_query = subprocess.check_output(
     [
