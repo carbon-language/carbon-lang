@@ -39,7 +39,6 @@ non_test_cc_roots_query = subprocess.check_output(
             ') in kind("(cc|pkg)_.*", deps($non_tests))'
         ),
     ],
-    stdout=subprocess.PIPE,
     universal_newlines=True,
 )
 ranked_targets = [line.split() for line in non_test_cc_roots_query.splitlines()]
