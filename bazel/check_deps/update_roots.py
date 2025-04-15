@@ -28,7 +28,7 @@ query_arg = (
     # query. Note if it ends up in releases, we might want to do more,
     # but that should also be caught by check_deps.py.
     "    except //utils/tree_sitter/..."
-    # Exclude tcmalloc for now.
+    # Exclude tcmalloc as an optional external library.
     "    except //bazel/malloc:tcmalloc_if_linux_opt"
     ") in kind('(cc|pkg)_.* rule', deps($non_tests))"
 )
