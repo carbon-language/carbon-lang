@@ -847,11 +847,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             queue_block_id(class_scope_id, redecl_inst.decl_block_id);
             continue;
           }
-          case CARBON_KIND(InterfaceDecl interface_inst): {
-            auto interface_scope_id = GetScopeFor(interface_inst.interface_id);
-            queue_block_id(interface_scope_id, redecl_inst.decl_block_id);
-            continue;
-          }
           default:
             CARBON_FATAL("Add redeclaration case for {0}", untyped_inst);
             continue;

@@ -881,7 +881,6 @@ struct GenericInterfaceType {
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
       {.ir_name = "impl_decl",
-       // FIXME
        // TODO: Modeling impls as unique doesn't properly handle impl
        // redeclarations.
        .constant_kind = InstConstantKind::Unique,
