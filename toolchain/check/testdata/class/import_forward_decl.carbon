@@ -62,13 +62,13 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .ForwardDecl = %ForwardDecl.decl
+// CHECK:STDOUT:     .ForwardDecl = %redecl
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_17.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %ForwardDecl.decl: type = class_decl @ForwardDecl [concrete = constants.%ForwardDecl] {} {}
+// CHECK:STDOUT:   redecl %redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl {

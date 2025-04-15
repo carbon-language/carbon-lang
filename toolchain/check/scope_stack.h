@@ -112,6 +112,21 @@ class ScopeStack {
     return sem_ir_->insts().TryGetAs<InstT>(inst_id);
   }
 
+  // Returns the current scope, if it is of the specified kind. If this is a
+  // redeclaration scope, use the original declaration instead. Otherwise,
+  // returns nullopt.
+  template <typename InstT>
+  auto GetCurrentDeclScopeAs() -> std::optional<InstT> {
+    auto inst_id = PeekInstId();
+    if (!inst_id.has_value()) {
+      return std::nullopt;
+    }
+    if (auto redecl_scope = sem_ir_->insts().TryGetAs<SemIR::Redecl>(inst_id)) {
+      inst_id = redecl_scope->decl_inst_id;
+    }
+    return sem_ir_->insts().TryGetAs<InstT>(inst_id);
+  }
+
   // If there is no `returned var` in scope, sets the given instruction to be
   // the current `returned var` and returns an `None`. If there
   // is already a `returned var`, returns it instead.

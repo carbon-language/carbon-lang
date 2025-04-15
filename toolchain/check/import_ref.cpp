@@ -1708,7 +1708,7 @@ static auto MakeIncompleteClass(ImportContext& context,
       context.local_context(),
       MakeImportedLocIdAndInst(
           context.local_context(),
-          AddImportIRInst(context, import_class.latest_decl_id()), class_decl));
+          AddImportIRInst(context, import_class.non_redecl_id()), class_decl));
   // Regardless of whether ClassDecl is a complete type, we first need an
   // incomplete type so that any references have something to point at.
   class_decl.class_id = context.local_classes().Add(

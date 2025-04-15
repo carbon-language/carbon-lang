@@ -77,7 +77,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .D = %D.decl.loc5
+// CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
@@ -89,7 +89,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc5: %D.type = class_decl @D [concrete = constants.%D.generic] {
+// CHECK:STDOUT:   %D.decl: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc6: %C.262 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5_20.1: type = splice_block %C.loc5 [concrete = constants.%C.262] {
@@ -106,22 +106,20 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc5_9.1: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc6: %D.type = class_decl @D [concrete = constants.%D.generic] {
-// CHECK:STDOUT:     %b.patt.loc6: %C.262 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5 (constants.%b.patt)]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc6_20.1: type = splice_block %C.loc6 [concrete = constants.%C.262] {
-// CHECK:STDOUT:       %C.ref.loc6: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:       %int_1000.loc6: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
-// CHECK:STDOUT:       %impl.elem0.loc6: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:       %bound_method.loc6_20.1: <bound method> = bound_method %int_1000.loc6, %impl.elem0.loc6 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:       %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc6_20.2: <bound method> = bound_method %int_1000.loc6, %specific_fn.loc6 [concrete = constants.%bound_method]
-// CHECK:STDOUT:       %int.convert_checked.loc6: init %i32 = call %bound_method.loc6_20.2(%int_1000.loc6) [concrete = constants.%int_1000.1b6]
-// CHECK:STDOUT:       %.loc6_20.2: %i32 = value_of_initializer %int.convert_checked.loc6 [concrete = constants.%int_1000.1b6]
-// CHECK:STDOUT:       %.loc6_20.3: %i32 = converted %int_1000.loc6, %.loc6_20.2 [concrete = constants.%int_1000.1b6]
-// CHECK:STDOUT:       %C.loc6: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
+// CHECK:STDOUT:   redecl %D.decl {
+// CHECK:STDOUT:     @D.%.loc6_20.1: type = splice_block @D.%C.loc6 [concrete = constants.%C.262] {
+// CHECK:STDOUT:       @D.%C.ref.loc6: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:       @D.%int_1000.loc6: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
+// CHECK:STDOUT:       @D.%impl.elem0.loc6: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:       @D.%bound_method.loc6_20.1: <bound method> = bound_method @D.%int_1000.loc6, @D.%impl.elem0.loc6 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:       @D.%specific_fn.loc6: <specific function> = specific_function @D.%impl.elem0.loc6, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:       @D.%bound_method.loc6_20.2: <bound method> = bound_method @D.%int_1000.loc6, @D.%specific_fn.loc6 [concrete = constants.%bound_method]
+// CHECK:STDOUT:       @D.%int.convert_checked.loc6: init %i32 = call @D.%bound_method.loc6_20.2(@D.%int_1000.loc6) [concrete = constants.%int_1000.1b6]
+// CHECK:STDOUT:       @D.%.loc6_20.2: %i32 = value_of_initializer @D.%int.convert_checked.loc6 [concrete = constants.%int_1000.1b6]
+// CHECK:STDOUT:       @D.%.loc6_20.3: %i32 = converted @D.%int_1000.loc6, @D.%.loc6_20.2 [concrete = constants.%int_1000.1b6]
+// CHECK:STDOUT:       @D.%C.loc6: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc6: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
+// CHECK:STDOUT:     @D.%b.loc6: %C.262 = bind_symbolic_name b, 0 [symbolic = @D.%b.loc5_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

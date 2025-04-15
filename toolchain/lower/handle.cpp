@@ -220,6 +220,11 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   // Parameters are lowered by `BuildFunctionDefinition`.
 }
 
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::Redecl /*inst*/) -> void {
+  // No action to perform.
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ReturnSlot inst) -> void {
   if (SemIR::InitRepr::ForType(context.sem_ir(), inst.type_id).kind ==

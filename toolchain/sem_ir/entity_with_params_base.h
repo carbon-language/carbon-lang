@@ -76,6 +76,15 @@ struct EntityWithParamsBase {
     return non_owning_decl_id;
   }
 
+  // Returns the instruction for the latest declaration that isn't a
+  // redeclaration.
+  auto non_redecl_id() const -> SemIR::InstId {
+    if (first_owning_decl_id.has_value()) {
+      return first_owning_decl_id;
+    }
+    return non_owning_decl_id;
+  }
+
   // Determines whether this entity has any parameter lists.
   auto has_parameters() const -> bool {
     return implicit_param_patterns_id.has_value() ||

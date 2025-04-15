@@ -109,18 +109,16 @@ class E(U:! type) {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Generic = %Generic.decl.loc4
+// CHECK:STDOUT:     .Generic = %Generic.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Generic.decl.loc4: %Generic.type = class_decl @Generic [concrete = constants.%Generic.generic] {
+// CHECK:STDOUT:   %Generic.decl: %Generic.type = class_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Generic.decl.loc6: %Generic.type = class_decl @Generic [concrete = constants.%Generic.generic] {
-// CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
+// CHECK:STDOUT:   redecl %Generic.decl {
+// CHECK:STDOUT:     @Generic.%T.loc6: type = bind_symbolic_name T, 0 [symbolic = @Generic.%T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

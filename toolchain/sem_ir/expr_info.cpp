@@ -34,6 +34,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case NameBindingDecl::Kind:
       case Namespace::Kind:
       case OutParamPattern::Kind:
+      case Redecl::Kind:
       case RefParamPattern::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:

@@ -526,6 +526,10 @@ class Stringifier {
     step_stack_->Push(inst.pointee_id, "*");
   }
 
+  auto StringifyInst(SemIR::InstId /*inst_id*/, Redecl inst) -> void {
+    step_stack_->Push(inst.decl_inst_id);
+  }
+
   auto StringifyInst(SemIR::InstId /*inst_id*/, SpecificFunction inst) -> void {
     auto callee = SemIR::GetCalleeFunction(*sem_ir_, inst.callee_id);
     if (callee.function_id.has_value()) {

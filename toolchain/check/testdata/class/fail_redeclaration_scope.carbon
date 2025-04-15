@@ -35,7 +35,7 @@ class Y {
 // CHECK:STDOUT:   %B.d5b: type = class_type @B.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %B.29a: type = class_type @B.2 [concrete]
+// CHECK:STDOUT:   %B.577: type = class_type @B.2 [concrete]
 // CHECK:STDOUT:   %Y: type = class_type @Y [concrete]
 // CHECK:STDOUT:   %B.768: type = class_type @B.3 [concrete]
 // CHECK:STDOUT: }
@@ -50,19 +50,19 @@ class Y {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .A = %A.decl.loc11
+// CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [concrete = constants.%A.466] {} {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A.1 [concrete = constants.%A.466] {} {}
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
-// CHECK:STDOUT:   %A.decl.loc19: type = class_decl @A.1 [concrete = constants.%A.466] {} {}
+// CHECK:STDOUT:   redecl %A.decl {}
 // CHECK:STDOUT:   %Y.decl: type = class_decl @Y [concrete = constants.%Y] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
-// CHECK:STDOUT:   %B.decl: type = class_decl @B.2 [concrete = constants.%B.29a] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.2 [concrete = constants.%B.577] {} {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -74,7 +74,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A.2 [concrete = constants.%A.197] {} {}
-// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [concrete = constants.%B.d5b] {} {}
+// CHECK:STDOUT:   redecl @A.2.%B.decl {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
