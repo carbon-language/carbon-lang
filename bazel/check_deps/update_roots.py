@@ -21,6 +21,10 @@ from pathlib import Path
 os.chdir(Path(__file__).parents[2])
 
 print("Compute non-test C++ root targets...")
+query_arg = (
+    "let non_tests = attr(testonly, 0, //... except //utils/tree_sitter/...)"
+    "  in kind('(cc|pkg)_.* rule', deps($non_tests))"
+)
 non_test_cc_roots_query = subprocess.check_output(
     [
         "./scripts/run_bazel.py",
@@ -29,9 +33,7 @@ non_test_cc_roots_query = subprocess.check_output(
         "--noimplicit_deps",
         "--notool_deps",
         "--output=minrank",
-        "let non_tests ="
-        "    attr(testonly, 0, //... except //utils/tree_sitter/...)"
-        "  in kind('(cc|pkg)_.* rule', deps($non_tests))",
+        query_arg
     ],
     universal_newlines=True,
 )
