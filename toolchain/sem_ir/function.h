@@ -44,7 +44,9 @@ struct FunctionFields {
   // this function.
   VirtualModifier virtual_modifier;
 
-  uint16_t virtual_index = 0;
+  // The index of the vtable slot for this virtual function. -1 if the function
+  // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
+  int32_t virtual_index = -1;
 
   // The implicit self parameter, if any, in implicit_param_patterns_id from
   // EntityWithParamsBase.

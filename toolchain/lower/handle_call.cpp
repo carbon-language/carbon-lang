@@ -458,7 +458,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::CallInst* call;
   const auto& function =
       context.sem_ir().functions().Get(callee_function.function_id);
-  if (function.virtual_modifier != SemIR::Function::VirtualModifier::None) {
+  if (function.virtual_index != -1) {
     CARBON_CHECK(args.size() >= 1,
                  "Virtual functions must have at least one parameter");
     auto* ptr_type =
