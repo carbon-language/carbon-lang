@@ -120,7 +120,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // A `var` binding in a class scope declares a field, not a true binding,
   // so we handle it separately.
   if (auto parent_class_decl =
-          context.scope_stack().GetCurrentDeclScopeAs<SemIR::ClassDecl>();
+          context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
       parent_class_decl.has_value() && !is_generic &&
       node_kind == Parse::NodeKind::VarBindingPattern) {
     if (name_id == SemIR::NameId::Underscore) {

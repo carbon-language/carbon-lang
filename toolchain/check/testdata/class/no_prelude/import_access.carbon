@@ -170,10 +170,10 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc4
+// CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc4: type = class_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
-// CHECK:STDOUT:   %ForwardWithDef.decl.loc6: type = class_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
+// CHECK:STDOUT:   %ForwardWithDef.decl: type = class_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
+// CHECK:STDOUT:   redecl %ForwardWithDef.decl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef {
@@ -556,10 +556,10 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc4
+// CHECK:STDOUT:     .Redecl [private] = %Redecl.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Redecl.decl.loc4: type = class_decl @Redecl [concrete = constants.%Redecl] {} {}
-// CHECK:STDOUT:   %Redecl.decl.loc6: type = class_decl @Redecl [concrete = constants.%Redecl] {} {}
+// CHECK:STDOUT:   %Redecl.decl: type = class_decl @Redecl [concrete = constants.%Redecl] {} {}
+// CHECK:STDOUT:   redecl %Redecl.decl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Redecl {

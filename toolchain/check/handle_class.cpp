@@ -172,7 +172,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
 static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                            bool is_definition)
-    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
+    -> std::tuple<SemIR::ClassId, SemIR::InstId, SemIR::InstId> {
   auto name = PopNameComponent(context);
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
@@ -248,7 +248,8 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     const auto& prev_class = context.classes().Get(class_decl.class_id);
     FinishGenericRedecl(context, prev_class.generic_id);
 
-    if (prev_class.first_owning_decl_id.has_value()) {
+    if (prev_class.first_owning_decl_id.has_value() &&
+        prev_class.first_owning_decl_id != class_decl_id) {
       first_decl_id = prev_class.first_owning_decl_id;
       ReplaceInstBeforeConstantUse(
           context, class_decl_id,
@@ -269,7 +270,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     context.definitions_required_by_decl().push_back(first_decl_id);
   }
 
-  return {class_decl.class_id, class_decl_id};
+  return {class_decl.class_id, first_decl_id, class_decl_id};
 }
 
 auto HandleParseNode(Context& context, Parse::ClassDeclId node_id) -> bool {
@@ -280,14 +281,14 @@ auto HandleParseNode(Context& context, Parse::ClassDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
     -> bool {
-  auto [class_id, class_decl_id] =
+  auto [class_id, decl_id, definition_id] =
       BuildClassDecl(context, node_id, /*is_definition=*/true);
   auto& class_info = context.classes().Get(class_id);
-  StartClassDefinition(context, class_info, class_decl_id);
+  StartClassDefinition(context, class_info, decl_id, definition_id);
 
   // Enter the class scope.
   context.scope_stack().Push(
-      class_decl_id, class_info.scope_id,
+      decl_id, class_info.scope_id,
       context.generics().GetSelfSpecific(class_info.generic_id));
   StartGenericDefinition(context);
 
@@ -325,7 +326,7 @@ static auto GetCurrentScopeAsClassOrDiagnose(Context& context,
                                              Lex::TokenKind tok)
     -> std::optional<SemIR::ClassDecl> {
   auto class_scope =
-      context.scope_stack().GetCurrentDeclScopeAs<SemIR::ClassDecl>();
+      context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!class_scope) {
     DiagnoseClassSpecificDeclOutsideClass(context, loc_id, tok);
   }

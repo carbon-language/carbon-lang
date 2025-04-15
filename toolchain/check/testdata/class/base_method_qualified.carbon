@@ -52,10 +52,10 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
-// CHECK:STDOUT:   %F.type.33d: type = fn_type @F.2 [concrete]
-// CHECK:STDOUT:   %F.0dd: %F.type.33d = struct_value () [concrete]
-// CHECK:STDOUT:   %G.type.788: type = fn_type @G.2 [concrete]
-// CHECK:STDOUT:   %G.853: %G.type.788 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [concrete]
+// CHECK:STDOUT:   %G.type.04c: type = fn_type @G.2 [concrete]
+// CHECK:STDOUT:   %G.07e: %G.type.04c = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.b1e: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base.b1e [concrete]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [concrete]
@@ -158,7 +158,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc19: %Derived.elem = base_decl %Base.ref, element0 [concrete]
-// CHECK:STDOUT:   %F.decl: %F.type.33d = fn_decl @F.2 [concrete = constants.%F.0dd] {
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -166,7 +166,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type.788 = fn_decl @G.2 [concrete = constants.%G.853] {
+// CHECK:STDOUT:   %G.decl: %G.type.04c = fn_decl @G.2 [concrete = constants.%G.07e] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
