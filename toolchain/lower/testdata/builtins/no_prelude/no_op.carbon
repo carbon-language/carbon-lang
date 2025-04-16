@@ -25,6 +25,12 @@ fn H() -> () {
   return NoOp2(());
 }
 
+fn I();
+
+fn J() {
+  NoOp2(I());
+}
+
 // CHECK:STDOUT: ; ModuleID = 'no_op.carbon'
 // CHECK:STDOUT: source_filename = "no_op.carbon"
 // CHECK:STDOUT:
@@ -44,6 +50,15 @@ fn H() -> () {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc25_18.1.temp = alloca {}, align 8, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CI.Main()
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CJ.Main() !dbg !14 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_CI.Main(), !dbg !15
+// CHECK:STDOUT:   %.loc31_11.1.temp = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -68,3 +83,6 @@ fn H() -> () {
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !12 = !DILocation(line: 25, column: 10, scope: !11)
 // CHECK:STDOUT: !13 = !DILocation(line: 25, column: 3, scope: !11)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "J", linkageName: "_CJ.Main", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = !DILocation(line: 31, column: 9, scope: !14)
+// CHECK:STDOUT: !16 = !DILocation(line: 30, column: 1, scope: !14)
