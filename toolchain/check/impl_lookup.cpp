@@ -5,6 +5,7 @@
 #include "toolchain/check/impl_lookup.h"
 
 #include <algorithm>
+#include <utility>
 #include <variant>
 
 #include "toolchain/base/kind_switch.h"

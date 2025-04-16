@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <algorithm>
+#include <vector>
+
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"

@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/facet_type_info.h"
 
+#include <tuple>
+
 namespace Carbon::SemIR {
 
 template <typename VecT, typename CompareT>

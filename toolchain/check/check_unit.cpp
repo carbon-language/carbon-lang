@@ -5,6 +5,7 @@
 #include "toolchain/check/check_unit.h"
 
 #include <string>
+#include <utility>
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"

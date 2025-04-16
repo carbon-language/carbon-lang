@@ -4,6 +4,9 @@
 
 #include "toolchain/lex/string_literal.h"
 
+#include <initializer_list>
+#include <optional>
+
 #include "common/check.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"

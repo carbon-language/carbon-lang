@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "common/check.h"
 #include "toolchain/language_server/handle.h"

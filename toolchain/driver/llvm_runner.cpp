@@ -8,6 +8,7 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <string>
 
 #include "common/vlog.h"
 #include "lld/Common/Driver.h"

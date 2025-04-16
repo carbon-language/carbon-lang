@@ -5,6 +5,8 @@
 #include "common/exe_path.h"
 
 #include <gtest/gtest.h>
+#include <string>
+#include <system_error>
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"

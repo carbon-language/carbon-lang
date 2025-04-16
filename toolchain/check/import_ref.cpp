@@ -4,6 +4,11 @@
 
 #include "toolchain/check/import_ref.h"
 
+#include <optional>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 #include "common/check.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"

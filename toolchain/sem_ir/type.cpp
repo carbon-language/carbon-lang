@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/type.h"
 
+#include <optional>
+
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {

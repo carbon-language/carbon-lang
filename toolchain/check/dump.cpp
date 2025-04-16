@@ -15,6 +15,8 @@
 
 #include "toolchain/lex/dump.h"
 
+#include <string>
+
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/context.h"

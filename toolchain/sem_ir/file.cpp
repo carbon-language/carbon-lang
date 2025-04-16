@@ -4,6 +4,10 @@
 
 #include "toolchain/sem_ir/file.h"
 
+#include <optional>
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"

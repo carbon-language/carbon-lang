@@ -4,6 +4,9 @@
 
 #include "toolchain/check/import.h"
 
+#include <optional>
+#include <utility>
+
 #include "common/check.h"
 #include "common/map.h"
 #include "toolchain/base/kind_switch.h"

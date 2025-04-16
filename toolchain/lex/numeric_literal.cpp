@@ -4,7 +4,10 @@
 
 #include "toolchain/lex/numeric_literal.h"
 
+#include <algorithm>
 #include <bitset>
+#include <iterator>
+#include <optional>
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"

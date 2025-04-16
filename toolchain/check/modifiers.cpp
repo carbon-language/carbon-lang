@@ -4,6 +4,8 @@
 
 #include "toolchain/check/modifiers.h"
 
+#include <optional>
+
 #include "toolchain/check/decl_introducer_state.h"
 
 namespace Carbon::Check {

@@ -4,6 +4,10 @@
 
 #include "toolchain/check/node_id_traversal.h"
 
+#include <optional>
+#include <utility>
+#include <variant>
+
 #include "toolchain/check/handle.h"
 
 namespace Carbon::Check {

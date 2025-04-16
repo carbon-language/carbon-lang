@@ -7,6 +7,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <utility>
 
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Sema/Lookup.h"

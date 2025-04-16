@@ -4,6 +4,9 @@
 
 #include "toolchain/check/deferred_definition_worklist.h"
 
+#include <algorithm>
+#include <optional>
+
 #include "common/variant_helpers.h"
 #include "common/vlog.h"
 #include "toolchain/check/handle.h"

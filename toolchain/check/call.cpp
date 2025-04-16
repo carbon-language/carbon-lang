@@ -4,6 +4,8 @@
 
 #include "toolchain/check/call.h"
 
+#include <optional>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"

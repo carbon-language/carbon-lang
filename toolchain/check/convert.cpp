@@ -4,6 +4,7 @@
 
 #include "toolchain/check/convert.h"
 
+#include <optional>
 #include <string>
 #include <utility>
 

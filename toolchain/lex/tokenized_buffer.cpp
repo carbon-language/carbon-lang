@@ -6,6 +6,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
+#include <optional>
+#include <utility>
 
 #include "common/check.h"
 #include "common/string_helpers.h"

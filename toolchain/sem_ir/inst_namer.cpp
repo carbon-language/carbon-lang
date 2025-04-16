@@ -4,6 +4,10 @@
 
 #include "toolchain/sem_ir/inst_namer.h"
 
+#include <string>
+#include <utility>
+#include <variant>
+
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"

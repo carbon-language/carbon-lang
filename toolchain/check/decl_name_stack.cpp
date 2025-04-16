@@ -4,6 +4,8 @@
 
 #include "toolchain/check/decl_name_stack.h"
 
+#include <utility>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"

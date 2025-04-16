@@ -4,6 +4,11 @@
 
 #include "toolchain/check/eval.h"
 
+#include <algorithm>
+#include <array>
+#include <optional>
+#include <utility>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/diagnostic_helpers.h"
