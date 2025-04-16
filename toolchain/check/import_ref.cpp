@@ -678,23 +678,33 @@ static auto AddImportIRInst(ImportContext& context, SemIR::InstId inst_id)
 
 // Sets the constant value for an instruction and returns it. The constant value
 // is computed if not explicitly specified.
-static auto ComputeOrSetConstantValue(
-    Context& context, SemIR::InstId inst_id, SemIR::Inst inst,
-    std::optional<SemIR::ConstantId> const_id)
-    -> SemIR::ConstantId {
-  if (!const_id) {
-    const_id = TryEvalInstUnsafe(context, inst_id, inst);
-  }
-  if (const_id->has_value()) {
+static auto SetConstantValue(Context& context, SemIR::InstId inst_id,
+                             SemIR::Inst inst) -> SemIR::ConstantId {
+  auto const_id = TryEvalInstUnsafe(context, inst_id, inst);
+  if (const_id.has_value()) {
     CARBON_VLOG_TO(context.vlog_stream(), "Constant: {0} -> {1}\n", inst,
-                   context.constant_values().GetInstId(*const_id));
+                   context.constant_values().GetInstId(const_id));
   }
-  context.constant_values().Set(inst_id, *const_id);
-  return *const_id;
+  context.constant_values().Set(inst_id, const_id);
+  return const_id;
 }
 
-// Adds an imported instruction. The constant value of the instruction can be
-// specified if it is known, otherwise it will be computed.
+// Adds an imported instruction without setting its constant value. The
+// instruction should later be updated by either `SetConstantValue` or
+// `ReplaceImportedInstAndSetConstantValue`.
+template <typename InstT>
+static auto AddPlaceholderImportedInst(ImportContext& context,
+                                       SemIR::InstId import_inst_id, InstT inst)
+    -> SemIR::InstId {
+  auto inst_id = context.local_insts().AddInNoBlock(MakeImportedLocIdAndInst(
+      context.local_context(), AddImportIRInst(context, import_inst_id), inst));
+  CARBON_VLOG_TO(context.local_context().vlog_stream(),
+                 "AddImportedInst: {0}\n", static_cast<SemIR::Inst>(inst));
+  return inst_id;
+}
+
+// Adds an imported instruction. The constant value of the instruction will be
+// computed.
 //
 // Normally `AddImportedConstant` should be used to create the result of
 // resolving a constant, for example by calling `ResolveAs*`. However, we
@@ -705,43 +715,28 @@ static auto ComputeOrSetConstantValue(
 // Do not use `AddInst*`, as it will add symbolic constants to the eval block of
 // whatever generic the import happens within.
 template <typename InstT>
-static auto AddImportedInst(
-    ImportContext& context, SemIR::InstId import_inst_id, InstT inst,
-    std::optional<SemIR::ConstantId> const_id = std::nullopt) -> SemIR::InstId {
-  auto inst_id = context.local_insts().AddInNoBlock(MakeImportedLocIdAndInst(
-      context.local_context(), AddImportIRInst(context, import_inst_id), inst));
-  CARBON_VLOG_TO(context.local_context().vlog_stream(),
-                 "AddImportedInst: {0}\n", static_cast<SemIR::Inst>(inst));
-  ComputeOrSetConstantValue(context.local_context(), inst_id, inst, const_id);
+static auto AddImportedInst(ImportContext& context,
+                            SemIR::InstId import_inst_id, InstT inst)
+    -> SemIR::InstId {
+  auto inst_id = AddPlaceholderImportedInst(context, import_inst_id, inst);
+  SetConstantValue(context.local_context(), inst_id, inst);
   return inst_id;
 }
 
-// Convenience for AddImportedInst for placeholder instructions. The constant
-// value is set to `None`; the instruction should later be updated by
-// `ReplaceImportedInstAndSetConstantValue`.
-template <typename InstT>
-static auto AddPlaceholderImportedInst(ImportContext& context,
-                                       SemIR::InstId import_decl_id, InstT inst)
-    -> SemIR::InstId {
-  return AddImportedInst(context, import_decl_id, inst,
-                         SemIR::ConstantId::None);
-}
-
-// Replace an imported instruction with a new instruction. The constant value of
-// the instruction must previously have been set to `None`, for example by using
-// `AddPlaceholderImportedInst`. The new constant value can be specified if
-// known, and is otherwise computed. Sets and returns the constant value.
-static auto ReplaceImportedInstAndSetConstantValue(
-    Context& context, SemIR::InstId inst_id, SemIR::Inst inst,
-    std::optional<SemIR::ConstantId> const_id = std::nullopt)
+// Replace an imported instruction that was added by
+// `AddPlaceholderImportedInst` with a new instruction. Computes, sets, and
+// returns the new constant value.
+static auto ReplacePlaceholderImportedInst(ImportContext& context,
+                                           SemIR::InstId inst_id,
+                                           SemIR::Inst inst)
     -> SemIR::ConstantId {
-  CARBON_VLOG_TO(context.vlog_stream(), "ReplaceImportedInst: {0} -> {1}\n",
-                 inst_id, inst);
-  context.sem_ir().insts().Set(inst_id, inst);
+  CARBON_VLOG_TO(context.local_context().vlog_stream(),
+                 "ReplaceImportedInst: {0} -> {1}\n", inst_id, inst);
+  context.local_insts().Set(inst_id, inst);
 
-  CARBON_CHECK(context.constant_values().Get(inst_id) ==
-               SemIR::ConstantId::None);
-  return ComputeOrSetConstantValue(context, inst_id, inst, const_id);
+  CARBON_CHECK(context.local_constant_values().Get(inst_id) ==
+               SemIR::ConstantId::NotConstant);
+  return SetConstantValue(context.local_context(), inst_id, inst);
 }
 
 // Returns the ConstantId for an InstId. Adds unresolved constants to
@@ -1180,9 +1175,7 @@ static auto GetLocalParamPatternsId(ImportContext& context,
         auto new_binding_inst =
             context.local_insts().GetAs<SemIR::SymbolicBindingPattern>(
                 context.local_constant_values().GetInstId(bind_const_id));
-        new_param_id = AddImportedInst(context, binding_id, new_binding_inst,
-                                       bind_const_id);
-        context.local_constant_values().Set(new_param_id, bind_const_id);
+        new_param_id = AddImportedInst(context, binding_id, new_binding_inst);
         break;
       }
       default: {
@@ -1514,8 +1507,8 @@ static auto MakeAssociatedConstant(
   });
 
   // Write the associated constant ID into the AssociatedConstantDecl.
-  auto const_id = ReplaceImportedInstAndSetConstantValue(
-      context.local_context(), assoc_const_decl_id, assoc_const_decl);
+  auto const_id = ReplacePlaceholderImportedInst(context, assoc_const_decl_id,
+                                                 assoc_const_decl);
   return {assoc_const_decl.assoc_const_id, const_id};
 }
 
@@ -1763,8 +1756,8 @@ static auto MakeIncompleteClass(ImportContext& context,
   }
 
   // Write the class ID into the ClassDecl.
-  auto self_const_id = ReplaceImportedInstAndSetConstantValue(
-      context.local_context(), class_decl_id, class_decl);
+  auto self_const_id =
+      ReplacePlaceholderImportedInst(context, class_decl_id, class_decl);
   return {class_decl.class_id, self_const_id};
 }
 
@@ -2003,8 +1996,8 @@ static auto MakeFunctionDecl(ImportContext& context,
       context.local_context(), function_decl.function_id, specific_id);
 
   // Write the function ID and type into the FunctionDecl.
-  auto function_const_id = ReplaceImportedInstAndSetConstantValue(
-      context.local_context(), function_decl_id, function_decl);
+  auto function_const_id =
+      ReplacePlaceholderImportedInst(context, function_decl_id, function_decl);
   return {function_decl.function_id, function_const_id};
 }
 
@@ -2170,8 +2163,8 @@ static auto MakeImplDeclaration(ImportContext& context,
         .witness_id = witness_id}});
 
   // Write the impl ID into the ImplDecl.
-  auto impl_const_id = ReplaceImportedInstAndSetConstantValue(
-      context.local_context(), impl_decl_id, impl_decl);
+  auto impl_const_id =
+      ReplacePlaceholderImportedInst(context, impl_decl_id, impl_decl);
   return {impl_decl.impl_id, impl_const_id};
 }
 
@@ -2326,8 +2319,8 @@ static auto MakeInterfaceDecl(ImportContext& context,
   }
 
   // Write the interface ID into the InterfaceDecl.
-  auto interface_const_id = ReplaceImportedInstAndSetConstantValue(
-      context.local_context(), interface_decl_id, interface_decl);
+  auto interface_const_id = ReplacePlaceholderImportedInst(
+      context, interface_decl_id, interface_decl);
   return {interface_decl.interface_id, interface_const_id};
 }
 
@@ -2696,8 +2689,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   resolver.local_name_scopes()
       .Get(namespace_decl.name_scope_id)
       .set_is_closed_import(true);
-  auto namespace_const_id = ReplaceImportedInstAndSetConstantValue(
-      resolver.local_context(), inst_id, namespace_decl);
+  auto namespace_const_id =
+      ReplacePlaceholderImportedInst(resolver, inst_id, namespace_decl);
   return {.const_id = namespace_const_id};
 }
 
