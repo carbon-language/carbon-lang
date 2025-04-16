@@ -676,8 +676,7 @@ static auto AddImportIRInst(ImportContext& context, SemIR::InstId inst_id)
       {.ir_id = context.import_ir_id(), .inst_id = inst_id});
 }
 
-// Sets the constant value for an instruction and returns it. The constant value
-// is computed if not explicitly specified.
+// Computes, sets, and returns the constant value for an instruction.
 static auto SetConstantValue(Context& context, SemIR::InstId inst_id,
                              SemIR::Inst inst) -> SemIR::ConstantId {
   auto const_id = TryEvalInstUnsafe(context, inst_id, inst);
