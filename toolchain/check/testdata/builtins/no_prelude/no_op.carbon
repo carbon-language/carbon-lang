@@ -28,6 +28,16 @@ fn F() {
   NoOp();
 }
 
+// --- ignore_args.carbon
+
+library "[[@TEST_NAME]]";
+
+fn NoOp(x: ()) -> () = "no_op";
+
+fn F() {
+  NoOp(());
+}
+
 // --- assign.carbon
 
 library "[[@TEST_NAME]]";
@@ -111,6 +121,54 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NoOp.ref: %NoOp.type = name_ref NoOp, file.%NoOp.decl [concrete = constants.%NoOp]
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %NoOp.ref() [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- ignore_args.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
+// CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .NoOp = %NoOp.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {
+// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc4_20.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_20.2: type = converted %.loc4_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
+// CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_13.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc4_13.3: type = converted %.loc4_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
+// CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @NoOp(%x.param_patt: %empty_tuple.type) -> %empty_tuple.type = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %NoOp.ref: %NoOp.type = name_ref NoOp, file.%NoOp.decl [concrete = constants.%NoOp]
+// CHECK:STDOUT:   %.loc7_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_9.2: %empty_tuple.type = converted %.loc7_9.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %NoOp.ref(%.loc7_9.2) [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

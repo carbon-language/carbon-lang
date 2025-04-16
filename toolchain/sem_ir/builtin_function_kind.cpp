@@ -192,6 +192,15 @@ static auto ValidateSignature(const File& sem_ir,
   return true;
 }
 
+// Validates the signature for NoOp. This ignores all arguments, only validating
+// that the return type is compatible.
+static auto ValidateNoOpSignature(const File& sem_ir,
+                                  llvm::ArrayRef<TypeId> /*arg_types*/,
+                                  TypeId return_type) -> bool {
+  ValidateState state;
+  return Check<NoReturn>(sem_ir, state, return_type);
+}
+
 // Descriptions of builtin functions follow. For each builtin, a corresponding
 // `BuiltinInfo` constant is declared describing properties of that builtin.
 namespace BuiltinFunctionInfo {
@@ -215,7 +224,7 @@ using FloatT = TypeParam<0, AnyFloat>;
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
-constexpr BuiltinInfo NoOp = {"no_op", ValidateSignature<auto()->NoReturn>};
+constexpr BuiltinInfo NoOp = {"no_op", ValidateNoOpSignature};
 
 // Prints a single character.
 constexpr BuiltinInfo PrintChar = {
