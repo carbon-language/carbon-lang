@@ -680,7 +680,7 @@ static auto AddImportIRInst(ImportContext& context, SemIR::InstId inst_id)
 // is computed if not explicitly specified.
 static auto ComputeOrSetConstantValue(
     Context& context, SemIR::InstId inst_id, SemIR::Inst inst,
-    std::optional<SemIR::ConstantId> const_id = std::nullopt)
+    std::optional<SemIR::ConstantId> const_id)
     -> SemIR::ConstantId {
   if (!const_id) {
     const_id = TryEvalInstUnsafe(context, inst_id, inst);
@@ -718,7 +718,7 @@ static auto AddImportedInst(
 
 // Convenience for AddImportedInst for placeholder instructions. The constant
 // value is set to `None`; the instruction should later be updated by
-// `ReplaceImoprtedInstAndSetConstantValue`.
+// `ReplaceImportedInstAndSetConstantValue`.
 template <typename InstT>
 static auto AddPlaceholderImportedInst(ImportContext& context,
                                        SemIR::InstId import_decl_id, InstT inst)
