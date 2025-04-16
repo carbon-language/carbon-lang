@@ -53,13 +53,12 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   RebuildGenericConstantInEvalBlockCallbacks(
       Context* context, SemIR::GenericId generic_id,
       SemIR::GenericInstIndex::Region region, SemIR::LocId loc_id,
-      ConstantsInGenericMap& constants_in_generic, bool inside_redeclaration)
+      ConstantsInGenericMap& constants_in_generic)
       : SubstInstCallbacks(context),
         generic_id_(generic_id),
         region_(region),
         loc_id_(loc_id),
-        constants_in_generic_(constants_in_generic),
-        inside_redeclaration_(inside_redeclaration) {}
+        constants_in_generic_(constants_in_generic) {}
 
   auto RebuildType(SemIR::InstId type_inst_id) const -> SemIR::TypeId override {
     // When building instructions in the eval block, form attached types.
@@ -109,16 +108,6 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
     // We might already have an instruction in the eval block if a transitive
     // operand of this instruction has the same constant value.
     auto result = constants_in_generic_.Insert(const_inst_id, [&] {
-      if (inside_redeclaration_) {
-        // Adding instructions to a redeclaration causes crashes later since it
-        // causes us to produce invalid indices into the original declaration's
-        // set of instructions. So we terminate now and avoid adding a new
-        // instruction and new index. It should not be possible to create this
-        // situation where a generic redeclaration introduces new instructions
-        // to the eval block.
-        CARBON_FATAL("generic redeclaration differs from previous declaration");
-      }
-
       // TODO: Add a function on `Context` to add the instruction without
       // inserting it into the dependent instructions list or computing a
       // constant value for it.
@@ -153,7 +142,6 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   SemIR::GenericInstIndex::Region region_;
   SemIR::LocId loc_id_;
   ConstantsInGenericMap& constants_in_generic_;
-  bool inside_redeclaration_;
 };
 
 // Substitution callbacks to rebuild a template action. This rebuilds the action
@@ -165,11 +153,9 @@ class RebuildTemplateActionInEvalBlockCallbacks final
   RebuildTemplateActionInEvalBlockCallbacks(
       Context* context, SemIR::GenericId generic_id,
       SemIR::GenericInstIndex::Region region, SemIR::LocId loc_id,
-      ConstantsInGenericMap& constants_in_generic, bool inside_redeclaration,
-      SemIR::InstId action_inst_id)
-      : RebuildGenericConstantInEvalBlockCallbacks(context, generic_id, region,
-                                                   loc_id, constants_in_generic,
-                                                   inside_redeclaration),
+      ConstantsInGenericMap& constants_in_generic, SemIR::InstId action_inst_id)
+      : RebuildGenericConstantInEvalBlockCallbacks(
+            context, generic_id, region, loc_id, constants_in_generic),
         action_inst_id_(action_inst_id) {}
 
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst) const
@@ -205,15 +191,14 @@ class RebuildTemplateActionInEvalBlockCallbacks final
 static auto AddGenericTypeToEvalBlock(
     Context& context, SemIR::GenericId generic_id,
     SemIR::GenericInstIndex::Region region, SemIR::LocId loc_id,
-    ConstantsInGenericMap& constants_in_generic, bool inside_redeclaration,
-    SemIR::TypeId type_id) -> SemIR::TypeId {
+    ConstantsInGenericMap& constants_in_generic, SemIR::TypeId type_id)
+    -> SemIR::TypeId {
   // Substitute into the type's constant instruction and rebuild it in the eval
   // block.
-  auto type_inst_id =
-      SubstInst(context, context.types().GetInstId(type_id),
-                RebuildGenericConstantInEvalBlockCallbacks(
-                    &context, generic_id, region, loc_id, constants_in_generic,
-                    inside_redeclaration));
+  auto type_inst_id = SubstInst(
+      context, context.types().GetInstId(type_id),
+      RebuildGenericConstantInEvalBlockCallbacks(&context, generic_id, region,
+                                                 loc_id, constants_in_generic));
   return context.types().GetTypeIdForTypeConstantId(
       context.constant_values().GetAttached(type_inst_id));
 }
@@ -225,8 +210,8 @@ static auto AddGenericTypeToEvalBlock(
 static auto AddGenericConstantToEvalBlock(
     Context& context, SemIR::GenericId generic_id,
     SemIR::GenericInstIndex::Region region,
-    ConstantsInGenericMap& constants_in_generic, bool inside_redeclaration,
-    SemIR::InstId inst_id) -> SemIR::ConstantId {
+    ConstantsInGenericMap& constants_in_generic, SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
   CARBON_CHECK(context.constant_values().Get(inst_id).is_symbolic(),
                "Adding generic constant {0} with non-symbolic value {1}",
                context.insts().Get(inst_id),
@@ -237,7 +222,7 @@ static auto AddGenericConstantToEvalBlock(
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   auto callbacks = RebuildGenericConstantInEvalBlockCallbacks(
       &context, generic_id, region, context.insts().GetLocId(inst_id),
-      constants_in_generic, inside_redeclaration);
+      constants_in_generic);
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
   CARBON_CHECK(new_inst_id != const_inst_id,
                "No substitutions performed for generic constant {0}",
@@ -252,14 +237,14 @@ static auto AddGenericConstantToEvalBlock(
 static auto AddTemplateActionToEvalBlock(
     Context& context, SemIR::GenericId generic_id,
     SemIR::GenericInstIndex::Region region,
-    ConstantsInGenericMap& constants_in_generic, bool inside_redeclaration,
-    SemIR::InstId inst_id) -> void {
+    ConstantsInGenericMap& constants_in_generic, SemIR::InstId inst_id)
+    -> void {
   // Substitute into the constant value and rebuild it in the eval block.
   auto new_inst_id = SubstInst(
       context, inst_id,
       RebuildTemplateActionInEvalBlockCallbacks(
           &context, generic_id, region, context.insts().GetLocId(inst_id),
-          constants_in_generic, inside_redeclaration, inst_id));
+          constants_in_generic, inst_id));
   CARBON_CHECK(new_inst_id == inst_id,
                "Substitution changed InstId of template action");
   constants_in_generic.Insert(inst_id, inst_id);
@@ -314,15 +299,6 @@ auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void {
     return;
   }
 
-  if (context.generic_region_stack().PeekPendingGeneric().generic_id.index ==
-      -2) {
-    // TODO: Remove this and the corresponding custom code in import_ref.
-    return;
-  }
-
-  // TODO
-  const bool inside_redeclaration = false;
-
   context.generic_region_stack().AddDependentInst(dependent_inst.inst_id);
 
   auto [generic_id, region] =
@@ -344,7 +320,7 @@ auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void {
     auto inst = context.insts().Get(inst_id);
     auto type_id = AddGenericTypeToEvalBlock(
         context, generic_id, region, context.insts().GetLocId(inst_id),
-        constants_in_generic, inside_redeclaration, inst.type_id());
+        constants_in_generic, inst.type_id());
     // TODO: Eventually, completeness requirements should be modeled as
     // constraints on the generic rather than properties of the type. For now,
     // require the transformed type to be complete if the original was.
@@ -363,16 +339,14 @@ auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void {
     // Update the constant value to refer to this generic.
     context.constant_values().Set(
         inst_id, AddGenericConstantToEvalBlock(context, generic_id, region,
-                                               constants_in_generic,
-                                               inside_redeclaration, inst_id));
+                                               constants_in_generic, inst_id));
   }
 
   // If the instruction is a template action, add it directly to this position
   // in the eval block.
   if ((dep_kind & DependentInst::Template) != DependentInst::None) {
     AddTemplateActionToEvalBlock(context, generic_id, region,
-                                 constants_in_generic, inside_redeclaration,
-                                 inst_id);
+                                 constants_in_generic, inst_id);
   }
 }
 
@@ -405,8 +379,7 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
   for (auto [i, inst_id] : llvm::enumerate(const_ids)) {
     // Build a constant in the inst block.
     AddGenericConstantToEvalBlock(context, generic_id, region,
-                                  constants_in_generic,
-                                  /*inside_redeclaration*/ false, inst_id);
+                                  constants_in_generic, inst_id);
     CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().size() == i + 1,
                  "Produced {0} instructions when importing {1}",
                  (context.generic_region_stack().PeekEvalBlock().size() - i),
