@@ -681,7 +681,7 @@ static auto AddImportIRInst(ImportContext& context, SemIR::InstId inst_id)
 static auto SetConstantValue(Context& context, SemIR::InstId inst_id,
                              SemIR::Inst inst) -> SemIR::ConstantId {
   auto const_id = TryEvalInstUnsafe(context, inst_id, inst);
-  if (const_id.has_value()) {
+  if (const_id.is_constant()) {
     CARBON_VLOG_TO(context.vlog_stream(), "Constant: {0} -> {1}\n", inst,
                    context.constant_values().GetInstId(const_id));
   }
