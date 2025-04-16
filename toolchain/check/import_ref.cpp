@@ -3319,7 +3319,7 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   auto constant_id = resolver.Resolve(load_ir_inst.inst_id);
 
   // Replace the ImportRefUnloaded instruction with ImportRefLoaded. This
-  // doesn't use ReplaceImportedInstAndSetConstantValue because it would trigger
+  // doesn't use ReplacePlaceholderImportedInst because it would trigger
   // TryEvalInst, which we want to avoid with ImportRefs.
   context.sem_ir().insts().Set(
       inst_id,
