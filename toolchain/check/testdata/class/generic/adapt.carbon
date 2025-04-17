@@ -196,11 +196,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.x.loc6_1.2 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc5_8: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc5_3: @C.%C.elem (%C.elem.66c) = var_pattern %.loc5_8
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem.66c) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc5: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.x.loc6_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc6_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -208,7 +205,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f2e
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc5_8
+// CHECK:STDOUT:     .x = %.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -235,7 +232,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.98a]
 // CHECK:STDOUT:   %.loc13_13.1: %C.98a = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc13_13.2: %C.98a = converted %a.ref, %.loc13_13.1
-// CHECK:STDOUT:   %x.ref: %C.elem.476 = name_ref x, @C.%.loc5_8 [concrete = @C.%.loc5_8]
+// CHECK:STDOUT:   %x.ref: %C.elem.476 = name_ref x, @C.%.loc5 [concrete = @C.%.loc5]
 // CHECK:STDOUT:   %.loc13_23.1: ref %i32 = class_element_access %.loc13_13.2, element0
 // CHECK:STDOUT:   %.loc13_23.2: %i32 = bind_value %.loc13_23.1
 // CHECK:STDOUT:   return %.loc13_23.2
@@ -299,7 +296,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//adapt_specific_type, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//adapt_specific_type, loc5_8, loaded [concrete = %.22b]
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.c07]
-// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//adapt_specific_type, inst46 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//adapt_specific_type, inst43 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -465,11 +462,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.x.loc6_1.2 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc5_8: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc5_3: @C.%C.elem (%C.elem.66c) = var_pattern %.loc5_8
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem.66c) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc5: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.x.loc6_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc6_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -477,7 +471,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f2e
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc5_8
+// CHECK:STDOUT:     .x = %.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -500,7 +494,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: fn @Access(%a.param_patt: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %C.elem.476 = name_ref x, @C.%.loc5_8 [concrete = @C.%.loc5_8]
+// CHECK:STDOUT:   %x.ref: %C.elem.476 = name_ref x, @C.%.loc5 [concrete = @C.%.loc5]
 // CHECK:STDOUT:   %.loc21_11.1: %C.98a = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc21_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
@@ -583,11 +577,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc9_1.2: <witness> = complete_type_witness %struct_type.x.loc9_1.2 [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc8_8: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc8_3: @C.%C.elem (%C.elem.66c) = var_pattern %.loc8_8
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem.66c) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_9.1 [symbolic = %T.loc7_9.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc8: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.x.loc9_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc9_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc9_1.1: <witness> = complete_type_witness %struct_type.x.loc9_1.1 [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc9_1.1
@@ -595,7 +586,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f2e
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc8_8
+// CHECK:STDOUT:     .x = %.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -670,7 +661,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//extend_adapt_specific_type_library, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [concrete = %.22b]
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [concrete = constants.%complete_type.c07]
-// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst46 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst43 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.19d12e.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.239]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -969,18 +960,16 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc11_8: %C.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc11_3: %C.elem = var_pattern %.loc11_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc11: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc11_8
+// CHECK:STDOUT:   .n = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImportedConvert(%a.param_patt: %Adapter.e4c) -> %i32 {
@@ -999,7 +988,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc15_13.1: %C = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc15_13.2: %C = converted %a.ref, %.loc15_13.1
-// CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc11_8 [concrete = @C.%.loc11_8]
+// CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc11 [concrete = @C.%.loc11]
 // CHECK:STDOUT:   %.loc15_18.1: ref %i32 = class_element_access %.loc15_13.2, element0
 // CHECK:STDOUT:   %.loc15_18.2: %i32 = bind_value %.loc15_18.1
 // CHECK:STDOUT:   return %.loc15_18.2

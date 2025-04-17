@@ -57,11 +57,8 @@ fn Make() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc16_8: <error> = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc16_3: <error> = var_pattern %.loc16_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <none>
+// CHECK:STDOUT:   %NoSuchType.ref: <error> = name_ref NoSuchType, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16: <error> = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: <error>} [concrete = <error>]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -69,7 +66,7 @@ fn Make() -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .NoSuchType = <poisoned>
-// CHECK:STDOUT:   .a = %.loc16_8
+// CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %C {

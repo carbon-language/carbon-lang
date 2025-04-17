@@ -116,11 +116,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc16_8: %B.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc16_3: %B.elem = var_pattern %.loc16_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem = var <none>
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %.loc16: %B.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %A} [concrete = constants.%struct_type.a.72c]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.2b9]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -128,7 +125,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   .a = %.loc16_8
+// CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1[addr %self.param_patt: %ptr.6db]();
@@ -143,7 +140,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %addr.loc28: %ptr.6db = addr_of %.loc28_4.2
 // CHECK:STDOUT:   %F.call.loc28: init %empty_tuple.type = call %F.bound.loc28(%addr.loc28)
 // CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
-// CHECK:STDOUT:   %a.ref: %B.elem = name_ref a, @B.%.loc16_8 [concrete = @B.%.loc16_8]
+// CHECK:STDOUT:   %a.ref: %B.elem = name_ref a, @B.%.loc16 [concrete = @B.%.loc16]
 // CHECK:STDOUT:   %.loc39_4.1: ref %A = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %.loc39_4.2: %A = bind_value %.loc39_4.1
 // CHECK:STDOUT:   %F.ref.loc39: %F.type.649 = name_ref F, @A.%F.decl [concrete = constants.%F.485]

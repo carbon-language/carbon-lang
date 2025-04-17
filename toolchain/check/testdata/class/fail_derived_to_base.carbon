@@ -129,43 +129,37 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
-// CHECK:STDOUT:   %.loc12_8: %A1.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc12_3: %A1.elem = var_pattern %.loc12_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A1.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc12: %A1.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A1
-// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
-// CHECK:STDOUT:   %.loc16_8: %A2.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc16_3: %A2.elem = var_pattern %.loc16_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A2.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc16: %A2.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A2
-// CHECK:STDOUT:   .a = %.loc16_8
+// CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2.decl [concrete = constants.%A2]
 // CHECK:STDOUT:   %.loc20: %B2.elem.a92 = base_decl %A2.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc21_8: %B2.elem.4b2 = field_decl b, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc21_3: %B2.elem.4b2 = var_pattern %.loc21_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B2.elem.4b2 = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc21: %B2.elem.4b2 = field_decl b, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.base.b: type = struct_type {.base: %A2, .b: %i32} [concrete = constants.%struct_type.base.b.618]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b [concrete = constants.%complete_type.92f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -174,7 +168,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   .Self = constants.%B2
 // CHECK:STDOUT:   .A2 = <poisoned>
 // CHECK:STDOUT:   .base = %.loc20
-// CHECK:STDOUT:   .b = %.loc21_8
+// CHECK:STDOUT:   .b = %.loc21
 // CHECK:STDOUT:   extend %A2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

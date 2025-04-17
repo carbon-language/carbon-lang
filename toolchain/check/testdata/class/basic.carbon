@@ -137,11 +137,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18_8: %Class.elem = field_decl k, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc18_3: %Class.elem = var_pattern %.loc18_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc18: %Class.elem = field_decl k, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: %i32} [concrete = constants.%struct_type.k]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [concrete = constants.%complete_type.954]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -150,7 +148,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   .k = %.loc18_8
+// CHECK:STDOUT:   .k = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n.param_patt: %i32) -> %i32 {

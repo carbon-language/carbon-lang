@@ -112,11 +112,8 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc6_8: %C.elem = field_decl i, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc6_3: %C.elem = var_pattern %.loc6_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:   %.loc6: %C.elem = field_decl i, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %I.type} [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.i [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -124,7 +121,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   .i = %.loc6_8
+// CHECK:STDOUT:   .i = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %C) {
@@ -133,7 +130,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:     %a.patt: %I.type = binding_pattern a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc6_8 [concrete = @C.%.loc6_8]
+// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc6 [concrete = @C.%.loc6]
 // CHECK:STDOUT:   %.loc12_15.1: ref %I.type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc12_15.2: %I.type = bind_value %.loc12_15.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -153,6 +150,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:   %Self.25f: %BitAnd.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %BitAnd.assoc_type: type = assoc_entity_type @BitAnd [concrete]
 // CHECK:STDOUT:   %assoc0: %BitAnd.assoc_type = assoc_entity element0, imports.%Core.import_ref.a93 [concrete]
+// CHECK:STDOUT:   %Op.type.27a: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.25f [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
@@ -165,6 +163,11 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:   %Op.type.eb8: type = fn_type @Op.2, @impl(type) [concrete]
 // CHECK:STDOUT:   %Op.444: %Op.type.eb8 = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.473: <witness> = complete_type_witness type [concrete]
+// CHECK:STDOUT:   %BitAnd.facet: %BitAnd.type = facet_value type, (%impl_witness.3ea) [concrete]
+// CHECK:STDOUT:   %.2ac: type = fn_type_with_self_type %Op.type.27a, %BitAnd.facet [concrete]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %I.type, %Op.444 [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.444, @Op.2(type) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %I.type, %Op.specific_fn [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@I & @J> [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %facet_type [concrete]
 // CHECK:STDOUT:   %struct_type.ij: type = struct_type {.ij: %facet_type} [concrete]
@@ -252,11 +255,16 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:   %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:   %impl.elem0: %.2ac = impl_witness_access constants.%impl_witness.3ea, element0 [concrete = constants.%Op.444]
+// CHECK:STDOUT:   %bound_method.loc7_13.1: <bound method> = bound_method %I.ref, %impl.elem0 [concrete = constants.%Op.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc7_13.2: <bound method> = bound_method %I.ref, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %type.and: init type = call %bound_method.loc7_13.2(%I.ref, %J.ref) [concrete = constants.%facet_type]
+// CHECK:STDOUT:   %.loc7_13.1: type = value_of_initializer %type.and [concrete = constants.%facet_type]
+// CHECK:STDOUT:   %.loc7_13.2: type = converted %type.and, %.loc7_13.1 [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %.loc7_9: %C.elem = field_decl ij, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc7_3: %C.elem = var_pattern %.loc7_9
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %struct_type.ij: type = struct_type {.ij: %facet_type} [concrete = constants.%struct_type.ij]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.ij [concrete = constants.%complete_type.559]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

@@ -154,11 +154,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness %struct_type.x.loc13_1.2 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4339b3.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12_8: @Class.%Class.elem (%Class.elem.e262de.1) = field_decl x, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc12_3: @Class.%Class.elem (%Class.elem.e262de.1) = var_pattern %.loc12_8
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem.e262de.1) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc12: @Class.%Class.elem (%Class.elem.e262de.1) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.x.loc13_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc13_1.2 (constants.%struct_type.x.2ac3f0.1)]
 // CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %struct_type.x.loc13_1.1 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4339b3.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
@@ -166,14 +163,14 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.fe1b2d.1
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc12_8
+// CHECK:STDOUT:     .x = %.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %Class.247) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.247 = name_ref c, %c
-// CHECK:STDOUT:   %x.ref: %Class.elem.2d8 = name_ref x, @Class.%.loc12_8 [concrete = @Class.%.loc12_8]
+// CHECK:STDOUT:   %x.ref: %Class.elem.2d8 = name_ref x, @Class.%.loc12 [concrete = @Class.%.loc12]
 // CHECK:STDOUT:   %.loc16_11.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc16_11.2: %i32 = bind_value %.loc16_11.1
 // CHECK:STDOUT:   return %.loc16_11.2
@@ -192,7 +189,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   fn(%T.patt.loc19_6.1: type, %c.param_patt: @G.%Class.loc19_26.2 (%Class.fe1b2d.1)) -> @G.%T.loc19_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @G.%Class.loc19_26.2 (%Class.fe1b2d.1) = name_ref c, %c
-// CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.e262de.1) = name_ref x, @Class.%.loc12_8 [concrete = @Class.%.loc12_8]
+// CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.e262de.1) = name_ref x, @Class.%.loc12 [concrete = @Class.%.loc12]
 // CHECK:STDOUT:     %.loc20_11.1: ref @G.%T.loc19_6.2 (%T) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc20_11.2: @G.%T.loc19_6.2 (%T) = bind_value %.loc20_11.1
 // CHECK:STDOUT:     return %.loc20_11.2
@@ -212,7 +209,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   fn(%U.patt.loc23_6.1: type, %c.param_patt: @H.%Class.loc23_26.2 (%Class.fe1b2d.2)) -> @H.%U.loc23_6.2 (%U) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @H.%Class.loc23_26.2 (%Class.fe1b2d.2) = name_ref c, %c
-// CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.e262de.2) = name_ref x, @Class.%.loc12_8 [concrete = @Class.%.loc12_8]
+// CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.e262de.2) = name_ref x, @Class.%.loc12 [concrete = @Class.%.loc12]
 // CHECK:STDOUT:     %.loc24_11.1: ref @H.%U.loc23_6.2 (%U) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc24_11.2: @H.%U.loc23_6.2 (%U) = bind_value %.loc24_11.1
 // CHECK:STDOUT:     return %.loc24_11.2

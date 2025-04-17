@@ -75,9 +75,13 @@ fn G[_:! type]() {}
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:7: error: semantics TODO: `_ used as field name` [SemanticsTodo]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:7: error: expected identifier in field declaration [ExpectedFieldIdentifier]
   // CHECK:STDERR:   var _: ();
-  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   var _: ();
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   var _: ();
 }
@@ -427,32 +431,15 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %struct_type._: type = struct_type {._: %empty_tuple.type} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type._ [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc9_8: %C.elem = field_decl _, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc9_3: %C.elem = var_pattern %.loc9_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
-// CHECK:STDOUT:   %struct_type._: type = struct_type {._: %empty_tuple.type} [concrete = constants.%struct_type._]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type._ [concrete = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   ._ = %.loc9_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_interface.carbon

@@ -167,11 +167,8 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.x.loc6_1.2 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc5_8: @Base.%Base.elem (%Base.elem.9af) = field_decl x, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc5_3: @Base.%Base.elem (%Base.elem.9af) = var_pattern %.loc5_8
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @Base.%Base.elem (%Base.elem.9af) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_17.1 [symbolic = %T.loc4_17.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.x.loc6_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc6_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -179,23 +176,21 @@ fn H() {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc5_8
+// CHECK:STDOUT:     .x = %.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param {
-// CHECK:STDOUT:   %.loc9_8: %Param.elem = field_decl y, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc9_3: %Param.elem = var_pattern %.loc9_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Param.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc9: %Param.elem = field_decl y, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %i32} [concrete = constants.%struct_type.y]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [concrete = constants.%complete_type.0f9]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Param
-// CHECK:STDOUT:   .y = %.loc9_8
+// CHECK:STDOUT:   .y = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -219,11 +214,11 @@ fn H() {
 // CHECK:STDOUT: fn @DoubleFieldAccess(%d.param_patt: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %x.ref: %Base.elem.d1f = name_ref x, @Base.%.loc5_8 [concrete = @Base.%.loc5_8]
+// CHECK:STDOUT:   %x.ref: %Base.elem.d1f = name_ref x, @Base.%.loc5 [concrete = @Base.%.loc5]
 // CHECK:STDOUT:   %.loc17_11.1: ref %Base.7a8 = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc17_11.2: ref %Base.7a8 = converted %d.ref, %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_11.3: ref %Param = class_element_access %.loc17_11.2, element0
-// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, @Param.%.loc9_8 [concrete = @Param.%.loc9_8]
+// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, @Param.%.loc9 [concrete = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc17_13.1: ref %i32 = class_element_access %.loc17_11.3, element0
 // CHECK:STDOUT:   %.loc17_13.2: %i32 = bind_value %.loc17_13.1
 // CHECK:STDOUT:   return %.loc17_13.2
@@ -286,14 +281,14 @@ fn H() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.e8d: <witness> = import_ref Main//extend_generic_base, loc10_1, loaded [concrete = constants.%complete_type.09d]
-// CHECK:STDOUT:   %Main.import_ref.446 = import_ref Main//extend_generic_base, inst46 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.446 = import_ref Main//extend_generic_base, inst43 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.a92: %Param.elem = import_ref Main//extend_generic_base, loc9_8, loaded [concrete = %.be7]
 // CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//extend_generic_base, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b5f: <witness> = import_ref Main//extend_generic_base, loc6_1, loaded [symbolic = @Base.%complete_type (constants.%complete_type.433)]
 // CHECK:STDOUT:   %Main.import_ref.8e0 = import_ref Main//extend_generic_base, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.7f7: @Base.%Base.elem (%Base.elem.9af) = import_ref Main//extend_generic_base, loc5_8, loaded [concrete = %.e66]
 // CHECK:STDOUT:   %Main.import_ref.bd0: <witness> = import_ref Main//extend_generic_base, loc14_1, loaded [concrete = constants.%complete_type.b07]
-// CHECK:STDOUT:   %Main.import_ref.f6c = import_ref Main//extend_generic_base, inst84 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f6c = import_ref Main//extend_generic_base, inst78 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.d24 = import_ref Main//extend_generic_base, loc13_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.77a301.2: type = import_ref Main//extend_generic_base, loc13_26, loaded [concrete = constants.%Base.7a8]
 // CHECK:STDOUT: }

@@ -531,7 +531,7 @@ fn G() {
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %T.ref.loc21_37: %Class = name_ref T, %T.loc21_6.1 [symbolic = %T.loc21_6.2 (constants.%T)]
-// CHECK:STDOUT:       %t.ref: %Class.elem = name_ref t, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]
+// CHECK:STDOUT:       %t.ref: %Class.elem = name_ref t, @Class.%.loc5 [concrete = @Class.%.loc5]
 // CHECK:STDOUT:       %.loc21_38.1: ref type = class_element_access %T.ref.loc21_37, element0 [symbolic = %.loc21_38.3 (constants.%.2fe)]
 // CHECK:STDOUT:       %.loc21_38.2: type = bind_value %.loc21_38.1
 // CHECK:STDOUT:     }
@@ -542,18 +542,14 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc5_8: %Class.elem = field_decl t, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_3: %Class.elem = var_pattern %.loc5_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %.loc5: %Class.elem = field_decl t, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.t: type = struct_type {.t: type} [concrete = constants.%struct_type.t]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.t [concrete = constants.%complete_type.509]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .t = %.loc5_8
+// CHECK:STDOUT:   .t = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @HoldsType(%T.loc8_17.1: %Class) {

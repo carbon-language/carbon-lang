@@ -497,11 +497,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc12_8: <error> = field_decl c, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc12_3: <error> = var_pattern %.loc12_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <none>
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc12: <error> = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: <error>} [concrete = <error>]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -509,6 +506,6 @@ class C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .c = %.loc12_8
+// CHECK:STDOUT:   .c = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

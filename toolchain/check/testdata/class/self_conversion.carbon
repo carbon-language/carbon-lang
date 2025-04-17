@@ -133,18 +133,16 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc12_8: %Base.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc12_3: %Base.elem = var_pattern %.loc12_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Base.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc12: %Base.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,7 +191,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: fn @SelfBase[%self.param_patt: %Base]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc22
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12_8 [concrete = @Base.%.loc12_8]
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12 [concrete = @Base.%.loc12]
 // CHECK:STDOUT:   %.loc23_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc23_14.2: %i32 = bind_value %.loc23_14.1
 // CHECK:STDOUT:   return %.loc23_14.2
@@ -203,7 +201,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.11f = name_ref self, %self.loc26
 // CHECK:STDOUT:   %.loc27_4: ref %Base = deref %self.ref
-// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12_8 [concrete = @Base.%.loc12_8]
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12 [concrete = @Base.%.loc12]
 // CHECK:STDOUT:   %.loc27_10: ref %i32 = class_element_access %.loc27_4, element0
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]

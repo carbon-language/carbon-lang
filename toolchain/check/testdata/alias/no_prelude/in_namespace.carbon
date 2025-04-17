@@ -74,11 +74,9 @@ fn F() -> NS.a {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc11_19.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc11_16: %C.elem = field_decl v, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc11_11: %C.elem = var_pattern %.loc11_16
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

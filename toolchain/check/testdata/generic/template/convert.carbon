@@ -197,11 +197,9 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc13_8: %C.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc13_3: %C.elem = var_pattern %.loc13_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc13: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   impl_decl @impl.4e3 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -217,7 +215,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc13_8
+// CHECK:STDOUT:   .n = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
@@ -252,7 +250,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: %C]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
-// CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc13_8 [concrete = @C.%.loc13_8]
+// CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc13 [concrete = @C.%.loc13]
 // CHECK:STDOUT:   %.loc15_50.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc15_50.2: %i32 = bind_value %.loc15_50.1
 // CHECK:STDOUT:   return %.loc15_50.2

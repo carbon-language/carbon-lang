@@ -221,11 +221,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %return.param.loc6: ref @G.%T.loc6 (%T) = out_param call_param1
 // CHECK:STDOUT:       %return.loc6: ref @G.%T.loc6 (%T) = return_slot %return.param.loc6
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc7_8: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc7_3: @Class.%Class.elem (%Class.elem) = var_pattern %.loc7_8
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc7: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.n.loc8_1.1: type = struct_type {.n: %T} [symbolic = %struct_type.n.loc8_1.2 (constants.%struct_type.n)]
 // CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness %struct_type.n.loc8_1.1 [symbolic = %complete_type.loc8_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
@@ -235,7 +232,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
-// CHECK:STDOUT:     .n = %.loc7_8
+// CHECK:STDOUT:     .n = %.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -264,7 +261,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   fn[%self.param_patt: @G.%Class (%Class)]() -> @G.%T.loc6 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class) = name_ref self, %self.loc14
-// CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc7_8 [concrete = @Class.%.loc7_8]
+// CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc7 [concrete = @Class.%.loc7]
 // CHECK:STDOUT:     %.loc15_14.1: ref @G.%T.loc6 (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc15_14.2: @G.%T.loc6 (%T) = bind_value %.loc15_14.1
 // CHECK:STDOUT:     return %.loc15_14.2

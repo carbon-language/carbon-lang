@@ -107,25 +107,21 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12_8: %Class.elem.c91 = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc12_3: %Class.elem.c91 = var_pattern %.loc12_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc12: ref %Class.elem.c91 = var <none>
-// CHECK:STDOUT:   %.loc13_11: %Class.elem.0c0 = field_decl next, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc13_3: %Class.elem.0c0 = var_pattern %.loc13_11
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc13: ref %Class.elem.0c0 = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc12: %Class.elem.c91 = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:   %.loc13: %Class.elem.0c0 = field_decl next, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.n.next: type = struct_type {.n: %i32, .next: %ptr.e71} [concrete = constants.%struct_type.n.next]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [concrete = constants.%complete_type.78f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc12_8
+// CHECK:STDOUT:   .n = %.loc12
 // CHECK:STDOUT:   .Class = <poisoned>
-// CHECK:STDOUT:   .next = %.loc13_11
+// CHECK:STDOUT:   .next = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %ptr.e71) -> %return.param_patt: %Class {

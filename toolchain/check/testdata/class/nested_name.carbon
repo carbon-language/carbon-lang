@@ -96,24 +96,22 @@ fn G(o: Outer) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc13_10: %Inner.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc13_5: %Inner.elem = var_pattern %.loc13_10
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Inner.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc13: %Inner.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .n = %.loc13_10
+// CHECK:STDOUT:   .n = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%oi.param_patt: %Inner) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
-// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13_10 [concrete = @Inner.%.loc13_10]
+// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13 [concrete = @Inner.%.loc13]
 // CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %oi.ref, element0
 // CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
 // CHECK:STDOUT:   return %.loc18_12.2

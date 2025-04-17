@@ -281,11 +281,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %complete_type.loc5_1.2: <witness> = complete_type_witness %struct_type.n.loc5_1.2 [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc4_8: @A.%A.elem (%A.elem.1ceb36.1) = field_decl n, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc4_3: @A.%A.elem (%A.elem.1ceb36.1) = var_pattern %.loc4_8
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @A.%A.elem (%A.elem.1ceb36.1) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc3_9.1 [symbolic = %T.loc3_9.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc4: @A.%A.elem (%A.elem.1ceb36.1) = field_decl n, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.n.loc5_1.1: type = struct_type {.n: %T} [symbolic = %struct_type.n.loc5_1.2 (constants.%struct_type.n.848971.1)]
 // CHECK:STDOUT:     %complete_type.loc5_1.1: <witness> = complete_type_witness %struct_type.n.loc5_1.1 [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc5_1.1
@@ -293,7 +290,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.13025a.1
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .n = %.loc4_8
+// CHECK:STDOUT:     .n = %.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,7 +315,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%A (%A.13025a.2)]() -> @F.2.%V (%V) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @F.2.%A (%A.13025a.2) = name_ref self, %self
-// CHECK:STDOUT:     %n.ref: @F.2.%A.elem (%A.elem.1ceb36.2) = name_ref n, @A.%.loc4_8 [concrete = @A.%.loc4_8]
+// CHECK:STDOUT:     %n.ref: @F.2.%A.elem (%A.elem.1ceb36.2) = name_ref n, @A.%.loc4 [concrete = @A.%.loc4]
 // CHECK:STDOUT:     %.loc13_16.1: ref @F.2.%V (%V) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc13_16.2: @F.2.%V (%V) = bind_value %.loc13_16.1
 // CHECK:STDOUT:     return %.loc13_16.2

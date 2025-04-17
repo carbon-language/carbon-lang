@@ -80,40 +80,36 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc12_8: %A.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc12_3: %A.elem = var_pattern %.loc12_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc12: %A.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc16_8: %B.elem = field_decl b, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc16_3: %B.elem = var_pattern %.loc16_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc16: %B.elem = field_decl b, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [concrete = constants.%complete_type.ba8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .b = %.loc16_8
+// CHECK:STDOUT:   .b = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBInA(%a.param_patt: %A) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16_8 [concrete = @B.%.loc16_8]
+// CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16 [concrete = @B.%.loc16]
 // CHECK:STDOUT:   %.loc27_11.1: %B = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc27_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>

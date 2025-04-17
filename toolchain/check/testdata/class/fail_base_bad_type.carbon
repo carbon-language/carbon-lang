@@ -846,18 +846,16 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Final {
-// CHECK:STDOUT:   %.loc5_8: %Final.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_3: %Final.elem = var_pattern %.loc5_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Final.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %Final.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Final
-// CHECK:STDOUT:   .a = %.loc5_8
+// CHECK:STDOUT:   .a = %.loc5
 // CHECK:STDOUT:   .b = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -891,7 +889,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.160 = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_11: ref %DeriveFromFinal = deref %p.ref
-// CHECK:STDOUT:   %a.ref: %Final.elem = name_ref a, @Final.%.loc5_8 [concrete = @Final.%.loc5_8]
+// CHECK:STDOUT:   %a.ref: %Final.elem = name_ref a, @Final.%.loc5 [concrete = @Final.%.loc5]
 // CHECK:STDOUT:   %.loc22_14.1: ref %Final = class_element_access %.loc22_11, element0
 // CHECK:STDOUT:   %.loc22_14.2: ref %Final = converted %.loc22_11, %.loc22_14.1
 // CHECK:STDOUT:   %.loc22_14.3: ref %i32 = class_element_access %.loc22_14.2, element0

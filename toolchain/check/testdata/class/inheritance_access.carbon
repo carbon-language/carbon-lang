@@ -266,24 +266,20 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Shape {
-// CHECK:STDOUT:   %.loc5_18: %Shape.elem = field_decl x, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_13: %Shape.elem = var_pattern %.loc5_18
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %Shape.elem = var <none>
-// CHECK:STDOUT:   %.loc6_18: %Shape.elem = field_decl y, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc6_13: %Shape.elem = var_pattern %.loc6_18
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %Shape.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %Shape.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc6: %Shape.elem = field_decl y, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.x.y: type = struct_type {.x: %i32, .y: %i32} [concrete = constants.%struct_type.x.y]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y [concrete = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Shape
-// CHECK:STDOUT:   .x [protected] = %.loc5_18
-// CHECK:STDOUT:   .y [protected] = %.loc6_18
+// CHECK:STDOUT:   .x [protected] = %.loc5
+// CHECK:STDOUT:   .y [protected] = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Circle {
@@ -324,12 +320,12 @@ class B {
 // CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Circle]() -> %return.param_patt: %tuple.type.d07 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc13_13: %Circle = name_ref self, %self
-// CHECK:STDOUT:   %x.ref: %Shape.elem = name_ref x, @Shape.%.loc5_18 [concrete = @Shape.%.loc5_18]
+// CHECK:STDOUT:   %x.ref: %Shape.elem = name_ref x, @Shape.%.loc5 [concrete = @Shape.%.loc5]
 // CHECK:STDOUT:   %.loc13_17.1: ref %Shape = class_element_access %self.ref.loc13_13, element0
 // CHECK:STDOUT:   %.loc13_17.2: ref %Shape = converted %self.ref.loc13_13, %.loc13_17.1
 // CHECK:STDOUT:   %.loc13_17.3: ref %i32 = class_element_access %.loc13_17.2, element0
 // CHECK:STDOUT:   %self.ref.loc13_21: %Circle = name_ref self, %self
-// CHECK:STDOUT:   %y.ref: %Shape.elem = name_ref y, @Shape.%.loc6_18 [concrete = @Shape.%.loc6_18]
+// CHECK:STDOUT:   %y.ref: %Shape.elem = name_ref y, @Shape.%.loc6 [concrete = @Shape.%.loc6]
 // CHECK:STDOUT:   %.loc13_25.1: ref %Shape = class_element_access %self.ref.loc13_21, element0
 // CHECK:STDOUT:   %.loc13_25.2: ref %Shape = converted %self.ref.loc13_21, %.loc13_25.1
 // CHECK:STDOUT:   %.loc13_25.3: ref %i32 = class_element_access %.loc13_25.2, element1
@@ -663,18 +659,16 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Shape {
-// CHECK:STDOUT:   %.loc5_16: %Shape.elem = field_decl y, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_11: %Shape.elem = var_pattern %.loc5_16
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Shape.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %Shape.elem = field_decl y, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %i32} [concrete = constants.%struct_type.y]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [concrete = constants.%complete_type.0f9]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Shape
-// CHECK:STDOUT:   .y [private] = %.loc5_16
+// CHECK:STDOUT:   .y [private] = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Square {
@@ -1097,11 +1091,8 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.loc14_23: %B.elem = field_decl internal, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc14_11: %B.elem = var_pattern %.loc14_23
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem = var <none>
+// CHECK:STDOUT:   %Internal.ref: type = name_ref Internal, file.%Internal.decl [concrete = constants.%Internal]
+// CHECK:STDOUT:   %.loc14: %B.elem = field_decl internal, element0 [concrete]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
@@ -1132,7 +1123,7 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .Internal = <poisoned>
-// CHECK:STDOUT:   .internal [private] = %.loc14_23
+// CHECK:STDOUT:   .internal [private] = %.loc14
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .SomeFunc = %SomeFunc.decl
 // CHECK:STDOUT:   .A = <poisoned>
@@ -1150,7 +1141,7 @@ class B {
 // CHECK:STDOUT: fn @SomeFunc[%self.param_patt: %B]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
-// CHECK:STDOUT:   %internal.ref: %B.elem = name_ref internal, @B.%.loc14_23 [concrete = @B.%.loc14_23]
+// CHECK:STDOUT:   %internal.ref: %B.elem = name_ref internal, @B.%.loc14 [concrete = @B.%.loc14]
 // CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc44_16.2: %Internal = bind_value %.loc44_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [concrete = <error>]
@@ -1194,18 +1185,16 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc5_16: %A.elem = field_decl x, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_11: %A.elem = var_pattern %.loc5_16
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %A.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [concrete = constants.%struct_type.x]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .x [private] = %.loc5_16
+// CHECK:STDOUT:   .x [private] = %.loc5
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1277,18 +1266,16 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc5_18: %A.elem = field_decl x, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_13: %A.elem = var_pattern %.loc5_18
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %A.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [concrete = constants.%struct_type.x]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .x [protected] = %.loc5_18
+// CHECK:STDOUT:   .x [protected] = %.loc5
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1319,7 +1306,7 @@ class B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %x.ref: %A.elem = name_ref x, @A.%.loc5_18 [concrete = @A.%.loc5_18]
+// CHECK:STDOUT:   %x.ref: %A.elem = name_ref x, @A.%.loc5 [concrete = @A.%.loc5]
 // CHECK:STDOUT:   %.loc12_9.1: ref %A = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc12_9.2: ref %A = converted %self.ref, %.loc12_9.1
 // CHECK:STDOUT:   %.loc12_9.3: ref %i32 = class_element_access %.loc12_9.2, element0

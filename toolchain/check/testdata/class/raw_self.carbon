@@ -150,11 +150,9 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %return.param.loc13: ref %tuple.type.d07 = out_param call_param2
 // CHECK:STDOUT:     %return.loc13: ref %tuple.type.d07 = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_8: %Class.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc14_3: %Class.elem = var_pattern %.loc14_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc14: %Class.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -163,14 +161,14 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   .n = %.loc14_8
+// CHECK:STDOUT:   .n = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.param_patt.loc17_21: %ptr.e71](%self.param_patt.loc17_36: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc18_5: %ptr.e71 = name_ref self, %self.loc17_17
 // CHECK:STDOUT:   %.loc18_4: ref %Class = deref %self.ref.loc18_5
-// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc14_8 [concrete = @Class.%.loc14_8]
+// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc14 [concrete = @Class.%.loc14]
 // CHECK:STDOUT:   %.loc18_10: ref %i32 = class_element_access %.loc18_4, element0
 // CHECK:STDOUT:   %self.ref.loc18_15: %i32 = name_ref r#self, %self.loc17_30
 // CHECK:STDOUT:   assign %.loc18_10, %self.ref.loc18_15
@@ -180,7 +178,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: fn @G[%self.param_patt.loc21_16: %Class](%self.param_patt.loc21_30: %i32) -> %return.param_patt: %tuple.type.d07 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc22_11: %Class = name_ref self, %self.loc21_12
-// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc14_8 [concrete = @Class.%.loc14_8]
+// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc14 [concrete = @Class.%.loc14]
 // CHECK:STDOUT:   %.loc22_15.1: ref %i32 = class_element_access %self.ref.loc22_11, element0
 // CHECK:STDOUT:   %.loc22_15.2: %i32 = bind_value %.loc22_15.1
 // CHECK:STDOUT:   %self.ref.loc22_19: %i32 = name_ref r#self, %self.loc21_24
