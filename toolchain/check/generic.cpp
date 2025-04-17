@@ -554,12 +554,14 @@ static auto ReattachConstant(Context& context, SemIR::GenericId generic_id,
 
   auto& symbolic_const =
       context.constant_values().GetSymbolicConstant(constant_id);
-  if (symbolic_const.generic_id != generic_id ||
-      symbolic_const.index.region() != SemIR::GenericInstIndex::Declaration) {
-    // TODO: Should this ever happen?
+  if (symbolic_const.generic_id != generic_id) {
+    // Constant doesn't refer into this generic.
     return constant_id;
   }
 
+  CARBON_CHECK(
+      symbolic_const.index.region() == SemIR::GenericInstIndex::Declaration,
+      "Definition region of redeclaration should not be referenced");
   return context.constant_values().GetAttached(
       eval_block[symbolic_const.index.index()]);
 }
