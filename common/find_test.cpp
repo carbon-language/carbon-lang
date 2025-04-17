@@ -11,6 +11,15 @@
 namespace Carbon {
 namespace {
 
+struct NoneType {
+  static const NoneType None;
+  int i;
+
+  friend auto operator==(NoneType, NoneType) -> bool = default;
+};
+
+const NoneType NoneType::None = {.i = -1};
+
 TEST(FindTest, ReturnType) {
   const std::vector<int> c;
   std::vector<int> m;
@@ -35,15 +44,15 @@ TEST(FindTest, FindOrNull) {
   EXPECT_EQ(FindOrNull(range, 3), nullptr);
 }
 
-TEST(FindTest, FindOrDefault) {
-  std::vector<int> empty;
-  EXPECT_EQ(FindOrDefault(empty, 0, -1), -1);
+TEST(FindTest, FindOrNone) {
+  std::vector<NoneType> empty;
+  EXPECT_EQ(FindOrNone(empty, NoneType{0}).i, -1);
 
-  std::vector<int> range = {1, 2};
-  EXPECT_EQ(FindOrDefault(range, 0, -1), -1);
-  EXPECT_EQ(FindOrDefault(range, 1, -1), 1);
-  EXPECT_EQ(FindOrDefault(range, 2, -1), 2);
-  EXPECT_EQ(FindOrDefault(range, 3, -1), -1);
+  std::vector<NoneType> range = {NoneType{1}, NoneType{2}};
+  EXPECT_EQ(FindOrNone(range, NoneType{0}).i, -1);
+  EXPECT_EQ(FindOrNone(range, NoneType{1}).i, 1);
+  EXPECT_EQ(FindOrNone(range, NoneType{2}).i, 2);
+  EXPECT_EQ(FindOrNone(range, NoneType{3}).i, -1);
 }
 
 TEST(FindTest, FindIfOrNull) {
@@ -62,19 +71,19 @@ TEST(FindTest, FindIfOrNull) {
   EXPECT_EQ(FindIfOrNull(range, make_pred(3)), nullptr);
 }
 
-TEST(FindTest, FindIfOrDefault) {
-  auto make_pred = [](int query) {
-    return [=](int elem) { return query == elem; };
+TEST(FindTest, FindIfOrNone) {
+  auto make_pred = [](NoneType query) {
+    return [=](NoneType elem) { return query == elem; };
   };
 
-  std::vector<int> empty;
-  EXPECT_EQ(FindIfOrDefault(empty, make_pred(0), -1), -1);
+  std::vector<NoneType> empty;
+  EXPECT_EQ(FindIfOrNone(empty, make_pred(NoneType{0})).i, -1);
 
-  std::vector<int> range = {1, 2};
-  EXPECT_EQ(FindIfOrDefault(range, make_pred(0), -1), -1);
-  EXPECT_EQ(FindIfOrDefault(range, make_pred(1), -1), 1);
-  EXPECT_EQ(FindIfOrDefault(range, make_pred(2), -1), 2);
-  EXPECT_EQ(FindIfOrDefault(range, make_pred(3), -1), -1);
+  std::vector<NoneType> range = {NoneType{1}, NoneType{2}};
+  EXPECT_EQ(FindIfOrNone(range, make_pred(NoneType{0})).i, -1);
+  EXPECT_EQ(FindIfOrNone(range, make_pred(NoneType{1})).i, 1);
+  EXPECT_EQ(FindIfOrNone(range, make_pred(NoneType{2})).i, 2);
+  EXPECT_EQ(FindIfOrNone(range, make_pred(NoneType{3})).i, -1);
 }
 
 TEST(FindTest, Contains) {

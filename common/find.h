@@ -33,6 +33,11 @@ concept IsComparable = requires(const A& a, const B& b) {
   { a == b } -> std::convertible_to<bool>;
 };
 
+template <typename Range>
+concept RangeValueHasNoneType = requires {
+  { RangeValueType<Range>::None } -> std::convertible_to<RangeValueType<Range>>;
+};
+
 }  // namespace Internal
 
 // Finds a value in the given `range` by comparing to `query`. Returns a
@@ -53,20 +58,20 @@ constexpr auto FindOrNull(Range&& range, const Query& query)
   }
 }
 
-// Finds a value in the given `range` by comparing to `query` and returns a copy
-// of it. If no match is found, returns `default_value`.
-template <typename Range, typename Query, typename Default>
+// Finds a value in the given `range` by testing the `predicate` and returns a
+// copy of it. If no match is found, returns `T::None` where the input range is
+// over values of type `T`.
+template <typename Range, typename Query>
   requires Internal::IsComparable<Query, Internal::RangeValueType<Range>> &&
-           std::convertible_to<Default&&, Internal::RangeValueType<Range>> &&
+           Internal::RangeValueHasNoneType<Range> &&
            std::copy_constructible<Internal::RangeValueType<Range>>
-constexpr auto FindOrDefault(Range&& range, const Query& query,
-                             Default default_value)
+constexpr auto FindOrNone(Range&& range, const Query& query)
     -> Internal::RangeValueType<Range> {
   auto it = llvm::find(range, query);
   if (it != range.end()) {
     return *it;
   } else {
-    return std::move(default_value);
+    return Internal::RangeValueType<Range>::None;
   }
 }
 
@@ -89,19 +94,19 @@ constexpr auto FindIfOrNull(Range&& range, Pred predicate)
 }
 
 // Finds a value in the given `range` by testing the `predicate` and returns a
-// copy of it. If no match is found, returns `default_value`.
-template <typename Range, typename Pred, typename Default>
+// copy of it. If no match is found, returns `T::None` where the input range is
+// over values of type `T`.
+template <typename Range, typename Pred>
   requires Internal::IsValidFindPredicate<Range, Pred> &&
-           std::convertible_to<Default&&, Internal::RangeValueType<Range>> &&
+           Internal::RangeValueHasNoneType<Range> &&
            std::copy_constructible<Internal::RangeValueType<Range>>
-constexpr auto FindIfOrDefault(Range&& range, Pred predicate,
-                               Default default_value)
+constexpr auto FindIfOrNone(Range&& range, Pred predicate)
     -> Internal::RangeValueType<Range> {
   auto it = llvm::find_if(range, predicate);
   if (it != range.end()) {
     return *it;
   } else {
-    return std::move(default_value);
+    return Internal::RangeValueType<Range>::None;
   }
 }
 
