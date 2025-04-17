@@ -359,7 +359,7 @@ We include launch commands for running lldb in VSCode in
 to run lldb from the command line.
 
 When running the debugger, include the `--local-lldbinit` argument to use our
-preset configuration options.
+preset configuration options. This requires running from the repository root.
 
 To debug a single `file_test`, use the following command, pointing it to an
 actual carbon test file.
