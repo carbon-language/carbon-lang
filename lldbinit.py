@@ -8,11 +8,11 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-# This script is only meant to be used from LLDB.
-assert(__name__ != "__main__")
-
 import lldb  # type: ignore
 import os
+
+# This script is only meant to be used from LLDB.
+assert __name__ != "__main__"
 
 project_root = os.path.dirname(os.path.realpath(__file__))
 
