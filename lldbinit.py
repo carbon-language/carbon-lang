@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Initialization for lldb.
+"""Initialization for lldb."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -8,8 +8,8 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-if __name__ == "__main__":
-    print("Run only as script from LLDB... Not as standalone program!")
+# This script is only meant to be used from LLDB.
+assert(__name__ != "__main__")
 
 import lldb  # type: ignore
 import os
@@ -26,5 +26,5 @@ def RunCommand(cmd: str) -> None:
     ci.HandleCommand(cmd, result)
 
 
-RunCommand(f"settings append target.source-map . {os.getcwd()}")
-RunCommand(f"settings append target.source-map /proc/self/cwd {os.getcwd()}")
+RunCommand(f"settings append target.source-map . {project_root}")
+RunCommand(f"settings append target.source-map /proc/self/cwd {project_root}")
