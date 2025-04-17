@@ -366,7 +366,8 @@ actual carbon test file.
 
 ```
 bazel build -c dbg //toolchain/testing:file_test && \
-  lldb --local-lldbinit bazel-bin/toolchain/testing/file_test -- --dump_output --file_tests /path/to/some/test.carbon
+  lldb --local-lldbinit bazel-bin/toolchain/testing/file_test -- \
+    --dump_output --file_tests /path/to/some/test.carbon
 ```
 
 ### Debugging with GDB instead of LLDB
