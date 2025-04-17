@@ -56,7 +56,7 @@ static auto CheckCompleteAdapterClassType(
         .Build(class_info.adapt_id, AdaptWithBase)
         .Note(class_info.base_id, AdaptWithBaseHere)
         .Emit();
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   if (!field_decls.empty()) {
@@ -67,7 +67,7 @@ static auto CheckCompleteAdapterClassType(
         .Build(class_info.adapt_id, AdaptWithFields)
         .Note(field_decls.front(), AdaptWithFieldHere)
         .Emit();
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   for (auto inst_id : body) {
@@ -84,7 +84,7 @@ static auto CheckCompleteAdapterClassType(
             .Build(class_info.adapt_id, AdaptWithVirtual)
             .Note(inst_id, AdaptWithVirtualHere)
             .Emit();
-        return SemIR::ErrorInst::SingletonInstId;
+        return SemIR::ErrorInst::InstId;
       }
     }
   }
@@ -97,8 +97,7 @@ static auto CheckCompleteAdapterClassType(
 
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
-      {.type_id =
-           GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
        // TODO: Use InstId from the adapt declaration.
        .object_repr_type_inst_id = context.types().GetInstId(object_repr_id)});
 }
@@ -112,10 +111,10 @@ static auto AddStructTypeFields(
     field_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     ReplaceInstPreservingConstantValue(context, field_decl_id, field_decl);
-    if (field_decl.type_id == SemIR::ErrorInst::SingletonTypeId) {
+    if (field_decl.type_id == SemIR::ErrorInst::TypeId) {
       struct_type_fields.push_back(
           {.name_id = field_decl.name_id,
-           .type_inst_id = SemIR::ErrorInst::SingletonTypeInstId});
+           .type_inst_id = SemIR::ErrorInst::TypeInstId});
       continue;
     }
     auto unbound_element_type =
@@ -141,8 +140,8 @@ static auto BuildVtable(Context& context, Parse::NodeId node_id,
     LoadImportRef(context, base_vtable_id);
     auto canonical_base_vtable_id =
         context.constant_values().GetConstantInstId(base_vtable_id);
-    if (canonical_base_vtable_id == SemIR::ErrorInst::SingletonInstId) {
-      return SemIR::ErrorInst::SingletonInstId;
+    if (canonical_base_vtable_id == SemIR::ErrorInst::InstId) {
+      return SemIR::ErrorInst::InstId;
     }
     auto base_vtable_inst_block = context.inst_blocks().Get(
         context.insts()
@@ -183,7 +182,7 @@ static auto BuildVtable(Context& context, Parse::NodeId node_id,
   }
   return AddInst<SemIR::Vtable>(
       context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::VtableType::SingletonInstId),
+      {.type_id = GetSingletonType(context, SemIR::VtableType::InstId),
        .virtual_functions_id = context.inst_blocks().Add(vtable)});
 }
 
@@ -222,7 +221,7 @@ static auto CheckCompleteClassType(
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
          .type_inst_id = context.types().GetInstId(
-             GetPointerType(context, SemIR::VtableType::SingletonInstId))});
+             GetPointerType(context, SemIR::VtableType::InstId))});
   }
   if (base_type_id.has_value()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
@@ -242,14 +241,13 @@ static auto CheckCompleteClassType(
 
   auto struct_type_inst_id = AddTypeInst<SemIR::StructType>(
       context, node_id,
-      {.type_id = SemIR::TypeType::SingletonTypeId,
+      {.type_id = SemIR::TypeType::TypeId,
        .fields_id =
            AddStructTypeFields(context, struct_type_fields, field_decls)});
 
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
-      {.type_id =
-           GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
        .object_repr_type_inst_id = struct_type_inst_id});
 }
 

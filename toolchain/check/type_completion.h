@@ -20,7 +20,8 @@ namespace Carbon::Check {
 // However, it's important that we use it during monomorphization, where we
 // don't want to trigger a request for more monomorphization.
 // TODO: Remove the other call to this function.
-auto TryToCompleteType(Context& context, SemIR::TypeId type_id, SemIRLoc loc,
+auto TryToCompleteType(Context& context, SemIR::TypeId type_id,
+                       SemIR::LocId loc_id,
                        MakeDiagnosticBuilderFn diagnoser = nullptr) -> bool;
 
 // Completes the type `type_id`. CHECK-fails if it can't be completed.

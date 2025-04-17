@@ -206,7 +206,7 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
 // `fn Class(T:! type).F(n: i32)` we will push the scope for `Class(T:! type)`
 // between the scope containing the declaration of `T` and the scope
 // containing the declaration of `n`.
-static auto PushNameQualifierScope(Context& context, SemIRLoc loc,
+static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId scope_inst_id,
                                    SemIR::NameScopeId scope_id,
                                    SemIR::GenericId generic_id,
@@ -219,7 +219,7 @@ static auto PushNameQualifierScope(Context& context, SemIRLoc loc,
   if (generic_id.has_value()) {
     self_specific_id = context.generics().GetSelfSpecific(generic_id);
     // When declaring a member of a generic, resolve the self specific.
-    ResolveSpecificDefinition(context, loc, self_specific_id);
+    ResolveSpecificDefinition(context, loc_id, self_specific_id);
   }
 
   // Close the generic stack scope and open a new one for whatever comes after
@@ -325,14 +325,14 @@ static auto CheckQualifierIsResolved(
 // Diagnose that a qualified declaration name specifies an incomplete class as
 // its scope.
 static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
-                                                        SemIRLoc loc,
+                                                        SemIR::LocId loc_id,
                                                         SemIR::ClassId class_id)
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
                     "cannot declare a member of incomplete class {0}",
                     SemIR::TypeId);
   auto builder =
-      context.emitter().Build(loc, QualifiedDeclInIncompleteClassScope,
+      context.emitter().Build(loc_id, QualifiedDeclInIncompleteClassScope,
                               context.classes().Get(class_id).self_type_id);
   NoteIncompleteClass(context, class_id, builder);
   builder.Emit();
@@ -341,13 +341,13 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
 // Diagnose that a qualified declaration name specifies an undefined interface
 // as its scope.
 static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
-    Context& context, SemIRLoc loc, SemIR::InterfaceId interface_id,
+    Context& context, SemIR::LocId loc_id, SemIR::InterfaceId interface_id,
     SemIR::InstId interface_inst_id) -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Error,
                     "cannot declare a member of undefined interface {0}",
                     InstIdAsType);
   auto builder = context.emitter().Build(
-      loc, QualifiedDeclInUndefinedInterfaceScope, interface_inst_id);
+      loc_id, QualifiedDeclInUndefinedInterfaceScope, interface_inst_id);
   NoteIncompleteInterface(context, interface_id, builder);
   builder.Emit();
 }
@@ -355,32 +355,32 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
 // Diagnose that a qualified declaration name specifies a different package as
 // its scope.
 static auto DiagnoseQualifiedDeclInImportedPackage(Context& context,
-                                                   SemIRLoc use_loc,
-                                                   SemIRLoc import_loc)
+                                                   SemIR::LocId use_loc_id,
+                                                   SemIR::LocId import_loc_id)
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
                     "imported packages cannot be used for declarations");
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackageSource, Note,
                     "package imported here");
   context.emitter()
-      .Build(use_loc, QualifiedDeclOutsidePackage)
-      .Note(import_loc, QualifiedDeclOutsidePackageSource)
+      .Build(use_loc_id, QualifiedDeclOutsidePackage)
+      .Note(import_loc_id, QualifiedDeclOutsidePackageSource)
       .Emit();
 }
 
 // Diagnose that a qualified declaration name specifies a non-scope entity as
 // its scope.
-static auto DiagnoseQualifiedDeclInNonScope(Context& context, SemIRLoc use_loc,
-                                            SemIRLoc non_scope_entity_loc)
-    -> void {
+static auto DiagnoseQualifiedDeclInNonScope(
+    Context& context, SemIR::LocId use_loc_id,
+    SemIR::LocId non_scope_entity_loc_id) -> void {
   CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
                     "name qualifiers are only allowed for entities that "
                     "provide a scope");
   CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
                     "referenced non-scope entity declared here");
   context.emitter()
-      .Build(use_loc, QualifiedNameInNonScope)
-      .Note(non_scope_entity_loc, QualifiedNameNonScopeEntity)
+      .Build(use_loc_id, QualifiedNameInNonScope)
+      .Note(non_scope_entity_loc_id, QualifiedNameNonScopeEntity)
       .Emit();
 }
 

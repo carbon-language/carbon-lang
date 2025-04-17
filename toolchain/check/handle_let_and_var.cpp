@@ -281,7 +281,7 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   auto decl = context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(
       decl_info.pattern_id);
   if (!decl) {
-    if (decl_info.pattern_id != SemIR::ErrorInst::SingletonInstId) {
+    if (decl_info.pattern_id != SemIR::ErrorInst::InstId) {
       CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
                         "pattern in associated constant declaration must be a "
                         "single `:!` binding");

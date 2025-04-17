@@ -54,7 +54,7 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
                              SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
-  SemIRLoc prev_loc = prev_class.latest_decl_id();
+  SemIR::LocId prev_loc_id = prev_class.latest_decl_id();
 
   // Check the generic parameters match, if they were specified.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
@@ -65,7 +65,7 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
   DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Class, prev_class.name_id,
       RedeclInfo(new_class, node_id, new_is_definition),
-      RedeclInfo(prev_class, prev_loc, prev_class.has_definition_started()),
+      RedeclInfo(prev_class, prev_loc_id, prev_class.has_definition_started()),
       prev_import_ir_id);
 
   if (new_is_definition && prev_class.has_definition_started()) {
@@ -208,10 +208,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl =
-      SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = SemIR::ClassId::None,
-                       .decl_block_id = decl_block_id};
+  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
+                                     .class_id = SemIR::ClassId::None,
+                                     .decl_block_id = decl_block_id};
   auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   // TODO: Store state regarding is_extern.
@@ -301,22 +300,23 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
 
 // Diagnoses a class-specific declaration appearing outside a class.
 static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
-                                                  SemIRLoc loc,
+                                                  SemIR::LocId loc_id,
                                                   Lex::TokenKind tok) -> void {
   CARBON_DIAGNOSTIC(ClassSpecificDeclOutsideClass, Error,
                     "`{0}` declaration outside class", Lex::TokenKind);
-  context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
+  context.emitter().Emit(loc_id, ClassSpecificDeclOutsideClass, tok);
 }
 
 // Returns the current scope's class declaration, or diagnoses if it isn't a
 // class.
-static auto GetCurrentScopeAsClassOrDiagnose(Context& context, SemIRLoc loc,
+static auto GetCurrentScopeAsClassOrDiagnose(Context& context,
+                                             SemIR::LocId loc_id,
                                              Lex::TokenKind tok)
     -> std::optional<SemIR::ClassDecl> {
   auto class_scope =
       context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!class_scope) {
-    DiagnoseClassSpecificDeclOutsideClass(context, loc, tok);
+    DiagnoseClassSpecificDeclOutsideClass(context, loc_id, tok);
   }
   return class_scope;
 }
@@ -324,8 +324,8 @@ static auto GetCurrentScopeAsClassOrDiagnose(Context& context, SemIRLoc loc,
 // Diagnoses a class-specific declaration that is repeated within a class, but
 // is not permitted to be repeated.
 static auto DiagnoseClassSpecificDeclRepeated(Context& context,
-                                              SemIRLoc new_loc,
-                                              SemIRLoc prev_loc,
+                                              SemIR::LocId new_loc_id,
+                                              SemIR::LocId prev_loc_id,
                                               Lex::TokenKind tok) -> void {
   CARBON_DIAGNOSTIC(AdaptDeclRepeated, Error,
                     "multiple `adapt` declarations in class");
@@ -336,9 +336,9 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
                     "previous `{0}` declaration is here", Lex::TokenKind);
   CARBON_CHECK(tok == Lex::TokenKind::Adapt || tok == Lex::TokenKind::Base);
   context.emitter()
-      .Build(new_loc, tok == Lex::TokenKind::Adapt ? AdaptDeclRepeated
-                                                   : BaseDeclRepeated)
-      .Note(prev_loc, ClassSpecificDeclPrevious, tok)
+      .Build(new_loc_id, tok == Lex::TokenKind::Adapt ? AdaptDeclRepeated
+                                                      : BaseDeclRepeated)
+      .Note(prev_loc_id, ClassSpecificDeclPrevious, tok)
       .Emit();
 }
 
@@ -387,8 +387,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
                                        adapted_type_inst_id);
       });
-  if (adapted_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    adapted_type_inst_id = SemIR::ErrorInst::SingletonTypeInstId;
+  if (adapted_type_id == SemIR::ErrorInst::TypeId) {
+    adapted_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
   // Build a SemIR representation for the declaration.
@@ -424,10 +424,9 @@ struct BaseInfo {
   SemIR::NameScopeId scope_id;
   SemIR::TypeInstId inst_id;
 };
-constexpr BaseInfo BaseInfo::Error = {
-    .type_id = SemIR::ErrorInst::SingletonTypeId,
-    .scope_id = SemIR::NameScopeId::None,
-    .inst_id = SemIR::ErrorInst::SingletonTypeInstId};
+constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::ErrorInst::TypeId,
+                                      .scope_id = SemIR::NameScopeId::None,
+                                      .inst_id = SemIR::ErrorInst::TypeInstId};
 }  // namespace
 
 // Diagnoses an attempt to derive from a final type.
@@ -452,7 +451,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                                    base_type_inst_id);
   });
 
-  if (base_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (base_type_id == SemIR::ErrorInst::TypeId) {
     return BaseInfo::Error;
   }
 
@@ -529,7 +528,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
                                 .base_type_inst_id = base_info.inst_id,
                                 .index = SemIR::ElementIndex::None});
 
-  if (base_info.type_id != SemIR::ErrorInst::SingletonTypeId) {
+  if (base_info.type_id != SemIR::ErrorInst::TypeId) {
     auto base_class_info = context.classes().Get(
         context.types().GetAs<SemIR::ClassType>(base_info.type_id).class_id);
     class_info.is_dynamic |= base_class_info.is_dynamic;

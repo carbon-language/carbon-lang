@@ -52,9 +52,8 @@ static auto BuildInterfaceDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the interface declaration.
-  auto interface_decl =
-      SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
-                           SemIR::InterfaceId::None, decl_block_id};
+  auto interface_decl = SemIR::InterfaceDecl{
+      SemIR::TypeType::TypeId, SemIR::InterfaceId::None, decl_block_id};
   auto interface_decl_id = AddPlaceholderInst(context, node_id, interface_decl);
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(

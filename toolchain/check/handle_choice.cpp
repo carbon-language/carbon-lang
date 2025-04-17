@@ -50,10 +50,9 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
 
   // Choices create a ClassId, since they ultimately turn into a class with
   // methods and some builtin impls.
-  auto class_decl =
-      SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = SemIR::ClassId::None,
-                       .decl_block_id = decl_block_id};
+  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
+                                     .class_id = SemIR::ClassId::None,
+                                     .decl_block_id = decl_block_id};
   auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   context.decl_name_stack().AddNameOrDiagnose(name_context, class_decl_id,
@@ -281,8 +280,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   auto choice_witness_id = AddInst(
       context, node_id,
       SemIR::CompleteTypeWitness{
-          .type_id =
-              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+          .type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
           .object_repr_type_inst_id =
               context.types().GetInstId(GetStructType(context, fields_id))});
   // Note: avoid storing a reference to the returned Class, since it may be

@@ -210,6 +210,7 @@ class TypeStructureBuilder {
         case SemIR::ImplWitnessAccess::Kind:
         case SemIR::IntLiteralType::Kind:
         case SemIR::LegacyFloatType::Kind:
+        case SemIR::NamespaceType::Kind:
         case SemIR::StringType::Kind:
         case SemIR::TypeType::Kind:
         case SemIR::WitnessType::Kind: {
@@ -353,7 +354,7 @@ class TypeStructureBuilder {
       return SymbolicType();
     }
     // Non-type values are concrete, only types are symbolic.
-    if (type_id_of_inst_id != SemIR::TypeType::SingletonTypeId) {
+    if (type_id_of_inst_id != SemIR::TypeType::TypeId) {
       return SemIR::TypeId::None;
     }
     return context_->types().GetTypeIdForTypeInstId(inst_id);

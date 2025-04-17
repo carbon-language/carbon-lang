@@ -62,7 +62,7 @@ fn F[T:! Z where .X = ()](z: T) {
   let a: z.Y = ();
 }
 
-// --- fail_todo_final_impl_makes_compatible_facet_values.carbon
+// --- final_impl_makes_compatible_facet_values.carbon
 library "[[@TEST_NAME]]";
 
 interface I {}
@@ -80,24 +80,12 @@ class D(T:! J) {
 
 fn F(T:! I & J) {
   // `I` found in the facet type; The facet value of `T` in `C(T)` holds a `FacetAccessWitness`.
-  // TODO: It should use the `final impl` and thus hold the same `ImplWitness`
   var x: C(T);
   // `D.c` used the final impl decl to make a facet value with an `ImplWitness`
   // for its `T` in `C(T)`.
   var y: D(T);
-  // This converts a pointer to a facet value (should be `ImplWitness` but
-  // isn't) to a pointer to a facet value (with `ImplWitness`).
-  //
-  // TODO: It should type check when they are both the same generic type
-  // `C(T:! I)` defined by the `final impl` of `I`.
-  //
-  // CHECK:STDERR: fail_todo_final_impl_makes_compatible_facet_values.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C(T as I)*` to `C(T as I)*` [ConversionFailure]
-  // CHECK:STDERR:   y.c = &x;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_final_impl_makes_compatible_facet_values.carbon:[[@LINE+4]]:3: note: type `C(T as I)*` does not implement interface `Core.ImplicitAs(C(T as I)*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   y.c = &x;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
+  // This converts a pointer to a type with with facet value (an `ImplWitness`)
+  // to a pointer to a type with a facet value (the same `ImplWitness`).
   y.c = &x;
 }
 

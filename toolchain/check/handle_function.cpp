@@ -560,7 +560,7 @@ static auto CheckFunctionDefinitionSignature(Context& context,
 
   // Check the parameter types are complete.
   for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::ErrorInst::SingletonInstId) {
+    if (param_ref_id == SemIR::ErrorInst::InstId) {
       continue;
     }
 

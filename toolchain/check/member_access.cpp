@@ -150,17 +150,17 @@ static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   auto member_value_id = context.constant_values().GetConstantInstId(member_id);
   if (!member_value_id.has_value()) {
-    if (member_value_id != SemIR::ErrorInst::SingletonInstId) {
+    if (member_value_id != SemIR::ErrorInst::InstId) {
       context.TODO(member_id, "non-constant associated entity");
     }
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   auto assoc_entity =
       context.insts().TryGetAs<SemIR::AssociatedEntity>(member_value_id);
   if (!assoc_entity) {
     context.TODO(member_id, "unexpected value for associated entity");
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // Substitute the interface specific and `Self` type into the type of the
@@ -188,7 +188,7 @@ static auto GetWitnessFromSingleImplLookupResult(
     -> SemIR::InstId {
   auto witness_id = SemIR::InstId::None;
   if (lookup_result.has_error_value()) {
-    witness_id = SemIR::ErrorInst::SingletonInstId;
+    witness_id = SemIR::ErrorInst::InstId;
   } else {
     auto witnesses = context.inst_blocks().Get(lookup_result.inst_block_id());
     CARBON_CHECK(witnesses.size() == 1);
@@ -228,7 +228,7 @@ static auto PerformImplLookup(
       context.emitter().Emit(loc_id, MissingImplInMemberAccess,
                              interface_type_id, self_type_id);
     }
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   auto witness_id =
@@ -256,7 +256,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       context, loc_id, name_id, lookup_scopes, required, access_info);
 
   if (!result.scope_result.is_found()) {
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
@@ -358,13 +358,13 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                llvm::enumerate(identified.required_interfaces())) {
             // Get the witness that `T` implements `base_type_id`.
             if (base_interface == assoc_interface) {
-              witness_inst_id = GetOrAddInst(
-                  context, loc_id,
-                  SemIR::FacetAccessWitness{
-                      .type_id = GetSingletonType(
-                          context, SemIR::WitnessType::SingletonInstId),
-                      .facet_value_inst_id = base_id,
-                      .index = SemIR::ElementIndex(index)});
+              witness_inst_id =
+                  GetOrAddInst(context, loc_id,
+                               SemIR::FacetAccessWitness{
+                                   .type_id = GetSingletonType(
+                                       context, SemIR::WitnessType::InstId),
+                                   .facet_value_inst_id = base_id,
+                                   .index = SemIR::ElementIndex(index)});
               break;
             }
           }
@@ -375,7 +375,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           context.TODO(member_id,
                        "associated entity not found in facet type, need to do "
                        "impl lookup");
-          return SemIR::ErrorInst::SingletonInstId;
+          return SemIR::ErrorInst::InstId;
         }
 
         member_id = AccessMemberOfImplWitness(
@@ -417,8 +417,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
 
     return GetOrAddInst<SemIR::BoundMethod>(
         context, loc_id,
-        {.type_id =
-             GetSingletonType(context, SemIR::BoundMethodType::SingletonInstId),
+        {.type_id = GetSingletonType(context, SemIR::BoundMethodType::InstId),
          .object_id = base_id,
          .function_decl_id = member_id});
   }
@@ -493,13 +492,13 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
   if (required) {
     return HandleAction<SemIR::AccessMemberAction>(
         context, loc_id,
-        {.type_id = SemIR::InstType::SingletonTypeId,
+        {.type_id = SemIR::InstType::TypeId,
          .base_id = base_id,
          .name_id = name_id});
   } else {
     return HandleAction<SemIR::AccessOptionalMemberAction>(
         context, loc_id,
-        {.type_id = SemIR::InstType::SingletonTypeId,
+        {.type_id = SemIR::InstType::TypeId,
          .base_id = base_id,
          .name_id = name_id});
   }
@@ -532,7 +531,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
         return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
                                        base_id);
       })) {
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // Materialize a temporary for the base expression if necessary.
@@ -567,19 +566,19 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                           SemIR::NameId);
         context.emitter().Emit(loc_id, QualifiedExprNameNotFound, base_id,
                                name_id);
-        return SemIR::ErrorInst::SingletonInstId;
+        return SemIR::ErrorInst::InstId;
       } else {
         return SemIR::InstId::None;
       }
     }
 
-    if (base_type_id != SemIR::ErrorInst::SingletonTypeId) {
+    if (base_type_id != SemIR::ErrorInst::TypeId) {
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                         "type {0} does not support qualified expressions",
                         TypeOfInstId);
       context.emitter().Emit(loc_id, QualifiedExprUnsupported, base_id);
     }
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // Perform lookup into the base type.
@@ -625,32 +624,30 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
       GetInterfaceType(context, interface.interface_id, interface.specific_id);
   auto facet_inst_id =
       ConvertToValueOfType(context, loc_id, base_id, interface_type_id);
-  if (facet_inst_id == SemIR::ErrorInst::SingletonInstId) {
-    return SemIR::ErrorInst::SingletonInstId;
+  if (facet_inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::InstId;
   }
   // That facet value has both the self type we need below and the witness
   // we are going to use to look up the value of the associated member.
   auto self_type_const_id = TryEvalInst(
-      context,
-      SemIR::FacetAccessType{.type_id = SemIR::TypeType::SingletonTypeId,
-                             .facet_value_inst_id = facet_inst_id});
+      context, SemIR::FacetAccessType{.type_id = SemIR::TypeType::TypeId,
+                                      .facet_value_inst_id = facet_inst_id});
   // TODO: We should be able to lookup constant associated values from runtime
   // facet values by using their FacetType only, but we assume constant values
   // for impl lookup at the moment.
   if (!self_type_const_id.is_constant()) {
     context.TODO(loc_id, "associated value lookup on runtime facet value");
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(self_type_const_id);
-  auto witness_id =
-      GetOrAddInst(context, loc_id,
-                   SemIR::FacetAccessWitness{
-                       .type_id = GetSingletonType(
-                           context, SemIR::WitnessType::SingletonInstId),
-                       .facet_value_inst_id = facet_inst_id,
-                       // There's only one interface in this facet type.
-                       .index = SemIR::ElementIndex(0)});
+  auto witness_id = GetOrAddInst(
+      context, loc_id,
+      SemIR::FacetAccessWitness{
+          .type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+          .facet_value_inst_id = facet_inst_id,
+          // There's only one interface in this facet type.
+          .index = SemIR::ElementIndex(0)});
   // Before we can access the element of the witness, we need to figure out
   // the type of that element. It depends on the self type and the specific
   // interface.
@@ -709,7 +706,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
     // > evaluation is required to succeed [...]
     if (!value_inst_id.has_value()) {
       context.TODO(loc_id, "Non-constant associated entity value");
-      return SemIR::ErrorInst::SingletonInstId;
+      return SemIR::ErrorInst::InstId;
     }
     auto assoc_entity =
         context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
@@ -743,7 +740,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
   // If we didn't perform impl lookup or instance binding, that's an error
   // because the base expression is not used for anything.
   if (member_id == member_expr_id &&
-      member.type_id() != SemIR::ErrorInst::SingletonTypeId) {
+      member.type_id() != SemIR::ErrorInst::TypeId) {
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
                       "member name of type {0} in compound member access is "
                       "not an instance member or an interface member",
@@ -768,7 +765,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
                       "tuples can be indexed that way",
                       TypeOfInstId);
     context.emitter().Emit(loc_id, TupleIndexOnANonTupleType, tuple_inst_id);
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   auto diag_non_constant_index = [&] {
@@ -776,7 +773,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
                       "tuple index must be a constant");
     context.emitter().Emit(loc_id, TupleIndexNotConstant);
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   };
   // Diagnose a non-constant index prior to conversion to IntLiteral, because
   // the conversion will fail if the index is not constant.
@@ -784,14 +781,14 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     return diag_non_constant_index();
   }
 
-  SemIR::TypeId element_type_id = SemIR::ErrorInst::SingletonTypeId;
+  SemIR::TypeId element_type_id = SemIR::ErrorInst::TypeId;
   auto index_node_id = context.insts().GetLocId(index_inst_id);
   index_inst_id = ConvertToValueOfType(
       context, index_node_id, index_inst_id,
-      GetSingletonType(context, SemIR::IntLiteralType::SingletonInstId));
+      GetSingletonType(context, SemIR::IntLiteralType::InstId));
   auto index_const_id = context.constant_values().Get(index_inst_id);
-  if (index_const_id == SemIR::ErrorInst::SingletonConstantId) {
-    return SemIR::ErrorInst::SingletonInstId;
+  if (index_const_id == SemIR::ErrorInst::ConstantId) {
+    return SemIR::ErrorInst::InstId;
   } else if (!index_const_id.is_concrete()) {
     return diag_non_constant_index();
   }
@@ -802,7 +799,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   std::optional<llvm::APInt> index_val = ValidateTupleIndex(
       context, loc_id, tuple_inst_id, index_literal, type_block.size());
   if (!index_val) {
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // TODO: Handle the case when `index_val->getZExtValue()` has too many bits.

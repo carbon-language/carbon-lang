@@ -26,12 +26,12 @@ auto PerformPointerDereference(
   base_id = ConvertToValueExpr(context, base_id);
   auto type_id = context.types().GetUnqualifiedType(
       context.insts().Get(base_id).type_id());
-  auto result_type_id = SemIR::ErrorInst::SingletonTypeId;
+  auto result_type_id = SemIR::ErrorInst::TypeId;
   if (auto pointer_type =
           context.types().TryGetAs<SemIR::PointerType>(type_id)) {
     result_type_id =
         context.types().GetTypeIdForTypeInstId(pointer_type->pointee_id);
-  } else if (type_id != SemIR::ErrorInst::SingletonTypeId) {
+  } else if (type_id != SemIR::ErrorInst::TypeId) {
     diagnose_not_pointer(type_id);
   }
   return AddInst<SemIR::Deref>(

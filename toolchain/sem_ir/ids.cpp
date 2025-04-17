@@ -132,11 +132,11 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
 
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   out << Label << "(";
-  if (*this == TypeType::SingletonTypeId) {
+  if (*this == TypeType::TypeId) {
     out << "TypeType";
-  } else if (*this == AutoType::SingletonTypeId) {
+  } else if (*this == AutoType::TypeId) {
     out << "AutoType";
-  } else if (*this == ErrorInst::SingletonTypeId) {
+  } else if (*this == ErrorInst::TypeId) {
     out << "Error";
   } else {
     AsConstantId().Print(out, /*disambiguate=*/false);

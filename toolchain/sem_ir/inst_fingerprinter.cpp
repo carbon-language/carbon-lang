@@ -404,8 +404,8 @@ struct Worklist {
 
       // Don't include the type if it's `type` or `<error>`, because those types
       // are self-referential.
-      if (inst.type_id() != TypeType::SingletonTypeId &&
-          inst.type_id() != ErrorInst::SingletonTypeId) {
+      if (inst.type_id() != TypeType::TypeId &&
+          inst.type_id() != ErrorInst::TypeId) {
         Add(inst.type_id());
       }
 

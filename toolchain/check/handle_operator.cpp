@@ -221,8 +221,7 @@ auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
   auto inner_type = ExprAsType(context, node_id, value_id);
   AddInstAndPush<SemIR::PointerType>(
       context, node_id,
-      {.type_id = SemIR::TypeType::SingletonTypeId,
-       .pointee_id = inner_type.inst_id});
+      {.type_id = SemIR::TypeType::TypeId, .pointee_id = inner_type.inst_id});
   return true;
 }
 
@@ -239,13 +238,13 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
       CARBON_DIAGNOSTIC(AddrOfEphemeralRef, Error,
                         "cannot take the address of a temporary object");
       context.emitter().Emit(TokenOnly(node_id), AddrOfEphemeralRef);
-      value_id = SemIR::ErrorInst::SingletonInstId;
+      value_id = SemIR::ErrorInst::InstId;
       break;
     default:
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "cannot take the address of non-reference expression");
       context.emitter().Emit(TokenOnly(node_id), AddrOfNonRef);
-      value_id = SemIR::ErrorInst::SingletonInstId;
+      value_id = SemIR::ErrorInst::InstId;
       break;
   }
   // TODO: Preserve spelling of type of operand where possible.
@@ -276,9 +275,9 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
     context.emitter().Emit(node_id, RepeatedConst);
   }
   auto inner_type = ExprAsType(context, node_id, value_id);
-  AddInstAndPush<SemIR::ConstType>(context, node_id,
-                                   {.type_id = SemIR::TypeType::SingletonTypeId,
-                                    .inner_id = inner_type.inst_id});
+  AddInstAndPush<SemIR::ConstType>(
+      context, node_id,
+      {.type_id = SemIR::TypeType::TypeId, .inner_id = inner_type.inst_id});
   return true;
 }
 
@@ -330,7 +329,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
             TokenOnly(node_id), DerefOfNonPointer, not_pointer_type_id);
 
         // TODO: Check for any facet here, rather than only a type.
-        if (not_pointer_type_id == SemIR::TypeType::SingletonTypeId) {
+        if (not_pointer_type_id == SemIR::TypeType::TypeId) {
           CARBON_DIAGNOSTIC(
               DerefOfType, Note,
               "to form a pointer type, write the `*` after the pointee type");
