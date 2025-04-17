@@ -43,3 +43,7 @@
 
 # Ignore the .gdb_history that's created next to the project-specific .gdbinit
 .gdb_history
+
+# The developer needs to create this file for good lldb usage from the command
+# line, with paths that are local to their checkout.
+.lldbinit

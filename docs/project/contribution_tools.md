@@ -30,6 +30,7 @@ contributions.
     -   [Old LLVM versions](#old-llvm-versions)
     -   [Asking for help](#asking-for-help)
 -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    -   [Using LLDB from the command line](#using-lldb-from-the-command-line)
     -   [Debugging with GDB instead of LLDB](#debugging-with-gdb-instead-of-lldb)
     -   [Debugging other build modes](#debugging-other-build-modes)
     -   [Debugging on MacOS](#debugging-on-macos)
@@ -350,6 +351,33 @@ lldb bazel-bin/toolchain/carbon
 
 Any installed version of LLDB at least as recent as the installed Clang used for
 building should work.
+
+### Using LLDB from the command line
+
+We include launch commands for running lldb in VSCode in
+[`.vscode/lldb_launch.json`](/.vscode/lldb_launch.json). But it's also possible
+to run lldb from the command line.
+
+Put the following in a `.lldbinit` file, replacing `/path/to/carbon-lang` with
+the path to the root of the git checkout:
+
+```
+command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py
+settings append target.source-map . /path/to/carbon-lang
+settings append target.source-map /proc/self/cwd /path/to/carbon-lang
+settings set escape-non-printables false
+settings set target.max-string-summary-length 10000
+```
+
+When running the debugger, include the `--local-lldbinit` argument.
+
+To debug a single `file_test`, use the following command, pointing it to an
+actual carbon test file.
+
+```
+bazel build -c dbg //toolchain/testing:file_test && \
+  lldb --local-lldbinit bazel-bin/toolchain/testing/file_test -- --dump_output --file_tests /path/to/some/test.carbon
+```
 
 ### Debugging with GDB instead of LLDB
 
