@@ -171,6 +171,7 @@ cc_library(
         ":pointer_dereference",
         "//common:check",
         "//common:error",
+        "//common:find",
         "//common:map",
         "//common:ostream",
         "//common:variant_helpers",
