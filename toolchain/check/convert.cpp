@@ -994,7 +994,10 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  if (target.type_id == SemIR::TypeType::TypeId) {
+  if (target.type_id == SemIR::TypeType::TypeId ||
+      sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+    auto type_value_id = SemIR::InstId::None;
+
     // A tuple of types converts to type `type`.
     // TODO: This should apply even for non-literal tuples.
     if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
@@ -1010,7 +1013,7 @@ static auto PerformBuiltinConversion(
       // TODO: Should we add this as an instruction? It will contain references
       // to local InstIds.
       auto tuple_type_id = GetTupleType(context, type_inst_ids);
-      return sem_ir.types().GetInstId(tuple_type_id);
+      type_value_id = sem_ir.types().GetInstId(tuple_type_id);
     }
 
     // `{}` converts to `{} as type`.
@@ -1019,23 +1022,33 @@ static auto PerformBuiltinConversion(
     if (auto struct_literal = value.TryAs<SemIR::StructLiteral>();
         struct_literal &&
         struct_literal->elements_id == SemIR::InstBlockId::Empty) {
-      value_id = sem_ir.types().GetInstId(value_type_id);
+      type_value_id = sem_ir.types().GetInstId(value_type_id);
     }
 
-    // Facet type conversions: a value T of facet type F1 can be implicitly
-    // converted to facet type F2 if T satisfies the requirements of F2.
-    //
-    // TODO: Support this conversion in general. For now we only support it in
-    // the case where F1 is a facet type and F2 is `type`.
-    // TODO: Support converting tuple and struct values to facet types,
-    // combining the above conversions and this one in a single conversion.
-    if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
-      return AddInst<SemIR::FacetAccessType>(
-          context, loc_id,
-          {.type_id = target.type_id, .facet_value_inst_id = value_id});
+    if (type_value_id != SemIR::InstId::None) {
+      if (sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
+        // Use the converted `TypeType` value for converting to a facet.
+        value_id = type_value_id;
+        value_type_id = SemIR::TypeType::TypeId;
+      } else {
+        // We wanted a `TypeType`, and we've done that.
+        return type_value_id;
+      }
     }
   }
 
+  // FacetType converts to Type by wrapping the facet value in
+  // FacetAccessType.
+  if (target.type_id == SemIR::TypeType::TypeId &&
+      sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
+    return AddInst<SemIR::FacetAccessType>(
+        context, loc_id,
+        {.type_id = target.type_id, .facet_value_inst_id = value_id});
+  }
+
+  // Type values can convert to facet values, and facet values can convert to
+  // other facet values, as long as they satisfy the required interfaces of the
+  // target `FacetType`.
   if (target.type_id != value_type_id &&
       sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
       (sem_ir.types().Is<SemIR::TypeType>(value_type_id) ||
