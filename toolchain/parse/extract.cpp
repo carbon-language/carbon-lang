@@ -211,7 +211,7 @@ auto NodeExtractor::MatchesNodeIdOneOf(
       *trace_ << "\n";
     }
     return false;
-  } else if (!FindOrNull(kinds, node_kind)) {
+  } else if (!Contains(kinds, node_kind)) {
     if (trace_) {
       *trace_ << "NodeIdOneOf error: wrong kind " << node_kind << ", expected ";
       trace_kinds();

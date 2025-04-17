@@ -53,7 +53,7 @@ auto TestKindCoverage(const std::string& manifest_path,
 
   llvm::SmallVector<llvm::StringRef> missing_kinds;
   for (auto kind : kinds) {
-    if (FindOrNull(untested_kinds, kind)) {
+    if (Contains(untested_kinds, kind)) {
       EXPECT_FALSE(covered_kinds.Erase(kind.name()))
           << "Kind " << kind
           << " has coverage even though none was expected. If this has "

@@ -35,7 +35,18 @@ TEST(FindTest, FindOrNull) {
   EXPECT_EQ(FindOrNull(range, 3), nullptr);
 }
 
-TEST(FindTest, FindIfrNull) {
+TEST(FindTest, FindOrDefault) {
+  std::vector<int> empty;
+  EXPECT_EQ(FindOrDefault(empty, 0, -1), -1);
+
+  std::vector<int> range = {1, 2};
+  EXPECT_EQ(FindOrDefault(range, 0, -1), -1);
+  EXPECT_EQ(FindOrDefault(range, 1, -1), 1);
+  EXPECT_EQ(FindOrDefault(range, 2, -1), 2);
+  EXPECT_EQ(FindOrDefault(range, 3, -1), -1);
+}
+
+TEST(FindTest, FindIfOrNull) {
   auto make_pred = [](int query) {
     return [=](int elem) { return query == elem; };
   };
@@ -49,6 +60,32 @@ TEST(FindTest, FindIfrNull) {
   EXPECT_EQ(FindIfOrNull(range, make_pred(1)), &range[0]);
   EXPECT_EQ(FindIfOrNull(range, make_pred(2)), &range[1]);
   EXPECT_EQ(FindIfOrNull(range, make_pred(3)), nullptr);
+}
+
+TEST(FindTest, FindIfOrDefault) {
+  auto make_pred = [](int query) {
+    return [=](int elem) { return query == elem; };
+  };
+
+  std::vector<int> empty;
+  EXPECT_EQ(FindIfOrDefault(empty, make_pred(0), -1), -1);
+
+  std::vector<int> range = {1, 2};
+  EXPECT_EQ(FindIfOrDefault(range, make_pred(0), -1), -1);
+  EXPECT_EQ(FindIfOrDefault(range, make_pred(1), -1), 1);
+  EXPECT_EQ(FindIfOrDefault(range, make_pred(2), -1), 2);
+  EXPECT_EQ(FindIfOrDefault(range, make_pred(3), -1), -1);
+}
+
+TEST(FindTest, Contains) {
+  std::vector<int> empty;
+  EXPECT_EQ(Contains(empty, 0), false);
+
+  std::vector<int> range = {1, 2};
+  EXPECT_EQ(Contains(range, 0), false);
+  EXPECT_EQ(Contains(range, 1), true);
+  EXPECT_EQ(Contains(range, 2), true);
+  EXPECT_EQ(Contains(range, 3), false);
 }
 
 }  // namespace

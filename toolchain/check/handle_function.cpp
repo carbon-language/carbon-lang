@@ -91,13 +91,12 @@ static auto FindSelfPattern(Context& context,
     -> SemIR::InstId {
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  if (const auto* i =
-          FindIfOrNull(implicit_param_patterns, [&](auto implicit_param_id) {
-            return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
-          })) {
-    return *i;
-  }
-  return SemIR::InstId::None;
+  return FindIfOrDefault(
+      implicit_param_patterns,
+      [&](auto implicit_param_id) {
+        return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
+      },
+      SemIR::InstId::None);
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be

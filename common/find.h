@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_FIND_H_
 #define CARBON_COMMON_FIND_H_
 
+#include <concepts>
 #include <type_traits>
 
 #include "llvm/ADT/STLExtras.h"
@@ -42,13 +43,30 @@ concept IsComparable = requires(const A& a, const B& b) {
 // instead of an iterator that must be tested against `end()`.
 template <typename Range, typename Query = Internal::RangeValueType<Range>>
   requires Internal::IsComparable<Query, Internal::RangeValueType<Range>>
-auto FindOrNull(Range&& range, const Query& query)
+constexpr auto FindOrNull(Range&& range, const Query& query)
     -> Internal::RangePointerType<Range> {
   auto it = llvm::find(range, query);
   if (it != range.end()) {
     return std::addressof(*it);
   } else {
     return nullptr;
+  }
+}
+
+// Finds a value in the given `range` by comparing to `query` and returns a copy
+// of it. If no match is found, returns `default_value`.
+template <typename Range, typename Query, typename Default>
+  requires Internal::IsComparable<Query, Internal::RangeValueType<Range>> &&
+           std::convertible_to<Default&&, Internal::RangeValueType<Range>> &&
+           std::copy_constructible<Internal::RangeValueType<Range>>
+constexpr auto FindOrDefault(Range&& range, const Query& query,
+                             Default default_value)
+    -> Internal::RangeValueType<Range> {
+  auto it = llvm::find(range, query);
+  if (it != range.end()) {
+    return *it;
+  } else {
+    return std::move(default_value);
   }
 }
 
@@ -60,7 +78,7 @@ auto FindOrNull(Range&& range, const Query& query)
 // instead of an iterator that must be tested against `end()`.
 template <typename Range, typename Pred>
   requires Internal::IsValidFindPredicate<Range, Pred>
-auto FindIfOrNull(Range&& range, Pred predicate)
+constexpr auto FindIfOrNull(Range&& range, Pred predicate)
     -> Internal::RangePointerType<Range> {
   auto it = llvm::find_if(range, predicate);
   if (it != range.end()) {
@@ -68,6 +86,35 @@ auto FindIfOrNull(Range&& range, Pred predicate)
   } else {
     return nullptr;
   }
+}
+
+// Finds a value in the given `range` by testing the `predicate` and returns a
+// copy of it. If no match is found, returns `default_value`.
+template <typename Range, typename Pred, typename Default>
+  requires Internal::IsValidFindPredicate<Range, Pred> &&
+           std::convertible_to<Default&&, Internal::RangeValueType<Range>> &&
+           std::copy_constructible<Internal::RangeValueType<Range>>
+constexpr auto FindIfOrDefault(Range&& range, Pred predicate,
+                               Default default_value)
+    -> Internal::RangeValueType<Range> {
+  auto it = llvm::find_if(range, predicate);
+  if (it != range.end()) {
+    return *it;
+  } else {
+    return std::move(default_value);
+  }
+}
+
+// Finds a value in the given `range` by comparing to `query`. Returns a
+// pointer to the value from the range on success, and nullptr if nothing is
+// found.
+//
+// This is similar to `std::find_if()` but returns a pointer to the value
+// instead of an iterator that must be tested against `end()`.
+template <typename Range, typename Query = Internal::RangeValueType<Range>>
+  requires Internal::IsComparable<Query, Internal::RangeValueType<Range>>
+constexpr auto Contains(Range&& range, const Query& query) -> bool {
+  return llvm::find(range, query) != range.end();
 }
 
 }  // namespace Carbon
