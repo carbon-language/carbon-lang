@@ -225,29 +225,6 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
                            SemIR::ConstantId const_id) -> ResolveResult;
 
 namespace {
-// Wrapper around InstStore that always retrieves instructions with their
-// attached types. This is what we want when importing, but usually not what we
-// want in other contexts.
-class ImportInstStore {
- public:
-  explicit ImportInstStore(const SemIR::InstStore* store) : store_(store) {}
-
-  auto Get(SemIR::InstId inst_id) const -> SemIR::Inst {
-    return store_->GetWithAttachedType(inst_id);
-  }
-  template <typename InstT>
-  auto GetAs(SemIR::InstId inst_id) const -> InstT {
-    return Get(inst_id).As<InstT>();
-  }
-  template <typename InstT>
-  auto TryGetAs(SemIR::InstId inst_id) const -> std::optional<InstT> {
-    return Get(inst_id).TryAs<InstT>();
-  }
-
- private:
-  const SemIR::InstStore* store_;
-};
-
 // A context within which we are performing an import. Tracks information about
 // the source and destination. This provides a restricted interface compared to
 // ImportResolver: in particular, it does not have access to a work list.
@@ -298,9 +275,7 @@ class ImportContext {
   auto import_inst_blocks() -> decltype(auto) {
     return import_ir().inst_blocks();
   }
-  auto import_insts() -> ImportInstStore {
-    return ImportInstStore(&import_ir().insts());
-  }
+  auto import_insts() -> decltype(auto) { return import_ir().insts(); }
   auto import_interfaces() -> decltype(auto) {
     return import_ir().interfaces();
   }
@@ -1116,11 +1091,11 @@ static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
   const auto& param_patterns =
       resolver.import_inst_blocks().Get(param_patterns_id);
   for (auto pattern_id : param_patterns) {
-    auto pattern_inst = resolver.import_insts().Get(pattern_id);
+    auto pattern_inst = resolver.import_insts().GetWithAttachedType(pattern_id);
     GetLocalConstantId(resolver, pattern_inst.type_id());
     if (auto addr = pattern_inst.TryAs<SemIR::AddrPattern>()) {
       pattern_id = addr->inner_id;
-      pattern_inst = resolver.import_insts().Get(pattern_id);
+      pattern_inst = resolver.import_insts().GetWithAttachedType(pattern_id);
       GetLocalConstantId(resolver, pattern_inst.type_id());
     }
     // If the parameter is a symbolic binding, build the
@@ -1159,27 +1134,27 @@ static auto GetLocalParamPatternsId(ImportContext& context,
   const auto& param_patterns =
       context.import_inst_blocks().Get(param_patterns_id);
   llvm::SmallVector<SemIR::InstId> new_patterns;
-  for (auto param_id : param_patterns) {
+  for (auto inst_id : param_patterns) {
     // Figure out the pattern structure. This echoes
     // Function::GetParamPatternInfoFromPatternId.
-    auto addr_pattern_id = param_id;
-    auto addr_inst =
-        context.import_insts().TryGetAs<SemIR::AddrPattern>(addr_pattern_id);
-    auto param_pattern_id = addr_pattern_id;
+    auto inst = context.import_insts().GetWithAttachedType(inst_id);
+
+    auto addr_pattern_id = inst_id;
+    auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
     if (addr_inst) {
-      param_pattern_id = addr_inst->inner_id;
+      inst_id = addr_inst->inner_id;
+      inst = context.import_insts().GetWithAttachedType(inst_id);
     }
 
-    auto param_pattern =
-        context.import_insts().TryGetAs<SemIR::ValueParamPattern>(
-            param_pattern_id);
-    auto binding_id = addr_pattern_id;
+    auto param_pattern_id = inst_id;
+    auto param_pattern = inst.TryAs<SemIR::ValueParamPattern>();
     if (param_pattern) {
-      binding_id = param_pattern->subpattern_id;
+      inst_id = param_pattern->subpattern_id;
+      inst = context.import_insts().GetWithAttachedType(inst_id);
     }
 
-    auto binding =
-        context.import_insts().GetAs<SemIR::AnyBindingPattern>(binding_id);
+    auto binding_id = inst_id;
+    auto binding = inst.As<SemIR::AnyBindingPattern>();
 
     // Rebuild the pattern.
     auto entity_name =
@@ -1240,19 +1215,16 @@ static auto GetLocalParamPatternsId(ImportContext& context,
 // Returns a version of import_return_slot_pattern_id localized to the current
 // IR.
 static auto GetLocalReturnSlotPatternId(
-    ImportContext& context, SemIR::InstId import_return_slot_pattern_id)
-    -> SemIR::InstId {
+    ImportContext& context, SemIR::InstId import_return_slot_pattern_id,
+    SemIR::ConstantId return_type_const_id) -> SemIR::InstId {
   if (!import_return_slot_pattern_id.has_value()) {
     return SemIR::InstId::None;
   }
 
   auto param_pattern = context.import_insts().GetAs<SemIR::OutParamPattern>(
       import_return_slot_pattern_id);
-  auto return_slot_pattern =
-      context.import_insts().GetAs<SemIR::ReturnSlotPattern>(
-          param_pattern.subpattern_id);
   auto type_id = context.local_context().types().GetTypeIdForTypeConstantId(
-      GetLocalConstantIdChecked(context, return_slot_pattern.type_id));
+      return_type_const_id);
 
   auto new_return_slot_pattern_id = AddImportedInst<SemIR::ReturnSlotPattern>(
       context, param_pattern.subpattern_id,
@@ -2072,9 +2044,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto return_type_const_id = SemIR::ConstantId::None;
   if (import_function.return_slot_pattern_id.has_value()) {
     return_type_const_id = GetLocalConstantId(
-        resolver, resolver.import_insts()
-                      .Get(import_function.return_slot_pattern_id)
-                      .type_id());
+        resolver, resolver.import_insts().GetAttachedType(
+                      import_function.return_slot_pattern_id));
   }
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_function.parent_scope_id);
@@ -2098,7 +2069,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   new_function.param_patterns_id =
       GetLocalParamPatternsId(resolver, import_function.param_patterns_id);
   new_function.return_slot_pattern_id = GetLocalReturnSlotPatternId(
-      resolver, import_function.return_slot_pattern_id);
+      resolver, import_function.return_slot_pattern_id, return_type_const_id);
   SetGenericData(resolver, import_function.generic_id, new_function.generic_id,
                  generic_data);
 
