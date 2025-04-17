@@ -87,7 +87,8 @@ static auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
         specific_id,
         sem_ir.insts().Get(sem_ir.generics().Get(specific.generic_id).decl_id));
     // TODO: Make sure this is the same value that we put in the self specific
-    // when it's resolved. Consider not building value blocks a self specific.
+    // when it's resolved. Consider not building value blocks for a self
+    // specific.
     return sem_ir.constant_values().Get(symbolic.inst_id);
   }
   return sem_ir.constant_values().Get(
