@@ -358,18 +358,8 @@ We include launch commands for running lldb in VSCode in
 [`.vscode/lldb_launch.json`](/.vscode/lldb_launch.json). But it's also possible
 to run lldb from the command line.
 
-Put the following in a `.lldbinit` file, replacing `/path/to/carbon-lang` with
-the path to the root of the git checkout:
-
-```
-command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py
-settings append target.source-map . /path/to/carbon-lang
-settings append target.source-map /proc/self/cwd /path/to/carbon-lang
-settings set escape-non-printables false
-settings set target.max-string-summary-length 10000
-```
-
-When running the debugger, include the `--local-lldbinit` argument.
+When running the debugger, include the `--local-lldbinit` argument to use our
+preset configuration options.
 
 To debug a single `file_test`, use the following command, pointing it to an
 actual carbon test file.
