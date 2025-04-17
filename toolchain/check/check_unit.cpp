@@ -477,8 +477,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
       default: {
-        CARBON_FATAL("Unexpected inst in definitions_required_by_decl: {0}",
-                     decl_inst);
+        CARBON_FATAL("Unexpected inst in definitions_required: {0}", decl_inst);
       }
     }
   }
