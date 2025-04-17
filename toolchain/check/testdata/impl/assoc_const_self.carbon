@@ -819,7 +819,7 @@ fn CallF() {
 // CHECK:STDOUT: fn @CallF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc22: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc19: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
