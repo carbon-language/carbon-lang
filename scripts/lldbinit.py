@@ -19,7 +19,7 @@ result = lldb.SBCommandReturnObject()
 
 
 def RunCommand(cmd: str) -> None:
-    """Runs a command and prints it to the console to show that it ran"""
+    """Runs a command and prints it to the console to show that it ran."""
     print("(lldb) %s" % cmd)
     ci.HandleCommand(cmd, result)
 
