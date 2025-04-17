@@ -4,7 +4,6 @@
 
 #include "toolchain/check/generic.h"
 
-#include "common/map.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -25,21 +24,6 @@ namespace Carbon::Check {
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId;
 
-auto StartGenericDecl(Context& context) -> void {
-  context.generic_region_stack().Push();
-}
-
-auto StartGenericDefinition(Context& context) -> void {
-  // Push a generic region even if we don't have a generic_id. We might still
-  // have locally-introduced generic parameters to track:
-  //
-  // fn F() {
-  //   let T:! type = i32;
-  //   var x: T;
-  // }
-  context.generic_region_stack().Push();
-}
-
 // Adds an instruction `generic_inst_id` to the eval block for a generic region,
 // which is the current instruction block. The instruction `generic_inst_id` is
 // expected to compute the value of the constant described by `const_inst_id` in
@@ -51,8 +35,8 @@ static auto AddGenericConstantInstToEvalBlock(
     SemIR::InstId generic_inst_id, SemIR::ConstantDependence dependence)
     -> SemIR::ConstantId {
   auto index = SemIR::GenericInstIndex(
-      region, context.inst_block_stack().PeekCurrentBlockContents().size());
-  context.inst_block_stack().AddInstId(generic_inst_id);
+      region, context.generic_region_stack().PeekEvalBlock().size());
+  context.generic_region_stack().AddInstToEvalBlock(generic_inst_id);
   return context.constant_values().AddSymbolicConstant(
       {.inst_id = const_inst_id,
        .generic_id = generic_id,
@@ -61,14 +45,6 @@ static auto AddGenericConstantInstToEvalBlock(
 }
 
 namespace {
-// A map from an instruction ID representing a canonical symbolic constant to an
-// instruction within an eval block of the generic that computes the specific
-// value for that constant.
-//
-// We arbitrarily use a small size of 256 bytes for the map.
-// TODO: Determine a better number based on measurements.
-using ConstantsInGenericMap = Map<SemIR::InstId, SemIR::InstId, 256>;
-
 // Substitution callbacks to rebuild a generic constant in the eval block for a
 // generic region.
 class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
@@ -162,11 +138,12 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) const
       -> SemIR::InstId override {
     auto inst = context_->insts().Get(orig_inst_id);
-    CARBON_CHECK(
-        inst.Is<SemIR::BindSymbolicName>() ||
-            inst.Is<SemIR::SymbolicBindingPattern>(),
-        "Instruction {0} has symbolic constant value but no symbolic operands",
-        inst);
+    // TODO
+//    CARBON_CHECK(
+//        inst.Is<SemIR::BindSymbolicName>() ||
+//            inst.Is<SemIR::SymbolicBindingPattern>(),
+//        "Instruction {0} has symbolic constant value but no symbolic operands",
+//        inst);
 
     // Rebuild the instruction anyway so that it's included in the eval block.
     // TODO: Can we just reuse the instruction in this case?
@@ -312,83 +289,78 @@ static auto PopulateConstantsFromDeclaration(
   }
 }
 
+auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void {
+  if (context.generic_region_stack().Empty()) {
+    context.TODO(dependent_inst.inst_id,
+                 "dependent inst but no enclosing generic region");
+    return;
+  }
+  if (context.generic_region_stack().PeekPendingGeneric().generic_id.index ==
+      -2) {
+    // TODO: Remove this and the corresponding custom code in import_ref.
+    return;
+  }
+
+  // TODO
+  const bool inside_redeclaration = false;
+
+  auto [inst_id, dep_kind] = dependent_inst;
+  auto [generic_id, region] =
+      context.generic_region_stack().PeekPendingGeneric();
+  if (!generic_id.has_value()) {
+    // Allocate a placeholder generic now to form a generic ID. This generic
+    // will be populated once we reach the end of the generic declaration.
+    generic_id = context.generics().Add(
+        SemIR::Generic{.decl_id = SemIR::InstId::None,
+                       .bindings_id = SemIR::InstBlockId::None,
+                       .self_specific_id = SemIR::SpecificId::None});
+    context.generic_region_stack().SetPendingGenericId(generic_id);
+  }
+  auto& constants_in_generic =
+      context.generic_region_stack().PeekConstantsInGenericMap();
+
+  // If the type is symbolic, replace it with a type specific to this generic.
+  if ((dep_kind & DependentInst::SymbolicType) != DependentInst::None) {
+    auto inst = context.insts().Get(inst_id);
+    auto type_id = AddGenericTypeToEvalBlock(
+        context, generic_id, region, context.insts().GetLocId(inst_id),
+        constants_in_generic, inside_redeclaration, inst.type_id());
+    // TODO: Eventually, completeness requirements should be modeled as
+    // constraints on the generic rather than properties of the type. For now,
+    // require the transformed type to be complete if the original was.
+    if (context.types().IsComplete(inst.type_id())) {
+      CompleteTypeOrCheckFail(context, type_id);
+    }
+    inst.SetType(type_id);
+    context.sem_ir().insts().Set(inst_id, inst);
+  }
+
+  // If the instruction has a symbolic constant value, then make a note that
+  // we'll need to evaluate this instruction when forming the specific. Update
+  // the constant value of the instruction to refer to the result of that
+  // eventual evaluation.
+  if ((dep_kind & DependentInst::SymbolicConstant) != DependentInst::None) {
+    // Update the constant value to refer to this generic.
+    context.constant_values().Set(
+        inst_id, AddGenericConstantToEvalBlock(context, generic_id, region,
+                                               constants_in_generic,
+                                               inside_redeclaration, inst_id));
+  }
+
+  // If the instruction is a template action, add it directly to this position
+  // in the eval block.
+  if ((dep_kind & DependentInst::Template) != DependentInst::None) {
+    AddTemplateActionToEvalBlock(context, generic_id, region,
+                                 constants_in_generic, inside_redeclaration,
+                                 inst_id);
+  }
+}
+
 // Builds and returns a block of instructions whose constant values need to be
 // evaluated in order to resolve a generic to a specific.
-static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
-                                 SemIR::GenericInstIndex::Region region,
-                                 bool inside_redeclaration)
-    -> SemIR::InstBlockId {
-  context.inst_block_stack().Push();
-
-  ConstantsInGenericMap constants_in_generic;
-
-  if (region == SemIR::GenericInstIndex::Region::Definition ||
-      inside_redeclaration) {
-    PopulateConstantsFromDeclaration(context, generic_id, constants_in_generic);
-  }
-
-  // The work done in this loop might invalidate iterators into the generic
-  // region stack, but shouldn't add new dependent instructions to the current
-  // region.
-  auto num_dependent_insts =
-      context.generic_region_stack().PeekDependentInsts().size();
-  for (auto i : llvm::seq(num_dependent_insts)) {
-    auto [inst_id, dep_kind] =
-        context.generic_region_stack().PeekDependentInsts()[i];
-
-    // If the type is symbolic, replace it with a type specific to this generic.
-    if ((dep_kind & GenericRegionStack::DependencyKind::SymbolicType) !=
-        GenericRegionStack::DependencyKind::None) {
-      auto inst = context.insts().Get(inst_id);
-      auto type_id = AddGenericTypeToEvalBlock(
-          context, generic_id, region, context.insts().GetLocId(inst_id),
-          constants_in_generic, inside_redeclaration, inst.type_id());
-      // If the generic declaration is invalid, it can result in an error.
-      if (type_id == SemIR::ErrorInst::TypeId) {
-        break;
-      }
-      // TODO: Eventually, completeness requirements should be modeled as
-      // constraints on the generic rather than properties of the type. For now,
-      // require the transformed type to be complete if the original was.
-      if (context.types().IsComplete(inst.type_id())) {
-        CompleteTypeOrCheckFail(context, type_id);
-      }
-      inst.SetType(type_id);
-      context.sem_ir().insts().Set(inst_id, inst);
-    }
-
-    // If the instruction has a symbolic constant value, then make a note that
-    // we'll need to evaluate this instruction when forming the specific. Update
-    // the constant value of the instruction to refer to the result of that
-    // eventual evaluation.
-    if ((dep_kind & GenericRegionStack::DependencyKind::SymbolicConstant) !=
-        GenericRegionStack::DependencyKind::None) {
-      // Update the constant value to refer to this generic.
-      context.constant_values().Set(
-          inst_id, AddGenericConstantToEvalBlock(
-                       context, generic_id, region, constants_in_generic,
-                       inside_redeclaration, inst_id));
-    }
-
-    // If the instruction is a template action, add it directly to this position
-    // in the eval block.
-    if ((dep_kind & GenericRegionStack::DependencyKind::Template) !=
-        GenericRegionStack::DependencyKind::None) {
-      AddTemplateActionToEvalBlock(context, generic_id, region,
-                                   constants_in_generic, inside_redeclaration,
-                                   inst_id);
-    }
-  }
-
-  CARBON_CHECK(
-      num_dependent_insts ==
-          context.generic_region_stack().PeekDependentInsts().size(),
-      "Building eval block added new dependent insts, for example {0}",
-      context.insts().Get(context.generic_region_stack()
-                              .PeekDependentInsts()[num_dependent_insts]
-                              .inst_id));
-
-  return context.inst_block_stack().Pop();
+static auto MakeGenericEvalBlock(Context& context) -> SemIR::InstBlockId {
+  return context.inst_blocks().Add(
+      context.generic_region_stack().PeekEvalBlock());
 }
 
 // Builds and returns an eval block, given the list of canonical symbolic
@@ -398,17 +370,14 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
                              SemIR::GenericInstIndex::Region region,
                              llvm::ArrayRef<SemIR::InstId> const_ids)
     -> SemIR::InstBlockId {
-  context.inst_block_stack().Push();
+  context.generic_region_stack().Push({.generic_id = generic_id,
+                                       .region = region});
 
-  // We say we are not inside a redeclaration since this function is used for
-  // import and there's no redeclaration there.
-  bool inside_redeclaration = false;
-
-  ConstantsInGenericMap constants_in_generic;
+  auto& constants_in_generic =
+      context.generic_region_stack().PeekConstantsInGenericMap();
 
   // For the definition region, populate constants from the declaration.
-  if (inside_redeclaration ||
-      region == SemIR::GenericInstIndex::Region::Definition) {
+  if (region == SemIR::GenericInstIndex::Definition) {
     PopulateConstantsFromDeclaration(context, generic_id, constants_in_generic);
   }
 
@@ -416,16 +385,41 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
   for (auto [i, inst_id] : llvm::enumerate(const_ids)) {
     // Build a constant in the inst block.
     AddGenericConstantToEvalBlock(context, generic_id, region,
-                                  constants_in_generic, inside_redeclaration,
-                                  inst_id);
-    CARBON_CHECK(
-        context.inst_block_stack().PeekCurrentBlockContents().size() == i + 1,
-        "Produced {0} instructions when importing {1}",
-        (context.inst_block_stack().PeekCurrentBlockContents().size() - i),
-        context.insts().Get(inst_id));
+                                  constants_in_generic,
+                                  /*inside_redeclaration*/ false, inst_id);
+    CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().size() == i + 1,
+                 "Produced {0} instructions when importing {1}",
+                 (context.generic_region_stack().PeekEvalBlock().size() - i),
+                 context.insts().Get(inst_id));
   }
 
-  return context.inst_block_stack().Pop();
+  auto eval_block_id = MakeGenericEvalBlock(context);
+  context.generic_region_stack().Pop();
+  return eval_block_id;
+}
+
+auto StartGenericDecl(Context& context) -> void {
+  context.generic_region_stack().Push(
+      {.generic_id = SemIR::GenericId::None,
+       .region = SemIR::GenericInstIndex::Declaration});
+}
+
+auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id) -> void {
+  // Push a generic region even if we don't have a generic_id. We might still
+  // have locally-introduced generic parameters to track:
+  //
+  // fn F() {
+  //   let T:! type = i32;
+  //   var x: T;
+  // }
+  context.generic_region_stack().Push(
+      {.generic_id = generic_id,
+       .region = SemIR::GenericInstIndex::Definition});
+  if (generic_id.has_value()) {
+    PopulateConstantsFromDeclaration(
+        context, generic_id,
+        context.generic_region_stack().PeekConstantsInGenericMap());
+  }
 }
 
 auto DiscardGenericDecl(Context& context) -> void {
@@ -437,13 +431,11 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
       context.scope_stack().compile_time_bindings_stack().PeekAllValues();
 
   if (all_bindings.empty()) {
-    CARBON_CHECK(context.generic_region_stack().PeekDependentInsts().empty(),
-                 "Have dependent instruction {0} in declaration {1} but no "
+    CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().empty(),
+                 "Have non-empty eval block {0} in declaration {1} but no "
                  "compile time bindings are in scope.",
-                 context.insts().Get(context.generic_region_stack()
-                                         .PeekDependentInsts()
-                                         .front()
-                                         .inst_id),
+                 context.insts().Get(
+                     context.generic_region_stack().PeekEvalBlock().front()),
                  context.insts().Get(decl_id));
     context.generic_region_stack().Pop();
     return SemIR::GenericId::None;
@@ -455,10 +447,24 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
   // building this generic.
   auto bindings_id = context.inst_blocks().Add(all_bindings);
 
-  SemIR::GenericId generic_id = context.generics().Add(
-      SemIR::Generic{.decl_id = decl_id,
-                     .bindings_id = bindings_id,
-                     .self_specific_id = SemIR::SpecificId::None});
+  SemIR::Generic generic = {.decl_id = decl_id,
+                            .bindings_id = bindings_id,
+                            .self_specific_id = SemIR::SpecificId::None};
+
+  // Get the generic ID, or allocate one now if we don't have one yet. That
+  // could happen if the eval block is empty.
+  auto generic_id =
+      context.generic_region_stack().PeekPendingGeneric().generic_id;
+  if (!generic_id.has_value()) {
+    CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().empty(),
+                 "Non-empty eval block but didn't yet allocate a GenericId");
+    generic_id = context.generics().Add(generic);
+  } else {
+    CARBON_CHECK(!context.generics().Get(generic_id).decl_id.has_value(),
+                 "Built generic {0} twice", generic_id);
+    context.generics().Get(generic_id) = generic;
+  }
+
   // MakeSelfSpecificId could cause something to be imported, which would
   // invalidate the return value of `context.generics().Get(generic_id)`.
   auto self_specific_id = MakeSelfSpecificId(context, generic_id);
@@ -471,9 +477,7 @@ auto FinishGenericDecl(Context& context, SemIR::LocId loc_id,
   if (!generic_id.has_value()) {
     return;
   }
-  auto decl_block_id = MakeGenericEvalBlock(
-      context, generic_id, SemIR::GenericInstIndex::Region::Declaration,
-      /*inside_redeclaration=*/false);
+  auto decl_block_id = MakeGenericEvalBlock(context);
   context.generic_region_stack().Pop();
   context.generics().Get(generic_id).decl_block_id = decl_block_id;
 
@@ -497,10 +501,9 @@ auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
     return;
   }
 
-  auto definition_block_id = MakeGenericEvalBlock(
-      context, generic_id, SemIR::GenericInstIndex::Region::Declaration,
-      /*inside_redeclaration=*/true);
-  CARBON_CHECK(definition_block_id == SemIR::InstBlockId::Empty);
+  // TODO: Compare the current eval block to the existing eval block for
+  // `generic_id`, and somehow replace all references to the new eval block with
+  // references to `generic_id` instead.
 
   context.generic_region_stack().Pop();
 }
@@ -516,9 +519,7 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
     return;
   }
 
-  auto definition_block_id = MakeGenericEvalBlock(
-      context, generic_id, SemIR::GenericInstIndex::Region::Definition,
-      /*inside_redeclaration=*/false);
+  auto definition_block_id = MakeGenericEvalBlock(context);
   context.generics().Get(generic_id).definition_block_id = definition_block_id;
 
   context.generic_region_stack().Pop();
@@ -604,7 +605,7 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
     }
     auto definition_block_id =
         TryEvalBlockForSpecific(context, loc_id, specific_id,
-                                SemIR::GenericInstIndex::Region::Definition);
+                                SemIR::GenericInstIndex::Definition);
     // Note that TryEvalBlockForSpecific may reallocate the list of specifics,
     // so re-lookup the specific here.
     context.specifics().Get(specific_id).definition_block_id =

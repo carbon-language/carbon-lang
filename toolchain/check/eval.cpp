@@ -115,6 +115,7 @@ class EvalContext {
                      "Forward reference in eval block: index {0} referenced "
                      "before evaluation",
                      symbolic_info.index.index());
+        // TODO: Do we need to strip this back to an abstract value?
         return constant_values().Get(inst_id);
       } else {
         // TODO: Eliminate this call. This is the only place where we get a

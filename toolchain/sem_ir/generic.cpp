@@ -68,8 +68,9 @@ auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
 
   if (!specific_id.has_value()) {
     // We have a generic constant but no specific. We treat as a request for the
-    // canonical value of the constant.
-    return sem_ir.constant_values().Get(symbolic.inst_id);
+    // value that should be used within the generic itself, which is the generic
+    // constant.
+    return const_id;
   }
 
   const auto& specific = sem_ir.specifics().Get(specific_id);

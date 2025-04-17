@@ -118,7 +118,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   //  that here. Either remove the need for a token or find a token (a new
   //  introducer?) for the alternative to name.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, class_info.generic_id);
 
   context.name_scopes().AddRequiredName(
       class_info.scope_id, SemIR::NameId::SelfType,

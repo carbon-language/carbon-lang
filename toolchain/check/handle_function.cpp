@@ -589,7 +589,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   context.scope_stack().Push(decl_id);
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, function.generic_id);
 
   CheckFunctionDefinitionSignature(context, function);
 
@@ -736,7 +736,7 @@ auto HandleParseNode(Context& context,
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
       function.builtin_function_kind = builtin_kind;
       // Build an empty generic definition if this is a generic builtin.
-      StartGenericDefinition(context);
+      StartGenericDefinition(context, function.generic_id);
       FinishGenericDefinition(context, function.generic_id);
     } else {
       CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,
