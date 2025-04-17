@@ -1109,11 +1109,6 @@ class FormatterImpl {
     FormatTrailingBlock(inst.decl_block_id);
   }
 
-  auto FormatInstRhs(Redecl inst) -> void {
-    FormatArgs(inst.decl_inst_id);
-    FormatTrailingBlock(inst.decl_block_id);
-  }
-
   auto FormatInstRhs(IntValue inst) -> void {
     out_ << " ";
     sem_ir_->ints()

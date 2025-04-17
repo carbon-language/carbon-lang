@@ -849,19 +849,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         add_inst_name("ptr");
         continue;
       }
-      case CARBON_KIND(Redecl redecl_inst): {
-        auto decl_inst = sem_ir_->insts().Get(redecl_inst.decl_inst_id);
-        CARBON_KIND_SWITCH(decl_inst) {
-          case CARBON_KIND(ClassDecl class_inst): {
-            auto class_scope_id = GetScopeFor(class_inst.class_id);
-            queue_block_id(class_scope_id, redecl_inst.decl_block_id);
-            continue;
-          }
-          default:
-            CARBON_FATAL("Add redeclaration case for {0}", untyped_inst);
-            continue;
-        }
-      }
       case RequireCompleteType::Kind: {
         add_inst_name("require_complete");
         continue;

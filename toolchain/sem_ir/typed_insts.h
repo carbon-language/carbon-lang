@@ -1352,17 +1352,6 @@ struct PointerType {
   TypeInstId pointee_id;
 };
 
-// A redeclaration after an owning declaration. This has no constant value,
-// since the redeclaration may not be in the same generic context.
-struct Redecl {
-  static constexpr auto Kind = InstKind::Redecl.Define<Parse::AnyDeclId>(
-      {.ir_name = "redecl", .constant_kind = InstConstantKind::Never});
-
-  // The first owning declaration.
-  InstId decl_inst_id;
-  DeclInstBlockId decl_block_id;
-};
-
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {

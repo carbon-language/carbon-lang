@@ -175,7 +175,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
 static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
                            bool is_definition)
-    -> std::tuple<SemIR::ClassId, SemIR::InstId, SemIR::InstId> {
+    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto name = PopNameComponent(context);
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
@@ -232,7 +232,6 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
 
   // Create a new class if this isn't a valid redeclaration.
   bool is_new_class = !class_decl.class_id.has_value();
-  SemIR::InstId first_decl_id = class_decl_id;
   if (is_new_class) {
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
@@ -243,26 +242,14 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
       class_decl.type_id = GetGenericClassType(
           context, class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
-
-    // Write the class ID into the ClassDecl.
-    ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
   } else {
-    const auto& prev_class = context.classes().Get(class_decl.class_id);
-    FinishGenericRedecl(context, prev_class.generic_id);
-
-    // Declarations after the first owning declaration use a `Redecl`
-    // instruction instead of a `ClassDecl`.
-    if (prev_class.first_owning_decl_id.has_value() &&
-        prev_class.first_owning_decl_id != class_decl_id) {
-      first_decl_id = prev_class.first_owning_decl_id;
-      ReplaceInstBeforeConstantUse(
-          context, class_decl_id,
-          SemIR::Redecl{.decl_inst_id = first_decl_id,
-                        .decl_block_id = decl_block_id});
-    } else {
-      ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
-    }
+    auto prev_decl_generic_id =
+        context.classes().Get(class_decl.class_id).generic_id;
+    FinishGenericRedecl(context, prev_decl_generic_id);
   }
+
+  // Write the class ID into the ClassDecl.
+  ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
 
   if (is_new_class) {
     // TODO: Form this as part of building the definition, not as part of the
@@ -271,10 +258,10 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
-    context.definitions_required_by_decl().push_back(first_decl_id);
+    context.definitions_required_by_decl().push_back(class_decl_id);
   }
 
-  return {class_decl.class_id, first_decl_id, class_decl_id};
+  return {class_decl.class_id, class_decl_id};
 }
 
 auto HandleParseNode(Context& context, Parse::ClassDeclId node_id) -> bool {
@@ -285,14 +272,14 @@ auto HandleParseNode(Context& context, Parse::ClassDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
     -> bool {
-  auto [class_id, decl_id, definition_id] =
+  auto [class_id, class_decl_id] =
       BuildClassDecl(context, node_id, /*is_definition=*/true);
   auto& class_info = context.classes().Get(class_id);
-  StartClassDefinition(context, class_info, decl_id, definition_id);
+  StartClassDefinition(context, class_info, class_decl_id);
 
   // Enter the class scope.
   context.scope_stack().Push(
-      decl_id, class_info.scope_id,
+      class_decl_id, class_info.scope_id,
       context.generics().GetSelfSpecific(class_info.generic_id));
   StartGenericDefinition(context);
 

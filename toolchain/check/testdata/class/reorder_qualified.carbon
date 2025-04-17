@@ -133,7 +133,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   redecl @B.%C.decl {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %AF.decl: %AF.type = fn_decl @AF [concrete = constants.%AF] {} {}
 // CHECK:STDOUT:   %.loc46_8: %A.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   name_binding_decl {

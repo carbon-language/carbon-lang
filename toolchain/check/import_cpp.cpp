@@ -490,7 +490,7 @@ static auto BuildClassDefinition(Context& context,
   auto [class_id, class_decl_id] =
       BuildClassDecl(context, parent_scope_id, name_id);
   auto& class_info = context.classes().Get(class_id);
-  StartClassDefinition(context, class_info, class_decl_id, class_decl_id);
+  StartClassDefinition(context, class_info, class_decl_id);
 
   context.name_scopes()
       .Get(class_info.scope_id)

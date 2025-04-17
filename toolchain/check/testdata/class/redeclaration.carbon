@@ -39,11 +39,11 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Class = %Class.decl
+// CHECK:STDOUT:     .Class = %Class.decl.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   redecl %Class.decl {}
+// CHECK:STDOUT:   %Class.decl.loc11: type = class_decl @Class [concrete = constants.%Class] {} {}
+// CHECK:STDOUT:   %Class.decl.loc13: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
