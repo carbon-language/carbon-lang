@@ -493,6 +493,7 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
     CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().empty(),
                  "Non-empty eval block but didn't yet allocate a GenericId");
     generic_id = context.generics().Add(generic);
+    context.generic_region_stack().SetPendingGenericId(generic_id);
   } else {
     CARBON_CHECK(!context.generics().Get(generic_id).decl_id.has_value(),
                  "Built generic {0} twice", generic_id);
