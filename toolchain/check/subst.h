@@ -26,9 +26,8 @@ class SubstInstCallbacks {
 
   // Rebuilds the type of an instruction from the substituted type instruction.
   // By default this builds the unattached type described by the given type ID.
-  //
-  // TODO: Change to `TypeInstId` after merge with trunk.
-  virtual auto RebuildType(SemIR::InstId type_inst_id) const -> SemIR::TypeId;
+  virtual auto RebuildType(SemIR::TypeInstId type_inst_id) const
+      -> SemIR::TypeId;
 
   // Rebuilds an instruction whose operands were changed by substitution.
   // `orig_inst_id` is the instruction prior to substitution, and `new_inst` is

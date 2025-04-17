@@ -60,7 +60,8 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
         loc_id_(loc_id),
         constants_in_generic_(constants_in_generic) {}
 
-  auto RebuildType(SemIR::InstId type_inst_id) const -> SemIR::TypeId override {
+  auto RebuildType(SemIR::TypeInstId type_inst_id) const
+      -> SemIR::TypeId override {
     // When building instructions in the eval block, form attached types.
     return context().types().GetTypeIdForTypeConstantId(
         context().constant_values().GetAttached(type_inst_id));
