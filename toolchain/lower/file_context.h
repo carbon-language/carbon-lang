@@ -222,25 +222,25 @@ class FileContext {
 
   auto AddLoweredSpecificForGeneric(SemIR::GenericId generic_id,
                                     SemIR::SpecificId specific_id) {
-    llvm::SmallVector<SemIR::SpecificId> existing_specifics;
-    auto ls_entry = lowered_specifics.Insert(generic_id, existing_specifics);
-    ls_entry.value().push_back(specific_id);
+    lowered_specifics_[generic_id.index].push_back(specific_id);
   }
   auto CreateStateForSpecific(SemIR::SpecificId specific_id)
       -> llvm::SmallVector<LoweringFunctionState>* {
     if (!specific_id.has_value()) {
       return nullptr;
     }
-    return &lowered_states.Insert(specific_id, {}).value();
+    return &lowered_states_[specific_id.index];
   }
 
   auto CoalesceEquivalentSpecifics() -> void;
-  auto CheckTypeEquivalence(SemIR::SpecificId specific_id1,
-                            SemIR::SpecificId specific_id2) -> bool;
+  auto CheckTypeEquivalence(SemIR::SpecificId specific1,
+                            SemIR::SpecificId specific2) -> bool;
   auto CheckStateEquivalence(
-      SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
+      SemIR::SpecificId specific1, SemIR::SpecificId specific2,
       Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
-          visited_equivalent_specifics) -> bool;
+          visited_equivalent_specifics,
+      Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
+          visited_equivalent_specifics_flipped) -> bool;
   auto ReplaceSpecificWithSpecific(SemIR::SpecificId to_replace,
                                    SemIR::SpecificId replace_with) -> void;
   auto DeleteFunctionSpecific(SemIR::SpecificId to_replace,
@@ -312,24 +312,30 @@ class FileContext {
   // For a generic function, keep track of the specifics for which LLVM
   // function declarations were created. Those can be retrieved then via
   // from specific_functions_, via specific_functions_[specific_id.index].
-  Map<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>> lowered_specifics;
+  // We resize this to the correct size. Indexed by generic_id.index.
+  llvm::SmallVector<llvm::SmallVector<SemIR::SpecificId>, 0> lowered_specifics_;
+
   // For specifics that exist in lowered_specifics, store their function type
-  // information: return and parameter types.
+  // information: return and parameter types. We resize this to the correct
+  // size. Indexed by specific_id.index.
   // TODO: Storing all members of FunctionTypeInfo may not be necessary.
-  Map<SemIR::SpecificId, FunctionTypeInfo> lowered_specifics_types;
+  llvm::SmallVector<FunctionTypeInfo, 0> lowered_specifics_types_;
 
   // This is initialized and populated while lowering a specific.
   // The list of states for a specific is populated by the function_context
-  // for that specific.
-  Map<SemIR::SpecificId, llvm::SmallVector<LoweringFunctionState>>
-      lowered_states;
+  // for that specific. e resize this to the correct size. Indexed by
+  // specific_id.index.
+  llvm::SmallVector<llvm::SmallVector<LoweringFunctionState>, 0>
+      lowered_states_;
 
   // Equivalent specifics found. TODO: add flipped pairs
-  Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>> equivalent_specifics;
+  Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>> equivalent_specifics_;
   // Non-equivalent specifics found. TODO: add flipped pairs
-  Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>> non_equivalent_specifics;
-  // Set of replaced specifics.
-  Set<SemIR::SpecificId> replaced_specifics;
+  Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>
+      non_equivalent_specifics_;
+  // Track whether a specific was replaced by another. We resize it to the
+  // correct size and initialize with all false. Indexed by specific_id.index.
+  llvm::SmallVector<bool, 0> is_replaced_specific_;
 };
 
 }  // namespace Carbon::Lower
