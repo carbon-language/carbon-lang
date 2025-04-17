@@ -81,7 +81,7 @@ auto InitialFacetTypeImplWitness(
          .impl_id = SemIR::ImplId::None});
     return AddInst<SemIR::ImplWitness>(
         context, witness_loc_id,
-        {.type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
          .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
   }
@@ -113,7 +113,7 @@ auto InitialFacetTypeImplWitness(
         context.inst_blocks().AddUninitialized(assoc_entities.size());
     table = context.inst_blocks().GetMutable(elements_id);
     for (auto& uninit : table) {
-      uninit = SemIR::ImplWitnessTablePlaceholder::InstId;
+      uninit = SemIR::ImplWitnessTablePlaceholder::TypeInstId;
     }
 
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
@@ -122,7 +122,7 @@ auto InitialFacetTypeImplWitness(
 
     witness_inst_id = AddInst<SemIR::ImplWitness>(
         context, witness_loc_id,
-        {.type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
          .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
   }
@@ -171,7 +171,7 @@ auto InitialFacetTypeImplWitness(
       continue;
     }
 
-    if (table_entry != SemIR::ImplWitnessTablePlaceholder::InstId) {
+    if (table_entry != SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
       if (table_entry != rewrite_inst_id) {
         // TODO: Figure out how to print the two different values
         // `const_id` & `rewrite_inst_id` in the diagnostic
@@ -265,7 +265,7 @@ auto AllocateFacetTypeImplWitness(Context& context,
   }
 
   llvm::SmallVector<SemIR::InstId> empty_table(
-      assoc_entities.size(), SemIR::ImplWitnessTablePlaceholder::InstId);
+      assoc_entities.size(), SemIR::ImplWitnessTablePlaceholder::TypeInstId);
   context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
 }
 

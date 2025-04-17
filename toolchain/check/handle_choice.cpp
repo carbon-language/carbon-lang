@@ -280,7 +280,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   auto choice_witness_id = AddInst(
       context, node_id,
       SemIR::CompleteTypeWitness{
-          .type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
           .object_repr_type_inst_id =
               context.types().GetInstId(GetStructType(context, fields_id))});
   // Note: avoid storing a reference to the returned Class, since it may be

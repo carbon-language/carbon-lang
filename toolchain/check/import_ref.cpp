@@ -1700,7 +1700,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BoundMethod inst) -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
-               SemIR::BoundMethodType::InstId);
+               SemIR::BoundMethodType::TypeInstId);
   auto object_id = GetLocalConstantInstId(resolver, inst.object_id);
   auto function_decl_id =
       GetLocalConstantInstId(resolver, inst.function_decl_id);
@@ -1710,10 +1710,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   return ResolveAs<SemIR::BoundMethod>(
-      resolver, {.type_id = GetSingletonType(resolver.local_context(),
-                                             SemIR::BoundMethodType::InstId),
-                 .object_id = object_id,
-                 .function_decl_id = function_decl_id});
+      resolver,
+      {.type_id = GetSingletonType(resolver.local_context(),
+                                   SemIR::BoundMethodType::TypeInstId),
+       .object_id = object_id,
+       .function_decl_id = function_decl_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Call inst)
@@ -1886,7 +1887,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (import_class.is_complete()) {
     auto complete_type_witness_id = AddLoadedImportRef(
         resolver,
-        GetSingletonType(resolver.local_context(), SemIR::WitnessType::InstId),
+        GetSingletonType(resolver.local_context(),
+                         SemIR::WitnessType::TypeInstId),
         import_class.complete_type_witness_id, complete_type_witness_const_id);
     AddClassDefinition(resolver, import_class, new_class,
                        complete_type_witness_id, base_id, adapt_id, vtable_id);
@@ -1930,7 +1932,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CompleteTypeWitness inst)
     -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
-               SemIR::WitnessType::InstId);
+               SemIR::WitnessType::TypeInstId);
   auto object_repr_type_inst_id =
       GetLocalTypeInstId(resolver, inst.object_repr_type_inst_id);
   if (resolver.HasNewWork()) {
@@ -1938,7 +1940,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
   return ResolveAs<SemIR::CompleteTypeWitness>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
-                                             SemIR::WitnessType::InstId),
+                                             SemIR::WitnessType::TypeInstId),
                  .object_repr_type_inst_id = object_repr_type_inst_id});
 }
 
@@ -2461,7 +2463,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   return ResolveAs<SemIR::FacetAccessWitness>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
-                                             SemIR::WitnessType::InstId),
+                                             SemIR::WitnessType::TypeInstId),
                  .facet_value_inst_id = facet_value_inst_id,
                  .index = inst.index});
 }
@@ -2543,7 +2545,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::LookupImplWitness inst)
     -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
-               SemIR::WitnessType::InstId);
+               SemIR::WitnessType::TypeInstId);
 
   auto query_self_inst_id =
       GetLocalConstantInstId(resolver, inst.query_self_inst_id);
@@ -2564,7 +2566,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_specific_interfaces().Add(specific_interface);
   return ResolveAs<SemIR::LookupImplWitness>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
-                                             SemIR::WitnessType::InstId),
+                                             SemIR::WitnessType::TypeInstId),
                  .query_self_inst_id = query_self_inst_id,
                  .query_specific_interface_id = query_specific_interface_id});
 }
@@ -2572,7 +2574,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
-               SemIR::WitnessType::InstId);
+               SemIR::WitnessType::TypeInstId);
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   auto witness_table_id =
@@ -2585,7 +2587,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::ImplWitness>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
-                                             SemIR::WitnessType::InstId),
+                                             SemIR::WitnessType::TypeInstId),
                  .witness_table_id = witness_table_id,
                  .specific_id = specific_id});
 }
@@ -2676,8 +2678,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  auto namespace_type_id =
-      GetSingletonType(resolver.local_context(), SemIR::NamespaceType::InstId);
+  auto namespace_type_id = GetSingletonType(resolver.local_context(),
+                                            SemIR::NamespaceType::TypeInstId);
   auto namespace_decl =
       SemIR::Namespace{.type_id = namespace_type_id,
                        .name_scope_id = SemIR::NameScopeId::None,
@@ -2714,7 +2716,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::RequireCompleteType inst)
     -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
-               SemIR::WitnessType::InstId);
+               SemIR::WitnessType::TypeInstId);
 
   auto complete_type_inst_id =
       GetLocalTypeInstId(resolver, inst.complete_type_inst_id);
@@ -2724,7 +2726,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   return ResolveAs<SemIR::RequireCompleteType>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
-                                             SemIR::WitnessType::InstId),
+                                             SemIR::WitnessType::TypeInstId),
                  .complete_type_inst_id = complete_type_inst_id});
 }
 
@@ -2756,7 +2758,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   auto type_id = GetSingletonType(resolver.local_context(),
-                                  SemIR::SpecificFunctionType::InstId);
+                                  SemIR::SpecificFunctionType::TypeInstId);
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::SpecificImplFunction>(

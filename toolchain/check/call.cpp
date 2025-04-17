@@ -154,7 +154,7 @@ static auto BuildCalleeSpecificFunction(
         GetOrAddInst(context, context.insts().GetLocId(generic_callee_id),
                      SemIR::SpecificImplFunction{
                          .type_id = GetSingletonType(
-                             context, SemIR::SpecificFunctionType::InstId),
+                             context, SemIR::SpecificFunctionType::TypeInstId),
                          .callee_id = generic_callee_id,
                          .specific_id = callee_specific_id});
   } else {
@@ -164,7 +164,7 @@ static auto BuildCalleeSpecificFunction(
         GetOrAddInst(context, context.insts().GetLocId(generic_callee_id),
                      SemIR::SpecificFunction{
                          .type_id = GetSingletonType(
-                             context, SemIR::SpecificFunctionType::InstId),
+                             context, SemIR::SpecificFunctionType::TypeInstId),
                          .callee_id = generic_callee_id,
                          .specific_id = callee_specific_id});
   }

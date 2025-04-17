@@ -330,12 +330,13 @@ static auto FindWitnessInFacet(
     for (auto [index, interface] :
          llvm::enumerate(identified.required_interfaces())) {
       if (interface == specific_interface) {
-        auto witness_id = GetOrAddInst(
-            context, loc_id,
-            SemIR::FacetAccessWitness{.type_id = GetSingletonType(
-                                          context, SemIR::WitnessType::InstId),
-                                      .facet_value_inst_id = facet_inst_id,
-                                      .index = SemIR::ElementIndex(index)});
+        auto witness_id =
+            GetOrAddInst(context, loc_id,
+                         SemIR::FacetAccessWitness{
+                             .type_id = GetSingletonType(
+                                 context, SemIR::WitnessType::TypeInstId),
+                             .facet_value_inst_id = facet_inst_id,
+                             .index = SemIR::ElementIndex(index)});
         return witness_id;
       }
     }
@@ -356,7 +357,7 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   auto witness_const_id = EvalOrAddInst(
       context, loc_id.ToImplicit(),
       SemIR::LookupImplWitness{
-          .type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
           .query_self_inst_id =
               context.constant_values().GetInstId(query_self_const_id),
           .query_specific_interface_id =

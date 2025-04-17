@@ -126,9 +126,9 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
     // index so that we don't need an integer literal instruction here, and
     // remove this special case.
     auto index_id = block.template AddInst<SemIR::IntValue>(
-        loc_id,
-        {.type_id = GetSingletonType(context, SemIR::IntLiteralType::InstId),
-         .int_id = context.ints().Add(static_cast<int64_t>(i))});
+        loc_id, {.type_id = GetSingletonType(context,
+                                             SemIR::IntLiteralType::TypeInstId),
+                 .int_id = context.ints().Add(static_cast<int64_t>(i))});
     return AddInst<AccessInstT>(block, loc_id,
                                 {elem_type_id, aggregate_id, index_id});
   } else {
@@ -1422,7 +1422,7 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId value_id) -> SemIR::InstId {
   return ConvertToValueOfType(
       context, loc_id, value_id,
-      GetSingletonType(context, SemIR::BoolType::InstId));
+      GetSingletonType(context, SemIR::BoolType::TypeInstId));
 }
 
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,

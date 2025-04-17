@@ -89,7 +89,7 @@ auto CheckUnit::Run() -> void {
 auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      GetSingletonType(context_, SemIR::NamespaceType::InstId);
+      GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.

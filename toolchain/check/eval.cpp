@@ -827,7 +827,7 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
                               SemIR::IntKind int_kind, SemIR::InstId width_id,
                               Phase phase) -> SemIR::ConstantId {
   auto result = SemIR::IntType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::InstId),
+      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
       .int_kind = int_kind,
       .bit_width_id = width_id};
   if (!ValidateIntType(context, loc_id, result)) {
@@ -1441,7 +1441,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
-      return context.constant_values().Get(SemIR::IntLiteralType::InstId);
+      return context.constant_values().Get(SemIR::IntLiteralType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned: {
@@ -1462,11 +1462,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (!ValidateFloatBitWidth(context, loc_id, arg_ids[0])) {
         return SemIR::ErrorInst::ConstantId;
       }
-      return context.constant_values().Get(SemIR::LegacyFloatType::InstId);
+      return context.constant_values().Get(SemIR::LegacyFloatType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
-      return context.constant_values().Get(SemIR::BoolType::InstId);
+      return context.constant_values().Get(SemIR::BoolType::TypeInstId);
     }
 
     // Integer conversions.
@@ -1910,7 +1910,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
         if (rhs != SemIR::ErrorInst::ConstantId &&
             IsPeriodSelf(eval_context, lhs)) {
           auto rhs_inst_id = eval_context.constant_values().GetInstId(rhs);
-          if (rhs_inst_id == SemIR::TypeType::InstId) {
+          if (rhs_inst_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
           } else {
             auto facet_type =

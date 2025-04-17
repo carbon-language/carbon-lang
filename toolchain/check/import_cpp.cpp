@@ -173,7 +173,8 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
   }
 
   return AddImportNamespaceToScope(
-             context, GetSingletonType(context, SemIR::NamespaceType::InstId),
+             context,
+             GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
              SemIR::NameId::ForPackageName(cpp_package_id),
              SemIR::NameScopeId::Package,
              /*diagnose_duplicate_namespace=*/false,
@@ -427,8 +428,8 @@ static auto ImportNamespaceDecl(Context& context,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
   auto result = AddImportNamespace(
-      context, GetSingletonType(context, SemIR::NamespaceType::InstId), name_id,
-      parent_scope_id, /*import_id=*/SemIR::InstId::None);
+      context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
+      name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_cpp_decl_context(clang_decl);
