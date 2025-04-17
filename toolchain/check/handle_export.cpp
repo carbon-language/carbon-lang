@@ -18,12 +18,12 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
     -> bool {
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Export>();
-  // TODO: Probably need to update DeclNameStack to restrict to only namespaces.
-  context.decl_name_stack().PushScopeAndStartName();
   // Export declarations can't be generic, but we might have parsed a generic
   // parameter in their name, so enter a generic scope just in case.
   StartGenericDecl(context);
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Export>();
+  // TODO: Probably need to update DeclNameStack to restrict to only namespaces.
+  context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 

@@ -30,6 +30,8 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
     -> bool {
+  // This class is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // class signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -38,8 +40,6 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Class>();
   context.decl_name_stack().PushScopeAndStartName();
-  // This class is potentially generic.
-  StartGenericDecl(context);
   return true;
 }
 

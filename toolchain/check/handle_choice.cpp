@@ -23,18 +23,18 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ChoiceIntroducerId node_id)
     -> bool {
+  // This choice is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // choice signature, such as generic parameters.
   context.inst_block_stack().Push();
+  // There's no modifiers on a choice, but this informs how to typecheck any
+  // generic binding pattern.
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // The choice's name follows.
   context.decl_name_stack().PushScopeAndStartName();
-  // There's no modifiers on a choice, but this informs how to typecheck any
-  // generic binding pattern.
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
-  // This choice is potentially generic.
-  StartGenericDefinition(context);
   return true;
 }
 

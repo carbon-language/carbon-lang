@@ -16,11 +16,12 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
     -> bool {
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
-  context.decl_name_stack().PushScopeAndStartName();
   // Aliases can't be generic, but we might have parsed a generic parameter in
   // their name, so enter a generic scope just in case.
   StartGenericDecl(context);
+  // Optional modifiers and the name follow.
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
+  context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 

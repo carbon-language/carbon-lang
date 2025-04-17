@@ -25,6 +25,9 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
     -> bool {
+  // This might be a generic impl.
+  StartGenericDecl(context);
+
   // Create an instruction block to hold the instructions created for the type
   // and interface.
   context.inst_block_stack().Push();
@@ -39,9 +42,6 @@ auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
   // consistent to imagine that it does. This also gives us a scope for implicit
   // parameters.
   context.decl_name_stack().PushScopeAndStartName();
-
-  // This might be a generic impl.
-  StartGenericDecl(context);
   return true;
 }
 

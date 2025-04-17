@@ -20,12 +20,12 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
     -> bool {
-  // Optional modifiers and the name follow.
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Namespace>();
-  context.decl_name_stack().PushScopeAndStartName();
   // Namespaces can't be generic, but we might have parsed a generic parameter
   // in their name, so enter a generic scope just in case.
   StartGenericDecl(context);
+  // Optional modifiers and the name follow.
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Namespace>();
+  context.decl_name_stack().PushScopeAndStartName();
   return true;
 }
 
