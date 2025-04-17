@@ -1973,8 +1973,15 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0.37e: type = impl_witness_access %T.as_wit.iface0, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem1, @F(%J.facet.869) [symbolic]
 // CHECK:STDOUT:   %require_complete.8bd: <witness> = require_complete_type %impl.elem0.37e [symbolic]
+// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert.1, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.ca0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.820: type = facet_type <@ImplicitAs, @ImplicitAs(%impl.elem0.37e)> [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.cb0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%impl.elem0.37e) [symbolic]
+// CHECK:STDOUT:   %assoc0.37d: %ImplicitAs.assoc_type.cb0 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
 // CHECK:STDOUT:   %require_complete.1ce: <witness> = require_complete_type %ImplicitAs.type.820 [symbolic]
+// CHECK:STDOUT:   %assoc0.dc0: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1984,6 +1991,8 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//prelude/operators/as, loc13_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude/operators/as, loc13_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -2090,8 +2099,10 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0.1: type = impl_witness_access %T.as_wit.iface0.loc26_11.2, element0 [symbolic = %impl.elem0.1 (constants.%impl.elem0.37e)]
 // CHECK:STDOUT:   %specific_impl_fn.loc26_11.2: <specific function> = specific_impl_function %impl.elem1.loc26_11.2, @F(%J.facet) [symbolic = %specific_impl_fn.loc26_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:   %require_complete.loc26_15: <witness> = require_complete_type %impl.elem0.1 [symbolic = %require_complete.loc26_15 (constants.%require_complete.8bd)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%impl.elem0.1)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.820)]
-// CHECK:STDOUT:   %require_complete.loc26_14: <witness> = require_complete_type %ImplicitAs.type [symbolic = %require_complete.loc26_14 (constants.%require_complete.1ce)]
+// CHECK:STDOUT:   %ImplicitAs.type.loc26_14.2: type = facet_type <@ImplicitAs, @ImplicitAs(%impl.elem0.1)> [symbolic = %ImplicitAs.type.loc26_14.2 (constants.%ImplicitAs.type.820)]
+// CHECK:STDOUT:   %require_complete.loc26_14: <witness> = require_complete_type %ImplicitAs.type.loc26_14.2 [symbolic = %require_complete.loc26_14 (constants.%require_complete.1ce)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%impl.elem0.1) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.cb0)]
+// CHECK:STDOUT:   %assoc0: @GenericCallFI32.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.cb0) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.37d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc8_20.1: %J_where.type](%t.param_patt: @GenericCallFI32.%T.as_type.loc8_45.2 (%T.as_type)) -> %i32 {
 // CHECK:STDOUT:   !entry:
@@ -2103,7 +2114,10 @@ fn F() {
 // CHECK:STDOUT:     %impl.elem1.loc26_11.1: @GenericCallFI32.%.loc26_11.2 (%.861) = impl_witness_access %T.as_wit.iface0.loc26_11.1, element1 [symbolic = %impl.elem1.loc26_11.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %specific_impl_fn.loc26_11.1: <specific function> = specific_impl_function %impl.elem1.loc26_11.1, @F(constants.%J.facet.869) [symbolic = %specific_impl_fn.loc26_11.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     %.loc26_14: @GenericCallFI32.%impl.elem0.1 (%impl.elem0.37e) = converted %int_2, <error> [concrete = <error>]
+// CHECK:STDOUT:     %ImplicitAs.type.loc26_14.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%impl.elem0.37e)> [symbolic = %ImplicitAs.type.loc26_14.2 (constants.%ImplicitAs.type.820)]
+// CHECK:STDOUT:     %.loc26_14.1: @GenericCallFI32.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.cb0) = specific_constant imports.%Core.import_ref.492, @ImplicitAs(constants.%impl.elem0.37e) [symbolic = %assoc0 (constants.%assoc0.37d)]
+// CHECK:STDOUT:     %Convert.ref: @GenericCallFI32.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.cb0) = name_ref Convert, %.loc26_14.1 [symbolic = %assoc0 (constants.%assoc0.37d)]
+// CHECK:STDOUT:     %.loc26_14.2: @GenericCallFI32.%impl.elem0.1 (%impl.elem0.37e) = converted %int_2, <error> [concrete = <error>]
 // CHECK:STDOUT:     %.loc26_15: init @GenericCallFI32.%impl.elem0.1 (%impl.elem0.37e) = call %specific_impl_fn.loc26_11.1(<error>) [concrete = <error>]
 // CHECK:STDOUT:     %.loc26_16: %i32 = converted %.loc26_15, <error> [concrete = <error>]
 // CHECK:STDOUT:     return <error>
