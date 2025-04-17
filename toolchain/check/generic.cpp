@@ -721,9 +721,8 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
       // The generic is not defined yet.
       return false;
     }
-    auto definition_block_id =
-        TryEvalBlockForSpecific(context, loc_id, specific_id,
-                                SemIR::GenericInstIndex::Definition);
+    auto definition_block_id = TryEvalBlockForSpecific(
+        context, loc_id, specific_id, SemIR::GenericInstIndex::Definition);
     // Note that TryEvalBlockForSpecific may reallocate the list of specifics,
     // so re-lookup the specific here.
     context.specifics().Get(specific_id).definition_block_id =
