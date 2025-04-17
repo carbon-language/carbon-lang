@@ -68,7 +68,8 @@ fn F() {
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness file.%Animal.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table [concrete]
 // CHECK:STDOUT:   %e: %Eats.type = bind_symbolic_name e, 0 [symbolic]
 // CHECK:STDOUT:   %e.patt: %Eats.type = symbolic_binding_pattern e, 0 [symbolic]
 // CHECK:STDOUT:   %Feed.type: type = fn_type @Feed [concrete]
@@ -76,8 +77,8 @@ fn F() {
 // CHECK:STDOUT:   %Feed: %Feed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%impl_witness) [concrete]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Goat, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Goat, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed, @Feed(%Eats.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,12 +105,14 @@ fn F() {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc8: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @impl.27e [concrete]
+// CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.b88 [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc9: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @impl.b88 [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %e.patt.loc11_9.1: %Eats.type = symbolic_binding_pattern e, 0 [symbolic = %e.patt.loc11_9.2 (constants.%e.patt)]
 // CHECK:STDOUT:   } {
@@ -137,12 +140,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.27e: %Goat.ref as %Animal.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness.loc8
+// CHECK:STDOUT:   witness = file.%Animal.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.b88: %Goat.ref as %Eats.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness.loc9
+// CHECK:STDOUT:   witness = file.%Eats.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
@@ -171,11 +174,11 @@ fn F() {
 // CHECK:STDOUT:   %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc14_14: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc14_14 [concrete = constants.%Goat]
 // CHECK:STDOUT:   %.loc14_25: type = converted %.loc14_14, %as_type [concrete = constants.%Goat]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Goat, (constants.%impl_witness) [concrete = constants.%Eats.facet]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Goat, (constants.%Eats.impl_witness) [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %.loc14_32: %Eats.type = converted %.loc14_25, %Eats.facet [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed.ref, @Feed(constants.%Eats.facet) [concrete = constants.%Feed.specific_fn]
 // CHECK:STDOUT:   %Feed.call: init %empty_tuple.type = call %Feed.specific_fn()
@@ -209,18 +212,18 @@ fn F() {
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %Bleet.type: type = fn_type @Bleet [concrete]
 // CHECK:STDOUT:   %Bleet: %Bleet.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.1bc: <witness> = impl_witness () [concrete]
-// CHECK:STDOUT:   %impl_witness.9a5: <witness> = impl_witness (@impl.626.%Eat.decl) [concrete]
+// CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness @Goat.%Animal.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness @Goat.%Eats.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Eat.type.1b3: type = fn_type @Eat.2 [concrete]
 // CHECK:STDOUT:   %Eat.73e: %Eat.type.1b3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Goat, (%impl_witness.9a5) [concrete]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Goat, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%impl_witness.1bc) [concrete]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
 // CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
-// CHECK:STDOUT:   %.aa8: type = fn_type_with_self_type %Eat.type.e5d, %Eats.facet [concrete]
+// CHECK:STDOUT:   %.f6e: type = fn_type_with_self_type %Eat.type.e5d, %Eats.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -265,7 +268,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.32f: %Self.ref as %Animal.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = @Goat.%impl_witness.loc12
+// CHECK:STDOUT:   witness = @Goat.%Animal.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.626: %Self.ref as %Eats.ref {
@@ -273,7 +276,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Eat = %Eat.decl
-// CHECK:STDOUT:   witness = @Goat.%impl_witness.loc13
+// CHECK:STDOUT:   witness = @Goat.%Eats.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
@@ -282,12 +285,14 @@ fn F() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Goat [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness () [concrete = constants.%impl_witness.1bc]
+// CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @impl.32f [concrete]
+// CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.626 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Goat [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc13: <witness> = impl_witness (@impl.626.%Eat.decl) [concrete = constants.%impl_witness.9a5]
+// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (@impl.626.%Eat.decl), @impl.626 [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -329,7 +334,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_15.1: type = splice_block %.loc22_15.3 [concrete = constants.%Goat] {
 // CHECK:STDOUT:     %Goat.ref.loc22_10: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref.loc22: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:     %Animal.facet.loc22: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness.1bc) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:     %Animal.facet.loc22: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:     %.loc22_15.2: %Animal.type = converted %Goat.ref.loc22_10, %Animal.facet.loc22 [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:     %as_type.loc22: type = facet_access_type %.loc22_15.2 [concrete = constants.%Goat]
 // CHECK:STDOUT:     %.loc22_15.3: type = converted %.loc22_15.2, %as_type.loc22 [concrete = constants.%Goat]
@@ -340,7 +345,7 @@ fn F() {
 // CHECK:STDOUT:   %Bleet.call.loc23: init %empty_tuple.type = call %Bleet.ref.loc23()
 // CHECK:STDOUT:   %x.ref.loc24: ref %Goat = name_ref x, %x
 // CHECK:STDOUT:   %Eat.ref.loc24: %Eats.assoc_type = name_ref Eat, @Eats.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc24: %.aa8 = impl_witness_access constants.%impl_witness.9a5, element0 [concrete = constants.%Eat.73e]
+// CHECK:STDOUT:   %impl.elem0.loc24: %.f6e = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Eat.73e]
 // CHECK:STDOUT:   %Eat.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %.loc26_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Goat.ref.loc26_11: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
@@ -350,7 +355,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc26_8: ref %Goat = converted %.loc26_6.1, %.loc26_6.4
 // CHECK:STDOUT:   %Goat.ref.loc26_21: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.ref.loc26: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Animal.facet.loc26: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness.1bc) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet.loc26: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc26_26: %Animal.type = converted %Goat.ref.loc26_21, %Animal.facet.loc26 [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %as_type.loc26: type = facet_access_type %.loc26_26 [concrete = constants.%Goat]
 // CHECK:STDOUT:   %.loc26_35: type = converted %.loc26_26, %as_type.loc26 [concrete = constants.%Goat]
@@ -364,12 +369,12 @@ fn F() {
 // CHECK:STDOUT:   %.loc27_8: ref %Goat = converted %.loc27_6.1, %.loc27_6.4
 // CHECK:STDOUT:   %Goat.ref.loc27_21: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.ref.loc27: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Animal.facet.loc27: %Animal.type = facet_value constants.%Goat, (constants.%impl_witness.1bc) [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %Animal.facet.loc27: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %.loc27_26: %Animal.type = converted %Goat.ref.loc27_21, %Animal.facet.loc27 [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %as_type.loc27: type = facet_access_type %.loc27_26 [concrete = constants.%Goat]
 // CHECK:STDOUT:   %.loc27_35: type = converted %.loc27_26, %as_type.loc27 [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Eat.ref.loc27: %Eats.assoc_type = name_ref Eat, @Eats.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc27: %.aa8 = impl_witness_access constants.%impl_witness.9a5, element0 [concrete = constants.%Eat.73e]
+// CHECK:STDOUT:   %impl.elem0.loc27: %.f6e = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Eat.73e]
 // CHECK:STDOUT:   %Eat.call.loc27: init %empty_tuple.type = call %impl.elem0.loc27()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

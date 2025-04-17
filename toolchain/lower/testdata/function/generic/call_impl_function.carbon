@@ -59,7 +59,7 @@ fn G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %out.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %out.var), !dbg !10
-// CHECK:STDOUT:   %CallGenericMethod.call = call i32 @_CCallGenericMethod.Main.2b28d1a7fa793cbc(i32 10), !dbg !11
+// CHECK:STDOUT:   %CallGenericMethod.call = call i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 10), !dbg !11
 // CHECK:STDOUT:   store i32 %CallGenericMethod.call, ptr %out.var, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc40 = load i32, ptr %out.var, align 4, !dbg !12
 // CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 %.loc40), !dbg !13
@@ -69,7 +69,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CCallGenericMethod.Main.2b28d1a7fa793cbc(i32 %x) !dbg !15 {
+// CHECK:STDOUT: define i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 %x) !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc35_15 = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x), !dbg !16
 // CHECK:STDOUT:   ret i32 %.loc35_15, !dbg !17
@@ -97,6 +97,6 @@ fn G() {
 // CHECK:STDOUT: !12 = !DILocation(line: 40, column: 14, scope: !9)
 // CHECK:STDOUT: !13 = !DILocation(line: 40, column: 3, scope: !9)
 // CHECK:STDOUT: !14 = !DILocation(line: 38, column: 1, scope: !9)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "CallGenericMethod", linkageName: "_CCallGenericMethod.Main.2b28d1a7fa793cbc", scope: null, file: !3, line: 34, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "CallGenericMethod", linkageName: "_CCallGenericMethod.Main.b330a91dfda257ee", scope: null, file: !3, line: 34, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 35, column: 10, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 35, column: 3, scope: !15)

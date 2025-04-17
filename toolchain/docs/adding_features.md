@@ -282,12 +282,12 @@ If the resulting SemIR needs a new instruction:
 
         -   Set `.is_type = InstIsType::Always` in its `Kind` definition.
         -   When constructing instructions of this kind, pass
-            `SemIR::TypeType::SingletonTypeId` in as the value of the `type_id`
-            field, as in:
+            `SemIR::TypeType::TypeId` in as the value of the `type_id` field, as
+            in:
 
             ```
             SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(context,
-                node_id, {.type_id = SemIR::TypeType::SingletonTypeId, ...});
+                node_id, {.type_id = SemIR::TypeType::TypeId, ...});
             ```
 
     -   Although most instructions have distinct types represented by
@@ -299,11 +299,11 @@ If the resulting SemIR needs a new instruction:
         constructed as a special-case in
         [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
         one of these builtin types, use something like
-        `GetSingletonType(context,SemIR::WitnessType::SingletonInstId)`, as in:
+        `GetSingletonType(context,SemIR::WitnessType::InstId)`, as in:
 
         ```
         SemIR::TypeId witness_type_id =
-            GetSingletonType(context, SemIR::WitnessType::SingletonInstId);
+            GetSingletonType(context, SemIR::WitnessType::InstId);
         SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(
             context, node_id, {.type_id = witness_type_id, ...});
         ```

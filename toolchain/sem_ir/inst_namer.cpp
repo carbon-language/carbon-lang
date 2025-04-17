@@ -462,6 +462,24 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       out << suffix;
       add_inst_name(out.TakeStr());
     };
+    auto add_witness_table_name = [&](InstId witness_table_inst_id,
+                                      std::string name) {
+      auto witness_table = sem_ir_->insts().GetAs<SemIR::ImplWitnessTable>(
+          witness_table_inst_id);
+      if (!witness_table.impl_id.has_value()) {
+        // TODO: The witness comes from a facet value. Can we get the
+        // interface names from it? Store the facet value instruction in the
+        // table?
+        add_inst_name(name);
+        return;
+      }
+      const auto& impl = sem_ir_->impls().Get(witness_table.impl_id);
+      auto name_id =
+          sem_ir_->interfaces().Get(impl.interface.interface_id).name_id;
+
+      std::string suffix = llvm::formatv(".{}", name);
+      add_inst_name_id(name_id, suffix);
+    };
     auto facet_access_name_id = [&](InstId facet_value_inst_id) -> NameId {
       if (auto name = sem_ir_->insts().TryGetAs<NameRef>(facet_value_inst_id)) {
         return name->name_id;
@@ -688,10 +706,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             ".lookup_impl_witness");
         continue;
       }
-      case ImplWitness::Kind: {
-        // TODO: Include name of interface (is this available from the
-        // specific?).
-        add_inst_name("impl_witness");
+      case CARBON_KIND(ImplWitness inst): {
+        add_witness_table_name(inst.witness_table_id, "impl_witness");
         continue;
       }
       case CARBON_KIND(ImplWitnessAccess inst): {
@@ -703,6 +719,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case ImplWitnessAssociatedConstant::Kind: {
         add_inst_name("impl_witness_assoc_constant");
+        continue;
+      }
+      case ImplWitnessTable::Kind: {
+        add_witness_table_name(inst_id, "impl_witness_table");
         continue;
       }
       case ImportCppDecl::Kind: {
@@ -909,7 +929,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(TupleType inst): {
-        if (inst.elements_id == InstBlockId::Empty) {
+        if (inst.type_elements_id == InstBlockId::Empty) {
           add_inst_name("empty_tuple.type");
         } else {
           add_inst_name("tuple.type");

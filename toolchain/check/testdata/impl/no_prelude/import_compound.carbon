@@ -209,10 +209,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstance.assoc_type: type = assoc_entity_type @NonInstance [concrete]
 // CHECK:STDOUT:   %assoc0.525: %NonInstance.assoc_type = assoc_entity element0, @NonInstance.%F.decl [concrete]
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete]
-// CHECK:STDOUT:   %impl_witness.e97: <witness> = impl_witness (@impl.c58.%F.decl) [concrete]
+// CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness file.%NonInstance.impl_witness_table [concrete]
 // CHECK:STDOUT:   %F.type.042: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.db4: %F.type.042 = struct_value () [concrete]
-// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%impl_witness.e97) [concrete]
+// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%NonInstance.impl_witness) [concrete]
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
 // CHECK:STDOUT:   %Self.cf8: %Instance.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.cf8 [symbolic]
@@ -220,10 +220,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %G.449: %G.type.1e1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance.assoc_type: type = assoc_entity_type @Instance [concrete]
 // CHECK:STDOUT:   %assoc0.ab8: %Instance.assoc_type = assoc_entity element0, @Instance.%G.decl [concrete]
-// CHECK:STDOUT:   %impl_witness.114: <witness> = impl_witness (@impl.477.%G.decl) [concrete]
+// CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness file.%Instance.impl_witness_table [concrete]
 // CHECK:STDOUT:   %G.type.0c0: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.484: %G.type.0c0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, (%impl_witness.114) [concrete]
+// CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, (%Instance.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -238,7 +238,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:     %NonInstance.ref: type = name_ref NonInstance, file.%NonInstance.decl [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc7: <witness> = impl_witness (@impl.c58.%F.decl) [concrete = constants.%impl_witness.e97]
+// CHECK:STDOUT:   %NonInstance.impl_witness_table = impl_witness_table (@impl.c58.%F.decl), @impl.c58 [concrete]
+// CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness %NonInstance.impl_witness_table [concrete = constants.%NonInstance.impl_witness]
 // CHECK:STDOUT:   %Instance.decl: type = interface_decl @Instance [concrete = constants.%Instance.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl.477 [concrete] {} {
 // CHECK:STDOUT:     %.loc15_12.1: %empty_tuple.type = tuple_literal ()
@@ -246,7 +247,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:     %Instance.ref: type = name_ref Instance, file.%Instance.decl [concrete = constants.%Instance.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.477.%G.decl) [concrete = constants.%impl_witness.114]
+// CHECK:STDOUT:   %Instance.impl_witness_table = impl_witness_table (@impl.477.%G.decl), @impl.477 [concrete]
+// CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness %Instance.impl_witness_table [concrete = constants.%Instance.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance {
@@ -287,7 +289,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc7
+// CHECK:STDOUT:   witness = file.%NonInstance.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.477: %struct_type.i as %Instance.ref {
@@ -302,7 +304,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc15
+// CHECK:STDOUT:   witness = file.%Instance.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@NonInstance.%Self: %NonInstance.type) {
@@ -353,9 +355,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %assoc0: %NonInstance.assoc_type = assoc_entity element0, imports.%Main.import_ref.474 [concrete]
 // CHECK:STDOUT:   %F.type.9e5: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.2d7) [concrete]
-// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%impl_witness) [concrete]
-// CHECK:STDOUT:   %.1bc: type = fn_type_with_self_type %F.type.9e5, %NonInstance.facet [concrete]
+// CHECK:STDOUT:   %NonInstance.impl_witness_table = impl_witness_table (imports.%Main.import_ref.2d7), @impl.c58 [concrete]
+// CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness %NonInstance.impl_witness_table [concrete]
+// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%NonInstance.impl_witness) [concrete]
+// CHECK:STDOUT:   %.923: type = fn_type_with_self_type %F.type.9e5, %NonInstance.facet [concrete]
 // CHECK:STDOUT:   %F.type.042: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.db4: %F.type.042 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -367,13 +370,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.import_ref.e3c: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f85: %NonInstance.type = import_ref Main//lib, inst17 [no loc], loaded [symbolic = constants.%Self.73c]
-// CHECK:STDOUT:   %Main.import_ref.826: <witness> = import_ref Main//lib, loc7_30, loaded [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Main.import_ref.a26: <witness> = import_ref Main//lib, loc7_30, loaded [concrete = constants.%NonInstance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.1: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst42 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f09 = import_ref Main//lib, loc12_21, unloaded
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
-// CHECK:STDOUT:   %Main.import_ref.ab2 = import_ref Main//lib, loc15_27, unloaded
+// CHECK:STDOUT:   %Main.import_ref.a9f = import_ref Main//lib, loc15_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.2: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
 // CHECK:STDOUT: }
@@ -404,12 +407,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.c58: imports.%Main.import_ref.c9a3b6.1 as imports.%Main.import_ref.ef5 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.826
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.a26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.477: imports.%Main.import_ref.c9a3b6.2 as imports.%Main.import_ref.b49 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.ab2
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.a9f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallImport() {
@@ -419,10 +422,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %NonInstance.ref: type = name_ref NonInstance, imports.%Main.NonInstance [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.e3c [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value constants.%struct_type.i, (constants.%impl_witness) [concrete = constants.%NonInstance.facet]
+// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value constants.%struct_type.i, (constants.%NonInstance.impl_witness) [concrete = constants.%NonInstance.facet]
 // CHECK:STDOUT:   %.loc6_11: %NonInstance.type = converted %struct_type.i, %NonInstance.facet [concrete = constants.%NonInstance.facet]
-// CHECK:STDOUT:   %as_wit.iface0: <witness> = facet_access_witness %.loc6_11, element0 [concrete = constants.%impl_witness]
-// CHECK:STDOUT:   %impl.elem0: %.1bc = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%F.db4]
+// CHECK:STDOUT:   %as_wit.iface0: <witness> = facet_access_witness %.loc6_11, element0 [concrete = constants.%NonInstance.impl_witness]
+// CHECK:STDOUT:   %impl.elem0: %.923 = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%F.db4]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -483,13 +486,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst26 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %Main.import_ref.112 = import_ref Main//lib, loc7_30, unloaded
+// CHECK:STDOUT:   %Main.import_ref.eb8 = import_ref Main//lib, loc7_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.1: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst42 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f09 = import_ref Main//lib, loc12_21, unloaded
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
-// CHECK:STDOUT:   %Main.import_ref.ab2 = import_ref Main//lib, loc15_27, unloaded
+// CHECK:STDOUT:   %Main.import_ref.a9f = import_ref Main//lib, loc15_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.2: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
 // CHECK:STDOUT: }
@@ -553,12 +556,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.c58: imports.%Main.import_ref.c9a3b6.1 as imports.%Main.import_ref.ef5 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.112
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.eb8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.477: imports.%Main.import_ref.c9a3b6.2 as imports.%Main.import_ref.b49 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.ab2
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.a9f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallImportFail(%n.param_patt: %struct_type.i) {
@@ -663,13 +666,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc3_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
 // CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//default, inst26 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//default, loc4_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %Main.import_ref.112 = import_ref Main//lib, loc7_30, unloaded
+// CHECK:STDOUT:   %Main.import_ref.eb8 = import_ref Main//lib, loc7_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.1: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst42 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f09 = import_ref Main//lib, loc12_21, unloaded
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
-// CHECK:STDOUT:   %Main.import_ref.ab2 = import_ref Main//lib, loc15_27, unloaded
+// CHECK:STDOUT:   %Main.import_ref.a9f = import_ref Main//lib, loc15_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.2: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
 // CHECK:STDOUT: }
@@ -734,12 +737,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.c58: imports.%Main.import_ref.c9a3b6.1 as imports.%Main.import_ref.ef5 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.112
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.eb8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.477: imports.%Main.import_ref.c9a3b6.2 as imports.%Main.import_ref.b49 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.ab2
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.a9f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallIndirectImport(%p.param_patt: %ptr) {
@@ -810,9 +813,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %G.type.1e1: type = fn_type @G.1 [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.cf8 [symbolic]
 // CHECK:STDOUT:   %NonInstance.type: type = facet_type <@NonInstance> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Main.import_ref.373) [concrete]
-// CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, (%impl_witness) [concrete]
-// CHECK:STDOUT:   %.59b: type = fn_type_with_self_type %G.type.1e1, %Instance.facet [concrete]
+// CHECK:STDOUT:   %Instance.impl_witness_table = impl_witness_table (imports.%Main.import_ref.373), @impl.477 [concrete]
+// CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness %Instance.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, (%Instance.impl_witness) [concrete]
+// CHECK:STDOUT:   %.efa: type = fn_type_with_self_type %G.type.1e1, %Instance.facet [concrete]
 // CHECK:STDOUT:   %G.type.0c0: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.484: %G.type.0c0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %struct_type.i [concrete]
@@ -825,17 +829,17 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.NonInstance = import_ref Main//lib, NonInstance, unloaded
 // CHECK:STDOUT:   %Main.Instance: type = import_ref Main//lib, Instance, loaded [concrete = constants.%Instance.type]
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst42 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.124: %Instance.assoc_type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0d8: %Instance.type = import_ref Main//lib, inst41 [no loc], loaded [symbolic = constants.%Self.cf8]
+// CHECK:STDOUT:   %Main.import_ref.0d8: %Instance.type = import_ref Main//lib, inst42 [no loc], loaded [symbolic = constants.%Self.cf8]
 // CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.49c = import_ref Main//lib, loc4_9, unloaded
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.112 = import_ref Main//lib, loc7_30, unloaded
+// CHECK:STDOUT:   %Main.import_ref.eb8 = import_ref Main//lib, loc7_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.1: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
-// CHECK:STDOUT:   %Main.import_ref.97c: <witness> = import_ref Main//lib, loc15_27, loaded [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Main.import_ref.97f: <witness> = import_ref Main//lib, loc15_27, loaded [concrete = constants.%Instance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.2: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
 // CHECK:STDOUT: }
@@ -891,12 +895,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.c58: imports.%Main.import_ref.c9a3b6.1 as imports.%Main.import_ref.ef5 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.112
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.eb8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.477: imports.%Main.import_ref.c9a3b6.2 as imports.%Main.import_ref.b49 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.97c
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.97f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceCallImport(%n.param_patt: %struct_type.i) {
@@ -904,7 +908,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %n.ref: %struct_type.i = name_ref n, %n
 // CHECK:STDOUT:   %Instance.ref: type = name_ref Instance, imports.%Main.Instance [concrete = constants.%Instance.type]
 // CHECK:STDOUT:   %G.ref: %Instance.assoc_type = name_ref G, imports.%Main.import_ref.124 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.59b = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G.484]
+// CHECK:STDOUT:   %impl.elem0: %.efa = impl_witness_access constants.%Instance.impl_witness, element0 [concrete = constants.%G.484]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %bound_method(%n.ref)
 // CHECK:STDOUT:   return
@@ -925,7 +929,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.ref: type = name_ref Instance, imports.%Main.Instance [concrete = constants.%Instance.type]
 // CHECK:STDOUT:   %G.ref: %Instance.assoc_type = name_ref G, imports.%Main.import_ref.124 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %.loc10_4.1: ref %struct_type.i = deref %p.ref
-// CHECK:STDOUT:   %impl.elem0: %.59b = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%G.484]
+// CHECK:STDOUT:   %impl.elem0: %.efa = impl_witness_access constants.%Instance.impl_witness, element0 [concrete = constants.%G.484]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_4.1, %impl.elem0
 // CHECK:STDOUT:   %.loc10_4.2: ref %empty_tuple.type = struct_access %.loc10_4.1, element0
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
@@ -962,17 +966,17 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.dcd = import_ref Main//lib, inst42 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.124: %Instance.assoc_type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0d8: %Instance.type = import_ref Main//lib, inst41 [no loc], loaded [symbolic = constants.%Self.cf8]
+// CHECK:STDOUT:   %Main.import_ref.0d8: %Instance.type = import_ref Main//lib, inst42 [no loc], loaded [symbolic = constants.%Self.cf8]
 // CHECK:STDOUT:   %Main.import_ref.c55 = import_ref Main//lib, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.49c = import_ref Main//lib, loc4_9, unloaded
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.112 = import_ref Main//lib, loc7_30, unloaded
+// CHECK:STDOUT:   %Main.import_ref.eb8 = import_ref Main//lib, loc7_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.1: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
-// CHECK:STDOUT:   %Main.import_ref.ab2 = import_ref Main//lib, loc15_27, unloaded
+// CHECK:STDOUT:   %Main.import_ref.a9f = import_ref Main//lib, loc15_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a3b6.2: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
 // CHECK:STDOUT: }
@@ -1005,12 +1009,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.c58: imports.%Main.import_ref.c9a3b6.1 as imports.%Main.import_ref.ef5 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.112
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.eb8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.477: imports.%Main.import_ref.c9a3b6.2 as imports.%Main.import_ref.b49 [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.ab2
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.a9f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceCallImportFail() {

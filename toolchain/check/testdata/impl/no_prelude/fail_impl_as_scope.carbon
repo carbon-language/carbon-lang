@@ -219,19 +219,19 @@ class X {
 // CHECK:STDOUT:   %Method.84d: %Method.type.163 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.c94.%Zero.decl, @impl.c94.%Method.decl) [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @Point.%Z.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Zero.type.e33: type = fn_type @Zero.3 [concrete]
 // CHECK:STDOUT:   %Zero.dec: %Zero.type.e33 = struct_value () [concrete]
 // CHECK:STDOUT:   %Method.type.2ed: type = fn_type @Method.3 [concrete]
 // CHECK:STDOUT:   %Method.2c2: %Method.type.2ed = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%Z.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.071: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
+// CHECK:STDOUT:   %.d52: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.2c0: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
+// CHECK:STDOUT:   %.462: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -319,7 +319,7 @@ class X {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Zero = %Zero.decl
 // CHECK:STDOUT:   .Method = %Method.decl
-// CHECK:STDOUT:   witness = @Point.%impl_witness
+// CHECK:STDOUT:   witness = @Point.%Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Point {
@@ -327,7 +327,8 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.c94.%Zero.decl, @impl.c94.%Method.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (@impl.c94.%Zero.decl, @impl.c94.%Method.decl), @impl.c94 [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -385,10 +386,10 @@ class X {
 // CHECK:STDOUT:   %Point.ref.loc28: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
 // CHECK:STDOUT:   %Z.ref.loc28: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%Point, (constants.%impl_witness) [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%Point, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %.loc28: %Z.type = converted %Point.ref.loc28, %Z.facet [concrete = constants.%Z.facet]
-// CHECK:STDOUT:   %as_wit.iface0: <witness> = facet_access_witness %.loc28, element0 [concrete = constants.%impl_witness]
-// CHECK:STDOUT:   %impl.elem0: %.071 = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%Zero.dec]
+// CHECK:STDOUT:   %as_wit.iface0: <witness> = facet_access_witness %.loc28, element0 [concrete = constants.%Z.impl_witness]
+// CHECK:STDOUT:   %impl.elem0: %.d52 = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%Zero.dec]
 // CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   %.loc29_5.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Point.ref.loc29: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
@@ -398,7 +399,7 @@ class X {
 // CHECK:STDOUT:   %.loc29_7.1: ref %Point = converted %.loc29_5.1, %.loc29_5.4
 // CHECK:STDOUT:   %Z.ref.loc29: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   %Method.ref: %Z.assoc_type = name_ref Method, @Z.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %impl.elem1: %.2c0 = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%Method.2c2]
+// CHECK:STDOUT:   %impl.elem1: %.462 = impl_witness_access constants.%Z.impl_witness, element1 [concrete = constants.%Method.2c2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc29_7.1, %impl.elem1
 // CHECK:STDOUT:   %.loc29_7.2: %Point = bind_value %.loc29_7.1
 // CHECK:STDOUT:   %Method.call: init %empty_tuple.type = call %bound_method(%.loc29_7.2)
@@ -452,10 +453,10 @@ class X {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.3b4.%B.decl) [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @X.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %B.type.d47: type = fn_type @B.2 [concrete]
 // CHECK:STDOUT:   %B.4af: %B.type.d47 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%A.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -503,7 +504,7 @@ class X {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   .G = <poisoned>
-// CHECK:STDOUT:   witness = @X.%impl_witness
+// CHECK:STDOUT:   witness = @X.%A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.4cc: %Self.ref as %C.ref {
@@ -516,7 +517,8 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.3b4.%B.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (@impl.3b4.%B.decl), @impl.3b4 [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

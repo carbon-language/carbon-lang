@@ -50,23 +50,23 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Op.type.e3a: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %impl_witness.ec3: <witness> = impl_witness (@impl.c51.%Op.decl) [concrete]
+// CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness file.%Inc.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.73a: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.0c9: %Op.type.73a = struct_value () [concrete]
-// CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%impl_witness.ec3) [concrete]
+// CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
 // CHECK:STDOUT:   %AddAssign.type: type = facet_type <@AddAssign> [concrete]
 // CHECK:STDOUT:   %Op.type.421: type = fn_type @Op.3 [concrete]
-// CHECK:STDOUT:   %impl_witness.95d: <witness> = impl_witness (@impl.14c.%Op.decl) [concrete]
+// CHECK:STDOUT:   %AddAssign.impl_witness: <witness> = impl_witness file.%AddAssign.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Op.type.0b8: type = fn_type @Op.4 [concrete]
 // CHECK:STDOUT:   %Op.d8e: %Op.type.0b8 = struct_value () [concrete]
-// CHECK:STDOUT:   %AddAssign.facet: %AddAssign.type = facet_value %C, (%impl_witness.95d) [concrete]
+// CHECK:STDOUT:   %AddAssign.facet: %AddAssign.type = facet_value %C, (%AddAssign.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [concrete]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.295: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [concrete]
+// CHECK:STDOUT:   %.bc7: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.22d: type = fn_type_with_self_type %Op.type.421, %AddAssign.facet [concrete]
+// CHECK:STDOUT:   %.6d3: type = fn_type_with_self_type %Op.type.421, %AddAssign.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -94,13 +94,15 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%Core.Inc [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.c51.%Op.decl) [concrete = constants.%impl_witness.ec3]
+// CHECK:STDOUT:   %Inc.impl_witness_table = impl_witness_table (@impl.c51.%Op.decl), @impl.c51 [concrete]
+// CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness %Inc.impl_witness_table [concrete = constants.%Inc.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.14c [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %AddAssign.ref: type = name_ref AddAssign, imports.%Core.AddAssign [concrete = constants.%AddAssign.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness (@impl.14c.%Op.decl) [concrete = constants.%impl_witness.95d]
+// CHECK:STDOUT:   %AddAssign.impl_witness_table = impl_witness_table (@impl.14c.%Op.decl), @impl.14c [concrete]
+// CHECK:STDOUT:   %AddAssign.impl_witness: <witness> = impl_witness %AddAssign.impl_witness_table [concrete = constants.%AddAssign.impl_witness]
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [concrete = constants.%TestIncNonRef] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
@@ -141,7 +143,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc15
+// CHECK:STDOUT:   witness = file.%Inc.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.14c: %C.ref as %AddAssign.ref {
@@ -166,7 +168,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc18
+// CHECK:STDOUT:   witness = file.%AddAssign.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -185,7 +187,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %.295 = impl_witness_access constants.%impl_witness.ec3, element0 [concrete = constants.%Op.0c9]
+// CHECK:STDOUT:   %impl.elem0: %.bc7 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%Op.0c9]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc30: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc30
@@ -197,7 +199,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.22d = impl_witness_access constants.%impl_witness.95d, element0 [concrete = constants.%Op.d8e]
+// CHECK:STDOUT:   %impl.elem0: %.6d3 = impl_witness_access constants.%AddAssign.impl_witness, element0 [concrete = constants.%Op.d8e]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc41: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc41

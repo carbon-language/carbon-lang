@@ -1382,10 +1382,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls @A> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %D, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %D, (%A.impl_witness) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %E: %type_where = bind_symbolic_name E, 0 [symbolic]
@@ -1414,7 +1414,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %type_where = binding_pattern B
 // CHECK:STDOUT:   }
@@ -1426,7 +1427,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %A.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%D, (constants.%impl_witness) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%D, (constants.%A.impl_witness) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc8_35: %type_where = converted @__global_init.%D.ref, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %B: %type_where = bind_name B, %.loc8_35
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
@@ -1442,7 +1443,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %D.ref as %A.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -1468,7 +1469,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %A.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%D, (constants.%impl_witness) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%D, (constants.%A.impl_witness) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc11_38: %type_where = converted %D.ref, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %E: %type_where = bind_symbolic_name E, 0, %.loc11_38 [symbolic = constants.%E]
 // CHECK:STDOUT:   return
@@ -1488,10 +1489,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls @A> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %D, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %D, (%A.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1515,7 +1516,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %type_where = binding_pattern B
 // CHECK:STDOUT:   }
@@ -1527,7 +1529,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %A.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%D, (constants.%impl_witness) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%D, (constants.%A.impl_witness) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc12_36: %type_where = converted @__global_init.%D.ref, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %B: %type_where = bind_name B, %.loc12_36
 // CHECK:STDOUT: }
@@ -1542,7 +1544,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %D.ref as %A.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {

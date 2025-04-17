@@ -47,14 +47,25 @@ auto OperandIsDependent(Context& context, SemIR::InstId inst_id) -> bool {
          OperandIsDependent(context, context.constant_values().Get(inst_id));
 }
 
+auto OperandIsDependent(Context& context, SemIR::TypeInstId inst_id) -> bool {
+  // An instruction operand makes the instruction dependent if its type or
+  // constant value is dependent. TypeInstId has type `TypeType` which is
+  // concrete, so we only need to look at the constant value.
+  return OperandIsDependent(context, context.constant_values().Get(inst_id));
+}
+
 static auto OperandIsDependent(Context& context, SemIR::Inst::ArgAndKind arg)
     -> bool {
   CARBON_KIND_SWITCH(arg) {
+    case CARBON_KIND(SemIR::InstId inst_id): {
+      return OperandIsDependent(context, inst_id);
+    }
+
     case CARBON_KIND(SemIR::MetaInstId inst_id): {
       return OperandIsDependent(context, inst_id);
     }
 
-    case CARBON_KIND(SemIR::InstId inst_id): {
+    case CARBON_KIND(SemIR::TypeInstId inst_id): {
       return OperandIsDependent(context, inst_id);
     }
 
@@ -85,13 +96,13 @@ auto ActionIsDependent(Context& context, SemIR::Inst action_inst) -> bool {
 
 static auto AddDependentActionSpliceImpl(Context& context,
                                          SemIR::LocIdAndInst action,
-                                         SemIR::InstId result_type_inst_id)
+                                         SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId {
   auto inst_id = AddDependentActionInst(context, action);
   if (!result_type_inst_id.has_value()) {
-    result_type_inst_id = AddDependentActionInst(
+    result_type_inst_id = AddDependentActionTypeInst(
         context, action.loc_id,
-        SemIR::TypeOfInst{.type_id = SemIR::TypeType::SingletonTypeId,
+        SemIR::TypeOfInst{.type_id = SemIR::TypeType::TypeId,
                           .inst_id = inst_id});
   }
   return AddInst(
@@ -121,11 +132,11 @@ static auto RefineOperand(Context& context, SemIR::LocId loc_id,
       auto type_inst_id = context.types().GetInstId(inst.type_id());
       inst_id = AddDependentActionSpliceImpl(
           context,
-          SemIR::LocIdAndInst(loc_id,
-                              SemIR::RefineTypeAction{
-                                  .type_id = SemIR::InstType::SingletonTypeId,
-                                  .inst_id = *inst_id,
-                                  .inst_type_inst_id = type_inst_id}),
+          SemIR::LocIdAndInst(
+              loc_id,
+              SemIR::RefineTypeAction{.type_id = SemIR::InstType::TypeId,
+                                      .inst_id = *inst_id,
+                                      .inst_type_inst_id = type_inst_id}),
           type_inst_id);
     }
 
@@ -149,7 +160,7 @@ static auto RefineOperands(Context& context, SemIR::LocId loc_id,
 }
 
 auto AddDependentActionSplice(Context& context, SemIR::LocIdAndInst action,
-                              SemIR::InstId result_type_inst_id)
+                              SemIR::TypeInstId result_type_inst_id)
     -> SemIR::InstId {
   action.inst = RefineOperands(context, action.loc_id, action.inst);
   return AddDependentActionSpliceImpl(context, action, result_type_inst_id);

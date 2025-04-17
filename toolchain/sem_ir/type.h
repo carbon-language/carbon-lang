@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
@@ -62,6 +63,24 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Returns the instruction used to define the specified type.
   auto GetAsInst(TypeId type_id) const -> Inst;
+
+  // Converts an ArrayRef of `InstId`s to a range of `TypeInstId`s via
+  // GetAsTypeInstId().
+  auto GetBlockAsTypeInstIds(llvm::ArrayRef<InstId> array
+                             [[clang::lifetimebound]]) const -> auto {
+    return llvm::map_range(array, [&](SemIR::InstId type_inst_id) {
+      return GetAsTypeInstId(type_inst_id);
+    });
+  }
+
+  // Converts an ArrayRef of `InstId`s to a range of `TypeId`s via
+  // GetTypeIdForTypeInstId().
+  auto GetBlockAsTypeIds(llvm::ArrayRef<InstId> array
+                         [[clang::lifetimebound]]) const -> auto {
+    return llvm::map_range(array, [&](SemIR::InstId type_inst_id) {
+      return GetTypeIdForTypeInstId(type_inst_id);
+    });
+  }
 
   // Returns whether the specified kind of instruction was used to define the
   // type.
@@ -148,8 +167,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(SemIR::TypeId type_id) const -> bool {
-    return type_id == SemIR::TypeType::SingletonTypeId ||
-           Is<SemIR::FacetType>(type_id);
+    return type_id == SemIR::TypeType::TypeId || Is<SemIR::FacetType>(type_id);
   }
 
   // Returns a list of types that were completed in this file, in the order in

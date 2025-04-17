@@ -12,16 +12,16 @@
 namespace Carbon::Check {
 
 // Enforces that an integer type has a valid bit width.
-auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
-    -> bool;
+auto ValidateIntType(Context& context, SemIR::LocId loc_id,
+                     SemIR::IntType result) -> bool;
 
 // Enforces that the bit width is 64 for a float.
-auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
+auto ValidateFloatBitWidth(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId inst_id) -> bool;
 
 // Enforces that a float type has a valid bit width.
-auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
-    -> bool;
+auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
+                       SemIR::FloatType result) -> bool;
 
 // Gets the type to use for an unbound associated entity declared in this
 // interface. For example, this is the type of `I.T` after
@@ -35,7 +35,7 @@ auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
 
 // Gets a singleton type. The returned type will be complete. Requires that
 // `singleton_id` is already validated to be a singleton.
-auto GetSingletonType(Context& context, SemIR::InstId singleton_id)
+auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
     -> SemIR::TypeId;
 
 // Gets a class type.
@@ -49,7 +49,7 @@ auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
 // Gets the type of an associated function with the `Self` parameter bound to
 // a particular value. The returned type will be complete.
 auto GetFunctionTypeWithSelfType(Context& context,
-                                 SemIR::InstId interface_function_type_id,
+                                 SemIR::TypeInstId interface_function_type_id,
                                  SemIR::InstId self_id) -> SemIR::TypeId;
 
 // Gets a generic class type, which is the type of a name of a generic class,
@@ -71,7 +71,7 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 // Returns a pointer type whose pointee type is `pointee_type_id`.
-auto GetPointerType(Context& context, SemIR::InstId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId;
 
 // Returns a struct type with the given fields.

@@ -103,7 +103,7 @@ class C {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %i32 = bind_name x, <unexpected>.inst1066.loc27_14
+// CHECK:STDOUT:   %x: %i32 = bind_name x, <unexpected>.inst1083.loc27_14
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
 // CHECK:STDOUT:     %.loc37: %i32 = var_pattern %y.patt
@@ -123,11 +123,11 @@ class C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
-// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst1133.loc67_1
+// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst1150.loc67_1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = <unexpected>.inst1130.loc66_8
+// CHECK:STDOUT:   .n = <unexpected>.inst1147.loc66_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %i32);

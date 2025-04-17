@@ -28,7 +28,7 @@ auto DiscardGenericDecl(Context& context) -> void;
 auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId;
 
 // Builds eval block for the declaration.
-auto FinishGenericDecl(Context& context, SemIRLoc loc,
+auto FinishGenericDecl(Context& context, SemIR::LocId loc_id,
                        SemIR::GenericId generic_id) -> void;
 
 // BuildGeneric() and FinishGenericDecl() combined. Normally you would call this
@@ -55,31 +55,33 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 // Builds a new specific with a given argument list, or finds an existing one if
 // this generic has already been referenced with these arguments. Performs
 // substitution into the declaration, but not the definition, of the generic.
-auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
+auto MakeSpecific(Context& context, SemIR::LocId loc_id,
+                  SemIR::GenericId generic_id,
                   llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId;
 
 // Builds a new specific or finds an existing one in the case where the argument
 // list has already been converted into an instruction block. `args_id` should
 // be a canonical instruction block referring to constants.
-auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
-                  SemIR::InstBlockId args_id) -> SemIR::SpecificId;
+auto MakeSpecific(Context& context, SemIR::LocId loc_id,
+                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id)
+    -> SemIR::SpecificId;
 
 // Builds the specific that describes how the generic should refer to itself.
 // For example, for a generic `G(T:! type)`, this is the specific `G(T)`. If
 // `generic_id` is `None`, returns `None`.
-auto MakeSelfSpecific(Context& context, SemIRLoc loc,
+auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
                       SemIR::GenericId generic_id) -> SemIR::SpecificId;
 
 // Resolve the declaration of the given specific, by evaluating the eval block
 // of the corresponding generic and storing a corresponding value block in the
 // specific.
-auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
+auto ResolveSpecificDeclaration(Context& context, SemIR::LocId loc_id,
                                 SemIR::SpecificId specific_id) -> void;
 
 // Attempts to resolve the definition of the given specific, by evaluating the
 // eval block of the corresponding generic and storing a corresponding value
 // block in the specific. Returns false if a definition is not available.
-auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
+auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
                                SemIR::SpecificId specific_id) -> bool;
 
 // Diagnoses if an entity has implicit parameters, indicating it's generic, but

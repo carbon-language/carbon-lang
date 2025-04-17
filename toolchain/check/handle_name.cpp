@@ -286,8 +286,7 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
 auto HandleParseNode(Context& context, Parse::PackageExprId node_id) -> bool {
   AddInstAndPush<SemIR::NameRef>(
       context, node_id,
-      {.type_id =
-           GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
+      {.type_id = GetSingletonType(context, SemIR::NamespaceType::InstId),
        .name_id = SemIR::NameId::PackageNamespace,
        .value_id = SemIR::Namespace::PackageInstId});
   return true;

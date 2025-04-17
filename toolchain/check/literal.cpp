@@ -16,8 +16,7 @@ auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
     -> SemIR::InstId {
   return AddInst<SemIR::IntValue>(
       context, node_id,
-      {.type_id =
-           GetSingletonType(context, SemIR::IntLiteralType::SingletonInstId),
+      {.type_id = GetSingletonType(context, SemIR::IntLiteralType::InstId),
        .int_id = int_id});
 }
 

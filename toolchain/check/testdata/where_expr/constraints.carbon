@@ -590,7 +590,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %DoesNotImplI.type: type = fn_type @DoesNotImplI [concrete]
 // CHECK:STDOUT:   %DoesNotImplI: %DoesNotImplI.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [concrete]
@@ -637,7 +637,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [concrete = constants.%DoesNotImplI] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -657,7 +658,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %J.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -695,7 +696,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %J_where.type: type = facet_type <@J where TODO> [concrete]
 // CHECK:STDOUT:   %Y: %J_where.type = bind_symbolic_name Y, 0 [symbolic]
@@ -738,7 +739,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%Main.J [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:   %EmptyStruct.decl: %EmptyStruct.type = fn_decl @EmptyStruct [concrete = constants.%EmptyStruct] {
 // CHECK:STDOUT:     %Y.patt.loc9_16.1: %J_where.type = symbolic_binding_pattern Y, 0 [symbolic = %Y.patt.loc9_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:   } {
@@ -764,7 +766,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %J.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

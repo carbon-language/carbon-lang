@@ -28,13 +28,13 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %Self.1b5: %Eats.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self.fd4: %Animal.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.type, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -58,7 +58,8 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %Eats.type = binding_pattern e
 // CHECK:STDOUT:     %e.param_patt: %Eats.type = value_param_pattern %e.patt, call_param0
@@ -88,7 +89,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Animal.ref as %Eats.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%Eats.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%e.param_patt: %Eats.type) {
@@ -100,7 +101,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Animal.type, (constants.%impl_witness) [concrete = constants.%Eats.facet]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Animal.type, (constants.%Eats.impl_witness) [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %.loc22: %Eats.type = converted %Animal.ref, %Eats.facet [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc22)
 // CHECK:STDOUT:   return

@@ -182,7 +182,7 @@ static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
     context.TODO(loc_id,
                  "Control flow expressions are currently only supported inside "
                  "functions.");
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
   AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
                        {.target_id = region.block_ids.front()}));
@@ -291,8 +291,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           "Parameters out of order; expecting {0} but got {1}", results_.size(),
           param_pattern.index.index);
       CARBON_CHECK(entry.scrutinee_id.has_value());
-      if (entry.scrutinee_id == SemIR::ErrorInst::SingletonInstId) {
-        results_.push_back(SemIR::ErrorInst::SingletonInstId);
+      if (entry.scrutinee_id == SemIR::ErrorInst::InstId) {
+        results_.push_back(SemIR::ErrorInst::InstId);
       } else {
         results_.push_back(ConvertToValueOfType(
             context, context.insts().GetLocId(entry.scrutinee_id),
@@ -479,7 +479,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::TuplePattern tuple_pattern,
                                       SemIR::InstId pattern_inst_id,
                                       WorkItem entry) -> void {
-  if (tuple_pattern.type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (tuple_pattern.type_id == SemIR::ErrorInst::TypeId) {
     return;
   }
   auto subpattern_ids = context.inst_blocks().Get(tuple_pattern.elements_id);
@@ -528,24 +528,23 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   auto tuple_type =
       context.types().GetAs<SemIR::TupleType>(tuple_pattern.type_id);
   auto element_type_inst_ids =
-      context.inst_blocks().Get(tuple_type.elements_id);
+      context.inst_blocks().Get(tuple_type.type_elements_id);
   llvm::SmallVector<SemIR::InstId> subscrutinee_ids;
   subscrutinee_ids.reserve(element_type_inst_ids.size());
-  for (auto [i, element_type_inst_id] :
-       llvm::enumerate(element_type_inst_ids)) {
-    subscrutinee_ids.push_back(AddInst<SemIR::TupleAccess>(
-        context, scrutinee.loc_id,
-        {.type_id =
-             context.types().GetTypeIdForTypeInstId(element_type_inst_id),
-         .tuple_id = entry.scrutinee_id,
-         .index = SemIR::ElementIndex(i)}));
+  for (auto [i, element_type_id] : llvm::enumerate(
+           context.types().GetBlockAsTypeIds(element_type_inst_ids))) {
+    subscrutinee_ids.push_back(
+        AddInst<SemIR::TupleAccess>(context, scrutinee.loc_id,
+                                    {.type_id = element_type_id,
+                                     .tuple_id = entry.scrutinee_id,
+                                     .index = SemIR::ElementIndex(i)}));
   }
   add_all_subscrutinees(subscrutinee_ids);
 }
 
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
-  if (entry.pattern_id == SemIR::ErrorInst::SingletonInstId) {
+  if (entry.pattern_id == SemIR::ErrorInst::InstId) {
     return;
   }
   Diagnostics::AnnotationScope annotate_diagnostics(

@@ -100,7 +100,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
-    self_type_id = SemIR::ErrorInst::SingletonTypeId;
+    self_type_id = SemIR::ErrorInst::TypeId;
   }
 
   // Build the implicit access to the enclosing `Self`.
@@ -109,11 +109,11 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   // is a class and found its `Self`, so additionally performing an unqualified
   // name lookup would be redundant work, but would avoid duplicating the
   // handling of the `Self` expression.
-  auto self_inst_id = context.types().GetAsTypeInstId(AddInst(
+  auto self_inst_id = AddTypeInst(
       context, node_id,
-      SemIR::NameRef{.type_id = SemIR::TypeType::SingletonTypeId,
+      SemIR::NameRef{.type_id = SemIR::TypeType::TypeId,
                      .name_id = SemIR::NameId::SelfType,
-                     .value_id = context.types().GetInstId(self_type_id)}));
+                     .value_id = context.types().GetInstId(self_type_id)});
 
   // There's no need to push `Self` into scope here, because we can find it in
   // the parent class scope.
@@ -184,7 +184,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   }
 
   const auto& impl = context.impls().Get(impl_id);
-  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+  if (impl.witness_id == SemIR::ErrorInst::InstId) {
     parent_scope.set_has_error();
   } else {
     bool is_complete = RequireCompleteType(
@@ -227,8 +227,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
                  llvm::all_of(context.inst_blocks().Get(call_params_id),
                               [](SemIR::InstId inst_id) {
-                                return inst_id ==
-                                       SemIR::ErrorInst::SingletonInstId;
+                                return inst_id == SemIR::ErrorInst::InstId;
                               }));
   }
 
@@ -321,7 +320,7 @@ static auto CheckConstraintIsInterface(Context& context,
                                        SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface {
   auto facet_type_id = context.types().GetTypeIdForTypeInstId(constraint_id);
-  if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (facet_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::SpecificInterface::None;
   }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
@@ -415,7 +414,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       impl_info.witness_id =
           ImplWitnessForDeclaration(context, impl_info, is_definition);
     } else {
-      impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
+      impl_info.witness_id = SemIR::ErrorInst::InstId;
       // TODO: We might also want to mark that the name scope for the impl has
       // an error -- at least once we start making name lookups within the impl
       // also look into the facet (eg, so you can name associated constants from
@@ -425,6 +424,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
 
+    AssignImplIdInWitness(context, impl_decl.impl_id, impl_info.witness_id);
+
     // Looking to see if there are any generic bindings on the `impl`
     // declaration that are not deducible. If so, and the `impl` does not
     // actually use all its generic bindings, and will never be matched. This
@@ -433,14 +434,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     if (name.implicit_param_patterns_id.has_value()) {
       for (auto inst_id :
            context.inst_blocks().Get(name.implicit_param_patterns_id)) {
-        if (inst_id == SemIR::ErrorInst::SingletonInstId) {
+        if (inst_id == SemIR::ErrorInst::InstId) {
           has_error_in_implicit_pattern = true;
           break;
         }
       }
     }
     if (impl_info.generic_id.has_value() && !has_error_in_implicit_pattern &&
-        impl_info.witness_id != SemIR::ErrorInst::SingletonInstId) {
+        impl_info.witness_id != SemIR::ErrorInst::InstId) {
       context.inst_block_stack().Push();
       auto deduced_specific_id = DeduceImplArguments(
           context, node_id,
@@ -469,7 +470,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
         // diagnostics.
         FillImplWitnessWithErrors(context, impl_info);
         context.impls().Get(impl_decl.impl_id).witness_id =
-            SemIR::ErrorInst::SingletonInstId;
+            SemIR::ErrorInst::InstId;
       }
     }
   } else {
@@ -482,17 +483,16 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
+  if (self_type_id != SemIR::ErrorInst::TypeId &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
     if (impl_info.generic_id.has_value()) {
-      constraint_type_inst_id =
-          context.types().GetAsTypeInstId(AddInst<SemIR::SpecificConstant>(
-              context, context.insts().GetLocId(constraint_type_inst_id),
-              {.type_id = SemIR::TypeType::SingletonTypeId,
-               .inst_id = constraint_type_inst_id,
-               .specific_id =
-                   context.generics().GetSelfSpecific(impl_info.generic_id)}));
+      constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
+          context, context.insts().GetLocId(constraint_type_inst_id),
+          {.type_id = SemIR::TypeType::TypeId,
+           .inst_id = constraint_type_inst_id,
+           .specific_id =
+               context.generics().GetSelfSpecific(impl_info.generic_id)});
     }
     if (!ExtendImpl(context, extend_node, node_id, impl_decl.impl_id,
                     self_type_node, self_type_id, name.implicit_params_loc_id,
@@ -500,7 +500,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       // Don't allow the invalid impl to be used.
       FillImplWitnessWithErrors(context, impl_info);
       context.impls().Get(impl_decl.impl_id).witness_id =
-          SemIR::ErrorInst::SingletonInstId;
+          SemIR::ErrorInst::InstId;
     }
   }
 
@@ -509,7 +509,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // there is an error that would prevent the impl from being legal to define.
   if (!is_definition && !invalid_redeclaration &&
       context.impls().Get(impl_decl.impl_id).witness_id !=
-          SemIR::ErrorInst::SingletonInstId) {
+          SemIR::ErrorInst::InstId) {
     context.definitions_required_by_decl().push_back(impl_decl_id);
   }
 

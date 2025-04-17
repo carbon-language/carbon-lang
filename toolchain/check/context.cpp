@@ -25,17 +25,18 @@ Context::Context(DiagnosticEmitterBase* emitter,
       scope_stack_(sem_ir_),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       global_init_(this),
-      region_stack_(
-          [this](SemIRLoc loc, std::string label) { TODO(loc, label); }) {
+      region_stack_([this](SemIR::LocId loc_id, std::string label) {
+        TODO(loc_id, label);
+      }) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
   check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::None);
 }
 
-auto Context::TODO(SemIRLoc loc, std::string label) -> bool {
+auto Context::TODO(SemIR::LocId loc_id, std::string label) -> bool {
   CARBON_DIAGNOSTIC(SemanticsTodo, Error, "semantics TODO: `{0}`", std::string);
-  emitter_->Emit(loc, SemanticsTodo, std::move(label));
+  emitter_->Emit(loc_id, SemanticsTodo, std::move(label));
   return false;
 }
 

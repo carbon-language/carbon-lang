@@ -195,8 +195,10 @@ static auto PopOperand(Context& context, Worklist& worklist,
       SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(&context.sem_ir(),
                                                          old_fields_id);
       for (auto i : llvm::reverse(llvm::seq(old_fields.size()))) {
-        new_fields.Set(i, {.name_id = old_fields[i].name_id,
-                           .type_inst_id = worklist.Pop()});
+        new_fields.Set(
+            i,
+            {.name_id = old_fields[i].name_id,
+             .type_inst_id = context.types().GetAsTypeInstId(worklist.Pop())});
       }
       return new_fields.GetCanonical().index;
     }
@@ -335,6 +337,12 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
   CARBON_CHECK(worklist.size() == 1,
                "Unexpected data left behind in work list");
   return worklist.back().inst_id;
+}
+
+auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
+               const SubstInstCallbacks& callbacks) -> SemIR::TypeInstId {
+  return context.types().GetAsTypeInstId(
+      SubstInst(context, static_cast<SemIR::InstId>(inst_id), callbacks));
 }
 
 namespace {

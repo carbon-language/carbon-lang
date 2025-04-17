@@ -160,6 +160,9 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("No callee in function call.");
 
+    case SemIR::BuiltinFunctionKind::NoOp:
+      CARBON_FATAL("NoOp is a constant expression and won't reach this.");
+
     case SemIR::BuiltinFunctionKind::PrintChar: {
       auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
       llvm::Value* arg_value = context.builder().CreateSExtOrTrunc(

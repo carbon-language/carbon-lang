@@ -124,7 +124,7 @@ auto EvalConstantInst(Context& context, SemIR::ClassDecl inst)
 
   // A non-generic class declaration evaluates to the class type.
   return ConstantEvalResult::NewSamePhase(
-      SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
+      SemIR::ClassType{.type_id = SemIR::TypeType::TypeId,
                        .class_id = inst.class_id,
                        .specific_id = SemIR::SpecificId::None});
 }
@@ -234,7 +234,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
-    auto elements = context.inst_blocks().Get(witness->elements_id);
+    auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
+        witness->witness_table_id);
+    auto elements = context.inst_blocks().Get(witness_table.elements_id);
     // `elements` can be empty if there is only a forward declaration of the
     // impl.
     if (!elements.empty()) {
@@ -309,8 +311,7 @@ auto EvalConstantInst(Context& context, SemIR::NameRef inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::RequireCompleteType inst) -> ConstantEvalResult {
-  auto witness_type_id =
-      GetSingletonType(context, SemIR::WitnessType::SingletonInstId);
+  auto witness_type_id = GetSingletonType(context, SemIR::WitnessType::InstId);
 
   // If the type is a concrete constant, require it to be complete now.
   auto complete_type_id =
