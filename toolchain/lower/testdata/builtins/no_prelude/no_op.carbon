@@ -10,6 +10,8 @@
 
 fn NoOp() = "no_op";
 
+fn NoOp2(x: ()) -> () = "no_op";
+
 fn F() {
   NoOp();
 }
@@ -17,6 +19,16 @@ fn F() {
 fn G() -> () {
   var a: () = NoOp();
   return a;
+}
+
+fn H() -> () {
+  return NoOp2(());
+}
+
+fn I();
+
+fn J() {
+  NoOp2(I());
 }
 
 // CHECK:STDOUT: ; ModuleID = 'no_op.carbon'
@@ -34,6 +46,21 @@ fn G() -> () {
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CH.Main() !dbg !11 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc25_18.1.temp = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CI.Main()
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CJ.Main() !dbg !14 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_CI.Main(), !dbg !15
+// CHECK:STDOUT:   %.loc31_11.1.temp = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
@@ -46,10 +73,16 @@ fn G() -> () {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "no_op.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 13, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 19, column: 3, scope: !8)
+// CHECK:STDOUT: !7 = !DILocation(line: 15, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 3, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 21, column: 3, scope: !8)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DILocation(line: 25, column: 10, scope: !11)
+// CHECK:STDOUT: !13 = !DILocation(line: 25, column: 3, scope: !11)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "J", linkageName: "_CJ.Main", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = !DILocation(line: 31, column: 9, scope: !14)
+// CHECK:STDOUT: !16 = !DILocation(line: 30, column: 1, scope: !14)

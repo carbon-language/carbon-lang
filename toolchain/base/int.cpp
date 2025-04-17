@@ -4,6 +4,9 @@
 
 #include "toolchain/base/int.h"
 
+#include <algorithm>
+#include <string>
+
 namespace Carbon {
 
 auto IntStore::CanonicalBitWidth(int significant_bits) -> int {

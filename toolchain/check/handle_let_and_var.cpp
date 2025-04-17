@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <optional>
+
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
@@ -281,7 +283,7 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   auto decl = context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(
       decl_info.pattern_id);
   if (!decl) {
-    if (decl_info.pattern_id != SemIR::ErrorInst::SingletonInstId) {
+    if (decl_info.pattern_id != SemIR::ErrorInst::InstId) {
       CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
                         "pattern in associated constant declaration must be a "
                         "single `:!` binding");

@@ -4,6 +4,9 @@
 
 #include "toolchain/check/diagnostic_emitter.h"
 
+#include <algorithm>
+#include <string>
+
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/stringify.h"

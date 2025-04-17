@@ -4,6 +4,11 @@
 
 #include "toolchain/check/eval.h"
 
+#include <algorithm>
+#include <array>
+#include <optional>
+#include <utility>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -247,7 +252,7 @@ static auto GetPhase(const SemIR::ConstantValueStore& constant_values,
                      SemIR::ConstantId constant_id) -> Phase {
   if (!constant_id.is_constant()) {
     return Phase::Runtime;
-  } else if (constant_id == SemIR::ErrorInst::SingletonConstantId) {
+  } else if (constant_id == SemIR::ErrorInst::ConstantId) {
     return Phase::UnknownDueToError;
   }
   switch (constant_values.GetDependence(constant_id)) {
@@ -285,7 +290,7 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
       return context.constants().GetOrAdd(inst,
                                           SemIR::ConstantDependence::Template);
     case Phase::UnknownDueToError:
-      return SemIR::ErrorInst::SingletonConstantId;
+      return SemIR::ErrorInst::ConstantId;
     case Phase::Runtime:
       return SemIR::ConstantId::NotConstant;
   }
@@ -293,9 +298,8 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
 
 // Forms a `constant_id` describing why an evaluation was not constant.
 static auto MakeNonConstantResult(Phase phase) -> SemIR::ConstantId {
-  return phase == Phase::UnknownDueToError
-             ? SemIR::ErrorInst::SingletonConstantId
-             : SemIR::ConstantId::NotConstant;
+  return phase == Phase::UnknownDueToError ? SemIR::ErrorInst::ConstantId
+                                           : SemIR::ConstantId::NotConstant;
 }
 
 // Converts a bool value into a ConstantId.
@@ -334,11 +338,10 @@ static auto MakeFacetTypeResult(Context& context,
                                 const SemIR::FacetTypeInfo& info, Phase phase)
     -> SemIR::ConstantId {
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
-  return MakeConstantResult(
-      context,
-      SemIR::FacetType{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .facet_type_id = facet_type_id},
-      phase);
+  return MakeConstantResult(context,
+                            SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
+                                             .facet_type_id = facet_type_id},
+                            phase);
 }
 
 // `GetConstantValue` checks to see whether the provided ID describes a value
@@ -797,7 +800,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
         eval_context.emitter().Emit(
             eval_context.GetDiagnosticLoc(inst.index_id), ArrayIndexOutOfBounds,
             {.type = index->type_id, .value = index_val}, aggregate_type_id);
-        return SemIR::ErrorInst::SingletonConstantId;
+        return SemIR::ErrorInst::ConstantId;
       }
     }
   }
@@ -824,11 +827,11 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
                               SemIR::IntKind int_kind, SemIR::InstId width_id,
                               Phase phase) -> SemIR::ConstantId {
   auto result = SemIR::IntType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::SingletonInstId),
+      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
       .int_kind = int_kind,
       .bit_width_id = width_id};
   if (!ValidateIntType(context, loc_id, result)) {
-    return SemIR::ErrorInst::SingletonConstantId;
+    return SemIR::ErrorInst::ConstantId;
   }
   return MakeConstantResult(context, result, phase);
 }
@@ -1101,7 +1104,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIR::LocId loc_id,
         builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
         {.type = rhs.type_id, .value = rhs_orig_val});
     // TODO: Is it useful to recover by returning 0 or -1?
-    return SemIR::ErrorInst::SingletonConstantId;
+    return SemIR::ErrorInst::ConstantId;
   }
 
   if (rhs_orig_val.isNegative() &&
@@ -1115,7 +1118,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIR::LocId loc_id,
         builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
         {.type = rhs.type_id, .value = rhs_orig_val});
     // TODO: Is it useful to recover by returning 0 or -1?
-    return SemIR::ErrorInst::SingletonConstantId;
+    return SemIR::ErrorInst::ConstantId;
   }
 
   llvm::APInt result_val;
@@ -1134,7 +1137,7 @@ static auto PerformBuiltinIntShiftOp(Context& context, SemIR::LocId loc_id,
         context.emitter().Emit(loc_id, CompileTimeUnsizedShiftOutOfRange,
                                {.type = rhs.type_id, .value = rhs_orig_val},
                                IntStore::MaxIntWidth);
-        return SemIR::ErrorInst::SingletonConstantId;
+        return SemIR::ErrorInst::ConstantId;
       }
       lhs_val = lhs_val.sext(
           IntStore::CanonicalBitWidth(lhs_val.getSignificantBits() + *width));
@@ -1178,7 +1181,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIR::LocId loc_id,
     case SemIR::BuiltinFunctionKind::IntUMod:
       if (rhs_val.isZero()) {
         DiagnoseDivisionByZero(context, loc_id);
-        return SemIR::ErrorInst::SingletonConstantId;
+        return SemIR::ErrorInst::ConstantId;
       }
       break;
     default:
@@ -1423,7 +1426,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       // Allow errors to be diagnosed for both sides of the operator before
       // returning here if any error occurred on either side.
       if (!lhs_facet_type_id.has_value() || !rhs_facet_type_id.has_value()) {
-        return SemIR::ErrorInst::SingletonConstantId;
+        return SemIR::ErrorInst::ConstantId;
       }
       // Reuse one of the argument instructions if nothing has changed.
       if (lhs_facet_type_id == rhs_facet_type_id) {
@@ -1438,8 +1441,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
-      return context.constant_values().Get(
-          SemIR::IntLiteralType::SingletonInstId);
+      return context.constant_values().Get(SemIR::IntLiteralType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned: {
@@ -1458,14 +1460,13 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
         break;
       }
       if (!ValidateFloatBitWidth(context, loc_id, arg_ids[0])) {
-        return SemIR::ErrorInst::SingletonConstantId;
+        return SemIR::ErrorInst::ConstantId;
       }
-      return context.constant_values().Get(
-          SemIR::LegacyFloatType::SingletonInstId);
+      return context.constant_values().Get(SemIR::LegacyFloatType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
-      return context.constant_values().Get(SemIR::BoolType::SingletonInstId);
+      return context.constant_values().Get(SemIR::BoolType::TypeInstId);
     }
 
     // Integer conversions.
@@ -1598,7 +1599,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIR::LocId loc_id,
   //
   // TODO: Use a better representation for this.
   if (call.args_id == SemIR::InstBlockId::None) {
-    return SemIR::ErrorInst::SingletonConstantId;
+    return SemIR::ErrorInst::ConstantId;
   }
 
   // Find the constant value of the callee.
@@ -1631,7 +1632,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIR::LocId loc_id,
       ReplaceFieldWithConstantValue(eval_context, &call, &SemIR::Call::args_id,
                                     &phase);
   if (phase == Phase::UnknownDueToError) {
-    return SemIR::ErrorInst::SingletonConstantId;
+    return SemIR::ErrorInst::ConstantId;
   }
 
   // If any operand of the call is non-constant, the call is non-constant.
@@ -1743,7 +1744,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
         // The result is an instruction.
         return MakeConstantResult(
             eval_context.context(),
-            SemIR::InstValue{.type_id = SemIR::InstType::SingletonTypeId,
+            SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
                              .inst_id = result_inst_id},
             Phase::Concrete);
       }
@@ -1880,10 +1881,10 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
     info = GetConstantFacetTypeInfo(eval_context, facet_type->facet_type_id,
                                     &phase);
-  } else if (base_facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    return SemIR::ErrorInst::SingletonConstantId;
+  } else if (base_facet_type_id == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::ConstantId;
   } else {
-    CARBON_CHECK(base_facet_type_id == SemIR::TypeType::SingletonTypeId,
+    CARBON_CHECK(base_facet_type_id == SemIR::TypeType::TypeId,
                  "Unexpected type_id: {0}, inst: {1}", base_facet_type_id,
                  base_facet_inst);
   }
@@ -1906,10 +1907,10 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                          inst_id)) {
         SemIR::ConstantId lhs = eval_context.GetConstantValue(impls->lhs_id);
         SemIR::ConstantId rhs = eval_context.GetConstantValue(impls->rhs_id);
-        if (rhs != SemIR::ErrorInst::SingletonConstantId &&
+        if (rhs != SemIR::ErrorInst::ConstantId &&
             IsPeriodSelf(eval_context, lhs)) {
           auto rhs_inst_id = eval_context.constant_values().GetInstId(rhs);
-          if (rhs_inst_id == SemIR::TypeType::SingletonInstId) {
+          if (rhs_inst_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
           } else {
             auto facet_type =

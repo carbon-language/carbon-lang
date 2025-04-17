@@ -17,12 +17,12 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id).type_id;
   // Only facet types may have `where` restrictions.
-  if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
+  if (self_type_id != SemIR::ErrorInst::TypeId &&
       !context.types().IsFacetType(self_type_id)) {
     CARBON_DIAGNOSTIC(WhereOnNonFacetType, Error,
                       "left argument of `where` operator must be a facet type");
     context.emitter().Emit(self_node, WhereOnNonFacetType);
-    self_type_id = SemIR::ErrorInst::SingletonTypeId;
+    self_type_id = SemIR::ErrorInst::TypeId;
   }
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
@@ -105,13 +105,13 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // Check lhs is a facet and rhs is a facet type.
   auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
-  if (rhs_as_type.type_id != SemIR::ErrorInst::SingletonTypeId &&
+  if (rhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
       !context.types().IsFacetType(rhs_as_type.type_id)) {
     CARBON_DIAGNOSTIC(
         ImplsOnNonFacetType, Error,
         "right argument of `impls` requirement must be a facet type");
     context.emitter().Emit(rhs_node, ImplsOnNonFacetType);
-    rhs_as_type.inst_id = SemIR::ErrorInst::SingletonTypeInstId;
+    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
   }
   // TODO: Require that at least one side uses a designator.
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
@@ -139,7 +139,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
       context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
   AddInstAndPush<SemIR::WhereExpr>(context, node_id,
-                                   {.type_id = SemIR::TypeType::SingletonTypeId,
+                                   {.type_id = SemIR::TypeType::TypeId,
                                     .period_self_id = period_self_id,
                                     .requirements_id = requirements_id});
   return true;

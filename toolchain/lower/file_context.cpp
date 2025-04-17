@@ -4,6 +4,11 @@
 
 #include "toolchain/lower/file_context.h"
 
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"

@@ -7,9 +7,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <forward_list>
 #include <iterator>
+#include <string>
 
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"

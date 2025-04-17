@@ -4,6 +4,8 @@
 
 #include "toolchain/check/name_lookup.h"
 
+#include <optional>
+
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
@@ -334,7 +336,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     }
     return true;
   }
-  if (base_const_id == SemIR::ErrorInst::SingletonConstantId) {
+  if (base_const_id == SemIR::ErrorInst::ConstantId) {
     // Lookup into this scope should fail without producing an error.
     scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
                                   .specific_id = SemIR::SpecificId::None});
@@ -523,7 +525,7 @@ auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
                       llvm::StringRef name) -> SemIR::InstId {
   auto core_package_id = GetCorePackage(context, loc_id, name);
   if (!core_package_id.has_value()) {
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
@@ -536,7 +538,7 @@ auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
         "name `Core.{0}` implicitly referenced here, but not found",
         SemIR::NameId);
     context.emitter().Emit(loc_id, CoreNameNotFound, name_id);
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // Look through import_refs and aliases.

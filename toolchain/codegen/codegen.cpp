@@ -5,6 +5,8 @@
 #include "toolchain/codegen/codegen.h"
 
 #include <memory>
+#include <optional>
+#include <string>
 
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/TargetRegistry.h"

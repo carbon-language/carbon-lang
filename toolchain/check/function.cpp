@@ -33,8 +33,8 @@ auto CheckFunctionTypeMatches(Context& context,
       new_function.GetDeclaredReturnType(context.sem_ir());
   auto prev_return_type_id =
       prev_function.GetDeclaredReturnType(context.sem_ir(), prev_specific_id);
-  if (new_return_type_id == SemIR::ErrorInst::SingletonTypeId ||
-      prev_return_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (new_return_type_id == SemIR::ErrorInst::TypeId ||
+      prev_return_type_id == SemIR::ErrorInst::TypeId) {
     return false;
   }
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,

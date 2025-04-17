@@ -190,7 +190,7 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
         param_patterns_id != SemIR::InstBlockId::Empty) {
       for (auto param_id : context.inst_blocks().Get(param_patterns_id)) {
         if (context.insts().Get(param_id).type_id() ==
-            SemIR::ErrorInst::SingletonTypeId) {
+            SemIR::ErrorInst::TypeId) {
           return true;
         }
       }

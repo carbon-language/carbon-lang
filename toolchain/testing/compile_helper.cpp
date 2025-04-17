@@ -4,6 +4,9 @@
 
 #include "toolchain/testing/compile_helper.h"
 
+#include <string>
+#include <utility>
+
 namespace Carbon::Testing {
 
 auto CompileHelper::GetTokenizedBuffer(llvm::StringRef text,

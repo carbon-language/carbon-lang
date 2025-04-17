@@ -344,7 +344,7 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
           context, generic_id, region, context.insts().GetLocId(inst_id),
           constants_in_generic, inside_redeclaration, inst.type_id());
       // If the generic declaration is invalid, it can result in an error.
-      if (type_id == SemIR::ErrorInst::SingletonTypeId) {
+      if (type_id == SemIR::ErrorInst::TypeId) {
         break;
       }
       // TODO: Eventually, completeness requirements should be modeled as

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <optional>
+#include <utility>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
@@ -37,6 +40,8 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
     -> bool {
+  // The function is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
@@ -45,8 +50,6 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Fn>();
   context.decl_name_stack().PushScopeAndStartName();
-  // The function is potentially generic.
-  StartGenericDecl(context);
   return true;
 }
 
@@ -560,7 +563,7 @@ static auto CheckFunctionDefinitionSignature(Context& context,
 
   // Check the parameter types are complete.
   for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::ErrorInst::SingletonInstId) {
+    if (param_ref_id == SemIR::ErrorInst::InstId) {
       continue;
     }
 

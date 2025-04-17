@@ -4,6 +4,8 @@
 
 #include "toolchain/check/scope_stack.h"
 
+#include <utility>
+
 #include "common/check.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -138,7 +140,7 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
 
   // If we have no lexical results, check all non-lexical scopes.
   if (lexical_results.empty()) {
-    return {LexicalLookupHasLoadError() ? SemIR::ErrorInst::SingletonInstId
+    return {LexicalLookupHasLoadError() ? SemIR::ErrorInst::InstId
                                         : SemIR::InstId::None,
             non_lexical_scope_stack_};
   }

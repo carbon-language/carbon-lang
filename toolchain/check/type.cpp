@@ -72,7 +72,7 @@ auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
-  InstT inst = {SemIR::TypeType::SingletonTypeId, each_arg...};
+  InstT inst = {SemIR::TypeType::TypeId, each_arg...};
   return context.types().GetTypeIdForTypeConstantId(TryEvalInst(context, inst));
 }
 

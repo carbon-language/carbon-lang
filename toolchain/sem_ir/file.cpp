@@ -4,6 +4,10 @@
 
 #include "toolchain/sem_ir/file.h"
 
+#include <optional>
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -35,12 +39,12 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       inst_blocks_(allocator_),
       constants_(this) {
   // `type` and the error type are both complete & concrete types.
-  types_.SetComplete(TypeType::SingletonTypeId,
-                     {.value_repr = {.kind = ValueRepr::Copy,
-                                     .type_id = TypeType::SingletonTypeId}});
-  types_.SetComplete(ErrorInst::SingletonTypeId,
-                     {.value_repr = {.kind = ValueRepr::Copy,
-                                     .type_id = ErrorInst::SingletonTypeId}});
+  types_.SetComplete(
+      TypeType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId}});
+  types_.SetComplete(
+      ErrorInst::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId}});
 
   insts_.Reserve(SingletonInstKinds.size());
   for (auto kind : SingletonInstKinds) {

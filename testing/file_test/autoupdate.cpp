@@ -5,6 +5,8 @@
 #include "testing/file_test/autoupdate.h"
 
 #include <fstream>
+#include <string>
+#include <utility>
 
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"

@@ -9,6 +9,8 @@
 
 #include <filesystem>
 #include <fstream>
+#include <string>
+#include <system_error>
 #include <utility>
 
 #include "common/raw_string_ostream.h"

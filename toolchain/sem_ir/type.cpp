@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/type.h"
 
+#include <optional>
+
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {
@@ -14,10 +16,10 @@ static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
                "Canonicalizing non-constant type: {0}", constant_id);
   auto type_id =
       file.insts().Get(file.constant_values().GetInstId(constant_id)).type_id();
-  CARBON_CHECK(type_id == TypeType::SingletonTypeId ||
-                   constant_id == ErrorInst::SingletonConstantId,
-               "Forming type ID for non-type constant of type {0}",
-               file.types().GetAsInst(type_id));
+  CARBON_CHECK(
+      type_id == TypeType::TypeId || constant_id == ErrorInst::ConstantId,
+      "Forming type ID for non-type constant of type {0}",
+      file.types().GetAsInst(type_id));
 }
 
 auto TypeStore::GetTypeIdForTypeConstantId(ConstantId constant_id) const
@@ -80,7 +82,7 @@ static auto TryGetIntTypeInfo(const File& file, TypeId type_id)
     return std::nullopt;
   }
   auto inst_id = file.types().GetInstId(object_repr_id);
-  if (inst_id == IntLiteralType::SingletonInstId) {
+  if (inst_id == IntLiteralType::TypeInstId) {
     // `Core.IntLiteral` has an unknown bit-width.
     return TypeStore::IntTypeInfo{.is_signed = true, .bit_width = IntId::None};
   }

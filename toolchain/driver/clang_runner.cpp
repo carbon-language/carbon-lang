@@ -8,6 +8,8 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <string>
+#include <utility>
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"

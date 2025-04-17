@@ -5,6 +5,7 @@
 #include "toolchain/check/check_unit.h"
 
 #include <string>
+#include <utility>
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -67,10 +68,6 @@ auto CheckUnit::Run() -> void {
   // Add a block for the file.
   context_.inst_block_stack().Push();
 
-  // TODO: Remove this and the pop in `FinishRun` once we properly push and pop
-  // in the right places.
-  context_.generic_region_stack().Push();
-
   InitPackageScopeAndImports();
 
   // Eagerly import the impls declared in the api file to prepare to redeclare
@@ -88,7 +85,7 @@ auto CheckUnit::Run() -> void {
 auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      GetSingletonType(context_, SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
@@ -509,9 +506,6 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
 }
 
 auto CheckUnit::FinishRun() -> void {
-  // TODO: Remove this once we properly push and pop in the right places.
-  context_.generic_region_stack().Pop();
-
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
 

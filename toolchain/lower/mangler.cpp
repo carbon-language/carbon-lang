@@ -4,6 +4,8 @@
 
 #include "toolchain/lower/mangler.h"
 
+#include <string>
+
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"

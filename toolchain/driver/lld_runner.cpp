@@ -8,6 +8,7 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <string>
 
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"

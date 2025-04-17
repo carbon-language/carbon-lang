@@ -124,7 +124,7 @@ auto EvalConstantInst(Context& context, SemIR::ClassDecl inst)
 
   // A non-generic class declaration evaluates to the class type.
   return ConstantEvalResult::NewSamePhase(
-      SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
+      SemIR::ClassType{.type_id = SemIR::TypeType::TypeId,
                        .class_id = inst.class_id,
                        .specific_id = SemIR::SpecificId::None});
 }
@@ -312,7 +312,7 @@ auto EvalConstantInst(Context& context, SemIR::NameRef inst)
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::RequireCompleteType inst) -> ConstantEvalResult {
   auto witness_type_id =
-      GetSingletonType(context, SemIR::WitnessType::SingletonInstId);
+      GetSingletonType(context, SemIR::WitnessType::TypeInstId);
 
   // If the type is a concrete constant, require it to be complete now.
   auto complete_type_id =

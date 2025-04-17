@@ -8,7 +8,10 @@
 #include <gtest/gtest.h>
 
 #include <concepts>
+#include <string>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/Sequence.h"

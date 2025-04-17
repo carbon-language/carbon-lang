@@ -227,7 +227,7 @@ auto TypeCompleter::ProcessStep() -> bool {
       }
       // For a pointer representation, the pointee also needs to be complete.
       if (info.value_repr.kind == SemIR::ValueRepr::Pointer) {
-        if (info.value_repr.type_id == SemIR::ErrorInst::SingletonTypeId) {
+        if (info.value_repr.type_id == SemIR::ErrorInst::TypeId) {
           break;
         }
         auto pointee_type_id =
@@ -562,7 +562,7 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
         context, loc_id,
         SemIR::RequireCompleteType{
             .type_id =
-                GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+                GetSingletonType(context, SemIR::WitnessType::TypeInstId),
             .complete_type_inst_id = context.types().GetInstId(type_id)});
   }
 
@@ -645,7 +645,7 @@ auto AsCompleteType(Context& context, SemIR::TypeId type_id,
     -> SemIR::TypeId {
   return RequireCompleteType(context, type_id, loc_id, diagnoser)
              ? type_id
-             : SemIR::ErrorInst::SingletonTypeId;
+             : SemIR::ErrorInst::TypeId;
 }
 
 // Returns the type `type_id` if it is a concrete type, or produces an
@@ -658,7 +658,7 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
   return RequireConcreteType(context, type_id, loc_id, diagnoser,
                              abstract_diagnoser)
              ? type_id
-             : SemIR::ErrorInst::SingletonTypeId;
+             : SemIR::ErrorInst::TypeId;
 }
 
 auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,

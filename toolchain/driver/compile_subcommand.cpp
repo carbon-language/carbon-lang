@@ -4,6 +4,13 @@
 
 #include "toolchain/driver/compile_subcommand.h"
 
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <system_error>
+#include <utility>
+
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
