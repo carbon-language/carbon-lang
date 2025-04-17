@@ -4,9 +4,9 @@
 
 #include "toolchain/sem_ir/inst.h"
 
-#include "toolchain/sem_ir/file.h"
-
 #include <utility>
+
+#include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {
 
