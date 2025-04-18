@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <limits>
+#include <tuple>
 
 namespace Carbon::SemIR {
 namespace {

@@ -4,6 +4,8 @@
 
 #include "toolchain/language_server/incoming_messages.h"
 
+#include <utility>
+
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/language_server/handle.h"

@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <utility>
+
 #include "toolchain/language_server/handle.h"
 
 namespace Carbon::LanguageServer {

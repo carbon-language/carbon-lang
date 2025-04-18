@@ -4,7 +4,9 @@
 
 #include "toolchain/driver/tool_runner_base.h"
 
+#include <array>
 #include <memory>
+#include <optional>
 
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"

@@ -362,7 +362,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
                   GetOrAddInst(context, loc_id,
                                SemIR::FacetAccessWitness{
                                    .type_id = GetSingletonType(
-                                       context, SemIR::WitnessType::InstId),
+                                       context, SemIR::WitnessType::TypeInstId),
                                    .facet_value_inst_id = base_id,
                                    .index = SemIR::ElementIndex(index)});
               break;
@@ -417,7 +417,8 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
 
     return GetOrAddInst<SemIR::BoundMethod>(
         context, loc_id,
-        {.type_id = GetSingletonType(context, SemIR::BoundMethodType::InstId),
+        {.type_id =
+             GetSingletonType(context, SemIR::BoundMethodType::TypeInstId),
          .object_id = base_id,
          .function_decl_id = member_id});
   }
@@ -644,7 +645,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   auto witness_id = GetOrAddInst(
       context, loc_id,
       SemIR::FacetAccessWitness{
-          .type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
           .facet_value_inst_id = facet_inst_id,
           // There's only one interface in this facet type.
           .index = SemIR::ElementIndex(0)});
@@ -785,7 +786,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto index_node_id = context.insts().GetLocId(index_inst_id);
   index_inst_id = ConvertToValueOfType(
       context, index_node_id, index_inst_id,
-      GetSingletonType(context, SemIR::IntLiteralType::InstId));
+      GetSingletonType(context, SemIR::IntLiteralType::TypeInstId));
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::ConstantId) {
     return SemIR::ErrorInst::InstId;

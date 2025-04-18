@@ -4,6 +4,9 @@
 
 #include "toolchain/parse/tree_and_subtrees.h"
 
+#include <tuple>
+#include <utility>
+
 #include "toolchain/lex/token_index.h"
 
 namespace Carbon::Parse {

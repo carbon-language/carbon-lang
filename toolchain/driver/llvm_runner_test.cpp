@@ -7,6 +7,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"

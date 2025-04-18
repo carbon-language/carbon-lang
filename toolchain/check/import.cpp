@@ -4,6 +4,9 @@
 
 #include "toolchain/check/import.h"
 
+#include <optional>
+#include <utility>
+
 #include "common/check.h"
 #include "common/map.h"
 #include "toolchain/base/kind_switch.h"
@@ -596,7 +599,7 @@ static auto AddNamespaceFromOtherPackage(Context& context,
                                          SemIR::NameId name_id)
     -> SemIR::InstId {
   auto namespace_type_id =
-      GetSingletonType(context, SemIR::NamespaceType::InstId);
+      GetSingletonType(context, SemIR::NamespaceType::TypeInstId);
   AddImportNamespaceToScopeResult result = CopySingleNameScopeFromImportIR(
       context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
       import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);

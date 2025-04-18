@@ -4,6 +4,8 @@
 
 #include "toolchain/check/scope_stack.h"
 
+#include <utility>
+
 #include "common/check.h"
 #include "toolchain/sem_ir/ids.h"
 

@@ -6,8 +6,10 @@
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_FILE_TEST_BASE_H_
 
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "absl/strings/str_replace.h"
 #include "common/error.h"

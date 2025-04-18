@@ -75,6 +75,19 @@ fn Use() {
   var v : Derived = {.base = {}};
 }
 
+// --- call.carbon
+
+library "[[@TEST_NAME]]";
+
+base class Base {
+  virtual fn F[self: Self]();
+}
+
+fn Use(b: Base) {
+  b.F();
+}
+
+
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
 // CHECK:STDOUT: source_filename = "classes.carbon"
 // CHECK:STDOUT:
@@ -271,3 +284,35 @@ fn Use() {
 // CHECK:STDOUT: !8 = !DILocation(line: 13, column: 21, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 13, column: 30, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 1, scope: !4)
+// CHECK:STDOUT: ; ModuleID = 'call.carbon'
+// CHECK:STDOUT: source_filename = "call.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CUse.Main(ptr %b) !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F.call.vtable = load ptr, ptr %b, align 8, !dbg !7
+// CHECK:STDOUT:   %F.call = call ptr @llvm.load.relative.i32(ptr %F.call.vtable, i32 0), !dbg !7
+// CHECK:STDOUT:   call void %F.call(ptr %b), !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
+// CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: read) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "call.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 8, column: 1, scope: !4)

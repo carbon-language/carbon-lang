@@ -7,6 +7,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include "common/set.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/driver/driver.h"

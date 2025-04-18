@@ -5,6 +5,9 @@
 #include "testing/file_test/test_file.h"
 
 #include <fstream>
+#include <optional>
+#include <string>
+#include <utility>
 
 #include "common/check.h"
 #include "common/error.h"

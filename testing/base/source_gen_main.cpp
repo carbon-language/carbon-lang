@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <optional>
+#include <system_error>
+
 #include "common/bazel_working_dir.h"
 #include "common/command_line.h"
 #include "common/init_llvm.h"
