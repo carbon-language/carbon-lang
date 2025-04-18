@@ -1394,7 +1394,22 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
-    case SemIR::BuiltinFunctionKind::ReadChar: {
+    case SemIR::BuiltinFunctionKind::ReadChar:
+    case SemIR::BuiltinFunctionKind::IntSAddAssign:
+    case SemIR::BuiltinFunctionKind::IntSSubAssign:
+    case SemIR::BuiltinFunctionKind::IntSMulAssign:
+    case SemIR::BuiltinFunctionKind::IntSDivAssign:
+    case SemIR::BuiltinFunctionKind::IntSModAssign:
+    case SemIR::BuiltinFunctionKind::IntUAddAssign:
+    case SemIR::BuiltinFunctionKind::IntUSubAssign:
+    case SemIR::BuiltinFunctionKind::IntUMulAssign:
+    case SemIR::BuiltinFunctionKind::IntUDivAssign:
+    case SemIR::BuiltinFunctionKind::IntUModAssign:
+    case SemIR::BuiltinFunctionKind::IntAndAssign:
+    case SemIR::BuiltinFunctionKind::IntOrAssign:
+    case SemIR::BuiltinFunctionKind::IntXorAssign:
+    case SemIR::BuiltinFunctionKind::IntLeftShiftAssign:
+    case SemIR::BuiltinFunctionKind::IntRightShiftAssign: {
       // These are runtime-only builtins.
       // TODO: Consider tracking this on the `BuiltinFunctionKind`.
       return SemIR::ConstantId::NotConstant;
