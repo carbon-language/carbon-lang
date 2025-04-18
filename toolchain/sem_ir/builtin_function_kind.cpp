@@ -34,6 +34,9 @@ struct ValidateState {
   TypeId type_params[MaxTypeParams] = {TypeId::None, TypeId::None};
 };
 
+template <typename TypeConstraint>
+auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool;
+
 // Constraint that a type is generic type parameter `I` of the builtin,
 // satisfying `TypeConstraint`. See ValidateSignature for details.
 template <int I, typename TypeConstraint>
@@ -69,13 +72,11 @@ template <typename PointeeT>
 struct PointerTo {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    auto ptr_type = sem_ir.types().TryGetAs<SemIR::PointerType>(type_id);
-    if (!ptr_type) {
+    if (!sem_ir.types().Is<SemIR::PointerType>(type_id)) {
       return false;
     }
-    return PointeeT::Check(
-        sem_ir, state,
-        sem_ir.types().GetTypeIdForTypeInstId(ptr_type->pointee_id));
+    return SemIR::Check<PointeeT>(sem_ir, state,
+                                  sem_ir.GetPointeeType(type_id));
   }
 };
 
@@ -357,80 +358,80 @@ constexpr BuiltinInfo IntXor = {"int.xor",
 constexpr BuiltinInfo IntLeftShift = {
     "int.left_shift", ValidateSignature<auto(IntT, IntU)->IntT>};
 
-// "int.left_shift": integer right shift.
+// "int.right_shift": integer right shift.
 constexpr BuiltinInfo IntRightShift = {
     "int.right_shift", ValidateSignature<auto(IntT, IntU)->IntT>};
 
-// "int.sadd.assign": integer in-place addition.
+// "int.sadd_assign": integer in-place addition.
 constexpr BuiltinInfo IntSAddAssign = {
-    "int.sadd.assign",
+    "int.sadd_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.ssub": integer in-place subtraction.
+// "int.ssub_assign": integer in-place subtraction.
 constexpr BuiltinInfo IntSSubAssign = {
-    "int.ssub.assign",
+    "int.ssub_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.smul": integer in-place multiplication.
+// "int.smul_assign": integer in-place multiplication.
 constexpr BuiltinInfo IntSMulAssign = {
-    "int.smul.assign",
+    "int.smul_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.sdiv": integer in-place division.
+// "int.sdiv_assign": integer in-place division.
 constexpr BuiltinInfo IntSDivAssign = {
-    "int.sdiv.assign",
+    "int.sdiv_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.smod": integer in-place modulo.
+// "int.smod_assign": integer in-place modulo.
 constexpr BuiltinInfo IntSModAssign = {
-    "int.smod.assign",
+    "int.smod_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.uadd": unsigned integer in-place addition.
+// "int.uadd_assign": unsigned integer in-place addition.
 constexpr BuiltinInfo IntUAddAssign = {
-    "int.uadd.assign",
+    "int.uadd_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.usub": unsigned integer in-place subtraction.
+// "int.usub_assign": unsigned integer in-place subtraction.
 constexpr BuiltinInfo IntUSubAssign = {
-    "int.usub.assign",
+    "int.usub_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.umul": unsigned integer in-place multiplication.
+// "int.umul_assign": unsigned integer in-place multiplication.
 constexpr BuiltinInfo IntUMulAssign = {
-    "int.umul.assign",
+    "int.umul_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.udiv": unsigned integer in-place division.
+// "int.udiv_assign": unsigned integer in-place division.
 constexpr BuiltinInfo IntUDivAssign = {
-    "int.udiv.assign",
+    "int.udiv_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.mod": integer in-place modulo.
+// "int.mod_assign": integer in-place modulo.
 constexpr BuiltinInfo IntUModAssign = {
-    "int.umod.assign",
+    "int.umod_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.and": integer in-place bitwise and.
+// "int.and_assign": integer in-place bitwise and.
 constexpr BuiltinInfo IntAndAssign = {
-    "int.and.assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    "int.and_assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.or": integer in-place bitwise or.
+// "int.or_assign": integer in-place bitwise or.
 constexpr BuiltinInfo IntOrAssign = {
-    "int.or.assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    "int.or_assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.xor": integer in-place bitwise xor.
+// "int.xor_assign": integer in-place bitwise xor.
 constexpr BuiltinInfo IntXorAssign = {
-    "int.xor.assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    "int.xor_assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
-// "int.left_shift": integer in-place left shift.
+// "int.left_shift_assign": integer in-place left shift.
 constexpr BuiltinInfo IntLeftShiftAssign = {
-    "int.left_shift.assign",
+    "int.left_shift_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntU)->NoReturn>};
 
-// "int.left_shift": integer in-place right shift.
+// "int.right_shift_assign": integer in-place right shift.
 constexpr BuiltinInfo IntRightShiftAssign = {
-    "int.right_shift.assign",
+    "int.right_shift_assign",
     ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntU)->NoReturn>};
 
 // "int.eq": integer equality comparison.

@@ -696,16 +696,16 @@ static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)
     -> bool {
+  // Find the list of call parameters other than the implicit return slot.
+  auto call_params = context.inst_blocks().Get(function.call_params_id);
+  if (function.return_slot_pattern_id.has_value()) {
+    call_params = call_params.drop_back();
+  }
+
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  auto param_patterns =
-      context.inst_blocks().GetOrEmpty(function.param_patterns_id);
-  param_type_ids.reserve(implicit_param_patterns.size() +
-                         param_patterns.size());
-  for (auto param_id : llvm::concat<const SemIR::InstId>(
-           implicit_param_patterns, param_patterns)) {
+  param_type_ids.reserve(call_params.size());
+  for (auto param_id : call_params) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());
