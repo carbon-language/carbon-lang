@@ -626,7 +626,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   // If the self value is a (symbolic) facet value that has a symbolic witness,
   // then we don't need to do impl lookup, except that we want to find any final
   // impls to return a concrete witness if possible. So we limit the query to
-  // final impls only in that case. Note as in the DCHECK above, the query can
+  // final impls only in that case. Note as in the CHECK above, the query can
   // not be concrete in this case, so only final impls can produce a concrete
   // witness for this query.
   auto candidate_impls = CollectCandidateImplsForQuery(
