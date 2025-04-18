@@ -93,7 +93,7 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
 // `FacetAccessType` for which the canonical facet value is returned instead.
 //
 // For facet values unwrap `FacetValue` instructions to get to an underlying
-// canonical facet value instruction.
+// canonical type instruction.
 auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId;
 auto GetCanonicalizedFacetOrTypeValue(Context& context,
