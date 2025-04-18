@@ -145,8 +145,9 @@ static auto HandleIntComparison(FunctionContext& context, SemIR::InstId inst_id,
           GetBuiltinICmpPredicate(builtin_kind, cmp_signed), lhs, rhs));
 }
 
-// Handles a call to a binary operator that has a compound assignment form.
-static auto HandleBinaryOperatorBuiltinCall(
+// Creates a binary operator for a call to a builtin for either that operation
+// or the corresponding compound assignment.
+static auto CreateBinaryOperatorForBuiltin(
     FunctionContext& context, SemIR::InstId inst_id,
     SemIR::BuiltinFunctionKind builtin_kind, llvm::Value* lhs, llvm::Value* rhs)
     -> llvm::Value* {
@@ -367,7 +368,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntXor:
     case SemIR::BuiltinFunctionKind::IntLeftShift:
     case SemIR::BuiltinFunctionKind::IntRightShift: {
-      context.SetLocal(inst_id, HandleBinaryOperatorBuiltinCall(
+      context.SetLocal(inst_id, CreateBinaryOperatorForBuiltin(
                                     context, inst_id, builtin_kind,
                                     context.GetValue(arg_ids[0]),
                                     context.GetValue(arg_ids[1])));
@@ -395,7 +396,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       // and alignment information.
       auto* lhs_value = context.builder().CreateLoad(
           context.GetType(pointee_type_id), lhs_ptr);
-      auto* result = HandleBinaryOperatorBuiltinCall(
+      auto* result = CreateBinaryOperatorForBuiltin(
           context, inst_id, builtin_kind, lhs_value,
           context.GetValue(arg_ids[1]));
       context.builder().CreateStore(result, lhs_ptr);
