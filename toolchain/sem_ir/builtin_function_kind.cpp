@@ -414,15 +414,18 @@ constexpr BuiltinInfo IntUModAssign = {
 
 // "int.and_assign": integer in-place bitwise and.
 constexpr BuiltinInfo IntAndAssign = {
-    "int.and_assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    "int.and_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.or_assign": integer in-place bitwise or.
 constexpr BuiltinInfo IntOrAssign = {
-    "int.or_assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    "int.or_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.xor_assign": integer in-place bitwise xor.
 constexpr BuiltinInfo IntXorAssign = {
-    "int.xor_assign", ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    "int.xor_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.left_shift_assign": integer in-place left shift.
 constexpr BuiltinInfo IntLeftShiftAssign = {

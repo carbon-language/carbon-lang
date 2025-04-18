@@ -396,9 +396,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       auto* lhs_value = context.builder().CreateLoad(
           context.GetType(pointee_type_id), lhs_ptr);
       auto* result = HandleBinaryOperatorBuiltinCall(
-                                    context, inst_id, builtin_kind,
-                                    lhs_value,
-                                    context.GetValue(arg_ids[1]));
+          context, inst_id, builtin_kind, lhs_value,
+          context.GetValue(arg_ids[1]));
       context.builder().CreateStore(result, lhs_ptr);
       // TODO: Add a helper to get a "no value representation" value.
       context.SetLocal(inst_id, llvm::PoisonValue::get(context.GetType(
