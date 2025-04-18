@@ -24,35 +24,9 @@ TEST(FindTest, ReturnType) {
   const std::vector<int> c;
   std::vector<int> m;
 
-  static_assert(std::same_as<decltype(FindOrNull(c, 0)), const int*>);
-  static_assert(std::same_as<decltype(FindOrNull(m, 0)), int*>);
-
   auto pred = [](int) { return true; };
   static_assert(std::same_as<decltype(FindIfOrNull(c, pred)), const int*>);
   static_assert(std::same_as<decltype(FindIfOrNull(m, pred)), int*>);
-}
-
-TEST(FindTest, FindOrNull) {
-  std::vector<int> empty;
-  EXPECT_EQ(FindOrNull(empty, 0), nullptr);
-
-  std::vector<int> range = {1, 2};
-  EXPECT_EQ(FindOrNull(range, 0), nullptr);
-  // NOLINTNEXTLINE(readability-container-data-pointer)
-  EXPECT_EQ(FindOrNull(range, 1), &range[0]);
-  EXPECT_EQ(FindOrNull(range, 2), &range[1]);
-  EXPECT_EQ(FindOrNull(range, 3), nullptr);
-}
-
-TEST(FindTest, FindOrNone) {
-  std::vector<NoneType> empty;
-  EXPECT_EQ(FindOrNone(empty, NoneType{0}).i, -1);
-
-  std::vector<NoneType> range = {NoneType{1}, NoneType{2}};
-  EXPECT_EQ(FindOrNone(range, NoneType{0}).i, -1);
-  EXPECT_EQ(FindOrNone(range, NoneType{1}).i, 1);
-  EXPECT_EQ(FindOrNone(range, NoneType{2}).i, 2);
-  EXPECT_EQ(FindOrNone(range, NoneType{3}).i, -1);
 }
 
 TEST(FindTest, FindIfOrNull) {

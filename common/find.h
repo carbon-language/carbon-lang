@@ -40,41 +40,6 @@ concept RangeValueHasNoneType = requires {
 
 }  // namespace Internal
 
-// Finds a value in the given `range` by comparing to `query`. Returns a
-// pointer to the value from the range on success, and nullptr if nothing is
-// found.
-//
-// This is similar to `std::find_if()` but returns a pointer to the value
-// instead of an iterator that must be tested against `end()`.
-template <typename Range, typename Query = Internal::RangeValueType<Range>>
-  requires Internal::IsComparable<Query, Internal::RangeValueType<Range>>
-constexpr auto FindOrNull(Range&& range, const Query& query)
-    -> Internal::RangePointerType<Range> {
-  auto it = llvm::find(range, query);
-  if (it != range.end()) {
-    return std::addressof(*it);
-  } else {
-    return nullptr;
-  }
-}
-
-// Finds a value in the given `range` by testing the `predicate` and returns a
-// copy of it. If no match is found, returns `T::None` where the input range is
-// over values of type `T`.
-template <typename Range, typename Query>
-  requires Internal::IsComparable<Query, Internal::RangeValueType<Range>> &&
-           Internal::RangeValueHasNoneType<Range> &&
-           std::copy_constructible<Internal::RangeValueType<Range>>
-constexpr auto FindOrNone(Range&& range, const Query& query)
-    -> Internal::RangeValueType<Range> {
-  auto it = llvm::find(range, query);
-  if (it != range.end()) {
-    return *it;
-  } else {
-    return Internal::RangeValueType<Range>::None;
-  }
-}
-
 // Finds a value in the given `range` by testing the `predicate`. Returns a
 // pointer to the value from the range on success, and nullptr if nothing is
 // found.
