@@ -15,17 +15,18 @@
 
 namespace Carbon {
 
-auto CodeGen::Make(llvm::Module* module, llvm::StringRef target_triple,
+auto CodeGen::Make(llvm::Module* module, llvm::StringRef target_triple_str,
                    llvm::raw_pwrite_stream* errors) -> std::optional<CodeGen> {
   std::string error;
   const llvm::Target* target =
-      llvm::TargetRegistry::lookupTarget(target_triple, error);
+      llvm::TargetRegistry::lookupTarget(target_triple_str, error);
 
   if (!target) {
     *errors << "error: invalid target: " << error << "\n";
     return {};
   }
-  module->setTargetTriple(llvm::Triple(target_triple));
+  llvm::Triple target_triple(target_triple_str);
+  module->setTargetTriple(target_triple);
 
   constexpr llvm::StringLiteral CPU = "generic";
   constexpr llvm::StringLiteral Features = "";

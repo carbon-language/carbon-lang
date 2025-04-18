@@ -264,7 +264,7 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
   auto return_param_id = SemIR::InstId::None;
   if (return_info.has_return_slot()) {
     param_types.push_back(
-        llvm::PointerType::get(return_type, /*AddressSpace=*/0));
+        llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
     return_param_id = function.return_slot_pattern_id;
     param_inst_ids.push_back(return_param_id);
   }

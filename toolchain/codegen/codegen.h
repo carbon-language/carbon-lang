@@ -13,7 +13,7 @@ namespace Carbon {
 class CodeGen {
  public:
   // `module` and `errors` must not be null.
-  static auto Make(llvm::Module* module, llvm::StringRef target_triple,
+  static auto Make(llvm::Module* module, llvm::StringRef target_triple_str,
                    llvm::raw_pwrite_stream* errors) -> std::optional<CodeGen>;
 
   // Generates the object code file.
