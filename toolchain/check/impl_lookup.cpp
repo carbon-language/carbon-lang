@@ -621,7 +621,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
 
   // If we have a symbolic witness in the self query, then the query can not be
   // concrete: the query includes a symbolic self value.
-  CARBON_DCHECK(!self_facet_provides_witness || !query_is_concrete);
+  CARBON_CHECK(!self_facet_provides_witness || !query_is_concrete);
 
   // If the self value is a (symbolic) facet value that has a symbolic witness,
   // then we don't need to do impl lookup, except that we want to find any final
