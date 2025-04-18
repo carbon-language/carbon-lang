@@ -31,17 +31,6 @@ class ScopeStack {
     SemIR::InstBlockId continue_target;
   };
 
-  // A scope in which `return` can be used.
-  struct ReturnScope {
-    // The declaration from which we can return. Inside a function, this will
-    // be a `FunctionDecl`.
-    SemIR::InstId decl_id;
-
-    // The value corresponding to the current `returned var`, if any. Will be
-    // set and unset as `returned var`s are declared and go out of scope.
-    SemIR::InstId returned_var = SemIR::InstId::None;
-  };
-
   // A non-lexical scope in which unqualified lookup may be required.
   struct NonLexicalScope {
     // The index of the scope in the scope stack.
@@ -57,17 +46,22 @@ class ScopeStack {
   // Information about a scope that has been temporarily removed from the stack.
   struct SuspendedScope;
 
-  // Pushes a scope onto scope_stack_. NameScopeId::None is used for new
-  // scopes. lexical_lookup_has_load_error is used to limit diagnostics when a
-  // given namespace may contain a mix of both successful and failed name
-  // imports.
-  auto Push(SemIR::InstId scope_inst_id = SemIR::InstId::None,
-            SemIR::NameScopeId scope_id = SemIR::NameScopeId::None,
-            SemIR::SpecificId specific_id = SemIR::SpecificId::None,
-            bool lexical_lookup_has_load_error = false) -> void;
+  // Pushes a scope for a declaration name's parameters.
+  auto PushForDeclName() -> void;
 
-  // Pops the top scope from scope_stack_, cleaning up names from
-  // lexical_lookup_.
+  // Pushes an entity scope. Note functions must use `PushForFunction` instead.
+  auto PushForEntity(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
+                     SemIR::SpecificId specific_id,
+                     bool lexical_lookup_has_load_error = false) -> void;
+
+  // Pushes a scope which doesn't break up a function, because it would be
+  // allowed in a statement. For example, a struct literal or a code block.
+  auto PushForExpr() -> void;
+
+  // Pushes a function scope.
+  auto PushForFunction(SemIR::InstId scope_inst_id) -> void;
+
+  // Pops the top scope from scope_stack_. Removes names from lexical_lookup_.
   auto Pop() -> void;
 
   // Pops the top scope from scope_stack_ if it contains no names.
@@ -98,8 +92,12 @@ class ScopeStack {
     return Peek().specific_id;
   }
 
-  // Returns true if current scope is lexical.
-  auto PeekIsLexicalScope() const -> bool { return Peek().is_lexical_scope(); }
+  // Returns true if the current scope is inside a function scope (either the
+  // scope itself, or a lexical scope), without an intervening entity scope.
+  auto IsInFunctionScope() const -> bool {
+    return !return_scope_stack_.empty() &&
+           !return_scope_stack_.back().nested_scope_index.has_value();
+  }
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
@@ -116,6 +114,18 @@ class ScopeStack {
   // the current `returned var` and returns an `None`. If there
   // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
+
+  // Returns the `returned var` instruction if one is set.
+  auto GetReturnedVar() -> SemIR::InstId {
+    CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
+    return return_scope_stack_.back().returned_var;
+  }
+
+  // Returns the decl ID for the current return scope.
+  auto GetReturnScopeDeclId() -> SemIR::InstId {
+    CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
+    return return_scope_stack_.back().decl_id;
+  }
 
   // Looks up the name `name_id` in the current scope and enclosing scopes, but
   // do not look past `scope_index`. Returns the existing lookup result, if any.
@@ -159,10 +169,6 @@ class ScopeStack {
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
-
-  auto return_scope_stack() -> llvm::SmallVector<ReturnScope>& {
-    return return_scope_stack_;
-  }
 
   auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
     return break_continue_stack_;
@@ -219,12 +225,47 @@ class ScopeStack {
     Set<SemIR::NameId> names = {};
   };
 
+  // A scope in which `return` can be used.
+  struct ReturnScope {
+    // The `FunctionDecl`.
+    SemIR::InstId decl_id;
+
+    // The value corresponding to the current `returned var`, if any. Will be
+    // set and unset as `returned var`s are declared and go out of scope.
+    SemIR::InstId returned_var = SemIR::InstId::None;
+
+    // When processing a scope that's nested inside a `return` scope where
+    // `return` *cannot* be used (for example, a `class` inside a `fn`), this is
+    // the index of the terminating scope. It's set on `Push`, and cleared on
+    // the appropriate `Pop`.
+    //
+    // This won't be set for functions directly inside functions, because they
+    // will have their own `ReturnScope`.
+    ScopeIndex nested_scope_index = ScopeIndex::None;
+  };
+
+  // Pushes a scope onto scope_stack_. NameScopeId::None is used for new scopes.
+  // lexical_lookup_has_load_error is used to limit diagnostics when a given
+  // namespace may contain a mix of both successful and failed name imports.
+  auto Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
+            SemIR::SpecificId specific_id, bool lexical_lookup_has_load_error)
+      -> void;
+
   auto Peek() const -> const ScopeStackEntry& { return scope_stack_.back(); }
 
   // Returns whether lexical lookup currently has any load errors.
   auto LexicalLookupHasLoadError() const -> bool {
     return !scope_stack_.empty() &&
            scope_stack_.back().lexical_lookup_has_load_error;
+  }
+
+  // Marks the return scope as having left the function. Called after pushing
+  // the new scope.
+  auto MaybeLeftFunctionScope() -> void {
+    if (!return_scope_stack_.empty() &&
+        !return_scope_stack_.back().nested_scope_index.has_value()) {
+      return_scope_stack_.back().nested_scope_index = scope_stack_.back().index;
+    }
   }
 
   // Checks that the provided scope's `next_compile_time_bind_index` matches the
@@ -246,8 +287,8 @@ class ScopeStack {
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
 
-  // A stack of `destroy` functions to call. This only has entries for lexical
-  // scopes, because non-lexical scopes don't have destruction on scope exit.
+  // A stack of `destroy` functions to call. This only has entries for function
+  // scopes, because non-function scopes don't have destruction on scope exit.
   ArrayStack<SemIR::InstId> destroy_id_stack_;
 
   // Information about non-lexical scopes. This is a subset of the entries and

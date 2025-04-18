@@ -537,7 +537,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
                                 context.decl_name_stack().PeekParentScopeId());
 
-  context.scope_stack().Push(
+  context.scope_stack().PushForEntity(
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);

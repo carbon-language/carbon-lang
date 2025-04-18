@@ -476,7 +476,7 @@ fn G() { F({}); }
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %in_scope.patt: %NoAddr = binding_pattern in_scope
-// CHECK:STDOUT:     %.loc11: %NoAddr = var_pattern %in_scope.patt
+// CHECK:STDOUT:     %.loc11_5.1: %NoAddr = var_pattern %in_scope.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %in_scope.var: ref %NoAddr = var in_scope
 // CHECK:STDOUT:   %destroy.ref.4: %destroy.type.bc5 = name_ref destroy, imports.%Main.import_ref.7fe [concrete = constants.%destroy.60f]
@@ -486,12 +486,14 @@ fn G() { F({}); }
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
+// CHECK:STDOUT:   %.loc11_5.2: %NoAddr = bind_value %in_scope.var
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.4(%.loc11_5.2)
 // CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %with_addr.var
-// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.3(%addr)
+// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.3(%addr)
 // CHECK:STDOUT:   %.loc7_3.2: %ExplicitReturn = bind_value %explicit_return.var
-// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%.loc7_3.2)
+// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.2(%.loc7_3.2)
 // CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %no_addr.var
-// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
+// CHECK:STDOUT:   %destroy.call.4: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
