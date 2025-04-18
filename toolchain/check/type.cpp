@@ -179,8 +179,8 @@ auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     }
   }
 
-  CARBON_DCHECK(!context.insts().Is<SemIR::FacetAccessType>(inst_id));
-  CARBON_DCHECK(!context.insts().Is<SemIR::FacetValue>(inst_id));
+  CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessType>(inst_id));
+  CARBON_CHECK(!context.insts().Is<SemIR::FacetValue>(inst_id));
 
   return context.constant_values().GetConstantInstId(inst_id);
 }
