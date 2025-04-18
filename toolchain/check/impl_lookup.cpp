@@ -331,7 +331,7 @@ static auto LookupImplWitnessInSelfFacetValue(
     return EvalImplLookupResult::MakeNone();
   }
 
-  // The position of the interface in `required_interfaces()` is also the the
+  // The position of the interface in `required_interfaces()` is also the
   // position of the witness for that interface in `FacetValue`.
   auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
   auto facet_type_required_interfaces =
