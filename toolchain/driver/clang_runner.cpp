@@ -113,15 +113,9 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   // execution here, as subprocesses leaking memory won't impact this process.
   auto cc1_main = [enable_leaking = enable_leaking_](
                       llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
-    // Clang doesn't expose any option to disable injecting `-disable-free` into
-    // the CC1 invocation, or any way to append a flag that undoes it. So to
-    // avoid leaks, we need to edit the `cc1_args` here and remove
-    // `-disable-free`.
-    //
-    // TODO: We should see if upstream would be open to some configuration hook
-    // to suppress this when it is generating the CC1 flags and use that.
     if (!enable_leaking) {
-      llvm::erase(cc1_args, llvm::StringRef("-disable-free"));
+      // Last-flag wins, so this forcibly re-enables freeing memory.
+      cc1_args.push_back("-no-disable-free");
     }
 
     // cc1_args[0] will be the `clang_path` so we don't need the prepend arg.
