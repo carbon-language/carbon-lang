@@ -5,6 +5,7 @@
 #include <optional>
 #include <utility>
 
+#include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
@@ -90,15 +91,9 @@ static auto FindSelfPattern(Context& context,
     -> SemIR::InstId {
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  if (const auto* i = llvm::find_if(implicit_param_patterns,
-                                    [&](auto implicit_param_id) {
-                                      return SemIR::IsSelfPattern(
-                                          context.sem_ir(), implicit_param_id);
-                                    });
-      i != implicit_param_patterns.end()) {
-    return *i;
-  }
-  return SemIR::InstId::None;
+  return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
+    return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
+  });
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be

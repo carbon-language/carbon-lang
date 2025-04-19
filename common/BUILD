@@ -171,6 +171,28 @@ cc_test(
 )
 
 cc_library(
+    name = "find",
+    hdrs = ["find.h"],
+    deps = [
+        ":check",
+        ":ostream",
+        ":raw_string_ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "find_test",
+    size = "small",
+    srcs = ["find_test.cpp"],
+    deps = [
+        ":find",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "hashing",
     srcs = ["hashing.cpp"],
     hdrs = ["hashing.h"],

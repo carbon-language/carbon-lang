@@ -115,18 +115,21 @@ auto EvalConstantInst(Context& context, SemIR::ClassElementAccess inst)
 
 auto EvalConstantInst(Context& context, SemIR::ClassDecl inst)
     -> ConstantEvalResult {
+  const auto& class_info = context.classes().Get(inst.class_id);
+
   // If the class has generic parameters, we don't produce a class type, but a
   // callable whose return value is a class type.
-  if (context.classes().Get(inst.class_id).has_parameters()) {
+  if (class_info.has_parameters()) {
     return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
         .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
   }
 
   // A non-generic class declaration evaluates to the class type.
-  return ConstantEvalResult::NewSamePhase(
-      SemIR::ClassType{.type_id = SemIR::TypeType::TypeId,
-                       .class_id = inst.class_id,
-                       .specific_id = SemIR::SpecificId::None});
+  return ConstantEvalResult::NewAnyPhase(SemIR::ClassType{
+      .type_id = SemIR::TypeType::TypeId,
+      .class_id = inst.class_id,
+      .specific_id =
+          context.generics().GetSelfSpecific(class_info.generic_id)});
 }
 
 auto EvalConstantInst(Context& /*context*/, SemIR::ClassInit inst)
@@ -290,16 +293,19 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::InterfaceDecl inst)
     -> ConstantEvalResult {
+  const auto& interface_info = context.interfaces().Get(inst.interface_id);
+
   // If the interface has generic parameters, we don't produce an interface
   // type, but a callable whose return value is an interface type.
-  if (context.interfaces().Get(inst.interface_id).has_parameters()) {
+  if (interface_info.has_parameters()) {
     return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
         .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
   }
 
-  // A non-generic interface declaration evaluates to a facet type.
-  return ConstantEvalResult::NewSamePhase(FacetTypeFromInterface(
-      context, inst.interface_id, SemIR::SpecificId::None));
+  // A non-parameterized interface declaration evaluates to a facet type.
+  return ConstantEvalResult::NewAnyPhase(FacetTypeFromInterface(
+      context, inst.interface_id,
+      context.generics().GetSelfSpecific(interface_info.generic_id)));
 }
 
 auto EvalConstantInst(Context& context, SemIR::NameRef inst)

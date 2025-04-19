@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "common/error.h"
+#include "common/find.h"
 #include "common/struct_reflection.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
@@ -210,7 +211,7 @@ auto NodeExtractor::MatchesNodeIdOneOf(
       *trace_ << "\n";
     }
     return false;
-  } else if (llvm::find(kinds, node_kind) == kinds.end()) {
+  } else if (!Contains(kinds, node_kind)) {
     if (trace_) {
       *trace_ << "NodeIdOneOf error: wrong kind " << node_kind << ", expected ";
       trace_kinds();

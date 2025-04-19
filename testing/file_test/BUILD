@@ -43,6 +43,7 @@ cc_library(
         "//common:check",
         "//common:error",
         "//common:exe_path",
+        "//common:find",
         "//common:init_llvm",
         "//common:ostream",
         "//common:raw_string_ostream",

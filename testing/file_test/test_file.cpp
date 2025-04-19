@@ -11,6 +11,7 @@
 
 #include "common/check.h"
 #include "common/error.h"
+#include "common/find.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/JSON.h"
@@ -132,14 +133,13 @@ static auto AutoFillDidOpenParams(llvm::json::Object* params,
   }
 
   CARBON_ASSIGN_OR_RETURN(auto file_path, ExtractFilePathFromUri(*uri));
-  const auto* split_it =
-      llvm::find_if(splits, [&](const TestFile::Split& split) {
-        return split.filename == file_path;
-      });
-  if (split_it == splits.end()) {
+  const auto* split = FindIfOrNull(splits, [&](const TestFile::Split& split) {
+    return split.filename == file_path;
+  });
+  if (!split) {
     return ErrorBuilder() << "No split found for uri: " << *uri;
   }
-  attr_it->second = split_it->content;
+  attr_it->second = split->content;
   return Success();
 }
 
