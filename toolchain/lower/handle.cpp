@@ -36,7 +36,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::Value* index;
   if (context.sem_ir().types().GetInstId(
           context.sem_ir().insts().Get(inst.index_id).type_id()) ==
-      SemIR::IntLiteralType::InstId) {
+      SemIR::IntLiteralType::TypeInstId) {
     auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
         context.sem_ir().constant_values().GetConstantInstId(inst.index_id));
     index = llvm::ConstantInt::get(context.llvm_context(),
@@ -73,7 +73,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindAlias inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::InstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 
@@ -83,7 +83,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::InstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 
@@ -191,7 +191,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::InstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 

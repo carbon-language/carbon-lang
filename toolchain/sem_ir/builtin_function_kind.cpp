@@ -77,7 +77,7 @@ struct NoReturn {
 };
 
 // Constraint that a type is `bool`.
-using Bool = BuiltinType<BoolType::InstId>;
+using Bool = BuiltinType<BoolType::TypeInstId>;
 
 // Constraint that requires the type to be a sized integer type.
 struct AnySizedInt {
@@ -92,7 +92,8 @@ struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
     return AnySizedInt::Check(sem_ir, state, type_id) ||
-           BuiltinType<IntLiteralType::InstId>::Check(sem_ir, state, type_id);
+           BuiltinType<IntLiteralType::TypeInstId>::Check(sem_ir, state,
+                                                          type_id);
   }
 };
 
@@ -100,7 +101,8 @@ struct AnyInt {
 struct AnyFloat {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<LegacyFloatType::InstId>::Check(sem_ir, state, type_id)) {
+    if (BuiltinType<LegacyFloatType::TypeInstId>::Check(sem_ir, state,
+                                                        type_id)) {
       return true;
     }
     return sem_ir.types().Is<FloatType>(type_id);
@@ -108,14 +110,14 @@ struct AnyFloat {
 };
 
 // Constraint that requires the type to be the type type.
-using Type = BuiltinType<TypeType::InstId>;
+using Type = BuiltinType<TypeType::TypeInstId>;
 
 // Constraint that requires the type to be a type value, whose type is type
 // type. Also accepts symbolic constant value types.
 struct AnyType {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<TypeType::InstId>::Check(sem_ir, state, type_id)) {
+    if (BuiltinType<TypeType::TypeInstId>::Check(sem_ir, state, type_id)) {
       return true;
     }
     return sem_ir.types().GetAsInst(type_id).type_id() == TypeType::TypeId;

@@ -4,6 +4,8 @@
 
 #include "toolchain/check/name_lookup.h"
 
+#include <optional>
+
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"

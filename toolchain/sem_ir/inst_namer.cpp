@@ -4,6 +4,10 @@
 
 #include "toolchain/sem_ir/inst_namer.h"
 
+#include <string>
+#include <utility>
+#include <variant>
+
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"
@@ -583,6 +587,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& class_info = sem_ir_->classes().Get(inst.class_id);
         add_inst_name_id(class_info.name_id, ".decl");
         auto class_scope_id = GetScopeFor(inst.class_id);
+        // TODO: Should do this as part of building the class scope in the
+        // InstNamer constructor, not here.
         queue_block_id(class_scope_id, class_info.pattern_block_id);
         queue_block_id(class_scope_id, inst.decl_block_id);
         continue;
@@ -672,6 +678,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& function_info = sem_ir_->functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
+        // TODO: Should do this as part of building the function scope in the
+        // InstNamer constructor, not here.
         queue_block_id(function_scope_id, function_info.pattern_block_id);
         queue_block_id(function_scope_id, inst.decl_block_id);
         continue;
@@ -693,6 +701,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
+        // TODO: Should do this as part of building the impl scope in the
+        // InstNamer constructor, not here.
         queue_block_id(impl_scope_id,
                        sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
         queue_block_id(impl_scope_id, inst.decl_block_id);
@@ -791,6 +801,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".decl");
         auto interface_scope_id = GetScopeFor(inst.interface_id);
+        // TODO: Should do this as part of building the interface scope in the
+        // InstNamer constructor, not here.
         queue_block_id(interface_scope_id, interface_info.pattern_block_id);
         queue_block_id(interface_scope_id, inst.decl_block_id);
         continue;

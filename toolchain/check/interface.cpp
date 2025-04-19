@@ -4,6 +4,9 @@
 
 #include "toolchain/check/interface.h"
 
+#include <algorithm>
+#include <cstddef>
+
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"

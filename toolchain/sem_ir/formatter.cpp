@@ -4,6 +4,9 @@
 
 #include "toolchain/sem_ir/formatter.h"
 
+#include <string>
+#include <utility>
+
 #include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"

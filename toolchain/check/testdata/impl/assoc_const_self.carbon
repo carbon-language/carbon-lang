@@ -86,13 +86,10 @@ fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
 
 fn CallF() {
   // TODO: This call should eventually work.
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `{}` into type implementing `I where .(I.V) = {} and...` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: error: cannot convert type `{}` into type implementing `I where .(I.V) = {} and...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F({});
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: note: type `{}` does not implement interface `Core.ImplicitAs(I where .(I.V) = {} and...)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   F({});
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-10]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-7]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
@@ -822,8 +819,7 @@ fn CallF() {
 // CHECK:STDOUT: fn @CallF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc22_6: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc22_7: %I_where.type = converted %.loc22_6, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

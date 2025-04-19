@@ -4,6 +4,11 @@
 
 #include "toolchain/sem_ir/stringify.h"
 
+#include <optional>
+#include <string>
+#include <utility>
+#include <variant>
+
 #include "common/raw_string_ostream.h"
 #include "common/variant_helpers.h"
 #include "toolchain/base/kind_switch.h"

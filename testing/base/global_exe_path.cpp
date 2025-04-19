@@ -4,6 +4,7 @@
 
 #include "testing/base/global_exe_path.h"
 
+#include <optional>
 #include <string>
 
 #include "common/check.h"

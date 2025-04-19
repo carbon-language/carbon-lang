@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <algorithm>
+#include <vector>
+
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
@@ -439,9 +442,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto* callee = context.GetOrCreateFunction(
-      callee_function.function_id, callee_function.resolved_specific_id);
-
   std::vector<llvm::Value*> args;
 
   auto inst_type_id = SemIR::GetTypeOfInstInSpecific(
@@ -461,7 +461,40 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     }
   }
 
-  context.SetLocal(inst_id, context.builder().CreateCall(callee, args));
+  llvm::CallInst* call;
+  const auto& function =
+      context.sem_ir().functions().Get(callee_function.function_id);
+  if (function.virtual_index != -1) {
+    CARBON_CHECK(!args.empty(),
+                 "Virtual functions must have at least one parameter");
+    auto* ptr_type =
+        llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
+    // The vtable pointer is always at the start of the object in the Carbon
+    // ABI, so a pointer to the object is a pointer to the vtable pointer - load
+    // that to get a pointer to the vtable.
+    auto* vtable =
+        context.builder().CreateLoad(ptr_type, args.front(), "vtable");
+    auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
+    auto function_type_info = context.BuildFunctionTypeInfo(
+        function, callee_function.resolved_specific_id);
+    call = context.builder().CreateCall(
+        function_type_info.type,
+        context.builder().CreateCall(
+            llvm::Intrinsic::getOrInsertDeclaration(
+                &context.llvm_module(), llvm::Intrinsic::load_relative,
+                {i32_type}),
+            {vtable,
+             llvm::ConstantInt::get(
+                 i32_type, static_cast<uint64_t>(function.virtual_index) * 4)}),
+        args);
+  } else {
+    call = context.builder().CreateCall(
+        context.GetOrCreateFunction(callee_function.function_id,
+                                    callee_function.resolved_specific_id),
+        args);
+  }
+
+  context.SetLocal(inst_id, call);
 }
 
 }  // namespace Carbon::Lower

@@ -4,6 +4,9 @@
 
 #include "toolchain/parse/precedence.h"
 
+#include <initializer_list>
+#include <optional>
+
 #include "common/check.h"
 
 namespace Carbon::Parse {

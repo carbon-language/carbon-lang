@@ -6,6 +6,8 @@
 
 #include <array>
 #include <limits>
+#include <optional>
+#include <utility>
 
 #include "common/check.h"
 #include "common/variant_helpers.h"

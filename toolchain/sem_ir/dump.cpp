@@ -6,6 +6,8 @@
 
 #include "toolchain/sem_ir/dump.h"
 
+#include <string>
+
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/stringify.h"
 

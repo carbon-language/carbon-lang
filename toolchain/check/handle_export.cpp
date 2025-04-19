@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
@@ -17,6 +18,9 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
     -> bool {
+  // Export declarations can't be generic, but we might have parsed a generic
+  // parameter in their name, so enter a generic scope just in case.
+  StartGenericDecl(context);
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Export>();
   // TODO: Probably need to update DeclNameStack to restrict to only namespaces.
   context.decl_name_stack().PushScopeAndStartName();
@@ -26,6 +30,7 @@ auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
 auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Export));
+  DiscardGenericDecl(context);
   context.decl_name_stack().PopScope();
 
   auto introducer =

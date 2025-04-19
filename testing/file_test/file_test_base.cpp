@@ -21,9 +21,16 @@
 
 #include "testing/file_test/file_test_base.h"
 
+#include <atomic>
+#include <cstdlib>
 #include <filesystem>
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <utility>
 
 #include "absl/flags/flag.h"
