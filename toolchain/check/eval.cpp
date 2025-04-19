@@ -1674,7 +1674,7 @@ static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
                         context.types().GetConstantId(inst.type_id()));
   GetConstantValueForArg(eval_context, inst.arg0_and_kind(), &phase);
   GetConstantValueForArg(eval_context, inst.arg1_and_kind(), &phase);
-  CARBON_CHECK(IsConstant(phase));
+  CARBON_CHECK(phase != Phase::Runtime);
   return phase;
 }
 

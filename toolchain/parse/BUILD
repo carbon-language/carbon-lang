@@ -153,6 +153,7 @@ cc_library(
         ":node_kind",
         "//common:check",
         "//common:error",
+        "//common:find",
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:value_store",
