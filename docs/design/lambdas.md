@@ -11,11 +11,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Syntax Overview](#syntax-overview)
+    -   [Return type](#return-type)
+        - [Return expression](#return-expression)
+        - [Explicit return type](#explicit-return-type)
+        - [No return](#no-return)
+    -   [Implicit parameters in square brackets](#implicit-parameters-in-square-brackets)
+    -   [Parameters](#parameters)
     -   [Syntax Defined](#syntax-defined)
--   [Introducer](#introducer)
 -   [Positional Parameters](#positional-parameters)
     -   [Positional Parameter Restrictions](#positional-parameter-restrictions)
--   [Function Captures](#function-captures)
+-   [Lambda Captures](#lambda-captures)
     -   [Capture Modes](#capture-modes)
     -   [Default Capture Mode](#default-capture-mode)
 -   [Function Fields](#function-fields)
@@ -26,10 +31,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Syntax Overview
 
-**Proposal**: A largely continuous syntax between lambdas and function
-declarations.
+One goal of Carbon's lambda syntax is to have continuity between lambdas and function.
+Below are some example declarations:
 
-At a high level, lambdas and function declarations will look like the following.
+Implicit return types
 
 ```carbon
 // In a variable:
@@ -37,11 +42,13 @@ let lambda: auto = fn => T.Make();
 // Equivalent in C++23:
 // const auto lambda = [] { return T::Make(); };
 
-// In a function call:
-Foo(10, 20, fn => T.Make());
+// As an argument to a function call:
+Foo(10, E20, fn => T.Make());
 // Equivalent in C++23:
 // Foo(10, 20, [] { return T::Make(); });
 ```
+
+Explicit return types
 
 ```carbon
 // In a variable:
@@ -49,47 +56,41 @@ let lambda: auto = fn -> T { return T.Make(); };
 // Equivalent in C++23:
 // const auto lambda = [] -> T { return T::Make(); };
 
-// In a function call:
-PushBack(my_list, fn => T.Make());
+// As an argument to a function call:
+PushBack(my_list, fn -> T { return T.Make() });
 // Equivalent in C++23:
 // PushBack(my_list, [] { return T::Make(); });
 ```
 
-```carbon
-fn FunctionDeclaration => T.Make();
-// Equivalent in C++23:
-// auto FunctionDeclaration() { return T.Make(); }
-```
+### Return type
 
-```carbon
-fn FunctionDeclaration -> T { return T.Make(); }
-// Equivalent in C++23:
-// auto FunctionDeclaration() -> T { return T::Make(); }
-```
+There are three options for how a lambda expresses its return type, parallel to
+[how function declarations express returns](functions.md#return-clause): using
+a return expression, using an explicit return type, or having no return.
 
-There are functions which return an expression, such that the return type is
-`auto`.
+#### Return expression
 
-```carbon
+A return expression is introduced with a double arrow (`=>`) followed by an
+expression describing the function's return value. In this case, the return type is
+determined by the type of the expression, as if the return type was `auto`.
+
+```carbon 
 // In a variable:
 let lambda: auto = fn => T.Make();
 // Equivalent in C++23:
 // const auto lambda = [] { return T::Make(); };
 
-// In a function call:
+// As an argument to a function call:
 Foo(fn => T.Make());
 // Equivalent in C++23:
 // Foo([] { return T::Make(); });
 ```
 
-```carbon
-fn FunctionDeclaration => T.Make();
-// Equivalent in C++23:
-// auto FunctionDeclaration() { return T::Make(); }
-```
+#### Explicit return type
 
-And there are functions with an explicit return type that provide a body of
-statements.
+An explicit return type is introduced with a single arrow (`->`), followed by the
+return type, and finally the body of the lambda with a sequence of statements
+enclosed in curly braces (`{`...`}`).
 
 ```carbon
 // In a variable:
@@ -97,19 +98,16 @@ let lambda: auto = fn -> T { return T.Make(); };
 // Equivalent in C++23:
 // const auto lambda = [] -> T { return T::Make(); };
 
-// In a function call:
+// As an argument to a function call:
 Foo(fn -> T { return T.Make(); })
 // Equivalent in C++23:
 // Foo([] -> T { return T::Make(); });
 ```
 
-```carbon
-fn FunctionDeclaration -> T { return T.Make(); }
-// Equivalent in C++23:
-// auto FunctionDeclaration() -> T { return T::Make(); }
-```
+#### No return
 
-There are even functions that provide a body of statements but no return value.
+Lambdas that don't return anything end with a body of statements in curly braces
+(`{`...`}`).
 
 ```carbon
 // In a variable:
@@ -117,22 +115,16 @@ let lambda: auto = fn { Print(T.Make()); };
 // Equivalent in C++23:
 // const auto lambda = [] -> void { Print(T::Make()); };
 
-// In a function call:
+// As an argument in a function call:
 Foo(fn { Print(T.Make()); });
 // Equivalent in C++23:
 // Foo([] -> void { Print(T::Make()); });
 ```
 
-```carbon
-fn FunctionDeclaration { Print(T.Make()); }
-// Equivalent in C++23:
-// auto FunctionDeclaration() -> void { Print(T::Make()); }
-```
+### Implicit parameters in square brackets
 
-Functions support [captures](#function-captures), [fields](#function-fields) and
-deduced parameters in the square brackets. In addition, `self: Self` or
-`addr self: Self*` can be added to the square brackets of function declarations
-that exist inside class or interface definitions.
+Lambdas support [captures](#function-captures), [fields](#function-fields) and
+deduced parameters in the square brackets.
 
 ```carbon
 fn Foo(x: i32) {
@@ -141,21 +133,18 @@ fn Foo(x: i32) {
   // Equivalent in C++23:
   // const auto lambda = [x, y = int32_t{0}] mutable -> void { Print(++x, ++y); };
 
-  // In a function call:
+  // As an argument in a function calll:
   Foo(fn [var x, var y: i32 = 0] { Print(++x, ++y); });
   // Equivalent in C++23:
   // Foo([x, y = int32_t{0}] mutable -> void { Print(++x, ++y); });
-
-  fn FunctionDeclaration[var x, var y: i32 = 0] { Print(++x, ++y); }
-  // Equivalent in C++23:
-  // auto FunctionDeclaration = [x, y = int32_t{0}] mutable -> void { Print(++x, ++y); };
 }
 ```
 
-Functions also support so-called
-["positional parameters"](#positional-parameters) that are defined at their
-point of use using a dollar sign and a non-negative integer. They are implicitly
-of type `auto`.
+### Parameters
+
+Lambdas also support so-called ["positional parameters"](#positional-parameters) 
+that are defined at their point of use using a dollar sign and a non-negative integer.
+They are implicitly of type `auto`.
 
 ```carbon
 fn Foo() {
@@ -164,16 +153,10 @@ fn Foo() {
   // auto lambda = [](auto _0, auto...) -> void { Print(_0); };
   // Equivalent in Swift:
   // let lambda = { Print($0) };
-
-  fn FunctionDeclaration { Print($0); }
-  // Equivalent in C++23:
-  // auto FunctionDeclaration = [](auto _0, auto...) -> void { Print(_0); };
-  // Equivalent in Swift:
-  // let FunctionDeclaration = { Print($0) };
 }
 ```
 
-Of course, functions can also have named parameters, but a single function can't
+Of course, lambdas can also have named parameters, but a single lambda can't
 have both named and positional parameters.
 
 ```carbon
@@ -183,14 +166,10 @@ fn Foo() {
   // Equivalent in C++23:
   // const auto lambda = [](v: auto) -> void { Print(v); };
 
-  // In a function call:
+  // As an argument to a function call:
   Foo(fn (v: auto) { Print(v); });
   // Equivalent in C++23:
   // Foo([](v: auto) { Print(v); });
-
-  fn FunctionDeclaration(v: auto) { Print(v); }
-  // Equivalent in C++23:
-  // auto FunctionDeclaration(v: auto) -> void { Print(v); }
 }
 ```
 
@@ -200,23 +179,20 @@ parameters are always permitted.
 ```carbon
 fn Foo() {
   let lambda: auto = fn [T:! Printable](t: T) { Print(t); };
-
-  fn FunctionDeclaration[T:! Printable](t: T) { Print(t); }
 }
 ```
 
 ### Syntax Defined
 
-Function definitions and lambda expressions have one of the following syntactic
+Lambda expressions have one of the following syntactic
 forms (where items in square brackets are optional and independent):
 
-`fn` \[_name_\] \[_implicit-parameters_\] \[_tuple-pattern_\] `=>` _expression_
-\[`;`\]
+`fn`\[_implicit-parameters_\] \[_tuple-pattern_\] `=>` _expression_
 
-`fn` \[_name_\] \[_implicit-parameters_\] \[_tuple-pattern_\] \[`->`
+`fn` \[_implicit-parameters_\] \[_tuple-pattern_\] \[`->`
 _return-type_\] `{` _statements_ `}`
 
-The first form is a shorthand for the second: "`=>` _expression_ `;`" is
+The first form is a shorthand for the second: "`=>` _expression_" is
 equivalent to "`-> auto { return` _expression_ `; }`".
 
 _implicit-parameters_ consists of square brackets enclosing a optional default
@@ -225,9 +201,8 @@ parameters, all separated by commas. The default capture mode (if any) must come
 first; the other items can appear in any order. If _implicit-parameters_ is
 omitted, it is equivalent to `[]`.
 
-The presence of _name_ determines whether this is a function definition or a
-lambda expression. The trailing `;` in the first form is required for a function
-definition, but is not part of the syntax of a lambda expression.
+Function definitions are distinguished from lambdas by the presence of a name
+after the `fn` keyword.
 
 The presence of _tuple-pattern_ determines whether the function body uses named
 or positional parameters.
@@ -251,7 +226,6 @@ following code examples.
 |         E3         |         Body of Statements (no return value) ([positional parameters](#positional-parameters) disallowed)          |
 |         E4         |        Body of Statements (with return value) ([positional parameters](#positional-parameters) disallowed)         |
 |         F          |                                                Required Return Type                                                |
-|         G          |                                             Function Declaration Name                                              |
 
 ```carbon
 // Lambdas (all the following are in an expression context and are
@@ -282,69 +256,27 @@ fn [B, C](D) { E3; }
 fn [B, C](D) -> F { E4; }
 ```
 
-```carbon
-// Function Declarations (all the following are allowed as statements in a
-// function body or as declarations in other scopes)
-
-fn G => A1;
-
-fn G[B, C] => A1;
-
-fn G(D) => A2;
-
-fn G[B, C](D) => A2;
-
-fn G { E1; }
-
-fn G -> F { E2; }
-
-fn G[B, C] { E1; }
-
-fn G[B, C] -> F { E2; }
-
-fn G(D) { E3; }
-
-fn G(D) -> F { E4; }
-
-fn G[B, C](D) { E3; }
-
-fn G[B, C](D) -> F { E4; }
-```
-
-## Introducer
-
-**Proposal**: Introduce with the `fn` keyword to mirror function declarations.
-If a statement or declaration begins with `fn`, a name is required and it
-becomes a function declaration. Otherwise, if in an expression context, `fn`
-introduces a lambda.
-
-```carbon
-let lambda1: auto = fn => T.Make();
-
-let lambda2: auto = fn -> T { return T.Make(); };
-
-fn FunctionDeclaration1 => T.Make();
-
-fn FunctionDeclaration2 -> T { return T.Make(); }
-```
-
 ## Positional Parameters
 
-**Proposal**: Positional parameters, introduced in the body of a function by way
-of the dollar sign and a corresponding non-negative parameter position integer
-(ex: `$3`), are `auto` parameters to the function in which they are defined.
-They can be used in any lambda or function declaration that lacks an explicit
+Positional parameters, denoted by a dollar sign followed by a non-negative 
+integer (e.g., $3), are auto-typed parameters defined within the lambda's body.
+
+```carbon
+let lambda: auto = fn => { return $0 };
+```
+
+They can be used in any lambda declaration that lacks an explicit
 parameter list (parentheses). They are variadic by design, meaning an unbounded
 number of arguments can be passed to any function that lacks an explicit
 parameter list. Only the parameters that are named in the body will be read
 from, meaning the highest named parameter denotes the minimum number of
-arguments required by the function. The function body is free to omit
+arguments required by the function. The lambda body is free to omit
 lower-numbered parameters (ex: `fn { Print($10); }`).
 
 This syntax was inpsired by Swift's
 [Shorthand Argument Names](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/closures/#Shorthand-Argument-Names).
 
-```swift
+```carbon
 // A lambda that takes two positional parameters being used as a comparator
 Sort(my_list, fn => $0.val < $1.val);
 // In Swift: { $0.val < $1.val }
@@ -352,49 +284,34 @@ Sort(my_list, fn => $0.val < $1.val);
 
 ### Positional Parameter Restrictions
 
-**Proposal**: There are two restrictions applied to functions with positional
-parameters. The first restriction is that the definitions of function
-declarations must be attached to the declarations. The second restriction is
-that positional parameters can only be used in a context where there is exactly
-one enclosing function without an explicit parameter list. For example...
+There are two restrictions applied to functions with positional
+parameters. The first restriction is that the function's definition must be 
+attached to the declaration. The second restriction is that positional
+parameters can only be used in a context where there is exactly
+one enclosing function that has no explicit parameter list. For example...
 
 ```carbon
 fn Foo1 {
-  fn Bar1 {}  // ❌ Invalid: Foo1 is already using positional parameters
+  let lambda: auto = fn => ( $0 < $1 ) // ✅ Valid: Foo1 has no parameter list
 }
 
 fn Foo2 {
-  Print($0);
-  fn Bar2 {}  // ❌ Invalid: Foo2 is already using positional parameters
-}
-
-fn Foo3 {
-  fn Bar3 {
-    Print($0);  // ❌ Invalid: Foo3 is already using positional parameters
-  }
-}
-
-fn Foo4() {
-  fn Bar4 {
-    Print($0);  // ✅ Valid: Foo4 has explicit parameters
-  }
-}
-
-fn Foo5 {
-  fn Bar5() {}  // ✅ Valid: Bar5 has explicit parameters
-}
-
-fn Foo6() {
   my_list.Sort(
-    fn => $0 < $1  // ✅ Valid: Foo6 has explicit parameters
+    fn => { $0 < $1 }  // ❌ Invalid: Foo2 is already using positional parameters
+  );
+}
+
+fn Foo3() {
+  my_list.Sort(
+    fn => { $0 < $1 }  // ✅ Valid: Foo3 has explicit parameters
   );
 }
 ```
 
-## Function Captures
+## Lambda Captures
 
-**Proposal**: Function captures in Carbon mirror the non-init captures of C++. A
-function capture declaration consists of a capture mode (for `var` captures)
+Lambda captures in Carbon mirror the non-init captures of C++. A
+ capture declaration consists of a capture mode (for `var` captures)
 followed by the name of a binding from the enclosing scope, and makes that
 identifier available in the inner function body. The lifetime of a capture is
 the lifetime of the function in which it exists. For example...
@@ -418,16 +335,31 @@ fn Foo() {
 
 ### Capture Modes
 
-**Proposal**: `let` and `var` can appear as function captures. They behave as
-they would in regular bindings.
+Lambdas can capture variables from their surrounding scope using `let` or `var`,  
+just like regular bindings. These capture modes determine whether the lambda  
+sees a copy (`let`) or a mutable reference (`var`) to the captured variable.
 
-To prevent ambiguities, captures can only exist on functions where the
-definition is attached to the declaration. This means they are supported on
-lambdas (which always exist in an expression context) and they are supported on
-function declarations that are immediately defined inside the body of another
-function (which is in a statement context), but they are not supported on
-forward-declared functions nor are they supported as class members where
-`self: Self` is permitted.
+To avoid ambiguity, captures are only allowed when the lambda is **defined  
+inline**—within an expression or directly inside a function body. This means:
+
+- ✅ Lambdas support captures.  
+- ✅ Nested lambdas defined inside a function body support captures.  
+- ❌ Lambdas or functions declared ahead of time (e.g., forward-declared)  
+  **cannot** use captures.  
+- ❌ Captures are not allowed in class member functions where `self: Self` is  
+  used.
+
+You can use capture modes in two ways:  
+- As **default capture mode specifiers**  
+- For **explicit captures**, as shown in the example below:
+
+```carbon
+fn Foo() {
+  var counter: i32 = 0;
+  let printer = fn [let counter] { Print(counter); };
+  let incrementer = fn [var counter] { counter += 1; };
+}
+```
 
 Capture modes can be used as
 [default capture mode specifiers](#default-capture-mode) or for explicit
@@ -438,11 +370,10 @@ fn Example {
   var a: i32 = 0;
   var b: i32 = 0;
 
-  let lambda: auto = fn [a, var b] {
-    a += 1;  // ❌ Invalid: by-value captures are immutable
-
-    b += 1;  // ✅ Valid: Modifies the captured copy of the by-object capture
-  };
+let lambda: auto = fn [a, var b] {
+  a += 1;  // ❌ Invalid: `a` is an immutable copy (default `let`)
+  b += 1;  // ✅ Valid: `b` is a mutable copy (captured with `var`)
+};
 
   lambda();
 }
@@ -461,15 +392,13 @@ fn Example {
 }
 ```
 
-Note: If a function object F has mutable state, either because it has a
-by-object capture or because it has a by-object function field, then a call to F
-should require the callee to be a reference expression rather than a value
-expression. We need a mutable handle to the function in order to be able to
-mutate its mutable state.
+Note: If a function object F has mutable state (via by-object captures or
+mutable fields), calling F requires a mutable reference. This ensures the
+function has access to its internal state for mutation.
 
 ### Default Capture Mode
 
-**Proposal**: By default, there is no capturing in functions. The lack of any
+By default, there is no capturing in lambdas. The lack of any
 square brackets is the same as an empty pair of square brackets. Users can opt
 into capturing behavior. This is done either by way of individual explicit
 captures, or more succinctly by way of a default capture mode. The default
@@ -498,11 +427,11 @@ fn Foo2() {
 }
 ```
 
-## Function Fields
+## Function Fields in Lambdas
 
-**Proposal**: Function fields mirror the behavior of init captures in C++. A
+Function fields in lambdas mirror the behavior of init captures in C++. A
 function field definition consists of an irrefutable pattern, `=`, and an
-initializer. It matches the pattern with the initializer when the function
+initializer. It matches the pattern with the initializer when the lambda 
 definition is evaluated. The bindings in the pattern have the same lifetime as
 the function, and their scope extends to the end of the function body.
 
@@ -528,7 +457,7 @@ fn Foo() {
 
 ## Copy Semantics
 
-**Proposal**: To mirror the behavior of C++, function declarations and lambdas
+To mirror the behavior of C++, function declarations and lambdas
 will be as copyable as their contained function fields and function captures.
 This means that, if a function holds a by-object function field, if the type of
 the field is copyable, so too is the function that contains it. This also
@@ -541,11 +470,17 @@ contained from being copied assigned.
 
 ## Self and Recursion
 
-**Proposal**: To mirror C++'s use of capturing `this`, `self` should always come
+To mirror C++'s use of capturing `this`, `self` should always come
 from the outer scope as a capture. `self: Self` is never permitted on lambdas.
 For function declarations, it is only permitted when the function is a member of
 a class type or an interface, such that it refers to the class/interface and not
 to the function itself.
+
+```carbon
+fn = [self: Self] { return self.F(); };  // ❌ Not allowed
+
+fn = [self] { return self.F(); };  // ✅ Only if self came from outside
+```
 
 Note: Given the direction in
 [#3720](https://github.com/carbon-language/carbon-lang/pull/3720), an expression
