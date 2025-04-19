@@ -457,11 +457,10 @@ fn Foo() {
 
 ## Copy Semantics
 
-To mirror the behavior of C++, function declarations and lambdas
-will be as copyable as their contained function fields and function captures.
-This means that, if a function holds a by-object function field, if the type of
-the field is copyable, so too is the function that contains it. This also
-applies to captures.
+To mirror the behavior of C++, lambdas will be as copyable as their contained 
+function fields and function captures. This means that, if a function holds 
+a by-object function field, if the type of the field is copyable, so too is
+the function that contains it. This also applies to captures.
 
 The other case is by-value function fields. Since C++ const references, when
 made into fields of a class, prevent the class from being copied assigned, so
@@ -472,9 +471,6 @@ contained from being copied assigned.
 
 To mirror C++'s use of capturing `this`, `self` should always come
 from the outer scope as a capture. `self: Self` is never permitted on lambdas.
-For function declarations, it is only permitted when the function is a member of
-a class type or an interface, such that it refers to the class/interface and not
-to the function itself.
 
 ```carbon
 fn = [self: Self] { return self.F(); };  // ❌ Not allowed
