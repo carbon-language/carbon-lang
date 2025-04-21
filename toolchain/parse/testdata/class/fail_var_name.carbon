@@ -26,6 +26,16 @@ class C {
   // CHECK:STDERR:       ^~~~
   // CHECK:STDERR:
   var self: C;
+
+  var :;
+
+  var : C;
+
+  var name:;
+
+  var name C;
+
+  var name: C C;
 }
 
 // CHECK:STDOUT: - filename: fail_var_name.carbon
