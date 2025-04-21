@@ -48,7 +48,6 @@ fn F() {
   var explicit_return: ExplicitReturn;
   var with_addr: WithAddr;
   if (true) {
-    // TODO: Destroy in nested scope.
     var in_scope: NoAddr;
   }
 }

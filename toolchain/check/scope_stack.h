@@ -49,14 +49,16 @@ class ScopeStack {
   // Pushes a scope for a declaration name's parameters.
   auto PushForDeclName() -> void;
 
-  // Pushes a non-function entity scope. Functions must use `PushForFunction` instead.
+  // Pushes a non-function entity scope. Functions must use `PushForFunction`
+  // instead.
   auto PushForEntity(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                      SemIR::SpecificId specific_id,
                      bool lexical_lookup_has_load_error = false) -> void;
 
-  // Pushes a scope which doesn't break up a function, because it would be
-  // allowed in a statement. For example, a struct literal or a code block.
-  auto PushForExpr() -> void;
+  // Pushes a scope which should be in the same region as the current scope.
+  // These can be in a function without breaking `return` scoping. For example,
+  // this is used by struct literals and code blocks.
+  auto PushForSameRegion() -> void;
 
   // Pushes a function scope.
   auto PushForFunction(SemIR::InstId scope_inst_id) -> void;
@@ -235,13 +237,16 @@ class ScopeStack {
     // set and unset as `returned var`s are declared and go out of scope.
     SemIR::InstId returned_var = SemIR::InstId::None;
 
-    // When processing a scope that's nested inside a `return` scope where
-    // `return` *cannot* be used (for example, a `class` inside a `fn`), this is
-    // the index of the terminating scope. It's set on `Push`, and cleared on
-    // the appropriate `Pop`.
+    // When a nested scope interrupts a return scope, this is the index of the
+    // outermost interrupting scope (the one closest to the function scope).
+    // This can then be used to determine whether we're actually inside the most
+    // recent `ReturnScope`, or inside a different entity scope.
     //
     // This won't be set for functions directly inside functions, because they
     // will have their own `ReturnScope`.
+
+    // For example, when a `class` is inside a `fn`, it interrupts the function
+    // body by setting this on `PushEntity`; `Pop` will set it back to `None`.
     ScopeIndex nested_scope_index = ScopeIndex::None;
   };
 
@@ -260,9 +265,9 @@ class ScopeStack {
            scope_stack_.back().lexical_lookup_has_load_error;
   }
 
-  // Marks the return scope as having left the function. Called after pushing
-  // the new scope.
-  auto MaybeLeftFunctionScope() -> void {
+  // If inside a return scope, marks a nested scope (see `nested_scope_index`).
+  // Called after pushing the new scope.
+  auto MarkNestingIfInReturnScope() -> void {
     if (!return_scope_stack_.empty() &&
         !return_scope_stack_.back().nested_scope_index.has_value()) {
       return_scope_stack_.back().nested_scope_index = scope_stack_.back().index;
@@ -288,8 +293,8 @@ class ScopeStack {
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
 
-  // A stack of `destroy` functions to call. This only has entries for function
-  // scopes, because non-function scopes don't have destruction on scope exit.
+  // A stack of `destroy` functions to call. This only has entries inside of
+  // function bodies, where destruction on scope exit is required.
   ArrayStack<SemIR::InstId> destroy_id_stack_;
 
   // Information about non-lexical scopes. This is a subset of the entries and

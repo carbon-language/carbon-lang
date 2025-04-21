@@ -246,7 +246,7 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
   }
 
   // Enter a parameter scope in case the qualified name itself has parameters.
-  context.scope_stack().PushForExpr();
+  context.scope_stack().PushForSameRegion();
 }
 
 auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {

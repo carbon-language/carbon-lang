@@ -10,7 +10,7 @@ namespace Carbon::Check {
 auto HandleParseNode(Context& context, Parse::CodeBlockStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
-  context.scope_stack().PushForExpr();
+  context.scope_stack().PushForSameRegion();
   return true;
 }
 
