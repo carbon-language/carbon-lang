@@ -88,7 +88,6 @@ class FunctionContext {
   }
 
   // Returns a lowered type for the given type_id.
-  // TODO: Use GetTypeOfInst where possible.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
     return file_context_->GetType(type_id);
   }
