@@ -49,7 +49,7 @@ class ScopeStack {
   // Pushes a scope for a declaration name's parameters.
   auto PushForDeclName() -> void;
 
-  // Pushes an entity scope. Note functions must use `PushForFunction` instead.
+  // Pushes a non-function entity scope. Functions must use `PushForFunction` instead.
   auto PushForEntity(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                      SemIR::SpecificId specific_id,
                      bool lexical_lookup_has_load_error = false) -> void;
@@ -115,7 +115,8 @@ class ScopeStack {
   // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
-  // Returns the `returned var` instruction if one is set.
+  // Returns the `returned var` instruction that's currently in scope, or `None`
+  // if there isn't one.
   auto GetReturnedVar() -> SemIR::InstId {
     CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
     return return_scope_stack_.back().returned_var;
