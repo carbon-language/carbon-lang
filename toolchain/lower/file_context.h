@@ -5,11 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
+#include "common/raw_string_ostream.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/BLAKE3.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -29,45 +31,10 @@ class FileContext {
     int32_t column_number;
   };
 
-  struct LoweringFunctionState {
-    // The index of an instruction for the whole function
-    // Note: A more accurante representation would be
-    // index_for_block_id + index+inst_id_in_block. This doesn't look necessary
-    // for deduplicating specifics of the same generic, but would be needed for
-    // more complex analysis (ICF).
-    unsigned inst_id_index = 0;
-    // If the state has relevant information, it will be kept, otherwise it's
-    // discarded.
-    bool relevant = false;
-    // Global (constant) values that are dependent on the specific.
-    llvm::SmallVector<llvm::Value*> global_values;
-    // Calls, also dependent on specific, to other specific functions.
-    llvm::SmallVector<std::pair<SemIR::FunctionId, SemIR::SpecificId>> calls;
-    // This stores types emitted for VarStorage, which may be
-    // specific-dependent. E.g., associated constants.
-    // TODO: may need to add to this for other types as well. Params are
-    // handled separately by comparing the FunctionTypeInfo members.
-    llvm::SmallVector<llvm::Type*> types;
-
-    void Print(llvm::raw_ostream& out) {
-      out << "Index: " << inst_id_index << "; Globals: [";
-      for (auto* global : global_values) {
-        if (global) {
-          out << global << " ";
-        }
-      }
-      out << "]; Calls [";
-      for (auto [function_id, specific_id] : calls) {
-        out << "(" << function_id << ", " << specific_id << ") ";
-      }
-      out << "]; Types [";
-      for (auto* type : types) {
-        if (type) {
-          out << type << " ";
-        }
-      }
-      out << "];\n";
-    }
+  struct SpecificFunctionFingerprint {
+    llvm::BLAKE3Result<32UL> function_common_fingerprint;
+    llvm::BLAKE3Result<32UL> function_specific_fingerprint;
+    llvm::SmallVector<SemIR::SpecificId> calls;
   };
 
   explicit FileContext(
@@ -224,25 +191,28 @@ class FileContext {
                                     SemIR::SpecificId specific_id) {
     lowered_specifics_[generic_id.index].push_back(specific_id);
   }
-  auto CreateStateForSpecific(SemIR::SpecificId specific_id)
-      -> llvm::SmallVector<LoweringFunctionState>* {
+
+  auto InitializeFingerprintForSpecific(SemIR::SpecificId specific_id)
+      -> SpecificFunctionFingerprint* {
     if (!specific_id.has_value()) {
       return nullptr;
     }
-    return &lowered_states_[specific_id.index];
+    return &lowered_specific_fingerprint_[specific_id.index];
   }
 
   auto CoalesceEquivalentSpecifics() -> void;
   auto CheckTypeEquivalence(SemIR::SpecificId specific1,
                             SemIR::SpecificId specific2) -> bool;
-  auto CheckStateEquivalence(
+  auto CheckBodyEquivalence(
       SemIR::SpecificId specific1, SemIR::SpecificId specific2,
       Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
           visited_equivalent_specifics,
       Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
           visited_equivalent_specifics_flipped) -> bool;
-  auto ReplaceSpecificWithSpecific(SemIR::SpecificId to_replace,
-                                   SemIR::SpecificId replace_with) -> void;
+  auto AddOrUpdateSpecificEquivalence(
+      std::pair<SemIR::SpecificId, SemIR::SpecificId>& pair,
+      Set<SemIR::SpecificId>& specifics_to_delete) -> void;
+  auto CheckExistingEquivalence(SemIR::SpecificId, SemIR::SpecificId) -> bool;
   auto DeleteFunctionSpecific(SemIR::SpecificId to_replace,
                               SemIR::SpecificId replace_with) -> void;
 
@@ -315,22 +285,22 @@ class FileContext {
   // We resize this to the correct size. Indexed by generic_id.index.
   llvm::SmallVector<llvm::SmallVector<SemIR::SpecificId>, 0> lowered_specifics_;
 
-  // For specifics that exist in lowered_specifics, store their function type
-  // information: return and parameter types. We resize this to the correct
-  // size. Indexed by specific_id.index.
-  // TODO: Storing all members of FunctionTypeInfo may not be necessary.
-  llvm::SmallVector<FunctionTypeInfo, 0> lowered_specifics_types_;
+  // For specifics that exist in lowered_specifics, a hash of their function
+  // type information: return and parameter types. We resize this to the
+  // correct size. Indexed by specific_id.index.
+  // TODO: Hashing all members of FunctionTypeInfo may not be necessary.
+  llvm::SmallVector<llvm::BLAKE3Result<32UL>, 0>
+      lowered_specifics_type_fingerprint_;
 
   // This is initialized and populated while lowering a specific.
-  // The list of states for a specific is populated by the function_context
-  // for that specific. e resize this to the correct size. Indexed by
-  // specific_id.index.
-  llvm::SmallVector<llvm::SmallVector<LoweringFunctionState>, 0>
-      lowered_states_;
+  // We resize this to the correct size. Indexed by specific_id.index.
+  llvm::SmallVector<SpecificFunctionFingerprint, 0>
+      lowered_specific_fingerprint_;
 
-  // Equivalent specifics found. TODO: add flipped pairs
-  Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>> equivalent_specifics_;
-  // Non-equivalent specifics found. TODO: add flipped pairs
+  // Equivalent specifics found: for each specific point to the
+  // canonical equivalent specific
+  llvm::SmallVector<SemIR::SpecificId> equivalent_specifics_;
+  // Non-equivalent specifics found.
   Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>
       non_equivalent_specifics_;
   // Track whether a specific was replaced by another. We resize it to the

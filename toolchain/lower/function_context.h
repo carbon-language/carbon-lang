@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_
 
 #include "common/map.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -22,7 +23,30 @@ class FunctionContext {
       FileContext& file_context, llvm::Function* function,
       SemIR::SpecificId specific_id, llvm::DISubprogram* di_subprogram,
       llvm::raw_ostream* vlog_stream,
-      llvm::SmallVector<FileContext::LoweringFunctionState>* states);
+      FileContext::SpecificFunctionFingerprint* specific_function_state);
+
+  struct LoweringFunctionFingerprint {
+    // Index tracks instruction index in the whole function. Add the index
+    // to the fingerprint when specific-dependent information is found during
+    // lowering the instruction at this index.
+    unsigned inst_id_index = 0;
+    bool relevant = false;
+
+    // Create a two function fingerprints. Both fingerprints include the data
+    // that's evaluated (and hence lowered) differently based on the
+    // specific_id. The first fingerprint includes global values, types
+    // and function_id for functions called inside the function body.
+    // The second fingerprint also includes specific_ids for functions called.
+    // For two specifics of the same generic: if the first fingerprint
+    // (`function_common_fingerprint`) is different, the specifics cannot be
+    // coalesced; if the first and second fingerprint
+    // (`function_specific_fingerprint`) are the same, the specifics can be
+    // coalesced without additional checks. If the `function_common_fingerprint`
+    // is the same but `function_specific_fingerprint` is different, additional
+    // checks are needed, i.e. inspecting the non-hashed specific_ids.
+    llvm::BLAKE3 function_common_fingerprint;
+    llvm::BLAKE3 function_specific_fingerprint;
+  };
 
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
@@ -112,21 +136,45 @@ class FunctionContext {
   auto FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
                   SemIR::InstId source_id) -> void;
 
-  auto AddCallToCurrentState(SemIR::FunctionId function_id,
-                             SemIR::SpecificId specific_id) {
-    if (!current_states_) {
+  auto AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
+                                   SemIR::SpecificId specific_id) {
+    if (!function_fingerprint_) {
       return;
     }
-    current_state_.calls.push_back({function_id, specific_id});
-    current_state_.relevant = true;
+    current_fingerprint_.relevant = true;
+
+    RawStringOstream os;
+    // TODO: Replace with id that is translation unit independent.
+    function_id.Print(os);
+    current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
+    os.clear();
+    // TODO: Replace with id that is translation unit independent.
+    specific_id.Print(os);
+    current_fingerprint_.function_specific_fingerprint.update(os.TakeStr());
+    if (specific_id.has_value()) {
+      function_fingerprint_->calls.push_back(specific_id);
+    }
   }
 
-  auto AddTypeToCurrentState(llvm::Type* type) {
-    if (!current_states_) {
+  auto AddTypeToCurrentFingerprint(llvm::Type* type) {
+    if (!function_fingerprint_) {
       return;
     }
-    current_state_.types.push_back(type);
-    current_state_.relevant = true;
+    current_fingerprint_.relevant = true;
+    if (type) {
+      RawStringOstream os;
+      type->print(os);
+      current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
+    }
+  }
+
+  auto EmitFinalFingerprint() {
+    if (function_fingerprint_) {
+      current_fingerprint_.function_common_fingerprint.final(
+          function_fingerprint_->function_common_fingerprint);
+      current_fingerprint_.function_specific_fingerprint.final(
+          function_fingerprint_->function_specific_fingerprint);
+    }
   }
 
   auto llvm_context() -> llvm::LLVMContext& {
@@ -184,22 +232,26 @@ class FunctionContext {
   auto CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
 
-  auto IncrementCurrentState() {
-    if (!current_states_) {
+  auto IncrementInstIdForFingerprint() {
+    if (!function_fingerprint_) {
       return;
     }
-    if (current_state_.relevant) {
-      current_states_->push_back(current_state_);
-      current_state_ = {current_state_.inst_id_index + 1, false, {}, {}, {}};
-    } else {
-      ++current_state_.inst_id_index;
+    if (current_fingerprint_.relevant) {
+      current_fingerprint_.relevant = false;
+      // Is tracking the index necessary?
+      current_fingerprint_.function_common_fingerprint.update(
+          current_fingerprint_.inst_id_index);
     }
+    ++current_fingerprint_.inst_id_index;
   }
 
-  auto AddGlobalValueToCurrentState(llvm::Value* global) {
-    if (current_states_ && global) {
-      current_state_.global_values.push_back(global);
-      current_state_.relevant = true;
+  auto AddGlobalToCurrentFingerprint(llvm::Value* global) {
+    if (function_fingerprint_ && global) {
+      current_fingerprint_.relevant = true;
+
+      RawStringOstream os;
+      global->print(os);
+      current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
     }
   }
 
@@ -226,11 +278,12 @@ class FunctionContext {
   llvm::raw_ostream* vlog_stream_;
 
   // This is initialized and populated while lowering a specific function.
-  // A "state" corresponds to an inst_id. If anything specific-dependent
-  // was found, the state is added to the list of states: current_states_.
-  // The storage for current_states_ is in the file_context.
-  FileContext::LoweringFunctionState current_state_;
-  llvm::SmallVector<FileContext::LoweringFunctionState>* current_states_;
+  // When complete, this is used to complete the function_fingerprint_.
+  LoweringFunctionFingerprint current_fingerprint_;
+
+  // Accumulated fingerprint is stored in the state owned by the file_context.
+  // Currently only building a fingerprint for specific functions.
+  FileContext::SpecificFunctionFingerprint* function_fingerprint_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
   Map<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;

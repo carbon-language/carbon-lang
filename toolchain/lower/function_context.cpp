@@ -14,7 +14,7 @@ FunctionContext::FunctionContext(
     FileContext& file_context, llvm::Function* function,
     SemIR::SpecificId specific_id, llvm::DISubprogram* di_subprogram,
     llvm::raw_ostream* vlog_stream,
-    llvm::SmallVector<FileContext::LoweringFunctionState>* current_states)
+    FileContext::SpecificFunctionFingerprint* specific_function_state)
     : file_context_(&file_context),
       function_(function),
       specific_id_(specific_id),
@@ -22,7 +22,7 @@ FunctionContext::FunctionContext(
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),
       vlog_stream_(vlog_stream),
-      current_states_(current_states) {
+      function_fingerprint_(specific_function_state) {
   function_->setSubprogram(di_subprogram_);
 }
 
@@ -120,7 +120,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
 #include "toolchain/sem_ir/inst_kind.def"
   }
 
-  IncrementCurrentState();
+  IncrementInstIdForFingerprint();
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
   if (di_subprogram_) {
     builder_.SetCurrentDebugLocation(llvm::DebugLoc());
@@ -162,7 +162,7 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
   }
 
   auto* global = file_context_->GetGlobal(inst_id, specific_id_);
-  AddGlobalValueToCurrentState(global);
+  AddGlobalToCurrentFingerprint(global);
   return global;
 }
 
