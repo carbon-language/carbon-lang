@@ -130,9 +130,9 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %array_type;
+// CHECK:STDOUT: fn @F() -> %return.param: %array_type;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b.param_patt: %array_type) {
+// CHECK:STDOUT: fn @G(%b.param: %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
@@ -228,7 +228,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ValueBinding(%b.param_patt: %array_type) {
+// CHECK:STDOUT: fn @ValueBinding(%b.param: %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a

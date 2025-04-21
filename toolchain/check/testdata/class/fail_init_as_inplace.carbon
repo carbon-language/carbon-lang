@@ -116,7 +116,7 @@ fn F() {
 // CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %ptr.e71);
+// CHECK:STDOUT: fn @G(%p.param: %ptr.e71);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:

@@ -227,7 +227,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type %T.loc6_6.2 [symbolic = %require_complete.loc6_32 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %array_type.loc6_29.2 [symbolic = %require_complete.loc6_17 (constants.%require_complete.06f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc6_6.1: type](%a.param_patt: @F.%array_type.loc6_29.2 (%array_type.743)) -> @F.%T.loc6_6.2 (%T) {
+// CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc6_29.2 (%array_type.743)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_29.2 (%array_type.743) = name_ref a, %a
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -247,7 +247,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @G() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %array_type.002 = binding_pattern a
@@ -427,7 +427,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc6_62.3: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc6_62.3 (constants.%bound_method.ad4)]
 // CHECK:STDOUT:   %int.convert_checked.loc6_62.2: init %i32 = call %bound_method.loc6_62.3(%N.loc6_6.2) [symbolic = %int.convert_checked.loc6_62.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.patt.loc6_6.1: Core.IntLiteral](%a.param_patt: @F.%array_type.loc6_42.2 (%array_type.6a2)) -> %i32 {
+// CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc6_42.2 (%array_type.6a2)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc6_61: Core.IntLiteral = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N)]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -595,7 +595,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc6_52.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc6_6.1: type, %N.patt.loc6_16.1: Core.IntLiteral](%a.param_patt: @F.%array_type.loc6_52.2 (%array_type.bb5)) {
+// CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc6_52.2 (%array_type.bb5)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -767,7 +767,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type %T.loc6_6.2 [symbolic = %require_complete.loc6_32 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type %array_type.loc6_29.2 [symbolic = %require_complete.loc6_17 (constants.%require_complete.d11)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc6_6.1: type](%a.param_patt: @F.%array_type.loc6_29.2 (%array_type.9d4)) -> @F.%T.loc6_6.2 (%T) {
+// CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc6_29.2 (%array_type.9d4)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_29.2 (%array_type.9d4) = name_ref a, %a
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -787,7 +787,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @G() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %array_type.002 = binding_pattern a
@@ -980,7 +980,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc7_62.3: <bound method> = bound_method %N.loc7_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc7_62.3 (constants.%bound_method.ad4)]
 // CHECK:STDOUT:   %int.convert_checked.loc7_62.2: init %i32 = call %bound_method.loc7_62.3(%N.loc7_6.2) [symbolic = %int.convert_checked.loc7_62.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.patt.loc7_6.1: Core.IntLiteral](%a.param_patt: @F.%array_type.loc7_42.2 (%array_type.6a2)) -> %i32 {
+// CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc7_42.2 (%array_type.6a2)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc7_61: Core.IntLiteral = name_ref N, %N.loc7_6.1 [symbolic = %N.loc7_6.2 (constants.%N)]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -1172,7 +1172,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc6_28.2 [symbolic = %require_complete (constants.%require_complete.cde)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.patt.loc6_6.1: %i32](%a.param_patt: @F.%array_type.loc6_28.2 (%array_type.b2f)) -> %i32 {
+// CHECK:STDOUT:   fn(%a.param: @F.%array_type.loc6_28.2 (%array_type.b2f)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc6_47: %i32 = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.51e)]
 // CHECK:STDOUT:     return %N.ref.loc6_47

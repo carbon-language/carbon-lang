@@ -46,7 +46,7 @@ fn Foo(a: i32) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %i32) {
+// CHECK:STDOUT: fn @Foo(%a.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -92,7 +92,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeF64() -> f64;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param_patt: %struct_type.a.b {
+// CHECK:STDOUT: fn @F() -> %return.param: %struct_type.a.b {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %struct_type.a.b = binding_pattern x

@@ -110,7 +110,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   .n = %.loc13_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%oi.param_patt: %Inner) -> %i32 {
+// CHECK:STDOUT: fn @F(%oi.param: %Inner) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
 // CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13_10 [concrete = @Inner.%.loc13_10]
@@ -119,7 +119,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   return %.loc18_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%o.param_patt: %Outer) {
+// CHECK:STDOUT: fn @G(%o.param: %Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %Inner = binding_pattern i

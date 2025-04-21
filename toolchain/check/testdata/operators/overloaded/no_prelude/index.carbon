@@ -234,7 +234,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self: @At.%IndexWith.type (%IndexWith.type.b94) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc5_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @At.%Self.as_type.loc5_15.1 (%Self.as_type)](%subscript.param_patt: @At.%SubscriptType (%SubscriptType)) -> %empty_tuple.type;
+// CHECK:STDOUT:   fn(%self.param: @At.%Self.as_type.loc5_15.1 (%Self.as_type), %subscript.param: @At.%SubscriptType (%SubscriptType)) -> %empty_tuple.type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType) {
@@ -376,10 +376,10 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self: @At.1.%IndexWith.type (%IndexWith.type.bd2) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.30a)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self.as_type (%Self.as_type)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType)) -> %empty_tuple.type;
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self.param_patt: %empty_tuple.type](%subscript.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @At.2(%self.param: %empty_tuple.type, %subscript.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_13: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]

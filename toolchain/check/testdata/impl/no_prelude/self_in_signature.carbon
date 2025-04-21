@@ -316,10 +316,10 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.085)]
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.599)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.599)](%x.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.599)) -> @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.599);
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.599), %x.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.599)) -> @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.599);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %C](%x.param_patt: %C) -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @F.2(%self.param: %C, %x.param: %C) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc20_38.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc20_38.2: init %C = class_init (), %return [concrete = constants.%C.val]
@@ -327,7 +327,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   return %.loc20_39 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[%self.param_patt: %D](%x.param_patt: %D) -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @F.3(%self.param: %D, %x.param: %D) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_47.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc24_47.2: init %D = class_init (), %return [concrete = constants.%D.val]
@@ -342,12 +342,12 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %struct_type.x.y.loc28_36.1: type = struct_type {.x: @F.4.%Self.as_type.loc28_16.1 (%Self.as_type.e1e), .y: %empty_tuple.type} [symbolic = %struct_type.x.y.loc28_36.1 (constants.%struct_type.x.y.270)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc28_16.1, %struct_type.x.y.loc28_36.1) [symbolic = %tuple.type (constants.%tuple.type.46b)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param_patt: @F.4.%tuple.type (%tuple.type.46b));
+// CHECK:STDOUT:   fn(%x.param: @F.4.%tuple.type (%tuple.type.46b));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.5(%x.param_patt: %tuple.type.a17);
+// CHECK:STDOUT: fn @F.5(%x.param: %tuple.type.a17);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.6(%x.param_patt: %tuple.type.a5f);
+// CHECK:STDOUT: fn @F.6(%x.param: %tuple.type.a5f);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.085) {
 // CHECK:STDOUT:   %Self => constants.%Self.085

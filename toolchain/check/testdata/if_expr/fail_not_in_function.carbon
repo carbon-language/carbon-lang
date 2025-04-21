@@ -126,7 +126,7 @@ class C {
 // CHECK:STDOUT:   .n = %.loc54_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param_patt: %i32);
+// CHECK:STDOUT: fn @F(%a.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

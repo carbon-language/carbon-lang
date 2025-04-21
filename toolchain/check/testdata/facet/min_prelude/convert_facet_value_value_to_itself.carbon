@@ -138,7 +138,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc16_30.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc16_15.1: %Animal.type](%a.param_patt: @FeedAnimal.%T.as_type.loc16_30.2 (%T.as_type)) {
+// CHECK:STDOUT:   fn(%a.param: @FeedAnimal.%T.as_type.loc16_30.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -153,7 +153,7 @@ fn F() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc18_32.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %FeedAnimal.specific_fn.loc18_37.2: <specific function> = specific_function constants.%FeedAnimal, @FeedAnimal(%T.loc18_17.2) [symbolic = %FeedAnimal.specific_fn.loc18_37.2 (constants.%FeedAnimal.specific_fn.ec8)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc18_17.1: %Animal.type](%a.param_patt: @HandleAnimal.%T.as_type.loc18_32.2 (%T.as_type)) {
+// CHECK:STDOUT:   fn(%a.param: @HandleAnimal.%T.as_type.loc18_32.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %FeedAnimal.ref: %FeedAnimal.type = name_ref FeedAnimal, file.%FeedAnimal.decl [concrete = constants.%FeedAnimal]
 // CHECK:STDOUT:     %a.ref: @HandleAnimal.%T.as_type.loc18_32.2 (%T.as_type) = name_ref a, %a
@@ -352,7 +352,7 @@ fn F() {
 // CHECK:STDOUT:   %Self: @Convert.1.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.b4e)]
 // CHECK:STDOUT:   %Self.as_type.loc9_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type.7f0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type.7f0)]() -> @Convert.1.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type.7f0)) -> @Convert.1.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.2(@ImplicitAs.%Dest.loc12_22.1: type, @ImplicitAs.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f)) {
@@ -361,7 +361,7 @@ fn F() {
 // CHECK:STDOUT:   %Self: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.0f3)]
 // CHECK:STDOUT:   %Self.as_type.loc14_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_20.1 (constants.%Self.as_type.419)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.2.%Self.as_type.loc14_20.1 (%Self.as_type.419)]() -> @Convert.2.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @Convert.2.%Self.as_type.loc14_20.1 (%Self.as_type.419)) -> @Convert.2.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%Dest) {

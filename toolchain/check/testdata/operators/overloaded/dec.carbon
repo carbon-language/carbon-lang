@@ -99,7 +99,7 @@ fn TestOp() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[addr %self.param_patt: %ptr.019]();
+// CHECK:STDOUT: fn @Op.2(%self.param: %ptr.019);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {
 // CHECK:STDOUT: !entry:

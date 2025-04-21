@@ -293,7 +293,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.943
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "a.carbon"];
+// CHECK:STDOUT: fn @F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -348,7 +348,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.5d3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "a.carbon"];
+// CHECK:STDOUT: fn @F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -403,7 +403,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.5d3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "a.carbon"];
+// CHECK:STDOUT: fn @F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -470,7 +470,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.c85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "a.carbon"];
+// CHECK:STDOUT: fn @F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -538,7 +538,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.c85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "a.carbon"];
+// CHECK:STDOUT: fn @F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

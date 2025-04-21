@@ -50,7 +50,7 @@ fn Run(n: i32) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run(%n.param_patt: %i32) {
+// CHECK:STDOUT: fn @Run(%n.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

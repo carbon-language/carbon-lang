@@ -61,7 +61,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %require_complete.loc11_24: <witness> = require_complete_type %ptr.loc11_20.2 [symbolic = %require_complete.loc11_24 (constants.%require_complete.6e5)]
 // CHECK:STDOUT:   %require_complete.loc11_17: <witness> = require_complete_type %ptr.loc11_21.2 [symbolic = %require_complete.loc11_17 (constants.%require_complete.132)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc11_6.1: type, %p.param_patt: @F.%ptr.loc11_21.2 (%ptr.a13)) -> @F.%ptr.loc11_20.2 (%ptr.79f) {
+// CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc11_21.2 (%ptr.a13)) -> @F.%ptr.loc11_20.2 (%ptr.79f) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %p.ref: @F.%ptr.loc11_21.2 (%ptr.a13) = name_ref p, %p
 // CHECK:STDOUT:     %.loc12_10.1: ref @F.%ptr.loc11_20.2 (%ptr.79f) = deref %p.ref

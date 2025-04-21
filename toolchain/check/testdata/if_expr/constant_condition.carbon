@@ -300,7 +300,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   return %.loc25_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartiallyConstant(%t.param_patt: type) -> %i32 {
+// CHECK:STDOUT: fn @PartiallyConstant(%t.param: type) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %i32 = binding_pattern v

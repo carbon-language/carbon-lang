@@ -326,7 +326,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: <error>);
+// CHECK:STDOUT: fn @MyF(%bar.param: <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_struct_definition.carbon
 // CHECK:STDOUT:
@@ -379,7 +379,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: %ptr);
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_struct_declaration_and_definition.carbon
 // CHECK:STDOUT:
@@ -432,7 +432,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: %ptr);
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_struct_public_static_member_function.carbon
 // CHECK:STDOUT:
@@ -487,7 +487,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_import_struct_private_static_member_function.carbon
 // CHECK:STDOUT:
@@ -542,7 +542,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_struct_public_member_function.carbon
 // CHECK:STDOUT:
@@ -596,7 +596,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: %ptr.f68) {
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc14: ref %Bar = deref %bar.ref
@@ -714,7 +714,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: %ptr.f68) {
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %foo_bar.patt: %ptr.f68 = binding_pattern foo_bar
@@ -813,11 +813,11 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo1.1[]();
+// CHECK:STDOUT: fn @foo1.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo1.2[]();
+// CHECK:STDOUT: fn @foo1.2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo2[]();
+// CHECK:STDOUT: fn @foo2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_struct_inheritance_pointers.carbon
 // CHECK:STDOUT:
@@ -900,9 +900,9 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF1(%bar.param_patt: %ptr.f68);
+// CHECK:STDOUT: fn @MyF1(%bar.param: %ptr.f68);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF2(%bar.param_patt: %ptr.eca) {
+// CHECK:STDOUT: fn @MyF2(%bar.param: %ptr.eca) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MyF1.ref: %MyF1.type = name_ref MyF1, file.%MyF1.decl [concrete = constants.%MyF1]
 // CHECK:STDOUT:   %bar.ref: %ptr.eca = name_ref bar, %bar
@@ -947,7 +947,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: <error>);
+// CHECK:STDOUT: fn @MyF(%bar.param: <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_struct_to_inherit_public.carbon
 // CHECK:STDOUT:
@@ -1023,7 +1023,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_struct_to_inherit_private.carbon
 // CHECK:STDOUT:
@@ -1099,7 +1099,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_struct_template.carbon
 // CHECK:STDOUT:
@@ -1137,5 +1137,5 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: <error>);
+// CHECK:STDOUT: fn @MyF(%bar.param: <error>);
 // CHECK:STDOUT:

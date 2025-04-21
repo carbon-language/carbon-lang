@@ -111,7 +111,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self.param_patt: %C]() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @Op.2(%self.param: %C) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [concrete = constants.%C.val]
@@ -119,7 +119,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   return %.loc19_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @TestOp(%a.param: %C) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0: %.365 = impl_witness_access constants.%Negate.impl_witness, element0 [concrete = constants.%Op.64c]

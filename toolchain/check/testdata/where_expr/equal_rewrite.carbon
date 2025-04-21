@@ -274,7 +274,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %T.loc8_10.2: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_10.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc8_10.2: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc8_10.1: %N_where.type);
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @P(constants.%Self) {}
@@ -394,7 +394,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D.loc9_18.2: %A_where.type.0fe = bind_symbolic_name D, 0 [symbolic = %D.loc9_18.2 (constants.%D)]
 // CHECK:STDOUT:   %D.patt.loc9_18.2: %A_where.type.0fe = symbolic_binding_pattern D, 0 [symbolic = %D.patt.loc9_18.2 (constants.%D.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%D.patt.loc9_18.1: %A_where.type.0fe);
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%Self) {}
@@ -554,7 +554,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%G.patt.loc8_15.1: %E_where.type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -567,7 +567,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OneRewrite.specific_fn.loc11_3.2: <specific function> = specific_function constants.%OneRewrite, @OneRewrite(%H.loc10_20.2) [symbolic = %OneRewrite.specific_fn.loc11_3.2 (constants.%OneRewrite.specific_fn.90a0d5.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%H.patt.loc10_20.1: %E_where.type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %OneRewrite.ref: %OneRewrite.type = name_ref OneRewrite, file.%OneRewrite.decl [concrete = constants.%OneRewrite]
 // CHECK:STDOUT:     %H.ref: %E_where.type = name_ref H, %H.loc10_20.1 [symbolic = %H.loc10_20.2 (constants.%H)]
@@ -584,7 +584,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %RepeatedRewrite.specific_fn.loc15_3.2: <specific function> = specific_function constants.%RepeatedRewrite, @RepeatedRewrite(%I.loc14_20.2) [symbolic = %RepeatedRewrite.specific_fn.loc15_3.2 (constants.%RepeatedRewrite.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%I.patt.loc14_20.1: %E_where.type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %RepeatedRewrite.ref: %RepeatedRewrite.type = name_ref RepeatedRewrite, file.%RepeatedRewrite.decl [concrete = constants.%RepeatedRewrite]
 // CHECK:STDOUT:     %I.ref: %E_where.type = name_ref I, %I.loc14_20.1 [symbolic = %I.loc14_20.2 (constants.%I)]
@@ -777,7 +777,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%M.patt.loc9_17.1: %J_where.type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -790,7 +790,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Alphabetical.specific_fn.loc12_3.2: <specific function> = specific_function constants.%Alphabetical, @Alphabetical(%N.loc11_13.2) [symbolic = %Alphabetical.specific_fn.loc12_3.2 (constants.%Alphabetical.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc11_13.1: %J_where.type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Alphabetical.ref: %Alphabetical.type = name_ref Alphabetical, file.%Alphabetical.decl [concrete = constants.%Alphabetical]
 // CHECK:STDOUT:     %N.ref: %J_where.type = name_ref N, %N.loc11_13.1 [symbolic = %N.loc11_13.2 (constants.%N)]
@@ -943,7 +943,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%Q.patt.loc8_16.1: %O_where.type.fe1) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -959,7 +959,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %facet_value.loc12_16.2: %O_where.type.fe1 = facet_value %R.as_type.loc12_16.2, (%R.as_wit.iface0.loc12_16.2) [symbolic = %facet_value.loc12_16.2 (constants.%facet_value)]
 // CHECK:STDOUT:   %WithInteger.specific_fn.loc12_3.2: <specific function> = specific_function constants.%WithInteger, @WithInteger(%facet_value.loc12_16.2) [symbolic = %WithInteger.specific_fn.loc12_3.2 (constants.%WithInteger.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%R.patt.loc10_13.1: %O_where.type.741) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithInteger.ref: %WithInteger.type = name_ref WithInteger, file.%WithInteger.decl [concrete = constants.%WithInteger]
 // CHECK:STDOUT:     %R.ref: %O_where.type.741 = name_ref R, %R.loc10_13.1 [symbolic = %R.loc10_13.2 (constants.%R)]
@@ -1115,7 +1115,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%V.patt.loc9_10.1: %S_where.type.15b) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -1131,7 +1131,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %facet_value.loc13_10.2: %S_where.type.15b = facet_value %W.as_type.loc13_10.2, (%W.as_wit.iface0.loc13_10.2) [symbolic = %facet_value.loc13_10.2 (constants.%facet_value)]
 // CHECK:STDOUT:   %WithT.specific_fn.loc13_3.2: <specific function> = specific_function constants.%WithT, @WithT(%facet_value.loc13_10.2) [symbolic = %WithT.specific_fn.loc13_3.2 (constants.%WithT.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.patt.loc11_10.1: %S_where.type.0be) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithT.ref: %WithT.type = name_ref WithT, file.%WithT.decl [concrete = constants.%WithT]
 // CHECK:STDOUT:     %W.ref: %S_where.type.0be = name_ref W, %W.loc11_10.1 [symbolic = %W.loc11_10.2 (constants.%W)]
@@ -1271,26 +1271,26 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Equal.1(imports.%Main.import_ref.3bc: %N_where.type) [from "equal_constraint.carbon"] {
 // CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt.2: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.1: %N_where.type);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NestedRewrite(imports.%Main.import_ref.3bd: %A_where.type.0fe) [from "nested_rewrites.carbon"] {
 // CHECK:STDOUT:   %D: %A_where.type.0fe = bind_symbolic_name D, 0 [symbolic = %D (constants.%D)]
-// CHECK:STDOUT:   %D.patt.2: %A_where.type.0fe = symbolic_binding_pattern D, 0 [symbolic = %D.patt.2 (constants.%D.patt)]
+// CHECK:STDOUT:   %D.patt: %A_where.type.0fe = symbolic_binding_pattern D, 0 [symbolic = %D.patt (constants.%D.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%D.patt.1: %A_where.type.0fe);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NestedRewrite(constants.%D) {
 // CHECK:STDOUT:   %D => constants.%D
-// CHECK:STDOUT:   %D.patt.2 => constants.%D.patt
+// CHECK:STDOUT:   %D.patt => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_check_rewrite_constraints.carbon
@@ -1365,7 +1365,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X: <error>) {
-// CHECK:STDOUT:   fn(%X.patt: <error>);
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Member(constants.%Self.826) {}

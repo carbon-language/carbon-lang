@@ -127,9 +127,9 @@ fn Run() {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
+// CHECK:STDOUT: fn @F(%self.param: %Base);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Unused[%self.param_patt: %Base]();
+// CHECK:STDOUT: fn @Unused(%self.param: %Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -287,5 +287,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Base]() [from "a.carbon"];
+// CHECK:STDOUT: fn @F [from "a.carbon"];
 // CHECK:STDOUT:

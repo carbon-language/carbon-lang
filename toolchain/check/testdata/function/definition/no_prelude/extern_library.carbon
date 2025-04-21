@@ -363,7 +363,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- indirect_two_file_extern.carbon
 // CHECK:STDOUT:
@@ -399,7 +399,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_indirect_two_file.impl.carbon
 // CHECK:STDOUT:
@@ -522,7 +522,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @Extern();
+// CHECK:STDOUT: extern fn @Extern;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unloaded_decl_extern.carbon
 // CHECK:STDOUT:
@@ -566,5 +566,5 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   %ExternDecl.decl: %ExternDecl.type = fn_decl @ExternDecl [concrete = constants.%ExternDecl] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @ExternDecl();
+// CHECK:STDOUT: extern fn @ExternDecl;
 // CHECK:STDOUT:

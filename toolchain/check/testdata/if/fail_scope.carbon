@@ -81,7 +81,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @VarScope(%b.param_patt: bool) -> %i32 {
+// CHECK:STDOUT: fn @VarScope(%b.param: bool) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else

@@ -82,7 +82,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.loc4_33: <witness> = require_complete_type %ptr.loc4_29.2 [template = %require_complete.loc4_33 (constants.%require_complete.6e5)]
 // CHECK:STDOUT:   %require_complete.loc4_26: <witness> = require_complete_type %ptr.loc4_30.2 [template = %require_complete.loc4_26 (constants.%require_complete.132)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%ptr.loc4_30.2 (%ptr.a13)) -> @F.%ptr.loc4_29.2 (%ptr.79f) {
+// CHECK:STDOUT:   fn(%x.param: @F.%ptr.loc4_30.2 (%ptr.a13)) -> @F.%ptr.loc4_29.2 (%ptr.79f) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%ptr.loc4_30.2 (%ptr.a13) = name_ref x, %x
 // CHECK:STDOUT:     %.loc5_10.1: ref @F.%ptr.loc4_29.2 (%ptr.79f) = deref %x.ref
@@ -158,7 +158,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.loc5_16.1: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete.loc5_16.1 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %require_complete.loc5_16.2: <witness> = require_complete_type %U.loc4_25.2 [symbolic = %require_complete.loc5_16.2 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc4_15.1: type, %U.patt.loc4_25.1: type) -> %return.param_patt: @F.%tuple.type (%tuple.type.30b) {
+// CHECK:STDOUT:   fn() -> %return.param: @F.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc5: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]

@@ -150,7 +150,7 @@ class C {
 // CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
+// CHECK:STDOUT: fn @Use(%b.param: %Bad) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]
@@ -205,7 +205,7 @@ class C {
 // CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
+// CHECK:STDOUT: fn @Use(%b.param: %Bad) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %Bad = name_ref b, %b
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]

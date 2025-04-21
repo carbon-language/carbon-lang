@@ -129,7 +129,7 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:   return %.loc12_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b.param_patt: bool) -> %i32 {
+// CHECK:STDOUT: fn @F(%b.param: bool) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else

@@ -75,7 +75,7 @@ class C {
 // CHECK:STDOUT:   .a = %.loc14_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: %C) -> %i32 {
+// CHECK:STDOUT: fn @F(%c.param: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%.loc14_8 [concrete = @C.%.loc14_8]
