@@ -56,7 +56,7 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   %bound_method.c6f: <bound method> = bound_method %int_3.822, %Convert.specific_fn.8a8 [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32 [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %array_type [concrete]
+// CHECK:STDOUT:   %ptr.f01: type = ptr_type %array_type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %Convert.bound.b30: <bound method> = bound_method %int_3.1ba, %Convert.956 [concrete]
@@ -175,20 +175,20 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %ptr = binding_pattern b
+// CHECK:STDOUT:     %b.patt: %ptr.f01 = binding_pattern b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15: type = splice_block %ptr.loc15 [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %.loc15: type = splice_block %ptr.loc15 [concrete = constants.%ptr.f01] {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_3.loc15: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type.loc15: type = array_type %int_3.loc15, %i32.loc15 [concrete = constants.%array_type]
-// CHECK:STDOUT:     %ptr.loc15: type = ptr_type %array_type.loc15 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr.loc15: type = ptr_type %array_type.loc15 [concrete = constants.%ptr.f01]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr = bind_name b, @__global_init.%addr.loc15
+// CHECK:STDOUT:   %b: %ptr.f01 = bind_name b, @__global_init.%addr.loc15
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %ptr = binding_pattern c
+// CHECK:STDOUT:     %c.patt: %ptr.f01 = binding_pattern c
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_35: type = splice_block %ptr.loc16 [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %.loc16_35: type = splice_block %ptr.loc16 [concrete = constants.%ptr.f01] {
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ConvertToU32.ref: %ConvertToU32.type = name_ref ConvertToU32, %ConvertToU32.decl [concrete = constants.%ConvertToU32]
@@ -211,9 +211,9 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:     %.loc16_33.3: Core.IntLiteral = value_of_initializer %int.convert_checked.loc16_33.2 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %.loc16_33.4: Core.IntLiteral = converted %int.convert_checked.loc16_33.1, %.loc16_33.3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type.loc16: type = array_type %.loc16_33.4, %i32.loc16 [concrete = constants.%array_type]
-// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %array_type.loc16 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %array_type.loc16 [concrete = constants.%ptr.f01]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %ptr = bind_name c, @__global_init.%addr.loc16
+// CHECK:STDOUT:   %c: %ptr.f01 = bind_name c, @__global_init.%addr.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Add.1(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.sadd";
@@ -257,9 +257,9 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   %.loc14_1: init %array_type = converted %.loc14_40.1, %.loc14_40.11 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc14_1
 // CHECK:STDOUT:   %a.ref.loc15: ref %array_type = name_ref a, file.%a
-// CHECK:STDOUT:   %addr.loc15: %ptr = addr_of %a.ref.loc15
+// CHECK:STDOUT:   %addr.loc15: %ptr.f01 = addr_of %a.ref.loc15
 // CHECK:STDOUT:   %a.ref.loc16: ref %array_type = name_ref a, file.%a
-// CHECK:STDOUT:   %addr.loc16: %ptr = addr_of %a.ref.loc16
+// CHECK:STDOUT:   %addr.loc16: %ptr.f01 = addr_of %a.ref.loc16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

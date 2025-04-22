@@ -7,6 +7,7 @@
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/generic.h"
 
 namespace Carbon::Lower {
 
@@ -169,6 +170,10 @@ auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
                    sem_ir().types().GetAsInst(type_id));
   }
+}
+
+auto FunctionContext::GetTypeOfInst(SemIR::InstId inst_id) -> SemIR::TypeId {
+  return SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id(), inst_id);
 }
 
 auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,

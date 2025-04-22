@@ -561,7 +561,8 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
     AddInstInNoBlock(
         context, loc_id,
         SemIR::RequireCompleteType{
-            .type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+            .type_id =
+                GetSingletonType(context, SemIR::WitnessType::TypeInstId),
             .complete_type_inst_id = context.types().GetInstId(type_id)});
   }
 

@@ -33,7 +33,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -83,9 +83,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
-// CHECK:STDOUT:   %addr.loc13_13: %ptr = addr_of %n.ref
+// CHECK:STDOUT:   %addr.loc13_13: %ptr.235 = addr_of %n.ref
 // CHECK:STDOUT:   %.loc13_12: ref %i32 = deref %addr.loc13_13
-// CHECK:STDOUT:   %addr.loc13_11: %ptr = addr_of %.loc13_12
+// CHECK:STDOUT:   %addr.loc13_11: %ptr.235 = addr_of %.loc13_12
 // CHECK:STDOUT:   %.loc13_10.1: ref %i32 = deref %addr.loc13_11
 // CHECK:STDOUT:   %.loc13_10.2: %i32 = bind_value %.loc13_10.1
 // CHECK:STDOUT:   return %.loc13_10.2

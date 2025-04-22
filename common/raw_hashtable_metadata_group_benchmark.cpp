@@ -5,6 +5,8 @@
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
+#include <array>
+#include <numeric>
 
 #include "absl/random/random.h"
 #include "common/raw_hashtable_metadata_group.h"

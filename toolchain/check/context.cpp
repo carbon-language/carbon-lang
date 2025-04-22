@@ -4,6 +4,9 @@
 
 #include "toolchain/check/context.h"
 
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 
 namespace Carbon::Check {

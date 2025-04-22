@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <tuple>
+
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
@@ -19,6 +21,8 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::InterfaceIntroducerId node_id)
     -> bool {
+  // This interface is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // interface signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -27,8 +31,6 @@ auto HandleParseNode(Context& context, Parse::InterfaceIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Interface>();
   context.decl_name_stack().PushScopeAndStartName();
-  // This interface is potentially generic.
-  StartGenericDecl(context);
   return true;
 }
 

@@ -2,6 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <optional>
+#include <utility>
+
+#include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
@@ -37,6 +41,8 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
     -> bool {
+  // The function is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
@@ -45,8 +51,6 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Fn>();
   context.decl_name_stack().PushScopeAndStartName();
-  // The function is potentially generic.
-  StartGenericDecl(context);
   return true;
 }
 
@@ -87,15 +91,9 @@ static auto FindSelfPattern(Context& context,
     -> SemIR::InstId {
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  if (const auto* i = llvm::find_if(implicit_param_patterns,
-                                    [&](auto implicit_param_id) {
-                                      return SemIR::IsSelfPattern(
-                                          context.sem_ir(), implicit_param_id);
-                                    });
-      i != implicit_param_patterns.end()) {
-    return *i;
-  }
-  return SemIR::InstId::None;
+  return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
+    return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
+  });
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -698,16 +696,16 @@ static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)
     -> bool {
+  // Find the list of call parameters other than the implicit return slot.
+  auto call_params = context.inst_blocks().Get(function.call_params_id);
+  if (function.return_slot_pattern_id.has_value()) {
+    call_params = call_params.drop_back();
+  }
+
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  auto param_patterns =
-      context.inst_blocks().GetOrEmpty(function.param_patterns_id);
-  param_type_ids.reserve(implicit_param_patterns.size() +
-                         param_patterns.size());
-  for (auto param_id : llvm::concat<const SemIR::InstId>(
-           implicit_param_patterns, param_patterns)) {
+  param_type_ids.reserve(call_params.size());
+  for (auto param_id : call_params) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());

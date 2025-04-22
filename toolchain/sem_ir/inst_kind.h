@@ -80,7 +80,7 @@ enum class InstConstantKind : int8_t {
   // This instruction is itself a unique constant. This is used for declarations
   // whose constant identity is simply themselves. The `ConstantId` for this
   // instruction will always be a concrete constant whose `InstId` refers
-  // directly back to the instruction, rather than to a separate instrinction in
+  // directly back to the instruction, rather than to a separate instruction in
   // the constants block.
   // TODO: Decide if this is the model we want for these cases.
   Unique,

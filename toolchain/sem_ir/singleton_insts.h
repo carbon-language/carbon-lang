@@ -32,11 +32,11 @@ static constexpr std::array SingletonInstKinds = {
 // Returns true if the InstKind is a singleton.
 constexpr auto IsSingletonInstKind(InstKind kind) -> bool;
 
-// Provides the InstId for singleton instructions. These are exposed as
-// `InstT::InstId` in `typed_insts.h`.
+// Provides the TypeInstId for singleton instructions. These are exposed as
+// `InstT::TypeInstId` in `typed_insts.h`.
 template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
-constexpr auto MakeSingletonInstId() -> TypeInstId;
+constexpr auto MakeSingletonTypeInstId() -> TypeInstId;
 
 // Returns true if the InstId corresponds to a singleton inst.
 constexpr auto IsSingletonInstId(InstId id) -> bool {
@@ -67,7 +67,7 @@ constexpr auto IsSingletonInstKind(InstKind kind) -> bool {
 
 template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
-constexpr auto MakeSingletonInstId() -> TypeInstId {
+constexpr auto MakeSingletonTypeInstId() -> TypeInstId {
   auto index = Internal::GetSingletonInstIndex(InstKind::Make(Kind));
   return TypeInstId(index);
 }

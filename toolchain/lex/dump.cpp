@@ -6,6 +6,8 @@
 
 #include "toolchain/lex/dump.h"
 
+#include <string>
+
 #include "common/raw_string_ostream.h"
 
 namespace Carbon::Lex {

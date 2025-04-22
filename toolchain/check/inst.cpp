@@ -112,6 +112,12 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
       return SemIR::InstId::None;
     }
 
+    if (const_id.is_symbolic()) {
+      // TODO: Only add this instruction to the eval block, and don't
+      // re-evaluate it.
+      return AddInst(context, loc_id_and_inst);
+    }
+
     CARBON_VLOG_TO(context.vlog_stream(), "GetOrAddInst: constant: {0}\n",
                    loc_id_and_inst.inst);
     return context.constant_values().GetInstId(const_id);

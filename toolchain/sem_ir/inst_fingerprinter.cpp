@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
+#include <array>
+#include <utility>
 #include <variant>
 
 #include "common/ostream.h"

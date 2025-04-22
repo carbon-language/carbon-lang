@@ -4,6 +4,8 @@
 
 #include "toolchain/check/control_flow.h"
 
+#include <initializer_list>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/inst.h"

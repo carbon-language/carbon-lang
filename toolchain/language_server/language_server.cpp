@@ -4,6 +4,8 @@
 
 #include "toolchain/language_server/language_server.h"
 
+#include <memory>
+
 #include "clang-tools-extra/clangd/LSPBinder.h"
 #include "clang-tools-extra/clangd/Transport.h"
 #include "clang-tools-extra/clangd/support/Logger.h"

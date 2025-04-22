@@ -5,6 +5,8 @@
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
+#include <array>
+#include <string>
 #include <utility>
 
 #include "absl/random/random.h"

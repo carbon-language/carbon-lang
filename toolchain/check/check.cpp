@@ -4,6 +4,9 @@
 
 #include "toolchain/check/check.h"
 
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "common/map.h"
 #include "toolchain/check/check_unit.h"

@@ -106,7 +106,6 @@ class FileContext {
     printf_int_format_string_ = printf_int_format_string;
   }
 
- private:
   struct FunctionTypeInfo {
     llvm::FunctionType* type;
     llvm::SmallVector<SemIR::InstId> param_inst_ids;
@@ -121,6 +120,7 @@ class FileContext {
   auto BuildFunctionTypeInfo(const SemIR::Function& function,
                              SemIR::SpecificId specific_id) -> FunctionTypeInfo;
 
+ private:
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
   auto BuildFunctionDecl(SemIR::FunctionId function_id,
