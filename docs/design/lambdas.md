@@ -416,14 +416,6 @@ initializer. It matches the pattern with the initializer when the lambda
 definition is evaluated. The bindings in the pattern have the same lifetime as
 the function, and their scope extends to the end of the function body.
 
-To prevent ambiguities, function fields can only exist on functions where the
-definition is attached to the declaration. This means they are supported on
-lambdas (which always exist in an expression context) and they are supported on
-function declarations that are immediately defined inside the body of another
-function (which is in a statement context), but they are not supported on
-forward-declared functions nor are they supported as class members where
-`self: Self` is permitted.
-
 ```carbon
 fn Foo() {
   var h1: Handle = Handle.Get();
