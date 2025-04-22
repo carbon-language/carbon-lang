@@ -4,6 +4,7 @@
 
 #include "toolchain/parse/context.h"
 
+#include <initializer_list>
 #include <optional>
 
 #include "common/check.h"

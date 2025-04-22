@@ -49,6 +49,7 @@ cc_library(
     testonly = 1,
     hdrs = ["coverage_helper.h"],
     deps = [
+        "//common:find",
         "//common:set",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",

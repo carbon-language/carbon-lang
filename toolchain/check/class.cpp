@@ -97,7 +97,7 @@ static auto CheckCompleteAdapterClassType(
 
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        // TODO: Use InstId from the adapt declaration.
        .object_repr_type_inst_id = context.types().GetInstId(object_repr_id)});
 }
@@ -184,7 +184,7 @@ static auto BuildVtable(Context& context, Parse::NodeId node_id,
   }
   return AddInst<SemIR::Vtable>(
       context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::VtableType::InstId),
+      {.type_id = GetSingletonType(context, SemIR::VtableType::TypeInstId),
        .virtual_functions_id = context.inst_blocks().Add(vtable)});
 }
 
@@ -223,7 +223,7 @@ static auto CheckCompleteClassType(
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Vptr,
          .type_inst_id = context.types().GetInstId(
-             GetPointerType(context, SemIR::VtableType::InstId))});
+             GetPointerType(context, SemIR::VtableType::TypeInstId))});
   }
   if (base_type_id.has_value()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
@@ -249,7 +249,7 @@ static auto CheckCompleteClassType(
 
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        .object_repr_type_inst_id = struct_type_inst_id});
 }
 

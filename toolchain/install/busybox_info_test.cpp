@@ -9,6 +9,8 @@
 
 #include <cstdlib>
 #include <fstream>
+#include <optional>
+#include <system_error>
 
 #include "common/check.h"
 #include "llvm/ADT/ScopeExit.h"

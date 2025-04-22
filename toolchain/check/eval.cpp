@@ -4,6 +4,11 @@
 
 #include "toolchain/check/eval.h"
 
+#include <algorithm>
+#include <array>
+#include <optional>
+#include <utility>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -822,7 +827,7 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
                               SemIR::IntKind int_kind, SemIR::InstId width_id,
                               Phase phase) -> SemIR::ConstantId {
   auto result = SemIR::IntType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::InstId),
+      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
       .int_kind = int_kind,
       .bit_width_id = width_id};
   if (!ValidateIntType(context, loc_id, result)) {
@@ -1389,7 +1394,22 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
-    case SemIR::BuiltinFunctionKind::ReadChar: {
+    case SemIR::BuiltinFunctionKind::ReadChar:
+    case SemIR::BuiltinFunctionKind::IntSAddAssign:
+    case SemIR::BuiltinFunctionKind::IntSSubAssign:
+    case SemIR::BuiltinFunctionKind::IntSMulAssign:
+    case SemIR::BuiltinFunctionKind::IntSDivAssign:
+    case SemIR::BuiltinFunctionKind::IntSModAssign:
+    case SemIR::BuiltinFunctionKind::IntUAddAssign:
+    case SemIR::BuiltinFunctionKind::IntUSubAssign:
+    case SemIR::BuiltinFunctionKind::IntUMulAssign:
+    case SemIR::BuiltinFunctionKind::IntUDivAssign:
+    case SemIR::BuiltinFunctionKind::IntUModAssign:
+    case SemIR::BuiltinFunctionKind::IntAndAssign:
+    case SemIR::BuiltinFunctionKind::IntOrAssign:
+    case SemIR::BuiltinFunctionKind::IntXorAssign:
+    case SemIR::BuiltinFunctionKind::IntLeftShiftAssign:
+    case SemIR::BuiltinFunctionKind::IntRightShiftAssign: {
       // These are runtime-only builtins.
       // TODO: Consider tracking this on the `BuiltinFunctionKind`.
       return SemIR::ConstantId::NotConstant;
@@ -1436,7 +1456,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
-      return context.constant_values().Get(SemIR::IntLiteralType::InstId);
+      return context.constant_values().Get(SemIR::IntLiteralType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned: {
@@ -1457,11 +1477,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (!ValidateFloatBitWidth(context, loc_id, arg_ids[0])) {
         return SemIR::ErrorInst::ConstantId;
       }
-      return context.constant_values().Get(SemIR::LegacyFloatType::InstId);
+      return context.constant_values().Get(SemIR::LegacyFloatType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
-      return context.constant_values().Get(SemIR::BoolType::InstId);
+      return context.constant_values().Get(SemIR::BoolType::TypeInstId);
     }
 
     // Integer conversions.
@@ -1669,7 +1689,7 @@ static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
                         context.types().GetConstantId(inst.type_id()));
   GetConstantValueForArg(eval_context, inst.arg0_and_kind(), &phase);
   GetConstantValueForArg(eval_context, inst.arg1_and_kind(), &phase);
-  CARBON_CHECK(IsConstant(phase));
+  CARBON_CHECK(phase != Phase::Runtime);
   return phase;
 }
 
@@ -1905,7 +1925,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
         if (rhs != SemIR::ErrorInst::ConstantId &&
             IsPeriodSelf(eval_context, lhs)) {
           auto rhs_inst_id = eval_context.constant_values().GetInstId(rhs);
-          if (rhs_inst_id == SemIR::TypeType::InstId) {
+          if (rhs_inst_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
           } else {
             auto facet_type =

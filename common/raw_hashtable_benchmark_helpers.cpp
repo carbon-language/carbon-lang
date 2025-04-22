@@ -4,8 +4,11 @@
 
 #include "common/raw_hashtable_benchmark_helpers.h"
 
+#include <array>
 #include <cstddef>
 #include <forward_list>
+#include <utility>
+#include <vector>
 
 namespace Carbon::RawHashtable {
 

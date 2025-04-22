@@ -4,6 +4,8 @@
 
 #include "toolchain/driver/lld_subcommand.h"
 
+#include <string>
+
 #include "llvm/TargetParser/Host.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/lld_runner.h"

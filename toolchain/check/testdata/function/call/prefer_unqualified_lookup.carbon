@@ -31,8 +31,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%F.8b3) [symbolic]
-// CHECK:STDOUT:   %Inner.b32: type = class_type @Inner [concrete]
-// CHECK:STDOUT:   %Inner.6e0: type = class_type @Inner, @Inner(%F.8b3) [symbolic]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%F.8b3) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.8b3) [symbolic]
@@ -94,9 +93,10 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %F.patt.loc5_13.2: type = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_13.2 (constants.%F.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%F.loc5_13.2) [symbolic = %Inner (constants.%Inner)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Inner.decl: type = class_decl @Inner [concrete = constants.%Inner.b32] {} {}
+// CHECK:STDOUT:     %Inner.decl: type = class_decl @Inner [symbolic = @Class.%Inner (constants.%Inner)] {} {}
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -139,7 +139,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Inner.6e0
+// CHECK:STDOUT:     .Self = constants.%Inner
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
@@ -186,6 +186,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %F.patt.loc5_13.2 => constants.%F.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Inner => constants.%Inner
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%F.8b3) {
@@ -204,6 +205,8 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: specific @G(constants.%F.8b3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(%F.loc8_19.1) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@Class.%F.loc5_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(@G.%F.loc13_46.1) {}
 // CHECK:STDOUT:

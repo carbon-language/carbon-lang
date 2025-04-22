@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <utility>
 #include <variant>
 
 #include "toolchain/base/kind_switch.h"
@@ -370,7 +371,7 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   auto witness_const_id = EvalOrAddInst(
       context, loc_id.ToImplicit(),
       SemIR::LookupImplWitness{
-          .type_id = GetSingletonType(context, SemIR::WitnessType::InstId),
+          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
           .query_self_inst_id =
               context.constant_values().GetInstId(query_self_const_id),
           .query_specific_interface_id =

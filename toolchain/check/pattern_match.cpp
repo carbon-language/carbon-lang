@@ -5,6 +5,7 @@
 #include "toolchain/check/pattern_match.h"
 
 #include <functional>
+#include <utility>
 #include <vector>
 
 #include "llvm/ADT/STLExtras.h"

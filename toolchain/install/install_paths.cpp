@@ -5,6 +5,7 @@
 #include "toolchain/install/install_paths.h"
 
 #include <memory>
+#include <string>
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"

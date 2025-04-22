@@ -273,9 +273,9 @@ struct AutoType {
       {.ir_name = "auto",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
   static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(InstId));
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
   SemIR::TypeId type_id;
 };
@@ -428,7 +428,7 @@ struct BoolType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -459,7 +459,7 @@ struct BoundMethodType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -661,10 +661,10 @@ struct ErrorInst {
       {.ir_name = "<error>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr SemIR::InstId InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr SemIR::InstId InstId = TypeInstId;
   static constexpr auto ConstantId = ConstantId::ForConcreteConstant(InstId);
   static constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
-  static constexpr auto TypeInstId = TypeInstId::UnsafeMake(InstId);
 
   SemIR::TypeId type_id;
 };
@@ -775,7 +775,7 @@ struct LegacyFloatType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -981,7 +981,7 @@ struct ImplWitnessTablePlaceholder {
           {.ir_name = "impl_witness_table_placeholder",
            .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1060,9 +1060,9 @@ struct InstType {
       {.ir_name = "<instruction>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
   static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(InstId));
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
   SemIR::TypeId type_id;
 };
@@ -1115,7 +1115,7 @@ struct IntLiteralType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1215,7 +1215,7 @@ struct NamespaceType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1520,7 +1520,7 @@ struct SpecificFunctionType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1595,7 +1595,7 @@ struct StringType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1772,9 +1772,9 @@ struct TypeType {
       {.ir_name = "type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
   static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(InstId));
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
   SemIR::TypeId type_id;
 };
@@ -1867,7 +1867,7 @@ struct VtableType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1916,7 +1916,7 @@ struct WitnessType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto InstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };

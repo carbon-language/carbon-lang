@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_introducer_state.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
@@ -19,6 +20,9 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
     -> bool {
+  // Namespaces can't be generic, but we might have parsed a generic parameter
+  // in their name, so enter a generic scope just in case.
+  StartGenericDecl(context);
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Namespace>();
   context.decl_name_stack().PushScopeAndStartName();
@@ -35,13 +39,15 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
 
+  DiscardGenericDecl(context);
+
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Namespace>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
-  auto namespace_inst =
-      SemIR::Namespace{GetSingletonType(context, SemIR::NamespaceType::InstId),
-                       SemIR::NameScopeId::None, SemIR::InstId::None};
+  auto namespace_inst = SemIR::Namespace{
+      GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
+      SemIR::NameScopeId::None, SemIR::InstId::None};
   auto namespace_id = AddPlaceholderInst(context, node_id, namespace_inst);
 
   SemIR::ScopeLookupResult lookup_result =

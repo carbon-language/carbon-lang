@@ -268,8 +268,8 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc4_15.2)> [template = %ImplicitAs.type (constants.%ImplicitAs.type.d628ce.2)]
-// CHECK:STDOUT:   %.loc14_3.4: <instruction> = access_member_action %ImplicitAs.type, Convert [template]
+// CHECK:STDOUT:   %ImplicitAs.type.loc14_3.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc4_15.2)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
+// CHECK:STDOUT:   %.loc14_3.4: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
 // CHECK:STDOUT:   %.loc14_3.5: type = type_of_inst %.loc14_3.4 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) {
@@ -280,6 +280,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%T.loc4_15.2 (%T) = var v
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:     %ImplicitAs.type.loc14_3.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
 // CHECK:STDOUT:     %.loc14_3.2: @F.%.loc14_3.5 (@F.%.loc14_3.5) = splice_inst %.loc14_3.4
 // CHECK:STDOUT:     %.loc14_3.3: @F.%T.loc4_15.2 (%T) = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %v.var, <error>
