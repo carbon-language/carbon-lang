@@ -478,7 +478,7 @@ fn = [self: Self] { return self.F(); };  // ❌ Not allowed
 fn = [self] { return self.F(); };  // ✅ Only if self came from outside
 ```
 
-Note: Given the direction in
+Note: Following
 [#3720](https://github.com/carbon-language/carbon-lang/pull/3720), an expression
 of the form `x.(F)`, where `F` is a function with a `self` or `addr self`
 parameter, produces a callable that holds the value of `x`, and does not hold
