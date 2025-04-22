@@ -382,55 +382,55 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.loc51_6.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %C.ref.loc51_11: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc51_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc51_6.3: init %C = class_init (), %.loc51_6.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc51_6.4: ref %C = temporary %.loc51_6.2, %.loc51_6.3
-// CHECK:STDOUT:   %.loc51_8.1: ref %C = converted %.loc51_6.1, %.loc51_6.4
-// CHECK:STDOUT:   %C.ref.loc51_24: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %I.ref.loc51_29: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %I.facet.loc51_26: %I.type = facet_value constants.%C, (constants.%I.impl_witness) [concrete = constants.%I.facet.98f]
-// CHECK:STDOUT:   %.loc51_26: %I.type = converted %C.ref.loc51_24, %I.facet.loc51_26 [concrete = constants.%I.facet.98f]
-// CHECK:STDOUT:   %as_type.loc51_32: type = facet_access_type %.loc51_26 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc51_32: type = converted %.loc51_26, %as_type.loc51_32 [concrete = constants.%C]
-// CHECK:STDOUT:   %J.ref.loc51_44: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
-// CHECK:STDOUT:   %J.facet.loc51_41: %J.type = facet_value constants.%C, (constants.%J.impl_witness) [concrete = constants.%J.facet.5df]
-// CHECK:STDOUT:   %.loc51_41: %J.type = converted %.loc51_32, %J.facet.loc51_41 [concrete = constants.%J.facet.5df]
-// CHECK:STDOUT:   %as_type.loc51_47: type = facet_access_type %.loc51_41 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc51_47: type = converted %.loc51_41, %as_type.loc51_47 [concrete = constants.%C]
-// CHECK:STDOUT:   %I.ref.loc51_59: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %I.facet.loc51_56: %I.type = facet_value constants.%C, (constants.%I.impl_witness) [concrete = constants.%I.facet.98f]
-// CHECK:STDOUT:   %.loc51_56: %I.type = converted %.loc51_47, %I.facet.loc51_56 [concrete = constants.%I.facet.98f]
-// CHECK:STDOUT:   %as_type.loc51_62: type = facet_access_type %.loc51_56 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc51_62: type = converted %.loc51_56, %as_type.loc51_62 [concrete = constants.%C]
-// CHECK:STDOUT:   %J.ref.loc51_74: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
-// CHECK:STDOUT:   %J.facet.loc51_71: %J.type = facet_value constants.%C, (constants.%J.impl_witness) [concrete = constants.%J.facet.5df]
-// CHECK:STDOUT:   %.loc51_71: %J.type = converted %.loc51_62, %J.facet.loc51_71 [concrete = constants.%J.facet.5df]
-// CHECK:STDOUT:   %as_type.loc51_75: type = facet_access_type %.loc51_71 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc51_75: type = converted %.loc51_71, %as_type.loc51_75 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc39_6.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %C.ref.loc39_11: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc39_6.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc39_6.3: init %C = class_init (), %.loc39_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc39_6.4: ref %C = temporary %.loc39_6.2, %.loc39_6.3
+// CHECK:STDOUT:   %.loc39_8.1: ref %C = converted %.loc39_6.1, %.loc39_6.4
+// CHECK:STDOUT:   %C.ref.loc39_24: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %I.ref.loc39_29: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:   %I.facet.loc39_26: %I.type = facet_value constants.%C, (constants.%I.impl_witness) [concrete = constants.%I.facet.98f]
+// CHECK:STDOUT:   %.loc39_26: %I.type = converted %C.ref.loc39_24, %I.facet.loc39_26 [concrete = constants.%I.facet.98f]
+// CHECK:STDOUT:   %as_type.loc39_32: type = facet_access_type %.loc39_26 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc39_32: type = converted %.loc39_26, %as_type.loc39_32 [concrete = constants.%C]
+// CHECK:STDOUT:   %J.ref.loc39_44: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:   %J.facet.loc39_41: %J.type = facet_value constants.%C, (constants.%J.impl_witness) [concrete = constants.%J.facet.5df]
+// CHECK:STDOUT:   %.loc39_41: %J.type = converted %.loc39_32, %J.facet.loc39_41 [concrete = constants.%J.facet.5df]
+// CHECK:STDOUT:   %as_type.loc39_47: type = facet_access_type %.loc39_41 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc39_47: type = converted %.loc39_41, %as_type.loc39_47 [concrete = constants.%C]
+// CHECK:STDOUT:   %I.ref.loc39_59: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:   %I.facet.loc39_56: %I.type = facet_value constants.%C, (constants.%I.impl_witness) [concrete = constants.%I.facet.98f]
+// CHECK:STDOUT:   %.loc39_56: %I.type = converted %.loc39_47, %I.facet.loc39_56 [concrete = constants.%I.facet.98f]
+// CHECK:STDOUT:   %as_type.loc39_62: type = facet_access_type %.loc39_56 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc39_62: type = converted %.loc39_56, %as_type.loc39_62 [concrete = constants.%C]
+// CHECK:STDOUT:   %J.ref.loc39_74: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:   %J.facet.loc39_71: %J.type = facet_value constants.%C, (constants.%J.impl_witness) [concrete = constants.%J.facet.5df]
+// CHECK:STDOUT:   %.loc39_71: %J.type = converted %.loc39_62, %J.facet.loc39_71 [concrete = constants.%J.facet.5df]
+// CHECK:STDOUT:   %as_type.loc39_75: type = facet_access_type %.loc39_71 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc39_75: type = converted %.loc39_71, %as_type.loc39_75 [concrete = constants.%C]
 // CHECK:STDOUT:   %JJ.ref: %J.assoc_type = name_ref JJ, @J.%assoc0 [concrete = constants.%assoc0.78c]
 // CHECK:STDOUT:   %impl.elem0: %.638 = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%JJ.9c9]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc51_8.1, %impl.elem0
-// CHECK:STDOUT:   %.loc51_8.2: %C = bind_value %.loc51_8.1
-// CHECK:STDOUT:   %JJ.call: init %empty_tuple.type = call %bound_method(%.loc51_8.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc39_8.1, %impl.elem0
+// CHECK:STDOUT:   %.loc39_8.2: %C = bind_value %.loc39_8.1
+// CHECK:STDOUT:   %JJ.call: init %empty_tuple.type = call %bound_method(%.loc39_8.2)
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %C.ref.loc64_5: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc64_9.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %C.ref.loc64_14: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc64_9.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc64_9.3: init %C = class_init (), %.loc64_9.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc64_9.4: ref %C = temporary %.loc64_9.2, %.loc64_9.3
-// CHECK:STDOUT:   %.loc64_11.1: ref %C = converted %.loc64_9.1, %.loc64_9.4
-// CHECK:STDOUT:   %facet_value.loc64_15.1: %facet_type = facet_value constants.%C, (constants.%I.impl_witness, constants.%J.impl_witness) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc64_15.1: %facet_type = converted %C.ref.loc64_5, %facet_value.loc64_15.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc64_15.2: %facet_type = facet_value constants.%C, (constants.%I.impl_witness, constants.%J.impl_witness) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc64_15.2: %facet_type = converted constants.%C, %facet_value.loc64_15.2 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc64_15.3: %facet_type = facet_value constants.%C, (constants.%I.impl_witness, constants.%J.impl_witness) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc64_15.3: %facet_type = converted constants.%C, %facet_value.loc64_15.3 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %C.ref.loc45_5: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc45_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %C.ref.loc45_14: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc45_9.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc45_9.3: init %C = class_init (), %.loc45_9.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc45_9.4: ref %C = temporary %.loc45_9.2, %.loc45_9.3
+// CHECK:STDOUT:   %.loc45_11.1: ref %C = converted %.loc45_9.1, %.loc45_9.4
+// CHECK:STDOUT:   %facet_value.loc45_15.1: %facet_type = facet_value constants.%C, (constants.%I.impl_witness, constants.%J.impl_witness) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc45_15.1: %facet_type = converted %C.ref.loc45_5, %facet_value.loc45_15.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc45_15.2: %facet_type = facet_value constants.%C, (constants.%I.impl_witness, constants.%J.impl_witness) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc45_15.2: %facet_type = converted constants.%C, %facet_value.loc45_15.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc45_15.3: %facet_type = facet_value constants.%C, (constants.%I.impl_witness, constants.%J.impl_witness) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc45_15.3: %facet_type = converted constants.%C, %facet_value.loc45_15.3 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%facet_value) [concrete = constants.%F.specific_fn]
-// CHECK:STDOUT:   %.loc64_11.2: %C = bind_value %.loc64_11.1
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc64_11.2)
+// CHECK:STDOUT:   %.loc45_11.2: %C = bind_value %.loc45_11.1
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc45_11.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
