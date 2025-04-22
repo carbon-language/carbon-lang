@@ -31,7 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Syntax Overview
 
-One goal of Carbon's lambda syntax is to have continuity between lambdas and function.
+One goal of Carbon's lambda syntax is to have continuity between lambdas and function declarations.
 Below are some example declarations:
 
 Implicit return types
