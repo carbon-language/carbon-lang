@@ -284,33 +284,46 @@ Sort(my_list, fn => $0.val < $1.val);
 
 ### Positional Parameter Restrictions
 
-There are two restrictions applied to functions with positional
-parameters. The first restriction is that the function's definition must be 
-attached to the declaration. The second restriction is that positional
-parameters can only be used in a context where there is exactly
-one enclosing function that has no explicit parameter list. For example...
+Lambdas with positional parameters have the restriction that they
+can only be used in a context where there is exactly one enclosing
+function or lambda that has no explicit parameter list. For example:
 
 ```carbon
 fn Foo1 {
-  let lambda: auto = fn => ( $0 < $1 ) // ✅ Valid: Foo1 has no parameter list
+  // ❌ Invalid: Foo1 is already using positional parameters
+  let lambda: auto = fn => ( $0 < $1 )
 }
 
 fn Foo2 {
   my_list.Sort(
-    fn => { $0 < $1 }  // ❌ Invalid: Foo2 is already using positional parameters
+    fn => $0 < $1  // ❌ Invalid: Foo2 is already using positional parameters
   );
 }
 
 fn Foo3() {
   my_list.Sort(
-    fn => { $0 < $1 }  // ✅ Valid: Foo3 has explicit parameters
+    fn => $0 < $1  // ✅ Valid: Foo3 has explicit parameters
   );
+}
+
+fn Foo4() {
+  let lambda: auto = fn -> bool {
+    // ❌ Invalid: Outer lambda is already using positional parameters
+    return (fn => $0 < $1)($0, $1);
+  };
+}
+
+fn Foo5() {
+  let lambda: auto = fn (x: i32, y: i32) -> bool {
+    // ✅ Valid: Outer lambda has explicit parameters
+    return (fn => $0 < $1)(x, y);
+  };
 }
 ```
 
-## Lambda Captures
+## Captures
 
-Lambda captures in Carbon mirror the non-init captures of C++. A
+Captures in Carbon mirror the non-init captures of C++. A
  capture declaration consists of a capture mode (for `var` captures)
 followed by the name of a binding from the enclosing scope, and makes that
 identifier available in the inner function body. The lifetime of a capture is
@@ -336,8 +349,7 @@ fn Foo() {
 ### Capture Modes
 
 Lambdas can capture variables from their surrounding scope using `let` or `var`,  
-just like regular bindings. These capture modes determine whether the lambda  
-sees a copy (`let`) or a mutable reference (`var`) to the captured variable.
+just like regular bindings.
 
 
 Capture modes can be used as
@@ -350,7 +362,7 @@ fn Example {
   var b: i32 = 0;
 
 let lambda: auto = fn [a, var b] {
-  a += 1;  // ❌ Invalid: `a` is an immutable copy (default `let`)
+  a += 1;  // ❌ Invalid: by-value captures are immutable (default `let`)
   b += 1;  // ✅ Valid: `b` is a mutable copy (captured with `var`)
 };
 
@@ -459,3 +471,10 @@ of the form `x.(F)`, where `F` is a function with a `self` or `addr self`
 parameter, produces a callable that holds the value of `x`, and does not hold
 the value of `F`. As a consequence, we can't support combining captures and
 function fields with a `self` parameter.
+
+## Alternatives considered
+
+- [Terse vs Elaborated](/proposals/p3848.md#alternative-considered-terse-vs-elaborated)
+- [Sigil](/proposals/p3848.md#alternative-considered-sigil)
+- [Additional Positional Parameter Restriction](/proposals/p3848.md#alternative-considered-additional-positional-parameter-restriction)
+- [Recursive Self](/proposals/p3848.md#alternative-considered-recursive-self)
