@@ -86,7 +86,7 @@ auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                            SemIR::TypeInstId element_type_id) -> SemIR::TypeId;
 
-// Convert a facet value or type value instruction to a canonical facet or tyoe
+// Convert a facet value or type value instruction to a canonical facet or type
 // value instruction.
 //
 // Type values are already canonical and are returned unchanged, except for
