@@ -446,7 +446,8 @@ To mirror C++'s use of capturing `this`, `self` should always come
 from the outer scope as a capture. `self: Self` is never permitted on lambdas.
 
 ```carbon
-fn = [self: Self] { return self.F(); };  // ❌ Not allowed
+// ❌ Not allowed
+let lambda: auto = fn [self: Self] { self.F(); };
 
 fn = [self] { return self.F(); };  // ✅ Only if self came from outside
 ```
