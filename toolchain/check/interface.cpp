@@ -164,8 +164,7 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
       auto entity_name = context.entity_names().Get(bind_name.entity_name_id);
       entity_name.bind_index_value += index_delta;
       CARBON_CHECK(entity_name.bind_index_value >= 0);
-      bind_name.entity_name_id =
-          context.entity_names().AddCanonical(entity_name);
+      bind_name.entity_name_id = context.entity_names().Add(entity_name);
       new_arg_id =
           context.constant_values().GetInstId(TryEvalInst(context, bind_name));
     }

@@ -635,7 +635,7 @@ static auto GetConstantValue(EvalContext& eval_context,
     name_phase = Phase::CheckedSymbolic;
   }
   *phase = LatestPhase(*phase, name_phase);
-  return eval_context.entity_names().MakeCanonical(entity_name_id);
+  return entity_name_id;
 }
 
 // Replaces the specified field of the given typed instruction with its constant

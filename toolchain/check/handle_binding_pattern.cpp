@@ -56,11 +56,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto entity_name_id = SemIR::EntityNameId::None;
-    entity_name_id = context.entity_names().AddSymbolicBindingName(
-        name_id, context.scope_stack().PeekNameScopeId(),
-        is_generic ? context.scope_stack().AddCompileTimeBinding()
-                   : SemIR::CompileTimeBindIndex::None,
-        is_template);
+    entity_name_id = context.entity_names().Add(
+        {.name_id = name_id,
+         .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+         .bind_index_value =
+             is_generic ? context.scope_stack().AddCompileTimeBinding().index
+                        : SemIR::CompileTimeBindIndex::None.index,
+         .is_template = is_template});
     if (is_generic) {
       bind_id = AddInstInNoBlock(
           context, name_node,
