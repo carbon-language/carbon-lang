@@ -115,7 +115,7 @@ let lambda: auto = fn { Print(T.Make()); };
 // Equivalent in C++23:
 // const auto lambda = [] -> void { Print(T::Make()); };
 
-// As an argument in a function call:
+// As an argument to a function call:
 Foo(fn { Print(T.Make()); });
 // Equivalent in C++23:
 // Foo([] -> void { Print(T::Make()); });
