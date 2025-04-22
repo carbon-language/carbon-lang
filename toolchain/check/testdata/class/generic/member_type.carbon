@@ -273,16 +273,16 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %complete_type.loc7_3.2 => constants.%complete_type.84b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@Outer.%T.loc4_13.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@F.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Inner => constants.%Inner.51b
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@F.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@Outer.%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
@@ -683,6 +683,12 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %assoc0.loc6_28.2 => constants.%assoc0.95e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@Outer.%T.loc4_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@F.1.%T) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self.770) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.392
@@ -690,13 +696,15 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Self.as_type.loc6_16.1 => constants.%Self.as_type.ea1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@F.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@Outer.%T.loc4_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@impl.eed.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@impl.eed.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.eed(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -710,18 +718,14 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %F => constants.%F.ed9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.eed.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@impl.eed.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.eed(%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@F.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %C => constants.%C.390
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Inner.facet.9a3) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -730,9 +734,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Self.as_type.loc6_16.1 => constants.%C.390
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@Outer.%T.loc4_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@Outer.%T.loc4_13.2) {}
+// CHECK:STDOUT: specific @Inner(@F.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Inner.facet.c18) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -740,8 +742,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Self => constants.%Inner.facet.c18
 // CHECK:STDOUT:   %Self.as_type.loc6_16.1 => constants.%C.390
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@F.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(@F.2.%T, @F.2.%Inner.facet) {}
 // CHECK:STDOUT:

@@ -411,6 +411,8 @@ fn F() {
 // CHECK:STDOUT:   %Self.2 => constants.%Self.c30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(@impl.009.%U.as_type.loc25_49.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.009(constants.%T.fd4, constants.%U) {
 // CHECK:STDOUT:   %T.loc25_14.2 => constants.%T.fd4
 // CHECK:STDOUT:   %T.patt.loc25_14.2 => constants.%T.patt.a9c
@@ -423,14 +425,14 @@ fn F() {
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.fabf92.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@impl.009.%U.as_type.loc25_49.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.009(%T.loc25_14.2, %U.loc25_26.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eats(constants.%Food.as_type.952) {
 // CHECK:STDOUT:   %Food.loc20_16.2 => constants.%Food.as_type.952
 // CHECK:STDOUT:   %Food.patt.loc20_16.2 => constants.%Food.patt.e01
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(@Feed.%Food.as_type.loc30_37.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Food.9af, constants.%T.223) {
 // CHECK:STDOUT:   %Food.loc30_9.2 => constants.%Food.9af
@@ -441,8 +443,6 @@ fn F() {
 // CHECK:STDOUT:   %T.patt.loc30_24.2 => constants.%T.patt.f09
 // CHECK:STDOUT:   %T.as_type.loc30_43.2 => constants.%T.as_type.212
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@Feed.%Food.as_type.loc30_37.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T.fd4, constants.%Food.5fe) {
 // CHECK:STDOUT:   %T.loc31_17.2 => constants.%T.fd4
@@ -472,6 +472,8 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Eats(@HandleAnimal.%Food.as_type.loc31_56.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Food.5fe, constants.%Eats.facet.512) {
 // CHECK:STDOUT:   %Food.loc30_9.2 => constants.%Food.5fe
 // CHECK:STDOUT:   %Food.patt.loc30_9.2 => constants.%Food.patt.0b7
@@ -485,8 +487,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc30_41 => constants.%require_complete.234
 // CHECK:STDOUT:   %require_complete.loc30_50 => constants.%require_complete.444
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@HandleAnimal.%Food.as_type.loc31_56.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(@HandleAnimal.%Food.loc31_29.2, @HandleAnimal.%Eats.facet.loc31_76.2) {}
 // CHECK:STDOUT:
@@ -693,6 +693,10 @@ fn F() {
 // CHECK:STDOUT:   %Dest.patt.loc8_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %As.type => constants.%As.type.8ba
@@ -700,14 +704,14 @@ fn F() {
 // CHECK:STDOUT:   %Self.as_type.loc9_20.1 => constants.%Self.as_type.7f0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT:   %Dest.patt.loc12_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -715,8 +719,4 @@ fn F() {
 // CHECK:STDOUT:   %Self => constants.%Self.0f3
 // CHECK:STDOUT:   %Self.as_type.loc14_20.1 => constants.%Self.as_type.419
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
 // CHECK:STDOUT:

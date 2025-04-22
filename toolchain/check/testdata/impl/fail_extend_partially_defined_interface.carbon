@@ -91,13 +91,15 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Self) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(<unexpected>.inst21) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@impl.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%Self) {}
 // CHECK:STDOUT:

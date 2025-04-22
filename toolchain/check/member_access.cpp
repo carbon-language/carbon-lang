@@ -665,13 +665,13 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
 
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
-                        SemIR::InstId assoc_entity_inst_id,
+                        SemIR::ConstantId assoc_entity_const_id,
                         SemIR::SpecificInterface interface) -> SemIR::InstId {
   // TODO: This function shares a code with PerformCompoundMemberAccess(),
   // it would be nice to reduce the duplication.
 
   auto value_inst_id =
-      context.constant_values().GetConstantInstId(assoc_entity_inst_id);
+      context.constant_values().GetInstId(assoc_entity_const_id);
   CARBON_CHECK(value_inst_id.has_value());
   auto assoc_entity =
       context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);

@@ -225,9 +225,9 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(constants.%W, constants.%Self.8c5170.1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(%W.loc11_17.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%W, constants.%Self.8c5170.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%T) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%T
@@ -239,6 +239,8 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.3cf698.2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.3715ce.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(@H.%T.loc18_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T, constants.%Empty.facet.782) {}
 // CHECK:STDOUT:
@@ -258,8 +260,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %V.loc18_43.2 => constants.%V
 // CHECK:STDOUT:   %V.patt.loc18_43.2 => constants.%V.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(@H.%T.loc18_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%i32) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%i32

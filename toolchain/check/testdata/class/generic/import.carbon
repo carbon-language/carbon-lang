@@ -236,9 +236,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F => constants.%F.874
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(%T.loc6_21.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%i32) {
 // CHECK:STDOUT:   %T.loc6_21.2 => constants.%i32

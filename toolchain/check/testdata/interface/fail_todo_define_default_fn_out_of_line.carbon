@@ -226,7 +226,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [concrete = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%C (%C) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @F.%C (%C) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14 (constants.%U.patt)]
@@ -325,6 +325,10 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(<unexpected>.inst21) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@F.%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self, constants.%U) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C
@@ -332,7 +336,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %U.patt.loc14 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(<unexpected>.inst62.loc20_24) {}
 // CHECK:STDOUT:

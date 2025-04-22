@@ -1706,6 +1706,8 @@ fn F() {
 // CHECK:STDOUT:   %E.patt.loc8_10.2 => constants.%E.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @DD(@impl.266.%E.loc9_14.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.266(constants.%E) {
 // CHECK:STDOUT:   %E.loc9_14.2 => constants.%E
 // CHECK:STDOUT:   %E.patt.loc9_14.2 => constants.%E.patt
@@ -1715,8 +1717,6 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DD(@impl.266.%E.loc9_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.266(%E.loc9_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%D) {
@@ -1724,10 +1724,14 @@ fn F() {
 // CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @DD(@impl.497.%E.loc12_14.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Z.facet.aae) {
 // CHECK:STDOUT:   %D.loc11_10.2 => constants.%Z.facet.aae
 // CHECK:STDOUT:   %D.patt.loc11_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @CC(@impl.497.%Z.facet.loc12_32.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.497(constants.%E) {
 // CHECK:STDOUT:   %E.loc12_14.2 => constants.%E
@@ -1738,10 +1742,6 @@ fn F() {
 // CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.23e
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.b58
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @DD(@impl.497.%E.loc12_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CC(@impl.497.%Z.facet.loc12_32.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.497(%E.loc12_14.2) {}
 // CHECK:STDOUT:
@@ -1990,6 +1990,8 @@ fn F() {
 // CHECK:STDOUT:   %D.patt.loc12_10.2 => constants.%D.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @CC(@impl.0ce.%Y.facet.loc19_29.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.0ce(constants.%E) {
 // CHECK:STDOUT:   %E.loc19_14.2 => constants.%E
 // CHECK:STDOUT:   %E.patt.loc19_14.2 => constants.%E.patt
@@ -1999,8 +2001,6 @@ fn F() {
 // CHECK:STDOUT:   %CC.loc19_29.2 => constants.%CC.ed1
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.6bf
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CC(@impl.0ce.%Y.facet.loc19_29.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.0ce(%E.loc19_14.2) {}
 // CHECK:STDOUT:

@@ -242,13 +242,13 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@G.%T.loc19_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc19_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc19_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %Class.loc19_26.2 => constants.%Class.fe1b2d.1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T.loc19_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%U) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%U
@@ -262,11 +262,11 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type.4339b3.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@H.%U.loc23_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%U) {
 // CHECK:STDOUT:   %U.loc23_6.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc23_6.2 => constants.%U.patt
 // CHECK:STDOUT:   %Class.loc23_26.2 => constants.%Class.fe1b2d.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@H.%U.loc23_6.2) {}
 // CHECK:STDOUT:

@@ -755,12 +755,16 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %D => constants.%D.d85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(%T.loc2_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(@A.%T) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Outer.loc4_22.1 => constants.%Outer.9d6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@A.%T) {}
+// CHECK:STDOUT: specific @Inner(%T, %U.loc3_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%U) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%U
@@ -771,12 +775,14 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.generic => constants.%Inner.generic.e3b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(@B.%U) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %Outer.loc7_22.1 => constants.%Outer.99f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@B.%U) {}
+// CHECK:STDOUT: specific @Outer(@C.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%T) {
 // CHECK:STDOUT:   %U.loc3_15.2 => constants.%T
@@ -794,6 +800,8 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %D => constants.%D.aa3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@C.%T, @C.%T) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.eae
@@ -801,9 +809,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.loc10_22.1 => constants.%Inner.13a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@C.%T) {}
+// CHECK:STDOUT: specific @Outer(@D.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@C.%T, @C.%T) {}
+// CHECK:STDOUT: specific @Inner(@D.%T, @D.%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -812,12 +820,4 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %Inner.loc13_22.1 => constants.%Inner.c71
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@D.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@D.%T, @D.%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T, %U.loc3_15.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc2_13.2) {}
 // CHECK:STDOUT:

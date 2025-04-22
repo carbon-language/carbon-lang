@@ -348,21 +348,21 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(%T.loc8_15.2) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Derived(@AccessDerived.%T.loc13_18.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessDerived(constants.%T) {
 // CHECK:STDOUT:   %T.loc13_18.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc13_18.2 => constants.%T.patt
 // CHECK:STDOUT:   %Derived.loc13_40.2 => constants.%Derived.85c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived(@AccessDerived.%T.loc13_18.2) {}
+// CHECK:STDOUT: specific @Derived(@AccessBase.%T.loc17_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessBase(constants.%T) {
 // CHECK:STDOUT:   %T.loc17_15.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc17_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %Derived.loc17_37.2 => constants.%Derived.85c
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived(@AccessBase.%T.loc17_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(@AccessBase.%T.loc17_15.2) {}
 // CHECK:STDOUT:
@@ -658,21 +658,21 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(%T.loc8_15.2) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base(@AccessMissingBase.%T.loc13_22.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessMissingBase(constants.%T) {
 // CHECK:STDOUT:   %T.loc13_22.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc13_22.2 => constants.%T.patt
 // CHECK:STDOUT:   %Base.loc13_41.2 => constants.%Base.370
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(@AccessMissingBase.%T.loc13_22.2) {}
+// CHECK:STDOUT: specific @Derived(@AccessMissingDerived.%T.loc21_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessMissingDerived(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_25.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc21_25.2 => constants.%T.patt
 // CHECK:STDOUT:   %Derived.loc21_47.2 => constants.%Derived.85c
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived(@AccessMissingDerived.%T.loc21_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(@AccessMissingDerived.%T.loc21_25.2) {}
 // CHECK:STDOUT:

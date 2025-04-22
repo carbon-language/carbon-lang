@@ -211,6 +211,8 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@F.%T.loc7_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T.patt
@@ -221,8 +223,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc7_17 => constants.%require_complete.389
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2 => constants.%F.specific_fn.ef1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%T.loc7_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(%T.loc7_6.2) {}
 // CHECK:STDOUT:
@@ -387,6 +387,8 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(@F.%T.loc7_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T.patt
@@ -396,8 +398,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2 => constants.%F.specific_fn.ef1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.%T.loc7_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(%T.loc7_6.2) {}
 // CHECK:STDOUT:
@@ -443,8 +443,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.fe1: <witness> = require_complete_type %tuple.type.30b [symbolic]
 // CHECK:STDOUT:   %require_complete.e7e: <witness> = require_complete_type %Inner.c71 [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.dd9: <specific function> = specific_function %F, @F(%T, %U) [symbolic]
-// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %require_complete.b54: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %Outer.7c4: type = class_type @Outer, @Outer(%C) [concrete]
 // CHECK:STDOUT:   %Inner.type.181: type = generic_class_type @Inner, @Outer(%C) [concrete]
 // CHECK:STDOUT:   %Inner.generic.205: %Inner.type.181 = struct_value () [concrete]
@@ -608,28 +606,15 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc13_48: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc13_48 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:   %require_complete.loc13_27: <witness> = require_complete_type %Inner.loc13_45.2 [symbolic = %require_complete.loc13_27 (constants.%require_complete.e7e)]
 // CHECK:STDOUT:   %F.specific_fn.loc13_67.2: <specific function> = specific_function constants.%F, @F(%T.loc13_6.2, %U.loc13_16.2) [symbolic = %F.specific_fn.loc13_67.2 (constants.%F.specific_fn.dd9)]
-// CHECK:STDOUT:   %require_complete.loc13_70.1: <witness> = require_complete_type %T.loc13_6.2 [symbolic = %require_complete.loc13_70.1 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %require_complete.loc13_70.2: <witness> = require_complete_type %U.loc13_16.2 [symbolic = %require_complete.loc13_70.2 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.patt.loc13_6.1: type, %U.patt.loc13_16.1: type](%p.param_patt: @F.%Inner.loc13_45.2 (%Inner.c71)) -> %return.param_patt: @F.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%Inner.loc13_45.2 (%Inner.c71) = name_ref p, %p
 // CHECK:STDOUT:     %F.specific_fn.loc13_67.1: <specific function> = specific_function %F.ref, @F(constants.%T, constants.%U) [symbolic = %F.specific_fn.loc13_67.2 (constants.%F.specific_fn.dd9)]
-// CHECK:STDOUT:     %.loc13_70.1: ref @F.%tuple.type (%tuple.type.30b) = temporary_storage
-// CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.30b) = call %F.specific_fn.loc13_67.1(%p.ref) to %.loc13_70.1
-// CHECK:STDOUT:     %.loc13_70.2: ref @F.%tuple.type (%tuple.type.30b) = temporary %.loc13_70.1, %F.call
-// CHECK:STDOUT:     %tuple.elem0.loc13_70.1: ref @F.%T.loc13_6.2 (%T) = tuple_access %.loc13_70.2, element0
-// CHECK:STDOUT:     %.loc13_70.3: @F.%T.loc13_6.2 (%T) = bind_value %tuple.elem0.loc13_70.1
-// CHECK:STDOUT:     %tuple.elem0.loc13_70.2: ref @F.%T.loc13_6.2 (%T) = tuple_access %return, element0
-// CHECK:STDOUT:     %.loc13_70.4: init @F.%T.loc13_6.2 (%T) = initialize_from %.loc13_70.3 to %tuple.elem0.loc13_70.2
-// CHECK:STDOUT:     %tuple.elem1.loc13_70.1: ref @F.%U.loc13_16.2 (%U) = tuple_access %.loc13_70.2, element1
-// CHECK:STDOUT:     %.loc13_70.5: @F.%U.loc13_16.2 (%U) = bind_value %tuple.elem1.loc13_70.1
-// CHECK:STDOUT:     %tuple.elem1.loc13_70.2: ref @F.%U.loc13_16.2 (%U) = tuple_access %return, element1
-// CHECK:STDOUT:     %.loc13_70.6: init @F.%U.loc13_16.2 (%U) = initialize_from %.loc13_70.5 to %tuple.elem1.loc13_70.2
-// CHECK:STDOUT:     %.loc13_70.7: init @F.%tuple.type (%tuple.type.30b) = tuple_init (%.loc13_70.4, %.loc13_70.6) to %return
-// CHECK:STDOUT:     %.loc13_71: init @F.%tuple.type (%tuple.type.30b) = converted %F.call, %.loc13_70.7
-// CHECK:STDOUT:     return %.loc13_71 to %return
+// CHECK:STDOUT:     %.loc13_48: ref @F.%tuple.type (%tuple.type.30b) = splice_block %return {}
+// CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.30b) = call %F.specific_fn.loc13_67.1(%p.ref) to %.loc13_48
+// CHECK:STDOUT:     return %F.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -661,6 +646,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(@F.%T.loc13_6.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@F.%T.loc13_6.2, @F.%U.loc13_16.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc13_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T.patt
@@ -677,13 +666,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc13_48 => constants.%require_complete.fe1
 // CHECK:STDOUT:   %require_complete.loc13_27 => constants.%require_complete.e7e
 // CHECK:STDOUT:   %F.specific_fn.loc13_67.2 => constants.%F.specific_fn.dd9
-// CHECK:STDOUT:   %require_complete.loc13_70.1 => constants.%require_complete.4ae
-// CHECK:STDOUT:   %require_complete.loc13_70.2 => constants.%require_complete.b54
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@F.%T.loc13_6.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@F.%T.loc13_6.2, @F.%U.loc13_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(%T.loc13_6.2, %U.loc13_16.2) {}
 // CHECK:STDOUT:
@@ -719,8 +702,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc13_48 => constants.%complete_type.53b
 // CHECK:STDOUT:   %require_complete.loc13_27 => constants.%complete_type.357
 // CHECK:STDOUT:   %F.specific_fn.loc13_67.2 => constants.%F.specific_fn.4a7
-// CHECK:STDOUT:   %require_complete.loc13_70.1 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc13_70.2 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nontype.carbon
@@ -883,13 +864,13 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @WithNontype(@F.%N.loc6_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%N.51e
 // CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:   %WithNontype.loc6_31.2 => constants.%WithNontype.8a6
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithNontype(@F.%N.loc6_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithNontype(constants.%int_0.6a9) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%int_0.6a9

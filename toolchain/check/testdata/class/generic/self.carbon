@@ -206,6 +206,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@MakeSelf.%T) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeSelf(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
@@ -215,7 +217,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@MakeSelf.%T) {}
+// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@MakeClass.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -226,11 +230,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@MakeClass.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@F.%T) {}
 // CHECK:STDOUT:

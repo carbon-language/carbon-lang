@@ -3542,6 +3542,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%Z.facet.bf2) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@impl.%T.loc9_14.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc9_14.2 => constants.%T.patt
@@ -3550,8 +3552,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.07f
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc9_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc9_14.2) {}
 // CHECK:STDOUT:

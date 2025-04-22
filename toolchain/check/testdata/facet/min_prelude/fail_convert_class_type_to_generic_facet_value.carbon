@@ -224,9 +224,9 @@ fn G() {
 // CHECK:STDOUT:   %Scalar.patt.loc14_19.2 => constants.%Scalar.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self.dee) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(%Scalar.loc14_19.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self.dee) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc14_19.2 => constants.%GenericParam
@@ -248,6 +248,8 @@ fn G() {
 // CHECK:STDOUT:   %Scalar.patt.loc14_19.2 => constants.%Scalar.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc26_22.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc26_22.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc26_22.2 => constants.%T.patt
@@ -255,8 +257,6 @@ fn G() {
 // CHECK:STDOUT:   %U.loc26_32.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc26_32.2 => constants.%U.patt.9a6
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc26_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%WrongGenericParam) {
 // CHECK:STDOUT:   %Scalar.loc14_19.2 => constants.%WrongGenericParam
@@ -420,6 +420,10 @@ fn G() {
 // CHECK:STDOUT:   %Dest.patt.loc8_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %As.type => constants.%As.type.8ba
@@ -427,14 +431,14 @@ fn G() {
 // CHECK:STDOUT:   %Self.as_type.loc9_20.1 => constants.%Self.as_type.7f0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT:   %Dest.patt.loc12_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -442,8 +446,4 @@ fn G() {
 // CHECK:STDOUT:   %Self => constants.%Self.0f3
 // CHECK:STDOUT:   %Self.as_type.loc14_20.1 => constants.%Self.as_type.419
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
 // CHECK:STDOUT:

@@ -676,6 +676,10 @@ fn CallF() {
 // CHECK:STDOUT:   %N.patt.loc4_13.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(%N.loc4_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(@V.%N) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%N, constants.%Self.3a0) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %I.type => constants.%I.type.8a1
@@ -684,10 +688,6 @@ fn CallF() {
 // CHECK:STDOUT:   %array_type => constants.%array_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@V.%N) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%N.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%int_-1) {
 // CHECK:STDOUT:   %N.loc4_13.2 => constants.%int_-1

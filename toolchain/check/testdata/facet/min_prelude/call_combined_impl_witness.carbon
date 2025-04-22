@@ -477,9 +477,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AA.1(constants.%A.facet.5b4) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @BB.1(constants.%B.facet.abf) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AA.1(@G.%A.facet.loc33) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @BB.1(constants.%B.facet.abf) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @BB.1(@G.%B.facet.loc34) {}
 // CHECK:STDOUT:
@@ -765,6 +765,10 @@ fn F() {
 // CHECK:STDOUT:   %Dest.patt.loc9_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(%Dest.loc9_14.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %As.type => constants.%As.type.8ba
@@ -772,14 +776,14 @@ fn F() {
 // CHECK:STDOUT:   %Self.as_type.loc10_20.1 => constants.%Self.as_type.7f0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc9_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc13_22.2 => constants.%Dest
 // CHECK:STDOUT:   %Dest.patt.loc13_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc13_22.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -787,10 +791,6 @@ fn F() {
 // CHECK:STDOUT:   %Self => constants.%Self.0f3
 // CHECK:STDOUT:   %Self.as_type.loc14_20.1 => constants.%Self.as_type.419
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc13_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Self.e44) {
 // CHECK:STDOUT:   %Self => constants.%Self.e44

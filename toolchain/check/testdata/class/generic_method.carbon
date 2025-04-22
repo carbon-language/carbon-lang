@@ -50,7 +50,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%Class (%Class) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @F.%Class (%Class) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     %n.patt: @F.%T.loc13 (%T) = binding_pattern n
@@ -141,12 +141,14 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@F.%T.loc13) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc13 => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@F.%T.loc13) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
+// CHECK:STDOUT: specific @Class(<unexpected>.inst66.loc16_28) {}
 // CHECK:STDOUT:

@@ -256,14 +256,14 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @HoldsType(@F.%T.loc8_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %HoldsType.loc8_34.2 => constants.%HoldsType.cc9
 // CHECK:STDOUT:   %tuple.elem0.loc8_41.2 => constants.%tuple.elem0
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc8_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%tuple) {
 // CHECK:STDOUT:   %T.loc4_17.2 => constants.%tuple
@@ -433,14 +433,14 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @HoldsType(@F.%T.loc8_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %HoldsType.loc8_36.2 => constants.%HoldsType.843
 // CHECK:STDOUT:   %.loc8_43.3 => constants.%.20a
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc8_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%struct) {
 // CHECK:STDOUT:   %T.loc4_17.2 => constants.%struct
@@ -628,6 +628,8 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @HoldsType(@F.%T.loc21_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc21_6.2 => constants.%T.patt
@@ -635,14 +637,14 @@ fn G() {
 // CHECK:STDOUT:   %.loc21_38.3 => constants.%.2fe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc21_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%c) {
 // CHECK:STDOUT:   %T.loc8_17.2 => constants.%c
 // CHECK:STDOUT:   %T.patt.loc8_17.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HoldsType(<unexpected>.inst85.loc26_7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_array_index.carbon
 // CHECK:STDOUT:
@@ -817,11 +819,11 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @HoldsType(@F.%T.loc12_6.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc12_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %HoldsType.loc12_40.2 => constants.%HoldsType
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc12_6.2) {}
 // CHECK:STDOUT:
