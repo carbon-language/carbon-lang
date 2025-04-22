@@ -133,7 +133,7 @@ fn Foo(x: i32) {
   // Equivalent in C++23:
   // const auto lambda = [x, y = int32_t{0}] mutable -> void { Print(++x, ++y); };
 
-  // As an argument in a function calll:
+  // As an argument to a function calll:
   Foo(fn [var x, var y: i32 = 0] { Print(++x, ++y); });
   // Equivalent in C++23:
   // Foo([x, y = int32_t{0}] mutable -> void { Print(++x, ++y); });
