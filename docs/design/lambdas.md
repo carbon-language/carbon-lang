@@ -449,7 +449,8 @@ from the outer scope as a capture. `self: Self` is never permitted on lambdas.
 // ❌ Not allowed
 let lambda: auto = fn [self: Self] { self.F(); };
 
-fn = [self] { return self.F(); };  // ✅ Only if self came from outside
+// ✅ Captures `self` from outer scope
+let lambda: auto = fn [self] { self.F(); };
 ```
 
 Note: Following
