@@ -371,9 +371,11 @@ fn Example {
 }
 ```
 
-Note: If a function object F has mutable state (via by-object captures or
-mutable fields), calling F requires a mutable reference. This ensures the
-function has access to its internal state for mutation.
+Note: If a function object F has mutable state, either because it has a
+by-object capture or because it has a by-object function field, then a call to F
+should require the callee to be a reference expression rather than a value
+expression. We need a mutable handle to the function in order to be able to
+mutate its mutable state.
 
 ### Default Capture Mode
 
