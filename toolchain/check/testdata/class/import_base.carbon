@@ -91,16 +91,12 @@ fn Run() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_8: %Base.elem = field_decl x, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc8_3: %Base.elem = var_pattern %.loc8_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc8: ref %Base.elem = var <none>
-// CHECK:STDOUT:   %.loc9_13: %Base.elem = field_decl unused, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc9_3: %Base.elem = var_pattern %.loc9_13
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc9: ref %Base.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc8: %Base.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc9: %Base.elem = field_decl unused, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.x.unused: type = struct_type {.x: %i32, .unused: %i32} [concrete = constants.%struct_type.x.unused]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [concrete = constants.%complete_type.20c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -109,8 +105,8 @@ fn Run() {
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Unused = %Unused.decl
-// CHECK:STDOUT:   .x = %.loc8_8
-// CHECK:STDOUT:   .unused = %.loc9_13
+// CHECK:STDOUT:   .x = %.loc8
+// CHECK:STDOUT:   .unused = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
@@ -190,7 +186,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.e67: %Base.elem = import_ref Main//a, loc8_8, loaded [concrete = %.720]
 // CHECK:STDOUT:   %Main.import_ref.2e4 = import_ref Main//a, loc9_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c5f: <witness> = import_ref Main//a, loc14_1, loaded [concrete = constants.%complete_type.15c]
-// CHECK:STDOUT:   %Main.import_ref.9a9 = import_ref Main//a, inst79 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.9a9 = import_ref Main//a, inst73 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.7e5 = import_ref Main//a, loc13_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.a21640.2: type = import_ref Main//a, loc13_16, loaded [concrete = constants.%Base]
 // CHECK:STDOUT: }

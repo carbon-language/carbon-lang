@@ -102,11 +102,9 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_12: %B.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc19_7: %B.elem = var_pattern %.loc19_12
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc19: %B.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n.033]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -114,7 +112,7 @@ class A {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   .n = %.loc19_12
+// CHECK:STDOUT:   .n = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
@@ -125,7 +123,7 @@ class A {
 // CHECK:STDOUT:   %.loc22_19.1: ref %B = temporary_storage
 // CHECK:STDOUT:   %Make.call: init %B = call %Make.ref() to %.loc22_19.1
 // CHECK:STDOUT:   %.loc22_19.2: ref %B = temporary %.loc22_19.1, %Make.call
-// CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc19_12 [concrete = @B.%.loc19_12]
+// CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc19 [concrete = @B.%.loc19]
 // CHECK:STDOUT:   %.loc22_20.1: ref %i32 = class_element_access %.loc22_19.2, element0
 // CHECK:STDOUT:   %.loc22_20.2: %i32 = bind_value %.loc22_20.1
 // CHECK:STDOUT:   return %.loc22_20.2

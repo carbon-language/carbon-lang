@@ -774,16 +774,16 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %int_32.loc7_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc7_18: init type = call constants.%Int(%int_32.loc7_18) [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %.loc7_18.1: type = value_of_initializer %int.make_type_signed.loc7_18 [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %.loc7_18.2: type = converted %int.make_type_signed.loc7_18, %.loc7_18.1 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:   %.loc7_16: %D.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc7_11: %D.elem = var_pattern %.loc7_16
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc7_11: ref %D.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc7_30: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc7_30: init type = call constants.%Int(%int_32.loc7_30) [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %.loc7_30.1: type = value_of_initializer %int.make_type_signed.loc7_30 [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %.loc7_30.2: type = converted %int.make_type_signed.loc7_30, %.loc7_30.1 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:   %.loc7_28: %D.elem = field_decl m, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc7_23: %D.elem = var_pattern %.loc7_28
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc7_23: ref %D.elem = var <none>
 // CHECK:STDOUT:   %struct_type.n.m: type = struct_type {.n: %i32.builtin, .m: %i32.builtin} [concrete = constants.%struct_type.n.m.566]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.m [concrete = constants.%complete_type.682]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

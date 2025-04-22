@@ -55,6 +55,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir->names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.call_params_id);
+    CollectNamesInBlock(fn_scope, fn.pattern_block_id);
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
     }
@@ -75,6 +76,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     GetScopeInfo(class_scope).name = globals_.AllocateName(
         *this, class_loc,
         sem_ir->names().GetIRBaseName(class_info.name_id).str());
+    CollectNamesInBlock(class_scope, class_info.pattern_block_id);
     AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
     CollectNamesInBlock(class_scope, class_info.body_block_id);
     CollectNamesInGeneric(class_scope, class_info.generic_id);
@@ -88,6 +90,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     GetScopeInfo(interface_scope).name = globals_.AllocateName(
         *this, interface_loc,
         sem_ir->names().GetIRBaseName(interface_info.name_id).str());
+    CollectNamesInBlock(interface_scope, interface_info.pattern_block_id);
     AddBlockLabel(interface_scope, interface_info.body_block_id, "interface",
                   interface_loc);
     CollectNamesInBlock(interface_scope, interface_info.body_block_id);
@@ -112,6 +115,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     // TODO: Invent a name based on the self and constraint types.
     GetScopeInfo(impl_scope).name =
         globals_.AllocateName(*this, impl_fingerprint, "impl");
+    CollectNamesInBlock(impl_scope, impl_info.pattern_block_id);
     AddBlockLabel(impl_scope, impl_info.body_block_id, "impl",
                   impl_fingerprint);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
@@ -586,9 +590,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& class_info = sem_ir_->classes().Get(inst.class_id);
         add_inst_name_id(class_info.name_id, ".decl");
         auto class_scope_id = GetScopeFor(inst.class_id);
-        // TODO: Should do this as part of building the class scope in the
-        // InstNamer constructor, not here.
-        queue_block_id(class_scope_id, class_info.pattern_block_id);
         queue_block_id(class_scope_id, inst.decl_block_id);
         continue;
       }
@@ -677,9 +678,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& function_info = sem_ir_->functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
-        // TODO: Should do this as part of building the function scope in the
-        // InstNamer constructor, not here.
-        queue_block_id(function_scope_id, function_info.pattern_block_id);
         queue_block_id(function_scope_id, inst.decl_block_id);
         continue;
       }
@@ -700,10 +698,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
-        // TODO: Should do this as part of building the impl scope in the
-        // InstNamer constructor, not here.
-        queue_block_id(impl_scope_id,
-                       sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
         queue_block_id(impl_scope_id, inst.decl_block_id);
         break;
       }
@@ -800,9 +794,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".decl");
         auto interface_scope_id = GetScopeFor(inst.interface_id);
-        // TODO: Should do this as part of building the interface scope in the
-        // InstNamer constructor, not here.
-        queue_block_id(interface_scope_id, interface_info.pattern_block_id);
         queue_block_id(interface_scope_id, inst.decl_block_id);
         continue;
       }

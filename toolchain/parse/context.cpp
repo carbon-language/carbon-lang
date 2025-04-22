@@ -436,7 +436,9 @@ auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
 // definitions are deferred, such as a class or interface.
 static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
   auto& stack = context.state_stack();
-  if (stack.size() < 2 || stack.back().kind != StateKind::DeclScopeLoop) {
+  if (stack.size() < 2 ||
+      (stack.back().kind != StateKind::DeclScopeLoopAsClass &&
+       stack.back().kind != StateKind::DeclScopeLoopAsNonClass)) {
     return false;
   }
   auto kind = stack[stack.size() - 2].kind;

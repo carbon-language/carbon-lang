@@ -128,6 +128,8 @@ fn Var5() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
+// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple.type.f19: type = tuple_type (%Abstract1) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -149,11 +151,10 @@ fn Var5() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
+// CHECK:STDOUT:   %Abstract1.ref: type = name_ref Abstract1, file.%Abstract1.decl [concrete = constants.%Abstract1]
+// CHECK:STDOUT:   %.loc13_21.1: %tuple.type.85c = tuple_literal (%Abstract1.ref)
+// CHECK:STDOUT:   %.loc13_21.2: type = converted %.loc13_21.1, constants.%tuple.type.f19 [concrete = constants.%tuple.type.f19]
 // CHECK:STDOUT:   %.loc13_8: <error> = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %.loc13_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <none>
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: <error>} [concrete = <error>]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

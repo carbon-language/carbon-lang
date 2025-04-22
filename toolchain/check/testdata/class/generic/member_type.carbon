@@ -178,11 +178,8 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.n.loc7_3.2 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.84b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6_10: @Inner.%Inner.elem (%Inner.elem.310) = field_decl n, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc6_5: @Inner.%Inner.elem (%Inner.elem.310) = var_pattern %.loc6_10
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @Inner.%Inner.elem (%Inner.elem.310) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, @Outer.%T.loc4_13.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %.loc6: @Inner.%Inner.elem (%Inner.elem.310) = field_decl n, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.n.loc7_3.1: type = struct_type {.n: %T} [symbolic = %struct_type.n.loc7_3.2 (constants.%struct_type.n.848)]
 // CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness %struct_type.n.loc7_3.1 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.84b)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1
@@ -190,7 +187,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Inner.51b
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .n = %.loc6_10
+// CHECK:STDOUT:     .n = %.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -250,7 +247,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %Inner.721 = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Inner.721 = name_ref c, %c
-// CHECK:STDOUT:   %n.ref: %Inner.elem.6c2 = name_ref n, @Inner.%.loc6_10 [concrete = @Inner.%.loc6_10]
+// CHECK:STDOUT:   %n.ref: %Inner.elem.6c2 = name_ref n, @Inner.%.loc6 [concrete = @Inner.%.loc6]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = bind_value %.loc14_11.1
 // CHECK:STDOUT:   return %.loc14_11.2

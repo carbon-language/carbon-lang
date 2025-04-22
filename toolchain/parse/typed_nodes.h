@@ -562,6 +562,35 @@ struct VariableDecl {
   Lex::SemiTokenIndex token;
 };
 
+using FieldIntroducer = LeafNode<NodeKind::FieldIntroducer, Lex::VarTokenIndex>;
+using FieldInitializer =
+    LeafNode<NodeKind::FieldInitializer, Lex::EqualTokenIndex>;
+
+struct FieldNameAndType {
+  static constexpr auto Kind =
+      NodeKind::FieldNameAndType.Define({.child_count = 2});
+
+  IdentifierNameNotBeforeParamsId name;
+  Lex::ColonTokenIndex token;
+  AnyExprId type;
+};
+
+struct FieldDecl {
+  static constexpr auto Kind = NodeKind::FieldDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = FieldIntroducer::Kind});
+
+  FieldIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  FieldNameAndTypeId name_and_type;
+
+  struct Initializer {
+    FieldInitializerId equals;
+    AnyExprId value;
+  };
+  std::optional<Initializer> initializer;
+  Lex::SemiTokenIndex token;
+};
+
 // A `var` pattern.
 struct VariablePattern {
   static constexpr auto Kind = NodeKind::VariablePattern.Define(

@@ -152,7 +152,7 @@ fn M() {
 // CHECK:STDOUT:   %Cfn.decl: %Cfn.type = fn_decl @Cfn [concrete = constants.%Cfn] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %T.patt.loc12_22.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_22.1 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc12_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %x.patt: @Cfn.%T.loc12_22.1 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Cfn.%T.loc12_22.1 (%T) = value_param_pattern %x.patt, call_param1
 // CHECK:STDOUT:   } {
@@ -175,7 +175,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Cfn(%T.loc12_22.2: type) {
 // CHECK:STDOUT:   %T.loc12_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_22.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc12_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_22.1 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc12_22.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc12_22.1 [symbolic = %require_complete (constants.%require_complete.4ae)]
@@ -305,7 +305,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Cfn(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_22.1 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc12_22.1 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt.loc12_22.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
@@ -371,7 +371,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Cfn(constants.%i32) {
 // CHECK:STDOUT:   %T.loc12_22.1 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc12_22.1 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt.loc12_22.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a

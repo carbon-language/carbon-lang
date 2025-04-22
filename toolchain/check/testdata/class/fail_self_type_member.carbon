@@ -30,6 +30,8 @@ fn F() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, bool [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: bool} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [concrete]
@@ -38,11 +40,10 @@ fn F() -> bool {
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
+// CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:   %.loc12_10.2: type = converted %bool.make_type, %.loc12_10.1 [concrete = bool]
 // CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl b, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc12_3: %Class.elem = var_pattern %.loc12_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: bool} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

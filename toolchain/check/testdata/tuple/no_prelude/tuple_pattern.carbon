@@ -70,9 +70,13 @@ interface I {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+4]]:7: error: pattern in field declaration is not a single `:` binding [ExpectedSymbolicBindingInFieldDecl]
+  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+8]]:7: error: expected identifier in field declaration [ExpectedFieldIdentifier]
   // CHECK:STDERR:   var (x: {}, y: {});
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   var (x: {}, y: {});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var (x: {}, y: {});
 }
@@ -506,35 +510,15 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_struct_type [concrete]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%C.elem, %C.elem) [concrete]
-// CHECK:STDOUT:   %struct_type.x.y: type = struct_type {.x: %empty_struct_type, .y: %empty_struct_type} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc9_20: %tuple.type = tuple_pattern (<unexpected>.inst22.loc9_9, <unexpected>.inst25.loc9_16)
-// CHECK:STDOUT:     %.loc9_3: %tuple.type = var_pattern %.loc9_20
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %tuple.type = var <none>
-// CHECK:STDOUT:   %struct_type.x.y: type = struct_type {.x: %empty_struct_type, .y: %empty_struct_type} [concrete = constants.%struct_type.x.y]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y [concrete = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = <unexpected>.inst22.loc9_9
-// CHECK:STDOUT:   .y = <unexpected>.inst25.loc9_16
-// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_initializer_mismatch.carbon

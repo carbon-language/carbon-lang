@@ -156,11 +156,8 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness %struct_type.v.loc14_1.2 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc13_8: @A.%A.elem (%A.elem.1ce) = field_decl v, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc13_3: @A.%A.elem (%A.elem.1ce) = var_pattern %.loc13_8
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @A.%A.elem (%A.elem.1ce) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_9.1 [symbolic = %T.loc6_9.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc13: @A.%A.elem (%A.elem.1ce) = field_decl v, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.v.loc14_1.1: type = struct_type {.v: %T} [symbolic = %struct_type.v.loc14_1.2 (constants.%struct_type.v.ff1)]
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.v.loc14_1.1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
@@ -168,7 +165,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.130
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .v = %.loc13_8
+// CHECK:STDOUT:     .v = %.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
