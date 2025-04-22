@@ -339,27 +339,6 @@ Lambdas can capture variables from their surrounding scope using `let` or `var`,
 just like regular bindings. These capture modes determine whether the lambda  
 sees a copy (`let`) or a mutable reference (`var`) to the captured variable.
 
-To avoid ambiguity, captures are only allowed when the lambda is **defined  
-inline**—within an expression or directly inside a function body. This means:
-
-- ✅ Lambdas support captures.  
-- ✅ Nested lambdas defined inside a function body support captures.  
-- ❌ Lambdas or functions declared ahead of time (e.g., forward-declared)  
-  **cannot** use captures.  
-- ❌ Captures are not allowed in class member functions where `self: Self` is  
-  used.
-
-You can use capture modes in two ways:  
-- As **default capture mode specifiers**  
-- For **explicit captures**, as shown in the example below:
-
-```carbon
-fn Foo() {
-  var counter: i32 = 0;
-  let printer = fn [let counter] { Print(counter); };
-  let incrementer = fn [var counter] { counter += 1; };
-}
-```
 
 Capture modes can be used as
 [default capture mode specifiers](#default-capture-mode) or for explicit
