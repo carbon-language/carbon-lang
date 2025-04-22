@@ -242,16 +242,16 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %SubscriptType.patt.loc4_21.2 => constants.%SubscriptType.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(%SubscriptType.loc4_21.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @IndexWith(@At.%SubscriptType) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @At(constants.%SubscriptType, constants.%Self) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.b94
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc5_15.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@At.%SubscriptType) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(%SubscriptType.loc4_21.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- wrong_arg_count.carbon
 // CHECK:STDOUT:

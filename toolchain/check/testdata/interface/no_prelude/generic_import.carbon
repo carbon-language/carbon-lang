@@ -86,9 +86,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(%T.loc4_19.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:

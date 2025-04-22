@@ -500,8 +500,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .x = <unexpected>.inst23.loc9_8
-// CHECK:STDOUT:   .y = <unexpected>.inst27.loc9_15
+// CHECK:STDOUT:   .x = <unexpected>.inst24.loc9_8
+// CHECK:STDOUT:   .y = <unexpected>.inst28.loc9_15
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }

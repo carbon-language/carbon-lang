@@ -230,16 +230,16 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T.patt.loc8_22.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(%T.loc8_22.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%T) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%T, constants.%Self.0f3) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.07f
 // CHECK:STDOUT:   %Self => constants.%Self.0f3
 // CHECK:STDOUT:   %Self.as_type.loc9_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T.loc8_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%i32.builtin) {
 // CHECK:STDOUT:   %T.loc8_22.2 => constants.%i32.builtin

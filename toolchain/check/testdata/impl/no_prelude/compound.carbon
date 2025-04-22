@@ -199,16 +199,16 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Dest.patt.loc3_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc3_22.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.07f
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc4_20.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc3_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- non-instance_success.carbon
 // CHECK:STDOUT:

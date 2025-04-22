@@ -732,16 +732,16 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I = import_ref Main//interface, I, unloaded
 // CHECK:STDOUT:   %Main.I3: type = import_ref Main//interface, I3, loaded [concrete = constants.%I3.type]
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.148 = import_ref Main//interface, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.148 = import_ref Main//interface, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f5f: %I3.assoc_type = import_ref Main//interface, loc6_9, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.import_ref.680: %I3.assoc_type = import_ref Main//interface, loc7_9, loaded [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %Main.import_ref.181: %I3.assoc_type = import_ref Main//interface, loc8_9, loaded [concrete = constants.%assoc2]
 // CHECK:STDOUT:   %Main.T1 = import_ref Main//interface, T1, unloaded
 // CHECK:STDOUT:   %Main.T2 = import_ref Main//interface, T2, unloaded
 // CHECK:STDOUT:   %Main.T3 = import_ref Main//interface, T3, unloaded
-// CHECK:STDOUT:   %Main.import_ref.8a8474.1: %I3.type = import_ref Main//interface, inst25 [no loc], loaded [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Main.import_ref.8a8474.2: %I3.type = import_ref Main//interface, inst25 [no loc], loaded [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Main.import_ref.8a8474.3: %I3.type = import_ref Main//interface, inst25 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.8a8474.1: %I3.type = import_ref Main//interface, inst26 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.8a8474.2: %I3.type = import_ref Main//interface, inst26 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.8a8474.3: %I3.type = import_ref Main//interface, inst26 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1469,10 +1469,10 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I = import_ref Main//interface, I, unloaded
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType: type = import_ref Main//interface, NonType, loaded [concrete = constants.%NonType.type]
-// CHECK:STDOUT:   %Main.import_ref.8b7 = import_ref Main//interface, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8b7 = import_ref Main//interface, inst41 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.9fa: %NonType.assoc_type = import_ref Main//interface, loc12_8, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Y: %struct_type.a.225 = import_ref Main//interface, Y, loaded [concrete = %Y]
-// CHECK:STDOUT:   %Main.import_ref.86c: %NonType.type = import_ref Main//interface, inst39 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.86c: %NonType.type = import_ref Main//interface, inst41 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

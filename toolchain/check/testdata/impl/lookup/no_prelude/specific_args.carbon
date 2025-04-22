@@ -167,16 +167,16 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(%T.loc4_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(@F.%T) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc4_36.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc5_9.2 => constants.%T

@@ -161,12 +161,12 @@ fn H() {
 // CHECK:STDOUT:   %assoc0.loc12_22.2 => constants.%assoc0.8f0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(%T.loc11_13.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%Self.209, constants.%U) {
 // CHECK:STDOUT:   %U.loc12_8.1 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc12_8.2 => constants.%U.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc11_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_6.2 => constants.%T

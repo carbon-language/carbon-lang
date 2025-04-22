@@ -320,6 +320,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericNoParams(constants.%T) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericNoParams(@C.%T.loc8_9.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericNoParams(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.2(constants.%T, constants.%U) {
@@ -327,11 +329,9 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %U.patt.loc10_30.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.2(%T, %U.loc10_30.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericNoParams(@C.%T.loc8_9.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(%T.loc8_9.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericAndParams.2(%T, %U.loc10_30.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.1(constants.%X) {
 // CHECK:STDOUT:   %T.loc6_28.2 => constants.%X

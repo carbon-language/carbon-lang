@@ -372,6 +372,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @MyInt(@impl.%N.loc15_14.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%N) {
 // CHECK:STDOUT:   %N.loc15_14.2 => constants.%N
 // CHECK:STDOUT:   %N.patt.loc15_14.2 => constants.%N.patt
@@ -384,29 +386,27 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.fc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@impl.%N.loc15_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%N.loc15_14.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Add.facet.0e5) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet.0e5
 // CHECK:STDOUT:   %Self.as_type.loc5_15.1 => constants.%MyInt
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @MyInt(@Double.%N.loc19_11.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%N) {
 // CHECK:STDOUT:   %N.loc19_11.2 => constants.%N
 // CHECK:STDOUT:   %N.patt.loc19_11.2 => constants.%N.patt
 // CHECK:STDOUT:   %MyInt.loc19_39.2 => constants.%MyInt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Double.%N.loc19_11.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Add.facet.5a7) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet.5a7
@@ -469,7 +469,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.Double: %Double.type = import_ref Main//generic_impl, Double, loaded [concrete = constants.%Double]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.1: Core.IntLiteral = import_ref Main//generic_impl, loc11_13, loaded [symbolic = @MyInt.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.9e9: <witness> = import_ref Main//generic_impl, loc13_1, loaded [symbolic = @MyInt.%complete_type (constants.%complete_type.a87)]
-// CHECK:STDOUT:   %Main.import_ref.697 = import_ref Main//generic_impl, inst89 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.697 = import_ref Main//generic_impl, inst90 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//generic_impl, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//generic_impl, loc5_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//generic_impl, Op, unloaded

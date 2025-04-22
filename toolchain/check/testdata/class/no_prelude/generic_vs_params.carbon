@@ -331,12 +331,12 @@ class Foo[T:! type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericNoParams(constants.%T) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericNoParams(@C.%T.loc8_9.2) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.2(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc10_26.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc10_26.2 => constants.%U.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericNoParams(@C.%T.loc8_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(%T.loc8_9.2) {}
 // CHECK:STDOUT:

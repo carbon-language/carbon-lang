@@ -156,6 +156,10 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %assoc0.loc13_29.2 => constants.%assoc0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(%T.loc11_13.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(@F.1.%T) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
@@ -163,9 +167,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %Self.as_type.loc13_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc11_13.2) {}
+// CHECK:STDOUT: specific @I(@F.2.%T.loc23_24) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T.loc23_24 => constants.%T
@@ -173,6 +175,4 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc23_24.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.2.%T.loc23_24) {}
 // CHECK:STDOUT:

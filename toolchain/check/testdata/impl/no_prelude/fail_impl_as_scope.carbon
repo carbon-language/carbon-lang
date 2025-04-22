@@ -424,12 +424,12 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Zero.2(constants.%Self) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @impl.6b5(%Self) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Method.2(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc13_21.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6b5(%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Zero.1(constants.%Z.facet) {}
 // CHECK:STDOUT:

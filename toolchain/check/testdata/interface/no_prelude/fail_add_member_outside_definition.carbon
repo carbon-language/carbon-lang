@@ -126,9 +126,11 @@ interface Outer {
 // CHECK:STDOUT:   %F => constants.%F.9789e2.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%Self.277, constants.%Self.b60) {}
+// CHECK:STDOUT: specific @Inner(<unexpected>.inst29) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(%Self.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.2(constants.%Self.277, constants.%Self.b60) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.3(constants.%Self.277, constants.%Self.b60) {}
 // CHECK:STDOUT:

@@ -329,9 +329,9 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.patt.loc8_23.2 => constants.%T.patt.e01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T.8b3, constants.%Self.088) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(%T.loc8_23.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%T.8b3, constants.%Self.088) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_18.2 => constants.%C
