@@ -48,7 +48,7 @@ class Class {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc8: %Class.elem = field_decl field, element0 [concrete]
+// CHECK:STDOUT:   %.loc16: %Class.elem = field_decl field, element0 [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %i32} [concrete = constants.%struct_type.field]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [concrete = constants.%complete_type.d48]
@@ -56,6 +56,6 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .field = %.loc8
+// CHECK:STDOUT:   .field = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
