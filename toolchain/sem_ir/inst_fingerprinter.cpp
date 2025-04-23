@@ -60,10 +60,6 @@ struct Worklist {
     AddString(sem_ir->identifiers().Get(ident_id));
   }
 
-  auto Add(ClangSourceLocId /*clang_source_loc_id*/) -> void {
-    CARBON_FATAL("Should never fingerprint a location");
-  }
-
   auto Add(StringLiteralValueId lit_id) -> void {
     AddString(sem_ir->string_literal_values().Get(lit_id));
   }
