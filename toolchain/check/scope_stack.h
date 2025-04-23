@@ -51,9 +51,10 @@ class ScopeStack {
 
   // Pushes a non-function entity scope. Functions must use
   // `PushForFunctionBody` instead.
-  auto PushForEntity(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
-                     SemIR::SpecificId specific_id,
-                     bool lexical_lookup_has_load_error = false) -> void;
+  auto PushForEntityBody(SemIR::InstId scope_inst_id,
+                         SemIR::NameScopeId scope_id,
+                         SemIR::SpecificId specific_id,
+                         bool lexical_lookup_has_load_error = false) -> void;
 
   // Pushes a scope which should be in the same region as the current scope.
   // These can be in a function without breaking `return` scoping. For example,

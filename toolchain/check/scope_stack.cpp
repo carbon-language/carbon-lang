@@ -83,10 +83,10 @@ auto ScopeStack::PushForDeclName() -> void {
   MarkNestingIfInReturnScope();
 }
 
-auto ScopeStack::PushForEntity(SemIR::InstId scope_inst_id,
-                               SemIR::NameScopeId scope_id,
-                               SemIR::SpecificId specific_id,
-                               bool lexical_lookup_has_load_error) -> void {
+auto ScopeStack::PushForEntityBody(SemIR::InstId scope_inst_id,
+                                   SemIR::NameScopeId scope_id,
+                                   SemIR::SpecificId specific_id,
+                                   bool lexical_lookup_has_load_error) -> void {
   CARBON_CHECK(scope_inst_id.has_value());
   CARBON_DCHECK(!sem_ir_->insts().Is<SemIR::FunctionDecl>(scope_inst_id));
   Push(scope_inst_id, scope_id, specific_id, lexical_lookup_has_load_error);

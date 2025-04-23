@@ -233,8 +233,8 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
   // providing the definition.
   StartGenericDecl(context);
 
-  context.scope_stack().PushForEntity(scope_inst_id, scope_id, self_specific_id,
-                                      has_error);
+  context.scope_stack().PushForEntityBody(scope_inst_id, scope_id,
+                                          self_specific_id, has_error);
 
   // An interface also introduces its 'Self' parameter into scope, despite it
   // not being redeclared as part of the qualifier.
