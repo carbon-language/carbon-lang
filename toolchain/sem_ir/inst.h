@@ -355,7 +355,7 @@ struct LocIdAndInst {
 
   // Unsafely form a pair of a location and an instruction. Used in the cases
   // where we can't statically enforce the type matches.
-  static auto UncheckedLoc(LocId loc_id, Inst inst) -> LocIdAndInst {
+  static auto UncheckedLoc(SemIR::LocId loc_id, Inst inst) -> LocIdAndInst {
     return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
   }
 
@@ -370,6 +370,10 @@ struct LocIdAndInst {
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
   LocIdAndInst(SemIR::LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
+  template <typename InstT>
+    requires(Internal::HasUntypedNodeId<InstT>)
+  LocIdAndInst(SemIR::InstId loc_inst_id, InstT inst)
+      : loc_id(loc_inst_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;
@@ -398,7 +402,7 @@ class InstStore {
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst::UncheckedLoc(/*loc_id=*/inst_id, Get(inst_id));
+    return LocIdAndInst::UncheckedLoc(LocId(inst_id), Get(inst_id));
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -445,6 +449,10 @@ class InstStore {
       loc_id = loc_ids_[inst_id.index];
     }
     return loc_id;
+  }
+
+  auto GetCanonicalLocId(InstId inst_id) const -> LocId {
+    return GetCanonicalLocId(LocId(inst_id));
   }
 
   // Overwrites a given instruction with a new value.

@@ -164,7 +164,7 @@ static auto MergeFunctionRedecl(Context& context,
   DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Fn, prev_function.name_id,
       RedeclInfo(new_function, node_id, new_is_definition),
-      RedeclInfo(prev_function, prev_function.latest_decl_id(),
+      RedeclInfo(prev_function, SemIR::LocId(prev_function.latest_decl_id()),
                  prev_function.has_definition_started()),
       prev_import_ir_id);
   if (new_is_definition && prev_function.has_definition_started()) {
@@ -243,8 +243,9 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          prev_id);
+    DiagnoseDuplicateName(context, name_context.name_id,
+                          SemIR::LocId(name_context.loc_id),
+                          SemIR::LocId(prev_id));
     return;
   }
 
@@ -551,7 +552,8 @@ static auto CheckFunctionDefinitionSignature(Context& context,
 
   // Check the return type is complete.
   if (function.return_slot_pattern_id.has_value()) {
-    CheckFunctionReturnType(context, /*loc_id=*/function.return_slot_pattern_id,
+    CheckFunctionReturnType(context,
+                            SemIR::LocId(function.return_slot_pattern_id),
                             function, SemIR::SpecificId::None);
     params_to_complete = params_to_complete.drop_back();
   }
@@ -565,7 +567,7 @@ static auto CheckFunctionDefinitionSignature(Context& context,
     // The parameter types need to be complete.
     RequireCompleteType(
         context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
-        /*loc_id=*/param_ref_id, [&] {
+        SemIR::LocId(param_ref_id), [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,
               "parameter has incomplete type {0} in function definition",

@@ -24,7 +24,8 @@ auto AddNameToLookup(Context& context, SemIR::NameId name_id,
       existing.has_value()) {
     // TODO: Add coverage to this use case and use the location of the name
     // instead of the target.
-    DiagnoseDuplicateName(context, name_id, target_id, existing);
+    DiagnoseDuplicateName(context, name_id, SemIR::LocId(target_id),
+                          SemIR::LocId(existing));
   }
 }
 

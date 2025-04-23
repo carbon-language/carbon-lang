@@ -473,7 +473,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
 
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
-  if (!RequireCompleteType(context, base_type_id, /*loc_id=*/base_id, [&] {
+  if (!RequireCompleteType(context, base_type_id, SemIR::LocId(base_id), [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
                           "member access into object of incomplete type {0}",
                           TypeOfInstId);
@@ -735,7 +735,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
 
   SemIR::TypeId element_type_id = SemIR::ErrorInst::TypeId;
   index_inst_id = ConvertToValueOfType(
-      context, /*loc_id=*/index_inst_id, index_inst_id,
+      context, SemIR::LocId(index_inst_id), index_inst_id,
       GetSingletonType(context, SemIR::IntLiteralType::TypeInstId));
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::ConstantId) {

@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_INST_H_
 #define CARBON_TOOLCHAIN_CHECK_INST_H_
 
+#include <concepts>
+
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"

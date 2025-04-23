@@ -137,7 +137,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   CARBON_KIND_SWITCH(context.types().GetAsInst(operand_type_id)) {
     case CARBON_KIND(SemIR::ArrayType array_type): {
       auto cast_index_id = ConvertToValueOfType(
-          context, /*loc_id=*/index_inst_id, index_inst_id,
+          context, SemIR::LocId(index_inst_id), index_inst_id,
           // TODO: Replace this with impl lookup rather than hardcoding `i32`.
           MakeIntType(context, node_id, SemIR::IntKind::Signed,
                       context.ints().Add(32)));

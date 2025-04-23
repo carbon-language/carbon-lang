@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 
+#include <concepts>
 #include <cstdint>
 #include <string>
 #include <type_traits>
@@ -78,8 +79,9 @@ class Emitter {
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `Emitter::Emit`.
     // For the expected usage see the builder API: `Emitter::Build`.
-    template <typename... Args>
-    auto Note(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+    template <typename ToLocT, typename... Args>
+      requires std::constructible_from<LocT, ToLocT>
+    auto Note(ToLocT loc, const DiagnosticBase<Args...>& diagnostic_base,
               Internal::NoTypeDeduction<Args>... args) -> Builder&;
 
     // Emits the built diagnostic and its attached notes.
@@ -99,8 +101,9 @@ class Emitter {
    private:
     friend class Emitter<LocT>;
 
-    template <typename... Args>
-    explicit Builder(Emitter<LocT>* emitter, LocT loc,
+    template <typename ToLocT, typename... Args>
+      requires std::constructible_from<LocT, ToLocT>
+    explicit Builder(Emitter<LocT>* emitter, ToLocT loc,
                      const DiagnosticBase<Args...>& diagnostic_base,
                      llvm::SmallVector<llvm::Any> args);
 
@@ -143,8 +146,9 @@ class Emitter {
   //
   // When passing arguments, they may be buffered. As a consequence, lifetimes
   // may outlive the `Emit` call.
-  template <typename... Args>
-  auto Emit(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+  template <typename ToLocT, typename... Args>
+    requires std::constructible_from<LocT, ToLocT>
+  auto Emit(ToLocT loc, const DiagnosticBase<Args...>& diagnostic_base,
             Internal::NoTypeDeduction<Args>... args) -> void;
 
   // A fluent interface for building a diagnostic and attaching notes for added
@@ -153,8 +157,9 @@ class Emitter {
   //   emitter_.Build(loc1, MyDiagnostic)
   //     .Note(loc2, MyDiagnosticNote)
   //     .Emit();
-  template <typename... Args>
-  auto Build(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+  template <typename ToLocT, typename... Args>
+    requires std::constructible_from<LocT, ToLocT>
+  auto Build(ToLocT loc, const DiagnosticBase<Args...>& diagnostic_base,
              Internal::NoTypeDeduction<Args>... args) -> Builder;
 
   // Create a null `Builder` that will not emit anything. Notes will
@@ -267,9 +272,10 @@ struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 }  // namespace Internal
 
 template <typename LocT>
-template <typename... Args>
+template <typename ToLocT, typename... Args>
+  requires std::constructible_from<LocT, ToLocT>
 auto Emitter<LocT>::Builder::Note(
-    LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
+    ToLocT loc, const DiagnosticBase<Args...>& diagnostic_base,
     Internal::NoTypeDeduction<Args>... args) -> Builder& {
   if (!emitter_) {
     return *this;
@@ -277,7 +283,7 @@ auto Emitter<LocT>::Builder::Note(
   CARBON_CHECK(diagnostic_base.Level == Level::Note ||
                    diagnostic_base.Level == Level::LocationInfo,
                "{0}", static_cast<int>(diagnostic_base.Level));
-  AddMessage(loc, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
+  AddMessage(LocT(loc), diagnostic_base, {emitter_->MakeAny<Args>(args)...});
   return *this;
 }
 
@@ -310,12 +316,13 @@ auto Emitter<LocT>::Builder::Emit() && -> void {
 }
 
 template <typename LocT>
-template <typename... Args>
-Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
+template <typename ToLocT, typename... Args>
+  requires std::constructible_from<LocT, ToLocT>
+Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, ToLocT loc,
                                 const DiagnosticBase<Args...>& diagnostic_base,
                                 llvm::SmallVector<llvm::Any> args)
     : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
-  AddMessage(loc, diagnostic_base, std::move(args));
+  AddMessage(LocT(loc), diagnostic_base, std::move(args));
   CARBON_CHECK(diagnostic_base.Level != Level::Note);
 }
 
@@ -376,8 +383,9 @@ auto Emitter<LocT>::Builder::FormatFn(const Message& message,
 }
 
 template <typename LocT>
-template <typename... Args>
-auto Emitter<LocT>::Emit(LocT loc,
+template <typename ToLocT, typename... Args>
+  requires std::constructible_from<LocT, ToLocT>
+auto Emitter<LocT>::Emit(ToLocT loc,
                          const DiagnosticBase<Args...>& diagnostic_base,
                          Internal::NoTypeDeduction<Args>... args) -> void {
   Builder builder(this, loc, diagnostic_base, {MakeAny<Args>(args)...});
@@ -385,8 +393,9 @@ auto Emitter<LocT>::Emit(LocT loc,
 }
 
 template <typename LocT>
-template <typename... Args>
-auto Emitter<LocT>::Build(LocT loc,
+template <typename ToLocT, typename... Args>
+  requires std::constructible_from<LocT, ToLocT>
+auto Emitter<LocT>::Build(ToLocT loc,
                           const DiagnosticBase<Args...>& diagnostic_base,
                           Internal::NoTypeDeduction<Args>... args) -> Builder {
   return Builder(this, loc, diagnostic_base, {MakeAny<Args>(args)...});

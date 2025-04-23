@@ -499,7 +499,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
-      AddBlockLabel(scope_id, /*loc_id=*/inst_id, *branch);
+      AddBlockLabel(scope_id, LocId(inst_id), *branch);
     }
 
     CARBON_KIND_SWITCH(untyped_inst) {

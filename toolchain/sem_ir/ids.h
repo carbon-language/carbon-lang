@@ -849,8 +849,7 @@ struct LocId : public IdBase<LocId> {
                    ? FirstImportIRInstId - import_ir_inst_id.index
                    : NoneIndex) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
+  explicit constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NoneNodeId /*none*/) : IdBase(NoneIndex) {}
@@ -859,7 +858,7 @@ struct LocId : public IdBase<LocId> {
   constexpr LocId(Parse::NodeId node_id)
       : IdBase(FirstNodeId - node_id.index) {}
 
-  // Forms an equivalent LocId for a desugared location.  Requires a
+  // Forms an equivalent LocId for a desugared location. Requires a
   // canonical location. See `InstStore::GetCanonicalLocId()`.
   // TODO: Rename to something like `ToDesugared`.
   auto ToImplicit() const -> LocId {
@@ -872,7 +871,7 @@ struct LocId : public IdBase<LocId> {
     return *this;
   }
 
-  // Forms an equivalent `LocId` for a token-only diagnostic location.  Requires
+  // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
   // a canonical location. See `InstStore::GetCanonicalLocId()`.
   auto ToTokenOnly() const -> LocId {
     CARBON_CHECK(kind() != Kind::InstId);

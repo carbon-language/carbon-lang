@@ -706,7 +706,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  SemIR::AbsoluteNodeId resolved = GetAbsoluteNodeId(sem_ir_, inst_id).back();
+  SemIR::AbsoluteNodeId resolved =
+      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
   const auto& tree_and_subtrees =
       (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
                                                        .index]();

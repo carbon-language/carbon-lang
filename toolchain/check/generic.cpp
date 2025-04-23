@@ -256,7 +256,7 @@ static auto AddGenericConstantToEvalBlock(
   // we've not encountered it before.
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   auto callbacks = RebuildGenericConstantInEvalBlockCallbacks(
-      &context, generic_id, region, /*loc_id=*/inst_id, constants_in_generic,
+      &context, generic_id, region, SemIR::LocId(inst_id), constants_in_generic,
       inside_redeclaration);
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
   CARBON_CHECK(new_inst_id != const_inst_id,
@@ -278,7 +278,7 @@ static auto AddTemplateActionToEvalBlock(
   auto new_inst_id =
       SubstInst(context, inst_id,
                 RebuildTemplateActionInEvalBlockCallbacks(
-                    &context, generic_id, region, /*loc_id=*/inst_id,
+                    &context, generic_id, region, SemIR::LocId(inst_id),
                     constants_in_generic, inside_redeclaration, inst_id));
   CARBON_CHECK(new_inst_id == inst_id,
                "Substitution changed InstId of template action");
@@ -341,8 +341,8 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
         GenericRegionStack::DependencyKind::None) {
       auto inst = context.insts().Get(inst_id);
       auto type_id = AddGenericTypeToEvalBlock(
-          context, generic_id, region, /*loc_id=*/inst_id, constants_in_generic,
-          inside_redeclaration, inst.type_id());
+          context, generic_id, region, SemIR::LocId(inst_id),
+          constants_in_generic, inside_redeclaration, inst.type_id());
       // If the generic declaration is invalid, it can result in an error.
       if (type_id == SemIR::ErrorInst::TypeId) {
         break;
@@ -485,7 +485,7 @@ auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId {
   SemIR::GenericId generic_id = BuildGeneric(context, decl_id);
   if (generic_id.has_value()) {
-    FinishGenericDecl(context, decl_id, generic_id);
+    FinishGenericDecl(context, SemIR::LocId(decl_id), generic_id);
   }
   return generic_id;
 }

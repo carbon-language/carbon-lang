@@ -300,7 +300,7 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
       CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
                         "pattern in associated constant declaration must be a "
                         "single `:!` binding");
-      context.emitter().Emit(/*loc=*/decl_info.pattern_id,
+      context.emitter().Emit(SemIR::LocId(decl_info.pattern_id),
                              ExpectedSymbolicBindingInAssociatedConstant);
     }
     context.name_scopes()
