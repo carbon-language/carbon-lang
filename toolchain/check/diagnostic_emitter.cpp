@@ -88,7 +88,9 @@ auto DiagnosticEmitter::TryConvertClangDiagnosticLoc(SemIRLoc loc) const
 
   return Diagnostics::ConvertedLoc{
       .loc = {.filename = presumed_loc.getFilename(),
-              .line_number = static_cast<int32_t>(presumed_loc.getLine())}};
+              .line_number = static_cast<int32_t>(presumed_loc.getLine())},
+      // TODO: Set `last_byte_offset` based on the `import Cpp` location.
+      .last_byte_offset = 0};
 }
 
 auto DiagnosticEmitter::ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id,

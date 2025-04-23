@@ -376,11 +376,32 @@ import Cpp library "indirect_error.h";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: import_indirect_warning.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
+// CHECK:STDERR: import_indirect_warning.carbon:[[@LINE+10]]:1: note: in `Cpp` import [InCppImport]
 // CHECK:STDERR: import Cpp library "indirect_warning.h";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
+// CHECK:STDERR: ./one_warning.h:8: warning: C++:
+// CHECK:STDERR: In file included from fail_import_cpp_library_lexer_error.carbon.generated.cpp_imports.h:1:
+// CHECK:STDERR: ./one_warning.h:8:2: warning: "warning1"
+// CHECK:STDERR:     8 | #warning "warning1"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:  [CppInteropParseWarning]
 import Cpp library "indirect_warning.h";
+
+// --- fail_import_cpp_library_lexer_error.carbon
+
+library "[[@TEST_NAME]]";  // Trailing comment
+
+// TODO: Move this warning to be after the lexer trailing comment error.
+// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE+8]]:1: note: in `Cpp` import [InCppImport]
+// CHECK:STDERR: import Cpp library "one_warning.h";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE-7]]:44: error: trailing comments are not permitted [TrailingComment]
+// CHECK:STDERR: library "import_cpp_library_lexer_error";  // Trailing comment
+// CHECK:STDERR:                                            ^
+// CHECK:STDERR:
+import Cpp library "one_warning.h";
 
 // CHECK:STDOUT: --- fail_import_cpp_file_with_one_error.carbon
 // CHECK:STDOUT:
@@ -557,6 +578,23 @@ import Cpp library "indirect_warning.h";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
 // CHECK:STDOUT:     import Cpp "indirect_warning.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_import_cpp_library_lexer_error.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "one_warning.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
