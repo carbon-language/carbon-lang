@@ -127,11 +127,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Add an implicit `Cpp` import If there is an implicit `api` import, set it
   // second so that it uses the `ImportIRId::Cpp` when processed for imports.
   SetCppImportIR(context_,
-                 {.decl_id = SemIR::InstId::None,
-                  .is_export = false,
-                  .sem_ir = unit_and_imports_->cpp_import_names.empty()
-                                ? nullptr
-                                : &context_.sem_ir()});
+                 {.decl_id = SemIR::InstId::None, .is_export = false});
 
   // Add import instructions for everything directly imported. Implicit imports
   // are handled separately.
