@@ -98,7 +98,7 @@ auto ScopeStack::PushForSameRegion() -> void {
        /*lexical_lookup_has_load_error=*/false);
 }
 
-auto ScopeStack::PushForFunction(SemIR::InstId scope_inst_id) -> void {
+auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   CARBON_DCHECK(sem_ir_->insts().Is<SemIR::FunctionDecl>(scope_inst_id));
   Push(scope_inst_id, SemIR::NameScopeId::None, SemIR::SpecificId::None,
        /*lexical_lookup_has_load_error=*/false);

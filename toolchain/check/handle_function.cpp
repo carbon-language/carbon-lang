@@ -585,7 +585,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   auto& function = context.functions().Get(function_id);
 
   // Create the function scope and the entry block.
-  context.scope_stack().PushForFunction(decl_id);
+  context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   StartGenericDefinition(context);

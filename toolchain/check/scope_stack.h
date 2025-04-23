@@ -49,8 +49,8 @@ class ScopeStack {
   // Pushes a scope for a declaration name's parameters.
   auto PushForDeclName() -> void;
 
-  // Pushes a non-function entity scope. Functions must use `PushForFunction`
-  // instead.
+  // Pushes a non-function entity scope. Functions must use
+  // `PushForFunctionBody` instead.
   auto PushForEntity(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                      SemIR::SpecificId specific_id,
                      bool lexical_lookup_has_load_error = false) -> void;
@@ -61,7 +61,7 @@ class ScopeStack {
   auto PushForSameRegion() -> void;
 
   // Pushes a function scope.
-  auto PushForFunction(SemIR::InstId scope_inst_id) -> void;
+  auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
 
   // Pops the top scope from scope_stack_. Removes names from lexical_lookup_.
   auto Pop() -> void;
