@@ -1461,8 +1461,6 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0.loc5_11.1 => constants.%impl.elem0.11fef0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@GenericCallF.%J.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericCallF(constants.%J.facet.ee5) {
 // CHECK:STDOUT:   %T.loc24_17.2 => constants.%J.facet.ee5
 // CHECK:STDOUT:   %T.patt.loc24_17.2 => constants.%T.patt
@@ -1711,8 +1709,6 @@ fn F() {
 // CHECK:STDOUT:   %as_type => constants.%as_type.1a19b2.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@GenericAddResult.%J.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- interface_qualified.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1906,8 +1902,6 @@ fn F() {
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.64628e.2
 // CHECK:STDOUT:   %impl.elem0.loc5_23.1 => constants.%impl.elem0.11fef0.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(@GenericCallInterfaceQualified.%J.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_where.carbon
 // CHECK:STDOUT:
@@ -2115,8 +2109,6 @@ fn F() {
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness.bee
 // CHECK:STDOUT:   %impl.elem0.loc5_11.1 => constants.%impl.elem0.db9
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@GenericCallFI32.%J.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_associated_constant_in_impl.carbon
 // CHECK:STDOUT:
@@ -3492,8 +3484,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%Z.facet.2a2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc9_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc9_14.2 => constants.%T.patt
@@ -3502,8 +3492,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.8bc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc9_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%D) {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%D

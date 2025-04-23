@@ -242,10 +242,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %SubscriptType.patt.loc4_21.2 => constants.%SubscriptType.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(%SubscriptType.loc4_21.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@At.%SubscriptType) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @At(constants.%SubscriptType, constants.%Self) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.b94
@@ -405,10 +401,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
 // CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(%SubscriptType) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@At.1.%SubscriptType) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%SubscriptType, constants.%Self.30a) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType

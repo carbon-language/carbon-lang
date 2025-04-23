@@ -1829,14 +1829,10 @@ class T2 {
 // CHECK:STDOUT:   %T.patt.loc7_17.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(@F.1.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Base => constants.%Base.370
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(%T.loc7_17.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T1

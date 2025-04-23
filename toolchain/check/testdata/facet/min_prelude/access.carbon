@@ -236,8 +236,6 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DoIt(constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DoIt(@Use.%I.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- assoc_fn_using_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -360,8 +358,6 @@ interface J {
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type.loc5_16.1 => constants.%T.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(@Use.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_assoc_method.carbon
 // CHECK:STDOUT:
@@ -506,8 +502,6 @@ interface J {
 // CHECK:STDOUT:   %Self.as_type.loc5_17.1 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Copy(@Use.%I.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- access_selfless_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -612,8 +606,6 @@ interface J {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Hello(constants.%I.facet) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Hello(@Use.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_assoc_method_indirect.carbon
 // CHECK:STDOUT:
@@ -758,8 +750,6 @@ interface J {
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type.loc5_17.1 => constants.%T.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Copy(@UseIndirect.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_const_associated.carbon
 // CHECK:STDOUT:
@@ -1338,10 +1328,6 @@ interface J {
 // CHECK:STDOUT:   %Dest.patt.loc8_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %As.type => constants.%As.type.8ba
@@ -1353,10 +1339,6 @@ interface J {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT:   %Dest.patt.loc12_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {
 // CHECK:STDOUT:   %Dest => constants.%Dest

@@ -178,5 +178,3 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %F.specific_fn.loc5_10.2 => constants.%F.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc4_15.2, %U.loc4_25.2) {}
-// CHECK:STDOUT:

@@ -834,8 +834,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %T.patt.loc6_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%T.loc6_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc6_15.2 => constants.%empty_struct_type
 // CHECK:STDOUT:   %T.patt.loc6_15.2 => constants.%T.patt

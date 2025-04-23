@@ -387,16 +387,10 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc3_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(%T.loc3_9.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%U) {
 // CHECK:STDOUT:   %U.loc7_13.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%U.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%U.loc7_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%U, constants.%Self.209206.1) {
 // CHECK:STDOUT:   %U => constants.%U
@@ -417,8 +411,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %complete_type.loc5_1.2 => constants.%complete_type.84bb3d.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(@impl.%V.loc11_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%V) {
 // CHECK:STDOUT:   %U.loc7_13.2 => constants.%V
 // CHECK:STDOUT:   %U.patt.loc7_13.2 => constants.%U.patt
@@ -432,8 +424,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %assoc0.loc8_26.2 => constants.%assoc0.8f0422.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.%V.loc11_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%V) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%V
 // CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
@@ -446,10 +436,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %F.type => constants.%F.type.0fea45.1
 // CHECK:STDOUT:   %F => constants.%F.d6ae34.1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%V.loc11_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(@F.2.%V) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%V) {
 // CHECK:STDOUT:   %V => constants.%V
@@ -475,8 +461,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %complete_type.loc5_1.2 => constants.%complete_type.84bb3d.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(@TestGeneric.%W.loc17_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @TestGeneric(constants.%W) {
 // CHECK:STDOUT:   %W.loc17_16.2 => constants.%W
 // CHECK:STDOUT:   %W.patt.loc17_16.2 => constants.%W.patt
@@ -495,8 +479,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.1e5078.3
 // CHECK:STDOUT:   %assoc0.loc8_26.2 => constants.%assoc0.8f0422.3
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@TestGeneric.%W.loc17_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%W) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%W
@@ -517,8 +499,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %Self => constants.%I.facet.6d2
 // CHECK:STDOUT:   %Self.as_type.loc8_14.1 => constants.%A.13025a.3
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@TestGeneric.%W.loc17_16.2, @TestGeneric.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc3_9.2 => constants.%empty_struct_type

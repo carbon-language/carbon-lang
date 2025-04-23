@@ -161,8 +161,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc10_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T.patt
@@ -173,8 +171,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %F.type => constants.%F.type.40c
 // CHECK:STDOUT:   %F => constants.%F.071
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc10_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
@@ -374,10 +370,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %F.type => constants.%F.type.40c
 // CHECK:STDOUT:   %F => constants.%F.071
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:

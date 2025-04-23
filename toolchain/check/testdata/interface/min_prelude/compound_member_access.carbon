@@ -473,16 +473,12 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Q1(constants.%K1.facet.9e06af.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Q1(@Simple2.%K1.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound2(constants.%V) {
 // CHECK:STDOUT:   %V.loc13_14.2 => constants.%V
 // CHECK:STDOUT:   %V.patt.loc13_14.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Q1(constants.%K1.facet.9e06af.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Q1(@Compound2.%K1.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_caller_instance_interface_not.carbon
 // CHECK:STDOUT:
@@ -729,8 +725,6 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Q2(constants.%K2.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Q2(@Simple3.%K2.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound3(constants.%V) {
 // CHECK:STDOUT:   %V.loc14_14.2 => constants.%V
 // CHECK:STDOUT:   %V.patt.loc14_14.2 => constants.%V.patt
@@ -741,10 +735,6 @@ fn Works() {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %Dest.patt => constants.%Dest.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -771,8 +761,6 @@ fn Works() {
 // CHECK:STDOUT:   %T.patt => constants.%T.patt.e01
 // CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%T.8b3) {
 // CHECK:STDOUT:   %T => constants.%T.8b3
@@ -1059,15 +1047,11 @@ fn Works() {
 // CHECK:STDOUT:   %Self.as_type.loc4_15.1 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @R1(@Simple4.%L1.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @S1(constants.%L1.facet.ed78cc.1) {
 // CHECK:STDOUT:   %Self => constants.%L1.facet.ed78cc.1
 // CHECK:STDOUT:   %Self.as_type.loc5_24.1 => constants.%T.as_type
 // CHECK:STDOUT:   %ptr.loc5_24.1 => constants.%ptr.72f01d.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @S1(@Simple4.%L1.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound4(constants.%V) {
 // CHECK:STDOUT:   %V.loc16_14.2 => constants.%V
@@ -1080,15 +1064,11 @@ fn Works() {
 // CHECK:STDOUT:   %Self.as_type.loc4_15.1 => constants.%V.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @R1(@Compound4.%L1.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @S1(constants.%L1.facet.ed78cc.2) {
 // CHECK:STDOUT:   %Self => constants.%L1.facet.ed78cc.2
 // CHECK:STDOUT:   %Self.as_type.loc5_24.1 => constants.%V.as_type
 // CHECK:STDOUT:   %ptr.loc5_24.1 => constants.%ptr.72f01d.3
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @S1(@Compound4.%L1.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_interface_instance_caller_not.carbon
 // CHECK:STDOUT:
@@ -1282,15 +1262,11 @@ fn Works() {
 // CHECK:STDOUT:   %Self.as_type.loc5_15.1 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @R2(@Simple5.%L2.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @S2(constants.%L2.facet) {
 // CHECK:STDOUT:   %Self => constants.%L2.facet
 // CHECK:STDOUT:   %Self.as_type.loc6_24.1 => constants.%T.as_type
 // CHECK:STDOUT:   %ptr.loc6_24.1 => constants.%ptr.f3e54b.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @S2(@Simple5.%L2.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Compound5(constants.%V) {
 // CHECK:STDOUT:   %V.loc30_14.2 => constants.%V
@@ -1590,8 +1566,6 @@ fn Works() {
 // CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness.b7b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.f92(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
@@ -1617,10 +1591,6 @@ fn Works() {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %Dest.patt => constants.%Dest.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -1866,8 +1836,6 @@ fn Works() {
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness.b7b
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.f92(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -2153,10 +2121,6 @@ fn Works() {
 // CHECK:STDOUT:   %Dest.patt.loc9_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc9_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %As.type => constants.%As.type.8ba
@@ -2168,10 +2132,6 @@ fn Works() {
 // CHECK:STDOUT:   %Dest.loc13_22.2 => constants.%Dest
 // CHECK:STDOUT:   %Dest.patt.loc13_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc13_22.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -2190,8 +2150,6 @@ fn Works() {
 // CHECK:STDOUT:   %T.patt.loc21_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc21_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

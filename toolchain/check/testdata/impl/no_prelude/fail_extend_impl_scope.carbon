@@ -277,7 +277,5 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Zero.2(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6b5(%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Zero.1(constants.%Z.facet) {}
 // CHECK:STDOUT:

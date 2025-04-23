@@ -328,18 +328,10 @@ fn M() {
 // CHECK:STDOUT:   %F.specific_fn.loc21_3.2 => constants.%F.specific_fn.ef1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@H.%T.loc19_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc25_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc25_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @H(@G.%T.loc25_6.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@G.%T.loc25_6.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Cfn(@G.%T.loc25_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%i32) {
 // CHECK:STDOUT:   %T.loc16_6.2 => constants.%i32

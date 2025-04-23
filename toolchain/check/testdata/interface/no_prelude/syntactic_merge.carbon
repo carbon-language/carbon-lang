@@ -288,14 +288,10 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.patt.loc7_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(%a.loc7_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
 // CHECK:STDOUT:   %a.loc10_15.2 => constants.%a
 // CHECK:STDOUT:   %a.patt.loc10_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar(%a.loc10_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- spacing.carbon
 // CHECK:STDOUT:
@@ -361,8 +357,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_21.2 => constants.%a
 // CHECK:STDOUT:   %a.patt.loc6_21.2 => constants.%a.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(%a.loc6_21.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_parens.carbon
 // CHECK:STDOUT:
@@ -443,8 +437,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.patt.loc14_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(%a.loc14_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_raw_identifier.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -509,8 +501,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_15.2 => constants.%a
 // CHECK:STDOUT:   %a.patt.loc6_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo(%a.loc6_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.carbon
 // CHECK:STDOUT:
@@ -704,8 +694,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.patt.loc12_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(%a.loc12_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar.1(constants.%a) {
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT:   %a.patt => constants.%a.patt
@@ -715,8 +703,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc21_15.2 => constants.%a
 // CHECK:STDOUT:   %a.patt.loc21_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar.2(%a.loc21_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_mismatch.carbon
 // CHECK:STDOUT:
@@ -802,8 +788,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %b.patt.loc15_15.2 => constants.%b.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(%b.loc15_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -886,8 +870,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.patt.loc15_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(%a.loc15_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduced_alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -969,8 +951,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc15_15.2 => constants.%a
 // CHECK:STDOUT:   %a.patt.loc15_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(%a.loc15_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
 // CHECK:STDOUT:
@@ -1102,8 +1082,6 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.patt.loc17_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(%a.loc17_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_repeat_const.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1190,6 +1168,4 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %a.loc18_15.2 => constants.%a
 // CHECK:STDOUT:   %a.patt.loc18_15.2 => constants.%a.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(%a.loc18_15.2) {}
 // CHECK:STDOUT:

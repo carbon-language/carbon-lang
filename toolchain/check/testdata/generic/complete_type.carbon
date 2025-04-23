@@ -179,8 +179,6 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(%T.loc6_9.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%B) {
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%B
 // CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt

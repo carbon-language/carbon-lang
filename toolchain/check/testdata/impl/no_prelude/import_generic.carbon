@@ -229,20 +229,12 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Self.2 => constants.%Self.209
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc5_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.084.%T.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.084(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %I.type.loc8_32.2 => constants.%I.type.325
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.1a9
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.084(%T.loc8_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(<unexpected>.inst51.loc9_14) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%ptr) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%ptr
@@ -253,8 +245,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Self.2 => constants.%Self.fb4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.cd2.%ptr.loc12_32.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.cd2(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc12_14.2 => constants.%T.patt
@@ -263,8 +253,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.0e6
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.6ad
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.cd2(%T.loc12_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_generic.impl.carbon
 // CHECK:STDOUT:
@@ -477,18 +465,12 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.209
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.08450a.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.1a9ed3.1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.08450a.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.08450a.1(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%ptr) {
 // CHECK:STDOUT:   %T => constants.%ptr
@@ -508,22 +490,12 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.6ad3bf.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.cd2fdc.1.%ptr) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.cd2fdc.1(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.08450a.2.%T.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.08450a.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %I.type.loc8_32.2 => constants.%I.type.325
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.1a9ed3.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.08450a.2(%T.loc8_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.08450a.3.%T.loc14_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.08450a.3(constants.%T) {
 // CHECK:STDOUT:   %T.loc14_14.2 => constants.%T
@@ -533,10 +505,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.1a9ed3.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.08450a.3(%T.loc14_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.cd2fdc.2.%ptr.loc20_32.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.cd2fdc.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc20_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc20_14.2 => constants.%T.patt
@@ -544,10 +512,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %I.type.loc20_33.2 => constants.%I.type.0e2
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.6ad3bf.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.cd2fdc.2(%T.loc20_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.cd2fdc.3.%ptr.loc26_32.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.cd2fdc.3(constants.%T) {
 // CHECK:STDOUT:   %T.loc26_14.2 => constants.%T
@@ -557,8 +521,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.0e6
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.6ad3bf.3
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.cd2fdc.3(%T.loc26_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_generic_decl.carbon
 // CHECK:STDOUT:
@@ -664,10 +626,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(%T.loc5_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.199.%T.loc11_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.199(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_14.2 => constants.%T.patt
@@ -675,14 +633,10 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.809
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.199(%T.loc11_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%ptr) {
 // CHECK:STDOUT:   %T.loc5_13.2 => constants.%ptr
 // CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.dfd.%ptr.loc17_32.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.dfd(constants.%T) {
 // CHECK:STDOUT:   %T.loc17_14.2 => constants.%T
@@ -691,8 +645,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %J.type.loc17_33.2 => constants.%J.type.628
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.5a8
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.dfd(%T.loc17_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_generic_decl.impl.carbon
 // CHECK:STDOUT:
@@ -891,18 +843,12 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.252
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.199bba.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %J.type => constants.%J.type.b72
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.80964e.1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.199bba.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.199bba.1(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%ptr) {
 // CHECK:STDOUT:   %T => constants.%ptr
@@ -921,22 +867,12 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.5a859e.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.dfd2f7.1.%ptr) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.dfd2f7.1(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.199bba.2.%T.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.199bba.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T.patt
 // CHECK:STDOUT:   %J.type.loc8_32.2 => constants.%J.type.b72
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.80964e.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.199bba.2(%T.loc8_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.199bba.3.%T.loc14_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.199bba.3(constants.%T) {
 // CHECK:STDOUT:   %T.loc14_14.2 => constants.%T
@@ -946,10 +882,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.80964e.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.199bba.3(%T.loc14_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.dfd2f7.2.%ptr.loc20_32.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.dfd2f7.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc20_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc20_14.2 => constants.%T.patt
@@ -957,10 +889,6 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %J.type.loc20_33.2 => constants.%J.type.628
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.5a859e.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.dfd2f7.2(%T.loc20_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J(@impl.dfd2f7.3.%ptr.loc26_32.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.dfd2f7.3(constants.%T) {
 // CHECK:STDOUT:   %T.loc26_14.2 => constants.%T
@@ -970,6 +898,4 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.c60
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.5a859e.3
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.dfd2f7.3(%T.loc26_14.2) {}
 // CHECK:STDOUT:

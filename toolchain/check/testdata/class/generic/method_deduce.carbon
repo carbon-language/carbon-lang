@@ -306,8 +306,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Get.specific_fn.loc15_39.2 => constants.%Get.specific_fn.f73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc14_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetNoDeduce(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %U.loc16_24.1 => constants.%U
@@ -321,14 +319,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.loc16_53.2 => constants.%GetNoDeduce.specific_fn.536
 // CHECK:STDOUT:   %require_complete.loc16_70 => constants.%require_complete.fe1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Get.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Get(%T, %U.loc15_10.1) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetNoDeduce.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GetNoDeduce(%T, %U.loc16_24.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%A) {
 // CHECK:STDOUT:   %T.loc14_13.2 => constants.%A

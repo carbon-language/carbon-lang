@@ -304,8 +304,6 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%ptr.c28) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.c28
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T.patt

@@ -512,6 +512,16 @@ class FormatterImpl {
       return;
     }
 
+    if (!specific.GetValueBlock(GenericInstIndex::Declaration).has_value() &&
+        !specific.GetValueBlock(GenericInstIndex::Definition).has_value()) {
+      // Omit specifics that were never resolved. Such specifics exist only to
+      // track the way the arguments were spelled, and that information is
+      // conveyed entirely by the name of the specific. These specifics may also
+      // not be referenced by any SemIR that we format, so including them adds
+      // clutter and possibly emits references to instructions we didn't name.
+      return;
+    }
+
     llvm::SaveAndRestore generic_scope(
         scope_, inst_namer_->GetScopeFor(specific.generic_id));
 

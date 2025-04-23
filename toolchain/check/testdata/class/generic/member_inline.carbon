@@ -190,10 +190,6 @@ class C(T:! type) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
@@ -286,8 +282,4 @@ class C(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc4_9.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%T) {}
 // CHECK:STDOUT:

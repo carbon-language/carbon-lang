@@ -198,17 +198,9 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %G => constants.%G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@Class.%F.loc5_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%F.8b3) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%F.loc8_19.1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%F.8b3) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@G.%F.loc13_46.1) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@G.%F.loc13_46.1) {}
 // CHECK:STDOUT:

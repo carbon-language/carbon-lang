@@ -608,8 +608,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @OneRewrite(@RepeatedRewrite.%H.loc10_20.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewriteAgain(constants.%I) {
 // CHECK:STDOUT:   %I.loc14_20.2 => constants.%I
 // CHECK:STDOUT:   %I.patt.loc14_20.2 => constants.%I.patt
@@ -622,8 +620,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OneRewrite.specific_fn.loc11_3.2 => constants.%OneRewrite.specific_fn.7fa5d5.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @RepeatedRewrite(@OneRewriteAgain.%I.loc14_20.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {
 // CHECK:STDOUT:   %G.loc8_15.2 => constants.%I
@@ -814,8 +810,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Alphabetical(@Reversed.%N.loc11_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_rewrites_mismatch_right.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -979,8 +973,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithInteger(@WithBool.%facet_value.loc12_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_rewrites_mismatch_left.carbon
 // CHECK:STDOUT:
@@ -1152,8 +1144,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithT(@WithU.%facet_value.loc13_10.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_rewrites.carbon
 // CHECK:STDOUT:

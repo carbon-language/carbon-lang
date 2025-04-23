@@ -186,10 +186,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Dest.patt.loc3_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc3_22.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.07f
@@ -376,10 +372,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %T.loc4_18.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.patt
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(%T.loc4_18.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(@Op.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%T, constants.%Self.e98) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -571,10 +563,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8a8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(@Op.1.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%T, constants.%Self.e98) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Action.type => constants.%Action.type.cca
@@ -748,10 +736,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Action.assoc_type => constants.%Action.assoc_type.4ee
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.338
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Action(@Op.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%T, constants.%Self.e98) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -961,13 +945,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Factory(%T.loc4_19.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%T, constants.%Self.9ba) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Factory(@Method.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Method.1(constants.%T, constants.%Self.9ba) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1226,13 +1206,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.a48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Factory(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%T, constants.%Self.9ba) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Factory(@Method.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Method.1(constants.%T, constants.%Self.9ba) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1468,13 +1444,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.535
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Factory(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%T, constants.%Self.9ba) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Factory(@Method.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Method(constants.%T, constants.%Self.9ba) {
 // CHECK:STDOUT:   %T => constants.%T

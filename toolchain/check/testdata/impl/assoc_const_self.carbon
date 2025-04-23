@@ -671,10 +671,6 @@ fn CallF() {
 // CHECK:STDOUT:   %N.patt.loc4_13.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%N.loc4_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@V.%N) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @V(constants.%N, constants.%Self.3a0) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %I.type => constants.%I.type.8a1

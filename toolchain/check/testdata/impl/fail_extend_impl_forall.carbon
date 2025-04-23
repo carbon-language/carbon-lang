@@ -181,13 +181,9 @@ class C {
 // CHECK:STDOUT:   %assoc0.loc12_13.2 => constants.%assoc0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(%T.loc11_28.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(@impl.%T.loc20_23.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc20_23.2 => constants.%T
@@ -200,10 +196,6 @@ class C {
 // CHECK:STDOUT:   %F.type => constants.%F.type.2cb
 // CHECK:STDOUT:   %F => constants.%F.4b1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc20_23.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(<unexpected>.inst68.loc20_54) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

@@ -284,8 +284,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F => constants.%F.c98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
@@ -496,8 +494,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.3fd
 // CHECK:STDOUT:   %F => constants.%F.c98
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -715,8 +711,6 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc10_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T.patt
@@ -727,10 +721,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.8fe
 // CHECK:STDOUT:   %F => constants.%F.92a
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc10_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -961,18 +951,12 @@ fn G(x: A) {
 // CHECK:STDOUT:   %assoc0.loc5_21.2 => constants.%assoc0.d31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(%T.loc4_16.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@F.1.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self.322) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.901
 // CHECK:STDOUT:   %Self => constants.%Self.322
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@impl.%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
@@ -985,8 +969,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.6c8
 // CHECK:STDOUT:   %F => constants.%F.008
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
@@ -1180,8 +1162,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.56e
 // CHECK:STDOUT:   %F => constants.%F.9b8
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc12_14.2, %U.loc12_24.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1391,18 +1371,12 @@ fn G(x: A) {
 // CHECK:STDOUT:   %assoc0.loc5_21.2 => constants.%assoc0.d31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(%T.loc4_16.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@F.1.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self.322) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.901
 // CHECK:STDOUT:   %Self => constants.%Self.322
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@impl.%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
@@ -1415,8 +1389,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.912
 // CHECK:STDOUT:   %F => constants.%F.f30
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
