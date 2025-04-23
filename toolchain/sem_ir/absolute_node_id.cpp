@@ -20,7 +20,7 @@ static auto FollowImportRef(
                "If we get `None` locations here, we may need to more "
                "thoroughly track ImportDecls.");
 
-  auto import_loc_id = cursor_ir->insts().GetLocId(import_ir.decl_id);
+  auto import_loc_id = cursor_ir->insts().GetCanonicalLocId(import_ir.decl_id);
   switch (import_loc_id.kind()) {
     case SemIR::LocId::Kind::None:
       break;
@@ -32,8 +32,8 @@ static auto FollowImportRef(
           cursor_ir->import_ir_insts().Get(import_loc_id.import_ir_inst_id());
       const auto& implicit_ir =
           cursor_ir->import_irs().Get(implicit_import_ir_inst.ir_id);
-      auto implicit_loc_id =
-          implicit_ir.sem_ir->insts().GetLocId(implicit_import_ir_inst.inst_id);
+      auto implicit_loc_id = implicit_ir.sem_ir->insts().GetCanonicalLocId(
+          implicit_import_ir_inst.inst_id);
       CARBON_CHECK(implicit_loc_id.kind() == SemIR::LocId::Kind::NodeId,
                    "Should only be one layer of implicit imports");
       absolute_node_ids.push_back(
@@ -95,7 +95,7 @@ static auto GetAbsoluteNodeIdImpl(
     }
 
     // If the parse node has a value, use it for the location.
-    if (auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+    if (auto loc_id = cursor_ir->insts().GetCanonicalLocId(cursor_inst_id);
         loc_id.has_value()) {
       if (HandleLocId(absolute_node_ids, cursor_ir, cursor_inst_id, loc_id)) {
         return;
@@ -135,7 +135,8 @@ auto GetAbsoluteNodeId(const File* sem_ir, LocId loc_id)
     case SemIR::LocId::Kind::NodeId: {
       const File* cursor_ir = sem_ir;
       InstId cursor_inst_id = InstId::None;
-      if (HandleLocId(absolute_node_ids, cursor_ir, cursor_inst_id, loc_id)) {
+      if (HandleLocId(absolute_node_ids, cursor_ir, cursor_inst_id,
+                      cursor_ir->insts().GetCanonicalLocId(loc_id))) {
         break;
       }
       CARBON_CHECK(cursor_inst_id.has_value(), "Should be set by HandleLocId");

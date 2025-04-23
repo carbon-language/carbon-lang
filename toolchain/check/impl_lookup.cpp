@@ -369,7 +369,7 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
                                       SemIR::SpecificInterface interface)
     -> SemIR::InstId {
   auto witness_const_id = EvalOrAddInst(
-      context, loc_id.ToImplicit(),
+      context, context.insts().GetCanonicalLocId(loc_id).ToImplicit(),
       SemIR::LookupImplWitness{
           .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
           .query_self_inst_id =

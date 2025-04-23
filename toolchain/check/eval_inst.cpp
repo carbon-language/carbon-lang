@@ -206,9 +206,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   inst.query_self_inst_id =
       GetCanonicalizedFacetOrTypeValue(context, inst.query_self_inst_id);
 
-  auto result =
-      EvalLookupSingleImplWitness(context, context.insts().GetLocId(inst_id),
-                                  inst, non_canonical_query_self_inst_id);
+  auto result = EvalLookupSingleImplWitness(context, /*loc_id=*/inst_id, inst,
+                                            non_canonical_query_self_inst_id);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic

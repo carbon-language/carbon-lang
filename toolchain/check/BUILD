@@ -23,6 +23,7 @@ cc_library(
         "convert.cpp",
         "decl_name_stack.cpp",
         "deduce.cpp",
+        "diagnostic_helpers.cpp",
         "eval.cpp",
         "eval_inst.cpp",
         "facet_type.cpp",

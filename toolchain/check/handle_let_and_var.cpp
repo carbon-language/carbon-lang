@@ -300,7 +300,7 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
       CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
                         "pattern in associated constant declaration must be a "
                         "single `:!` binding");
-      context.emitter().Emit(context.insts().GetLocId(decl_info.pattern_id),
+      context.emitter().Emit(/*loc=*/decl_info.pattern_id,
                              ExpectedSymbolicBindingInAssociatedConstant);
     }
     context.name_scopes()
@@ -370,7 +370,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
         "expected `=`; `let` declaration must have an initializer");
-    context.emitter().Emit(TokenOnly(node_id), ExpectedInitializerAfterLet);
+    context.emitter().Emit(TokenOnly(context, node_id),
+                           ExpectedInitializerAfterLet);
   }
   return true;
 }

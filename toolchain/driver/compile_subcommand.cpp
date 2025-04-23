@@ -566,7 +566,7 @@ auto CompilationUnit::PostCheck() -> void {
       // `Check::Context`, which we don't have access to here.
       const SemIR::File* file = &*sem_ir_;
       while (true) {
-        auto loc_id = file->insts().GetLocId(entity_inst_id);
+        auto loc_id = file->insts().GetCanonicalLocId(entity_inst_id);
         if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
           return true;
         }

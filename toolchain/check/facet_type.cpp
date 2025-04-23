@@ -81,7 +81,7 @@ auto InitialFacetTypeImplWitness(
   }
 
   if (!RequireCompleteType(context, facet_type_id,
-                           context.insts().GetLocId(facet_type_inst_id), [&] {
+                           /*loc_id=*/facet_type_inst_id, [&] {
                              return IncompleteFacetTypeDiagnosticBuilder(
                                  context, witness_loc_id, facet_type_inst_id,
                                  is_definition);
@@ -197,9 +197,9 @@ auto InitialFacetTypeImplWitness(
       // Perform the conversion of the value to the type. We skipped this when
       // forming the facet type because the type of the associated constant
       // was symbolic.
-      auto converted_inst_id = ConvertToValueOfType(
-          context, context.insts().GetLocId(facet_type_inst_id),
-          rewrite_inst_id, assoc_const_type_id);
+      auto converted_inst_id =
+          ConvertToValueOfType(context, /*loc_id=*/facet_type_inst_id,
+                               rewrite_inst_id, assoc_const_type_id);
       // Canonicalize the converted constant value.
       converted_inst_id =
           context.constant_values().GetConstantInstId(converted_inst_id);
@@ -240,7 +240,7 @@ auto RequireCompleteFacetTypeForImplDefinition(
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
   return RequireCompleteType(context, facet_type_id,
-                             context.insts().GetLocId(facet_type_inst_id), [&] {
+                             /*loc_id=*/facet_type_inst_id, [&] {
                                return IncompleteFacetTypeDiagnosticBuilder(
                                    context, loc_id, facet_type_inst_id,
                                    /*is_definition=*/true);

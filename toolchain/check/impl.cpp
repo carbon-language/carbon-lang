@@ -97,8 +97,8 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
   }
 
   return InitialFacetTypeImplWitness(
-      context, context.insts().GetLocId(impl.latest_decl_id()),
-      impl.constraint_id, impl.self_id, impl.interface,
+      context, /*witness_loc_id=*/impl.latest_decl_id(), impl.constraint_id,
+      impl.self_id, impl.interface,
       context.generics().GetSelfSpecific(impl.generic_id), has_definition);
 }
 
@@ -204,9 +204,8 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
           CARBON_FATAL("Unexpected type: {0}", type_inst);
         }
         auto& fn = context.functions().Get(fn_type->function_id);
-        auto lookup_result =
-            LookupNameInExactScope(context, context.insts().GetLocId(decl_id),
-                                   fn.name_id, impl.scope_id, impl_scope);
+        auto lookup_result = LookupNameInExactScope(
+            context, /*loc_id=*/decl_id, fn.name_id, impl.scope_id, impl_scope);
         if (lookup_result.is_found()) {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_value = CheckAssociatedFunctionImplementation(

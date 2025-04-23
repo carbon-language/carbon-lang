@@ -64,9 +64,11 @@ class EvalContext {
   auto GetDiagnosticLoc(llvm::ArrayRef<SemIR::InstId> inst_ids)
       -> SemIR::LocId {
     for (auto inst_id : inst_ids) {
-      if (inst_id.has_value() &&
-          context_->insts().GetLocId(inst_id).has_value()) {
-        return inst_id;
+      if (inst_id.has_value()) {
+        auto loc_id = context_->insts().GetCanonicalLocId(inst_id);
+        if (loc_id.has_value()) {
+          return loc_id;
+        }
       }
     }
     return fallback_loc_id_;
@@ -1753,8 +1755,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       return MakeConstantResult(eval_context.context(), inst, phase);
     } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
       auto result_inst_id = PerformDelayedAction(
-          eval_context.context(), eval_context.insts().GetLocId(inst_id),
-          inst.As<InstT>());
+          eval_context.context(), /*loc_id=*/inst_id, inst.As<InstT>());
       if (result_inst_id.has_value()) {
         // The result is an instruction.
         return MakeConstantResult(

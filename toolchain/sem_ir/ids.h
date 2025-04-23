@@ -824,6 +824,12 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //
 // In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
 // Note that these can only be used with negative, non-`InstId` values.
+//
+// Use `InstStore::GetCanonicalLocId()` to convert a `LocId` to a canonical
+// `LocId` which will not be backed by an `InstId`. Note that this may return
+// `None`, so this operation needs to be done before checking `has_value()`.
+// Only canonical locations can be converted with `ToImplicit()` or
+// `ToTokenOnly()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -854,7 +860,7 @@ struct LocId : public IdBase<LocId> {
       : IdBase(FirstNodeId - node_id.index) {}
 
   // Forms an equivalent LocId for a desugared location.  Requires a
-  // non-`InstId` location.
+  // canonical location. See `InstStore::GetCanonicalLocId()`.
   // TODO: Rename to something like `ToDesugared`.
   auto ToImplicit() const -> LocId {
     // This should only be called for NodeId or ImportIRInstId, but we only set
@@ -867,7 +873,7 @@ struct LocId : public IdBase<LocId> {
   }
 
   // Forms an equivalent `LocId` for a token-only diagnostic location.  Requires
-  // a non-`InstId` location.
+  // a canonical location. See `InstStore::GetCanonicalLocId()`.
   auto ToTokenOnly() const -> LocId {
     CARBON_CHECK(kind() != Kind::InstId);
     if (has_value()) {
@@ -893,15 +899,13 @@ struct LocId : public IdBase<LocId> {
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
   auto is_implicit() const -> bool {
-    CARBON_CHECK(kind() != Kind::InstId);
     return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
   }
 
   // Returns true if the location is token-only for diagnostics. Requires a
   // non-`InstId` location.
   auto is_token_only() const -> bool {
-    CARBON_CHECK(kind() != Kind::InstId);
-    return (index & TokenOnlyBit) == 0;
+    return kind() != Kind::InstId && (index & TokenOnlyBit) == 0;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.

@@ -192,7 +192,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   } else {
     bool is_complete = RequireCompleteType(
         context, constraint_type_id,
-        context.insts().GetLocId(constraint_type_inst_id), [&] {
+        /*loc_id=*/constraint_type_inst_id, [&] {
           CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Error,
                             "`extend impl as` incomplete facet type {0}",
                             InstIdAsType);
@@ -491,7 +491,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
     if (impl_info.generic_id.has_value()) {
       constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
-          context, context.insts().GetLocId(constraint_type_inst_id),
+          context, /*loc=*/constraint_type_inst_id,
           {.type_id = SemIR::TypeType::TypeId,
            .inst_id = constraint_type_inst_id,
            .specific_id =

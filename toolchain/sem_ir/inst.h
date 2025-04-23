@@ -398,7 +398,7 @@ class InstStore {
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst::UncheckedLoc(GetLocId(inst_id), Get(inst_id));
+    return LocIdAndInst::UncheckedLoc(/*loc_id=*/inst_id, Get(inst_id));
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -431,11 +431,20 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  auto GetLocId(InstId inst_id) const -> LocId {
-    CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
-    CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}", inst_id.index,
-                 loc_ids_.size());
-    return loc_ids_[inst_id.index];
+  // Gets the canonical LocId for a location, which is not backed by an InstId.
+  //
+  // This operation needs to be done before using most operations on `LocId`
+  // since an `InstId` value is just a thin wrapper around a more canonical
+  // location.
+  auto GetCanonicalLocId(LocId loc_id) const -> LocId {
+    while (loc_id.kind() == SemIR::LocId::Kind::InstId) {
+      auto inst_id = loc_id.inst_id();
+      CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
+      CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}",
+                   inst_id.index, loc_ids_.size());
+      loc_id = loc_ids_[inst_id.index];
+    }
+    return loc_id;
   }
 
   // Overwrites a given instruction with a new value.

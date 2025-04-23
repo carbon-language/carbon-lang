@@ -519,7 +519,8 @@ static auto BuildFunctionDecl(Context& context,
           SemIR::Function::VirtualModifier::Abstract) {
     CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
                       "definition of `abstract` function");
-    context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
+    context.emitter().Emit(TokenOnly(context, node_id),
+                           DefinedAbstractFunction);
   }
 
   // Add to name lookup if needed, now that the decl is built.
@@ -550,9 +551,8 @@ static auto CheckFunctionDefinitionSignature(Context& context,
 
   // Check the return type is complete.
   if (function.return_slot_pattern_id.has_value()) {
-    CheckFunctionReturnType(
-        context, context.insts().GetLocId(function.return_slot_pattern_id),
-        function, SemIR::SpecificId::None);
+    CheckFunctionReturnType(context, /*loc_id=*/function.return_slot_pattern_id,
+                            function, SemIR::SpecificId::None);
     params_to_complete = params_to_complete.drop_back();
   }
 
@@ -565,7 +565,7 @@ static auto CheckFunctionDefinitionSignature(Context& context,
     // The parameter types need to be complete.
     RequireCompleteType(
         context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
-        context.insts().GetLocId(param_ref_id), [&] {
+        /*loc_id=*/param_ref_id, [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,
               "parameter has incomplete type {0} in function definition",
@@ -639,7 +639,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
-      context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
+      context.emitter().Emit(TokenOnly(context, node_id),
+                             MissingReturnStatement);
     } else {
       AddReturnCleanupBlock(context, node_id);
     }
