@@ -484,7 +484,7 @@ fn F() {
   let a: () = C(()).CC();
 }
 
-// --- fail_todo_final_extend_impl_as_specialization.carbon
+// --- final_extend_impl_as_specialization.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
@@ -494,24 +494,11 @@ interface Z(T:! type) {
 impl forall [T:! type, S:! type] T as Z(S) where .X = {} {}
 
 class C(S:! type) {
-  // TODO: https://github.com/carbon-language/carbon-lang/issues/5319
-  //
-  // CHECK:STDERR: fail_todo_final_extend_impl_as_specialization.carbon:[[@LINE+7]]:9: error: `extend` not allowed on declaration with `final` [ModifierNotAllowedWith]
-  // CHECK:STDERR:   final extend impl as Z(S) where .X = () {}
-  // CHECK:STDERR:         ^~~~~~
-  // CHECK:STDERR: fail_todo_final_extend_impl_as_specialization.carbon:[[@LINE+4]]:3: note: `final` previously appeared here [ModifierPrevious]
-  // CHECK:STDERR:   final extend impl as Z(S) where .X = () {}
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR:
-  final extend impl as Z(S) where .X = () {}
+  extend final impl as Z(S) where .X = () {}
   fn CC() -> Self.(Z(S).X) { return (); }
 }
 
 fn F() {
   let a: () = C(()).CC();
-  // CHECK:STDERR: fail_todo_final_extend_impl_as_specialization.carbon:[[@LINE+4]]:10: error: member name `X` not found in `C(())` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   let b: C(()).X = a;
-  // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR:
   let b: C(()).X = a;
 }
