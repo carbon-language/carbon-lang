@@ -135,11 +135,9 @@ class A {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %AF.decl: %AF.type = fn_decl @AF [concrete = constants.%AF] {} {}
-// CHECK:STDOUT:   %.loc46_8: %A.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc46_3: %A.elem = var_pattern %.loc46_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %A.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc46: %A.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -148,18 +146,16 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   .AF = %AF.decl
-// CHECK:STDOUT:   .a = %.loc46_8
+// CHECK:STDOUT:   .a = %.loc46
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %BF.decl: %BF.type = fn_decl @BF [concrete = constants.%BF] {} {}
-// CHECK:STDOUT:   %.loc16_10: %B.elem = field_decl b, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc16_5: %B.elem = var_pattern %.loc16_10
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %B.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc16: %B.elem = field_decl b, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b.0a3]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [concrete = constants.%complete_type.ba8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -168,7 +164,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT:   .BF = %BF.decl
-// CHECK:STDOUT:   .b = %.loc16_10
+// CHECK:STDOUT:   .b = %.loc16
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .AF = <poisoned>
@@ -178,11 +174,9 @@ class A {
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %DF.decl: %DF.type = fn_decl @DF [concrete = constants.%DF] {} {}
 // CHECK:STDOUT:   %CF.decl: %CF.type = fn_decl @CF [concrete = constants.%CF] {} {}
-// CHECK:STDOUT:   %.loc42_10: %C.elem = field_decl c, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc42_5: %C.elem = var_pattern %.loc42_10
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc42: %C.elem = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c.b66]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [concrete = constants.%complete_type.836]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -191,7 +185,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .D = %D.decl
 // CHECK:STDOUT:   .CF = %CF.decl
-// CHECK:STDOUT:   .c = %.loc42_10
+// CHECK:STDOUT:   .c = %.loc42
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
@@ -202,11 +196,9 @@ class A {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %DF.decl: %DF.type = fn_decl @DF [concrete = constants.%DF] {} {}
-// CHECK:STDOUT:   %.loc24_12: %D.elem = field_decl d, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc24_7: %D.elem = var_pattern %.loc24_12
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %D.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc24: %D.elem = field_decl d, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.d: type = struct_type {.d: %i32} [concrete = constants.%struct_type.d.b7b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d [concrete = constants.%complete_type.860]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -215,7 +207,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .DF = %DF.decl
-// CHECK:STDOUT:   .d = %.loc24_12
+// CHECK:STDOUT:   .d = %.loc24
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>

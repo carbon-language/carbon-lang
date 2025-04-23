@@ -61,5 +61,5 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param_patt.loc18_7: %i32, %n.param_patt.loc18_15: %i32);
+// CHECK:STDOUT: fn @F(%n.param.loc18_7: %i32, %n.param.loc18_15: %i32);
 // CHECK:STDOUT:

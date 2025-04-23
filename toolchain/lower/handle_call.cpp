@@ -64,8 +64,7 @@ static auto GetBuiltinFCmpPredicate(SemIR::BuiltinFunctionKind builtin_kind)
 // Returns whether the specified instruction has a signed integer type.
 static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
     -> bool {
-  return context.sem_ir().types().IsSignedInt(
-      context.sem_ir().insts().Get(int_id).type_id());
+  return context.sem_ir().types().IsSignedInt(context.GetTypeOfInst(int_id));
 }
 
 // Creates a zext or sext instruction depending on the signedness of the
@@ -86,13 +85,10 @@ static auto CreateExtOrTrunc(FunctionContext& context, llvm::Value* value,
                    : context.builder().CreateZExtOrTrunc(value, type, name);
 }
 
-// Handles a call to a builtin integer bit shift operator.
-static auto HandleIntShift(FunctionContext& context, SemIR::InstId inst_id,
+// Create a integer bit shift for a call to a builtin bit shift function.
+static auto CreateIntShift(FunctionContext& context,
                            llvm::Instruction::BinaryOps bin_op,
-                           SemIR::InstId lhs_id, SemIR::InstId rhs_id) -> void {
-  llvm::Value* lhs = context.GetValue(lhs_id);
-  llvm::Value* rhs = context.GetValue(rhs_id);
-
+                           llvm::Value* lhs, llvm::Value* rhs) -> llvm::Value* {
   // Weirdly, LLVM requires the operands of bit shift operators to be of the
   // same type. We can always use the width of the LHS, because if the RHS
   // doesn't fit in that then the cast is out of range anyway. Zero-extending is
@@ -102,8 +98,7 @@ static auto HandleIntShift(FunctionContext& context, SemIR::InstId inst_id,
   // negative or greater than or equal to the number of bits in the left-hand
   // type.
   rhs = context.builder().CreateZExtOrTrunc(rhs, lhs->getType(), "rhs");
-
-  context.SetLocal(inst_id, context.builder().CreateBinOp(bin_op, lhs, rhs));
+  return context.builder().CreateBinOp(bin_op, lhs, rhs);
 }
 
 // Handles a call to a builtin integer comparison operator.
@@ -148,6 +143,102 @@ static auto HandleIntComparison(FunctionContext& context, SemIR::InstId inst_id,
       inst_id,
       context.builder().CreateICmp(
           GetBuiltinICmpPredicate(builtin_kind, cmp_signed), lhs, rhs));
+}
+
+// Creates a binary operator for a call to a builtin for either that operation
+// or the corresponding compound assignment.
+static auto CreateBinaryOperatorForBuiltin(
+    FunctionContext& context, SemIR::InstId inst_id,
+    SemIR::BuiltinFunctionKind builtin_kind, llvm::Value* lhs, llvm::Value* rhs)
+    -> llvm::Value* {
+  // TODO: Consider setting this to true in the performance build mode if the
+  // result type is a signed integer type.
+  constexpr bool SignedOverflowIsUB = false;
+
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::IntSAdd:
+    case SemIR::BuiltinFunctionKind::IntSAddAssign: {
+      return context.builder().CreateAdd(lhs, rhs, "",
+                                         /*HasNUW=*/false,
+                                         /*HasNSW=*/SignedOverflowIsUB);
+    }
+    case SemIR::BuiltinFunctionKind::IntSSub:
+    case SemIR::BuiltinFunctionKind::IntSSubAssign: {
+      return context.builder().CreateSub(lhs, rhs, "",
+                                         /*HasNUW=*/false,
+                                         /*HasNSW=*/SignedOverflowIsUB);
+    }
+    case SemIR::BuiltinFunctionKind::IntSMul:
+    case SemIR::BuiltinFunctionKind::IntSMulAssign: {
+      return context.builder().CreateMul(lhs, rhs, "",
+                                         /*HasNUW=*/false,
+                                         /*HasNSW=*/SignedOverflowIsUB);
+    }
+    case SemIR::BuiltinFunctionKind::IntSDiv:
+    case SemIR::BuiltinFunctionKind::IntSDivAssign: {
+      return context.builder().CreateSDiv(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntSMod:
+    case SemIR::BuiltinFunctionKind::IntSModAssign: {
+      return context.builder().CreateSRem(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntUAdd:
+    case SemIR::BuiltinFunctionKind::IntUAddAssign: {
+      return context.builder().CreateAdd(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntUSub:
+    case SemIR::BuiltinFunctionKind::IntUSubAssign: {
+      return context.builder().CreateSub(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntUMul:
+    case SemIR::BuiltinFunctionKind::IntUMulAssign: {
+      return context.builder().CreateMul(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntUDiv:
+    case SemIR::BuiltinFunctionKind::IntUDivAssign: {
+      return context.builder().CreateUDiv(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntUMod:
+    case SemIR::BuiltinFunctionKind::IntUModAssign: {
+      return context.builder().CreateURem(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntAnd:
+    case SemIR::BuiltinFunctionKind::IntAndAssign: {
+      return context.builder().CreateAnd(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntOr:
+    case SemIR::BuiltinFunctionKind::IntOrAssign: {
+      return context.builder().CreateOr(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntXor:
+    case SemIR::BuiltinFunctionKind::IntXorAssign: {
+      return context.builder().CreateXor(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntLeftShift:
+    case SemIR::BuiltinFunctionKind::IntLeftShiftAssign: {
+      return CreateIntShift(context, llvm::Instruction::Shl, lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::IntRightShift:
+    case SemIR::BuiltinFunctionKind::IntRightShiftAssign: {
+      // TODO: Split each of these builtins into separate signed and unsigned
+      // builtins rather than working out here whether we're performing an
+      // arithmetic or logical shift.
+      auto lhs_id = context.sem_ir().inst_blocks().Get(
+          context.sem_ir().insts().GetAs<SemIR::Call>(inst_id).args_id)[0];
+      auto lhs_type_id = context.GetTypeOfInst(lhs_id);
+      if (builtin_kind == SemIR::BuiltinFunctionKind::IntRightShiftAssign) {
+        lhs_type_id = context.sem_ir().GetPointeeType(lhs_type_id);
+      }
+      return CreateIntShift(context,
+                            context.sem_ir().types().IsSignedInt(lhs_type_id)
+                                ? llvm::Instruction::AShr
+                                : llvm::Instruction::LShr,
+                            lhs, rhs);
+    }
+    default: {
+      CARBON_FATAL("Unexpected binary operator {0}", builtin_kind);
+    }
+  }
 }
 
 // Handles a call to a builtin function.
@@ -262,100 +353,56 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
               llvm::ConstantInt::getSigned(operand->getType(), -1), operand));
       return;
     }
-    case SemIR::BuiltinFunctionKind::IntSAdd: {
-      context.SetLocal(
-          inst_id, context.builder().CreateAdd(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1]), "",
-                                               /*HasNUW=*/false,
-                                               /*HasNSW=*/SignedOverflowIsUB));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntSSub: {
-      context.SetLocal(
-          inst_id, context.builder().CreateSub(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1]), "",
-                                               /*HasNUW=*/false,
-                                               /*HasNSW=*/SignedOverflowIsUB));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntSMul: {
-      context.SetLocal(
-          inst_id, context.builder().CreateMul(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1]), "",
-                                               /*HasNUW=*/false,
-                                               /*HasNSW=*/SignedOverflowIsUB));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntSDiv: {
-      context.SetLocal(
-          inst_id, context.builder().CreateSDiv(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntSMod: {
-      context.SetLocal(
-          inst_id, context.builder().CreateSRem(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntUAdd: {
-      context.SetLocal(
-          inst_id, context.builder().CreateAdd(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntUSub: {
-      context.SetLocal(
-          inst_id, context.builder().CreateSub(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntUMul: {
-      context.SetLocal(
-          inst_id, context.builder().CreateMul(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntUDiv: {
-      context.SetLocal(
-          inst_id, context.builder().CreateUDiv(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntUMod: {
-      context.SetLocal(
-          inst_id, context.builder().CreateURem(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntAnd: {
-      context.SetLocal(
-          inst_id, context.builder().CreateAnd(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntOr: {
-      context.SetLocal(
-          inst_id, context.builder().CreateOr(context.GetValue(arg_ids[0]),
-                                              context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntXor: {
-      context.SetLocal(
-          inst_id, context.builder().CreateXor(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::IntLeftShift: {
-      HandleIntShift(context, inst_id, llvm::Instruction::Shl, arg_ids[0],
-                     arg_ids[1]);
-      return;
-    }
+    case SemIR::BuiltinFunctionKind::IntSAdd:
+    case SemIR::BuiltinFunctionKind::IntSSub:
+    case SemIR::BuiltinFunctionKind::IntSMul:
+    case SemIR::BuiltinFunctionKind::IntSDiv:
+    case SemIR::BuiltinFunctionKind::IntSMod:
+    case SemIR::BuiltinFunctionKind::IntUAdd:
+    case SemIR::BuiltinFunctionKind::IntUSub:
+    case SemIR::BuiltinFunctionKind::IntUMul:
+    case SemIR::BuiltinFunctionKind::IntUDiv:
+    case SemIR::BuiltinFunctionKind::IntUMod:
+    case SemIR::BuiltinFunctionKind::IntAnd:
+    case SemIR::BuiltinFunctionKind::IntOr:
+    case SemIR::BuiltinFunctionKind::IntXor:
+    case SemIR::BuiltinFunctionKind::IntLeftShift:
     case SemIR::BuiltinFunctionKind::IntRightShift: {
-      HandleIntShift(context, inst_id,
-                     IsSignedInt(context, inst_id) ? llvm::Instruction::AShr
-                                                   : llvm::Instruction::LShr,
-                     arg_ids[0], arg_ids[1]);
+      context.SetLocal(inst_id, CreateBinaryOperatorForBuiltin(
+                                    context, inst_id, builtin_kind,
+                                    context.GetValue(arg_ids[0]),
+                                    context.GetValue(arg_ids[1])));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntSAddAssign:
+    case SemIR::BuiltinFunctionKind::IntSSubAssign:
+    case SemIR::BuiltinFunctionKind::IntSMulAssign:
+    case SemIR::BuiltinFunctionKind::IntSDivAssign:
+    case SemIR::BuiltinFunctionKind::IntSModAssign:
+    case SemIR::BuiltinFunctionKind::IntUAddAssign:
+    case SemIR::BuiltinFunctionKind::IntUSubAssign:
+    case SemIR::BuiltinFunctionKind::IntUMulAssign:
+    case SemIR::BuiltinFunctionKind::IntUDivAssign:
+    case SemIR::BuiltinFunctionKind::IntUModAssign:
+    case SemIR::BuiltinFunctionKind::IntAndAssign:
+    case SemIR::BuiltinFunctionKind::IntOrAssign:
+    case SemIR::BuiltinFunctionKind::IntXorAssign:
+    case SemIR::BuiltinFunctionKind::IntLeftShiftAssign:
+    case SemIR::BuiltinFunctionKind::IntRightShiftAssign: {
+      auto* lhs_ptr = context.GetValue(arg_ids[0]);
+      auto lhs_type_id = context.GetTypeOfInst(arg_ids[0]);
+      auto pointee_type_id = context.sem_ir().GetPointeeType(lhs_type_id);
+      // TODO: Factor out the code to create loads and stores, and include alias
+      // and alignment information.
+      auto* lhs_value = context.builder().CreateLoad(
+          context.GetType(pointee_type_id), lhs_ptr);
+      auto* result = CreateBinaryOperatorForBuiltin(
+          context, inst_id, builtin_kind, lhs_value,
+          context.GetValue(arg_ids[1]));
+      context.builder().CreateStore(result, lhs_ptr);
+      // TODO: Add a helper to get a "no value representation" value.
+      context.SetLocal(inst_id, llvm::PoisonValue::get(context.GetType(
+                                    context.GetTypeOfInst(inst_id))));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntEq:
@@ -444,8 +491,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
 
-  auto inst_type_id = SemIR::GetTypeOfInstInSpecific(
-      context.sem_ir(), context.specific_id(), inst_id);
+  auto inst_type_id = context.GetTypeOfInst(inst_id);
 
   if (SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst_type_id)
           .has_return_slot()) {
@@ -454,7 +500,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   }
 
   for (auto arg_id : arg_ids) {
-    auto arg_type_id = context.sem_ir().insts().Get(arg_id).type_id();
+    auto arg_type_id = context.GetTypeOfInst(arg_id);
     if (SemIR::ValueRepr::ForType(context.sem_ir(), arg_type_id).kind !=
         SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));

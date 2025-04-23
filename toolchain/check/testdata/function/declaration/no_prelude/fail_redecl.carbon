@@ -130,11 +130,11 @@ fn E() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%x.param_patt: %empty_tuple.type);
+// CHECK:STDOUT: fn @B(%x.param.loc21: %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.2(%x.param_patt: %empty_tuple.type);
+// CHECK:STDOUT: fn @C.2(%x.param: %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() {
 // CHECK:STDOUT: !entry:

@@ -64,7 +64,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(<unexpected>.inst27.loc4_14: bool) {
 // CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic = %B (constants.%B.7dd)]
-// CHECK:STDOUT:   %B.patt: bool = symbolic_binding_pattern B, 0 [symbolic = %B.patt (constants.%B.patt)]
+// CHECK:STDOUT:   %B.patt.loc4_14.2: bool = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_14.2 (constants.%B.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -95,6 +95,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%B.7dd) {
 // CHECK:STDOUT:   %B => constants.%B.7dd
-// CHECK:STDOUT:   %B.patt => constants.%B.patt
+// CHECK:STDOUT:   %B.patt.loc4_14.2 => constants.%B.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

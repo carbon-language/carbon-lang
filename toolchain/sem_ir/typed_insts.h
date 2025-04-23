@@ -748,7 +748,7 @@ struct FacetValue {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::VarBindingPatternId>(
+      InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
           {.ir_name = "field_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;

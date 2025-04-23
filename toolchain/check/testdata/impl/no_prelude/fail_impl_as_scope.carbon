@@ -346,7 +346,7 @@ class X {
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc5_19.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_19.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Method.1.%Self.as_type.loc5_19.1 (%Self.as_type)]();
+// CHECK:STDOUT:   fn(%self.param: @Method.1.%Self.as_type.loc5_19.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Zero.2(@Z.%Self: %Z.type) {
@@ -365,7 +365,7 @@ class X {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc13_21.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Method.2.%Self.as_type.loc13_21.1 (%Self.as_type)]() {
+// CHECK:STDOUT:   fn(%self.param: @Method.2.%Self.as_type.loc13_21.1 (%Self.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -376,7 +376,7 @@ class X {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Method.3[%self.param_patt: %Point]() {
+// CHECK:STDOUT: fn @Method.3(%self.param: %Point) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -81,7 +81,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Deref(%n.param_patt: %i32) {
+// CHECK:STDOUT: fn @Deref(%n.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref.loc16: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc16: ref <error> = deref %n.ref.loc16 [concrete = <error>]

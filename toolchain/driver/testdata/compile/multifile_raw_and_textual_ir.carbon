@@ -220,5 +220,5 @@ fn B() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "a.carbon"];
+// CHECK:STDOUT: fn @A [from "a.carbon"];
 // CHECK:STDOUT:

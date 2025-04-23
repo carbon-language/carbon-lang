@@ -222,10 +222,10 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.826)]
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70)](%other.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70)) -> @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70);
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70), %other.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70)) -> @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %i32](%other.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @F.2(%self.param: %i32, %other.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.826) {
 // CHECK:STDOUT:   %Self => constants.%Self.826

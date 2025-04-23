@@ -88,7 +88,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotGenericF(%U.param_patt: %I_where.type) {
+// CHECK:STDOUT: fn @NotGenericF(%U.param: %I_where.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -279,7 +279,7 @@ fn B() {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "redecl_after_def.carbon"];
+// CHECK:STDOUT: fn @A [from "redecl_after_def.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redef_after_def.carbon
 // CHECK:STDOUT:
@@ -322,7 +322,7 @@ fn B() {}
 // CHECK:STDOUT:   %A.decl: %A.type.00d7e7.2 = fn_decl @A.2 [concrete = constants.%A.1db889.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.1() [from "redef_after_def.carbon"];
+// CHECK:STDOUT: fn @A.1 [from "redef_after_def.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.2() {
 // CHECK:STDOUT: !entry:
@@ -372,7 +372,7 @@ fn B() {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "def_alias.carbon"];
+// CHECK:STDOUT: fn @A [from "def_alias.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:

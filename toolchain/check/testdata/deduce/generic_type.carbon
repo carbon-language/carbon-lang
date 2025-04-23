@@ -182,7 +182,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc7_17: <witness> = require_complete_type %C.loc7_22.2 [symbolic = %require_complete.loc7_17 (constants.%require_complete.389)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.2) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.ef1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc7_6.1: type](%p.param_patt: @F.%C.loc7_22.2 (%C.f2e)) -> @F.%T.loc7_6.2 (%T) {
+// CHECK:STDOUT:   fn(%p.param: @F.%C.loc7_22.2 (%C.f2e)) -> @F.%T.loc7_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%C.loc7_22.2 (%C.f2e) = name_ref p, %p
@@ -194,7 +194,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %C.131) -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @G(%p.param: %C.131) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %p.ref: %C.131 = name_ref p, %p
@@ -359,7 +359,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.loc7_22.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.2) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.ef1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc7_6.1: type](%p.param_patt: @F.%I.loc7_22.2 (%I.ff1)) -> %return.param_patt: %C {
+// CHECK:STDOUT:   fn(%p.param: @F.%I.loc7_22.2 (%I.ff1)) -> %return.param: %C {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%I.loc7_22.2 (%I.ff1) = name_ref p, %p
@@ -370,7 +370,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %I.ed8) -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @G(%p.param: %I.ed8) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %p.ref: %I.ed8 = name_ref p, %p
@@ -611,7 +611,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc13_70.1: <witness> = require_complete_type %T.loc13_6.2 [symbolic = %require_complete.loc13_70.1 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %require_complete.loc13_70.2: <witness> = require_complete_type %U.loc13_16.2 [symbolic = %require_complete.loc13_70.2 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc13_6.1: type, %U.patt.loc13_16.1: type](%p.param_patt: @F.%Inner.loc13_45.2 (%Inner.c71)) -> %return.param_patt: @F.%tuple.type (%tuple.type.30b) {
+// CHECK:STDOUT:   fn(%p.param: @F.%Inner.loc13_45.2 (%Inner.c71)) -> %return.param: @F.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%Inner.loc13_45.2 (%Inner.c71) = name_ref p, %p
@@ -633,7 +633,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %Inner.d70) -> %return.param_patt: %tuple.type.e8a {
+// CHECK:STDOUT: fn @G(%p.param: %Inner.d70) -> %return.param: %tuple.type.e8a {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %p.ref: %Inner.d70 = name_ref p, %p
@@ -843,7 +843,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %WithNontype.loc6_31.2 [symbolic = %require_complete (constants.%require_complete.9c5)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.patt.loc6_6.1: %i32](%x.param_patt: @F.%WithNontype.loc6_31.2 (%WithNontype.8a6)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%WithNontype.loc6_31.2 (%WithNontype.8a6)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc6_50: %i32 = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.51e)]
 // CHECK:STDOUT:     return %N.ref.loc6_50

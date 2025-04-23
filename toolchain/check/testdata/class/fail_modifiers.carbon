@@ -233,12 +233,12 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @F[%self.param_patt: %AbstractWithDefinition]() {
+// CHECK:STDOUT: abstract fn @F(%self.param: %AbstractWithDefinition) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @G[%self.param_patt: %AbstractWithDefinition]() {
+// CHECK:STDOUT: abstract fn @G(%self.param.loc97: %AbstractWithDefinition) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

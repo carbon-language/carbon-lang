@@ -106,6 +106,13 @@ auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
   return HandleIntroducer<Lex::TokenKind::Var>(context, node_id);
 }
 
+auto HandleParseNode(Context& context, Parse::FieldIntroducerId node_id)
+    -> bool {
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
+  context.node_stack().Push(node_id);
+  return true;
+}
+
 // Returns a VarStorage inst for the given `var` pattern. If the pattern
 // is the body of a returned var, this reuses the return slot, and otherwise it
 // adds a new inst.
@@ -209,6 +216,12 @@ auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
 auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
     -> bool {
   return HandleInitializer(context, node_id);
+}
+
+auto HandleParseNode(Context& context, Parse::FieldInitializerId node_id)
+    -> bool {
+  context.node_stack().Push(node_id);
+  return true;
 }
 
 namespace {
@@ -371,26 +384,6 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
 
-  if (auto class_scope =
-          context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>()) {
-    auto var = context.insts().GetAs<SemIR::VarPattern>(decl_info.pattern_id);
-    if (!context.insts().TryGetAs<SemIR::FieldDecl>(var.subpattern_id)) {
-      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInFieldDecl, Error,
-                        "pattern in field declaration is not a "
-                        "single `:` binding");
-      context.emitter().Emit(context.insts().GetLocId(var.subpattern_id),
-                             ExpectedSymbolicBindingInFieldDecl);
-      context.name_scopes()
-          .Get(context.classes().Get(class_scope->class_id).scope_id)
-          .set_has_error();
-    }
-    if (decl_info.init_id.has_value()) {
-      // TODO: In a class scope, we should instead save the initializer
-      // somewhere so that we can use it as a default.
-      context.TODO(node_id, "Field initializer");
-    }
-    return true;
-  }
   if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
                       "`var` declaration in interface");
@@ -399,6 +392,29 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::FieldDeclId node_id) -> bool {
+  if (context.node_stack().PeekNextIs(Parse::NodeKind::FieldInitializer)) {
+    // TODO: In a class scope, we should instead save the initializer
+    // somewhere so that we can use it as a default.
+    context.TODO(node_id, "Field initializer");
+    context.node_stack().PopExpr();
+    context.node_stack()
+        .PopAndDiscardSoloNodeId<Parse::NodeKind::FieldInitializer>();
+  }
+
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::FieldIntroducer>();
+  auto parent_scope_inst =
+      context.name_scopes()
+          .GetInstIfValid(context.scope_stack().PeekNameScopeId())
+          .second;
+  auto introducer =
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
+  CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
   return true;
 }
 

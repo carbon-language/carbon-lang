@@ -180,11 +180,11 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[addr %self.param_patt: %ptr.019]();
+// CHECK:STDOUT: fn @Op.2(%self.param: %ptr.019);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.4[addr %self.param_patt: %ptr.019](%other.param_patt: %C);
+// CHECK:STDOUT: fn @Op.4(%self.param: %ptr.019, %other.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestIncNonRef(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @TestIncNonRef(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0: %.bc7 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%Op.0c9]
@@ -195,7 +195,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAddAssignNonRef(%a.param_patt: %C, %b.param_patt: %C) {
+// CHECK:STDOUT: fn @TestAddAssignNonRef(%a.param: %C, %b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b

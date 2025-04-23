@@ -89,9 +89,9 @@ fn H() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %tuple.type.d07;
+// CHECK:STDOUT: fn @F() -> %return.param: %tuple.type.d07;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param_patt: %tuple.type.d07 {
+// CHECK:STDOUT: fn @G() -> %return.param: %tuple.type.d07 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %tuple.type.d07 = binding_pattern v

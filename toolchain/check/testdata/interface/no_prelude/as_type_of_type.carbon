@@ -57,7 +57,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %T.as_type.loc14_10.2: type = facet_access_type %T.loc13_6.2 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc14_10.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc13_6.1: %Empty.type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %x.patt: @F.%T.as_type.loc14_10.2 (%T.as_type) = binding_pattern x
