@@ -41,7 +41,6 @@ cc_library(
         "//toolchain/base:value_ids",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:node_kind",
-        "@llvm-project//clang:basic",
         "@llvm-project//llvm:Support",
     ],
 )
