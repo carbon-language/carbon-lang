@@ -356,7 +356,7 @@ static auto SingleThreaded(llvm::ArrayRef<FileTestInfo> tests) -> bool {
     found_test_to_run = true;
   }
   // 0 or 1 test will be run, so single-threaded.
-  return false;
+  return true;
 }
 
 // Runs the test in the section that would be inside a lock, possibly inside a
