@@ -216,9 +216,9 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   %c: %ptr.f01 = bind_name c, @__global_init.%addr.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add.1(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @Add.1(%a.param: %i32, %b.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertToU32(%a.param_patt: %i32) -> %u32 = "int.convert_checked";
+// CHECK:STDOUT: fn @ConvertToU32(%a.param: %i32) -> %u32 = "int.convert_checked";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

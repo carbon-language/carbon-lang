@@ -96,7 +96,7 @@ fn B() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_22.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_6.1: %Z.type](%x.param_patt: @A.%struct_type.a.loc4_22.2 (%struct_type.a)) {
+// CHECK:STDOUT:   fn(%x.param: @A.%struct_type.a.loc4_22.2 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -184,7 +184,7 @@ fn B() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_26.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_6.1: %Z.type](%x.param_patt: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a)) {
+// CHECK:STDOUT:   fn(%x.param: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -204,14 +204,14 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.2(imports.%Lib.import_ref.be7: %Z.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt.2: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic = %T.as_type (constants.%T.as_type)]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @A.2.%T.as_type (%T.as_type)} [symbolic = %struct_type.a (constants.%struct_type.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.1: %Z.type](%x.param_patt: @A.2.%struct_type.a (%struct_type.a));
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.1(constants.%T) {
@@ -223,7 +223,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
 // CHECK:STDOUT: }

@@ -82,16 +82,12 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc17_16: %Class.elem = field_decl j, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc17_11: %Class.elem = var_pattern %.loc17_16
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc17: ref %Class.elem = var <none>
-// CHECK:STDOUT:   %.loc23_14: %Class.elem = field_decl k, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc23_9: %Class.elem = var_pattern %.loc23_14
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc23: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc17: %Class.elem = field_decl j, element0 [concrete]
+// CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc23: %Class.elem = field_decl k, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %i32 = binding_pattern l
 // CHECK:STDOUT:   }
@@ -130,8 +126,8 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .j = %.loc17_16
-// CHECK:STDOUT:   .k = %.loc23_14
+// CHECK:STDOUT:   .j = %.loc17
+// CHECK:STDOUT:   .k = %.loc23
 // CHECK:STDOUT:   .l = %l
 // CHECK:STDOUT:   .m = %m
 // CHECK:STDOUT: }

@@ -101,7 +101,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %array_type.loc9_24.2: type = array_type %int.convert_checked.loc9_23.2, constants.%i32 [symbolic = %array_type.loc9_24.2 (constants.%array_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc9_24.2 [symbolic = %require_complete (constants.%require_complete.7cb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc4_6.1: %i32) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: @F.%array_type.loc9_24.2 (%array_type) = binding_pattern arr
@@ -224,7 +224,7 @@ fn H() { G(3); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc10_23.2: <instruction> = convert_to_value_action %N.ref, Core.IntLiteral [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc5_15.1: %i32) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: <error> = binding_pattern arr

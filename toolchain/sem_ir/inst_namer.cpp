@@ -54,14 +54,8 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     auto fn_loc = Parse::NodeId::None;
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir->names().GetIRBaseName(fn.name_id).str());
+    CollectNamesInBlock(fn_scope, fn.call_params_id);
     CollectNamesInBlock(fn_scope, fn.pattern_block_id);
-    // These generally point into `pattern_block_id`, but for an imported
-    // function, we don't import the pattern block, and we reference these when
-    // printing the function signature.
-    // TODO: Print the call params instead of the patterns when printing a
-    // function signature.
-    CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
-    CollectNamesInBlock(fn_scope, fn.param_patterns_id);
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
     }

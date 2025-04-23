@@ -223,11 +223,11 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Eq(%a.param_patt: bool, %b.param_patt: bool) -> bool = "bool.eq";
+// CHECK:STDOUT: fn @Eq(%a.param: bool, %b.param: bool) -> bool = "bool.eq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @True() -> %C.a14;
+// CHECK:STDOUT: fn @True() -> %return.param: %C.a14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @False() -> %C.2ba;
+// CHECK:STDOUT: fn @False() -> %return.param: %C.2ba;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -438,9 +438,9 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @True() -> %C.a14;
+// CHECK:STDOUT: fn @True() -> %return.param: %C.a14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @False() -> %C.2ba;
+// CHECK:STDOUT: fn @False() -> %return.param: %C.2ba;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

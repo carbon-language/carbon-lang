@@ -88,7 +88,7 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %array_type.loc11_30.2: type = array_type %int.convert_checked.loc11_29.2, constants.%i32 [symbolic = %array_type.loc11_30.2 (constants.%array_type)]
 // CHECK:STDOUT:   %ptr.loc11_31.2: type = ptr_type %array_type.loc11_30.2 [symbolic = %ptr.loc11_31.2 (constants.%ptr.0ad)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc11_6.1: %i32, %a.param_patt: @F.%ptr.loc11_31.2 (%ptr.0ad));
+// CHECK:STDOUT:   fn(%a.param: @F.%ptr.loc11_31.2 (%ptr.0ad));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {

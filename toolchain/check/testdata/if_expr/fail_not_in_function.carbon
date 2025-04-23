@@ -47,9 +47,21 @@ var y: if true then i32 else f64;
 fn F(a: if true then i32 else f64);
 
 class C {
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+16]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR:   var n: if true then i32 else f64;
+  // CHECK:STDERR:          ^~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:18: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR:   var n: if true then i32 else f64;
+  // CHECK:STDERR:                  ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR:   var n: if true then i32 else f64;
+  // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:
   var n: if true then i32 else f64;
 }
@@ -63,9 +75,6 @@ class C {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -112,21 +121,16 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc54_8: %C.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc54_3: %C.elem = var_pattern %.loc54_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst1384.loc67_1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc54_8
+// CHECK:STDOUT:   .n = <unexpected>.inst1381.loc66_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param_patt: %i32);
+// CHECK:STDOUT: fn @F(%a.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

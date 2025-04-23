@@ -139,7 +139,7 @@ extern fn A();
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A() [from "extern_api.carbon"];
+// CHECK:STDOUT: extern fn @A [from "extern_api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_impl.carbon
 // CHECK:STDOUT:
@@ -176,5 +176,5 @@ extern fn A();
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "extern_impl.carbon"];
+// CHECK:STDOUT: fn @A [from "extern_impl.carbon"];
 // CHECK:STDOUT:

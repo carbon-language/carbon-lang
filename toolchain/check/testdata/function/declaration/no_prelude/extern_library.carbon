@@ -190,7 +190,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_nonowner.carbon
 // CHECK:STDOUT:
@@ -210,7 +210,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_nonextern.carbon
 // CHECK:STDOUT:
@@ -230,7 +230,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_redecl.carbon
 // CHECK:STDOUT:
@@ -250,7 +250,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_library_copy.carbon
 // CHECK:STDOUT:
@@ -351,7 +351,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "extern_of_import.carbon"];
+// CHECK:STDOUT: fn @F [from "extern_of_import.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_on_definition.carbon
 // CHECK:STDOUT:

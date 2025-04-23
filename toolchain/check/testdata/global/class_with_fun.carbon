@@ -68,7 +68,7 @@ var a: A = {};
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ret_a() -> %return.param_patt: %A {
+// CHECK:STDOUT: fn @ret_a() -> %return.param: %A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc13_11.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc13_11.2: init %A = class_init (), %return [concrete = constants.%A.val]

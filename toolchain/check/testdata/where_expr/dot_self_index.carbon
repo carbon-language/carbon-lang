@@ -198,13 +198,13 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc18_17: <witness> = require_complete_type %Empty_where.type [symbolic = %require_complete.loc18_17 (constants.%require_complete.af8)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc18_6.1: type, %U.param_patt: @H.%Empty_where.type (%Empty_where.type.b73), %V.patt.loc18_43.1: type) {
+// CHECK:STDOUT:   fn(%U.param: @H.%Empty_where.type (%Empty_where.type.b73)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%U.param_patt: %Empty_where.type.fc2) {
+// CHECK:STDOUT: fn @G(%U.param: %Empty_where.type.fc2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [concrete = constants.%H]
 // CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

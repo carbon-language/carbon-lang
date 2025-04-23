@@ -193,7 +193,7 @@ interface I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc9_22.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_22.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self.as_type.loc9_22.1 (%Self.as_type)]();
+// CHECK:STDOUT:   fn(%self.param: @F.%Self.as_type.loc9_22.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {
@@ -246,7 +246,7 @@ interface I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc9_24.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_24.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self.as_type.loc9_24.1 (%Self.as_type)]();
+// CHECK:STDOUT:   fn(%self.param: @F.%Self.as_type.loc9_24.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {

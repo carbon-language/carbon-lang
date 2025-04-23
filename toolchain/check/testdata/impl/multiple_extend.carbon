@@ -308,7 +308,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%c.param_patt: %C) {
+// CHECK:STDOUT: fn @H(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type = name_ref F, @HasF.%assoc0 [concrete = constants.%assoc0.97a]
@@ -479,7 +479,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%d.param_patt: %D) {
+// CHECK:STDOUT: fn @B(%d.param: %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref.loc26: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %A.ref.loc26: <error> = name_ref A, <error> [concrete = <error>]
@@ -624,7 +624,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%e.param_patt: %E) {
+// CHECK:STDOUT: fn @H(%e.param: %E) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   %I.ref.loc20: %HasI.assoc_type = name_ref I, @HasI.%assoc0 [concrete = constants.%assoc0]
@@ -770,7 +770,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @M(%l.param_patt: %L) {
+// CHECK:STDOUT: fn @M(%l.param: %L) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %L.ref.loc24: type = name_ref L, file.%L.decl [concrete = constants.%L]
 // CHECK:STDOUT:   %K.ref.loc24: <error> = name_ref K, <error> [concrete = <error>]
@@ -962,7 +962,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @N.6();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @P(%o.param_patt: %O) {
+// CHECK:STDOUT: fn @P(%o.param: %O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %O.ref.loc28: type = name_ref O, file.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   %N.ref.loc28: %N.type.8b4 = name_ref N, @O.%N.decl [concrete = constants.%N.cc3]

@@ -213,13 +213,13 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self.param_patt: %ptr.6db]();
+// CHECK:STDOUT: fn @F.1(%self.param: %ptr.6db);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[addr %self.param_patt: %ptr.e79]();
+// CHECK:STDOUT: fn @F.2(%self.param: %ptr.e79);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[addr %self.param_patt: %ptr.019]();
+// CHECK:STDOUT: fn @F.3(%self.param: %ptr.019);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%a.param_patt: %ptr.6db, %b.param_patt: %ptr.e79, %c.param_patt: %ptr.019, %d.param_patt: %ptr.19c) {
+// CHECK:STDOUT: fn @Call(%a.param: %ptr.6db, %b.param: %ptr.e79, %c.param: %ptr.019, %d.param: %ptr.19c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.6db = name_ref a, %a
 // CHECK:STDOUT:   %.loc30: ref %A = deref %a.ref

@@ -212,7 +212,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .Self = constants.%SubscriptType.8ee
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self.param_patt: %C](%subscript.param_patt: %SubscriptType.8ee) -> %return.param_patt: %ElementType.e6b {
+// CHECK:STDOUT: fn @At.2(%self.param: %C, %subscript.param: %SubscriptType.8ee) -> %return.param: %ElementType.e6b {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType.e6b = class_init (), %return [concrete = constants.%ElementType.val]
@@ -380,7 +380,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   witness = file.%IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self.param_patt: %tuple.type.d07](%subscript.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @At.2(%self.param: %tuple.type.d07, %subscript.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %tuple.type.d07 = name_ref self, %self
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -534,7 +534,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .Self = constants.%SubscriptType.8ee
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self.param_patt: %C](%subscript.param_patt: %SubscriptType.8ee) -> %return.param_patt: %ElementType.e6b {
+// CHECK:STDOUT: fn @At.2(%self.param: %C, %subscript.param: %SubscriptType.8ee) -> %return.param: %ElementType.e6b {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType.e6b = class_init (), %return [concrete = constants.%ElementType.val]

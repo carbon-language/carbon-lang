@@ -110,9 +110,9 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %array_type;
+// CHECK:STDOUT: fn @F() -> %return.param: %array_type;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b.param_patt: %array_type) {
+// CHECK:STDOUT: fn @G(%b.param: %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pb.patt: %ptr.235 = binding_pattern pb

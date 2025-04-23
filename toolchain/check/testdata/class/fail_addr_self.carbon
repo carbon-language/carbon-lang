@@ -116,11 +116,11 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self.param_patt: %ptr.e71]();
+// CHECK:STDOUT: fn @F.1(%self.param: %ptr.e71);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.param_patt: %Class]();
+// CHECK:STDOUT: fn @G(%self.param: %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%c.param_patt: %Class, %p.param_patt: %ptr.e71) {
+// CHECK:STDOUT: fn @F.2(%c.param: %Class, %p.param: %ptr.e71) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc28: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc28: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]

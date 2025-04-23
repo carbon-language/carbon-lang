@@ -378,11 +378,11 @@ class T2 {
 // CHECK:STDOUT:   .K = %K.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @H[%self.param_patt: %Base]();
+// CHECK:STDOUT: virtual fn @H(%self.param: %Base);
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @J[%self.param_patt: %Abstract]();
+// CHECK:STDOUT: abstract fn @J(%self.param: %Abstract);
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @K[%self.param_patt: %Abstract]();
+// CHECK:STDOUT: virtual fn @K(%self.param: %Abstract);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- override_import.carbon
 // CHECK:STDOUT:
@@ -465,9 +465,9 @@ class T2 {
 // CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @H.1[%self.param_patt: %Derived]();
+// CHECK:STDOUT: impl fn @H.1(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H.2[%self.param_patt: %Base]() [from "modifiers.carbon"];
+// CHECK:STDOUT: fn @H.2 [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
@@ -569,9 +569,9 @@ class T2 {
 // CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F[%self.param_patt: %Derived]();
+// CHECK:STDOUT: virtual fn @F(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H[%self.param_patt: %Base]() [from "modifiers.carbon"];
+// CHECK:STDOUT: fn @H [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init.carbon
 // CHECK:STDOUT:
@@ -722,9 +722,9 @@ class T2 {
 // CHECK:STDOUT:   extend %A1.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %A1]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %A1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %A2]();
+// CHECK:STDOUT: impl fn @F.2(%self.param: %A2);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_base.carbon
 // CHECK:STDOUT:
@@ -846,11 +846,11 @@ class T2 {
 // CHECK:STDOUT:   extend %B2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %B1]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %B1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %B2]();
+// CHECK:STDOUT: impl fn @F.2(%self.param: %B2);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.3[%self.param_patt: %C]();
+// CHECK:STDOUT: impl fn @F.3(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
@@ -958,7 +958,7 @@ class T2 {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F[%self.param_patt: %C]();
+// CHECK:STDOUT: impl fn @F(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init_members.carbon
 // CHECK:STDOUT:
@@ -1021,16 +1021,12 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc5_9: %Base.elem = field_decl m1, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_3: %Base.elem = var_pattern %.loc5_9
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %Base.elem = var <none>
-// CHECK:STDOUT:   %.loc6_9: %Base.elem = field_decl m2, element2 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc6_3: %Base.elem = var_pattern %.loc6_9
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %Base.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %Base.elem = field_decl m1, element1 [concrete]
+// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc6: %Base.elem = field_decl m2, element2 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [concrete = constants.%F.d17] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
@@ -1046,12 +1042,12 @@ class T2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .m1 = %.loc5_9
-// CHECK:STDOUT:   .m2 = %.loc6_9
+// CHECK:STDOUT:   .m1 = %.loc5
+// CHECK:STDOUT:   .m2 = %.loc6
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %Base]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
@@ -1128,7 +1124,7 @@ class T2 {
 // CHECK:STDOUT:   %Base.ref.loc15: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %b2: ref %Base = bind_name b2, %b2.var
 // CHECK:STDOUT:   %b1.ref: ref %Base = name_ref b1, %b1
-// CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%.loc6_9 [concrete = @Base.%.loc6_9]
+// CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%.loc6 [concrete = @Base.%.loc6]
 // CHECK:STDOUT:   %.loc18_5: ref %i32 = class_element_access %b1.ref, element2
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
 // CHECK:STDOUT:   %impl.elem0.loc18: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -1208,7 +1204,7 @@ class T2 {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F[%self.param_patt: %Derived]();
+// CHECK:STDOUT: impl fn @F(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_impl.carbon
 // CHECK:STDOUT:
@@ -1311,9 +1307,9 @@ class T2 {
 // CHECK:STDOUT:   extend %AbstractIntermediate.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @F.1[%self.param_patt: %AbstractBase]();
+// CHECK:STDOUT: abstract fn @F.1(%self.param: %AbstractBase);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived]();
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- virtual_impl.carbon
 // CHECK:STDOUT:
@@ -1416,9 +1412,9 @@ class T2 {
 // CHECK:STDOUT:   extend %VirtualIntermediate.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %VirtualBase]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %VirtualBase);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived]();
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_mismatch.carbon
 // CHECK:STDOUT:
@@ -1511,9 +1507,9 @@ class T2 {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %Base]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %Base);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived](%v.param_patt: %i32);
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived, %v.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_conversion.carbon
 // CHECK:STDOUT:
@@ -1673,7 +1669,7 @@ class T2 {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self.param_patt: %T2]() -> %return.param_patt: %T1 {
+// CHECK:STDOUT: fn @Convert.2(%self.param: %T2) -> %return.param: %T1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc12_13.2: init %T1 = class_init (), %return [concrete = constants.%T1.val]
@@ -1681,9 +1677,9 @@ class T2 {
 // CHECK:STDOUT:   return %.loc12_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %Base]() -> %T1;
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %Base) -> %return.param: %T1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived]() -> %T2;
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived) -> %return.param: %T2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_generic_base.carbon
 // CHECK:STDOUT:
@@ -1823,10 +1819,10 @@ class T2 {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.370)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   virtual fn[%self.param_patt: @F.1.%Base (%Base.370)](%t.param_patt: @F.1.%T (%T));
+// CHECK:STDOUT:   virtual fn(%self.param: @F.1.%Base (%Base.370), %t.param: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived](%t.param_patt: %T1);
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived, %t.param: %T1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T
@@ -2012,7 +2008,7 @@ class T2 {
 // CHECK:STDOUT:   extend %T1.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F1.1[%self.param_patt: %ptr.87b]();
+// CHECK:STDOUT: virtual fn @F1.1(%self.param: %ptr.87b);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F1.2[addr %self.param_patt: %ptr.63e]();
+// CHECK:STDOUT: impl fn @F1.2(%self.param: %ptr.63e);
 // CHECK:STDOUT:

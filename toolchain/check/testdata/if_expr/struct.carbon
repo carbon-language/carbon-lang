@@ -94,9 +94,9 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%s.param_patt: %struct_type.a.b.501);
+// CHECK:STDOUT: fn @G(%s.param: %struct_type.a.b.501);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%cond.param_patt: bool) {
+// CHECK:STDOUT: fn @F(%cond.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %struct_type.a.b.501 = binding_pattern a

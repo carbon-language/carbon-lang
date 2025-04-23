@@ -43,9 +43,9 @@ fn Boo[a: ()]() {}
 // CHECK:STDOUT:   %Boo.decl: %Boo.type = fn_decl @Boo [concrete = constants.%Boo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[<error>: <error>]();
+// CHECK:STDOUT: fn @Foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Boo[<error>: <error>]() {
+// CHECK:STDOUT: fn @Boo() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

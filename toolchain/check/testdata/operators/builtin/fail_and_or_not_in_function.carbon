@@ -154,7 +154,7 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:   %or_val: ref bool = bind_name or_val, %or_val.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b.param_patt: bool) -> type {
+// CHECK:STDOUT: fn @F(%b.param: bool) -> type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else

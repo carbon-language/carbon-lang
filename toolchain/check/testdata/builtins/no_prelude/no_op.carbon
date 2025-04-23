@@ -160,7 +160,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NoOp(%x.param_patt: %empty_tuple.type) -> %empty_tuple.type = "no_op";
+// CHECK:STDOUT: fn @NoOp(%x.param: %empty_tuple.type) -> %empty_tuple.type = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:

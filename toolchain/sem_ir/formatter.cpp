@@ -439,19 +439,9 @@ class FormatterImpl {
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    FormatParamList(fn.implicit_param_patterns_id, /*is_implicit=*/true);
-    FormatParamList(fn.param_patterns_id, /*is_implicit=*/false);
-
-    if (fn.return_slot_pattern_id.has_value()) {
-      out_ << " -> ";
-      auto return_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
-      if (!fn.body_block_ids.empty() && return_info.is_valid() &&
-          return_info.has_return_slot()) {
-        FormatName(fn.return_slot_pattern_id);
-        out_ << ": ";
-      }
-      FormatTypeOfInst(fn.return_slot_pattern_id);
-    }
+    auto return_type_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
+    FormatParamList(fn.call_params_id, return_type_info.is_valid() &&
+                                           return_type_info.has_return_slot());
 
     if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
       out_ << " = \""
@@ -553,7 +543,7 @@ class FormatterImpl {
     llvm::SaveAndRestore generic_scope(scope_,
                                        inst_namer_->GetScopeFor(generic_id));
 
-    FormatParamList(generic.bindings_id, /*is_implicit=*/false);
+    FormatParamList(generic.bindings_id);
 
     out_ << " ";
     OpenBrace();
@@ -616,34 +606,52 @@ class FormatterImpl {
     }
   }
 
-  // Formats parameters, eliding them completely if they're empty. Wraps in
-  // parentheses or square brackets based on whether these are implicit
-  // parameters.
-  auto FormatParamList(InstBlockId param_patterns_id, bool is_implicit)
+  // Formats parameters, eliding them completely if they're empty. Wraps input
+  // parameters in parentheses. Formats output parameter as a return type.
+  auto FormatParamList(InstBlockId params_id, bool has_return_slot = false)
       -> void {
-    if (!param_patterns_id.has_value()) {
+    if (!params_id.has_value()) {
+      // TODO: This happens for imported functions, for which we don't currently
+      // import the call parameters list.
       return;
     }
 
-    out_ << (is_implicit ? "[" : "(");
+    llvm::StringLiteral close = ")";
+    out_ << "(";
 
     llvm::ListSeparator sep;
-    for (InstId param_id : sem_ir_->inst_blocks().Get(param_patterns_id)) {
-      out_ << sep;
+    for (InstId param_id : sem_ir_->inst_blocks().Get(params_id)) {
+      auto is_out_param = sem_ir_->insts().Is<OutParam>(param_id);
+      if (is_out_param) {
+        // TODO: An input parameter following an output parameter is formatted a
+        // bit strangely. For example, alternating input and output parameters
+        // produces:
+        //
+        //   fn @F(%in1: %t) -> %out1: %t, %in2: %t -> %out2: %t
+        //
+        // This doesn't actually happen right now, though.
+        out_ << std::exchange(close, llvm::StringLiteral(""));
+        out_ << " -> ";
+      } else {
+        out_ << sep;
+      }
       if (!param_id.has_value()) {
         out_ << "invalid";
         continue;
       }
-      if (auto addr = sem_ir_->insts().TryGetAs<SemIR::AddrPattern>(param_id)) {
-        out_ << "addr ";
-        param_id = addr->inner_id;
+      // Don't include the name of the return slot parameter if the function
+      // doesn't have a return slot; the name won't be used for anything in that
+      // case.
+      // TODO: Should the call parameter even exist in that case? There isn't a
+      // corresponding argument in a `call` instruction.
+      if (!is_out_param || has_return_slot) {
+        FormatName(param_id);
+        out_ << ": ";
       }
-      FormatName(param_id);
-      out_ << ": ";
       FormatTypeOfInst(param_id);
     }
 
-    out_ << (is_implicit ? "]" : ")");
+    out_ << close;
   }
 
   // Prints instructions for a code block.

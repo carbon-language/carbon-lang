@@ -51,7 +51,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc11_6.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc11_6.1: type, %n.param_patt: @F.%T.loc11_6.2 (%T)) -> @F.%T.loc11_6.2 (%T) {
+// CHECK:STDOUT:   fn(%n.param: @F.%T.loc11_6.2 (%T)) -> @F.%T.loc11_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %m.patt: @F.%T.loc11_6.2 (%T) = binding_pattern m

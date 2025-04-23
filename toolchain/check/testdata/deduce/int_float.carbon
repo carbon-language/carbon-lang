@@ -138,14 +138,14 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc4_42.2 [symbolic = %require_complete (constants.%require_complete.b4f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.patt.loc4_6.1: Core.IntLiteral](%n.param_patt: @F.%Int.loc4_42.2 (%Int)) -> Core.IntLiteral {
+// CHECK:STDOUT:   fn(%n.param: @F.%Int.loc4_42.2 (%Int)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc5: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%a.param_patt: %i64) -> Core.IntLiteral {
+// CHECK:STDOUT: fn @G(%a.param: %i64) -> Core.IntLiteral {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: %i64 = name_ref a, %a
@@ -268,14 +268,14 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.patt.loc9_6.1: Core.IntLiteral](%n.param_patt: <error>) -> Core.IntLiteral {
+// CHECK:STDOUT:   fn(%n.param: <error>) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %N.ref.loc10: Core.IntLiteral = name_ref N, %N.loc9_6.1 [symbolic = %N.loc9_6.2 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%a.param_patt: f64) -> Core.IntLiteral {
+// CHECK:STDOUT: fn @G(%a.param: f64) -> Core.IntLiteral {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a

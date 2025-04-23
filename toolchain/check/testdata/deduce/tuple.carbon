@@ -168,7 +168,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %require_complete.loc7_30: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc7_30 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.2, %U.loc7_16.2) [symbolic = %F.specific_fn.loc7_54.2 (constants.%F.specific_fn.dd9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc7_6.1: type, %U.patt.loc7_16.1: type](%pair.param_patt: @F.%tuple.type (%tuple.type.30b)) -> @F.%U.loc7_16.2 (%U) {
+// CHECK:STDOUT:   fn(%pair.param: @F.%tuple.type (%tuple.type.30b)) -> @F.%U.loc7_16.2 (%U) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %pair.ref: @F.%tuple.type (%tuple.type.30b) = name_ref pair, %pair
@@ -180,7 +180,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%pair.param_patt: %tuple.type.e8a) -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @G(%pair.param: %tuple.type.e8a) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %pair.ref: %tuple.type.e8a = name_ref pair, %pair
@@ -395,14 +395,14 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HasPair.loc6_41.2 [symbolic = %require_complete (constants.%require_complete.6bc)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%A.patt.loc6_6.1: %i32, %B.patt.loc6_15.1: %i32](%h.param_patt: @F.%HasPair.loc6_41.2 (%HasPair.568)) -> %i32 {
+// CHECK:STDOUT:   fn(%h.param: @F.%HasPair.loc6_41.2 (%HasPair.568)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %B.ref.loc6_60: %i32 = name_ref B, %B.loc6_15.1 [symbolic = %B.loc6_15.2 (constants.%B)]
 // CHECK:STDOUT:     return %B.ref.loc6_60
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%h.param_patt: %HasPair.369) -> %i32 {
+// CHECK:STDOUT: fn @G(%h.param: %HasPair.369) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %h.ref: %HasPair.369 = name_ref h, %h
@@ -554,10 +554,10 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %T.patt.loc7_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc7_6.2, %T.loc7_6.2) [symbolic = %tuple.type (constants.%tuple.type.d00)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc7_6.1: type](%pair.param_patt: @F.%tuple.type (%tuple.type.d00)) -> @F.%T.loc7_6.2 (%T);
+// CHECK:STDOUT:   fn(%pair.param: @F.%tuple.type (%tuple.type.d00)) -> @F.%T.loc7_6.2 (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%pair.param_patt: %tuple.type.e8a) -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @G(%pair.param: %tuple.type.e8a) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %pair.ref: %tuple.type.e8a = name_ref pair, %pair

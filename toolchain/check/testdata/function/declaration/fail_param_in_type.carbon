@@ -60,5 +60,5 @@ fn F(n: i32, a: array(i32, n)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param_patt: %i32, %a.param_patt: <error>);
+// CHECK:STDOUT: fn @F(%n.param: %i32, %a.param: <error>);
 // CHECK:STDOUT:

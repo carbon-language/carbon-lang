@@ -112,11 +112,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.x.loc7_3.2 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6_10: @C.%C.elem (%C.elem.cca) = field_decl x, element0 [concrete]
-// CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %.loc6_5: @C.%C.elem (%C.elem.cca) = var_pattern %.loc6_10
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem.cca) = var <none>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc5_11.1 [symbolic = %T.loc5_11.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc6: @C.%C.elem (%C.elem.cca) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:     %struct_type.x.loc7_3.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc7_3.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness %struct_type.x.loc7_3.1 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1
@@ -124,7 +121,7 @@ class C(C:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.f06
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .x = %.loc6_10
+// CHECK:STDOUT:     .x = %.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
