@@ -147,12 +147,23 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // The location that triggered calling Clang.
   SemIRLoc loc_;
 
+  // Information on a Clang diagnostic that can be converted to a Carbon
+  // diagnostic.
   struct ClangDiagnosticInfo {
+    // The Clang diagnostic level.
     clang::DiagnosticsEngine::Level level;
+
+    // The ID of the ImportIR instruction referring to the Clang source
+    // location.
     SemIR::ImportIRInstId import_ir_inst_id;
+
+    // The Clang diagnostic textual message.
     std::string message;
   };
 
+  // Collects the information for all Clang diagnostics to be converted to
+  // Carbon diagnostics after the context has been initialized with the Clang
+  // AST.
   llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
 };
 
