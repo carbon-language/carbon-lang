@@ -63,8 +63,6 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
     // specifics, we'll need to somehow track them in lookup.
     CARBON_CHECK(!specific_id.has_value(),
                  "Lexical scope should not have an associated specific.");
-
-    destroy_id_stack_.PushArray();
   } else {
     non_lexical_scope_stack_.push_back({.scope_index = next_scope_index_,
                                         .name_scope_id = scope_id,
@@ -79,6 +77,36 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
   VerifyNextCompileTimeBindIndex("Push", scope_stack_.back());
 }
 
+auto ScopeStack::PushForDeclName() -> void {
+  Push(SemIR::InstId::None, SemIR::NameScopeId::None, SemIR::SpecificId::None,
+       /*lexical_lookup_has_load_error=*/false);
+  MarkNestingIfInReturnScope();
+}
+
+auto ScopeStack::PushForEntity(SemIR::InstId scope_inst_id,
+                               SemIR::NameScopeId scope_id,
+                               SemIR::SpecificId specific_id,
+                               bool lexical_lookup_has_load_error) -> void {
+  CARBON_CHECK(scope_inst_id.has_value());
+  CARBON_DCHECK(!sem_ir_->insts().Is<SemIR::FunctionDecl>(scope_inst_id));
+  Push(scope_inst_id, scope_id, specific_id, lexical_lookup_has_load_error);
+  MarkNestingIfInReturnScope();
+}
+
+auto ScopeStack::PushForSameRegion() -> void {
+  Push(SemIR::InstId::None, SemIR::NameScopeId::None, SemIR::SpecificId::None,
+       /*lexical_lookup_has_load_error=*/false);
+}
+
+auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
+  CARBON_DCHECK(sem_ir_->insts().Is<SemIR::FunctionDecl>(scope_inst_id));
+  Push(scope_inst_id, SemIR::NameScopeId::None, SemIR::SpecificId::None,
+       /*lexical_lookup_has_load_error=*/false);
+
+  return_scope_stack_.push_back({.decl_id = scope_inst_id});
+  destroy_id_stack_.PushArray();
+}
+
 auto ScopeStack::Pop() -> void {
   auto scope = scope_stack_.pop_back_val();
 
@@ -89,17 +117,27 @@ auto ScopeStack::Pop() -> void {
     lexical_results.pop_back();
   });
 
-  if (scope.is_lexical_scope()) {
-    destroy_id_stack_.PopArray();
-  } else {
+  if (!scope.is_lexical_scope()) {
     CARBON_CHECK(non_lexical_scope_stack_.back().scope_index == scope.index);
     non_lexical_scope_stack_.pop_back();
   }
 
-  if (scope.has_returned_var) {
-    CARBON_CHECK(!return_scope_stack_.empty());
-    CARBON_CHECK(return_scope_stack_.back().returned_var.has_value());
-    return_scope_stack_.back().returned_var = SemIR::InstId::None;
+  if (!return_scope_stack_.empty()) {
+    if (scope.has_returned_var) {
+      CARBON_CHECK(return_scope_stack_.back().returned_var.has_value());
+      return_scope_stack_.back().returned_var = SemIR::InstId::None;
+    }
+
+    if (return_scope_stack_.back().decl_id == scope.scope_inst_id) {
+      // Leaving the function scope.
+      return_scope_stack_.pop_back();
+      destroy_id_stack_.PopArray();
+    } else if (return_scope_stack_.back().nested_scope_index == scope.index) {
+      // Returned to a function scope from a non-function nested entity scope.
+      return_scope_stack_.back().nested_scope_index = ScopeIndex::None;
+    }
+  } else {
+    CARBON_CHECK(!scope.has_returned_var);
   }
 
   VerifyNextCompileTimeBindIndex("Pop", scope);
@@ -218,11 +256,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   CARBON_CHECK(!scope_stack_.empty(), "No scope to suspend");
   SuspendedScope result = {.entry = scope_stack_.pop_back_val(),
                            .suspended_items = {}};
-  if (result.entry.is_lexical_scope()) {
-    CARBON_CHECK(destroy_id_stack_.PeekArray().empty(),
-                 "Missing support to suspend scopes with destructed storage");
-    destroy_id_stack_.PopArray();
-  } else {
+  if (!result.entry.is_lexical_scope()) {
     non_lexical_scope_stack_.pop_back();
   }
   auto peek_compile_time_bindings = compile_time_binding_stack_.PeekArray();
@@ -265,9 +299,7 @@ auto ScopeStack::Restore(SuspendedScope scope) -> void {
 
   VerifyNextCompileTimeBindIndex("Restore", scope.entry);
 
-  if (scope.entry.is_lexical_scope()) {
-    destroy_id_stack_.PushArray();
-  } else {
+  if (!scope.entry.is_lexical_scope()) {
     non_lexical_scope_stack_.push_back(
         {.scope_index = scope.entry.index,
          .name_scope_id = scope.entry.scope_id,

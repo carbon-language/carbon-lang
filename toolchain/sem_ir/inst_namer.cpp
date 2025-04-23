@@ -621,18 +621,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         }
         continue;
       }
-      case CARBON_KIND(FacetAccessWitness inst): {
-        auto name_id = facet_access_name_id(inst.facet_value_inst_id);
-        RawStringOstream out;
-        if (name_id.has_value()) {
-          out << ".as_wit.iface" << inst.index.index;
-          add_inst_name_id(name_id, out.TakeStr());
-        } else {
-          out << "as_wit.iface" << inst.index.index;
-          add_inst_name(out.TakeStr());
-        }
-        continue;
-      }
       case CARBON_KIND(FacetType inst): {
         const auto& facet_type_info =
             sem_ir_->facet_types().Get(inst.facet_type_id);

@@ -229,7 +229,9 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       unit_and_imports_->package_imports_map.Lookup(PackageNameId::None);
   if (!import_map_lookup) {
     // Push the scope; there are no names to add.
-    context_.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
+    context_.scope_stack().PushForEntity(
+        package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
+        /*lexical_lookup_has_load_error=*/false);
     return;
   }
   PackageImports& self_import =
@@ -244,7 +246,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       CollectTransitiveImports(self_import.import_decl_id, &self_import,
                                /*api_imports=*/nullptr));
 
-  context_.scope_stack().Push(
+  context_.scope_stack().PushForEntity(
       package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
       context_.name_scopes().Get(SemIR::NameScopeId::Package).has_error());
 }

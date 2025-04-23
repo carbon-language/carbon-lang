@@ -12,8 +12,10 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
@@ -315,68 +317,15 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         auto assoc_interface = assoc_type->GetSpecificInterface();
 
         // Witness that `T` implements the `assoc_interface`.
-        SemIR::InstId witness_inst_id = SemIR::InstId::None;
-
-        bool is_lookup_in_period_self = false;
-        if (auto name = context.insts().TryGetAs<SemIR::NameRef>(base_id)) {
-          if (name->name_id == SemIR::NameId::PeriodSelf) {
-            is_lookup_in_period_self = true;
-          }
-        }
-
-        // TODO: In `.Self` we want to find the witness through its FacetType,
-        // which is the code below this block. Instead of special-casing that
-        // here, we could have the impl lookup also include witnesses
-        // (FacetAccessWitness) from the FacetType? And even non-final results.
-        // Then we just call into lookup once here, for `.Self` or otherwise,
-        // and can drop the construction of FacetAccessWitness from this
-        // function, and resolve TODO below that for "associated entity not
-        // found in facet type".
-        if (!is_lookup_in_period_self) {
-          // For an associated constant value, we need to do impl lookup to try
-          // find a final impl declaration. If we find one, we can use the value
-          // assigned to the constant there, instead of its symbolic value.
-          auto assoc_entity = context.insts().GetAs<SemIR::AssociatedEntity>(
-              context.constant_values().GetConstantInstId(
-                  result.scope_result.target_inst_id()));
-          if (context.insts().Is<SemIR::AssociatedConstantDecl>(
-                  assoc_entity.decl_id)) {
-            witness_inst_id = LookupFinalImplWitnessForSpecificInterface(
-                context, loc_id, context.constant_values().Get(base_id),
-                assoc_interface);
-          }
-        }
-
-        if (!witness_inst_id.has_value()) {
-          // First look for `assoc_interface` in the type of the base. If it is
-          // found, get the witness that the interface is implemented from
-          // `base_id`.
-          auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
-          const auto& identified =
-              context.identified_facet_types().Get(identified_id);
-          for (auto [index, base_interface] :
-               llvm::enumerate(identified.required_interfaces())) {
-            // Get the witness that `T` implements `base_type_id`.
-            if (base_interface == assoc_interface) {
-              witness_inst_id =
-                  GetOrAddInst(context, loc_id,
-                               SemIR::FacetAccessWitness{
-                                   .type_id = GetSingletonType(
-                                       context, SemIR::WitnessType::TypeInstId),
-                                   .facet_value_inst_id = base_id,
-                                   .index = SemIR::ElementIndex(index)});
-              break;
-            }
-          }
-        }
-        // TODO: If that fails, would need to do impl lookup to see if the facet
-        // value implements the interface of `*assoc_type`.
-        if (!witness_inst_id.has_value()) {
-          context.TODO(member_id,
-                       "associated entity not found in facet type, need to do "
-                       "impl lookup");
-          return SemIR::ErrorInst::InstId;
-        }
+        auto lookup_result = LookupImplWitness(
+            context, loc_id, context.constant_values().Get(base_id),
+            EvalOrAddInst(
+                context, loc_id,
+                FacetTypeFromInterface(context, assoc_interface.interface_id,
+                                       assoc_interface.specific_id)));
+        CARBON_CHECK(lookup_result.has_value());
+        auto witness_inst_id =
+            GetWitnessFromSingleImplLookupResult(context, lookup_result);
 
         member_id = AccessMemberOfImplWitness(
             context, loc_id, base_as_type.type_id, witness_inst_id,
@@ -642,13 +591,16 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   }
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(self_type_const_id);
-  auto witness_id = GetOrAddInst(
-      context, loc_id,
-      SemIR::FacetAccessWitness{
-          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-          .facet_value_inst_id = facet_inst_id,
-          // There's only one interface in this facet type.
-          .index = SemIR::ElementIndex(0)});
+
+  auto lookup_result = LookupImplWitness(
+      context, loc_id, context.constant_values().Get(facet_inst_id),
+      EvalOrAddInst(context, loc_id,
+                    FacetTypeFromInterface(context, interface.interface_id,
+                                           interface.specific_id)));
+  CARBON_CHECK(lookup_result.has_value());
+  auto witness_id =
+      GetWitnessFromSingleImplLookupResult(context, lookup_result);
+
   // Before we can access the element of the witness, we need to figure out
   // the type of that element. It depends on the self type and the specific
   // interface.

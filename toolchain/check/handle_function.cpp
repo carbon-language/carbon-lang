@@ -585,10 +585,9 @@ static auto HandleFunctionDefinitionAfterSignature(
   auto& function = context.functions().Get(function_id);
 
   // Create the function scope and the entry block.
-  context.return_scope_stack().push_back({.decl_id = decl_id});
+  context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  context.scope_stack().Push(decl_id);
   StartGenericDefinition(context);
 
   CheckFunctionDefinitionSignature(context, function);
@@ -645,9 +644,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     }
   }
 
-  context.scope_stack().Pop();
   context.inst_block_stack().Pop();
-  context.return_scope_stack().pop_back();
+  context.scope_stack().Pop();
   context.decl_name_stack().PopScope();
 
   auto& function = context.functions().Get(function_id);

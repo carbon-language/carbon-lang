@@ -22,19 +22,13 @@ auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
 }
 
-// Returns `true` if the `FacetAccessWitness` of `witness_id` matches
-// `interface`.
-static auto WitnessAccessMatchesInterface(
+// Returns whether the `LookupImplWitness` of `witness_id` matches `interface`.
+static auto WitnessQueryMatchesInterface(
     Context& context, SemIR::InstId witness_id,
     const SemIR::SpecificInterface& interface) -> bool {
-  auto access = context.insts().GetAs<SemIR::FacetAccessWitness>(witness_id);
-  auto type_id = context.insts().Get(access.facet_value_inst_id).type_id();
-  auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
-  // The order of witnesses is from the identified facet type.
-  auto identified_id = RequireIdentifiedFacetType(context, facet_type);
-  const auto& identified = context.identified_facet_types().Get(identified_id);
-  const auto& impls = identified.required_interfaces()[access.index.index];
-  return impls == interface;
+  auto lookup = context.insts().GetAs<SemIR::LookupImplWitness>(witness_id);
+  return interface ==
+         context.specific_interfaces().Get(lookup.query_specific_interface_id);
 }
 
 static auto IncompleteFacetTypeDiagnosticBuilder(
@@ -130,8 +124,8 @@ auto InitialFacetTypeImplWitness(
   for (auto rewrite : facet_type_info.rewrite_constraints) {
     auto access =
         context.insts().GetAs<SemIR::ImplWitnessAccess>(rewrite.lhs_id);
-    if (!WitnessAccessMatchesInterface(context, access.witness_id,
-                                       interface_to_witness)) {
+    if (!WitnessQueryMatchesInterface(context, access.witness_id,
+                                      interface_to_witness)) {
       continue;
     }
     auto& table_entry = table[access.index.index];

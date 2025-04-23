@@ -752,9 +752,9 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %Self.as_wit.iface0: <witness> = facet_access_witness %Self, element0 [symbolic]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %Self.as_type, (%Self.as_wit.iface0) [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Self.as_wit.iface0, element0 [symbolic]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %Self.as_type, (%I.lookup_impl_witness) [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%F.decl [concrete]
@@ -788,8 +788,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %return.patt: @F.%impl.elem0.loc6_13.1 (%impl.elem0) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.%impl.elem0.loc6_13.1 (%impl.elem0) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.as_wit.iface0.loc6_13.2: <witness> = facet_access_witness @I.%Self, element0 [symbolic = %Self.as_wit.iface0.loc6_13.1 (constants.%Self.as_wit.iface0)]
-// CHECK:STDOUT:     %impl.elem0.loc6_13.2: type = impl_witness_access %Self.as_wit.iface0.loc6_13.2, element0 [symbolic = %impl.elem0.loc6_13.1 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc6_13.2: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_13.1 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %impl.elem0.loc6_13.2 [symbolic = %impl.elem0.loc6_13.1 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %return.param: ref @F.%impl.elem0.loc6_13.1 (%impl.elem0) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @F.%impl.elem0.loc6_13.1 (%impl.elem0) = return_slot %return.param
@@ -811,8 +810,8 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_wit.iface0.loc6_13.1: <witness> = facet_access_witness %Self, element0 [symbolic = %Self.as_wit.iface0.loc6_13.1 (constants.%Self.as_wit.iface0)]
-// CHECK:STDOUT:   %impl.elem0.loc6_13.1: type = impl_witness_access %Self.as_wit.iface0.loc6_13.1, element0 [symbolic = %impl.elem0.loc6_13.1 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
+// CHECK:STDOUT:   %impl.elem0.loc6_13.1: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_13.1 (constants.%impl.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @F.%impl.elem0.loc6_13.1 (%impl.elem0);
 // CHECK:STDOUT: }
@@ -823,7 +822,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_wit.iface0.loc6_13.1 => constants.%Self.as_wit.iface0
+// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.lookup_impl_witness
 // CHECK:STDOUT:   %impl.elem0.loc6_13.1 => constants.%impl.elem0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

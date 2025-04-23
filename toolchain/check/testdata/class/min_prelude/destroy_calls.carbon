@@ -51,7 +51,6 @@ fn F() {
   var explicit_return: ExplicitReturn;
   var with_addr: WithAddr;
   if (true) {
-    // TODO: Destroy in nested scope.
     var in_scope: NoAddr;
   }
 }
@@ -497,22 +496,24 @@ fn G() { F({}); }
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %in_scope.patt: %NoAddr = binding_pattern in_scope
-// CHECK:STDOUT:     %.loc11: %NoAddr = var_pattern %in_scope.patt
+// CHECK:STDOUT:     %.loc10_5.1: %NoAddr = var_pattern %in_scope.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %in_scope.var: ref %NoAddr = var in_scope
 // CHECK:STDOUT:   %destroy.ref.4: %destroy.type.bc5 = name_ref destroy, imports.%Main.import_ref.7fe [concrete = constants.%destroy.60f]
 // CHECK:STDOUT:   %destroy.bound.4: <bound method> = bound_method %in_scope.var, %destroy.ref.4
-// CHECK:STDOUT:   %NoAddr.ref.loc11: type = name_ref NoAddr, imports.%Main.NoAddr [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %NoAddr.ref.loc10: type = name_ref NoAddr, imports.%Main.NoAddr [concrete = constants.%NoAddr]
 // CHECK:STDOUT:   %in_scope: ref %NoAddr = bind_name in_scope, %in_scope.var
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
+// CHECK:STDOUT:   %.loc10_5.2: %NoAddr = bind_value %in_scope.var
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.4(%.loc10_5.2)
 // CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %with_addr.var
-// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.3(%addr)
+// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.3(%addr)
 // CHECK:STDOUT:   %.loc7_3.2: %ExplicitReturn = bind_value %explicit_return.var
-// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%.loc7_3.2)
+// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.2(%.loc7_3.2)
 // CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %no_addr.var
-// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
+// CHECK:STDOUT:   %destroy.call.4: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

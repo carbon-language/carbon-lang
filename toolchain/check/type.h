@@ -86,6 +86,20 @@ auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                            SemIR::TypeInstId element_type_id) -> SemIR::TypeId;
 
+// Convert a facet value or type value instruction to a canonical facet or type
+// value instruction.
+//
+// Type values are already canonical and are returned unchanged, except for
+// `FacetAccessType` which is unwrapped to find the facet value it refers to.
+//
+// For facet values, unwraps `FacetValue` instructions to get to an underlying
+// canonical type instruction.
+auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId;
+auto GetCanonicalizedFacetOrTypeValue(Context& context,
+                                      SemIR::ConstantId const_id)
+    -> SemIR::ConstantId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_TYPE_H_
