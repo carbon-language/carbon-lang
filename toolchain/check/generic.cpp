@@ -320,7 +320,7 @@ auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void {
   if ((dep_kind & DependentInst::SymbolicType) != DependentInst::None) {
     auto inst = context.insts().Get(inst_id);
     auto type_id = AddGenericTypeToEvalBlock(
-        context, generic_id, region, context.insts().GetLocId(inst_id),
+        context, generic_id, region, /*loc_id=*/inst_id,
         constants_in_generic, inst.type_id());
     // TODO: Eventually, completeness requirements should be modeled as
     // constraints on the generic rather than properties of the type. For now,

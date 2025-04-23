@@ -672,7 +672,6 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
 
   auto value_inst_id =
       context.constant_values().GetInstId(assoc_entity_const_id);
-  CARBON_CHECK(value_inst_id.has_value());
   auto assoc_entity =
       context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
   auto decl_id = assoc_entity.decl_id;

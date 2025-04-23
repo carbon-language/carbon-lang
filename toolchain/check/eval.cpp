@@ -145,7 +145,7 @@ class EvalContext {
 
     // While resolving a specific, map from previous instructions in the eval
     // block into their evaluated values. These values won't be present on the
-    // specific itself yet, so `GetConstantValueInSpecific` won't be able to
+    // specific itself yet, so `GetTypeOfInstInSpecific` won't be able to
     // find them.
     const auto& symbolic_info =
         constant_values().GetSymbolicConstant(types().GetConstantId(type_id));

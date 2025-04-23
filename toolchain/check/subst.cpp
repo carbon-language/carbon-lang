@@ -263,7 +263,7 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
   int32_t arg0 = PopOperand(context, worklist, inst.arg0_and_kind());
   auto type_id =
       inst.type_id().has_value()
-          ? callbacks.RebuildType(SemIR::TypeInstId::UnsafeMake(worklist.Pop()))
+          ? callbacks.RebuildType(context.types().GetAsTypeInstId(worklist.Pop()))
           : SemIR::TypeId::None;
   if (type_id == inst.type_id() && arg0 == inst.arg0() && arg1 == inst.arg1()) {
     return callbacks.ReuseUnchanged(inst_id);
