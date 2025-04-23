@@ -294,12 +294,11 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   //   // Has generic type and constant value, but no generic region.
   //   fn A(T:! type).F() {}
   //
-  // TODO: Use a different instruction kind for out-of-line definitions and
-  // CHECK this doesn't happen.
+  // TODO: Copy the attached type and constant value from the previous
+  // declaration in this case instead of attempting to attach the new
+  // declaration to a generic region that we're no longer within.
   if (context.generic_region_stack().Empty()) {
-    if ((dep_kind & DependentInst::Template) != DependentInst::None) {
-      context.inst_block_stack().AddInstId(inst_id);
-    }
+    CARBON_CHECK((dep_kind & DependentInst::Template) == DependentInst::None);
     return;
   }
 

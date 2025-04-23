@@ -261,10 +261,10 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
   // Note that we pop in reverse order because we pushed them in forwards order.
   int32_t arg1 = PopOperand(context, worklist, inst.arg1_and_kind());
   int32_t arg0 = PopOperand(context, worklist, inst.arg0_and_kind());
-  auto type_id =
-      inst.type_id().has_value()
-          ? callbacks.RebuildType(context.types().GetAsTypeInstId(worklist.Pop()))
-          : SemIR::TypeId::None;
+  auto type_id = inst.type_id().has_value()
+                     ? callbacks.RebuildType(
+                           context.types().GetAsTypeInstId(worklist.Pop()))
+                     : SemIR::TypeId::None;
   if (type_id == inst.type_id() && arg0 == inst.arg0() && arg1 == inst.arg1()) {
     return callbacks.ReuseUnchanged(inst_id);
   }
