@@ -222,8 +222,9 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 
       // Verify the decl so that things like aliases are name conflicts.
       const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      if (!import_ir->insts().Is<SemIR::FunctionDecl>(import_ir_inst.inst_id)) {
+          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      if (!import_ir->insts().Is<SemIR::FunctionDecl>(
+              import_ir_inst.inst_id())) {
         break;
       }
 
@@ -234,7 +235,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
                 struct_value->type_id)) {
           prev_function_id = function_type->function_id;
           prev_type_id = struct_value->type_id;
-          prev_import_ir_id = import_ir_inst.ir_id;
+          prev_import_ir_id = import_ir_inst.ir_id();
         }
       }
       break;

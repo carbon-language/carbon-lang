@@ -55,8 +55,7 @@ static auto AddImportIRInst(Context& context,
   SemIR::ClangSourceLocId clang_source_loc_id =
       context.sem_ir().clang_source_locs().Add(clang_source_loc);
   return context.import_ir_insts().Add(
-      {.ir_id = SemIR::ImportIRId::Cpp,
-       .clang_source_loc_id = clang_source_loc_id});
+      SemIR::ImportIRInst(clang_source_loc_id));
 }
 
 // Used to convert Clang diagnostics to Carbon diagnostics.

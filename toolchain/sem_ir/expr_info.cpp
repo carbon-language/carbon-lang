@@ -50,8 +50,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ImportRefLoaded::Kind: {
         auto import_ir_inst = ir->import_ir_insts().Get(
             untyped_inst.As<SemIR::AnyImportRef>().import_ir_inst_id);
-        ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-        inst_id = import_ir_inst.inst_id;
+        ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        inst_id = import_ir_inst.inst_id();
         continue;
       }
 

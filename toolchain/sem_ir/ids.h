@@ -23,6 +23,7 @@ namespace Carbon::SemIR {
 
 // Forward declare indexed types, for integration with ValueStore.
 class File;
+class ImportIRInst;
 class Inst;
 class NameScope;
 struct AssociatedConstant;
@@ -37,7 +38,6 @@ struct Specific;
 struct SpecificInterface;
 struct ImportCpp;
 struct ImportIR;
-struct ImportIRInst;
 struct Impl;
 struct Interface;
 struct StructTypeField;

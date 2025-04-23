@@ -337,9 +337,9 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
       if (local_imports) {
         CARBON_CHECK(package_id == api_imports_entry.first);
       } else {
-        auto import_ir_inst_id = context_.import_ir_insts().Add(
-            {.ir_id = SemIR::ImportIRId::ApiForImpl,
-             .inst_id = api_imports->import_decl_id});
+        auto import_ir_inst_id =
+            context_.import_ir_insts().Add(SemIR::ImportIRInst(
+                SemIR::ImportIRId::ApiForImpl, api_imports->import_decl_id));
         import_decl_id =
             AddInst(context_, MakeImportedLocIdAndInst<SemIR::ImportDecl>(
                                   context_, import_ir_inst_id,
@@ -420,7 +420,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
       auto import_ir_id = context_.sem_ir()
                               .import_ir_insts()
                               .Get(function_loc_id.import_ir_inst_id())
-                              .ir_id;
+                              .ir_id();
       auto& import_ir = context_.import_irs().Get(import_ir_id);
       if (import_ir.sem_ir->package_id().has_value() !=
           context_.sem_ir().package_id().has_value()) {

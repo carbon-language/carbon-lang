@@ -15,8 +15,8 @@ static auto FollowImportRef(
     const File*& cursor_ir, InstId& cursor_inst_id,
     ImportIRInstId import_ir_inst_id) -> void {
   auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
-  CARBON_CHECK(import_ir_inst.ir_id != ImportIRId::Cpp);
-  const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id);
+  CARBON_CHECK(import_ir_inst.ir_id() != ImportIRId::Cpp);
+  const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id());
   CARBON_CHECK(import_ir.decl_id.has_value(),
                "If we get `None` locations here, we may need to more "
                "thoroughly track ImportDecls.");
@@ -32,9 +32,9 @@ static auto FollowImportRef(
     auto implicit_import_ir_inst =
         cursor_ir->import_ir_insts().Get(import_loc_id.import_ir_inst_id());
     const auto& implicit_ir =
-        cursor_ir->import_irs().Get(implicit_import_ir_inst.ir_id);
+        cursor_ir->import_irs().Get(implicit_import_ir_inst.ir_id());
     auto implicit_loc_id =
-        implicit_ir.sem_ir->insts().GetLocId(implicit_import_ir_inst.inst_id);
+        implicit_ir.sem_ir->insts().GetLocId(implicit_import_ir_inst.inst_id());
     CARBON_CHECK(implicit_loc_id.is_node_id(),
                  "Should only be one layer of implicit imports");
     absolute_node_ids.push_back(
@@ -43,7 +43,7 @@ static auto FollowImportRef(
   }
 
   cursor_ir = import_ir.sem_ir;
-  cursor_inst_id = import_ir_inst.inst_id;
+  cursor_inst_id = import_ir_inst.inst_id();
 }
 
 // Returns true if this is the final parse node location. If the location is is
