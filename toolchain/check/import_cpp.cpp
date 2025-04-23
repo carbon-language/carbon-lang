@@ -94,15 +94,15 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
     std::string diagnostics_str = diagnostics_stream.TakeStr();
 
-    diagnostics_infos_.push_back({.level = diag_level,
-                                  .import_ir_inst_id = clang_import_ir_inst_id,
-                                  .message = diagnostics_str});
+    diagnostic_infos_.push_back({.level = diag_level,
+                                 .import_ir_inst_id = clang_import_ir_inst_id,
+                                 .message = diagnostics_str});
   }
 
   // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
   // be called after the AST is set in the context.
   auto EmitDiagnostics() -> void {
-    for (const ClangDiagnosticInfo& info : diagnostics_infos_) {
+    for (const ClangDiagnosticInfo& info : diagnostic_infos_) {
       switch (info.level) {
         case clang::DiagnosticsEngine::Ignored:
         case clang::DiagnosticsEngine::Note:
@@ -153,7 +153,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     std::string message;
   };
 
-  llvm::SmallVector<ClangDiagnosticInfo> diagnostics_infos_;
+  llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
 };
 
 }  // namespace
