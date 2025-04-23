@@ -236,6 +236,14 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }
+
+  if (!dump_sem_ir_ranges_.empty()) {
+    output_stream << "  dump_sem_ir_ranges:\n";
+    for (auto range : dump_sem_ir_ranges_) {
+      output_stream << "  - {start: " << range.start.index
+                    << ", end: " << range.end.index << "}\n";
+    }
+  }
 }
 
 auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
