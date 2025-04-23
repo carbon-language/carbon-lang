@@ -122,7 +122,7 @@ class A {
 // CHECK:STDOUT:   fn() -> @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.2() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @Make.2() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc21_33.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [concrete = constants.%C.val]

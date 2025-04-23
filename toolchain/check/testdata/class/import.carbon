@@ -149,9 +149,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared]();
+// CHECK:STDOUT: fn @F(%self.param: %ForwardDeclared);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr]();
+// CHECK:STDOUT: fn @G(%self.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -364,7 +364,7 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared.7b34f2.1]() [from "a.carbon"];
+// CHECK:STDOUT: fn @F [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr <unexpected>.inst1395: %ptr.6cf]() [from "a.carbon"];
+// CHECK:STDOUT: fn @G [from "a.carbon"];
 // CHECK:STDOUT:

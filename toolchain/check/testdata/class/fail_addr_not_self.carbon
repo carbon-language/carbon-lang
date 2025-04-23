@@ -89,10 +89,10 @@ class Class {
 // CHECK:STDOUT:   %a.loc16_13.1: %ptr = bind_symbolic_name a, 0 [symbolic = %a.loc16_13.1 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.loc16_13.2: %ptr = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.2 (constants.%a.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.patt.loc16_13.1: %ptr]();
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b.param_patt: %ptr);
+// CHECK:STDOUT: fn @G(%b.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%a) {
 // CHECK:STDOUT:   %a.loc16_13.1 => constants.%a

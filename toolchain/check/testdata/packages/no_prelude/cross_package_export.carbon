@@ -876,7 +876,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: %C.type = bind_alias C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C() [from "conflict.carbon"];
+// CHECK:STDOUT: fn @C [from "conflict.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict_on_export_name.carbon
 // CHECK:STDOUT:

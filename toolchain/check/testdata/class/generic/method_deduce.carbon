@@ -214,7 +214,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Get: @Get.%Get.type (%Get.type.fd9) = struct_value () [symbolic = %Get (constants.%Get.cf9)]
 // CHECK:STDOUT:   %Get.specific_fn.loc15_39.2: <specific function> = specific_function %Get, @Get(%T, %U.loc15_10.1) [symbolic = %Get.specific_fn.loc15_39.2 (constants.%Get.specific_fn.f73)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.patt.loc15_10.1: type) -> %return.param_patt: @Get.%tuple.type (%tuple.type.30b) {
+// CHECK:STDOUT:   fn() -> %return.param: @Get.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc15_39: @Get.%Get.type (%Get.type.fd9) = specific_constant @Class.%Get.decl, @Class(constants.%T) [symbolic = %Get (constants.%Get.cf9)]
 // CHECK:STDOUT:     %Get.ref: @Get.%Get.type (%Get.type.fd9) = name_ref Get, %.loc15_39 [symbolic = %Get (constants.%Get.cf9)]
@@ -239,7 +239,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.loc16_53.2: <specific function> = specific_function %GetNoDeduce, @GetNoDeduce(%T, %U.loc16_24.1) [symbolic = %GetNoDeduce.specific_fn.loc16_53.2 (constants.%GetNoDeduce.specific_fn.536)]
 // CHECK:STDOUT:   %require_complete.loc16_70: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc16_70 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param_patt: @GetNoDeduce.%T (%T), %U.patt.loc16_24.1: type) -> %return.param_patt: @GetNoDeduce.%tuple.type (%tuple.type.30b) {
+// CHECK:STDOUT:   fn(%x.param: @GetNoDeduce.%T (%T)) -> %return.param: @GetNoDeduce.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc16_53: @GetNoDeduce.%GetNoDeduce.type (%GetNoDeduce.type.766) = specific_constant @Class.%GetNoDeduce.decl, @Class(constants.%T) [symbolic = %GetNoDeduce (constants.%GetNoDeduce.c9a)]
 // CHECK:STDOUT:     %GetNoDeduce.ref: @GetNoDeduce.%GetNoDeduce.type (%GetNoDeduce.type.766) = name_ref GetNoDeduce, %.loc16_53 [symbolic = %GetNoDeduce (constants.%GetNoDeduce.c9a)]
@@ -252,7 +252,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallGenericMethod(%c.param_patt: %Class.480) -> %return.param_patt: %tuple.type.cc6 {
+// CHECK:STDOUT: fn @CallGenericMethod(%c.param: %Class.480) -> %return.param: %tuple.type.cc6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.480 = name_ref c, %c
 // CHECK:STDOUT:   %.loc20: %Get.type.501 = specific_constant @Class.%Get.decl, @Class(constants.%A) [concrete = constants.%Get.f37]
@@ -264,7 +264,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   return %Get.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallGenericMethodWithNonDeducedParam(%c.param_patt: %Class.480) -> %return.param_patt: %tuple.type.cc6 {
+// CHECK:STDOUT: fn @CallGenericMethodWithNonDeducedParam(%c.param: %Class.480) -> %return.param: %tuple.type.cc6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.480 = name_ref c, %c
 // CHECK:STDOUT:   %.loc24_11: %GetNoDeduce.type.5d6 = specific_constant @Class.%GetNoDeduce.decl, @Class(constants.%A) [concrete = constants.%GetNoDeduce.162]

@@ -217,7 +217,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete.loc8_21: <witness> = require_complete_type %HoldsType.loc8_34.2 [symbolic = %require_complete.loc8_21 (constants.%require_complete.514)]
 // CHECK:STDOUT:   %require_complete.loc8_38: <witness> = require_complete_type %tuple.elem0.loc8_41.2 [symbolic = %require_complete.loc8_38 (constants.%require_complete.fec)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc8_6.1: %tuple.type](%x.param_patt: @F.%HoldsType.loc8_34.2 (%HoldsType.cc9), %a.param_patt: @F.%tuple.elem0.loc8_41.2 (%tuple.elem0)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc8_34.2 (%HoldsType.cc9), %a.param: @F.%tuple.elem0.loc8_41.2 (%tuple.elem0)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -394,7 +394,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete.loc8_23: <witness> = require_complete_type %HoldsType.loc8_36.2 [symbolic = %require_complete.loc8_23 (constants.%require_complete.b19)]
 // CHECK:STDOUT:   %require_complete.loc8_40: <witness> = require_complete_type %.loc8_43.3 [symbolic = %require_complete.loc8_40 (constants.%require_complete.1b9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc8_6.1: %struct_type.t](%x.param_patt: @F.%HoldsType.loc8_36.2 (%HoldsType.843), %a.param_patt: @F.%.loc8_43.3 (%.20a)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc8_36.2 (%HoldsType.843), %a.param: @F.%.loc8_43.3 (%.20a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -586,7 +586,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc21_31.2 [symbolic = %require_complete (constants.%require_complete.8fa644.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc21_6.1: %Class](%x.param_patt: @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1), %a.param_patt: <error>) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1), %a.param: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -785,7 +785,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc12_40.2 [symbolic = %require_complete (constants.%require_complete.640)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc12_6.1: %array_type](%x.param_patt: @F.%HoldsType.loc12_40.2 (%HoldsType), %a.param_patt: <error>) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc12_40.2 (%HoldsType), %a.param: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

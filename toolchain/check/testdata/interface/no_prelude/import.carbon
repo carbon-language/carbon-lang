@@ -280,17 +280,17 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (imports.%Main.T.6ee, imports.%Main.F.5d0)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseEmpty(%e.param_patt: %Empty.type) {
+// CHECK:STDOUT: fn @UseEmpty(%e.param: %Empty.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseBasic(%e.param_patt: %Basic.type) {
+// CHECK:STDOUT: fn @UseBasic(%e.param: %Basic.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseForwardDeclared(%f.param_patt: %ForwardDeclared.type) {
+// CHECK:STDOUT: fn @UseForwardDeclared(%f.param: %ForwardDeclared.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -149,7 +149,7 @@ fn G() -> C {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @G() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c

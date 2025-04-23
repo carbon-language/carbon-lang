@@ -277,10 +277,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@WithAssocFn.%T.loc8_23.1: type, @WithAssocFn.%Self.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.ce6)) {
-// CHECK:STDOUT:   fn() -> %X;
+// CHECK:STDOUT:   fn() -> %return.param: %X;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %return.param_patt: %X {
+// CHECK:STDOUT: fn @F.2() -> %return.param: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc17_15.2: init %X = class_init (), %return [concrete = constants.%X.val]
@@ -294,7 +294,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc24_12.1: %Simple.type.51f) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -307,7 +307,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Receive.specific_fn.loc26_3.2: <specific function> = specific_function constants.%Receive, @Receive(%T.loc25_9.2) [symbolic = %Receive.specific_fn.loc26_3.2 (constants.%Receive.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc25_9.1: %Simple.type.51f) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [concrete = constants.%Receive]
 // CHECK:STDOUT:     %T.ref: %Simple.type.51f = name_ref T, %T.loc25_9.1 [symbolic = %T.loc25_9.2 (constants.%T.692)]
@@ -479,7 +479,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.loc9_6.2: %Generic.type.c7c = bind_symbolic_name T, 0 [symbolic = %T.loc9_6.2 (constants.%T.a53)]
 // CHECK:STDOUT:   %T.patt.loc9_6.2: %Generic.type.c7c = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_6.2 (constants.%T.patt.3e0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc9_6.1: %Generic.type.c7c);
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc10_6.1: %Generic.type.4ce) {
@@ -488,7 +488,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc10_6.1: %Generic.type.4ce) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: %Generic.type.4ce = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T.bae)]

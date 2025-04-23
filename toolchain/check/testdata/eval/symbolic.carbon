@@ -104,7 +104,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %array_type.loc15_20.2: type = array_type constants.%int_5, %T.loc12_6.2 [symbolic = %array_type.loc15_20.2 (constants.%array_type.ec2)]
 // CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %array_type.loc15_20.2 [symbolic = %require_complete.loc15 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc12_6.1: type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %u.patt: @F.%tuple.type (%tuple.type.4f2) = binding_pattern u
@@ -156,7 +156,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %array_type.loc19_22.2: type = array_type %int.convert_checked.loc19_21.2, constants.%i32 [symbolic = %array_type.loc19_22.2 (constants.%array_type.c7c)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc19_22.2 [symbolic = %require_complete (constants.%require_complete.7cb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt.loc18_6.1: %i32) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %k.patt: @G.%array_type.loc19_22.2 (%array_type.c7c) = binding_pattern k

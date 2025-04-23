@@ -322,15 +322,15 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
+// CHECK:STDOUT: fn @Less.2(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LessOrEquivalent.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
+// CHECK:STDOUT: fn @LessOrEquivalent.2(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
+// CHECK:STDOUT: fn @Greater.2(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterOrEquivalent.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
+// CHECK:STDOUT: fn @GreaterOrEquivalent.2(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLess(%a.param_patt: %C, %b.param_patt: %C) -> bool {
+// CHECK:STDOUT: fn @TestLess(%a.param: %C, %b.param: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -342,7 +342,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %.loc14_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLessEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
+// CHECK:STDOUT: fn @TestLessEqual(%a.param: %C, %b.param: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -354,7 +354,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %.loc18_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreater(%a.param_patt: %C, %b.param_patt: %C) -> bool {
+// CHECK:STDOUT: fn @TestGreater(%a.param: %C, %b.param: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -366,7 +366,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %.loc22_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreaterEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
+// CHECK:STDOUT: fn @TestGreaterEqual(%a.param: %C, %b.param: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -507,28 +507,28 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLess(%a.param_patt: %D, %b.param_patt: %D) -> bool {
+// CHECK:STDOUT: fn @TestLess(%a.param: %D, %b.param: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLessEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
+// CHECK:STDOUT: fn @TestLessEqual(%a.param: %D, %b.param: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreater(%a.param_patt: %D, %b.param_patt: %D) -> bool {
+// CHECK:STDOUT: fn @TestGreater(%a.param: %D, %b.param: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreaterEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
+// CHECK:STDOUT: fn @TestGreaterEqual(%a.param: %D, %b.param: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b

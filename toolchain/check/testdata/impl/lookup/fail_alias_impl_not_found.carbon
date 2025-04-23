@@ -101,7 +101,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%c.param_patt: %C) {
+// CHECK:STDOUT: fn @F.2(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc24: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]

@@ -113,9 +113,9 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   .d = %.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeInner() -> %Inner;
+// CHECK:STDOUT: fn @MakeInner() -> %return.param: %Inner;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeOuter() -> %return.param_patt: %Outer {
+// CHECK:STDOUT: fn @MakeOuter() -> %return.param: %Outer {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeInner.ref.loc24_16: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [concrete = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc24_45.1: ref %Inner = class_element_access %return, element0

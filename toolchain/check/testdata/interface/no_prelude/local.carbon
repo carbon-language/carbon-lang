@@ -108,10 +108,10 @@ fn F() {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc13_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc13_16.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @G.1.%Self.as_type.loc13_16.1 (%Self.as_type)]();
+// CHECK:STDOUT:   fn(%self.param: @G.1.%Self.as_type.loc13_16.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2[%self.param_patt: %empty_tuple.type]() {
+// CHECK:STDOUT: fn @G.2(%self.param: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

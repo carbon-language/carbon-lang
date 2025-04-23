@@ -69,7 +69,7 @@ fn Var() {
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %X;
+// CHECK:STDOUT: fn @Make() -> %return.param: %X;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Let() {
 // CHECK:STDOUT: !entry:

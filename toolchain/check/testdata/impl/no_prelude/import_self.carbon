@@ -91,7 +91,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc5_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.%Self.as_type.loc5_15.1 (%Self.as_type)](%other.param_patt: @Op.%Self.as_type.loc5_15.1 (%Self.as_type)) -> @Op.%Self.as_type.loc5_15.1 (%Self.as_type);
+// CHECK:STDOUT:   fn(%self.param: @Op.%Self.as_type.loc5_15.1 (%Self.as_type), %other.param: @Op.%Self.as_type.loc5_15.1 (%Self.as_type)) -> @Op.%Self.as_type.loc5_15.1 (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%Self) {
@@ -204,10 +204,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type)) -> @Op.1.%Self.as_type (%Self.as_type);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self.param_patt: %empty_tuple.type](%other.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @Op.2(%self.param: %empty_tuple.type, %other.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_52: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
@@ -215,7 +215,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   return %.loc7_53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param_patt: %empty_tuple.type, %y.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]

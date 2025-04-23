@@ -270,7 +270,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived.loc13_40.2, %T.loc13_18.2 [symbolic = %Derived.elem (constants.%Derived.elem.6d2)]
 // CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %T.loc13_18.2 [symbolic = %require_complete.loc14 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc13_18.1: type](%x.param_patt: @AccessDerived.%Derived.loc13_40.2 (%Derived.85c)) -> @AccessDerived.%T.loc13_18.2 (%T) {
+// CHECK:STDOUT:   fn(%x.param: @AccessDerived.%Derived.loc13_40.2 (%Derived.85c)) -> @AccessDerived.%T.loc13_18.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessDerived.%Derived.loc13_40.2 (%Derived.85c) = name_ref x, %x
 // CHECK:STDOUT:     %d.ref: @AccessDerived.%Derived.elem (%Derived.elem.6d2) = name_ref d, @Derived.%.loc10 [concrete = @Derived.%.loc10]
@@ -292,7 +292,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %T.loc17_15.2 [symbolic = %Base.elem (constants.%Base.elem.9af)]
 // CHECK:STDOUT:   %require_complete.loc18_13: <witness> = require_complete_type %T.loc17_15.2 [symbolic = %require_complete.loc18_13 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc17_15.1: type](%x.param_patt: @AccessBase.%Derived.loc17_37.2 (%Derived.85c)) -> @AccessBase.%T.loc17_15.2 (%T) {
+// CHECK:STDOUT:   fn(%x.param: @AccessBase.%Derived.loc17_37.2 (%Derived.85c)) -> @AccessBase.%T.loc17_15.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessBase.%Derived.loc17_37.2 (%Derived.85c) = name_ref x, %x
 // CHECK:STDOUT:     %b.ref: @AccessBase.%Base.elem (%Base.elem.9af) = name_ref b, @Base.%.loc5 [concrete = @Base.%.loc5]
@@ -304,7 +304,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessConcrete(%x.param_patt: %Derived.115) -> %i32 {
+// CHECK:STDOUT: fn @AccessConcrete(%x.param: %Derived.115) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %Derived.115 = name_ref x, %x
 // CHECK:STDOUT:   %b.ref: %Base.elem.a98 = name_ref b, @Base.%.loc5 [concrete = @Base.%.loc5]
@@ -592,7 +592,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base.loc13_41.2 [symbolic = %require_complete (constants.%require_complete.97d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc13_22.1: type](%x.param_patt: @AccessMissingBase.%Base.loc13_41.2 (%Base.370)) -> @AccessMissingBase.%T.loc13_22.2 (%T) {
+// CHECK:STDOUT:   fn(%x.param: @AccessMissingBase.%Base.loc13_41.2 (%Base.370)) -> @AccessMissingBase.%T.loc13_22.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessMissingBase.%Base.loc13_41.2 (%Base.370) = name_ref x, %x
 // CHECK:STDOUT:     %nonesuch.ref: <error> = name_ref nonesuch, <error> [concrete = <error>]
@@ -610,7 +610,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc21_25.2) [symbolic = %Base (constants.%Base.370)]
 // CHECK:STDOUT:   %require_complete.loc26: <witness> = require_complete_type %Base [symbolic = %require_complete.loc26 (constants.%require_complete.97d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc21_25.1: type](%x.param_patt: @AccessMissingDerived.%Derived.loc21_47.2 (%Derived.85c)) -> @AccessMissingDerived.%T.loc21_25.2 (%T) {
+// CHECK:STDOUT:   fn(%x.param: @AccessMissingDerived.%Derived.loc21_47.2 (%Derived.85c)) -> @AccessMissingDerived.%T.loc21_25.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessMissingDerived.%Derived.loc21_47.2 (%Derived.85c) = name_ref x, %x
 // CHECK:STDOUT:     %nonesuch.ref: <error> = name_ref nonesuch, <error> [concrete = <error>]
@@ -618,7 +618,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessMissingConcrete(%x.param_patt: %Derived.115) -> %i32 {
+// CHECK:STDOUT: fn @AccessMissingConcrete(%x.param: %Derived.115) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %Derived.115 = name_ref x, %x
 // CHECK:STDOUT:   %nonesuch.ref: <error> = name_ref nonesuch, <error> [concrete = <error>]

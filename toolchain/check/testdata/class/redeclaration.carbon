@@ -90,7 +90,7 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Class](%b.param_patt: bool) {
+// CHECK:STDOUT: fn @F(%self.param.loc17: %Class, %b.param.loc17: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -80,7 +80,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:   .something = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%c.param_patt: %Class) -> %i32 {
+// CHECK:STDOUT: fn @G(%c.param: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %something.ref: <error> = name_ref something, <error> [concrete = <error>]

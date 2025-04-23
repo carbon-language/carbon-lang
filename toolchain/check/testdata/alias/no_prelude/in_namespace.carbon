@@ -86,7 +86,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   .v = %.loc11_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @F() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_17.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_18.1: %struct_type.v = struct_literal (%.loc19_17.1)

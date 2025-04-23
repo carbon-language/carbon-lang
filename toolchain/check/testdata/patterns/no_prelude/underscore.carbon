@@ -238,9 +238,9 @@ fn F() -> {} {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%_.param_patt: %empty_struct_type);
+// CHECK:STDOUT: fn @F(%_.param: %empty_struct_type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%_.param_patt: %empty_struct_type) {
+// CHECK:STDOUT: fn @G(%_.param: %empty_struct_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -288,7 +288,7 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%_.patt.loc4_6.1: type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -347,7 +347,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.loc4_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
 // CHECK:STDOUT:   %_.patt.loc4_6.2: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%_.patt.loc4_6.1: type);
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -402,7 +402,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.loc4_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
 // CHECK:STDOUT:   %_.patt.loc4_6.2: type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%_.patt.loc4_6.1: type]();
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%_.loc6_6.1: type) {
@@ -411,7 +411,7 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%_.patt.loc6_6.1: type]() {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

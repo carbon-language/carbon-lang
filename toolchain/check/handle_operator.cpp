@@ -398,10 +398,10 @@ auto HandleParseNode(Context& context, Parse::ShortCircuitOperandOrId node_id)
 // occurs during operand handling.
 static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
     -> bool {
-  if (context.return_scope_stack().empty()) {
-    context.TODO(node_id,
-                 "Control flow expressions are currently only supported inside "
-                 "functions.");
+  if (!context.scope_stack().IsInFunctionScope()) {
+    return context.TODO(node_id,
+                        "Control flow expressions are currently only supported "
+                        "inside functions.");
   }
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto short_circuit_result_id = context.node_stack().PopExpr();

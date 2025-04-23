@@ -212,7 +212,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%N.param: Core.IntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.1(@ImplicitAs.%T.loc8_22.1: type, @ImplicitAs.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
@@ -220,10 +220,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Self: @Convert.1.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.0f3)]
 // CHECK:STDOUT:   %Self.as_type.loc9_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type)]() -> @Convert.1.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type)) -> @Convert.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self.param_patt: Core.IntLiteral]() -> %i32.builtin = "int.convert_checked";
+// CHECK:STDOUT: fn @Convert.2(%self.param: Core.IntLiteral) -> %i32.builtin = "int.convert_checked";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_22.2 => constants.%T
@@ -794,9 +794,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   .m = %.loc7_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "core.carbon"];
+// CHECK:STDOUT: fn @Int = "int.make_type_signed" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Make() -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0.loc8_31: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_0.loc8_39: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -824,12 +824,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Self: @Convert.1.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type (%Self.as_type)]() -> @Convert.1.%T (%T);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self.param_patt: Core.IntLiteral]() -> %i32.builtin = "int.convert_checked" [from "core.carbon"];
+// CHECK:STDOUT: fn @Convert.2 = "int.convert_checked" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.3[%self.param_patt: %C.808]() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Convert.3(%self.param: %C.808) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc10: ref %D = splice_block %return {}
@@ -837,7 +837,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.4[%self.param_patt: %C.8be]() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Convert.4(%self.param: %C.8be) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc11: ref %D = splice_block %return {}
@@ -845,7 +845,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.5[%self.param_patt: %C.c17]() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Convert.5(%self.param: %C.c17) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc12: ref %D = splice_block %return {}
@@ -853,7 +853,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.6[%self.param_patt: %C.414]() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Convert.6(%self.param: %C.414) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc13: ref %D = splice_block %return {}
@@ -861,7 +861,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.7[%self.param_patt: %C.488]() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Convert.7(%self.param: %C.488) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc14: ref %D = splice_block %return {}
@@ -869,7 +869,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.8[%self.param_patt: %C.3e2]() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Convert.8(%self.param: %C.3e2) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc15: ref %D = splice_block %return {}
@@ -877,7 +877,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.9[%self.param_patt: %C.78c]() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Convert.9(%self.param: %C.78c) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc16: ref %D = splice_block %return {}
@@ -885,7 +885,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.10[%self.param_patt: %C.6aa]() -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @Convert.10(%self.param: %C.6aa) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc17: ref %D = splice_block %return {}
@@ -1366,9 +1366,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "core.carbon"];
+// CHECK:STDOUT: fn @Int = "int.make_type_signed" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F0(%n.param_patt: %i32.builtin) -> %return.param_patt: %D {
+// CHECK:STDOUT: fn @F0(%n.param: %i32.builtin) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false.loc8: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   if %false.loc8 br !if.then.loc8 else br !if.else.loc8
@@ -1599,28 +1599,28 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Self: @Convert.1.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type (%Self.as_type)]() -> @Convert.1.%T (%T);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self.param_patt: Core.IntLiteral]() -> %i32.builtin = "int.convert_checked" [from "core.carbon"];
+// CHECK:STDOUT: fn @Convert.2 = "int.convert_checked" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.3[%self.param_patt: %C.76d]() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Convert.3 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.4[%self.param_patt: %C.012]() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Convert.4 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.5[%self.param_patt: %C.3e6]() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Convert.5 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.6[%self.param_patt: %C.4d9]() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Convert.6 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.7[%self.param_patt: %C.a67]() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Convert.7 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.8[%self.param_patt: %C.65c]() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Convert.8 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.9[%self.param_patt: %C.898]() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Convert.9 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.10[%self.param_patt: %C.f0a]() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Convert.10 [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %D [from "library.carbon"];
+// CHECK:STDOUT: fn @Make [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N

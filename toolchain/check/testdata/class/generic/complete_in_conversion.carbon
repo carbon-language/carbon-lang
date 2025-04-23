@@ -217,9 +217,9 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int.1(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int.1(%N.param: Core.IntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param_patt: %ptr.b65) {
+// CHECK:STDOUT: fn @F(%a.param: %ptr.b65) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %ptr.e79 = binding_pattern b

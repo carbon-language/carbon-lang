@@ -211,7 +211,7 @@ fn H() {
 // CHECK:STDOUT:   extend %Base
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DoubleFieldAccess(%d.param_patt: %Derived) -> %i32 {
+// CHECK:STDOUT: fn @DoubleFieldAccess(%d.param: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elem.d1f = name_ref x, @Base.%.loc5 [concrete = @Base.%.loc5]
@@ -358,7 +358,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param_patt: %Derived) -> %i32 {
+// CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elem.d1f = name_ref x, imports.%Main.import_ref.7f7 [concrete = imports.%.e66]
@@ -888,7 +888,7 @@ fn H() {
 // CHECK:STDOUT:   %G: @G.%G.type (%G.type.56f312.1) = struct_value () [symbolic = %G (constants.%G.b504c4.1)]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%U) [symbolic = %G.specific_fn (constants.%G.specific_fn.169)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @G.%U (%U);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%U) {

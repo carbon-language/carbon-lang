@@ -27,7 +27,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
-  context.scope_stack().Push();
+  context.scope_stack().PushForSameRegion();
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
   auto entity_name_id = context.entity_names().Add(

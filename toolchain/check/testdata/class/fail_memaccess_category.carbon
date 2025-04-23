@@ -128,9 +128,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self.param_patt: %ptr.6db]();
+// CHECK:STDOUT: fn @F.1(%self.param: %ptr.6db);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%s.param_patt: %struct_type.a.72c, %b.param_patt: %B) {
+// CHECK:STDOUT: fn @F.2(%s.param: %struct_type.a.72c, %b.param: %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %struct_type.a.72c = name_ref s, %s
 // CHECK:STDOUT:   %.loc28_4.1: %A = struct_access %s.ref, element0

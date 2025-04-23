@@ -247,7 +247,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: <error>);
+// CHECK:STDOUT: fn @MyF(%bar.param: <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_union_definition.carbon
 // CHECK:STDOUT:
@@ -300,7 +300,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: %ptr);
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_union_declaration_and_definition.carbon
 // CHECK:STDOUT:
@@ -353,7 +353,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: %ptr);
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_union_public_static_member_function.carbon
 // CHECK:STDOUT:
@@ -408,7 +408,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_import_union_private_static_member_function.carbon
 // CHECK:STDOUT:
@@ -463,7 +463,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_union_public_member_function.carbon
 // CHECK:STDOUT:
@@ -517,7 +517,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: %ptr.f68) {
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc14: ref %Bar = deref %bar.ref
@@ -635,7 +635,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: %ptr.f68) {
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %foo_bar.patt: %ptr.f68 = binding_pattern foo_bar
@@ -726,7 +726,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_union_template.carbon
 // CHECK:STDOUT:
@@ -764,5 +764,5 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param_patt: <error>);
+// CHECK:STDOUT: fn @MyF(%bar.param: <error>);
 // CHECK:STDOUT:

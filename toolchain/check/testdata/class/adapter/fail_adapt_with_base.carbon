@@ -77,5 +77,5 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:   .Simple = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F[%self.param_patt: %AdaptWithVirtual]();
+// CHECK:STDOUT: virtual fn @F(%self.param: %AdaptWithVirtual);
 // CHECK:STDOUT:

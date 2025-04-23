@@ -203,12 +203,12 @@ impl i32 as I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C.loc15_17.1: type = class_type @C, @C(constants.%I.type, %Self) [symbolic = %C.loc15_17.1 (constants.%C.dbb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.param_patt: @F.1.%C.loc15_17.1 (%C.dbb));
+// CHECK:STDOUT:   fn(%c.param: @F.1.%C.loc15_17.1 (%C.dbb));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%c.param_patt: %C.7db);
+// CHECK:STDOUT: fn @F.2(%c.param: %C.7db);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%c.param_patt: %C.6fb);
+// CHECK:STDOUT: fn @F.3(%c.param: %C.6fb);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T, constants.%X) {
 // CHECK:STDOUT:   %T.loc11_9.2 => constants.%T

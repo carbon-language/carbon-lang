@@ -129,7 +129,7 @@ class A {
 // CHECK:STDOUT:   return %.loc22_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param_patt: %B {
+// CHECK:STDOUT: fn @Make() -> %return.param: %B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %B = binding_pattern b

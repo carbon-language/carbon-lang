@@ -223,7 +223,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   fn() -> @F.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %return.param_patt: %Param {
+// CHECK:STDOUT: fn @F.2() -> %return.param: %Param {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc15_21.1: %struct_type.x.c96 = struct_literal (%int_2)
@@ -240,7 +240,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   return %.loc15_22 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%c.param_patt: %C) {
+// CHECK:STDOUT: fn @G(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
@@ -488,7 +488,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Self: @F.1.%I.type (%I.type.325e65.1) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.209206.1)]
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type)](%t.param_patt: @F.1.%T (%T));
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type), %t.param: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(@X.%U.loc8_9.1: type) {
@@ -501,7 +501,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %require_complete.loc10_14: <witness> = require_complete_type %X [symbolic = %require_complete.loc10_14 (constants.%require_complete.441)]
 // CHECK:STDOUT:   %require_complete.loc10_23: <witness> = require_complete_type %U [symbolic = %require_complete.loc10_23 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.2.%X (%X)](%t.param_patt: @F.2.%U (%U)) {
+// CHECK:STDOUT:   fn(%self.param: @F.2.%X (%X), %t.param: @F.2.%U (%U)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

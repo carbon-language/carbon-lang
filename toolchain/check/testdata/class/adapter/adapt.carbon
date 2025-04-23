@@ -205,7 +205,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%a.param_patt: %AdaptNotExtend) {
+// CHECK:STDOUT: fn @F.2(%a.param: %AdaptNotExtend) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %AdaptNotExtend = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]

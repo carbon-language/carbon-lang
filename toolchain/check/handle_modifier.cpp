@@ -50,6 +50,9 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
   } else if (keyword.HasAnyOf(KeywordModifierSet::Extern)) {
     order = ModifierOrder::Extern;
     later_modifiers = KeywordModifierSet::Decl;
+  } else if (keyword.HasAnyOf(KeywordModifierSet::Extend)) {
+    order = ModifierOrder::Extend;
+    later_modifiers = KeywordModifierSet::Decl;
   } else {
     order = ModifierOrder::Decl;
     later_modifiers = KeywordModifierSet::None;

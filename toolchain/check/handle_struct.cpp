@@ -14,7 +14,7 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::StructLiteralStartId node_id)
     -> bool {
-  context.scope_stack().Push();
+  context.scope_stack().PushForSameRegion();
   context.node_stack().Push(node_id);
   context.struct_type_fields_stack().PushArray();
   context.param_and_arg_refs_stack().Push();
@@ -23,7 +23,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::StructTypeLiteralStartId node_id)
     -> bool {
-  context.scope_stack().Push();
+  context.scope_stack().PushForSameRegion();
   context.node_stack().Push(node_id);
   context.struct_type_fields_stack().PushArray();
   return true;

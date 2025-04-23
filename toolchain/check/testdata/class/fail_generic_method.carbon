@@ -142,7 +142,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Class (%Class)](%n.param_patt: @F.1.%T (%T));
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Class (%Class), %n.param: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(%N.loc33_10.1: %i32) {
@@ -151,7 +151,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: <error>](%n.param_patt: <error>) {
+// CHECK:STDOUT:   fn(%self.param: <error>, %n.param: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

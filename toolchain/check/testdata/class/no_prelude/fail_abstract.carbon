@@ -304,7 +304,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param_patt: %Abstract) {
+// CHECK:STDOUT: fn @F(%a.param: %Abstract) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %Abstract = binding_pattern l
@@ -400,9 +400,9 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Param(%a.param_patt: %Abstract);
+// CHECK:STDOUT: fn @Param(%a.param: %Abstract);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%p.param_patt: %Abstract) {
+// CHECK:STDOUT: fn @Call(%p.param: %Abstract) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Param.ref: %Param.type = name_ref Param, file.%Param.decl [concrete = constants.%Param]
 // CHECK:STDOUT:   %p.ref: %Abstract = name_ref p, %p
@@ -471,7 +471,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param_patt: %Derived {
+// CHECK:STDOUT: fn @Make() -> %return.param: %Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc22_20: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc22_29: %empty_struct_type = struct_literal ()
@@ -544,7 +544,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Return(%a.param_patt: %Abstract) -> %return.param_patt: %Abstract {
+// CHECK:STDOUT: fn @Return(%a.param: %Abstract) -> %return.param: %Abstract {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   return <error> to %return
@@ -622,7 +622,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %empty_struct_type {
+// CHECK:STDOUT: fn @Access(%d.param: %Derived) -> %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %Derived.elem.513 = name_ref base, @Derived.%.loc9 [concrete = @Derived.%.loc9]
@@ -709,7 +709,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnAbstract() -> %Abstract;
+// CHECK:STDOUT: fn @ReturnAbstract() -> %return.param: %Abstract;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnAbstract() {
 // CHECK:STDOUT: !entry:

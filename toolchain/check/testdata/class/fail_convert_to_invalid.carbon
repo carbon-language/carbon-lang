@@ -69,7 +69,7 @@ fn Make() -> C {
 // CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @Make() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123]
 // CHECK:STDOUT:   %.loc20: %struct_type.a = struct_literal (%int_123)

@@ -181,23 +181,6 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::FacetAccessWitness inst)
-    -> ConstantEvalResult {
-  // TODO: The `index` we are given is an index into the required_interfaces of
-  // the original facet type, but we're using it to index into the witnesses of
-  // the substituted facet type. There is no reason to expect those witnesses to
-  // be in the same order, or even for there to be the same number of witnesses.
-
-  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
-          inst.facet_value_inst_id)) {
-    auto impl_witness_inst_id = context.inst_blocks().Get(
-        facet_value->witnesses_block_id)[inst.index.index];
-    return ConstantEvalResult::Existing(
-        context.constant_values().Get(impl_witness_inst_id));
-  }
-  return ConstantEvalResult::NewSamePhase(inst);
-}
-
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::FloatType inst) -> ConstantEvalResult {
   return ValidateFloatType(context, inst_id, inst)
@@ -216,8 +199,16 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::LookupImplWitness inst) -> ConstantEvalResult {
-  auto result = EvalLookupSingleImplWitness(
-      context, context.insts().GetLocId(inst_id), inst);
+  // The self value is canonicalized in order to produce a canonical
+  // LookupImplWitness instruction. We save the non-canonical instruction as it
+  // may be a concrete `FacetValue` that contains a concrete witness.
+  auto non_canonical_query_self_inst_id = inst.query_self_inst_id;
+  inst.query_self_inst_id =
+      GetCanonicalizedFacetOrTypeValue(context, inst.query_self_inst_id);
+
+  auto result =
+      EvalLookupSingleImplWitness(context, context.insts().GetLocId(inst_id),
+                                  inst, non_canonical_query_self_inst_id);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic

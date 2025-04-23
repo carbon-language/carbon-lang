@@ -184,7 +184,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   extend imports.%Main.import_ref.3019d1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%c.param_patt: %C) {
+// CHECK:STDOUT: fn @G(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc7: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc7: %I.assoc_type = name_ref F, imports.%Main.import_ref.c44 [concrete = constants.%assoc0]
@@ -198,10 +198,10 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.5dd: %I.type) [from "extend_impl_library.carbon"] {
-// CHECK:STDOUT:   fn();
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() [from "extend_impl_library.carbon"];
+// CHECK:STDOUT: fn @F.2 [from "extend_impl_library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:

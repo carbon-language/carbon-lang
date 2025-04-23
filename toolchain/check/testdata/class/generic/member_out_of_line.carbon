@@ -242,7 +242,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc5 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param_patt: @F.%T.loc5 (%T)) -> @F.%T.loc5 (%T) {
+// CHECK:STDOUT:   fn(%n.param.loc10: @F.%T.loc5 (%T)) -> @F.%T.loc5 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @F.%T.loc5 (%T) = name_ref n, %n.loc10
 // CHECK:STDOUT:     return %n.ref
@@ -258,7 +258,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc6 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %T.loc6 [symbolic = %require_complete.loc15 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @G.%Class (%Class)]() -> @G.%T.loc6 (%T) {
+// CHECK:STDOUT:   fn(%self.param.loc14: @G.%Class (%Class)) -> @G.%T.loc6 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class) = name_ref self, %self.loc14
 // CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc7 [concrete = @Class.%.loc7]
@@ -431,7 +431,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %require_complete.loc10_31: <witness> = require_complete_type %B [symbolic = %require_complete.loc10_31 (constants.%require_complete.fca)]
 // CHECK:STDOUT:   %require_complete.loc10_40: <witness> = require_complete_type %T.loc6 [symbolic = %require_complete.loc10_40 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%B (%B)](%a.param_patt: @F.%T.loc6 (%T)) {
+// CHECK:STDOUT:   fn(%self.param.loc10: @F.%B (%B), %a.param.loc10: @F.%T.loc6 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

@@ -57,7 +57,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param_patt: %ptr) -> %ptr {
+// CHECK:STDOUT: fn @F(%p.param: %ptr) -> %ptr {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref

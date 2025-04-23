@@ -86,7 +86,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PrintChar.1(%a.param_patt: %i32) -> %i32 = "print.char";
+// CHECK:STDOUT: fn @PrintChar.1(%a.param: %i32) -> %i32 = "print.char";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:

@@ -146,7 +146,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[addr %self.param_patt: %ptr.11f]() {
+// CHECK:STDOUT: fn @F(%self.param.loc17: %ptr.11f) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.11f = name_ref self, %self.loc17
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref
@@ -163,7 +163,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%p.param_patt: %ptr.404) {
+// CHECK:STDOUT: fn @Call(%p.param: %ptr.404) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.404 = name_ref p, %p
 // CHECK:STDOUT:   %.loc26_4.1: ref %Derived = deref %p.ref

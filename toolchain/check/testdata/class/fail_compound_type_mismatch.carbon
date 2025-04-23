@@ -105,7 +105,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   .b = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessBInA(%a.param_patt: %A) -> %i32 {
+// CHECK:STDOUT: fn @AccessBInA(%a.param: %A) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]

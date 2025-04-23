@@ -53,3 +53,21 @@ class C(T:! X) {}
 class D(T:! Y) { adapt C(T); }
 
 fn Test(T:! Y & Z, d: D(T)) {}
+
+// --- final_symbolic_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+// This impl has a rewrite to a symbolic value, and the `.Self` type has a
+// dependency on a generic parameter.
+final impl forall [T:! type, S:! type] T as Z(S) where .X = T {}
+
+class C {}
+
+fn F(T:! Z(C), t: T) {
+  // This should typecheck, the `final impl` should give the same `T`.
+  let a: T.X = t;
+}

@@ -207,7 +207,7 @@ fn Test() {
 // CHECK:STDOUT:   .n = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self.param_patt: %i32]() -> %return.param_patt: %X {
+// CHECK:STDOUT: fn @Convert.2(%self.param: %i32) -> %return.param: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self
 // CHECK:STDOUT:   %.loc16_51.1: %struct_type.n = struct_literal (%self.ref)
@@ -218,7 +218,7 @@ fn Test() {
 // CHECK:STDOUT:   return %.loc16_52 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.3[%self.param_patt: %X]() -> %i32 {
+// CHECK:STDOUT: fn @Convert.3(%self.param: %X) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12 [concrete = @X.%.loc12]
@@ -227,9 +227,9 @@ fn Test() {
 // CHECK:STDOUT:   return %.loc20_45.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sink_i32(%n.param_patt: %i32);
+// CHECK:STDOUT: fn @Sink_i32(%n.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sink_X(%x.param_patt: %X);
+// CHECK:STDOUT: fn @Sink_X(%x.param: %X);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Source(%T.loc27_11.1: type) {
 // CHECK:STDOUT:   %T.loc27_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc27_11.2 (constants.%T)]
@@ -239,7 +239,7 @@ fn Test() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc27_11.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc27_11.2) [symbolic = %Source.specific_fn.loc27_35.2 (constants.%Source.specific_fn.ff0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc27_11.1: type) -> @Source.%T.loc27_11.2 (%T) {
+// CHECK:STDOUT:   fn() -> @Source.%T.loc27_11.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Source.ref: %Source.type = name_ref Source, file.%Source.decl [concrete = constants.%Source]
 // CHECK:STDOUT:     %T.ref.loc27_42: type = name_ref T, %T.loc27_11.1 [symbolic = %T.loc27_11.2 (constants.%T)]

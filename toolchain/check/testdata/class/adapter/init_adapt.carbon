@@ -247,9 +247,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeC() -> %C;
+// CHECK:STDOUT: fn @MakeC() -> %return.param: %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeAdaptC() -> %AdaptC;
+// CHECK:STDOUT: fn @MakeAdaptC() -> %return.param: %AdaptC;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -438,9 +438,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeC() -> %C;
+// CHECK:STDOUT: fn @MakeC() -> %return.param: %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeAdaptC() -> %AdaptC;
+// CHECK:STDOUT: fn @MakeAdaptC() -> %return.param: %AdaptC;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

@@ -71,7 +71,7 @@ fn H() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc13_22.2 [symbolic = %require_complete (constants.%require_complete.b7f)]
 // CHECK:STDOUT:   %array: @G.%array_type.loc13_22.2 (%array_type.281) = tuple_value () [symbolic = %array (constants.%array.2ed)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc11_6.1: type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: @G.%array_type.loc13_22.2 (%array_type.281) = binding_pattern arr

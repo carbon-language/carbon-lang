@@ -174,14 +174,14 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertUnrelated(%p.param_patt: %ptr.afe) -> %ptr.678 {
+// CHECK:STDOUT: fn @ConvertUnrelated(%p.param: %ptr.afe) -> %ptr.678 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.afe = name_ref p, %p
 // CHECK:STDOUT:   %.loc31_46: %ptr.678 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertIncomplete(%p.param_patt: %ptr.c62) -> %ptr.590 {
+// CHECK:STDOUT: fn @ConvertIncomplete(%p.param: %ptr.c62) -> %ptr.590 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.c62 = name_ref p, %p
 // CHECK:STDOUT:   %.loc42_55: %ptr.590 = converted %p.ref, <error> [concrete = <error>]

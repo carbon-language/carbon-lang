@@ -115,7 +115,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   .b = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @F() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %result.patt: %C = binding_pattern result

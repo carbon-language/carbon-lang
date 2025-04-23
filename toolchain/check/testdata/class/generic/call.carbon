@@ -665,7 +665,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Outer.loc4_22.1 [symbolic = %require_complete (constants.%require_complete.127)]
 // CHECK:STDOUT:   %Outer.val: @A.%Outer.loc4_22.1 (%Outer.9d6) = struct_value () [symbolic = %Outer.val (constants.%Outer.val.234)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param_patt: @A.%Outer.loc4_22.1 (%Outer.9d6) {
+// CHECK:STDOUT:   fn() -> %return.param: @A.%Outer.loc4_22.1 (%Outer.9d6) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc5_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc5_15.2: init @A.%Outer.loc4_22.1 (%Outer.9d6) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.234)]
@@ -682,7 +682,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Outer.loc7_22.1 [symbolic = %require_complete (constants.%require_complete.964)]
 // CHECK:STDOUT:   %Outer.val: @B.%Outer.loc7_22.1 (%Outer.99f) = struct_value () [symbolic = %Outer.val (constants.%Outer.val.a2f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param_patt: @B.%Outer.loc7_22.1 (%Outer.99f) {
+// CHECK:STDOUT:   fn() -> %return.param: @B.%Outer.loc7_22.1 (%Outer.99f) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_15.2: init @B.%Outer.loc7_22.1 (%Outer.99f) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.a2f)]
@@ -701,7 +701,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Inner.loc10_22.1 [symbolic = %require_complete (constants.%require_complete.7b1)]
 // CHECK:STDOUT:   %Inner.val: @C.%Inner.loc10_22.1 (%Inner.13a) = struct_value () [symbolic = %Inner.val (constants.%Inner.val.69d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param_patt: @C.%Inner.loc10_22.1 (%Inner.13a) {
+// CHECK:STDOUT:   fn() -> %return.param: @C.%Inner.loc10_22.1 (%Inner.13a) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc11_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc11_15.2: init @C.%Inner.loc10_22.1 (%Inner.13a) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.69d)]
@@ -721,7 +721,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Inner.loc13_22.1 [symbolic = %require_complete (constants.%require_complete.e7e)]
 // CHECK:STDOUT:   %Inner.val: @D.%Inner.loc13_22.1 (%Inner.c71) = struct_value () [symbolic = %Inner.val (constants.%Inner.val.dfa)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param_patt: @D.%Inner.loc13_22.1 (%Inner.c71) {
+// CHECK:STDOUT:   fn() -> %return.param: @D.%Inner.loc13_22.1 (%Inner.c71) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc14_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc14_15.2: init @D.%Inner.loc13_22.1 (%Inner.c71) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.dfa)]

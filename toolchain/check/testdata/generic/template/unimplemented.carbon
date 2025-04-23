@@ -122,7 +122,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %.loc11_11.4: <instruction> = access_member_action %.loc11_11.1, n [template]
 // CHECK:STDOUT:   %.loc11_11.5: type = type_of_inst %.loc11_11.4 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc6_15.1: type](%x.param_patt: @F.%T.loc6_15.2 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc6_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc6_15.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc11_11.1: @F.%T.loc6_15.2 (%T) = splice_inst %.loc11_11.3
@@ -205,7 +205,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %.loc16_11.2: <instruction> = access_member_action %c.ref, n [template]
 // CHECK:STDOUT:   %.loc16_11.3: type = type_of_inst %.loc16_11.2 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.patt.loc11_15.1: %C) -> %i32 {
+// CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: %C = name_ref c, %c.loc11_15.1 [template = %c.loc11_15.2 (constants.%c)]
 // CHECK:STDOUT:     %.loc16_11.1: @F.%.loc16_11.3 (@F.%.loc16_11.3) = splice_inst %.loc16_11.2
@@ -270,7 +270,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %.loc14_3.4: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
 // CHECK:STDOUT:   %.loc14_3.5: type = type_of_inst %.loc14_3.4 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%T.loc4_15.2 (%T) = binding_pattern v

@@ -159,7 +159,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @F.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc4_36.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_36.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self.as_type.loc4_36.1 (%Self.as_type)]();
+// CHECK:STDOUT:   fn(%self.param: @F.%Self.as_type.loc4_36.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -304,10 +304,10 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @F.1.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.209)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type (%Self.as_type)]();
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %X]() {
+// CHECK:STDOUT: fn @F.2(%self.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -463,7 +463,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.bf8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%x.param_patt: %X) {
+// CHECK:STDOUT: fn @G(%x.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x
 // CHECK:STDOUT:   %I.ref: %I.type.dac = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
@@ -483,10 +483,10 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @F.1.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.209)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type (%Self.as_type)]();
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %X]() [from "impl_in_interface_args.carbon"];
+// CHECK:STDOUT: fn @F.2 [from "impl_in_interface_args.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -660,10 +660,10 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @F.1.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.209)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type (%Self.as_type)]();
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %C.23b]() {
+// CHECK:STDOUT: fn @F.2(%self.param: %C.23b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -855,7 +855,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.acf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%c.param_patt: %C.23b) {
+// CHECK:STDOUT: fn @H(%c.param: %C.23b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C.23b = name_ref c, %c
 // CHECK:STDOUT:   %I.ref: %I.type.dac = name_ref I, imports.%Main.I [concrete = constants.%I.generic]
@@ -875,10 +875,10 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Self: @F.1.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.209)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type (%Self.as_type)]();
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %C.23b]() [from "impl_in_class_args.carbon"];
+// CHECK:STDOUT: fn @F.2 [from "impl_in_class_args.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

@@ -212,7 +212,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%a.param_patt: %ptr.5df) {
+// CHECK:STDOUT: fn @F.2(%a.param: %ptr.5df) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %ptr.36a = binding_pattern b

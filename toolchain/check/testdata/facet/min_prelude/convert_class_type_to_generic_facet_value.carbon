@@ -237,7 +237,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc15_22.1: type, %U.patt.loc15_32.1: @CallGenericMethod.%Generic.type.loc15_45.2 (%Generic.type.91ccba.2)) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -265,7 +265,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn.loc22_3.2: <specific function> = specific_function constants.%CallGenericMethod, @CallGenericMethod(%T.loc21_31.2, %U.loc21_41.2) [symbolic = %CallGenericMethod.specific_fn.loc22_3.2 (constants.%CallGenericMethod.specific_fn.a24)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc21_31.1: type, %U.patt.loc21_41.1: @PassThroughToGenericMethod.%Generic.type.loc21_54.2 (%Generic.type.91ccba.2)) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %CallGenericMethod.ref: %CallGenericMethod.type = name_ref CallGenericMethod, file.%CallGenericMethod.decl [concrete = constants.%CallGenericMethod]
 // CHECK:STDOUT:     %T.ref.loc22: type = name_ref T, %T.loc21_31.1 [symbolic = %T.loc21_31.2 (constants.%T)]
@@ -525,7 +525,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_22.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc15_22.1: type](%U.patt.loc15_32.1: @CallGenericMethod.%Generic.type.loc15_45.2 (%Generic.type.91ccba.2), %t.param_patt: @CallGenericMethod.%T.loc15_22.2 (%T)) {
+// CHECK:STDOUT:   fn(%t.param: @CallGenericMethod.%T.loc15_22.2 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -731,7 +731,7 @@ fn G() {
 // CHECK:STDOUT:   %Self: @Convert.1.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.b4e)]
 // CHECK:STDOUT:   %Self.as_type.loc9_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type.7f0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type.7f0)]() -> @Convert.1.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type.7f0)) -> @Convert.1.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.2(@ImplicitAs.%Dest.loc12_22.1: type, @ImplicitAs.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f)) {
@@ -740,7 +740,7 @@ fn G() {
 // CHECK:STDOUT:   %Self: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.0f3)]
 // CHECK:STDOUT:   %Self.as_type.loc14_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_20.1 (constants.%Self.as_type.419)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.2.%Self.as_type.loc14_20.1 (%Self.as_type.419)]() -> @Convert.2.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @Convert.2.%Self.as_type.loc14_20.1 (%Self.as_type.419)) -> @Convert.2.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%Dest) {

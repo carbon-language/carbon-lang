@@ -223,7 +223,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%a.param_patt: %Adapter) -> %i32 {
+// CHECK:STDOUT: fn @Access(%a.param: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
@@ -352,7 +352,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedAccess(%a.param_patt: %Adapter) -> %i32 {
+// CHECK:STDOUT: fn @ImportedAccess(%a.param: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
@@ -491,7 +491,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   extend %C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%a.param_patt: %Adapter) -> %i32 {
+// CHECK:STDOUT: fn @Access(%a.param: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %C.elem.476 = name_ref x, @C.%.loc5 [concrete = @C.%.loc5]
@@ -719,7 +719,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedAccess(%a.param_patt: %Adapter) -> %i32 {
+// CHECK:STDOUT: fn @ImportedAccess(%a.param: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %C.elem.ed6 = name_ref x, imports.%Main.import_ref.262 [concrete = imports.%.22b]
@@ -828,7 +828,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert(%a.param_patt: %Adapter.e4c) -> %i32 {
+// CHECK:STDOUT: fn @Convert(%a.param: %Adapter.e4c) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter.e4c = name_ref a, %a
 // CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -972,7 +972,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   .n = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedConvert(%a.param_patt: %Adapter.e4c) -> %i32 {
+// CHECK:STDOUT: fn @ImportedConvert(%a.param: %Adapter.e4c) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter.e4c = name_ref a, %a
 // CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -982,7 +982,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   return %.loc7_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedConvertLocal(%a.param_patt: %Adapter.58f) -> %i32 {
+// CHECK:STDOUT: fn @ImportedConvertLocal(%a.param: %Adapter.58f) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter.58f = name_ref a, %a
 // CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, file.%C.decl [concrete = constants.%C]

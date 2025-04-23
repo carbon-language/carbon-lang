@@ -159,7 +159,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type %Class [symbolic = %require_complete.loc13 (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr %self.param_patt: @GetAddr.%ptr.loc12_29.1 (%ptr.955)]() -> @GetAddr.%ptr.loc12_38.1 (%ptr.79f) {
+// CHECK:STDOUT:   fn(%self.param: @GetAddr.%ptr.loc12_29.1 (%ptr.955)) -> @GetAddr.%ptr.loc12_38.1 (%ptr.79f) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetAddr.%ptr.loc12_29.1 (%ptr.955) = name_ref self, %self
 // CHECK:STDOUT:     %.loc13_17.1: ref @GetAddr.%Class (%Class) = deref %self.ref
@@ -179,7 +179,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc18: <witness> = require_complete_type %T [symbolic = %require_complete.loc18 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @GetValue.%Class (%Class)]() -> @GetValue.%T (%T) {
+// CHECK:STDOUT:   fn(%self.param: @GetValue.%Class (%Class)) -> @GetValue.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetValue.%Class (%Class) = name_ref self, %self
 // CHECK:STDOUT:     %k.ref: @GetValue.%Class.elem (%Class.elem) = name_ref k, @Class.%.loc21 [concrete = @Class.%.loc21]

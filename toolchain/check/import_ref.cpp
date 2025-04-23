@@ -2453,22 +2453,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::FacetAccessWitness inst)
-    -> ResolveResult {
-  auto facet_value_inst_id =
-      GetLocalConstantInstId(resolver, inst.facet_value_inst_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  return ResolveAs<SemIR::FacetAccessWitness>(
-      resolver, {.type_id = GetSingletonType(resolver.local_context(),
-                                             SemIR::WitnessType::TypeInstId),
-                 .facet_value_inst_id = facet_value_inst_id,
-                 .index = inst.index});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FacetType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
 
@@ -2940,9 +2924,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::FacetAccessType inst): {
-      return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::FacetAccessWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::FacetType inst): {

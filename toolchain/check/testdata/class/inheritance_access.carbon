@@ -317,7 +317,7 @@ class B {
 // CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Circle]() -> %return.param_patt: %tuple.type.d07 {
+// CHECK:STDOUT: fn @GetPosition(%self.param: %Circle) -> %return.param: %tuple.type.d07 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc13_13: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %x.ref: %Shape.elem = name_ref x, @Shape.%.loc5 [concrete = @Shape.%.loc5]
@@ -457,7 +457,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.param_patt: %C]() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @G(%self.param: %C) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %F.ref: %F.type.649 = name_ref F, @A.%F.decl [concrete = constants.%F.485]
@@ -702,7 +702,7 @@ class B {
 // CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Square]() -> %i32 {
+// CHECK:STDOUT: fn @GetPosition(%self.param: %Square) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Square = name_ref self, %self
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
@@ -1140,7 +1140,7 @@ class B {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SomeFunc[%self.param_patt: %B]() -> %i32 {
+// CHECK:STDOUT: fn @SomeFunc(%self.param: %B) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %internal.ref: %B.elem = name_ref internal, @B.%.loc14 [concrete = @B.%.loc14]
@@ -1223,7 +1223,7 @@ class B {
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
+// CHECK:STDOUT: fn @F(%self.param: %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
@@ -1304,7 +1304,7 @@ class B {
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
+// CHECK:STDOUT: fn @F(%self.param: %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]

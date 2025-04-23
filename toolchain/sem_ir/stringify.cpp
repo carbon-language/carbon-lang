@@ -295,13 +295,6 @@ class Stringifier {
     step_stack_->PushInstId(inst.facet_value_inst_id);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, FacetAccessWitness inst)
-      -> void {
-    *out_ << "<witness for ";
-    step_stack_->Push(inst.facet_value_inst_id, ", interface ", inst.index,
-                      ">");
-  }
-
   auto StringifyInst(SemIR::InstId /*inst_id*/, FacetType inst) -> void {
     const FacetTypeInfo& facet_type_info =
         sem_ir_->facet_types().Get(inst.facet_type_id);
@@ -412,20 +405,7 @@ class Stringifier {
           lookup->query_specific_interface_id);
     }
 
-    if (auto witness =
-            sem_ir_->insts().TryGetAs<FacetAccessWitness>(impl_witness_id)) {
-      auto witness_type_id =
-          sem_ir_->insts().Get(witness->facet_value_inst_id).type_id();
-      auto facet_type = sem_ir_->types().GetAs<FacetType>(witness_type_id);
-      // TODO: Support != 1 interface better.
-      const auto& facet_type_info =
-          sem_ir_->facet_types().Get(facet_type.facet_type_id);
-      if (facet_type_info.extend_constraints.size() == 1) {
-        return facet_type_info.extend_constraints.front();
-      }
-    }
-
-    // TODO: Handle other cases.
+    // TODO: Handle ImplWitness.
     return std::nullopt;
   }
 
@@ -466,17 +446,17 @@ class Stringifier {
                         ")");
     }
 
-    if (auto witness =
-            sem_ir_->insts().TryGetAs<FacetAccessWitness>(witness_inst_id)) {
+    if (auto lookup =
+            sem_ir_->insts().TryGetAs<LookupImplWitness>(witness_inst_id)) {
       bool period_self = false;
       if (auto sym_name = sem_ir_->insts().TryGetAs<BindSymbolicName>(
-              witness->facet_value_inst_id)) {
+              lookup->query_self_inst_id)) {
         auto name_id =
             sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
         period_self = (name_id == SemIR::NameId::PeriodSelf);
       }
       if (!period_self) {
-        step_stack_->PushInstId(witness->facet_value_inst_id);
+        step_stack_->PushInstId(lookup->query_self_inst_id);
       }
     } else {
       // TODO: Omit parens if not needed for precedence.

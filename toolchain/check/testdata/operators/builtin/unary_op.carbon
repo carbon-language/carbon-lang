@@ -92,7 +92,7 @@ fn Constant() {
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Not(%b.param_patt: bool) -> bool {
+// CHECK:STDOUT: fn @Not(%b.param: bool) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   %.loc12: bool = not %b.ref

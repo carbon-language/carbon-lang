@@ -102,7 +102,7 @@ fn Initializing() {
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Value(%n.param_patt: %X) {
+// CHECK:STDOUT: fn @Value(%n.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %m.patt: %X = binding_pattern m
@@ -114,7 +114,7 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Reference(%p.param_patt: %ptr.d17) {
+// CHECK:STDOUT: fn @Reference(%p.param: %ptr.d17) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %q.patt: %ptr.d17 = binding_pattern q
@@ -131,7 +131,7 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %X;
+// CHECK:STDOUT: fn @Make() -> %return.param: %X;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Initializing() {
 // CHECK:STDOUT: !entry:

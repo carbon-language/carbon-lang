@@ -89,9 +89,9 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .field = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Member[%self.param_patt: %C]();
+// CHECK:STDOUT: fn @Member(%self.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%ptr.param_patt: %ptr.019) {
+// CHECK:STDOUT: fn @Foo(%ptr.param: %ptr.019) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ptr.ref.loc17: %ptr.019 = name_ref ptr, %ptr.loc16_8
 // CHECK:STDOUT:   %.loc17_4.1: ref %C = deref %ptr.ref.loc17

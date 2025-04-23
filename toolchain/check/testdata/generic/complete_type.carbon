@@ -169,7 +169,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param_patt: %A.1d4) {
+// CHECK:STDOUT: fn @F(%x.param: %A.1d4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -251,7 +251,7 @@ fn G() { F(B); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc6_6.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc6_6.1: type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%T.loc6_6.2 (%T) = binding_pattern v
@@ -334,7 +334,7 @@ fn G() { F(B); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc6_6.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc6_6.1: type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%T.loc6_6.2 (%T) = binding_pattern v

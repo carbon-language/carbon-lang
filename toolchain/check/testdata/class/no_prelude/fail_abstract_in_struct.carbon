@@ -243,7 +243,7 @@ fn Var5() {
 // CHECK:STDOUT:   .Self = constants.%Abstract3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param_patt: %Abstract3) {
+// CHECK:STDOUT: fn @F(%a.param: %Abstract3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %struct_type.m3.fe4 = binding_pattern l

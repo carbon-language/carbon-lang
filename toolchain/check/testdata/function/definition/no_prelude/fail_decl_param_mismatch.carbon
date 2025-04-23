@@ -191,21 +191,21 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%x.param_patt: %empty_tuple.type) {
+// CHECK:STDOUT: fn @F.2(%x.param: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.1(%x.param_patt: %empty_tuple.type);
+// CHECK:STDOUT: fn @G.1(%x.param: %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H.1(%x.param_patt: %empty_tuple.type);
+// CHECK:STDOUT: fn @H.1(%x.param: %empty_tuple.type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H.2(%x.param_patt: <error>) {
+// CHECK:STDOUT: fn @H.2(%x.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

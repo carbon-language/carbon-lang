@@ -126,7 +126,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "package_raw_core.carbon"];
+// CHECK:STDOUT: fn @F [from "package_raw_core.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:

@@ -144,7 +144,7 @@ class C(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param_patt: @F.%T (%T)) -> @F.%T (%T) {
+// CHECK:STDOUT:   fn(%n.param: @F.%T (%T)) -> @F.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @F.%T (%T) = name_ref n, %n
 // CHECK:STDOUT:     return %n.ref
@@ -160,7 +160,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %T [symbolic = %require_complete.loc10 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @G.%Class (%Class)]() -> @G.%T (%T) {
+// CHECK:STDOUT:   fn(%self.param: @G.%Class (%Class)) -> @G.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc13 [concrete = @Class.%.loc13]

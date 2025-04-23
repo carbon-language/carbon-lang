@@ -106,7 +106,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   .p = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {
+// CHECK:STDOUT: fn @F(%self.param.loc21: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc21
 // CHECK:STDOUT:   %p.ref: %Class.elem = name_ref p, @Class.%.loc18 [concrete = @Class.%.loc18]
@@ -122,7 +122,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   return %.loc22_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param_patt: %Class {
+// CHECK:STDOUT: fn @Make() -> %return.param: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %Class = binding_pattern s

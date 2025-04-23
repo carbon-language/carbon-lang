@@ -213,11 +213,11 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self.param_patt: %C](%other.param_patt: %C) -> %C;
+// CHECK:STDOUT: fn @Op.2(%self.param: %C, %other.param: %C) -> %return.param: %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.4[addr %self.param_patt: %ptr.019](%other.param_patt: %C);
+// CHECK:STDOUT: fn @Op.4(%self.param: %ptr.019, %other.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test(%a.param_patt: %C, %b.param_patt: %D) -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @Test(%a.param: %C, %b.param: %D) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -229,7 +229,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAssign(%b.param_patt: %D) {
+// CHECK:STDOUT: fn @TestAssign(%b.param: %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a

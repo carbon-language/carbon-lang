@@ -167,7 +167,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: %Class.247) -> %i32 {
+// CHECK:STDOUT: fn @F(%c.param: %Class.247) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.247 = name_ref c, %c
 // CHECK:STDOUT:   %x.ref: %Class.elem.2d8 = name_ref x, @Class.%.loc12 [concrete = @Class.%.loc12]
@@ -186,7 +186,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc19_26.2, %T.loc19_6.2 [symbolic = %Class.elem (constants.%Class.elem.e262de.1)]
 // CHECK:STDOUT:   %require_complete.loc20: <witness> = require_complete_type %T.loc19_6.2 [symbolic = %require_complete.loc20 (constants.%require_complete.4aeca8.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc19_6.1: type, %c.param_patt: @G.%Class.loc19_26.2 (%Class.fe1b2d.1)) -> @G.%T.loc19_6.2 (%T) {
+// CHECK:STDOUT:   fn(%c.param: @G.%Class.loc19_26.2 (%Class.fe1b2d.1)) -> @G.%T.loc19_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @G.%Class.loc19_26.2 (%Class.fe1b2d.1) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.e262de.1) = name_ref x, @Class.%.loc12 [concrete = @Class.%.loc12]
@@ -206,7 +206,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete.loc23_17: <witness> = require_complete_type %Class.loc23_26.2 [symbolic = %require_complete.loc23_17 (constants.%require_complete.4f8a42.2)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc23_26.2, %U.loc23_6.2 [symbolic = %Class.elem (constants.%Class.elem.e262de.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.patt.loc23_6.1: type, %c.param_patt: @H.%Class.loc23_26.2 (%Class.fe1b2d.2)) -> @H.%U.loc23_6.2 (%U) {
+// CHECK:STDOUT:   fn(%c.param: @H.%Class.loc23_26.2 (%Class.fe1b2d.2)) -> @H.%U.loc23_6.2 (%U) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @H.%Class.loc23_26.2 (%Class.fe1b2d.2) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.e262de.2) = name_ref x, @Class.%.loc12 [concrete = @Class.%.loc12]

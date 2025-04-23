@@ -1075,29 +1075,29 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PossiblyF();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%b.param_patt: bool);
+// CHECK:STDOUT: fn @F.2(%b.param: bool);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[%self.param_patt: %FExtraImplicitParam]();
+// CHECK:STDOUT: fn @F.3(%self.param: %FExtraImplicitParam);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.5(@J.%Self: %J.type) {
-// CHECK:STDOUT:   fn[%self.param_patt: bool](%b.param_patt: bool) -> bool;
+// CHECK:STDOUT:   fn(%self.param: bool, %b.param: bool) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.6[%self.param_patt: bool]() -> bool;
+// CHECK:STDOUT: fn @F.6(%self.param: bool) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.7(%b.param_patt: bool) -> bool;
+// CHECK:STDOUT: fn @F.7(%b.param: bool) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.8[%self.param_patt: bool](%b.param_patt: bool);
+// CHECK:STDOUT: fn @F.8(%self.param: bool, %b.param: bool);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.9[%self.param_patt: bool](%b.param_patt: %FDifferentParamType) -> bool;
+// CHECK:STDOUT: fn @F.9(%self.param: bool, %b.param: %FDifferentParamType) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.10[%self.param_patt: %FDifferentImplicitParamType](%b.param_patt: bool) -> bool;
+// CHECK:STDOUT: fn @F.10(%self.param: %FDifferentImplicitParamType, %b.param: bool) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.11[%self.param_patt: bool](%b.param_patt: bool) -> %FDifferentReturnType;
+// CHECK:STDOUT: fn @F.11(%self.param: bool, %b.param: bool) -> %FDifferentReturnType;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.12[%self.param_patt: bool](%not_b.param_patt: bool) -> bool;
+// CHECK:STDOUT: fn @F.12(%self.param: bool, %not_b.param: bool) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.13(@SelfNested.%Self: %SelfNested.type) {
 // CHECK:STDOUT:   %Self: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2ff)]
@@ -1107,12 +1107,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc188_16.1, %struct_type.x.y.loc188_37.1) [symbolic = %tuple.type (constants.%tuple.type.229)]
 // CHECK:STDOUT:   %array_type.loc188_57.1: type = array_type constants.%int_4, %Self.as_type.loc188_16.1 [symbolic = %array_type.loc188_57.1 (constants.%array_type.873)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param_patt: @F.13.%tuple.type (%tuple.type.229)) -> @F.13.%array_type.loc188_57.1 (%array_type.873);
+// CHECK:STDOUT:   fn(%x.param: @F.13.%tuple.type (%tuple.type.229)) -> @F.13.%array_type.loc188_57.1 (%array_type.873);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.14(%x.param_patt: %tuple.type.a7d) -> %array_type.a41;
+// CHECK:STDOUT: fn @F.14(%x.param: %tuple.type.a7d) -> %array_type.a41;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.15(%x.param_patt: %tuple.type.eb9) -> %array_type.a41;
+// CHECK:STDOUT: fn @F.15(%x.param: %tuple.type.eb9) -> %array_type.a41;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.826) {}
 // CHECK:STDOUT:

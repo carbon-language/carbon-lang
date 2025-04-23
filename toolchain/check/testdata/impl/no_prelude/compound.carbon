@@ -191,7 +191,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: @Convert.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc4_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_20.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @Convert.%Self.as_type.loc4_20.1 (%Self.as_type)) -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -284,8 +284,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %F1.ref: %NonInstance1.assoc_type = name_ref F1, @NonInstance1.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %NonInstance1.facet: %NonInstance1.type = facet_value constants.%struct_type.a, (constants.%NonInstance1.impl_witness) [concrete = constants.%NonInstance1.facet]
 // CHECK:STDOUT:   %.loc12_11: %NonInstance1.type = converted %struct_type.a, %NonInstance1.facet [concrete = constants.%NonInstance1.facet]
-// CHECK:STDOUT:   %as_wit.iface0: <witness> = facet_access_witness %.loc12_11, element0 [concrete = constants.%NonInstance1.impl_witness]
-// CHECK:STDOUT:   %impl.elem0: %.a2c = impl_witness_access %as_wit.iface0, element0 [concrete = constants.%F1.c75]
+// CHECK:STDOUT:   %impl.elem0: %.a2c = impl_witness_access constants.%NonInstance1.impl_witness, element0 [concrete = constants.%F1.c75]
 // CHECK:STDOUT:   %F1.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -421,7 +420,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NonInstanceCall2(%n.param_patt: %struct_type.b) {
+// CHECK:STDOUT: fn @NonInstanceCall2(%n.param: %struct_type.b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %struct_type.b = name_ref n, %n
 // CHECK:STDOUT:   %NonInstance2.ref: type = name_ref NonInstance2, file.%NonInstance2.decl [concrete = constants.%NonInstance2.type]
@@ -436,7 +435,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: @Convert.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F2.1(constants.%Self.5a9) {}
@@ -601,7 +600,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NonInstanceCallIndirect(%p.param_patt: %ptr) {
+// CHECK:STDOUT: fn @NonInstanceCallIndirect(%p.param: %ptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %NonInstance3.ref: type = name_ref NonInstance3, file.%NonInstance3.decl [concrete = constants.%NonInstance3.type]
@@ -617,7 +616,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: @Convert.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type)]() -> @Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F3.1(constants.%Self.dd1) {}
@@ -762,15 +761,15 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: %Instance1.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc4_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @G1.1.%Self.as_type.loc4_15.1 (%Self.as_type)]();
+// CHECK:STDOUT:   fn(%self.param: @G1.1.%Self.as_type.loc4_15.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G1.2[%self.param_patt: %struct_type.d]() {
+// CHECK:STDOUT: fn @G1.2(%self.param: %struct_type.d) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InstanceCall(%n.param_patt: %struct_type.d) {
+// CHECK:STDOUT: fn @InstanceCall(%n.param: %struct_type.d) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %struct_type.d = name_ref n, %n
 // CHECK:STDOUT:   %Instance1.ref: type = name_ref Instance1, file.%Instance1.decl [concrete = constants.%Instance1.type]
@@ -781,7 +780,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InstanceCallIndirect(%p.param_patt: %ptr) {
+// CHECK:STDOUT: fn @InstanceCallIndirect(%p.param: %ptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %Instance1.ref: type = name_ref Instance1, file.%Instance1.decl [concrete = constants.%Instance1.type]
@@ -886,10 +885,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Self: %Instance2.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc4_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc4_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @G2.1.%Self.as_type.loc4_15.1 (%Self.as_type)]();
+// CHECK:STDOUT:   fn(%self.param: @G2.1.%Self.as_type.loc4_15.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G2.2[%self.param_patt: %struct_type.e]() {
+// CHECK:STDOUT: fn @G2.2(%self.param: %struct_type.e) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

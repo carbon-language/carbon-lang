@@ -128,20 +128,20 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestUnary(%a.param_patt: %C) -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @TestUnary(%a.param: %C) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestBinary(%a.param_patt: %C, %b.param_patt: %C) -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @TestBinary(%a.param: %C, %b.param: %C) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestRef(%b.param_patt: %C) {
+// CHECK:STDOUT: fn @TestRef(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a

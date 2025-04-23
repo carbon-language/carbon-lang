@@ -383,10 +383,10 @@ class Class(U:! type) {
 // CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.5ab3ec.3: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %i32;
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %return.param_patt: %CompleteClass.a06 [from "foo.carbon"] {
+// CHECK:STDOUT: fn @F.2() -> %return.param: %CompleteClass.a06 [from "foo.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.44a = struct_literal (%int_1)
@@ -563,10 +563,10 @@ class Class(U:! type) {
 // CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.5ab3ec.2: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %i32;
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %CompleteClass.e9e [from "foo.carbon"];
+// CHECK:STDOUT: fn @F.2 [from "foo.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseField() -> %i32 {
 // CHECK:STDOUT: !entry:
@@ -730,10 +730,10 @@ class Class(U:! type) {
 // CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.5ab3ec.2: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %i32;
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %CompleteClass.a06 [from "foo.carbon"];
+// CHECK:STDOUT: fn @F.2 [from "foo.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

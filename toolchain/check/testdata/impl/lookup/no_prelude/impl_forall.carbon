@@ -301,7 +301,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %Self: @F.1.%I.type (%I.type.325e65.1) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.209206.1)]
 // CHECK:STDOUT:   %Self.as_type.loc8_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc8_14.1 (%Self.as_type)]() -> @F.1.%U (%U);
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc8_14.1 (%Self.as_type)) -> @F.1.%U (%U);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(@impl.%V.loc11_14.1: type) {
@@ -313,7 +313,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %require_complete.loc12_12: <witness> = require_complete_type %A [symbolic = %require_complete.loc12_12 (constants.%require_complete.5b8aee.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %V [symbolic = %A.elem (constants.%A.elem.1ceb36.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.2.%A (%A.13025a.2)]() -> @F.2.%V (%V) {
+// CHECK:STDOUT:   fn(%self.param: @F.2.%A (%A.13025a.2)) -> @F.2.%V (%V) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @F.2.%A (%A.13025a.2) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @F.2.%A.elem (%A.elem.1ceb36.2) = name_ref n, @A.%.loc4 [concrete = @A.%.loc4]
@@ -342,7 +342,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %impl.elem0.loc18_11.2: @TestGeneric.%.loc18_11 (%.fe1) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_11.2: <specific function> = specific_impl_function %impl.elem0.loc18_11.2, @F.1(%W.loc17_16.2, %I.facet) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%W.patt.loc17_16.1: type](%a.param_patt: @TestGeneric.%A.loc17_32.2 (%A.13025a.3)) -> @TestGeneric.%W.loc17_16.2 (%W) {
+// CHECK:STDOUT:   fn(%a.param: @TestGeneric.%A.loc17_32.2 (%A.13025a.3)) -> @TestGeneric.%W.loc17_16.2 (%W) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @TestGeneric.%A.loc17_32.2 (%A.13025a.3) = name_ref a, %a
 // CHECK:STDOUT:     %I.ref: %I.type.dac = name_ref I, file.%I.decl [concrete = constants.%I.generic]
@@ -361,7 +361,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestSpecific(%a.param_patt: %A.235) -> %empty_struct_type {
+// CHECK:STDOUT: fn @TestSpecific(%a.param: %A.235) -> %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A.235 = name_ref a, %a
 // CHECK:STDOUT:   %I.ref: %I.type.dac = name_ref I, file.%I.decl [concrete = constants.%I.generic]

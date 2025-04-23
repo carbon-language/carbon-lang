@@ -200,7 +200,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc9_9: <witness> = require_complete_type %T [symbolic = %require_complete.loc9_9 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @F.%T (%T)} [symbolic = %struct_type.n (constants.%struct_type.n.848)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param_patt: @F.%T (%T)) -> %return.param_patt: @F.%Inner (%Inner.51b) {
+// CHECK:STDOUT:   fn(%n.param: @F.%T (%T)) -> %return.param: @F.%Inner (%Inner.51b) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @F.%T (%T) = name_ref n, %n
 // CHECK:STDOUT:     %.loc9_39.1: @F.%struct_type.n (%struct_type.n.848) = struct_literal (%n.ref)
@@ -582,7 +582,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Self: @F.1.%Inner.type (%Inner.type.392) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.770)]
 // CHECK:STDOUT:   %Self.as_type.loc6_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc6_16.1 (constants.%Self.as_type.ea1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc6_16.1 (%Self.as_type.ea1)]() -> @F.1.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc6_16.1 (%Self.as_type.ea1)) -> @F.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(@Outer.%T.loc4_13.1: type) {
@@ -603,7 +603,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %impl.elem0.loc11_41.2: @F.2.%.loc11_41 (%.692) = impl_witness_access %Inner.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_41.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc11_41.2: <specific function> = specific_impl_function %impl.elem0.loc11_41.2, @F.1(%T, %Inner.facet) [symbolic = %specific_impl_fn.loc11_41.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.2.%C (%C.390)]() -> @F.2.%T (%T) {
+// CHECK:STDOUT:   fn(%self.param: @F.2.%C (%C.390)) -> @F.2.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @F.2.%C (%C.390) = name_ref self, %self
 // CHECK:STDOUT:     %.loc11_43: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.type (constants.%Inner.type.392)]
@@ -621,7 +621,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[%self.param_patt: %D]() -> %i32;
+// CHECK:STDOUT: fn @F.3(%self.param: %D) -> %i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() -> %i32 {
 // CHECK:STDOUT: !entry:

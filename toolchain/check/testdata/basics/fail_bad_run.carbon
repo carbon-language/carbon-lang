@@ -52,7 +52,7 @@ fn Run() -> String {}
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() -> %return.param_patt: String {
+// CHECK:STDOUT: fn @Run() -> %return.param: String {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -48,7 +48,6 @@ fn F() {
   var explicit_return: ExplicitReturn;
   var with_addr: WithAddr;
   if (true) {
-    // TODO: Destroy in nested scope.
     var in_scope: NoAddr;
   }
 }
@@ -234,15 +233,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.1() -> %NoAddr;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %NoAddr]();
+// CHECK:STDOUT: fn @destroy.1(%self.param: %NoAddr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> %ExplicitReturn;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.2[%self.param_patt: %ExplicitReturn]() -> %empty_tuple.type;
+// CHECK:STDOUT: fn @destroy.2(%self.param: %ExplicitReturn) -> %empty_tuple.type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.3() -> %WithAddr;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.3[addr %self.param_patt: %ptr]();
+// CHECK:STDOUT: fn @destroy.3(%self.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_return.carbon
 // CHECK:STDOUT:
@@ -358,11 +357,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %NoAddr]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.1 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.2[%self.param_patt: %ExplicitReturn]() -> %empty_tuple.type [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.2 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst83: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.3 [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_scope.carbon
 // CHECK:STDOUT:
@@ -476,30 +475,32 @@ fn G() { F({}); }
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %in_scope.patt: %NoAddr = binding_pattern in_scope
-// CHECK:STDOUT:     %.loc11: %NoAddr = var_pattern %in_scope.patt
+// CHECK:STDOUT:     %.loc10_5.1: %NoAddr = var_pattern %in_scope.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %in_scope.var: ref %NoAddr = var in_scope
 // CHECK:STDOUT:   %destroy.ref.4: %destroy.type.bc5 = name_ref destroy, imports.%Main.import_ref.7fe [concrete = constants.%destroy.60f]
 // CHECK:STDOUT:   %destroy.bound.4: <bound method> = bound_method %in_scope.var, %destroy.ref.4
-// CHECK:STDOUT:   %NoAddr.ref.loc11: type = name_ref NoAddr, imports.%Main.NoAddr [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %NoAddr.ref.loc10: type = name_ref NoAddr, imports.%Main.NoAddr [concrete = constants.%NoAddr]
 // CHECK:STDOUT:   %in_scope: ref %NoAddr = bind_name in_scope, %in_scope.var
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
+// CHECK:STDOUT:   %.loc10_5.2: %NoAddr = bind_value %in_scope.var
+// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.4(%.loc10_5.2)
 // CHECK:STDOUT:   %addr: %ptr.b4e = addr_of %with_addr.var
-// CHECK:STDOUT:   %destroy.call.1: init %empty_tuple.type = call %destroy.bound.3(%addr)
+// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.3(%addr)
 // CHECK:STDOUT:   %.loc7_3.2: %ExplicitReturn = bind_value %explicit_return.var
-// CHECK:STDOUT:   %destroy.call.2: init %empty_tuple.type = call %destroy.bound.2(%.loc7_3.2)
+// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.2(%.loc7_3.2)
 // CHECK:STDOUT:   %.loc6_3.2: %NoAddr = bind_value %no_addr.var
-// CHECK:STDOUT:   %destroy.call.3: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
+// CHECK:STDOUT:   %destroy.call.4: init %empty_tuple.type = call %destroy.bound.1(%.loc6_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %NoAddr]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.1 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.2[%self.param_patt: %ExplicitReturn]() -> %empty_tuple.type [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.2 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst83: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.3 [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- temp.carbon
 // CHECK:STDOUT:
@@ -615,17 +616,17 @@ fn G() { F({}); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.1() -> %NoAddr [from "types.carbon"];
+// CHECK:STDOUT: fn @Make.1 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.1[%self.param_patt: %NoAddr]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.1 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.2() -> %ExplicitReturn [from "types.carbon"];
+// CHECK:STDOUT: fn @Make.2 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.2[%self.param_patt: %ExplicitReturn]() -> %empty_tuple.type [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.2 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.3() -> %WithAddr [from "types.carbon"];
+// CHECK:STDOUT: fn @Make.3 [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.3[addr <unexpected>.inst93: %ptr.b4e]() [from "types.carbon"];
+// CHECK:STDOUT: fn @destroy.3 [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_recovery.carbon
 // CHECK:STDOUT:
@@ -693,7 +694,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @destroy.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.2[%self.param_patt: %Args]();
+// CHECK:STDOUT: fn @destroy.2(%self.param: %Args, %x.param: %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
@@ -792,7 +793,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %.4: <instruction> = access_optional_member_action %.1, destroy [template]
 // CHECK:STDOUT:   %.5: type = type_of_inst %.4 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc6_15.1: type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%C.loc7_13.2 (%C.f2e) = binding_pattern v

@@ -121,7 +121,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %require_complete.loc16_26: <witness> = require_complete_type %Class [symbolic = %require_complete.loc16_26 (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %require_complete.loc16_35: <witness> = require_complete_type %T.loc13 [symbolic = %require_complete.loc16_35 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%Class (%Class)](%n.param_patt: @F.%T.loc13 (%T)) {
+// CHECK:STDOUT:   fn(%self.param.loc16: @F.%Class (%Class), %n.param.loc16: @F.%T.loc13 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

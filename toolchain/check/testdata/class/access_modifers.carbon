@@ -264,7 +264,7 @@ class A {
 // CHECK:STDOUT:   return %.loc9_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param_patt: %Circle {
+// CHECK:STDOUT: fn @Make() -> %return.param: %Circle {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc13_24.1: %struct_type.radius.f47 = struct_literal (%int_5)
@@ -475,7 +475,7 @@ class A {
 // CHECK:STDOUT:   .Compute = %Compute.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetRadius[%self.param_patt: %Circle]() -> %i32 {
+// CHECK:STDOUT: fn @GetRadius(%self.param: %Circle) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%.loc5 [concrete = @Circle.%.loc5]
@@ -497,7 +497,7 @@ class A {
 // CHECK:STDOUT:   return %.loc12_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Compute[%self.param_patt: %Circle]() -> %i32 {
+// CHECK:STDOUT: fn @Compute(%self.param: %Circle) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %SomeInternalFunction.ref: %SomeInternalFunction.type = name_ref SomeInternalFunction, @Circle.%SomeInternalFunction.decl [concrete = constants.%SomeInternalFunction]

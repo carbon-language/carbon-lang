@@ -160,7 +160,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @InitFromStructGeneric.%T.loc8_26.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k.b21)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc9_17.2, %T.loc8_26.2 [symbolic = %Class.elem (constants.%Class.elem.e26)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc8_26.1: type, %x.param_patt: @InitFromStructGeneric.%T.loc8_26.2 (%T)) -> @InitFromStructGeneric.%T.loc8_26.2 (%T) {
+// CHECK:STDOUT:   fn(%x.param: @InitFromStructGeneric.%T.loc8_26.2 (%T)) -> @InitFromStructGeneric.%T.loc8_26.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = binding_pattern v
@@ -188,7 +188,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InitFromStructSpecific(%x.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @InitFromStructSpecific(%x.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %Class.247 = binding_pattern v
@@ -356,7 +356,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Adapt.loc9_23.2: type = class_type @Adapt, @Adapt(%T.loc8_27.2) [symbolic = %Adapt.loc9_23.2 (constants.%Adapt.2e4)]
 // CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %Adapt.loc9_23.2 [symbolic = %require_complete.loc9 (constants.%require_complete.26c)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc8_27.1: type, %x.param_patt: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T)) -> @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) {
+// CHECK:STDOUT:   fn(%x.param: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T)) -> @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [concrete = constants.%Adapt.generic]
@@ -371,7 +371,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InitFromAdaptedSpecific(%x.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @InitFromAdaptedSpecific(%x.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [concrete = constants.%Adapt.generic]

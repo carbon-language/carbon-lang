@@ -304,7 +304,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   .k = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {
+// CHECK:STDOUT: fn @F(%self.param.loc20: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc20
 // CHECK:STDOUT:   %k.ref: %Class.elem = name_ref k, @Class.%.loc17 [concrete = @Class.%.loc17]
@@ -313,9 +313,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc21_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.e71]() -> %i32;
+// CHECK:STDOUT: fn @G(%self.param: %ptr.e71) -> %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%c.param_patt: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Call(%c.param: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
@@ -326,7 +326,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc27_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallAlias(%c.param_patt: %Class) -> %i32 {
+// CHECK:STDOUT: fn @CallAlias(%c.param: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %A.ref: %F.type = name_ref A, @Class.%A [concrete = constants.%F]
@@ -382,7 +382,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc40_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFThroughPointer(%p.param_patt: %ptr.e71) -> %i32 {
+// CHECK:STDOUT: fn @CallFThroughPointer(%p.param: %ptr.e71) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
 // CHECK:STDOUT:   %.loc44_11.1: ref %Class = deref %p.ref
@@ -395,7 +395,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc44_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallGThroughPointer(%p.param_patt: %ptr.e71) -> %i32 {
+// CHECK:STDOUT: fn @CallGThroughPointer(%p.param: %ptr.e71) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
 // CHECK:STDOUT:   %.loc48_11: ref %Class = deref %p.ref
@@ -408,7 +408,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc48_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %Class;
+// CHECK:STDOUT: fn @Make() -> %return.param: %Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFOnInitializingExpr() -> %i32 {
 // CHECK:STDOUT: !entry:

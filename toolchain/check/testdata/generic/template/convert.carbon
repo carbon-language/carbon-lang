@@ -228,7 +228,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %.loc5_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.2 [template]
 // CHECK:STDOUT:   %.loc5_11.4: <instruction> = convert_to_value_action %.loc5_11.1, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc5_11.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc5_11.3
@@ -237,7 +237,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test1(%n.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @Test1(%n.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
@@ -248,7 +248,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   return %.loc9_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self.param_patt: %C]() -> %i32 {
+// CHECK:STDOUT: fn @Convert.2(%self.param: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc13 [concrete = @C.%.loc13]
@@ -257,7 +257,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   return %.loc15_50.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test2(%c.param_patt: %C) -> %i32 {
+// CHECK:STDOUT: fn @Test2(%c.param: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
@@ -387,7 +387,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.2 [template]
 // CHECK:STDOUT:   %.loc11_11.4: <instruction> = convert_to_value_action %.loc11_11.1, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc11_11.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc11_11.3
@@ -396,7 +396,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test(%d.param_patt: %D) -> %i32 {
+// CHECK:STDOUT: fn @Test(%d.param: %D) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d

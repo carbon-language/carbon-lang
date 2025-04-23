@@ -353,7 +353,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeTuple() -> %tuple.type.b6b;
+// CHECK:STDOUT: fn @MakeTuple() -> %return.param: %tuple.type.b6b;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:

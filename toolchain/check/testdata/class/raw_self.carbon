@@ -164,7 +164,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   .n = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[addr %self.param_patt.loc17_21: %ptr.e71](%self.param_patt.loc17_36: %i32) {
+// CHECK:STDOUT: fn @F(%self.param.loc17_21: %ptr.e71, %self.param.loc17_36: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc18_5: %ptr.e71 = name_ref self, %self.loc17_17
 // CHECK:STDOUT:   %.loc18_4: ref %Class = deref %self.ref.loc18_5
@@ -175,7 +175,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.param_patt.loc21_16: %Class](%self.param_patt.loc21_30: %i32) -> %return.param_patt: %tuple.type.d07 {
+// CHECK:STDOUT: fn @G(%self.param.loc21_16: %Class, %self.param.loc21_30: %i32) -> %return.param.loc21: %tuple.type.d07 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc22_11: %Class = name_ref self, %self.loc21_12
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc14 [concrete = @Class.%.loc14]

@@ -57,6 +57,8 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
       return KeywordModifierSet::Access;
     case ModifierOrder::Extern:
       return KeywordModifierSet::Extern;
+    case ModifierOrder::Extend:
+      return KeywordModifierSet::Extend;
     case ModifierOrder::Decl:
       return KeywordModifierSet::Decl;
   }

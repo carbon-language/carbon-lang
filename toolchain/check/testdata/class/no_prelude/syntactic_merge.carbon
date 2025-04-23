@@ -1156,9 +1156,9 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self.param_patt: %ptr.11f]();
+// CHECK:STDOUT: fn @F.1(%self.param: %ptr.11f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[addr %self.param_patt: %ptr.11f]() {
+// CHECK:STDOUT: fn @F.2(%self.param: %ptr.11f) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.11f = name_ref self, %self
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref

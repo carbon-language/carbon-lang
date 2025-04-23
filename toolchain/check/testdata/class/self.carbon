@@ -154,7 +154,7 @@ class Class {
 // CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {
+// CHECK:STDOUT: fn @F(%self.param.loc11: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc11
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [concrete = @Class.%.loc8]
@@ -163,7 +163,7 @@ class Class {
 // CHECK:STDOUT:   return %.loc12_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.e71]() -> %i32 {
+// CHECK:STDOUT: fn @G(%self.param.loc15: %ptr.e71) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.e71 = name_ref self, %self.loc15
 // CHECK:STDOUT:   %.loc16_11: ref %Class = deref %self.ref
@@ -224,5 +224,5 @@ class Class {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> <error>;
+// CHECK:STDOUT: fn @F(%self.param: %Class) -> <error>;
 // CHECK:STDOUT:

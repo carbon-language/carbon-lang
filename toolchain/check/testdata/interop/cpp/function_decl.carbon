@@ -271,7 +271,7 @@ fn F() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Carbon_foo(%val.param_patt: %i32);
+// CHECK:STDOUT: fn @Carbon_foo(%val.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
@@ -288,7 +288,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo_int[]() -> %i32;
+// CHECK:STDOUT: fn @foo_int();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_float_return_function_decl.carbon
 // CHECK:STDOUT:
@@ -398,7 +398,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%b.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_int_params_function_decl.carbon
 // CHECK:STDOUT:
@@ -484,7 +484,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%a.param_patt: %i32, %b.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_functions_with_int_params.carbon
 // CHECK:STDOUT:
@@ -605,9 +605,9 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo1[](%a.param_patt: %i32, %b.param_patt: %i32);
+// CHECK:STDOUT: fn @foo1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo2[](%c.param_patt: %i32, %b.param_patt: %i32);
+// CHECK:STDOUT: fn @foo2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_unnamed_int_param_function_decl.carbon
 // CHECK:STDOUT:
@@ -679,7 +679,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%_.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_default_param_parameterless_call.carbon
 // CHECK:STDOUT:
@@ -727,7 +727,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%a.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_default_param_sucessful_call_function_decl.carbon
 // CHECK:STDOUT:
@@ -799,7 +799,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%a.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_ref_param_function_decl.carbon
 // CHECK:STDOUT:

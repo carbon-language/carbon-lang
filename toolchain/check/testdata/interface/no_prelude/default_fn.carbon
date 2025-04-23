@@ -117,7 +117,7 @@ class C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc14_16.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc14_16.1 (%Self.as_type)]() {
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc14_16.1 (%Self.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %c.patt: %C = binding_pattern c
@@ -141,7 +141,7 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %C]() {
+// CHECK:STDOUT: fn @F.2(%self.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

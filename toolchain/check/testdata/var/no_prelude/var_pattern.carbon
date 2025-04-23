@@ -213,7 +213,7 @@ class C {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param_patt: %empty_tuple.type, %.loc4_13: %empty_tuple.type);
+// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
@@ -331,7 +331,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%.loc8: <error>]();
+// CHECK:STDOUT: fn @F(%.param: <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_self.carbon
 // CHECK:STDOUT:
@@ -369,5 +369,5 @@ class C {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%.loc5: %C]();
+// CHECK:STDOUT: fn @F(%self.param: %C);
 // CHECK:STDOUT:

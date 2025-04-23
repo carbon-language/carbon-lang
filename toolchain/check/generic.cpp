@@ -308,8 +308,8 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // If the type is symbolic, replace it with a type specific to this generic.
   if ((dep_kind & DependentInst::SymbolicType) != DependentInst::None) {
     auto inst = context.insts().Get(inst_id);
-    auto type_id =
-        AddGenericTypeToEvalBlock(context, /*loc_id=*/inst_id, inst.type_id());
+    auto type_id = AddGenericTypeToEvalBlock(
+        context, context.insts().GetLocId(inst_id), inst.type_id());
     // TODO: Eventually, completeness requirements should be modeled as
     // constraints on the generic rather than properties of the type. For now,
     // require the transformed type to be complete if the original was.
