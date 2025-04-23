@@ -222,12 +222,6 @@ class File : public Printable<File> {
   }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
-  auto clang_source_locs() -> ValueStore<ClangSourceLocId>& {
-    return clang_source_locs_;
-  }
-  auto clang_source_locs() const -> const ValueStore<ClangSourceLocId>& {
-    return clang_source_locs_;
-  }
   auto constant_values() -> ConstantValueStore& { return constant_values_; }
   auto constant_values() const -> const ConstantValueStore& {
     return constant_values_;
@@ -240,6 +234,13 @@ class File : public Printable<File> {
   auto expr_regions() -> ValueStore<ExprRegionId>& { return expr_regions_; }
   auto expr_regions() const -> const ValueStore<ExprRegionId>& {
     return expr_regions_;
+  }
+
+  auto clang_source_locs() -> ValueStore<ClangSourceLocId>& {
+    return clang_source_locs_;
+  }
+  auto clang_source_locs() const -> const ValueStore<ClangSourceLocId>& {
+    return clang_source_locs_;
   }
 
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
