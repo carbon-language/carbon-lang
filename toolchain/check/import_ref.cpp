@@ -48,12 +48,10 @@ static auto SetImportIR(Context& context, SemIR::ImportIR import_ir,
                expected_import_ir_id);
 }
 
-auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void {
+auto SetApiImportIRs(Context& context, SemIR::ImportIR import_ir) -> void {
   SetImportIR(context, import_ir, SemIR::ImportIRId::ApiForImpl);
-}
-
-auto SetCppImportIR(Context& context, SemIR::ImportIR import_ir) -> void {
-  SetImportIR(context, import_ir, SemIR::ImportIRId::Cpp);
+  SetImportIR(context, {.decl_id = SemIR::InstId::None, .is_export = false},
+              SemIR::ImportIRId::Cpp);
 }
 
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)

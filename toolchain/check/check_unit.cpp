@@ -108,26 +108,21 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
                                  .import_id = SemIR::InstId::None});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
-  // If there is an implicit `api` import, set it first so that it uses the
-  // `ImportIRId::ApiForImpl` when processed for imports.
+  // Call `SetApiImportIRs()` to set `ImportIRId::ApiForImpl` and
+  // `ImportIRId::Cpp` first as required.
   if (unit_and_imports_->api_for_impl) {
     const auto& names = context_.parse_tree().packaging_decl()->names;
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
         context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
-    SetApiImportIR(context_,
-                   {.decl_id = import_decl_id,
-                    .is_export = false,
-                    .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
+    SetApiImportIRs(context_,
+                    {.decl_id = import_decl_id,
+                     .is_export = false,
+                     .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
   } else {
-    SetApiImportIR(context_,
-                   {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
+    SetApiImportIRs(context_,
+                    {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
   }
-
-  // Add an implicit `Cpp` import as the second import so that it uses the
-  // `ImportIRId::Cpp` when processed for imports.
-  SetCppImportIR(context_,
-                 {.decl_id = SemIR::InstId::None, .is_export = false});
 
   // Add import instructions for everything directly imported. Implicit imports
   // are handled separately.
