@@ -39,8 +39,10 @@ struct DependentInst {
   Kind kind;
 };
 
-// Add a dependent instruction to the current generic.
-auto AddDependentInst(Context& context, DependentInst dependent_inst) -> void;
+// Attach a dependent instruction to the current generic, updating its type and
+// constant value as necessary.
+auto AttachDependentInstToCurrentGeneric(Context& context,
+                                         DependentInst dependent_inst) -> void;
 
 // Discard the information about the current generic entity. This should be
 // called instead of `FinishGenericDecl` if the corresponding `Generic` object

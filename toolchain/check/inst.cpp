@@ -49,7 +49,8 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
 
   // Keep track of dependent instructions.
   if (dep_kind != DependentInst::None) {
-    AddDependentInst(context, {.inst_id = inst_id, .kind = dep_kind});
+    AttachDependentInstToCurrentGeneric(context,
+                                        {.inst_id = inst_id, .kind = dep_kind});
   }
 }
 
@@ -84,8 +85,8 @@ auto AddDependentActionInst(Context& context,
   context.constant_values().Set(inst_id, const_id);
 
   // Register the instruction to be added to the eval block.
-  AddDependentInst(context,
-                   {.inst_id = inst_id, .kind = DependentInst::Template});
+  AttachDependentInstToCurrentGeneric(
+      context, {.inst_id = inst_id, .kind = DependentInst::Template});
   return inst_id;
 }
 
