@@ -11,17 +11,17 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/min_prelude/fail_init_with_self.carbon
 
-// --- basic.carbon
+// --- fail_basic.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+4]]:15: error: `x` used before initialization [UsedBeforeInitialization]
+  // CHECK:STDERR: fail_basic.carbon:[[@LINE+4]]:15: error: `x` used before initialization [UsedBeforeInitialization]
   // CHECK:STDERR:   var x: () = x;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
   var x: () = x;
 }
 
-// CHECK:STDOUT: --- fail_init_with_self.carbon
+// CHECK:STDOUT: --- fail_basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
@@ -48,14 +48,14 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %.loc19_3: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc7_3: %empty_tuple.type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc19_11.1: type = splice_block %.loc19_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc19_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_11.3: type = converted %.loc19_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc7_11.1: type = splice_block %.loc7_11.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc7_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_11.3: type = converted %.loc7_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   return

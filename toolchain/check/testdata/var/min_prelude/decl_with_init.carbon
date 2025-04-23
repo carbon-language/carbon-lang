@@ -17,7 +17,7 @@ fn Main() {
   var x: () = ();
 }
 
-// CHECK:STDOUT: --- decl_with_init.carbon
+// CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
@@ -45,16 +45,16 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %.loc15_3.1: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc3_3.1: %empty_tuple.type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
-// CHECK:STDOUT:   %.loc15_16.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_16.2: init %empty_tuple.type = tuple_init () to %x.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_3.2: init %empty_tuple.type = converted %.loc15_16.1, %.loc15_16.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var, %.loc15_3.2
-// CHECK:STDOUT:   %.loc15_11.1: type = splice_block %.loc15_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc15_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_11.3: type = converted %.loc15_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc3_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc3_16.2: init %empty_tuple.type = tuple_init () to %x.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc3_3.2: init %empty_tuple.type = converted %.loc3_16.1, %.loc3_16.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var, %.loc3_3.2
+// CHECK:STDOUT:   %.loc3_11.1: type = splice_block %.loc3_11.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc3_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc3_11.3: type = converted %.loc3_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   return

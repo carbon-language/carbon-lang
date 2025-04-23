@@ -11,19 +11,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/min_prelude/fail_lookup_outside_scope.carbon
 
-// --- basic.carbon
+// --- fail_basic.carbon
 
 fn Main() {
   var x: ();
 }
 
-// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
+// CHECK:STDERR: fail_basic.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var y: () = x;
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 var y: () = x;
 
-// CHECK:STDOUT: --- fail_lookup_outside_scope.carbon
+// CHECK:STDOUT: --- fail_basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
@@ -48,12 +48,12 @@ var y: () = x;
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %empty_tuple.type = binding_pattern y
-// CHECK:STDOUT:     %.loc22_1: %empty_tuple.type = var_pattern %y.patt
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var y
-// CHECK:STDOUT:   %.loc22_9.1: type = splice_block %.loc22_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc22_9.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc22_9.3: type = converted %.loc22_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = bind_name y, %y.var
 // CHECK:STDOUT: }
@@ -62,12 +62,12 @@ var y: () = x;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %.loc15_3: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:     %.loc3_3: %empty_tuple.type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
-// CHECK:STDOUT:   %.loc15_11.1: type = splice_block %.loc15_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc15_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_11.3: type = converted %.loc15_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc3_11.1: type = splice_block %.loc3_11.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc3_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc3_11.3: type = converted %.loc3_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   return
