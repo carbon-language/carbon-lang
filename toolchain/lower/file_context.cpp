@@ -732,6 +732,12 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info)
     return nullptr;
   }
 
+  // Vtables can't be generated for generics, only for their specifics - and
+  // must be done lazily based on the use of those specifics.
+  if (class_info.generic_id != SemIR::GenericId::None) {
+    return nullptr;
+  }
+
   Mangler m(*this);
   std::string mangled_name = m.MangleVTable(class_info);
 

@@ -44,9 +44,7 @@ library "[[@TEST_NAME]]";
 
 fn NoOp() = "no_op";
 
-fn F() {
-  var x: () = NoOp();
-}
+var x: () = NoOp();
 
 // --- fail_signature.carbon
 
@@ -178,37 +176,34 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .NoOp = %NoOp.decl
-// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %.loc6_1: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoOp() = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %.loc7_3: %empty_tuple.type = var_pattern %x.patt
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %NoOp.ref: %NoOp.type = name_ref NoOp, file.%NoOp.decl [concrete = constants.%NoOp]
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %NoOp.ref() [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var, %no_op
-// CHECK:STDOUT:   %.loc7_11.1: type = splice_block %.loc7_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc7_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc7_11.3: type = converted %.loc7_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   assign file.%x.var, %no_op
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
