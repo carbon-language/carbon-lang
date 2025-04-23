@@ -34,7 +34,7 @@ struct ImportIRInst : public Printable<ImportIRInst> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{ir_id: " << ir_id << ", ";
     if (ir_id == ImportIRId::Cpp) {
-      out << "clang_source_location_id: " << clang_source_location_id;
+      out << "clang_source_loc_id: " << clang_source_loc_id;
     } else {
       out << "inst_id: " << inst_id;
     }
@@ -45,7 +45,7 @@ struct ImportIRInst : public Printable<ImportIRInst> {
       -> bool {
     return lhs.ir_id == rhs.ir_id &&
            (lhs.ir_id == ImportIRId::Cpp
-                ? lhs.clang_source_location_id == rhs.clang_source_location_id
+                ? lhs.clang_source_loc_id == rhs.clang_source_loc_id
                 : lhs.inst_id == rhs.inst_id);
   }
 
@@ -55,7 +55,7 @@ struct ImportIRInst : public Printable<ImportIRInst> {
     InstId inst_id;
 
     // Set iff `ir_id == ImportIRId::Cpp`.
-    ClangSourceLocationId clang_source_location_id;
+    ClangSourceLocId clang_source_loc_id;
   };
 };
 

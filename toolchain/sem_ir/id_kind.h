@@ -152,7 +152,7 @@ using IdKind = TypeEnum<
     AssociatedConstantId,
     BoolValue,
     CallParamIndex,
-    ClangSourceLocationId,
+    ClangSourceLocId,
     ClassId,
     CompileTimeBindIndex,
     ConstantId,

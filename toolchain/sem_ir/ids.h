@@ -745,8 +745,8 @@ struct TypeId : public IdBase<TypeId> {
 };
 
 // The ID of a Clang Source Location.
-struct ClangSourceLocationId : public IdBase<ClangSourceLocationId> {
-  static constexpr llvm::StringLiteral Label = "clang_source_location";
+struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
+  static constexpr llvm::StringLiteral Label = "clang_source_loc";
   using ValueType = clang::SourceLocation;
 
   using IdBase::IdBase;

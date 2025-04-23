@@ -222,12 +222,11 @@ class File : public Printable<File> {
   }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
-  auto clang_source_locations() -> ValueStore<ClangSourceLocationId>& {
-    return clang_source_locations_;
+  auto clang_source_locs() -> ValueStore<ClangSourceLocId>& {
+    return clang_source_locs_;
   }
-  auto clang_source_locations() const
-      -> const ValueStore<ClangSourceLocationId>& {
-    return clang_source_locations_;
+  auto clang_source_locs() const -> const ValueStore<ClangSourceLocId>& {
+    return clang_source_locs_;
   }
   auto constant_values() -> ConstantValueStore& { return constant_values_; }
   auto constant_values() const -> const ConstantValueStore& {
@@ -372,7 +371,7 @@ class File : public Printable<File> {
   ValueStore<ExprRegionId> expr_regions_;
 
   // C++ source locations for C++ interop.
-  ValueStore<ClangSourceLocationId> clang_source_locations_;
+  ValueStore<ClangSourceLocId> clang_source_locs_;
 };
 
 }  // namespace Carbon::SemIR

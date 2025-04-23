@@ -81,8 +81,8 @@ auto DiagnosticEmitter::TryConvertClangDiagnosticLoc(SemIRLoc loc) const
 
   CARBON_CHECK(sem_ir_->import_irs().Get(import_ir_inst.ir_id).sem_ir ==
                sem_ir_);
-  clang::SourceLocation clang_loc = sem_ir_->clang_source_locations().Get(
-      import_ir_inst.clang_source_location_id);
+  clang::SourceLocation clang_loc =
+      sem_ir_->clang_source_locs().Get(import_ir_inst.clang_source_loc_id);
 
   CARBON_CHECK(sem_ir_->cpp_ast());
   clang::PresumedLoc presumed_loc =
