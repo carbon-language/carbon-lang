@@ -965,16 +965,16 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
       StartDumpSemIRRange(comment_text.begin());
       AdvanceToLine(source_text, position, line_index_ + 1);
       return;
-    } else if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
+    }
+    if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
       EndDumpSemIRRange(comment_text.begin());
       AdvanceToLine(source_text, position, line_index_ + 1);
       return;
-    } else {
-      CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
-                        "whitespace is required after '//'");
-      emitter_.Emit(comment_text.begin() + 2,
-                    NoWhitespaceAfterCommentIntroducer);
     }
+
+    CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
+                      "whitespace is required after '//'");
+    emitter_.Emit(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer);
 
     // We use this to tweak the lexing of blocks below.
     is_valid_after_slashes = false;
