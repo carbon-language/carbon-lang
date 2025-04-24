@@ -826,7 +826,7 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 // Note that these can only be used with negative, non-`InstId` values.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
-  enum class Kind {
+  enum class Kind : uint8_t {
     None,
     ImportIRInstId,
     InstId,
