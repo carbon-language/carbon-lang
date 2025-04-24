@@ -26,9 +26,9 @@ index 9bdd454e1e36..0f30c21f63dc 100644
 +        "lib/fuzzer/Fuzzer*.def",
 +    ]),
 +    copts = [
-+      # Not using no-sanitize=address per https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow#false-positives
-+      "-fno-sanitize=memory,thread,undefined",
-+      "-fsanitize-coverage=0",
++        # Not using no-sanitize=address per https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow#false-positives
++        "-fno-sanitize=memory,thread,undefined",
++        "-fsanitize-coverage=0",
 +    ],
 +    includes = ["lib/fuzzer"],
 +)
