@@ -45,7 +45,7 @@ fn F(e: Empty) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%e.param_patt: %Empty.type) {
+// CHECK:STDOUT: fn @F(%e.param: %Empty.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

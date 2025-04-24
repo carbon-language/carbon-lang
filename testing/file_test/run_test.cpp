@@ -6,6 +6,9 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <utility>
+
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -122,7 +125,7 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
       input_stream = tmpfile();
       fwrite(split->content.c_str(), sizeof(char), split->content.size(),
              input_stream);
-      rewind(input_stream);
+      CARBON_CHECK(!fseek(input_stream, 0, SEEK_SET));
     } else if (!fs->addFile(split->filename, /*ModificationTime=*/0,
                             llvm::MemoryBuffer::getMemBuffer(
                                 split->content, split->filename,

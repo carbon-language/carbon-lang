@@ -5,6 +5,8 @@
 #include "toolchain/language_server/context.h"
 
 #include <memory>
+#include <optional>
+#include <utility>
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"

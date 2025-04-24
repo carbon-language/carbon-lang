@@ -122,17 +122,21 @@ class TypeStructureBuilder {
            SemIR::SpecificInterface interface_constraint) -> TypeStructure {
     CARBON_CHECK(work_list_.empty());
 
-    first_symbolic_distance_ = TypeStructure::InfiniteDistance;
+    symbolic_type_indices_.clear();
     structure_.clear();
 
     // The self type comes first in the type structure, so we push it last, as
     // the queue works from the back.
     Push(interface_constraint);
-    PushInstId(self_inst_id);
+    if (self_inst_id.has_value()) {
+      PushInstId(self_inst_id);
+    }
     BuildTypeStructure();
 
+    // TODO: This requires 4 SmallVector moves (two here and two in the
+    // constructor). Find a way to reduce that.
     return TypeStructure(std::exchange(structure_, {}),
-                         first_symbolic_distance_);
+                         std::exchange(symbolic_type_indices_, {}));
   }
 
  private:
@@ -206,6 +210,7 @@ class TypeStructureBuilder {
         case SemIR::ImplWitnessAccess::Kind:
         case SemIR::IntLiteralType::Kind:
         case SemIR::LegacyFloatType::Kind:
+        case SemIR::NamespaceType::Kind:
         case SemIR::StringType::Kind:
         case SemIR::TypeType::Kind:
         case SemIR::WitnessType::Kind: {
@@ -264,6 +269,10 @@ class TypeStructureBuilder {
           PushInstId(const_type.inner_id);
           break;
         }
+        case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
+          Push(assoc.type_id);
+          break;
+        }
         case CARBON_KIND(SemIR::PointerType pointer_type): {
           AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
           Push(CloseType());
@@ -272,16 +281,13 @@ class TypeStructureBuilder {
         }
         case CARBON_KIND(SemIR::TupleType tuple_type): {
           auto inner_types =
-              context_->type_blocks().Get(tuple_type.elements_id);
+              context_->inst_blocks().Get(tuple_type.type_elements_id);
           if (inner_types.empty()) {
             AppendStructural(TypeStructure::Structural::Concrete);
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType());
-            for (auto type :
-                 context_->type_blocks().Get(tuple_type.elements_id)) {
-              Push(type);
-            }
+            PushArgs(context_->inst_blocks().Get(tuple_type.type_elements_id));
           }
           break;
         }
@@ -293,8 +299,8 @@ class TypeStructureBuilder {
           } else {
             AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
             Push(CloseType());
-            for (const auto& field : fields) {
-              Push(field.type_id);
+            for (const auto& field : llvm::reverse(fields)) {
+              PushInstId(field.type_inst_id);
             }
           }
           break;
@@ -348,7 +354,7 @@ class TypeStructureBuilder {
       return SymbolicType();
     }
     // Non-type values are concrete, only types are symbolic.
-    if (type_id_of_inst_id != SemIR::TypeType::SingletonTypeId) {
+    if (type_id_of_inst_id != SemIR::TypeType::TypeId) {
       return SemIR::TypeId::None;
     }
     return context_->types().GetTypeIdForTypeInstId(inst_id);
@@ -391,18 +397,14 @@ class TypeStructureBuilder {
   // Append a structural element to the TypeStructure being built.
   auto AppendStructural(TypeStructure::Structural structural) -> void {
     if (structural == TypeStructure::Structural::Symbolic) {
-      // Sets the `distance` in `first_symbolic_distance_` if it does not
-      // already have a non-infinite value.
-      if (first_symbolic_distance_ == TypeStructure::InfiniteDistance) {
-        first_symbolic_distance_ = structure_.size();
-      }
+      symbolic_type_indices_.push_back(structure_.size());
     }
     structure_.push_back(structural);
   }
 
   Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
-  int first_symbolic_distance_;
+  llvm::SmallVector<int> symbolic_type_indices_;
   llvm::SmallVector<TypeStructure::Structural> structure_;
 };
 

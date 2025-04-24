@@ -78,6 +78,11 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
+      case CARBON_KIND(ImplWitnessAssociatedConstant inst): {
+        inst_id = inst.inst_id;
+        continue;
+      }
+
       case CARBON_KIND(SpecificConstant inst): {
         inst_id = inst.inst_id;
         continue;
@@ -104,7 +109,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ConstType::Kind:
       case ConvertToValueAction::Kind:
       case FacetAccessType::Kind:
-      case FacetAccessWitness::Kind:
       case FacetType::Kind:
       case FacetValue::Kind:
       case FloatLiteral::Kind:
@@ -116,6 +120,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case LookupImplWitness::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
+      case ImplWitnessTable::Kind:
+      case ImplWitnessTablePlaceholder::Kind:
       case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case InstType::Kind:

@@ -2,6 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <optional>
+#include <utility>
+
+#include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
@@ -37,6 +41,8 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
     -> bool {
+  // The function is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // function signature, such as parameter and return types.
   context.inst_block_stack().Push();
@@ -45,15 +51,13 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Fn>();
   context.decl_name_stack().PushScopeAndStartName();
-  // The function is potentially generic.
-  StartGenericDecl(context);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
-  auto type_id = ExprAsType(context, type_node_id, type_inst_id).type_id;
+  auto as_type = ExprAsType(context, type_node_id, type_inst_id);
 
   // If the previous node was `IdentifierNameBeforeParams`, then it would have
   // caused these entries to be pushed to the pattern stacks. But it's possible
@@ -69,10 +73,11 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   }
 
   auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
-      context, node_id, {.type_id = type_id, .type_inst_id = type_inst_id});
+      context, node_id,
+      {.type_id = as_type.type_id, .type_inst_id = as_type.inst_id});
   auto param_pattern_id = AddPatternInst<SemIR::OutParamPattern>(
       context, node_id,
-      {.type_id = type_id,
+      {.type_id = as_type.type_id,
        .subpattern_id = return_slot_pattern_id,
        .index = SemIR::CallParamIndex::None});
   context.node_stack().Push(node_id, param_pattern_id);
@@ -86,15 +91,9 @@ static auto FindSelfPattern(Context& context,
     -> SemIR::InstId {
   auto implicit_param_patterns =
       context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  if (const auto* i = llvm::find_if(implicit_param_patterns,
-                                    [&](auto implicit_param_id) {
-                                      return SemIR::IsSelfPattern(
-                                          context.sem_ir(), implicit_param_id);
-                                    });
-      i != implicit_param_patterns.end()) {
-    return *i;
-  }
-  return SemIR::InstId::None;
+  return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
+    return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
+  });
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -559,7 +558,7 @@ static auto CheckFunctionDefinitionSignature(Context& context,
 
   // Check the parameter types are complete.
   for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::ErrorInst::SingletonInstId) {
+    if (param_ref_id == SemIR::ErrorInst::InstId) {
       continue;
     }
 
@@ -586,10 +585,9 @@ static auto HandleFunctionDefinitionAfterSignature(
   auto& function = context.functions().Get(function_id);
 
   // Create the function scope and the entry block.
-  context.return_scope_stack().push_back({.decl_id = decl_id});
+  context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  context.scope_stack().Push(decl_id);
   StartGenericDefinition(context);
 
   CheckFunctionDefinitionSignature(context, function);
@@ -646,9 +644,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     }
   }
 
-  context.scope_stack().Pop();
   context.inst_block_stack().Pop();
-  context.return_scope_stack().pop_back();
+  context.scope_stack().Pop();
   context.decl_name_stack().PopScope();
 
   auto& function = context.functions().Get(function_id);
@@ -697,16 +694,16 @@ static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)
     -> bool {
+  // Find the list of call parameters other than the implicit return slot.
+  auto call_params = context.inst_blocks().Get(function.call_params_id);
+  if (function.return_slot_pattern_id.has_value()) {
+    call_params = call_params.drop_back();
+  }
+
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  auto param_patterns =
-      context.inst_blocks().GetOrEmpty(function.param_patterns_id);
-  param_type_ids.reserve(implicit_param_patterns.size() +
-                         param_patterns.size());
-  for (auto param_id : llvm::concat<const SemIR::InstId>(
-           implicit_param_patterns, param_patterns)) {
+  param_type_ids.reserve(call_params.size());
+  for (auto param_id : call_params) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());

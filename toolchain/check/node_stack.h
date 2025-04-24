@@ -100,6 +100,18 @@ class NodeStack {
     stack_.push_back({.node_id = node_id, .id = Id(id)});
   }
 
+  // TODO: Most parse nodes don't know about TypeInstId, so downgrade TypeInstId
+  // to InstId to match expectations. We should teach parse nodes that will
+  // receive a TypeInstId to expect it, and this function can go away.
+  auto Push(Parse::NodeId node_id, SemIR::TypeInstId id) -> void {
+    auto kind = parse_tree_->node_kind(node_id);
+    if (NodeKindToIdKind(kind) == Id::KindFor<SemIR::InstId>()) {
+      Push<SemIR::InstId>(node_id, id);
+    } else {
+      Push<SemIR::TypeInstId>(node_id, id);
+    }
+  }
+
   // Returns whether there is a node of the specified kind on top of the stack.
   auto PeekIs(Parse::NodeKind kind) const -> bool {
     return !stack_.empty() && PeekNodeKind() == kind;
@@ -384,7 +396,7 @@ class NodeStack {
         Parse::NodeCategory::MemberName | Parse::NodeCategory::NonExprName,
         Id::KindFor<SemIR::NameId>());
     set_id_if_category_is(Parse::NodeCategory::ImplAs,
-                          Id::KindFor<SemIR::InstId>());
+                          Id::KindFor<SemIR::TypeInstId>());
     set_id_if_category_is(Parse::NodeCategory::Decl |
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
@@ -398,6 +410,7 @@ class NodeStack {
       -> std::optional<Id::Kind> {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::FieldNameAndType:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::ShortCircuitOperandAnd:
@@ -434,6 +447,8 @@ class NodeStack {
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::ExplicitParamListStart:
+      case Parse::NodeKind::FieldInitializer:
+      case Parse::NodeKind::FieldIntroducer:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:

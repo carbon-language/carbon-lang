@@ -197,14 +197,14 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   adapt_decl %i32 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32.builtin [concrete = constants.%complete_type.f8a]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%i32.builtin [concrete = constants.%complete_type.f8a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptCopyable
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: %AdaptCopyable) -> %AdaptCopyable {
+// CHECK:STDOUT: fn @F(%c.param: %AdaptCopyable) -> %AdaptCopyable {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %AdaptCopyable = binding_pattern d
@@ -220,7 +220,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InTuple(%c.param_patt: %tuple.type.2a3) -> %return.param_patt: %tuple.type.2a3 {
+// CHECK:STDOUT: fn @InTuple(%c.param: %tuple.type.2a3) -> %return.param: %tuple.type.2a3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %tuple.type.2a3 = binding_pattern d
@@ -340,14 +340,14 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc5_18: %tuple.type.24b = tuple_literal (%i32.loc5_10, %i32.loc5_15)
 // CHECK:STDOUT:   %.loc5_19: type = converted %.loc5_18, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   adapt_decl %.loc5_19 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.d07 [concrete = constants.%complete_type.65d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%tuple.type.d07 [concrete = constants.%complete_type.65d]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptTuple
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: %AdaptTuple) -> %return.param_patt: %AdaptTuple {
+// CHECK:STDOUT: fn @F(%c.param: %AdaptTuple) -> %return.param: %AdaptTuple {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %AdaptTuple = binding_pattern d
@@ -386,7 +386,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   return %.loc10_11.9 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InTuple(%c.param_patt: %tuple.type.f69) -> %return.param_patt: %tuple.type.f69 {
+// CHECK:STDOUT: fn @InTuple(%c.param: %tuple.type.f69) -> %return.param: %tuple.type.f69 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %tuple.type.f69 = binding_pattern d
@@ -490,6 +490,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Noncopyable {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -500,7 +501,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: class @AdaptNoncopyable {
 // CHECK:STDOUT:   %Noncopyable.ref: type = name_ref Noncopyable, file.%Noncopyable.decl [concrete = constants.%Noncopyable]
 // CHECK:STDOUT:   adapt_decl %Noncopyable.ref [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -508,7 +509,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   .Noncopyable = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%a.param_patt: %AdaptNoncopyable) -> %return.param_patt: %AdaptNoncopyable {
+// CHECK:STDOUT: fn @G(%a.param: %AdaptNoncopyable) -> %return.param: %AdaptNoncopyable {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %AdaptNoncopyable = binding_pattern b
@@ -574,6 +575,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Noncopyable {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -590,7 +592,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc9_31: %tuple.type.ff9 = tuple_literal (%i32.loc9_10, %Noncopyable.ref, %i32.loc9_28)
 // CHECK:STDOUT:   %.loc9_32: type = converted %.loc9_31, constants.%tuple.type.c9a [concrete = constants.%tuple.type.c9a]
 // CHECK:STDOUT:   adapt_decl %.loc9_32 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.c9a [concrete = constants.%complete_type.201]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%tuple.type.c9a [concrete = constants.%complete_type.201]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -598,7 +600,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   .Noncopyable = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%a.param_patt: %AdaptNoncopyableIndirect) -> %return.param_patt: %AdaptNoncopyableIndirect {
+// CHECK:STDOUT: fn @H(%a.param: %AdaptNoncopyableIndirect) -> %return.param: %AdaptNoncopyableIndirect {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %AdaptNoncopyableIndirect = binding_pattern b
@@ -707,14 +709,14 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %i32.loc5_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %struct_type.e.f: type = struct_type {.e: %i32, .f: %i32} [concrete = constants.%struct_type.e.f]
 // CHECK:STDOUT:   adapt_decl %struct_type.e.f [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.e.f [concrete = constants.%complete_type.511]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.e.f [concrete = constants.%complete_type.511]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptStruct
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @I(%g.param_patt: %AdaptStruct) -> %return.param_patt: %AdaptStruct {
+// CHECK:STDOUT: fn @I(%g.param: %AdaptStruct) -> %return.param: %AdaptStruct {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %h.patt: %AdaptStruct = binding_pattern h
@@ -753,7 +755,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   return %.loc10_11.13 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InTuple(%c.param_patt: %tuple.type.80b) -> %return.param_patt: %tuple.type.80b {
+// CHECK:STDOUT: fn @InTuple(%c.param: %tuple.type.80b) -> %return.param: %tuple.type.80b {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %tuple.type.80b = binding_pattern d

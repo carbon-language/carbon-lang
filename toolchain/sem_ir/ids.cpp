@@ -132,11 +132,11 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
 
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   out << Label << "(";
-  if (*this == TypeType::SingletonTypeId) {
+  if (*this == TypeType::TypeId) {
     out << "TypeType";
-  } else if (*this == AutoType::SingletonTypeId) {
+  } else if (*this == AutoType::TypeId) {
     out << "AutoType";
-  } else if (*this == ErrorInst::SingletonTypeId) {
+  } else if (*this == ErrorInst::TypeId) {
     out << "Error";
   } else {
     AsConstantId().Print(out, /*disambiguate=*/false);
@@ -166,11 +166,19 @@ auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto LocId::Print(llvm::raw_ostream& out) const -> void {
-  out << Label << "_";
-  if (is_node_id() || !has_value()) {
-    out << node_id();
-  } else {
-    out << import_ir_inst_id();
+  switch (kind()) {
+    case Kind::None:
+      IdBase::Print(out);
+      break;
+    case Kind::ImportIRInstId:
+      out << Label << "_" << import_ir_inst_id();
+      break;
+    case Kind::InstId:
+      out << Label << "_" << inst_id();
+      break;
+    case Kind::NodeId:
+      out << Label << "_" << node_id();
+      break;
   }
 }
 

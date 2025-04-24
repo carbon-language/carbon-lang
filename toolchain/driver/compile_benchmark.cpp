@@ -4,6 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
+#include <algorithm>
 #include <string>
 
 #include "testing/base/global_exe_path.h"

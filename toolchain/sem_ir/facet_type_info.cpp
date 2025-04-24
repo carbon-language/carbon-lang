@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/facet_type_info.h"
 
+#include <tuple>
+
 namespace Carbon::SemIR {
 
 template <typename VecT, typename CompareT>
@@ -22,8 +24,8 @@ static auto ImplsLess(const FacetTypeInfo::ImplsConstraint& lhs,
 // Canonically ordered by the numerical ids.
 static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
                         const FacetTypeInfo::RewriteConstraint& rhs) -> bool {
-  return std::tie(lhs.lhs_const_id.index, lhs.rhs_const_id.index) <
-         std::tie(rhs.lhs_const_id.index, rhs.rhs_const_id.index);
+  return std::tie(lhs.lhs_id.index, lhs.rhs_id.index) <
+         std::tie(rhs.lhs_id.index, rhs.rhs_id.index);
 }
 
 // Canonically ordered by the numerical ids.
@@ -147,7 +149,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     out << outer_sep << "rewrites: ";
     llvm::ListSeparator sep;
     for (RewriteConstraint req : rewrite_constraints) {
-      out << sep << req.lhs_const_id << "=" << req.rhs_const_id;
+      out << sep << req.lhs_id << "=" << req.rhs_id;
     }
   }
 

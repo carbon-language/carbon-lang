@@ -28,7 +28,7 @@ auto Parse(Lex::TokenizedBuffer& tokens, Diagnostics::Consumer& consumer,
   context.AddLeafNode(NodeKind::FileStart,
                       context.ConsumeChecked(Lex::TokenKind::FileStart));
 
-  context.PushState(StateKind::DeclScopeLoop);
+  context.PushState(StateKind::DeclScopeLoopAsNonClass);
 
   while (!context.state_stack().empty()) {
     switch (context.state_stack().back().kind) {

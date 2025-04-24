@@ -71,10 +71,10 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %Convert.993: %Convert.type.50a = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.e1d: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%RuntimeConvertTo) [concrete]
 // CHECK:STDOUT:   %assoc0.c91: %ImplicitAs.assoc_type.e1d = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness file.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Convert.type.e8b: type = fn_type @Convert.2 [concrete]
 // CHECK:STDOUT:   %Convert.e81: %Convert.type.e8b = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.580 = facet_value %RuntimeConvertFrom, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.580 = facet_value %RuntimeConvertFrom, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %RuntimeConvertTo.val: %RuntimeConvertTo = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple.elem0: type = tuple_access %T, element0 [symbolic]
@@ -91,7 +91,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %from.patt: %RuntimeConvertFrom = symbolic_binding_pattern from, 0 [symbolic]
 // CHECK:STDOUT:   %RuntimeConvertFrom.val: %RuntimeConvertFrom = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.dc0: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
-// CHECK:STDOUT:   %.31e: type = fn_type_with_self_type %Convert.type.50a, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %.f4e: type = fn_type_with_self_type %Convert.type.50a, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %from, %Convert.e81 [symbolic]
 // CHECK:STDOUT:   %A.patt.78b: %RuntimeConvertTo = symbolic_binding_pattern A, 1 [symbolic]
 // CHECK:STDOUT: }
@@ -103,11 +103,11 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//prelude, loc12_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//prelude, inst66 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.ff5 = import_ref Core//prelude, inst67 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
 // CHECK:STDOUT:   %Core.Convert: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, Convert, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//prelude, loc12_22, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//prelude, inst66 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
+// CHECK:STDOUT:   %Core.import_ref.ce1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.d62) = import_ref Core//prelude, inst67 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,7 +139,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%RuntimeConvertTo)> [concrete = constants.%ImplicitAs.type.580]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@impl.%Convert.decl), @impl [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc26_6.1: %tuple.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc26_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %A.patt.loc26_20.1: @F.%tuple.elem0.loc26_25.2 (%tuple.elem0) = symbolic_binding_pattern A, 1 [symbolic = %A.patt.loc26_20.2 (constants.%A.patt.f80)]
@@ -220,7 +221,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .RuntimeConvertTo = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @HoldsType(%T.loc16_17.1: %tuple.type) {
@@ -230,6 +231,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -239,6 +241,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @RuntimeConvertFrom {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -247,6 +250,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @RuntimeConvertTo {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -260,10 +264,10 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %Self: @Convert.1.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type (%Self.as_type)]() -> @Convert.1.%Dest (%Dest);
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self.param_patt: %RuntimeConvertFrom]() -> %return.param_patt: %RuntimeConvertTo {
+// CHECK:STDOUT: fn @Convert.2(%self.param: %RuntimeConvertFrom) -> %return.param: %RuntimeConvertTo {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc23_58.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc23_58.2: init %RuntimeConvertTo = class_init (), %return [concrete = constants.%RuntimeConvertTo.val]
@@ -280,15 +284,15 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %HoldsType.loc26_43.2: type = class_type @HoldsType, @HoldsType(%T.loc26_6.2) [symbolic = %HoldsType.loc26_43.2 (constants.%HoldsType.cc9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%HoldsType.loc26_43.2 (%HoldsType.cc9) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc26_43.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc26_6.1: %tuple.type](%A.patt.loc26_20.1: @F.%tuple.elem0.loc26_25.2 (%tuple.elem0), %x.param_patt: @F.%HoldsType.loc26_43.2 (%HoldsType.cc9)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc26_43.2 (%HoldsType.cc9)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%holds_to.param_patt: %HoldsType.066) {
+// CHECK:STDOUT: fn @G(%holds_to.param: %HoldsType.066) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %from.patt: %RuntimeConvertFrom = symbolic_binding_pattern from, 0 [symbolic = constants.%from.patt]
@@ -304,8 +308,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %from.ref: %RuntimeConvertFrom = name_ref from, %from [symbolic = constants.%from]
 // CHECK:STDOUT:   %holds_to.ref: %HoldsType.066 = name_ref holds_to, %holds_to
-// CHECK:STDOUT:   %tuple.elem0: type = tuple_access constants.%tuple, element0 [concrete = constants.%RuntimeConvertTo]
-// CHECK:STDOUT:   %impl.elem0: %.31e = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Convert.e81]
+// CHECK:STDOUT:   %impl.elem0: %.f4e = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Convert.e81]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method constants.%from, %impl.elem0 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %.loc40_19.1: ref %RuntimeConvertTo = temporary_storage
 // CHECK:STDOUT:   %Convert.call: init %RuntimeConvertTo = call %bound_method(constants.%from) to %.loc40_19.1
@@ -519,7 +522,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %Self: @Convert.1.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.b4e)]
 // CHECK:STDOUT:   %Self.as_type.loc9_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type.7f0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type.7f0)]() -> @Convert.1.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type.7f0)) -> @Convert.1.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Convert.2(@ImplicitAs.%Dest.loc12_22.1: type, @ImplicitAs.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f)) {
@@ -528,7 +531,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %Self: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.0f3)]
 // CHECK:STDOUT:   %Self.as_type.loc14_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_20.1 (constants.%Self.as_type.419)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.2.%Self.as_type.loc14_20.1 (%Self.as_type.419)]() -> @Convert.2.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @Convert.2.%Self.as_type.loc14_20.1 (%Self.as_type.419)) -> @Convert.2.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%Dest) {

@@ -113,7 +113,7 @@ fn H() {
 // CHECK:STDOUT:   %U.loc12_8.1: type = bind_symbolic_name U, 2 [symbolic = %U.loc12_8.1 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc12_8.2: type = symbolic_binding_pattern U, 2 [symbolic = %U.patt.loc12_8.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.patt.loc12_8.1: type) -> @F.%U.loc12_8.1 (%U);
+// CHECK:STDOUT:   fn() -> @F.%U.loc12_8.1 (%U);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc15_6.1: type) {
@@ -122,12 +122,12 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.loc19_6.2: type = facet_type <@I, @I(%T.loc15_6.2)> [symbolic = %I.type.loc19_6.2 (constants.%I.type.325)]
-// CHECK:STDOUT:   %require_complete.loc19_7.1: <witness> = require_complete_type @G.%I.type.loc19_6.2 (%I.type.325) [symbolic = %require_complete.loc19_7.1 (constants.%require_complete.cfe)]
+// CHECK:STDOUT:   %require_complete.loc19_7.1: <witness> = require_complete_type %I.type.loc19_6.2 [symbolic = %require_complete.loc19_7.1 (constants.%require_complete.cfe)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T.loc15_6.2) [symbolic = %I.assoc_type (constants.%I.assoc_type.1e5)]
 // CHECK:STDOUT:   %assoc0: @G.%I.assoc_type (%I.assoc_type.1e5) = assoc_entity element0, @I.%F.decl [symbolic = %assoc0 (constants.%assoc0.8f0)]
-// CHECK:STDOUT:   %require_complete.loc19_7.2: <witness> = require_complete_type @G.%I.assoc_type (%I.assoc_type.1e5) [symbolic = %require_complete.loc19_7.2 (constants.%require_complete.f84)]
+// CHECK:STDOUT:   %require_complete.loc19_7.2: <witness> = require_complete_type %I.assoc_type [symbolic = %require_complete.loc19_7.2 (constants.%require_complete.f84)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc15_6.1: type) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %I.ref: %I.type.dac = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]

@@ -51,6 +51,7 @@ class Class {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl.loc12: %F.type.f1baa3.1 = fn_decl @F.1 [concrete = constants.%F.1f2582.1] {} {}
 // CHECK:STDOUT:   %F.decl.loc20: %F.type.f1baa3.2 = fn_decl @F.2 [concrete = constants.%F.1f2582.2] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

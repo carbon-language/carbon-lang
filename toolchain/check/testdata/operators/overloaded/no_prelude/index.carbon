@@ -78,6 +78,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @IndexWith {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -102,7 +103,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     import Core//core_wrong_index_with
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.8f2: <witness> = import_ref Core//core_wrong_index_with, loc4_18, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Core.import_ref.4c7 = import_ref Core//core_wrong_index_with, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.4c7 = import_ref Core//core_wrong_index_with, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -233,7 +234,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self: @At.%IndexWith.type (%IndexWith.type.b94) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc5_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @At.%Self.as_type.loc5_15.1 (%Self.as_type)](%subscript.param_patt: @At.%SubscriptType (%SubscriptType)) -> %empty_tuple.type;
+// CHECK:STDOUT:   fn(%self.param: @At.%Self.as_type.loc5_15.1 (%Self.as_type), %subscript.param: @At.%SubscriptType (%SubscriptType)) -> %empty_tuple.type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType) {
@@ -273,15 +274,15 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.9b9: %At.type.969 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.assoc_type.3d4: type = assoc_entity_type @IndexWith, @IndexWith(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %assoc0.21b: %IndexWith.assoc_type.3d4 = assoc_entity element0, imports.%Core.import_ref.e99 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%At.decl) [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness file.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %At.type.486: type = fn_type @At.2 [concrete]
 // CHECK:STDOUT:   %At.7c4: %At.type.486 = struct_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.a51 = facet_value %empty_tuple.type, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.a51 = facet_value %empty_tuple.type, (%IndexWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.e1e: %IndexWith.assoc_type.290 = assoc_entity element0, imports.%Core.import_ref.981 [symbolic]
-// CHECK:STDOUT:   %.851: type = fn_type_with_self_type %At.type.969, %IndexWith.facet [concrete]
+// CHECK:STDOUT:   %.ffc: type = fn_type_with_self_type %At.type.969, %IndexWith.facet [concrete]
 // CHECK:STDOUT:   %At.bound: <bound method> = bound_method %empty_tuple, %At.7c4 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -292,11 +293,11 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.504 = import_ref Core//core_wrong_arg_count, IndexWith, loaded [concrete = constants.%IndexWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:   %Core.import_ref.68a = import_ref Core//core_wrong_arg_count, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.68a = import_ref Core//core_wrong_arg_count, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Core.import_ref.613: @IndexWith.%IndexWith.assoc_type (%IndexWith.assoc_type.290) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%assoc0 (constants.%assoc0.e1e)]
 // CHECK:STDOUT:   %Core.At: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, At, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:   %Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2) = import_ref Core//core_wrong_arg_count, inst25 [no loc], loaded [symbolic = @IndexWith.%Self (constants.%Self.30a)]
+// CHECK:STDOUT:   %Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2) = import_ref Core//core_wrong_arg_count, inst26 [no loc], loaded [symbolic = @IndexWith.%Self (constants.%Self.30a)]
 // CHECK:STDOUT:   %Core.import_ref.e99: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -315,7 +316,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     %.loc6_29: type = converted %.loc6_28, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%empty_tuple.type)> [concrete = constants.%IndexWith.type.a51]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%At.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@impl.%At.decl), @impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,7 +367,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .At = %At.decl
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @At.1(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2)) [from "core_wrong_arg_count.carbon"] {
@@ -374,10 +376,10 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self: @At.1.%IndexWith.type (%IndexWith.type.bd2) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.30a)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @At.1.%Self.as_type (%Self.as_type)](%subscript.param_patt: @At.1.%SubscriptType (%SubscriptType)) -> %empty_tuple.type;
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2[%self.param_patt: %empty_tuple.type](%subscript.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @At.2(%self.param: %empty_tuple.type, %subscript.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_13: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
@@ -393,7 +395,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.loc12_11.2: %empty_tuple.type = converted %.loc12_11.1, %empty_tuple.loc12_11 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc12_14: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_15: %empty_tuple.type = converted %.loc12_14, %empty_tuple.loc12_14 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %impl.elem0: %.851 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%At.7c4]
+// CHECK:STDOUT:   %impl.elem0: %.ffc = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%At.7c4]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12_11.2, %impl.elem0 [concrete = constants.%At.bound]
 // CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %bound_method(%.loc12_11.2, %.loc12_15)
 // CHECK:STDOUT:   return

@@ -45,5 +45,5 @@ fn F((a: {}, b: {}), c: {});
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.loc15_19: %tuple.type, %c.param_patt: %empty_struct_type);
+// CHECK:STDOUT: fn @F(%c.param: %empty_struct_type);
 // CHECK:STDOUT:

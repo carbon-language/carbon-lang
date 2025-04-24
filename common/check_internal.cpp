@@ -4,6 +4,9 @@
 
 #include "common/check_internal.h"
 
+#include <cstdlib>
+#include <string>
+
 #include "common/ostream.h"
 #include "llvm/Support/Signals.h"
 

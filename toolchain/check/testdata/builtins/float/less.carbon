@@ -175,6 +175,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @True {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -183,6 +184,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @False {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -190,11 +192,11 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less(%a.param_patt: f64, %b.param_patt: f64) -> bool = "float.less";
+// CHECK:STDOUT: fn @Less(%a.param: f64, %b.param: f64) -> bool = "float.less";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a.param_patt: f64) -> f64 = "float.negate";
+// CHECK:STDOUT: fn @Negate(%a.param: f64) -> f64 = "float.negate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%true_.param_patt: %True, %false_.param_patt: %False) {
+// CHECK:STDOUT: fn @F(%true_.param: %True, %false_.param: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref.loc9: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Less.ref.loc9: %Less.type = name_ref Less, file.%Less.decl [concrete = constants.%Less]
@@ -302,7 +304,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param_patt: f64, %b.param_patt: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Less.ref: %Less.type = name_ref Less, file.%Less.decl [concrete = constants.%Less]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a

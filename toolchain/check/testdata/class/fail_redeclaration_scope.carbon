@@ -63,6 +63,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B.2 [concrete = constants.%B.29a] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -74,6 +75,7 @@ class Y {
 // CHECK:STDOUT: class @X {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A.2 [concrete = constants.%A.197] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [concrete = constants.%B.d5b] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -84,6 +86,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [concrete = constants.%B.d5b] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -93,6 +96,7 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.1 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -104,6 +108,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B.3 [concrete = constants.%B.768] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -112,6 +117,7 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.3 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

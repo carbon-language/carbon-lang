@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -42,6 +42,16 @@ cc_library(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:node_kind",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "ids_test",
+    srcs = ["ids_test.cpp"],
+    deps = [
+        ":typed_insts",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -135,9 +145,9 @@ cc_library(
 )
 
 cc_library(
-    name = "stringify_type",
-    srcs = ["stringify_type.cpp"],
-    hdrs = ["stringify_type.h"],
+    name = "stringify",
+    srcs = ["stringify.cpp"],
+    hdrs = ["stringify.h"],
     deps = [
         ":file",
         ":typed_insts",
@@ -231,7 +241,7 @@ cc_library(
     hdrs = ["dump.h"],
     deps = [
         ":file",
-        ":stringify_type",
+        ":stringify",
         "//common:ostream",
         "//common:raw_string_ostream",
     ],

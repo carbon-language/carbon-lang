@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/type_info.h"
 
+#include <string>
+
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/file.h"
 

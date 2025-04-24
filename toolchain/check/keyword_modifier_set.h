@@ -16,7 +16,7 @@ LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 
 // The order of modifiers. Each of these corresponds to a group on
 // KeywordModifierSet, and can be used as an array index.
-enum class ModifierOrder : int8_t { Access, Extern, Decl, Last = Decl };
+enum class ModifierOrder : int8_t { Access, Extern, Extend, Decl, Last = Decl };
 
 // Represents a set of keyword modifiers, using a separate bit per modifier.
 class KeywordModifierSet {
@@ -35,13 +35,15 @@ class KeywordModifierSet {
     // Extern is standalone.
     Extern = 1 << 2,
 
+    // Extend can be combined with Final, but no others in the group below.
+    Extend = 1 << 3,
+
     // At most one of these declaration modifiers allowed for a given
     // declaration:
-    Abstract = 1 << 3,
-    Base = 1 << 4,
-    Default = 1 << 5,
-    Export = 1 << 6,
-    Extend = 1 << 7,
+    Abstract = 1 << 4,
+    Base = 1 << 5,
+    Default = 1 << 6,
+    Export = 1 << 7,
     Final = 1 << 8,
     Impl = 1 << 9,
     Virtual = 1 << 10,
@@ -53,7 +55,7 @@ class KeywordModifierSet {
     Method = Abstract | Impl | Virtual,
     ImplDecl = Extend | Final,
     Interface = Default | Final,
-    Decl = Class | Method | ImplDecl | Interface | Export | Returned,
+    Decl = Class | Method | Impl | Interface | Export | Returned,
     None = 0,
 
     LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Returned)
@@ -142,12 +144,13 @@ class KeywordModifierSet {
 static_assert(!KeywordModifierSet(KeywordModifierSet::Access)
                       .HasAnyOf(KeywordModifierSet::Extern) &&
                   !KeywordModifierSet(KeywordModifierSet::Access |
-                                      KeywordModifierSet::Extern)
+                                      KeywordModifierSet::Extern |
+                                      KeywordModifierSet::Extend)
                        .HasAnyOf(KeywordModifierSet::Decl),
               "Order-related sets must not overlap");
 static_assert(~KeywordModifierSet::None ==
                   (KeywordModifierSet::Access | KeywordModifierSet::Extern |
-                   KeywordModifierSet::Decl),
+                   KeywordModifierSet::Extend | KeywordModifierSet::Decl),
               "Modifier missing from all modifier sets");
 
 }  // namespace Carbon::Check

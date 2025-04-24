@@ -9,6 +9,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <utility>
 
 #include "common/check.h"

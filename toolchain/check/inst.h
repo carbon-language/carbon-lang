@@ -24,6 +24,15 @@ auto AddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
+// Like AddInst, but for instructions with a type_id of `TypeType`, which is
+// encoded in the return type of `TypeInstId`.
+template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
+auto AddTypeInst(Context& context, LocT loc, InstT inst) -> SemIR::TypeInstId {
+  return context.types().GetAsTypeInstId(
+      AddInst(context, SemIR::LocIdAndInst(loc, inst)));
+}
+
 // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
 // result.
 //
@@ -64,6 +73,23 @@ auto GetOrAddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return GetOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
+// Evaluate the given instruction, and returns the corresponding constant value.
+// Adds the instruction to the current block if it might be referenced by its
+// constant value; otherwise, does not add the instruction to an instruction
+// block.
+auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::ConstantId;
+
+// Convenience for EvalOrAddInst with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
+template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup())
+auto EvalOrAddInst(Context& context, LocT loc, InstT inst)
+    -> SemIR::ConstantId {
+  return EvalOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
+}
+
 // Adds an instruction and enqueues it to be added to the eval block of the
 // enclosing generic, returning the produced ID. The instruction is expected to
 // be a dependent template instantiation action.
@@ -74,9 +100,17 @@ auto AddDependentActionInst(Context& context,
 // Convenience wrapper for AddDependentActionInst.
 template <typename InstT, typename LocT>
 auto AddDependentActionInst(Context& context, LocT loc, InstT inst)
-    -> decltype(AddDependentActionInst(context,
-                                       SemIR::LocIdAndInst(loc, inst))) {
+    -> SemIR::InstId {
   return AddDependentActionInst(context, SemIR::LocIdAndInst(loc, inst));
+}
+
+// Like AddDependentActionInst, but for instructions with a type_id of
+// `TypeType`, which is encoded in the return type of `TypeInstId`.
+template <typename InstT, typename LocT>
+auto AddDependentActionTypeInst(Context& context, LocT loc, InstT inst)
+    -> SemIR::TypeInstId {
+  return context.types().GetAsTypeInstId(
+      AddDependentActionInst(context, loc, inst));
 }
 
 // Adds an instruction to the current pattern block, returning the produced

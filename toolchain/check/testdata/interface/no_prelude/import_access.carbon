@@ -209,7 +209,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Def: type = import_ref Test//def, Def, loaded [concrete = constants.%Def.type]
-// CHECK:STDOUT:   %Test.import_ref = import_ref Test//def, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref = import_ref Test//def, inst17 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -235,7 +235,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: %Def.type) {
+// CHECK:STDOUT: fn @F(%i.param: %Def.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -263,7 +263,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -301,7 +301,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -316,7 +316,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.ForwardWithDef: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [concrete = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %Test.import_ref = import_ref Test//forward_with_def, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref = import_ref Test//forward_with_def, inst18 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -342,7 +342,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: %ForwardWithDef.type) {
+// CHECK:STDOUT: fn @F(%i.param: %ForwardWithDef.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -370,7 +370,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -408,7 +408,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -451,7 +451,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -482,7 +482,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -520,7 +520,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

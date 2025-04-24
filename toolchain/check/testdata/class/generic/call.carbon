@@ -105,11 +105,12 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (imports.%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness %ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
-// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
+// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.4e6: <bound method> = bound_method %int_5.64b, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.a25: <bound method> = bound_method %int_5.64b, %Convert.specific_fn [concrete]
@@ -161,7 +162,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
-// CHECK:STDOUT:     %impl.elem0.loc6: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:     %impl.elem0.loc6: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc6_21.1: <bound method> = bound_method %int_5, %impl.elem0.loc6 [concrete = constants.%Convert.bound.4e6]
 // CHECK:STDOUT:     %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_21.2: <bound method> = bound_method %int_5, %specific_fn.loc6 [concrete = constants.%bound_method.a25]
@@ -181,7 +182,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc9_15: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %.loc9_19.2: type = converted %.loc9_15, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %impl.elem0.loc9: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:     %impl.elem0.loc9: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc9_19.1: <bound method> = bound_method %int_0, %impl.elem0.loc9 [concrete = constants.%Convert.bound.d04]
 // CHECK:STDOUT:     %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc9_19.2: <bound method> = bound_method %int_0, %specific_fn.loc9 [concrete = constants.%bound_method.b6e]
@@ -202,6 +203,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -301,6 +303,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -386,6 +389,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -471,6 +475,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -565,6 +570,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.loc3_15.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc3_15.2 (constants.%U)]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -634,6 +640,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:       %return.param: ref @D.%Inner.loc13_22.1 (%Inner.c71) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @D.%Inner.loc13_22.1 (%Inner.c71) = return_slot %return.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -655,10 +662,10 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Outer.loc4_22.1: type = class_type @Outer, @Outer(%T) [symbolic = %Outer.loc4_22.1 (constants.%Outer.9d6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%Outer.loc4_22.1 (%Outer.9d6) [symbolic = %require_complete (constants.%require_complete.127)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Outer.loc4_22.1 [symbolic = %require_complete (constants.%require_complete.127)]
 // CHECK:STDOUT:   %Outer.val: @A.%Outer.loc4_22.1 (%Outer.9d6) = struct_value () [symbolic = %Outer.val (constants.%Outer.val.234)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param_patt: @A.%Outer.loc4_22.1 (%Outer.9d6) {
+// CHECK:STDOUT:   fn() -> %return.param: @A.%Outer.loc4_22.1 (%Outer.9d6) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc5_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc5_15.2: init @A.%Outer.loc4_22.1 (%Outer.9d6) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.234)]
@@ -672,10 +679,10 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Outer.loc7_22.1: type = class_type @Outer, @Outer(%U) [symbolic = %Outer.loc7_22.1 (constants.%Outer.99f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @B.%Outer.loc7_22.1 (%Outer.99f) [symbolic = %require_complete (constants.%require_complete.964)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Outer.loc7_22.1 [symbolic = %require_complete (constants.%require_complete.964)]
 // CHECK:STDOUT:   %Outer.val: @B.%Outer.loc7_22.1 (%Outer.99f) = struct_value () [symbolic = %Outer.val (constants.%Outer.val.a2f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param_patt: @B.%Outer.loc7_22.1 (%Outer.99f) {
+// CHECK:STDOUT:   fn() -> %return.param: @B.%Outer.loc7_22.1 (%Outer.99f) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_15.2: init @B.%Outer.loc7_22.1 (%Outer.99f) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.a2f)]
@@ -691,10 +698,10 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.loc10_22.1: type = class_type @Inner, @Inner(%T, %T) [symbolic = %Inner.loc10_22.1 (constants.%Inner.13a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @C.%Inner.loc10_22.1 (%Inner.13a) [symbolic = %require_complete (constants.%require_complete.7b1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Inner.loc10_22.1 [symbolic = %require_complete (constants.%require_complete.7b1)]
 // CHECK:STDOUT:   %Inner.val: @C.%Inner.loc10_22.1 (%Inner.13a) = struct_value () [symbolic = %Inner.val (constants.%Inner.val.69d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param_patt: @C.%Inner.loc10_22.1 (%Inner.13a) {
+// CHECK:STDOUT:   fn() -> %return.param: @C.%Inner.loc10_22.1 (%Inner.13a) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc11_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc11_15.2: init @C.%Inner.loc10_22.1 (%Inner.13a) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.69d)]
@@ -711,10 +718,10 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.loc13_22.1: type = class_type @Inner, @Inner(%T, %U) [symbolic = %Inner.loc13_22.1 (constants.%Inner.c71)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @D.%Inner.loc13_22.1 (%Inner.c71) [symbolic = %require_complete (constants.%require_complete.e7e)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Inner.loc13_22.1 [symbolic = %require_complete (constants.%require_complete.e7e)]
 // CHECK:STDOUT:   %Inner.val: @D.%Inner.loc13_22.1 (%Inner.c71) = struct_value () [symbolic = %Inner.val (constants.%Inner.val.dfa)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param_patt: @D.%Inner.loc13_22.1 (%Inner.c71) {
+// CHECK:STDOUT:   fn() -> %return.param: @D.%Inner.loc13_22.1 (%Inner.c71) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc14_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc14_15.2: init @D.%Inner.loc13_22.1 (%Inner.c71) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.dfa)]

@@ -103,7 +103,7 @@ class DeductionWorklist {
     }
     for (auto [param, arg] :
          llvm::reverse(llvm::zip_equal(param_fields, arg_fields))) {
-      Add(param.type_id, arg.type_id, needs_substitution);
+      Add(param.type_inst_id, arg.type_inst_id, needs_substitution);
     }
   }
 
@@ -111,12 +111,6 @@ class DeductionWorklist {
               bool needs_substitution) -> void {
     AddAll(context_->inst_blocks().Get(params),
            context_->inst_blocks().Get(args), needs_substitution);
-  }
-
-  auto AddAll(SemIR::TypeBlockId params, SemIR::TypeBlockId args,
-              bool needs_substitution) -> void {
-    AddAll(context_->type_blocks().Get(params),
-           context_->type_blocks().Get(args), needs_substitution);
   }
 
   // Adds a (param, arg) pair for an instruction argument, given its kind.
@@ -136,8 +130,8 @@ class DeductionWorklist {
         Add(inst_id, SemIR::InstId(arg), needs_substitution);
         break;
       }
-      case CARBON_KIND(SemIR::TypeId type_id): {
-        Add(type_id, SemIR::TypeId(arg), needs_substitution);
+      case CARBON_KIND(SemIR::TypeInstId inst_id): {
+        Add(inst_id, SemIR::InstId(arg), needs_substitution);
         break;
       }
       case CARBON_KIND(SemIR::StructTypeFieldsId fields_id): {
@@ -146,10 +140,6 @@ class DeductionWorklist {
       }
       case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
         AddAll(inst_block_id, SemIR::InstBlockId(arg), needs_substitution);
-        break;
-      }
-      case CARBON_KIND(SemIR::TypeBlockId type_block_id): {
-        AddAll(type_block_id, SemIR::TypeBlockId(arg), needs_substitution);
         break;
       }
       case CARBON_KIND(SemIR::SpecificId specific_id): {
@@ -331,7 +321,7 @@ auto DeductionContext::Deduce() -> bool {
                                                 param_type_id)
                          : TryConvertToValueOfType(context(), loc_id_, arg_id,
                                                    param_type_id);
-      if (arg_id == SemIR::ErrorInst::SingletonInstId) {
+      if (arg_id == SemIR::ErrorInst::InstId) {
         return false;
       }
     }
@@ -588,7 +578,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
           NoteGenericHere(context(), generic_id_, diag);
           diag.Emit();
         }
-        deduced_arg_id = SemIR::ErrorInst::SingletonInstId;
+        deduced_arg_id = SemIR::ErrorInst::InstId;
       }
     }
 

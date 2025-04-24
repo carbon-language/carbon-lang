@@ -68,11 +68,12 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %As.type.fd4: type = facet_type <@As, @As(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.99b: type = fn_type @Convert.1, @As(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.686(%int_32) [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (imports.%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %As.impl_witness.6b4: <witness> = impl_witness %As.impl_witness_table.eb4, @impl.686(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.5, @impl.686(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [concrete]
-// CHECK:STDOUT:   %As.facet: %As.type.fd4 = facet_value Core.IntLiteral, (%impl_witness.882) [concrete]
-// CHECK:STDOUT:   %.249: type = fn_type_with_self_type %Convert.type.99b, %As.facet [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.fd4 = facet_value Core.IntLiteral, (%As.impl_witness.6b4) [concrete]
+// CHECK:STDOUT:   %.982: type = fn_type_with_self_type %Convert.type.99b, %As.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.197 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.197, @Convert.5(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
@@ -127,9 +128,9 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_12.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_12.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_12.1: type](%x.param_patt: @Defined.%T.loc4_12.2 (%T)) -> @Defined.%T.loc4_12.2 (%T) {
+// CHECK:STDOUT:   fn(%x.param: @Defined.%T.loc4_12.2 (%T)) -> @Defined.%T.loc4_12.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Defined.%T.loc4_12.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     return %x.ref
@@ -142,7 +143,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.249 = impl_witness_access constants.%impl_witness.882, element0 [concrete = constants.%Convert.197]
+// CHECK:STDOUT:   %impl.elem0: %.982 = impl_witness_access constants.%As.impl_witness.6b4, element0 [concrete = constants.%Convert.197]
 // CHECK:STDOUT:   %bound_method.loc9_20.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.5(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_20.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
@@ -185,11 +186,12 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %As.type.fd4: type = facet_type <@As, @As(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.99b: type = fn_type @Convert.1, @As(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.686(%int_32) [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (imports.%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %As.impl_witness.6b4: <witness> = impl_witness %As.impl_witness_table.eb4, @impl.686(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.5, @impl.686(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [concrete]
-// CHECK:STDOUT:   %As.facet: %As.type.fd4 = facet_value Core.IntLiteral, (%impl_witness.882) [concrete]
-// CHECK:STDOUT:   %.249: type = fn_type_with_self_type %Convert.type.99b, %As.facet [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.fd4 = facet_value Core.IntLiteral, (%As.impl_witness.6b4) [concrete]
+// CHECK:STDOUT:   %.982: type = fn_type_with_self_type %Convert.type.99b, %As.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.197 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.197, @Convert.5(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
@@ -260,9 +262,9 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_12.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc10: type](%x.param_patt: @Defined.%T.loc4_12.2 (%T)) -> @Defined.%T.loc4_12.2 (%T) {
+// CHECK:STDOUT:   fn(%x.param.loc10: @Defined.%T.loc4_12.2 (%T)) -> @Defined.%T.loc4_12.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Defined.%T.loc4_12.2 (%T) = name_ref x, %x.loc10
 // CHECK:STDOUT:     return %x.ref
@@ -275,7 +277,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.249 = impl_witness_access constants.%impl_witness.882, element0 [concrete = constants.%Convert.197]
+// CHECK:STDOUT:   %impl.elem0: %.982 = impl_witness_access constants.%As.impl_witness.6b4, element0 [concrete = constants.%Convert.197]
 // CHECK:STDOUT:   %bound_method.loc7_20.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.5(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_20.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
@@ -316,11 +318,12 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %As.type.fd4: type = facet_type <@As, @As(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.99b: type = fn_type @Convert.1, @As(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.882: <witness> = impl_witness (imports.%Core.import_ref.78a), @impl.686(%int_32) [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (imports.%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %As.impl_witness.6b4: <witness> = impl_witness %As.impl_witness_table.eb4, @impl.686(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.4fd: type = fn_type @Convert.5, @impl.686(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.197: %Convert.type.4fd = struct_value () [concrete]
-// CHECK:STDOUT:   %As.facet: %As.type.fd4 = facet_value Core.IntLiteral, (%impl_witness.882) [concrete]
-// CHECK:STDOUT:   %.249: type = fn_type_with_self_type %Convert.type.99b, %As.facet [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.fd4 = facet_value Core.IntLiteral, (%As.impl_witness.6b4) [concrete]
+// CHECK:STDOUT:   %.982: type = fn_type_with_self_type %Convert.type.99b, %As.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.197 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.197, @Convert.5(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
@@ -374,7 +377,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.loc4_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc4_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_14.1: type](%x.param_patt: @Undefined.%T.loc4_14.2 (%T)) -> @Undefined.%T.loc4_14.2 (%T);
+// CHECK:STDOUT:   fn(%x.param: @Undefined.%T.loc4_14.2 (%T)) -> @Undefined.%T.loc4_14.2 (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallUndefined() -> %i32 {
@@ -383,7 +386,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.249 = impl_witness_access constants.%impl_witness.882, element0 [concrete = constants.%Convert.197]
+// CHECK:STDOUT:   %impl.elem0: %.982 = impl_witness_access constants.%As.impl_witness.6b4, element0 [concrete = constants.%Convert.197]
 // CHECK:STDOUT:   %bound_method.loc14_22.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.5(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_22.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]

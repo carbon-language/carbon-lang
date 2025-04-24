@@ -35,8 +35,6 @@ jobs:
               - 'docs/project/goals.md'
               - 'docs/project/roadmap.md'
               - 'proposals/*.md'
-            explorer:
-              - 'explorer/**'
             toolchain:
               - 'toolchain/**'
 
@@ -45,13 +43,6 @@ jobs:
         uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
         with:
           reviewers: KateGregory, chandlerc, zygoloid
-          max-num-of-reviewers: 1
-
-      - id: assign-explorer
-        if: steps.filter.outputs.explorer == 'true'
-        uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
-        with:
-          reviewers: geoffromer, jonmeow, zygoloid
           max-num-of-reviewers: 1
 
       - id: assign-toolchain
@@ -65,7 +56,6 @@ jobs:
       - id: assign-fallback
         if: |
           steps.filter.outputs.leads != 'true' &&
-          steps.filter.outputs.explorer != 'true' &&
           steps.filter.outputs.toolchain != 'true'
         uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
         with:

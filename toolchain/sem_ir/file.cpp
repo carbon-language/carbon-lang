@@ -4,6 +4,10 @@
 
 #include "toolchain/sem_ir/file.h"
 
+#include <optional>
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -31,17 +35,16 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       impls_(*this),
-      type_blocks_(allocator_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(this) {
   // `type` and the error type are both complete & concrete types.
-  types_.SetComplete(TypeType::SingletonTypeId,
-                     {.value_repr = {.kind = ValueRepr::Copy,
-                                     .type_id = TypeType::SingletonTypeId}});
-  types_.SetComplete(ErrorInst::SingletonTypeId,
-                     {.value_repr = {.kind = ValueRepr::Copy,
-                                     .type_id = ErrorInst::SingletonTypeId}});
+  types_.SetComplete(
+      TypeType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId}});
+  types_.SetComplete(
+      ErrorInst::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId}});
 
   insts_.Reserve(SingletonInstKinds.size());
   for (auto kind : SingletonInstKinds) {
@@ -104,7 +107,6 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("specifics", specifics_.OutputYaml());
           map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
           map.Add("types", types_.OutputYaml());
-          map.Add("type_blocks", type_blocks_.OutputYaml());
           map.Add("insts",
                   Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                     for (auto [id, inst] : insts_.enumerate()) {
@@ -157,7 +159,6 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
                     import_ir_insts_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
                     struct_type_fields_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "type_blocks_"), type_blocks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "name_scopes_"), name_scopes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "constant_values_"),

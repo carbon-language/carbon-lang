@@ -13,20 +13,20 @@ namespace Carbon::Check {
 
 // Diagnoses an `extern` declaration that was not preceded by a declaration in
 // the API file.
-auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
+auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIR::LocId loc_id)
     -> void;
 
 // Information on new and previous declarations for DiagnoseIfInvalidRedecl.
 struct RedeclInfo {
-  explicit RedeclInfo(SemIR::EntityWithParamsBase params, SemIRLoc loc,
+  explicit RedeclInfo(SemIR::EntityWithParamsBase params, SemIR::LocId loc_id,
                       bool is_definition)
-      : loc(loc),
+      : loc_id(loc_id),
         is_definition(is_definition),
         is_extern(params.is_extern),
         extern_library_id(params.extern_library_id) {}
 
   // The associated diagnostic location.
-  SemIRLoc loc;
+  SemIR::LocId loc_id;
   // True if a definition.
   bool is_definition;
   // True if an `extern` declaration.
@@ -60,24 +60,24 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
 // different kinds of entity such as classes and functions.
 struct DeclParams {
   explicit DeclParams(const SemIR::EntityWithParamsBase& base)
-      : loc(base.latest_decl_id()),
+      : loc_id(base.latest_decl_id()),
         first_param_node_id(base.first_param_node_id),
         last_param_node_id(base.last_param_node_id),
         implicit_param_patterns_id(base.implicit_param_patterns_id),
         param_patterns_id(base.param_patterns_id) {}
 
-  DeclParams(SemIRLoc loc, Parse::NodeId first_param_node_id,
+  DeclParams(SemIR::LocId loc_id, Parse::NodeId first_param_node_id,
              Parse::NodeId last_param_node_id,
              SemIR::InstBlockId implicit_param_patterns_id,
              SemIR::InstBlockId param_patterns_id)
-      : loc(loc),
+      : loc_id(loc_id),
         first_param_node_id(first_param_node_id),
         last_param_node_id(last_param_node_id),
         implicit_param_patterns_id(implicit_param_patterns_id),
         param_patterns_id(param_patterns_id) {}
 
   // The location of the declaration of the entity.
-  SemIRLoc loc;
+  SemIR::LocId loc_id;
 
   // Parse tree bounds for the parameters, including both implicit and explicit
   // parameters. These will be compared to match between declaration and

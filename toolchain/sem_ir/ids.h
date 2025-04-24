@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
+#include <limits>
+
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/base/index_base.h"
@@ -41,6 +43,9 @@ struct InstId : public IdBase<InstId> {
   static constexpr llvm::StringLiteral Label = "inst";
   using ValueType = Inst;
 
+  // The maximum ID, inclusive.
+  static constexpr int Max = std::numeric_limits<int32_t>::max();
+
   // Represents the result of a name lookup that is temporarily disallowed
   // because the name is currently being initialized.
   static const InstId InitTombstone;
@@ -51,6 +56,26 @@ struct InstId : public IdBase<InstId> {
 };
 
 constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
+
+// And InstId whose value is a type. The fact it's a type is CHECKed on
+// construction, and this allows that check to be represented in the type
+// system.
+struct TypeInstId : public InstId {
+  static const TypeInstId None;
+
+  using InstId::InstId;
+
+  static constexpr auto UnsafeMake(InstId id) -> TypeInstId {
+    return TypeInstId(UnsafeCtor(), id);
+  }
+
+ private:
+  struct UnsafeCtor {};
+  explicit constexpr TypeInstId(UnsafeCtor /*unsafe*/, InstId id)
+      : InstId(id) {}
+};
+
+constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction
@@ -707,8 +732,8 @@ constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
 struct TypeId : public IdBase<TypeId> {
   static constexpr llvm::StringLiteral Label = "type";
 
-  // `StringifyTypeExpr` is used for diagnostics. However, where possible, an
-  // `InstId` describing how the type was written should be preferred, using
+  // `StringifyConstantInst` is used for diagnostics. However, where possible,
+  // an `InstId` describing how the type was written should be preferred, using
   // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
@@ -731,22 +756,6 @@ struct TypeId : public IdBase<TypeId> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
-
-// The ID of a type block.
-struct TypeBlockId : public IdBase<TypeBlockId> {
-  static constexpr llvm::StringLiteral Label = "type_block";
-  // Types for BlockValueStore<TypeBlockId>.
-  using ElementType = TypeId;
-  using ValueType = llvm::MutableArrayRef<ElementType>;
-
-  // The canonical empty block, reused to avoid allocating empty vectors. Always
-  // the 0-index block.
-  static const TypeBlockId Empty;
-
-  using IdBase::IdBase;
-};
-
-constexpr TypeBlockId TypeBlockId::Empty = TypeBlockId(0);
 
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase<ElementIndex> {
@@ -787,71 +796,158 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
   using ValueType = ImportIRInst;
 
-  using IdBase::IdBase;
+  // ImportIRInstId is restricted so that it can fit into LocId.
+  static constexpr int32_t BitsWithNodeId = 29;
+
+  // The maximum ID, non-inclusive.
+  static constexpr int Max = (1 << BitsWithNodeId) - Parse::NodeId::Max - 2;
+
+  constexpr explicit ImportIRInstId(int32_t index) : IdBase(index) {
+    CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
+  }
 };
 
-// A SemIR location used as the location of instructions.
+// A SemIR location used as the location of instructions. This contains either a
+// InstId, NodeId, ImportIRInstId, or None. The intent is that any of these can
+// indicate the source of an instruction, and also be used to associate a line
+// in diagnostics.
 //
-// Contents:
-// - index > None: A Parse::NodeId in the current IR.
-// - index < None: An ImportIRInstId.
-// - index == None: Can be used for either.
+// The structure is:
+// - None: The standard NoneIndex for all Id types, -1.
+// - InstId: positive values including zero; a full 31 bits.
+//   - [0, 1 << 31)
+// - NodeId: negative values starting after None; the 24 bit NodeId range.
+//   - [-2, -2 - (1 << 24))
+// - ImportIRInstId: remaining negative values; after NodeId, fills out negative
+//   values to 29 bits.
+//   - [-2 - (1 << 24), -(1 << 29))
+//
+// In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
+// Note that these can only be used with negative, non-`InstId` values.
 struct LocId : public IdBase<LocId> {
+  // The contained index kind.
+  enum class Kind {
+    None,
+    ImportIRInstId,
+    InstId,
+    NodeId,
+  };
+
   static constexpr llvm::StringLiteral Label = "loc";
 
-  // This bit, if set for a node ID location, indicates a location for
-  // operations performed implicitly.
-  static const int32_t ImplicitBit = 1 << 30;
-
   using IdBase::IdBase;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LocId(ImportIRInstId import_ir_inst_id)
+      : IdBase(import_ir_inst_id.has_value()
+                   ? FirstImportIRInstId - import_ir_inst_id.index
+                   : NoneIndex) {}
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NoneNodeId /*none*/) : IdBase(NoneIndex) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(Parse::NodeId node_id) : IdBase(node_id.index) {
-    CARBON_CHECK(node_id.has_value() == has_value());
-    CARBON_CHECK(!is_implicit());
-  }
+  constexpr LocId(Parse::NodeId node_id)
+      : IdBase(FirstNodeId - node_id.index) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(ImportIRInstId inst_id)
-      : IdBase(NoneIndex + ImportIRInstId::NoneIndex - inst_id.index) {
-    CARBON_CHECK(inst_id.has_value() == has_value());
-    CARBON_CHECK(index & ImplicitBit);
-  }
-
-  // Forms an equivalent LocId for an implicit location.
+  // Forms an equivalent LocId for a desugared location.  Requires a
+  // non-`InstId` location.
+  // TODO: Rename to something like `ToDesugared`.
   auto ToImplicit() const -> LocId {
-    // For import IR locations and the `None` location, the implicit bit is
-    // always set, so this is a no-op.
-    return LocId(index | ImplicitBit);
+    // This should only be called for NodeId or ImportIRInstId, but we only set
+    // the flag for NodeId.
+    CARBON_CHECK(kind() != Kind::InstId);
+    if (kind() == Kind::NodeId) {
+      return LocId(index & ~ImplicitBit);
+    }
+    return *this;
   }
 
-  auto is_node_id() const -> bool { return index > NoneIndex; }
-  auto is_import_ir_inst_id() const -> bool { return index < NoneIndex; }
+  // Forms an equivalent `LocId` for a token-only diagnostic location.  Requires
+  // a non-`InstId` location.
+  auto ToTokenOnly() const -> LocId {
+    CARBON_CHECK(kind() != Kind::InstId);
+    if (has_value()) {
+      return LocId(index & ~TokenOnlyBit);
+    }
+    return *this;
+  }
+
+  // Returns the kind of the `LocId`.
+  auto kind() const -> Kind {
+    if (!has_value()) {
+      return Kind::None;
+    }
+    if (index >= 0) {
+      return Kind::InstId;
+    }
+    if (index_without_flags() <= FirstImportIRInstId) {
+      return Kind::ImportIRInstId;
+    }
+    return Kind::NodeId;
+  }
+
+  // Returns true if the location corresponds to desugared instructions.
+  // Requires a non-`InstId` location.
   auto is_implicit() const -> bool {
-    return is_node_id() && (index & ImplicitBit) != 0;
+    CARBON_CHECK(kind() != Kind::InstId);
+    return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
   }
 
-  // This is allowed to return `NodeId::None`, but should never be used for
-  // `InstId` other than `InstId::None`.
+  // Returns true if the location is token-only for diagnostics. Requires a
+  // non-`InstId` location.
+  auto is_token_only() const -> bool {
+    CARBON_CHECK(kind() != Kind::InstId);
+    return (index & TokenOnlyBit) == 0;
+  }
+
+  // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
+  auto import_ir_inst_id() const -> ImportIRInstId {
+    if (!has_value()) {
+      return ImportIRInstId::None;
+    }
+    CARBON_CHECK(kind() == Kind::ImportIRInstId, "{0}", index);
+    return ImportIRInstId(FirstImportIRInstId - index_without_flags());
+  }
+
+  // Returns the equivalent `InstId` when `kind()` matches or is `None`.
+  auto inst_id() const -> InstId {
+    CARBON_CHECK(kind() == Kind::None || kind() == Kind::InstId, "{0}", index);
+    return InstId(index);
+  }
+
+  // Returns the equivalent `NodeId` when `kind()` matches or is `None`.
   auto node_id() const -> Parse::NodeId {
     if (!has_value()) {
       return Parse::NodeId::None;
     }
-    CARBON_CHECK(is_node_id());
-    return Parse::NodeId(index & ~ImplicitBit);
-  }
-
-  // This is allowed to return `InstId::None`, but should never be used for
-  // `NodeId` other than `NodeId::None`.
-  auto import_ir_inst_id() const -> ImportIRInstId {
-    CARBON_CHECK(is_import_ir_inst_id() || !has_value());
-    return ImportIRInstId(NoneIndex + ImportIRInstId::NoneIndex - index);
+    CARBON_CHECK(kind() == Kind::NodeId, "{0}", index);
+    return Parse::NodeId(FirstNodeId - index_without_flags());
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
+
+ private:
+  // Whether a location corresponds to desugared instructions. This only applies
+  // for `NodeId`.
+  static constexpr int32_t ImplicitBit = 1 << 30;
+
+  // See `token_only` for the use. This only applies for `NodeId` and
+  // `ImportIRInstId`.
+  static constexpr int32_t TokenOnlyBit = 1 << 29;
+
+  // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
+  static constexpr int32_t FirstNodeId = NoneIndex - 1;
+  static constexpr int32_t FirstImportIRInstId =
+      FirstNodeId - Parse::NodeId::Max;
+
+  auto index_without_flags() const -> int32_t {
+    CARBON_DCHECK(index < NoneIndex, "Only for NodeId and ImportIRInstId");
+    return index | ImplicitBit | TokenOnlyBit;
+  }
 };
 
 // Polymorphic id for fields in `Any[...]` typed instruction category. Used for

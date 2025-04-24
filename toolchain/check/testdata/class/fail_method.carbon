@@ -101,6 +101,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -113,9 +114,9 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WithSelf[%self.param_patt: %Class]();
+// CHECK:STDOUT: fn @WithSelf(%self.param: %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: %Class) {
+// CHECK:STDOUT: fn @F(%c.param: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc19: %Class = name_ref c, %c
 // CHECK:STDOUT:   %NoSelf.ref.loc19: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [concrete = constants.%NoSelf]

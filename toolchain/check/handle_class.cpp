@@ -2,7 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <optional>
+#include <tuple>
+
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
@@ -27,19 +31,10 @@
 
 namespace Carbon::Check {
 
-// If `type_id` is a class type, get its corresponding `SemIR::Class` object.
-// Otherwise returns `nullptr`.
-static auto TryGetAsClass(Context& context, SemIR::TypeId type_id)
-    -> SemIR::Class* {
-  auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
-  if (!class_type) {
-    return nullptr;
-  }
-  return &context.classes().Get(class_type->class_id);
-}
-
 auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
     -> bool {
+  // This class is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // class signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -48,8 +43,6 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Class>();
   context.decl_name_stack().PushScopeAndStartName();
-  // This class is potentially generic.
-  StartGenericDecl(context);
   return true;
 }
 
@@ -64,7 +57,7 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
                              SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
-  SemIRLoc prev_loc = prev_class.latest_decl_id();
+  SemIR::LocId prev_loc_id = prev_class.latest_decl_id();
 
   // Check the generic parameters match, if they were specified.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
@@ -75,7 +68,7 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
   DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Class, prev_class.name_id,
       RedeclInfo(new_class, node_id, new_is_definition),
-      RedeclInfo(prev_class, prev_loc, prev_class.has_definition_started()),
+      RedeclInfo(prev_class, prev_loc_id, prev_class.has_definition_started()),
       prev_import_ir_id);
 
   if (new_is_definition && prev_class.has_definition_started()) {
@@ -218,10 +211,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl =
-      SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = SemIR::ClassId::None,
-                       .decl_block_id = decl_block_id};
+  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
+                                     .class_id = SemIR::ClassId::None,
+                                     .decl_block_id = decl_block_id};
   auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   // TODO: Store state regarding is_extern.
@@ -260,14 +252,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
 
   if (is_new_class) {
-    // Build the `Self` type using the resulting type constant.
     // TODO: Form this as part of building the definition, not as part of the
     // declaration.
-    auto& class_info = context.classes().Get(class_decl.class_id);
-    auto specific_id =
-        context.generics().GetSelfSpecific(class_info.generic_id);
-    class_info.self_type_id =
-        GetClassType(context, class_decl.class_id, specific_id);
+    SetClassSelfType(context, class_decl.class_id);
   }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
@@ -288,23 +275,13 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   auto [class_id, class_decl_id] =
       BuildClassDecl(context, node_id, /*is_definition=*/true);
   auto& class_info = context.classes().Get(class_id);
-
-  // Track that this declaration is the definition.
-  CARBON_CHECK(!class_info.has_definition_started());
-  class_info.definition_id = class_decl_id;
-  class_info.scope_id = context.name_scopes().Add(
-      class_decl_id, SemIR::NameId::None, class_info.parent_scope_id);
+  StartClassDefinition(context, class_info, class_decl_id);
 
   // Enter the class scope.
-  context.scope_stack().Push(
+  context.scope_stack().PushForEntity(
       class_decl_id, class_info.scope_id,
       context.generics().GetSelfSpecific(class_info.generic_id));
   StartGenericDefinition(context);
-
-  // Introduce `Self`.
-  context.name_scopes().AddRequiredName(
-      class_info.scope_id, SemIR::NameId::SelfType,
-      context.types().GetInstId(class_info.self_type_id));
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);
@@ -326,22 +303,23 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
 
 // Diagnoses a class-specific declaration appearing outside a class.
 static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
-                                                  SemIRLoc loc,
+                                                  SemIR::LocId loc_id,
                                                   Lex::TokenKind tok) -> void {
   CARBON_DIAGNOSTIC(ClassSpecificDeclOutsideClass, Error,
                     "`{0}` declaration outside class", Lex::TokenKind);
-  context.emitter().Emit(loc, ClassSpecificDeclOutsideClass, tok);
+  context.emitter().Emit(loc_id, ClassSpecificDeclOutsideClass, tok);
 }
 
 // Returns the current scope's class declaration, or diagnoses if it isn't a
 // class.
-static auto GetCurrentScopeAsClassOrDiagnose(Context& context, SemIRLoc loc,
+static auto GetCurrentScopeAsClassOrDiagnose(Context& context,
+                                             SemIR::LocId loc_id,
                                              Lex::TokenKind tok)
     -> std::optional<SemIR::ClassDecl> {
   auto class_scope =
       context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
   if (!class_scope) {
-    DiagnoseClassSpecificDeclOutsideClass(context, loc, tok);
+    DiagnoseClassSpecificDeclOutsideClass(context, loc_id, tok);
   }
   return class_scope;
 }
@@ -349,8 +327,8 @@ static auto GetCurrentScopeAsClassOrDiagnose(Context& context, SemIRLoc loc,
 // Diagnoses a class-specific declaration that is repeated within a class, but
 // is not permitted to be repeated.
 static auto DiagnoseClassSpecificDeclRepeated(Context& context,
-                                              SemIRLoc new_loc,
-                                              SemIRLoc prev_loc,
+                                              SemIR::LocId new_loc_id,
+                                              SemIR::LocId prev_loc_id,
                                               Lex::TokenKind tok) -> void {
   CARBON_DIAGNOSTIC(AdaptDeclRepeated, Error,
                     "multiple `adapt` declarations in class");
@@ -361,9 +339,9 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
                     "previous `{0}` declaration is here", Lex::TokenKind);
   CARBON_CHECK(tok == Lex::TokenKind::Adapt || tok == Lex::TokenKind::Base);
   context.emitter()
-      .Build(new_loc, tok == Lex::TokenKind::Adapt ? AdaptDeclRepeated
-                                                   : BaseDeclRepeated)
-      .Note(prev_loc, ClassSpecificDeclPrevious, tok)
+      .Build(new_loc_id, tok == Lex::TokenKind::Adapt ? AdaptDeclRepeated
+                                                      : BaseDeclRepeated)
+      .Note(prev_loc_id, ClassSpecificDeclPrevious, tok)
       .Emit();
 }
 
@@ -395,7 +373,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto [adapted_inst_id, adapted_type_id] =
+  auto [adapted_type_inst_id, adapted_type_id] =
       ExprAsType(context, node_id, adapted_type_expr_id);
   adapted_type_id = AsConcreteType(
       context, adapted_type_id, node_id,
@@ -404,26 +382,26 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
                           "adapted type {0} is an incomplete type",
                           InstIdAsType);
         return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
-                                       adapted_inst_id);
+                                       adapted_type_inst_id);
       },
       [&] {
         CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
                           "adapted type {0} is an abstract type", InstIdAsType);
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
-                                       adapted_inst_id);
+                                       adapted_type_inst_id);
       });
-  if (adapted_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    adapted_inst_id = SemIR::ErrorInst::SingletonInstId;
+  if (adapted_type_id == SemIR::ErrorInst::TypeId) {
+    adapted_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
   // Build a SemIR representation for the declaration.
   class_info.adapt_id = AddInst<SemIR::AdaptDecl>(
-      context, node_id, {.adapted_type_inst_id = adapted_inst_id});
+      context, node_id, {.adapted_type_inst_id = adapted_type_inst_id});
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    class_scope.AddExtendedScope(adapted_inst_id);
+    class_scope.AddExtendedScope(adapted_type_inst_id);
   }
   return true;
 }
@@ -447,17 +425,16 @@ struct BaseInfo {
 
   SemIR::TypeId type_id;
   SemIR::NameScopeId scope_id;
-  SemIR::InstId inst_id;
+  SemIR::TypeInstId inst_id;
 };
-constexpr BaseInfo BaseInfo::Error = {
-    .type_id = SemIR::ErrorInst::SingletonTypeId,
-    .scope_id = SemIR::NameScopeId::None,
-    .inst_id = SemIR::ErrorInst::SingletonInstId};
+constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::ErrorInst::TypeId,
+                                      .scope_id = SemIR::NameScopeId::None,
+                                      .inst_id = SemIR::ErrorInst::TypeInstId};
 }  // namespace
 
 // Diagnoses an attempt to derive from a final type.
 static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
-                                SemIR::InstId base_type_inst_id) -> void {
+                                SemIR::TypeInstId base_type_inst_id) -> void {
   CARBON_DIAGNOSTIC(BaseIsFinal, Error,
                     "deriving from final type {0}; base type must be an "
                     "`abstract` or `base` class",
@@ -477,7 +454,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                                    base_type_inst_id);
   });
 
-  if (base_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (base_type_id == SemIR::ErrorInst::TypeId) {
     return BaseInfo::Error;
   }
 
@@ -545,15 +522,16 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
-  auto field_type_id = GetUnboundElementType(context, class_info.self_type_id,
-                                             base_info.type_id);
+  auto field_type_id = GetUnboundElementType(
+      context, context.types().GetInstId(class_info.self_type_id),
+      base_info.inst_id);
   class_info.base_id =
       AddInst<SemIR::BaseDecl>(context, node_id,
                                {.type_id = field_type_id,
                                 .base_type_inst_id = base_info.inst_id,
                                 .index = SemIR::ElementIndex::None});
 
-  if (base_info.type_id != SemIR::ErrorInst::SingletonTypeId) {
+  if (base_info.type_id != SemIR::ErrorInst::TypeId) {
     auto base_class_info = context.classes().Get(
         context.types().GetAs<SemIR::ClassType>(base_info.type_id).class_id);
     class_info.is_dynamic |= base_class_info.is_dynamic;
@@ -577,221 +555,22 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   return true;
 }
 
-// Checks that the specified finished adapter definition is valid and builds and
-// returns a corresponding complete type witness instruction.
-static auto CheckCompleteAdapterClassType(Context& context,
-                                          Parse::NodeId node_id,
-                                          SemIR::ClassId class_id)
-    -> SemIR::InstId {
-  const auto& class_info = context.classes().Get(class_id);
-  if (class_info.base_id.has_value()) {
-    CARBON_DIAGNOSTIC(AdaptWithBase, Error, "adapter with base class");
-    CARBON_DIAGNOSTIC(AdaptWithBaseHere, Note, "`base` declaration is here");
-    context.emitter()
-        .Build(class_info.adapt_id, AdaptWithBase)
-        .Note(class_info.base_id, AdaptWithBaseHere)
-        .Emit();
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-
-  auto field_decls = context.field_decls_stack().PeekArray();
-  if (!field_decls.empty()) {
-    CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter with fields");
-    CARBON_DIAGNOSTIC(AdaptWithFieldHere, Note,
-                      "first field declaration is here");
-    context.emitter()
-        .Build(class_info.adapt_id, AdaptWithFields)
-        .Note(field_decls.front(), AdaptWithFieldHere)
-        .Emit();
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-
-  for (auto inst_id : context.inst_block_stack().PeekCurrentBlockContents()) {
-    if (auto function_decl =
-            context.insts().TryGetAs<SemIR::FunctionDecl>(inst_id)) {
-      auto& function = context.functions().Get(function_decl->function_id);
-      if (function.virtual_modifier ==
-          SemIR::Function::VirtualModifier::Virtual) {
-        CARBON_DIAGNOSTIC(AdaptWithVirtual, Error,
-                          "adapter with virtual function");
-        CARBON_DIAGNOSTIC(AdaptWithVirtualHere, Note,
-                          "first virtual function declaration is here");
-        context.emitter()
-            .Build(class_info.adapt_id, AdaptWithVirtual)
-            .Note(inst_id, AdaptWithVirtualHere)
-            .Emit();
-        return SemIR::ErrorInst::SingletonInstId;
-      }
-    }
-  }
-
-  // The object representation of the adapter is the object representation
-  // of the adapted type.
-  auto adapted_type_id =
-      class_info.GetAdaptedType(context.sem_ir(), SemIR::SpecificId::None);
-  auto object_repr_id = context.types().GetObjectRepr(adapted_type_id);
-
-  return AddInst<SemIR::CompleteTypeWitness>(
-      context, node_id,
-      {.type_id =
-           GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
-       .object_repr_id = object_repr_id});
-}
-
-static auto AddStructTypeFields(
-    Context& context,
-    llvm::SmallVector<SemIR::StructTypeField>& struct_type_fields)
-    -> SemIR::StructTypeFieldsId {
-  for (auto field_decl_id : context.field_decls_stack().PeekArray()) {
-    auto field_decl = context.insts().GetAs<SemIR::FieldDecl>(field_decl_id);
-    field_decl.index =
-        SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
-    ReplaceInstPreservingConstantValue(context, field_decl_id, field_decl);
-    if (field_decl.type_id == SemIR::ErrorInst::SingletonTypeId) {
-      struct_type_fields.push_back(
-          {.name_id = field_decl.name_id,
-           .type_id = SemIR::ErrorInst::SingletonTypeId});
-      continue;
-    }
-    auto unbound_element_type =
-        context.sem_ir().types().GetAs<SemIR::UnboundElementType>(
-            field_decl.type_id);
-    struct_type_fields.push_back(
-        {.name_id = field_decl.name_id,
-         .type_id = unbound_element_type.element_type_id});
-  }
-  auto fields_id =
-      context.struct_type_fields().AddCanonical(struct_type_fields);
-  return fields_id;
-}
-
-// Builds and returns a vtable for the current class. Assumes that the virtual
-// functions for the class are listed as the top element of the `vtable_stack`.
-static auto BuildVtable(Context& context, Parse::NodeId node_id,
-                        SemIR::InstId base_vtable_id) -> SemIR::InstId {
-  llvm::SmallVector<SemIR::InstId> vtable;
-  if (base_vtable_id.has_value()) {
-    LoadImportRef(context, base_vtable_id);
-    auto canonical_base_vtable_id =
-        context.constant_values().GetConstantInstId(base_vtable_id);
-    if (canonical_base_vtable_id == SemIR::ErrorInst::SingletonInstId) {
-      return SemIR::ErrorInst::SingletonInstId;
-    }
-    auto base_vtable_inst_block = context.inst_blocks().Get(
-        context.insts()
-            .GetAs<SemIR::Vtable>(canonical_base_vtable_id)
-            .virtual_functions_id);
-    // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
-    // elements of the top of `vtable_stack`.
-    for (auto fn_decl_id : base_vtable_inst_block) {
-      auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
-      const auto& fn = context.functions().Get(fn_decl.function_id);
-      for (auto override_fn_decl_id :
-           context.vtable_stack().PeekCurrentBlockContents()) {
-        auto override_fn_decl =
-            context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
-        const auto& override_fn =
-            context.functions().Get(override_fn_decl.function_id);
-        if (override_fn.virtual_modifier ==
-                SemIR::FunctionFields::VirtualModifier::Impl &&
-            override_fn.name_id == fn.name_id) {
-          // TODO: Support generic base classes, rather than passing
-          // `SpecificId::None`.
-          CheckFunctionTypeMatches(context, override_fn, fn,
-                                   SemIR::SpecificId::None,
-                                   /*check_syntax=*/false,
-                                   /*check_self=*/false);
-          fn_decl_id = override_fn_decl_id;
-        }
-      }
-      vtable.push_back(fn_decl_id);
-    }
-  }
-
-  for (auto inst_id : context.vtable_stack().PeekCurrentBlockContents()) {
-    auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
-    const auto& fn = context.functions().Get(fn_decl.function_id);
-    if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Impl) {
-      vtable.push_back(inst_id);
-    }
-  }
-  return AddInst<SemIR::Vtable>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::VtableType::SingletonInstId),
-       .virtual_functions_id = context.inst_blocks().Add(vtable)});
-}
-
-// Checks that the specified finished class definition is valid and builds and
-// returns a corresponding complete type witness instruction.
-static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
-                                   SemIR::ClassId class_id) -> SemIR::InstId {
-  auto& class_info = context.classes().Get(class_id);
-  if (class_info.adapt_id.has_value()) {
-    return CheckCompleteAdapterClassType(context, node_id, class_id);
-  }
-
-  bool defining_vptr = class_info.is_dynamic;
-  auto base_type_id =
-      class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::None);
-  SemIR::Class* base_class_info = nullptr;
-  if (base_type_id.has_value()) {
-    // TODO: If the base class is template dependent, we will need to decide
-    // whether to add a vptr as part of instantiation.
-    base_class_info = TryGetAsClass(context, base_type_id);
-    if (base_class_info && base_class_info->is_dynamic) {
-      defining_vptr = false;
-    }
-  }
-
-  auto field_decls = context.field_decls_stack().PeekArray();
-  llvm::SmallVector<SemIR::StructTypeField> struct_type_fields;
-  struct_type_fields.reserve(defining_vptr + class_info.base_id.has_value() +
-                             field_decls.size());
-  if (defining_vptr) {
-    struct_type_fields.push_back(
-        {.name_id = SemIR::NameId::Vptr,
-         .type_id =
-             GetPointerType(context, SemIR::VtableType::SingletonInstId)});
-  }
-  if (base_type_id.has_value()) {
-    auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
-    base_decl.index =
-        SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
-    ReplaceInstPreservingConstantValue(context, class_info.base_id, base_decl);
-    struct_type_fields.push_back(
-        {.name_id = SemIR::NameId::Base, .type_id = base_type_id});
-  }
-
-  if (class_info.is_dynamic) {
-    class_info.vtable_id = BuildVtable(
-        context, node_id,
-        defining_vptr ? SemIR::InstId::None : base_class_info->vtable_id);
-  }
-
-  return AddInst<SemIR::CompleteTypeWitness>(
-      context, node_id,
-      {.type_id =
-           GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
-       .object_repr_id = GetStructType(
-           context, AddStructTypeFields(context, struct_type_fields))});
-}
-
 auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
     -> bool {
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
 
   // The class type is now fully defined. Compute its object representation.
-  auto complete_type_witness_id =
-      CheckCompleteClassType(context, node_id, class_id);
-  auto& class_info = context.classes().Get(class_id);
-  class_info.complete_type_witness_id = complete_type_witness_id;
+  ComputeClassObjectRepr(context, node_id, class_id,
+                         context.field_decls_stack().PeekArray(),
+                         context.vtable_stack().PeekCurrentBlockContents(),
+                         context.inst_block_stack().PeekCurrentBlockContents());
 
   context.inst_block_stack().Pop();
   context.field_decls_stack().PopArray();
   context.vtable_stack().Pop();
 
-  FinishGenericDefinition(context, class_info.generic_id);
+  FinishGenericDefinition(context, context.classes().Get(class_id).generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

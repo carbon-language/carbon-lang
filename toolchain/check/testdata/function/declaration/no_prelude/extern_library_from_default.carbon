@@ -70,7 +70,7 @@ extern fn F();
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_wrong_library.carbon
 // CHECK:STDOUT:
@@ -90,5 +90,5 @@ extern fn F();
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:

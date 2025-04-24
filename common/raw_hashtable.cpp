@@ -4,6 +4,8 @@
 
 #include "common/raw_hashtable.h"
 
+#include <cstddef>
+
 namespace Carbon::RawHashtable {
 
 volatile std::byte global_addr_seed{1};

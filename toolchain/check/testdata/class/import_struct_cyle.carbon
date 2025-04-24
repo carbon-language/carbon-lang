@@ -72,18 +72,18 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %.loc10_8: %Cycle.elem = field_decl c, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc10_3: %Cycle.elem = var_pattern %.loc10_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Cycle.elem = var <none>
+// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl.loc4 [concrete = constants.%Cycle]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr} [concrete = constants.%struct_type.b]
+// CHECK:STDOUT:   %.loc10: %Cycle.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
 // CHECK:STDOUT:   .Cycle = <poisoned>
-// CHECK:STDOUT:   .c = %.loc10_8
+// CHECK:STDOUT:   .c = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -107,7 +107,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.b93: <witness> = import_ref Main//a, loc11_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.455: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %.354]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

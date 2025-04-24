@@ -2,14 +2,14 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest")
 
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testdata",
-    data = glob(["testdata/**/*.carbon"]),
+    srcs = glob(["testdata/**/*.carbon"]),
 )
 
 cc_library(
@@ -116,6 +116,7 @@ cc_test(
 
 cc_library(
     name = "null_diagnostics",
+    testonly = 1,
     hdrs = ["null_diagnostics.h"],
     deps = [
         ":diagnostic_emitter",

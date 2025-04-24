@@ -140,11 +140,10 @@ class Class {
 // CHECK:STDOUT:     %return.param.loc6: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc6: ref %i32 = return_slot %return.param.loc6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_8: %Class.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc8_3: %Class.elem = var_pattern %.loc8_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc8: %Class.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -152,23 +151,23 @@ class Class {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   .n = %.loc8_8
+// CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {
+// CHECK:STDOUT: fn @F(%self.param.loc11: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc11
-// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8_8 [concrete = @Class.%.loc8_8]
+// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [concrete = @Class.%.loc8]
 // CHECK:STDOUT:   %.loc12_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc12_14.2: %i32 = bind_value %.loc12_14.1
 // CHECK:STDOUT:   return %.loc12_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.e71]() -> %i32 {
+// CHECK:STDOUT: fn @G(%self.param.loc15: %ptr.e71) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.e71 = name_ref self, %self.loc15
 // CHECK:STDOUT:   %.loc16_11: ref %Class = deref %self.ref
-// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8_8 [concrete = @Class.%.loc8_8]
+// CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [concrete = @Class.%.loc8]
 // CHECK:STDOUT:   %.loc16_17.1: ref %i32 = class_element_access %.loc16_11, element0
 // CHECK:STDOUT:   %.loc16_17.2: %i32 = bind_value %.loc16_17.1
 // CHECK:STDOUT:   return %.loc16_17.2
@@ -216,6 +215,7 @@ class Class {
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param1
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -224,5 +224,5 @@ class Class {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> <error>;
+// CHECK:STDOUT: fn @F(%self.param: %Class) -> <error>;
 // CHECK:STDOUT:

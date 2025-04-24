@@ -86,7 +86,7 @@ fn If(b: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If(%b.param_patt: bool) {
+// CHECK:STDOUT: fn @If(%b.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else

@@ -105,6 +105,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -115,11 +116,11 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self.param_patt: %ptr.e71]();
+// CHECK:STDOUT: fn @F.1(%self.param: %ptr.e71);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.param_patt: %Class]();
+// CHECK:STDOUT: fn @G(%self.param: %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%c.param_patt: %Class, %p.param_patt: %ptr.e71) {
+// CHECK:STDOUT: fn @F.2(%c.param: %Class, %p.param: %ptr.e71) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc28: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc28: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]

@@ -8,6 +8,8 @@
 #include <gtest/gtest.h>
 
 #include <forward_list>
+#include <optional>
+#include <string>
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/shared_value_stores.h"

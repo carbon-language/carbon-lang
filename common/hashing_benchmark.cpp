@@ -5,6 +5,7 @@
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <numbers>
 

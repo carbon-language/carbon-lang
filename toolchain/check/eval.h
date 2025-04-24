@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -38,8 +39,12 @@ inline auto TryEvalInst(Context& context, SemIR::InstId inst_id)
 // value and the instruction is known to not matter. However, even then care
 // should be taken: if the produced constant is symbolic, you may still need an
 // instruction to associate the constant with the enclosing generic.
+//
+// To evaluate an instruction and add it to SemIR only if necessary, use
+// EvalOrAddInst instead.
 template <typename InstT>
-  requires(!InstT::Kind.constant_needs_inst_id())
+  requires(InstT::Kind.constant_needs_inst_id() ==
+           SemIR::InstConstantNeedsInstIdKind::No)
 auto TryEvalInst(Context& context, InstT inst) -> SemIR::ConstantId {
   return TryEvalInstUnsafe(context, SemIR::InstId::None, inst);
 }
@@ -47,7 +52,7 @@ auto TryEvalInst(Context& context, InstT inst) -> SemIR::ConstantId {
 // Evaluates the eval block for a region of a specific. Produces a block
 // containing the evaluated constant values of the instructions in the eval
 // block.
-auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
+auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
     -> SemIR::InstBlockId;
