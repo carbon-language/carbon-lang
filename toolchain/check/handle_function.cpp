@@ -310,6 +310,30 @@ static auto ValidateForEntryPoint(Context& context,
   }
 }
 
+static auto IsGenericFunction(Context& context,
+                              SemIR::GenericId function_generic_id,
+                              SemIR::GenericId class_generic_id) -> bool {
+  if (function_generic_id == SemIR::GenericId::None) {
+    return false;
+  }
+
+  if (class_generic_id == SemIR::GenericId::None) {
+    return true;
+  }
+
+  const auto& function_generic = context.generics().Get(function_generic_id);
+  const auto& class_generic = context.generics().Get(class_generic_id);
+
+  auto function_bindings =
+      context.inst_blocks().Get(function_generic.bindings_id);
+  auto class_bindings = context.inst_blocks().Get(class_generic.bindings_id);
+
+  // If the function's bindings are the same size as the class's bindings,
+  // then there are no extra bindings for the function, so it is effectively
+  // non-generic within the scope of a specific of the class.
+  return class_bindings.size() != function_bindings.size();
+}
+
 // Requests a vtable be created when processing a virtual function.
 static auto RequestVtableIfVirtual(
     Context& context, Parse::AnyFunctionDeclId node_id,
@@ -334,29 +358,10 @@ static auto RequestVtableIfVirtual(
     context.emitter().Emit(node_id, ImplWithoutBase);
   }
 
-  if (generic_id != SemIR::GenericId::None) {
-    bool function_is_generic = true;
-    if (class_info.generic_id != SemIR::GenericId::None) {
-      const auto& function_generic = context.generics().Get(generic_id);
-      const auto& class_generic = context.generics().Get(class_info.generic_id);
-
-      auto function_bindings =
-          context.inst_blocks().Get(function_generic.bindings_id);
-      auto class_bindings =
-          context.inst_blocks().Get(class_generic.bindings_id);
-
-      // If the function's bindings are the same size as the class's bindings,
-      // then there are no extra bindings for the function, so it is effectively
-      // non-generic within the scope of a specific of the class.
-      if (class_bindings.size() == function_bindings.size()) {
-        function_is_generic = false;
-      }
-    }
-    if (function_is_generic) {
-      CARBON_DIAGNOSTIC(GenericVirtual, Error, "generic virtual function");
-      context.emitter().Emit(node_id, GenericVirtual);
-      return;
-    }
+  if (IsGenericFunction(context, generic_id, class_info.generic_id)) {
+    CARBON_DIAGNOSTIC(GenericVirtual, Error, "generic virtual function");
+    context.emitter().Emit(node_id, GenericVirtual);
+    return;
   }
 
   // TODO: If this is an `impl` function, check there's a matching base
