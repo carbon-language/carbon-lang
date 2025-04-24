@@ -14,6 +14,9 @@ namespace Carbon::Check {
 
 auto DiagnosticEmitter::ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
+  // TODO: Instead of special casing Clang location here, support it within
+  // `GetAbsoluteNodeId()`. See discussion in
+  // https://github.com/carbon-language/carbon-lang/pull/5262/files#r2040308805.
   auto converted_clang_loc = TryConvertClangDiagnosticLoc(loc);
   if (converted_clang_loc) {
     return *converted_clang_loc;
