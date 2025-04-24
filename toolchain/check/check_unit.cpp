@@ -115,13 +115,13 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
         context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
-    SetApiImportIRs(context_,
-                    {.decl_id = import_decl_id,
-                     .is_export = false,
-                     .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
+    SetSpecialImportIRs(
+        context_, {.decl_id = import_decl_id,
+                   .is_export = false,
+                   .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
   } else {
-    SetApiImportIRs(context_,
-                    {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
+    SetSpecialImportIRs(context_,
+                        {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
   }
 
   // Add import instructions for everything directly imported. Implicit imports

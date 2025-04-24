@@ -34,8 +34,9 @@ static auto InternalAddImportIR(Context& context, SemIR::ImportIR import_ir)
 
 // Sets the IR for a specific ImportIRId. Should be called in the right order in
 // order to ensure the correct ID is assigned.
-static auto SetImportIR(Context& context, SemIR::ImportIR import_ir,
-                        SemIR::ImportIRId expected_import_ir_id) -> void {
+static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
+                               SemIR::ImportIRId expected_import_ir_id)
+    -> void {
   auto ir_id = SemIR::ImportIRId::None;
   if (import_ir.sem_ir != nullptr) {
     ir_id = AddImportIR(context, import_ir);
@@ -48,10 +49,11 @@ static auto SetImportIR(Context& context, SemIR::ImportIR import_ir,
                expected_import_ir_id);
 }
 
-auto SetApiImportIRs(Context& context, SemIR::ImportIR import_ir) -> void {
-  SetImportIR(context, import_ir, SemIR::ImportIRId::ApiForImpl);
-  SetImportIR(context, {.decl_id = SemIR::InstId::None, .is_export = false},
-              SemIR::ImportIRId::Cpp);
+auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void {
+  SetSpecialImportIR(context, import_ir, SemIR::ImportIRId::ApiForImpl);
+  SetSpecialImportIR(context,
+                     {.decl_id = SemIR::InstId::None, .is_export = false},
+                     SemIR::ImportIRId::Cpp);
 }
 
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)

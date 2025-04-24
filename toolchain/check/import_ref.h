@@ -13,7 +13,7 @@ namespace Carbon::Check {
 
 // Sets the IRs for `ImportIRId::ApiForImpl` and `ImportIRId::Cpp`. Should be
 // called before `AddImportIR` in order to ensure the correct IDs are assigned.
-auto SetApiImportIRs(Context& context, SemIR::ImportIR import_ir) -> void;
+auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void;
 
 // Adds an ImportIR, returning the ID. May use an existing ID if already added.
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
