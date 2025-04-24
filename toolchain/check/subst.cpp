@@ -386,7 +386,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
     auto const_id = EvalOrAddInst(
         *context_,
         SemIR::LocIdAndInst::UncheckedLoc(
-            context_->insts().GetCanonicalLocId(old_inst_id).ToImplicit(),
+            context_->insts().GetResolvedLocId(old_inst_id).ToImplicit(),
             new_inst));
     CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");

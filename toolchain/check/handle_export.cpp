@@ -62,7 +62,7 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
     context.emitter()
         .Build(node_id, ExportRedundant)
         // Use the location of the export itself, not the exported instruction.
-        .Note(context.insts().GetCanonicalLocId(inst_id), ExportPrevious)
+        .Note(context.insts().GetResolvedLocId(inst_id), ExportPrevious)
         .Emit();
     return true;
   }

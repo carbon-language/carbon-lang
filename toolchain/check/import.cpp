@@ -103,7 +103,7 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
     return SemIR::LocIdAndInst::NoLoc(namespace_inst);
   }
 
-  SemIR::LocId import_loc_id = context.insts().GetCanonicalLocId(import_id);
+  SemIR::LocId import_loc_id = context.insts().GetResolvedLocId(import_id);
   if (!import_loc_id.has_value()) {
     // TODO: Either document the use-case for this, or require a location.
     return SemIR::LocIdAndInst::NoLoc(namespace_inst);

@@ -14,7 +14,7 @@ auto TokenOnly(Context& /*context*/, Parse::NodeId node_id) -> SemIR::LocId {
 }
 
 auto TokenOnly(Context& context, SemIR::LocId loc_id) -> SemIR::LocId {
-  return context.insts().GetCanonicalLocId(loc_id).ToTokenOnly();
+  return context.insts().GetResolvedLocId(loc_id).ToTokenOnly();
 }
 
 }  // namespace Carbon::Check

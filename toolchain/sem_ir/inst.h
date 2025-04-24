@@ -435,12 +435,13 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  // Gets the canonical LocId for a location, which is not backed by an InstId.
+  // Returns a resolved LocId, which will point to a parse node, an import, or
+  // be None.
   //
-  // This operation needs to be done before using most operations on `LocId`
-  // since an `InstId` value is just a thin wrapper around a more canonical
-  // location.
-  auto GetCanonicalLocId(LocId loc_id) const -> LocId {
+  // Unresolved LocIds can be backed by an InstId which may or may not have a
+  // value after being resolved, so this operation needs to be done before using
+  // most operations on `LocId`.
+  auto GetResolvedLocId(LocId loc_id) const -> LocId {
     while (loc_id.kind() == SemIR::LocId::Kind::InstId) {
       auto inst_id = loc_id.inst_id();
       CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
@@ -451,8 +452,14 @@ class InstStore {
     return loc_id;
   }
 
-  auto GetCanonicalLocId(InstId inst_id) const -> LocId {
-    return GetCanonicalLocId(LocId(inst_id));
+  // Gets the resolved LocId for an instruction. InstId can directly construct
+  // an unresolved LocId. This skips that step when a resolved LocId is needed.
+  auto GetResolvedLocId(InstId inst_id) const -> LocId {
+    CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
+    CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}", inst_id.index,
+                 loc_ids_.size());
+    auto loc_id = loc_ids_[inst_id.index];
+    return GetResolvedLocId(loc_id);
   }
 
   // Overwrites a given instruction with a new value.

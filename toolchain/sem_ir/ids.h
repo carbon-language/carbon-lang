@@ -825,11 +825,11 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 // In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
 // Note that these can only be used with negative, non-`InstId` values.
 //
-// Use `InstStore::GetCanonicalLocId()` to convert a `LocId` to a canonical
-// `LocId` which will not be backed by an `InstId`. Note that this may return
-// `None`, so this operation needs to be done before checking `has_value()`.
-// Only canonical locations can be converted with `ToImplicit()` or
-// `ToTokenOnly()`.
+// Use `InstStore::GetResolvedLocId()` to get a resolved `LocId` which will not
+// be backed by an `InstId`. Note that the resolves `LocId` may be `None` even
+// when the original `LocId` was not, so this operation needs to be done before
+// checking `has_value()`. Only resolved locations can be converted with
+// `ToImplicit()` or `ToTokenOnly()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -859,7 +859,7 @@ struct LocId : public IdBase<LocId> {
       : IdBase(FirstNodeId - node_id.index) {}
 
   // Forms an equivalent LocId for a desugared location. Requires a
-  // canonical location. See `InstStore::GetCanonicalLocId()`.
+  // resolved location. See `InstStore::GetResolvedLocId()`.
   // TODO: Rename to something like `ToDesugared`.
   auto ToImplicit() const -> LocId {
     // This should only be called for NodeId or ImportIRInstId, but we only set
@@ -872,7 +872,7 @@ struct LocId : public IdBase<LocId> {
   }
 
   // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
-  // a canonical location. See `InstStore::GetCanonicalLocId()`.
+  // a resolved location. See `InstStore::GetResolvedLocId()`.
   auto ToTokenOnly() const -> LocId {
     CARBON_CHECK(kind() != Kind::InstId);
     if (has_value()) {
