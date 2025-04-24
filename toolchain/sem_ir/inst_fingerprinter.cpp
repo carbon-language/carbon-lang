@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
+#include <array>
+#include <utility>
 #include <variant>
 
 #include "common/ostream.h"
@@ -134,17 +136,9 @@ struct Worklist {
     AddBlock(sem_ir->inst_blocks().Get(inst_block_id));
   }
 
-  auto Add(TypeBlockId type_block_id) -> void {
-    if (!type_block_id.has_value()) {
-      AddInvalid();
-      return;
-    }
-    AddBlock(sem_ir->type_blocks().Get(type_block_id));
-  }
-
   auto Add(StructTypeField field) -> void {
     Add(field.name_id);
-    Add(field.type_id);
+    Add(field.type_inst_id);
   }
 
   auto Add(StructTypeFieldsId struct_type_fields_id) -> void {
@@ -412,8 +406,8 @@ struct Worklist {
 
       // Don't include the type if it's `type` or `<error>`, because those types
       // are self-referential.
-      if (inst.type_id() != TypeType::SingletonTypeId &&
-          inst.type_id() != ErrorInst::SingletonTypeId) {
+      if (inst.type_id() != TypeType::TypeId &&
+          inst.type_id() != ErrorInst::TypeId) {
         Add(inst.type_id());
       }
 

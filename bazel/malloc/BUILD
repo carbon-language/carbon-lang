@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel/cc_rules:defs.bzl", "cc_library")
 
 config_setting(
     name = "is_linux",

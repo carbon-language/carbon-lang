@@ -5,6 +5,8 @@
 #include "toolchain/source/source_buffer.h"
 
 #include <limits>
+#include <memory>
+#include <optional>
 
 #include "llvm/Support/ErrorOr.h"
 #include "toolchain/diagnostics/file_diagnostics.h"

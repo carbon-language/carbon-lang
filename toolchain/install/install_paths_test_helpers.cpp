@@ -4,6 +4,9 @@
 
 #include "toolchain/install/install_paths_test_helpers.h"
 
+#include <memory>
+#include <utility>
+
 #include "testing/base/global_exe_path.h"
 
 namespace Carbon::Testing {

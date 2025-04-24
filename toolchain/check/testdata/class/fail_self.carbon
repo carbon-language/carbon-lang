@@ -135,6 +135,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %return.param.loc18: ref %Class = out_param call_param0
 // CHECK:STDOUT:     %return.loc18: ref %Class = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -153,6 +154,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -162,12 +164,12 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(%self.param_patt: %Class) {
+// CHECK:STDOUT: fn @F.1(%self.param.loc25: %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param_patt: %Class {
+// CHECK:STDOUT: fn @G() -> %return.param.loc28: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
@@ -181,9 +183,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return <error> to %return.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %Class]();
+// CHECK:STDOUT: fn @F.2(%self.param: %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallWrongSelf(%ws.param_patt: %WrongSelf) {
+// CHECK:STDOUT: fn @CallWrongSelf(%ws.param: %WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.25f = name_ref F, @WrongSelf.%F.decl [concrete = constants.%F.3a3]

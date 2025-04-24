@@ -4,6 +4,9 @@
 
 #include "toolchain/sem_ir/name_scope.h"
 
+#include <optional>
+#include <utility>
+
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::SemIR {

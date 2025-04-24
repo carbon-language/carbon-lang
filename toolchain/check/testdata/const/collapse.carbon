@@ -69,7 +69,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param_patt: %ptr.3bc) -> %ptr.3bc {
+// CHECK:STDOUT: fn @F(%p.param: %ptr.3bc) -> %ptr.3bc {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.3bc = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref

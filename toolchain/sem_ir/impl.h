@@ -17,9 +17,9 @@ struct ImplFields {
   // This following members always have values and do not change.
 
   // The type for which the impl is implementing a constraint.
-  InstId self_id;
+  TypeInstId self_id;
   // The constraint that the impl implements.
-  InstId constraint_id;
+  TypeInstId constraint_id;
 
   // The single interface to implement from `constraint_id`.
   // The members are `None` if `constraint_id` isn't complete or doesn't
@@ -38,6 +38,9 @@ struct ImplFields {
   // The first block of the impl body.
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::None;
+
+  // Whether the impl declaration is marked `final`.
+  bool is_final;
 
   // The following members are set at the `}` of the impl definition.
   bool defined = false;

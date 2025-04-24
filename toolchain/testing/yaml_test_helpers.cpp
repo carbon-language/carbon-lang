@@ -4,6 +4,13 @@
 
 #include "toolchain/testing/yaml_test_helpers.h"
 
+#include <iomanip>
+#include <optional>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <variant>
+
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/YAMLParser.h"

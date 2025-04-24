@@ -135,6 +135,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.6db = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -158,7 +159,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.e79 = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.953 [concrete = constants.%complete_type.020]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A} [concrete = constants.%struct_type.base.953]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.020]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -184,7 +186,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.019 = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.0ff [concrete = constants.%complete_type.98e]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [concrete = constants.%struct_type.base.0ff]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -198,7 +201,8 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc26: %D.elem = base_decl %B.ref, element0 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.0ff [concrete = constants.%complete_type.98e]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [concrete = constants.%struct_type.base.0ff]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -209,13 +213,13 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1[addr %self.param_patt: %ptr.6db]();
+// CHECK:STDOUT: fn @F.1(%self.param: %ptr.6db);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[addr %self.param_patt: %ptr.e79]();
+// CHECK:STDOUT: fn @F.2(%self.param: %ptr.e79);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[addr %self.param_patt: %ptr.019]();
+// CHECK:STDOUT: fn @F.3(%self.param: %ptr.019);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%a.param_patt: %ptr.6db, %b.param_patt: %ptr.e79, %c.param_patt: %ptr.019, %d.param_patt: %ptr.19c) {
+// CHECK:STDOUT: fn @Call(%a.param: %ptr.6db, %b.param: %ptr.e79, %c.param: %ptr.019, %d.param: %ptr.19c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.6db = name_ref a, %a
 // CHECK:STDOUT:   %.loc30: ref %A = deref %a.ref

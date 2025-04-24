@@ -46,7 +46,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
 // - A symbolic value. Lookup found an impl but it is not returned since lookup
 //   will need to be done again with a more specific query to look for
 //   specializations.
-class EvalImplLookupResult {
+class [[nodiscard]] EvalImplLookupResult {
  public:
   static auto MakeNone() -> EvalImplLookupResult {
     return EvalImplLookupResult(SemIR::InstId::None);
@@ -70,7 +70,8 @@ class EvalImplLookupResult {
   // `has_value()` is true, it means a non-final impl was found and a further
   // more specific query will need to be done.
   auto has_concrete_value() const -> bool {
-    return std::holds_alternative<SemIR::InstId>(result_);
+    const auto* inst_id = std::get_if<SemIR::InstId>(&result_);
+    return inst_id && inst_id->has_value();
   }
 
   // Only valid if `has_concrete_value()` is true. Returns the witness id for
@@ -94,7 +95,8 @@ class EvalImplLookupResult {
 // the self facet value for finding a witness, since LookupImplWitness() would
 // have found that and not caused us to defer lookup to here.
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                                 SemIR::LookupImplWitness eval_query)
+                                 SemIR::LookupImplWitness eval_query,
+                                 SemIR::InstId non_canonical_query_self_inst_id)
     -> EvalImplLookupResult;
 
 }  // namespace Carbon::Check

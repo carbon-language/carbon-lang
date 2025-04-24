@@ -70,7 +70,6 @@ class CopyOnWriteBlock {
 using CopyOnWriteInstBlock = CopyOnWriteBlock<InstBlockId, &File::inst_blocks>;
 using CopyOnWriteStructTypeFieldsBlock =
     CopyOnWriteBlock<StructTypeFieldsId, &File::struct_type_fields>;
-using CopyOnWriteTypeBlock = CopyOnWriteBlock<TypeBlockId, &File::type_blocks>;
 
 }  // namespace Carbon::SemIR
 

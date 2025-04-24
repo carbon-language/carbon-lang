@@ -4,6 +4,8 @@
 
 #include "common/hashing.h"
 
+#include <cstddef>
+
 namespace Carbon {
 
 auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void {

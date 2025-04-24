@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/function.h"
 
+#include <optional>
+
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"

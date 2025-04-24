@@ -52,7 +52,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Echo(%a.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @Echo(%a.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, %a
 // CHECK:STDOUT:   return %a.ref

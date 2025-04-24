@@ -5,7 +5,7 @@
 # Trivial, single-file testing libraries. More complex libraries should get
 # their own directory.
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 

@@ -61,6 +61,7 @@ fn G(x: X) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %self: %X = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -69,9 +70,9 @@ fn G(x: X) {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %X]();
+// CHECK:STDOUT: fn @F(%self.param: %X);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%x.param_patt: %X) {
+// CHECK:STDOUT: fn @G(%x.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc12_3: %X = name_ref x, %x
 // CHECK:STDOUT:   %x.ref.loc12_6: %X = name_ref x, %x

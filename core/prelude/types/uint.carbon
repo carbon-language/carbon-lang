@@ -117,77 +117,44 @@ impl forall [N:! IntLiteral()] UInt(N) as RightShift {
 
 // Compound assignments.
 
-// TODO: Once we can lower specific functions, make these generic.
-// Each function has a commented out generic signature.
-
-// impl forall [N:! IntLiteral()] UInt(N) as AddAssign {
-impl u32 as AddAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self + other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as AddAssign {
+  fn Op[addr self: Self*](other: Self) = "int.uadd_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as BitAndAssign {
-impl u32 as BitAndAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self & other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as BitAndAssign {
+  fn Op[addr self: Self*](other: Self) = "int.and_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as BitOrAssign {
-impl u32 as BitOrAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self | other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as BitOrAssign {
+  fn Op[addr self: Self*](other: Self) = "int.or_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as BitXorAssign {
-impl u32 as BitXorAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self ^ other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as BitXorAssign {
+  fn Op[addr self: Self*](other: Self) = "int.xor_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as DivAssign {
-impl u32 as DivAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self / other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as DivAssign {
+  fn Op[addr self: Self*](other: Self) = "int.udiv_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as LeftShiftAssign {
-impl u32 as LeftShiftAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self << other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as LeftShiftAssign {
+  fn Op[addr self: Self*](other: Self) = "int.left_shift_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as ModAssign {
-impl u32 as ModAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self % other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as ModAssign {
+  fn Op[addr self: Self*](other: Self) = "int.umod_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as MulAssign {
-impl u32 as MulAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self * other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as MulAssign {
+  fn Op[addr self: Self*](other: Self) = "int.umul_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as RightShiftAssign {
-impl u32 as RightShiftAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self >> other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as RightShiftAssign {
+  fn Op[addr self: Self*](other: Self) = "int.right_shift_assign";
 }
 
-// impl forall [N:! IntLiteral()] UInt(N) as SubAssign {
-impl u32 as SubAssign {
-  fn Op[addr self: Self*](other: Self) {
-    *self = *self - other;
-  }
+impl forall [N:! IntLiteral()] UInt(N) as SubAssign {
+  fn Op[addr self: Self*](other: Self) = "int.usub_assign";
 }
 
 // Increment and decrement.

@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_TYPE_STRUCTURE_H_
 #define CARBON_TOOLCHAIN_CHECK_TYPE_STRUCTURE_H_
 
-#include <compare>
+#include <algorithm>
 
 #include "common/ostream.h"
 #include "toolchain/check/context.h"
@@ -28,25 +28,21 @@ class TypeStructure : public Printable<TypeStructure> {
   // lookup query.
   auto IsCompatibleWith(const TypeStructure& other) const -> bool;
 
-  // Ordering of type structures. A higher value is a better match.
-  friend auto operator<=>(const TypeStructure& lhs, const TypeStructure& rhs)
-      -> std::weak_ordering {
-    // Higher distance is a better match, and `InfiniteDistance` is treated
-    // specially as the best possible match.
-    if (lhs.distance_to_first_symbolic_type_ !=
-        rhs.distance_to_first_symbolic_type_) {
-      if (lhs.distance_to_first_symbolic_type_ == InfiniteDistance) {
-        return std::weak_ordering::greater;
-      } else if (rhs.distance_to_first_symbolic_type_ == InfiniteDistance) {
-        return std::weak_ordering::less;
-      } else {
-        return lhs.distance_to_first_symbolic_type_ <=>
-               rhs.distance_to_first_symbolic_type_;
-      }
-    }
-    // TODO: If they have a symbolic in the same position, we could use further
-    // symbolic types to get an ordering.
-    return std::weak_ordering::equivalent;
+  // Ordering of type structures. A lower value is a better match.
+  // TODO: switch to operator<=> once we can depend on
+  // std::lexicographical_compare_three_way (in particular, once we can
+  // require clang-17 or newer, including in places like the GitHub test
+  // runners).
+  friend auto operator<(const TypeStructure& lhs, const TypeStructure& rhs)
+      -> bool {
+    return std::lexicographical_compare(
+        lhs.symbolic_type_indices_.begin(), lhs.symbolic_type_indices_.end(),
+        rhs.symbolic_type_indices_.begin(), rhs.symbolic_type_indices_.end(),
+        [](int lhs_index, int rhs_index) {
+          // A higher symbolic type index is a better match, so we need to
+          // reverse the order.
+          return rhs_index < lhs_index;
+        });
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -82,15 +78,15 @@ class TypeStructure : public Printable<TypeStructure> {
   static constexpr int InfiniteDistance = -1;
 
   TypeStructure(llvm::SmallVector<Structural> structure,
-                int distance_to_first_symbolic_type)
+                llvm::SmallVector<int> symbolic_type_indices)
       : structure_(std::move(structure)),
-        distance_to_first_symbolic_type_(distance_to_first_symbolic_type) {}
+        symbolic_type_indices_(std::move(symbolic_type_indices)) {}
 
   // The structural position of concrete and symbolic values in the type.
   llvm::SmallVector<Structural> structure_;
 
-  // Number of concrete types traversed before finding a symbolic type.
-  int distance_to_first_symbolic_type_;
+  // Indices of the symbolic entries in structure_.
+  llvm::SmallVector<int> symbolic_type_indices_;
 };
 
 // Constructs the TypeStructure for a self type or facet value and an interface

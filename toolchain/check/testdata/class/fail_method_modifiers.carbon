@@ -113,6 +113,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [concrete = constants.%FinalClass]
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -139,6 +140,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [concrete = constants.%AbstractClass]
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -157,6 +159,7 @@ base class BaseClass {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [concrete = constants.%BaseClass]
 // CHECK:STDOUT:     %self: %BaseClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -165,13 +168,13 @@ base class BaseClass {
 // CHECK:STDOUT:   .Abstract = %Abstract.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Abstract.1[%self.param_patt: %FinalClass]();
+// CHECK:STDOUT: fn @Abstract.1(%self.param: %FinalClass);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Virtual[%self.param_patt: %FinalClass]();
+// CHECK:STDOUT: fn @Virtual(%self.param: %FinalClass);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Default[%self.param_patt: %AbstractClass]();
+// CHECK:STDOUT: fn @Default(%self.param: %AbstractClass);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Final[%self.param_patt: %AbstractClass]();
+// CHECK:STDOUT: fn @Final(%self.param: %AbstractClass);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Abstract.2[%self.param_patt: %BaseClass]();
+// CHECK:STDOUT: fn @Abstract.2(%self.param: %BaseClass);
 // CHECK:STDOUT:

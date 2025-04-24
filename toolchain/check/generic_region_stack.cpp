@@ -11,6 +11,21 @@ auto GenericRegionStack::Push() -> void { dependent_insts_stack_.PushArray(); }
 auto GenericRegionStack::Pop() -> void { dependent_insts_stack_.PopArray(); }
 
 auto GenericRegionStack::AddDependentInst(DependentInst inst) -> void {
+  if (dependent_insts_stack_.empty()) {
+    // If we don't have a generic region here, leave the dependent instruction
+    // unattached. This happens for out-of-line redeclarations of members of
+    // dependent scopes:
+    //
+    //   class A(T:! type) {
+    //     fn F();
+    //   }
+    //   // Has generic type and constant value, but no generic region.
+    //   fn A(T:! type).F() {}
+    //
+    // TODO: Use a different instruction kind for out-of-line definitions and
+    // CHECK this doesn't happen.
+    return;
+  }
   dependent_insts_stack_.AppendToTop(inst);
 }
 

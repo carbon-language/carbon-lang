@@ -214,6 +214,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -222,11 +223,11 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Neq(%a.param_patt: bool, %b.param_patt: bool) -> bool = "bool.neq";
+// CHECK:STDOUT: fn @Neq(%a.param: bool, %b.param: bool) -> bool = "bool.neq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @True() -> %C.a14;
+// CHECK:STDOUT: fn @True() -> %return.param: %C.a14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @False() -> %C.2ba;
+// CHECK:STDOUT: fn @False() -> %return.param: %C.2ba;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -290,9 +291,10 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %False: %False.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [concrete]
 // CHECK:STDOUT:   %NotEqual.type.e6c: type = fn_type @NotEqual.1 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%Core.import_ref.85b, imports.%Core.import_ref.67a) [concrete]
-// CHECK:STDOUT:   %Eq.facet: %Eq.type = facet_value bool, (%impl_witness) [concrete]
-// CHECK:STDOUT:   %.d6e: type = fn_type_with_self_type %NotEqual.type.e6c, %Eq.facet [concrete]
+// CHECK:STDOUT:   %Eq.impl_witness_table = impl_witness_table (imports.%Core.import_ref.85b, imports.%Core.import_ref.67a), @impl.bb5 [concrete]
+// CHECK:STDOUT:   %Eq.impl_witness: <witness> = impl_witness %Eq.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Eq.facet: %Eq.type = facet_value bool, (%Eq.impl_witness) [concrete]
+// CHECK:STDOUT:   %.f66: type = fn_type_with_self_type %NotEqual.type.e6c, %Eq.facet [concrete]
 // CHECK:STDOUT:   %NotEqual.type.c0e: type = fn_type @NotEqual.2 [concrete]
 // CHECK:STDOUT:   %NotEqual.bf4: %NotEqual.type.c0e = struct_value () [concrete]
 // CHECK:STDOUT:   %NotEqual.bound.542: <bound method> = bound_method %true, %NotEqual.bf4 [concrete]
@@ -359,7 +361,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %C.ref.loc9: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc9_10: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %true.loc9_18: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %impl.elem1.loc9: %.d6e = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%NotEqual.bf4]
+// CHECK:STDOUT:     %impl.elem1.loc9: %.f66 = impl_witness_access constants.%Eq.impl_witness, element1 [concrete = constants.%NotEqual.bf4]
 // CHECK:STDOUT:     %bound_method.loc9: <bound method> = bound_method %true.loc9_10, %impl.elem1.loc9 [concrete = constants.%NotEqual.bound.542]
 // CHECK:STDOUT:     %bool.neq.loc9: init bool = call %bound_method.loc9(%true.loc9_10, %true.loc9_18) [concrete = constants.%false]
 // CHECK:STDOUT:     %.loc9_22.2: bool = value_of_initializer %bool.neq.loc9 [concrete = constants.%false]
@@ -376,7 +378,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc10: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %false.loc10: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %impl.elem1.loc10: %.d6e = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%NotEqual.bf4]
+// CHECK:STDOUT:     %impl.elem1.loc10: %.f66 = impl_witness_access constants.%Eq.impl_witness, element1 [concrete = constants.%NotEqual.bf4]
 // CHECK:STDOUT:     %bound_method.loc10: <bound method> = bound_method %true.loc10, %impl.elem1.loc10 [concrete = constants.%NotEqual.bound.542]
 // CHECK:STDOUT:     %bool.neq.loc10: init bool = call %bound_method.loc10(%true.loc10, %false.loc10) [concrete = constants.%true]
 // CHECK:STDOUT:     %.loc10_23.2: bool = value_of_initializer %bool.neq.loc10 [concrete = constants.%true]
@@ -393,7 +395,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %C.ref.loc11: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %false.loc11: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %true.loc11: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %impl.elem1.loc11: %.d6e = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%NotEqual.bf4]
+// CHECK:STDOUT:     %impl.elem1.loc11: %.f66 = impl_witness_access constants.%Eq.impl_witness, element1 [concrete = constants.%NotEqual.bf4]
 // CHECK:STDOUT:     %bound_method.loc11: <bound method> = bound_method %false.loc11, %impl.elem1.loc11 [concrete = constants.%NotEqual.bound.5a9]
 // CHECK:STDOUT:     %bool.neq.loc11: init bool = call %bound_method.loc11(%false.loc11, %true.loc11) [concrete = constants.%true]
 // CHECK:STDOUT:     %.loc11_23.2: bool = value_of_initializer %bool.neq.loc11 [concrete = constants.%true]
@@ -410,7 +412,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %false.loc12_10: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %false.loc12_19: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %impl.elem1.loc12: %.d6e = impl_witness_access constants.%impl_witness, element1 [concrete = constants.%NotEqual.bf4]
+// CHECK:STDOUT:     %impl.elem1.loc12: %.f66 = impl_witness_access constants.%Eq.impl_witness, element1 [concrete = constants.%NotEqual.bf4]
 // CHECK:STDOUT:     %bound_method.loc12: <bound method> = bound_method %false.loc12_10, %impl.elem1.loc12 [concrete = constants.%NotEqual.bound.5a9]
 // CHECK:STDOUT:     %bool.neq.loc12: init bool = call %bound_method.loc12(%false.loc12_10, %false.loc12_19) [concrete = constants.%false]
 // CHECK:STDOUT:     %.loc12_24.2: bool = value_of_initializer %bool.neq.loc12 [concrete = constants.%false]
@@ -427,6 +429,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -435,9 +438,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @True() -> %C.a14;
+// CHECK:STDOUT: fn @True() -> %return.param: %C.a14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @False() -> %C.2ba;
+// CHECK:STDOUT: fn @False() -> %return.param: %C.2ba;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

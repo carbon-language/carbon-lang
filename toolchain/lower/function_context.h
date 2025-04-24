@@ -80,10 +80,20 @@ class FunctionContext {
     return file_context_->GetOrCreateFunction(function_id, specific_id);
   }
 
+  // Builds LLVM function type information for the specified function.
+  auto BuildFunctionTypeInfo(const SemIR::Function& function,
+                             SemIR::SpecificId specific_id)
+      -> FileContext::FunctionTypeInfo {
+    return file_context_->BuildFunctionTypeInfo(function, specific_id);
+  }
+
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
     return file_context_->GetType(type_id);
   }
+
+  // Returns the type of the given instruction in the current specific.
+  auto GetTypeOfInst(SemIR::InstId inst_id) -> SemIR::TypeId;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {
@@ -134,6 +144,17 @@ class FunctionContext {
   auto specific_id() -> SemIR::SpecificId { return specific_id_; }
   auto builder() -> llvm::IRBuilderBase& { return builder_; }
   auto sem_ir() -> const SemIR::File& { return file_context_->sem_ir(); }
+
+  // TODO: could template on BuiltinFunctionKind if more format
+  // globals are eventually needed.
+  auto printf_int_format_string() -> llvm::Value* {
+    auto* format_string = file_context_->printf_int_format_string();
+    if (!format_string) {
+      format_string = builder().CreateGlobalString("%d\n", "printf.int.format");
+      file_context_->SetPrintfIntFormatString(format_string);
+    }
+    return format_string;
+  }
 
  private:
   // Custom instruction inserter for our IR builder. Automatically names

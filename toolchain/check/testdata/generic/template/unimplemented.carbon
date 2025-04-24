@@ -117,12 +117,12 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %T.patt.loc6_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc6_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc6_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, @F.%T.loc6_15.2 (%T) [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc6_15.2 [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, %T.loc6_15.2 [template]
 // CHECK:STDOUT:   %.loc11_11.4: <instruction> = access_member_action %.loc11_11.1, n [template]
 // CHECK:STDOUT:   %.loc11_11.5: type = type_of_inst %.loc11_11.4 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc6_15.1: type](%x.param_patt: @F.%T.loc6_15.2 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc6_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc6_15.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc11_11.1: @F.%T.loc6_15.2 (%T) = splice_inst %.loc11_11.3
@@ -185,17 +185,16 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_3: %C.elem = var_pattern %.loc5_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %C.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc5_8
+// CHECK:STDOUT:   .n = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%c.loc11_15.1: %C) {
@@ -206,7 +205,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %.loc16_11.2: <instruction> = access_member_action %c.ref, n [template]
 // CHECK:STDOUT:   %.loc16_11.3: type = type_of_inst %.loc16_11.2 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.patt.loc11_15.1: %C) -> %i32 {
+// CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: %C = name_ref c, %c.loc11_15.1 [template = %c.loc11_15.2 (constants.%c)]
 // CHECK:STDOUT:     %.loc16_11.1: @F.%.loc16_11.3 (@F.%.loc16_11.3) = splice_inst %.loc16_11.2
@@ -266,12 +265,12 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_15.2 (%T) [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc4_15.2)> [template = %ImplicitAs.type (constants.%ImplicitAs.type.d628ce.2)]
-// CHECK:STDOUT:   %.loc14_3.4: <instruction> = access_member_action %ImplicitAs.type, Convert [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %ImplicitAs.type.loc14_3.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc4_15.2)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
+// CHECK:STDOUT:   %.loc14_3.4: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
 // CHECK:STDOUT:   %.loc14_3.5: type = type_of_inst %.loc14_3.4 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_15.1: type](%x.param_patt: @F.%T.loc4_15.2 (%T)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%T.loc4_15.2 (%T) = binding_pattern v
@@ -279,6 +278,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%T.loc4_15.2 (%T) = var v
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:     %ImplicitAs.type.loc14_3.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
 // CHECK:STDOUT:     %.loc14_3.2: @F.%.loc14_3.5 (@F.%.loc14_3.5) = splice_inst %.loc14_3.4
 // CHECK:STDOUT:     %.loc14_3.3: @F.%T.loc4_15.2 (%T) = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %v.var, <error>

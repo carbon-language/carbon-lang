@@ -189,6 +189,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -198,6 +199,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -212,10 +214,10 @@ fn G() {
 // CHECK:STDOUT:   %tuple.elem0.loc8_41.2: type = tuple_access %T.loc8_6.2, element0 [symbolic = %tuple.elem0.loc8_41.2 (constants.%tuple.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8_21: <witness> = require_complete_type @F.%HoldsType.loc8_34.2 (%HoldsType.cc9) [symbolic = %require_complete.loc8_21 (constants.%require_complete.514)]
-// CHECK:STDOUT:   %require_complete.loc8_38: <witness> = require_complete_type @F.%tuple.elem0.loc8_41.2 (%tuple.elem0) [symbolic = %require_complete.loc8_38 (constants.%require_complete.fec)]
+// CHECK:STDOUT:   %require_complete.loc8_21: <witness> = require_complete_type %HoldsType.loc8_34.2 [symbolic = %require_complete.loc8_21 (constants.%require_complete.514)]
+// CHECK:STDOUT:   %require_complete.loc8_38: <witness> = require_complete_type %tuple.elem0.loc8_41.2 [symbolic = %require_complete.loc8_38 (constants.%require_complete.fec)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc8_6.1: %tuple.type](%x.param_patt: @F.%HoldsType.loc8_34.2 (%HoldsType.cc9), %a.param_patt: @F.%tuple.elem0.loc8_41.2 (%tuple.elem0)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc8_34.2 (%HoldsType.cc9), %a.param: @F.%tuple.elem0.loc8_41.2 (%tuple.elem0)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -364,6 +366,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -373,6 +376,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -387,10 +391,10 @@ fn G() {
 // CHECK:STDOUT:   %.loc8_43.3: type = struct_access %T.loc8_6.2, element0 [symbolic = %.loc8_43.3 (constants.%.20a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8_23: <witness> = require_complete_type @F.%HoldsType.loc8_36.2 (%HoldsType.843) [symbolic = %require_complete.loc8_23 (constants.%require_complete.b19)]
-// CHECK:STDOUT:   %require_complete.loc8_40: <witness> = require_complete_type @F.%.loc8_43.3 (%.20a) [symbolic = %require_complete.loc8_40 (constants.%require_complete.1b9)]
+// CHECK:STDOUT:   %require_complete.loc8_23: <witness> = require_complete_type %HoldsType.loc8_36.2 [symbolic = %require_complete.loc8_23 (constants.%require_complete.b19)]
+// CHECK:STDOUT:   %require_complete.loc8_40: <witness> = require_complete_type %.loc8_43.3 [symbolic = %require_complete.loc8_40 (constants.%require_complete.1b9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc8_6.1: %struct_type.t](%x.param_patt: @F.%HoldsType.loc8_36.2 (%HoldsType.843), %a.param_patt: @F.%.loc8_43.3 (%.20a)) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc8_36.2 (%HoldsType.843), %a.param: @F.%.loc8_43.3 (%.20a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -527,7 +531,7 @@ fn G() {
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %T.ref.loc21_37: %Class = name_ref T, %T.loc21_6.1 [symbolic = %T.loc21_6.2 (constants.%T)]
-// CHECK:STDOUT:       %t.ref: %Class.elem = name_ref t, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]
+// CHECK:STDOUT:       %t.ref: %Class.elem = name_ref t, @Class.%.loc5 [concrete = @Class.%.loc5]
 // CHECK:STDOUT:       %.loc21_38.1: ref type = class_element_access %T.ref.loc21_37, element0 [symbolic = %.loc21_38.3 (constants.%.2fe)]
 // CHECK:STDOUT:       %.loc21_38.2: type = bind_value %.loc21_38.1
 // CHECK:STDOUT:     }
@@ -538,17 +542,14 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc5_8: %Class.elem = field_decl t, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_3: %Class.elem = var_pattern %.loc5_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %Class.elem = var <none>
+// CHECK:STDOUT:   %.loc5: %Class.elem = field_decl t, element0 [concrete]
+// CHECK:STDOUT:   %struct_type.t: type = struct_type {.t: type} [concrete = constants.%struct_type.t]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.t [concrete = constants.%complete_type.509]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .t = %.loc5_8
+// CHECK:STDOUT:   .t = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @HoldsType(%T.loc8_17.1: %Class) {
@@ -558,6 +559,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -567,6 +569,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -581,9 +584,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc21_38.3: ref type = class_element_access %T.loc21_6.2, element0 [symbolic = %.loc21_38.3 (constants.%.2fe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1) [symbolic = %require_complete (constants.%require_complete.8fa644.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc21_31.2 [symbolic = %require_complete (constants.%require_complete.8fa644.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc21_6.1: %Class](%x.param_patt: @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1), %a.param_patt: <error>) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc21_31.2 (%HoldsType.f95cf2.1), %a.param: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -658,11 +661,12 @@ fn G() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (imports.%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness %ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
-// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
+// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
@@ -729,7 +733,7 @@ fn G() {
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:       %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:       %bound_method.loc12_48.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:       %bound_method.loc12_48.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
@@ -753,6 +757,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -762,6 +767,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -775,9 +781,9 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.loc12_40.2: type = class_type @HoldsType, @HoldsType(%T.loc12_6.2) [symbolic = %HoldsType.loc12_40.2 (constants.%HoldsType)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%HoldsType.loc12_40.2 (%HoldsType) [symbolic = %require_complete (constants.%require_complete.640)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc12_40.2 [symbolic = %require_complete (constants.%require_complete.640)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc12_6.1: %array_type](%x.param_patt: @F.%HoldsType.loc12_40.2 (%HoldsType), %a.param_patt: <error>) {
+// CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc12_40.2 (%HoldsType), %a.param: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

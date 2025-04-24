@@ -91,19 +91,19 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%n.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @A(%n.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%n.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @B(%n.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%if.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @C(%if.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %if.ref: %empty_tuple.type = name_ref r#if, %if
 // CHECK:STDOUT:   return %if.ref

@@ -4,7 +4,11 @@
 
 #include "testing/base/source_gen.h"
 
+#include <algorithm>
+#include <array>
 #include <numeric>
+#include <string>
+#include <utility>
 
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"

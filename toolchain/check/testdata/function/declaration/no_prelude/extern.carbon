@@ -127,7 +127,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F() [from "basic.carbon"];
+// CHECK:STDOUT: extern fn @F [from "basic.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -200,6 +200,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -211,7 +212,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.param_patt: %C]();
+// CHECK:STDOUT: fn @G(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_in_importer.carbon
 // CHECK:STDOUT:
@@ -231,5 +232,5 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F() [from "basic.carbon"];
+// CHECK:STDOUT: extern fn @F [from "basic.carbon"];
 // CHECK:STDOUT:

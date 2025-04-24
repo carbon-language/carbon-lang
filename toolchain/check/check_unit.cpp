@@ -5,6 +5,7 @@
 #include "toolchain/check/check_unit.h"
 
 #include <string>
+#include <utility>
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -67,10 +68,6 @@ auto CheckUnit::Run() -> void {
   // Add a block for the file.
   context_.inst_block_stack().Push();
 
-  // TODO: Remove this and the pop in `FinishRun` once we properly push and pop
-  // in the right places.
-  context_.generic_region_stack().Push();
-
   InitPackageScopeAndImports();
 
   // Eagerly import the impls declared in the api file to prepare to redeclare
@@ -88,7 +85,7 @@ auto CheckUnit::Run() -> void {
 auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      GetSingletonType(context_, SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
@@ -232,7 +229,9 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       unit_and_imports_->package_imports_map.Lookup(PackageNameId::None);
   if (!import_map_lookup) {
     // Push the scope; there are no names to add.
-    context_.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
+    context_.scope_stack().PushForEntity(
+        package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
+        /*lexical_lookup_has_load_error=*/false);
     return;
   }
   PackageImports& self_import =
@@ -247,7 +246,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       CollectTransitiveImports(self_import.import_decl_id, &self_import,
                                /*api_imports=*/nullptr));
 
-  context_.scope_stack().Push(
+  context_.scope_stack().PushForEntity(
       package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
       context_.name_scopes().Get(SemIR::NameScopeId::Package).has_error());
 }
@@ -407,7 +406,8 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
         function.extern_library_id == context_.sem_ir().library_id()) {
       auto function_loc_id =
           context_.insts().GetLocId(function.non_owning_decl_id);
-      CARBON_CHECK(function_loc_id.is_import_ir_inst_id());
+      CARBON_CHECK(function_loc_id.kind() ==
+                   SemIR::LocId::Kind::ImportIRInstId);
       auto import_ir_id = context_.sem_ir()
                               .import_ir_insts()
                               .Get(function_loc_id.import_ir_inst_id())
@@ -479,7 +479,8 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
       default: {
-        CARBON_FATAL("Unexpected inst in definitions_required: {0}", decl_inst);
+        CARBON_FATAL("Unexpected inst in definitions_required_by_decl: {0}",
+                     decl_inst);
       }
     }
   }
@@ -507,9 +508,6 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
 }
 
 auto CheckUnit::FinishRun() -> void {
-  // TODO: Remove this once we properly push and pop in the right places.
-  context_.generic_region_stack().Pop();
-
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
 

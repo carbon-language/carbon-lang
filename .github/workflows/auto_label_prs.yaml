@@ -33,10 +33,6 @@ jobs:
               - 'examples/**'
               - 'third_party/examples/**'
 
-            explorer:
-              - 'explorer/**'
-              - 'installers/**'
-
             infrastructure:
               - '*.bzl'
               - '*.cfg'
@@ -73,14 +69,6 @@ jobs:
         if: steps.filter.outputs.documentation == 'true'
         run: |
           gh pr edit "${PR}" --add-label "documentation"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR: ${{ github.event.pull_request.html_url }}
-
-      - id: explorer
-        if: steps.filter.outputs.explorer == 'true'
-        run: |
-          gh pr edit "${PR}" --add-label "explorer"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}

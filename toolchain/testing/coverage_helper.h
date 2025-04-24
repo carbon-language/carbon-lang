@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string>
 
+#include "common/find.h"
 #include "common/set.h"
 #include "llvm/ADT/StringExtras.h"
 #include "re2/re2.h"
@@ -52,7 +53,7 @@ auto TestKindCoverage(const std::string& manifest_path,
 
   llvm::SmallVector<llvm::StringRef> missing_kinds;
   for (auto kind : kinds) {
-    if (llvm::find(untested_kinds, kind) != untested_kinds.end()) {
+    if (Contains(untested_kinds, kind)) {
       EXPECT_FALSE(covered_kinds.Erase(kind.name()))
           << "Kind " << kind
           << " has coverage even though none was expected. If this has "

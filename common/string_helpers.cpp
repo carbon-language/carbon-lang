@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <string>
 
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"

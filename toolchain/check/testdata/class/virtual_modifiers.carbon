@@ -341,6 +341,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%H.decl) [concrete = constants.%.c3d]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -367,6 +368,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Abstract = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12: <vtable> = vtable (%J.decl, %K.decl) [concrete = constants.%.2b2]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -376,11 +378,11 @@ class T2 {
 // CHECK:STDOUT:   .K = %K.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @H[%self.param_patt: %Base]();
+// CHECK:STDOUT: virtual fn @H(%self.param: %Base);
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @J[%self.param_patt: %Abstract]();
+// CHECK:STDOUT: abstract fn @J(%self.param: %Abstract);
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @K[%self.param_patt: %Abstract]();
+// CHECK:STDOUT: virtual fn @K(%self.param: %Abstract);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- override_import.carbon
 // CHECK:STDOUT:
@@ -413,7 +415,7 @@ class T2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -443,7 +445,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9: <vtable> = vtable (%H.decl) [concrete = constants.%.dce]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.96c [concrete = constants.%complete_type.0e2]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base.96c]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.0e2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -462,9 +465,9 @@ class T2 {
 // CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @H.1[%self.param_patt: %Derived]();
+// CHECK:STDOUT: impl fn @H.1(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H.2[%self.param_patt: %Base]() [from "modifiers.carbon"];
+// CHECK:STDOUT: fn @H.2 [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
@@ -518,7 +521,7 @@ class T2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -546,6 +549,7 @@ class T2 {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Modifiers.Base [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %.loc9: <vtable> = vtable (constants.%H, %F.decl) [concrete = constants.%.02f]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.0e2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -565,9 +569,9 @@ class T2 {
 // CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F[%self.param_patt: %Derived]();
+// CHECK:STDOUT: virtual fn @F(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H[%self.param_patt: %Base]() [from "modifiers.carbon"];
+// CHECK:STDOUT: fn @H [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init.carbon
 // CHECK:STDOUT:
@@ -593,7 +597,7 @@ class T2 {
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.ace = import_ref Modifiers//default, loc6_1, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -685,6 +689,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %A1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.593]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -705,6 +710,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %A2 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: <vtable> = vtable (%F.decl) [concrete = constants.%.943]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.a6f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -716,9 +722,9 @@ class T2 {
 // CHECK:STDOUT:   extend %A1.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %A1]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %A1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %A2]();
+// CHECK:STDOUT: impl fn @F.2(%self.param: %A2);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_base.carbon
 // CHECK:STDOUT:
@@ -783,6 +789,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %B1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.bc5]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -803,7 +810,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %B2 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: <vtable> = vtable (%F.decl) [concrete = constants.%.579]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.508 [concrete = constants.%complete_type.5ac]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B1} [concrete = constants.%struct_type.base.508]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.5ac]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -826,7 +834,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16: <vtable> = vtable (%F.decl) [concrete = constants.%.5f6]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.421 [concrete = constants.%complete_type.066]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B2} [concrete = constants.%struct_type.base.421]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.066]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -837,11 +846,11 @@ class T2 {
 // CHECK:STDOUT:   extend %B2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %B1]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %B1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %B2]();
+// CHECK:STDOUT: impl fn @F.2(%self.param: %B2);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.3[%self.param_patt: %C]();
+// CHECK:STDOUT: impl fn @F.3(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
@@ -940,6 +949,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10: <vtable> = vtable () [concrete = constants.%.f2b]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -948,7 +958,7 @@ class T2 {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F[%self.param_patt: %C]();
+// CHECK:STDOUT: impl fn @F(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init_members.carbon
 // CHECK:STDOUT:
@@ -968,11 +978,12 @@ class T2 {
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (imports.%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness %ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
-// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
+// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.b30: <bound method> = bound_method %int_3.1ba, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.047: <bound method> = bound_method %int_3.1ba, %Convert.specific_fn [concrete]
@@ -1010,16 +1021,12 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc5_9: %Base.elem = field_decl m1, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_3: %Base.elem = var_pattern %.loc5_9
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %Base.elem = var <none>
-// CHECK:STDOUT:   %.loc6_9: %Base.elem = field_decl m2, element2 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc6_3: %Base.elem = var_pattern %.loc6_9
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %Base.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %Base.elem = field_decl m1, element1 [concrete]
+// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc6: %Base.elem = field_decl m2, element2 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [concrete = constants.%F.d17] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
@@ -1029,17 +1036,18 @@ class T2 {
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9: <vtable> = vtable (%F.decl) [concrete = constants.%.5ee]
+// CHECK:STDOUT:   %struct_type.vptr.m1.m2: type = struct_type {.<vptr>: %ptr.454, .m1: %i32, .m2: %i32} [concrete = constants.%struct_type.vptr.m1.m2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [concrete = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .m1 = %.loc5_9
-// CHECK:STDOUT:   .m2 = %.loc6_9
+// CHECK:STDOUT:   .m1 = %.loc5
+// CHECK:STDOUT:   .m2 = %.loc6
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %Base]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
@@ -1049,7 +1057,7 @@ class T2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %i32 = var i
 // CHECK:STDOUT:   %int_3.loc12: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %impl.elem0.loc12: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc12: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %int_3.loc12, %impl.elem0.loc12 [concrete = constants.%Convert.bound.b30]
 // CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_3.2: <bound method> = bound_method %int_3.loc12, %specific_fn.loc12 [concrete = constants.%bound_method.047]
@@ -1094,7 +1102,7 @@ class T2 {
 // CHECK:STDOUT:   %.loc15_35.2: ref %ptr.454 = class_element_access %b2.var, element0
 // CHECK:STDOUT:   %.loc15_35.3: ref %ptr.454 = vtable_ptr @Base.%.loc9
 // CHECK:STDOUT:   %.loc15_35.4: init %ptr.454 = initialize_from %.loc15_35.3 to %.loc15_35.2
-// CHECK:STDOUT:   %impl.elem0.loc15_35.1: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc15_35.1: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [concrete = constants.%Convert.bound.4e6]
 // CHECK:STDOUT:   %specific_fn.loc15_35.1: <specific function> = specific_function %impl.elem0.loc15_35.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_35.2: <bound method> = bound_method %int_5, %specific_fn.loc15_35.1 [concrete = constants.%bound_method.a25]
@@ -1102,7 +1110,7 @@ class T2 {
 // CHECK:STDOUT:   %.loc15_35.5: init %i32 = converted %int_5, %int.convert_checked.loc15_35.1 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc15_35.6: ref %i32 = class_element_access %b2.var, element2
 // CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.5 to %.loc15_35.6 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %impl.elem0.loc15_35.2: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc15_35.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc15_35.3: <bound method> = bound_method %int_3.loc15, %impl.elem0.loc15_35.2 [concrete = constants.%Convert.bound.b30]
 // CHECK:STDOUT:   %specific_fn.loc15_35.2: <specific function> = specific_function %impl.elem0.loc15_35.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_35.4: <bound method> = bound_method %int_3.loc15, %specific_fn.loc15_35.2 [concrete = constants.%bound_method.047]
@@ -1116,10 +1124,10 @@ class T2 {
 // CHECK:STDOUT:   %Base.ref.loc15: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %b2: ref %Base = bind_name b2, %b2.var
 // CHECK:STDOUT:   %b1.ref: ref %Base = name_ref b1, %b1
-// CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%.loc6_9 [concrete = @Base.%.loc6_9]
+// CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%.loc6 [concrete = @Base.%.loc6]
 // CHECK:STDOUT:   %.loc18_5: ref %i32 = class_element_access %b1.ref, element2
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
-// CHECK:STDOUT:   %impl.elem0.loc18: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0.loc18: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc18_9.1: <bound method> = bound_method %int_4, %impl.elem0.loc18 [concrete = constants.%Convert.bound.ac3]
 // CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_9.2: <bound method> = bound_method %int_4, %specific_fn.loc18 [concrete = constants.%bound_method.1da]
@@ -1164,6 +1172,7 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1183,6 +1192,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10: <vtable> = vtable () [concrete = constants.%.f2b]
+// CHECK:STDOUT:   %struct_type.vptr.base: type = struct_type {.<vptr>: %ptr.454, .base: %Base} [concrete = constants.%struct_type.vptr.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.base [concrete = constants.%complete_type.336]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1194,7 +1204,7 @@ class T2 {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F[%self.param_patt: %Derived]();
+// CHECK:STDOUT: impl fn @F(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_impl.carbon
 // CHECK:STDOUT:
@@ -1249,6 +1259,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %AbstractBase = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.6ec]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1261,7 +1272,8 @@ class T2 {
 // CHECK:STDOUT:   %AbstractBase.ref: type = name_ref AbstractBase, file.%AbstractBase.decl [concrete = constants.%AbstractBase]
 // CHECK:STDOUT:   %.loc9: %AbstractIntermediate.elem = base_decl %AbstractBase.ref, element0 [concrete]
 // CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.6e9) [concrete = constants.%.6ec]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.efd [concrete = constants.%complete_type.2d3]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %AbstractBase} [concrete = constants.%struct_type.base.efd]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.2d3]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1283,7 +1295,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.da5 [concrete = constants.%complete_type.f8c]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %AbstractIntermediate} [concrete = constants.%struct_type.base.da5]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.f8c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1294,9 +1307,9 @@ class T2 {
 // CHECK:STDOUT:   extend %AbstractIntermediate.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @F.1[%self.param_patt: %AbstractBase]();
+// CHECK:STDOUT: abstract fn @F.1(%self.param: %AbstractBase);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived]();
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- virtual_impl.carbon
 // CHECK:STDOUT:
@@ -1351,6 +1364,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %VirtualBase = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.def]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1363,7 +1377,8 @@ class T2 {
 // CHECK:STDOUT:   %VirtualBase.ref: type = name_ref VirtualBase, file.%VirtualBase.decl [concrete = constants.%VirtualBase]
 // CHECK:STDOUT:   %.loc9: %VirtualIntermediate.elem = base_decl %VirtualBase.ref, element0 [concrete]
 // CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.3e7) [concrete = constants.%.def]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.61e [concrete = constants.%complete_type.f09]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %VirtualBase} [concrete = constants.%struct_type.base.61e]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.f09]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1385,7 +1400,8 @@ class T2 {
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.43c [concrete = constants.%complete_type.fa6]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %VirtualIntermediate} [concrete = constants.%struct_type.base.43c]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.fa6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1396,9 +1412,9 @@ class T2 {
 // CHECK:STDOUT:   extend %VirtualIntermediate.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %VirtualBase]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %VirtualBase);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived]();
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_mismatch.carbon
 // CHECK:STDOUT:
@@ -1450,6 +1466,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [concrete = constants.%.5ee]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1478,6 +1495,7 @@ class T2 {
 // CHECK:STDOUT:     %v: %i32 = bind_name v, %v.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1489,9 +1507,9 @@ class T2 {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %Base]();
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %Base);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived](%v.param_patt: %i32);
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived, %v.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_conversion.carbon
 // CHECK:STDOUT:
@@ -1503,7 +1521,7 @@ class T2 {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e40: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness file.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Convert.type.c41: type = fn_type @Convert.2 [concrete]
 // CHECK:STDOUT:   %Convert.f35: %Convert.type.c41 = struct_value () [concrete]
 // CHECK:STDOUT:   %T1.val: %T1 = struct_value () [concrete]
@@ -1550,7 +1568,8 @@ class T2 {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T1)> [concrete = constants.%ImplicitAs.type.e40]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Convert.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@impl.%Convert.decl), @impl [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness]
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT: }
@@ -1573,10 +1592,11 @@ class T2 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .T1 = <poisoned>
 // CHECK:STDOUT:   .Convert = %Convert.decl
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1585,6 +1605,7 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T2 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1607,6 +1628,7 @@ class T2 {
 // CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F.decl) [concrete = constants.%.5ee]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1634,6 +1656,7 @@ class T2 {
 // CHECK:STDOUT:     %return: ref %T2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc30: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1646,7 +1669,7 @@ class T2 {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2[%self.param_patt: %T2]() -> %return.param_patt: %T1 {
+// CHECK:STDOUT: fn @Convert.2(%self.param: %T2) -> %return.param: %T1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc12_13.2: init %T1 = class_init (), %return [concrete = constants.%T1.val]
@@ -1654,9 +1677,9 @@ class T2 {
 // CHECK:STDOUT:   return %.loc12_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1[%self.param_patt: %Base]() -> %T1;
+// CHECK:STDOUT: virtual fn @F.1(%self.param: %Base) -> %return.param: %T1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived]() -> %T2;
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived) -> %return.param: %T2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_generic_base.carbon
 // CHECK:STDOUT:
@@ -1713,6 +1736,7 @@ class T2 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1747,6 +1771,7 @@ class T2 {
 // CHECK:STDOUT:       %t: @F.1.%T (%T) = bind_name t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc9_1.1: <vtable> = vtable (%F.decl) [symbolic = %.loc9_1.2 (constants.%.f89)]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1777,6 +1802,7 @@ class T2 {
 // CHECK:STDOUT:     %t: %T1 = bind_name t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21: <vtable> = vtable (%F.decl) [concrete = constants.%.88d]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base.ea5} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.65a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1793,10 +1819,10 @@ class T2 {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.370)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   virtual fn[%self.param_patt: @F.1.%Base (%Base.370)](%t.param_patt: @F.1.%T (%T));
+// CHECK:STDOUT:   virtual fn(%self.param: @F.1.%Base (%Base.370), %t.param: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2[%self.param_patt: %Derived](%t.param_patt: %T1);
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived, %t.param: %T1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T
@@ -1861,6 +1887,7 @@ class T2 {
 // CHECK:STDOUT: class @T1 {
 // CHECK:STDOUT:   %F.decl: %F.type.ba7 = fn_decl @F.1 [concrete = constants.%F.1a5] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1874,6 +1901,7 @@ class T2 {
 // CHECK:STDOUT:   %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:   %.loc18: %T2.elem = base_decl %T1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.834 = fn_decl @F.2 [concrete = constants.%F.a48] {} {}
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.e14]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1943,6 +1971,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %ptr.87b = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F1.decl) [concrete = constants.%.278]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1967,6 +1996,7 @@ class T2 {
 // CHECK:STDOUT:     %self: %ptr.63e = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: <vtable> = vtable (%F1.decl) [concrete = constants.%.20a]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.e14]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1978,7 +2008,7 @@ class T2 {
 // CHECK:STDOUT:   extend %T1.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F1.1[%self.param_patt: %ptr.87b]();
+// CHECK:STDOUT: virtual fn @F1.1(%self.param: %ptr.87b);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F1.2[addr %self.param_patt: %ptr.63e]();
+// CHECK:STDOUT: impl fn @F1.2(%self.param: %ptr.63e);
 // CHECK:STDOUT:

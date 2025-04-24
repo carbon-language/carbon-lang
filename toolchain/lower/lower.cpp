@@ -4,6 +4,9 @@
 
 #include "toolchain/lower/lower.h"
 
+#include <memory>
+#include <optional>
+
 #include "toolchain/lower/file_context.h"
 
 namespace Carbon::Lower {

@@ -7,6 +7,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include "toolchain/base/value_ids.h"
 
 namespace Carbon::Testing {

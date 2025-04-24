@@ -13,23 +13,30 @@ namespace Carbon::SemIR {
 // The canonical list of singleton kinds. The order of `TypeType` is
 // significant because other singletons use it as a type.
 static constexpr std::array SingletonInstKinds = {
-    InstKind::TypeType,       InstKind::AutoType,
-    InstKind::BoolType,       InstKind::BoundMethodType,
-    InstKind::ErrorInst,      InstKind::InstType,
-    InstKind::IntLiteralType, InstKind::LegacyFloatType,
-    InstKind::NamespaceType,  InstKind::SpecificFunctionType,
-    InstKind::StringType,     InstKind::VtableType,
+    InstKind::TypeType,
+    InstKind::AutoType,
+    InstKind::BoolType,
+    InstKind::BoundMethodType,
+    InstKind::ErrorInst,
+    InstKind::ImplWitnessTablePlaceholder,
+    InstKind::InstType,
+    InstKind::IntLiteralType,
+    InstKind::LegacyFloatType,
+    InstKind::NamespaceType,
+    InstKind::SpecificFunctionType,
+    InstKind::StringType,
+    InstKind::VtableType,
     InstKind::WitnessType,
 };
 
 // Returns true if the InstKind is a singleton.
 constexpr auto IsSingletonInstKind(InstKind kind) -> bool;
 
-// Provides the InstId for singleton instructions. These are exposed as
-// `InstT::SingletonInstId` in `typed_insts.h`.
+// Provides the TypeInstId for singleton instructions. These are exposed as
+// `InstT::TypeInstId` in `typed_insts.h`.
 template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
-constexpr auto MakeSingletonInstId() -> InstId;
+constexpr auto MakeSingletonTypeInstId() -> TypeInstId;
 
 // Returns true if the InstId corresponds to a singleton inst.
 constexpr auto IsSingletonInstId(InstId id) -> bool {
@@ -60,9 +67,9 @@ constexpr auto IsSingletonInstKind(InstKind kind) -> bool {
 
 template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
-constexpr auto MakeSingletonInstId() -> InstId {
+constexpr auto MakeSingletonTypeInstId() -> TypeInstId {
   auto index = Internal::GetSingletonInstIndex(InstKind::Make(Kind));
-  return InstId(index);
+  return TypeInstId(index);
 }
 
 }  // namespace Carbon::SemIR

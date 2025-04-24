@@ -67,6 +67,7 @@ base class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -78,6 +79,7 @@ base class A {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
 // CHECK:STDOUT:   %.loc16: %B.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A.466950.1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.020]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -91,12 +93,10 @@ base class A {
 // CHECK:STDOUT: class @A.2 {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
 // CHECK:STDOUT:   %.loc27: %A.elem = base_decl %A.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc32_8: <error> = field_decl c, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc32_3: <error> = var_pattern %.loc32_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
+// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc32: <error> = field_decl c, element1 [concrete]
+// CHECK:STDOUT:   %struct_type.base.c: type = struct_type {.base: %A.466950.1, .c: <error>} [concrete = <error>]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -104,7 +104,7 @@ base class A {
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc27
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .c = %.loc32_8
+// CHECK:STDOUT:   .c = %.loc32
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -57,7 +57,7 @@ class Context {
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(SemIRLoc loc, std::string label) -> bool;
+  auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
@@ -118,10 +118,7 @@ class Context {
 
   auto scope_stack() -> ScopeStack& { return scope_stack_; }
 
-  // Conveneicne functions for frequently-used `scope_stack` members.
-  auto return_scope_stack() -> llvm::SmallVector<ScopeStack::ReturnScope>& {
-    return scope_stack().return_scope_stack();
-  }
+  // Convenience functions for frequently-used `scope_stack` members.
   auto break_continue_stack()
       -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
     return scope_stack().break_continue_stack();
@@ -152,7 +149,7 @@ class Context {
   }
 
   auto definitions_required_by_use()
-      -> llvm::SmallVector<std::pair<SemIRLoc, SemIR::SpecificId>>& {
+      -> llvm::SmallVector<std::pair<SemIR::LocId, SemIR::SpecificId>>& {
     return definitions_required_by_use_;
   }
 
@@ -262,9 +259,6 @@ class Context {
     return sem_ir().struct_type_fields();
   }
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
-  auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
-    return sem_ir().type_blocks();
-  }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
   // `inst.h`. This is `const` to prevent accidental misuse.
   auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
@@ -353,7 +347,7 @@ class Context {
   // Entities that should have definitions by the end of the current source
   // file, because of a generic was used a concrete specific. This is currently
   // only tracking specific functions that should have a definition emitted.
-  llvm::SmallVector<std::pair<SemIRLoc, SemIR::SpecificId>>
+  llvm::SmallVector<std::pair<SemIR::LocId, SemIR::SpecificId>>
       definitions_required_by_use_;
 
   // State for global initialization.
