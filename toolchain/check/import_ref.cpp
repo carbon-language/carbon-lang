@@ -32,8 +32,7 @@ static auto InternalAddImportIR(Context& context, SemIR::ImportIR import_ir)
   return context.import_irs().Add(import_ir);
 }
 
-// Sets the IR for a specific ImportIRId. Should be called in the right order in
-// order to ensure the correct ID is assigned.
+// Adds a special-cased IR and verifies it received the correct ID.
 static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
                                SemIR::ImportIRId expected_import_ir_id)
     -> void {
