@@ -25,18 +25,21 @@ class FunctionContext {
       llvm::raw_ostream* vlog_stream,
       FileContext::SpecificFunctionFingerprint* specific_function_state);
 
+  // Describes a function's body fingerprint while creating the function body.
+  // The final fingerprint is stores in the FileContext as a
+  // SpecificFunctionFingerprint.
   struct LoweringFunctionFingerprint {
     // Index tracks instruction index in the whole function. Add the index
     // to the fingerprint when specific-dependent information is found during
     // lowering the instruction at this index.
-    unsigned inst_id_index = 0;
+    int inst_id_index = 0;
     bool relevant = false;
 
     // Create a two function fingerprints. Both fingerprints include the data
     // that's evaluated (and hence lowered) differently based on the
     // specific_id. The first fingerprint includes global values, types
     // and function_id for functions called inside the function body.
-    // The second fingerprint also includes specific_ids for functions called.
+    // The second fingerprint includes specific_ids for functions called.
     // For two specifics of the same generic: if the first fingerprint
     // (`function_common_fingerprint`) is different, the specifics cannot be
     // coalesced; if the first and second fingerprint

@@ -136,7 +136,7 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 
 auto FileContext::CoalesceEquivalentSpecifics() -> void {
   for (auto& specifics : lowered_specifics_) {
-    if (specifics.size() == 0) {
+    if (specifics.empty()) {
       continue;
     }
     for (unsigned i = 0; i < specifics.size() - 1; ++i) {
@@ -161,7 +161,7 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
         // stored in lowered_specifics_types.
         // Mark non-equivalance in case it can be reused to short-cut another
         // path and continue the search for other equivalences.
-        if (!CheckTypeEquivalence(specifics[i], specifics[j])) {
+        if (!AreFunctionTypesEquivalent(specifics[i], specifics[j])) {
           auto insert_result = non_equivalent_specifics_.Insert(pair);
           // Save a lookup; if pair was previously inserted, so was the flipped
           if (insert_result.is_inserted()) {
@@ -179,20 +179,21 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
         // Function type information matches, check usages inside function body
         // that are dependent on the specific. This information has been stored
         // in lowered_states while lowering each function body.
-        if (CheckBodyEquivalence(specifics[i], specifics[j],
-                                 visited_equivalent_specifics,
-                                 visited_equivalent_specifics_flipped)) {
+        if (AreFunctionBodiesEquivalent(specifics[i], specifics[j],
+                                        visited_equivalent_specifics,
+                                        visited_equivalent_specifics_flipped)) {
           Set<SemIR::SpecificId> specifics_to_delete;
-          visited_equivalent_specifics.ForEach([&](auto equivalent_entry) {
-            CARBON_VLOG("Found equivalent specifics: {0}, {1}",
-                        equivalent_entry.first, equivalent_entry.second);
-            AddOrUpdateSpecificEquivalence(equivalent_entry,
+          visited_equivalent_specifics.ForEach(
+              [&](std::pair<SemIR::SpecificId, SemIR::SpecificId>
+                      equivalent_entry) {
+                CARBON_VLOG("Found equivalent specifics: {0}, {1}",
+                            equivalent_entry.first, equivalent_entry.second);
+                ProcessSpecificEquivalence(equivalent_entry,
                                            specifics_to_delete);
-          });
+              });
 
-          specifics_to_delete.ForEach([&](auto specific_id) {
-            DeleteFunctionSpecific(specific_id,
-                                   equivalent_specifics_[specific_id.index]);
+          specifics_to_delete.ForEach([&](SemIR::SpecificId specific_id) {
+            DeleteFunctionSpecific(specific_id);
           });
 
           // Removed the replaced specific from the list of emitted specifics.
@@ -214,7 +215,7 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
   }
 }
 
-auto FileContext::AddOrUpdateSpecificEquivalence(
+auto FileContext::ProcessSpecificEquivalence(
     std::pair<SemIR::SpecificId, SemIR::SpecificId>& pair,
     Set<SemIR::SpecificId>& specifics_to_delete) -> void {
   auto [specific1, specific2] = pair;
@@ -242,9 +243,8 @@ auto FileContext::AddOrUpdateSpecificEquivalence(
   }
 }
 
-auto FileContext::CheckExistingEquivalence(SemIR::SpecificId specific1,
-                                           SemIR::SpecificId specific2)
-    -> bool {
+auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific1,
+                                     SemIR::SpecificId specific2) -> bool {
   if (!equivalent_specifics_[specific1.index].has_value() ||
       !equivalent_specifics_[specific2.index].has_value()) {
     return false;
@@ -272,22 +272,21 @@ auto FileContext::CheckExistingEquivalence(SemIR::SpecificId specific1,
          equivalent_specifics_[specific2.index];
 }
 
-auto FileContext::DeleteFunctionSpecific(SemIR::SpecificId to_replace,
-                                         SemIR::SpecificId replace_with)
-    -> void {
+auto FileContext::DeleteFunctionSpecific(SemIR::SpecificId to_replace) -> void {
   specific_functions_[to_replace.index]->eraseFromParent();
   specific_functions_[to_replace.index] =
-      specific_functions_[replace_with.index];
+      specific_functions_[equivalent_specifics_[to_replace.index].index];
 }
 
-auto FileContext::CheckTypeEquivalence(SemIR::SpecificId specific1,
-                                       SemIR::SpecificId specific2) -> bool {
+auto FileContext::AreFunctionTypesEquivalent(SemIR::SpecificId specific1,
+                                             SemIR::SpecificId specific2)
+    -> bool {
   CARBON_CHECK(specific1.has_value() && specific2.has_value());
   return lowered_specifics_type_fingerprint_[specific1.index] ==
          lowered_specifics_type_fingerprint_[specific2.index];
 }
 
-auto FileContext::CheckBodyEquivalence(
+auto FileContext::AreFunctionBodiesEquivalent(
     SemIR::SpecificId specific1, SemIR::SpecificId specific2,
     Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
         visited_equivalent_specifics,
@@ -330,7 +329,7 @@ auto FileContext::CheckBodyEquivalence(
         if (non_equivalent_specifics_.Contains(inner_pair)) {
           return false;
         }
-        if (CheckExistingEquivalence(state1.calls[i], state2.calls[i])) {
+        if (IsKnownEquivalence(state1.calls[i], state2.calls[i])) {
           continue;
         }
         if (visited_equivalent_specifics_flipped.Lookup(inner_pair)) {
