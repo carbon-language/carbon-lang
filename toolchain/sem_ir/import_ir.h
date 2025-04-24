@@ -29,16 +29,16 @@ struct ImportIR : public Printable<ImportIR> {
 static_assert(sizeof(ImportIR) == 8 + sizeof(uintptr_t), "Unexpected size");
 
 // A reference to an instruction in an imported IR. Used for diagnostics with
-// LocId. For `Cpp` import, points to a Clang source location.
+// LocId. For a `Cpp` import, points to a Clang source location.
 class ImportIRInst : public Printable<ImportIRInst> {
  public:
-  // Constructor for non `Cpp` import.
+  // Constructor for a non-`Cpp` import.
   explicit ImportIRInst(ImportIRId ir_id, InstId inst_id)
       : ir_id_(ir_id), inst_id_(inst_id) {
     CARBON_CHECK(ir_id != ImportIRId::Cpp);
   }
 
-  // Constructor for `Cpp` import.
+  // Constructor for a `Cpp` import.
   explicit ImportIRInst(ClangSourceLocId clang_source_loc_id)
       : ir_id_(SemIR::ImportIRId::Cpp),
         clang_source_loc_id_(clang_source_loc_id) {}

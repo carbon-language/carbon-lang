@@ -109,7 +109,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
   // Call `SetApiImportIRs()` to set `ImportIRId::ApiForImpl` and
-  // `ImportIRId::Cpp` first as required.
+  // `ImportIRId::Cpp` first, as required.
   if (unit_and_imports_->api_for_impl) {
     const auto& names = context_.parse_tree().packaging_decl()->names;
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
