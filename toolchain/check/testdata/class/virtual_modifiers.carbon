@@ -327,6 +327,14 @@ base class T1(T:! type) {
   virtual fn F[self: Self]();
 }
 
+// --- with_dependent_arg.carbon
+
+library "[[@TEST_NAME]]";
+
+base class T1(T:! type) {
+  virtual fn F[self: Self](t: T);
+}
+
 
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
