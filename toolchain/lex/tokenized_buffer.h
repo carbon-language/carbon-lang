@@ -90,7 +90,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   //
   // The particular syntax was chosen because it can be lexed efficiently. It
   // only occurs in invalid comment strings, so shouldn't slow down lexing of
-  // correct code. It's also comment-like because its present won't affect
+  // correct code. It's also comment-like because its presence won't affect
   // parse/check.
   struct DumpSemIRRange {
     TokenIndex start;
