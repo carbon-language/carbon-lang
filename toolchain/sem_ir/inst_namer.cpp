@@ -40,8 +40,8 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   CollectNamesInBlock(ScopeId::Constants, sem_ir->constants().array_ref());
 
   // Build the ImportRef scope.
-  CollectNamesInBlock(ScopeId::ImportRefs, sem_ir->inst_blocks().Get(
-                                               SemIR::InstBlockId::ImportRefs));
+  CollectNamesInBlock(ScopeId::ImportRefs,
+                      sem_ir->inst_blocks().Get(InstBlockId::ImportRefs));
 
   // Build the file scope.
   CollectNamesInBlock(ScopeId::File, sem_ir->top_inst_block_id());
@@ -157,7 +157,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   }
 
   // Check for a builtin.
-  if (SemIR::IsSingletonInstId(inst_id)) {
+  if (IsSingletonInstId(inst_id)) {
     return sem_ir_->insts().Get(inst_id).kind().ir_name().str();
   }
 
@@ -172,7 +172,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     out << "<unexpected>." << inst_id;
     auto loc_id = sem_ir_->insts().GetLocId(inst_id);
     // TODO: Consider handling other kinds.
-    if (loc_id.kind() == SemIR::LocId::Kind::NodeId) {
+    if (loc_id.kind() == LocId::Kind::NodeId) {
       const auto& tree = sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id.node_id());
       out << ".loc" << tree.tokens().GetLineNumber(token) << "_"
@@ -226,8 +226,8 @@ auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
 
 auto InstNamer::Namespace::AllocateName(
     const InstNamer& inst_namer,
-    std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint,
-    std::string name) -> Name {
+    std::variant<LocId, uint64_t> loc_id_or_fingerprint, std::string name)
+    -> Name {
   // The best (shortest) name for this instruction so far, and the current
   // name for it.
   Name best;
@@ -264,7 +264,7 @@ auto InstNamer::Namespace::AllocateName(
   // Append location information to try to disambiguate.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
     // TODO: Consider handling other kinds.
-    if (loc_id->kind() == SemIR::LocId::Kind::NodeId) {
+    if (loc_id->kind() == LocId::Kind::NodeId) {
       const auto& tree = inst_namer.sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id->node_id());
       llvm::raw_string_ostream(name)
@@ -303,7 +303,7 @@ auto InstNamer::Namespace::AllocateName(
 
 auto InstNamer::AddBlockLabel(
     ScopeId scope_id, InstBlockId block_id, std::string name,
-    std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint) -> void {
+    std::variant<LocId, uint64_t> loc_id_or_fingerprint) -> void {
   if (!block_id.has_value() || labels_[block_id.index].second) {
     return;
   }
@@ -323,8 +323,8 @@ auto InstNamer::AddBlockLabel(
 
 // Finds and adds a suitable block label for the given SemIR instruction that
 // represents some kind of branch.
-auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
-                              AnyBranch branch) -> void {
+auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
+    -> void {
   if (!loc_id.node_id().has_value()) {
     AddBlockLabel(scope_id, branch.target_id, "", loc_id);
     return;
@@ -414,7 +414,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   auto queue_block_insts = [&](ScopeId scope_id,
                                llvm::ArrayRef<InstId> inst_ids) {
     for (auto inst_id : llvm::reverse(inst_ids)) {
-      if (inst_id.has_value() && !SemIR::IsSingletonInstId(inst_id)) {
+      if (inst_id.has_value() && !IsSingletonInstId(inst_id)) {
         insts.push_back(std::make_pair(scope_id, inst_id));
       }
     }
@@ -437,8 +437,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     auto add_inst_name = [&](std::string name) {
       ScopeId old_scope_id = insts_[inst_id.index].first;
       if (old_scope_id == ScopeId::None) {
-        std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint =
-            SemIR::LocId::None;
+        std::variant<LocId, uint64_t> loc_id_or_fingerprint = LocId::None;
         if (scope_id == ScopeId::Constants || scope_id == ScopeId::ImportRefs) {
           loc_id_or_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, inst_id);
         } else {
@@ -457,7 +456,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
           (sem_ir_->names().GetIRBaseName(name_id).str() + suffix).str());
     };
     auto add_int_or_float_type_name = [&](char type_literal_prefix,
-                                          SemIR::InstId bit_width_id,
+                                          InstId bit_width_id,
                                           llvm::StringRef suffix = "") {
       RawStringOstream out;
       out << type_literal_prefix;
@@ -471,8 +470,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     };
     auto add_witness_table_name = [&](InstId witness_table_inst_id,
                                       std::string name) {
-      auto witness_table = sem_ir_->insts().GetAs<SemIR::ImplWitnessTable>(
-          witness_table_inst_id);
+      auto witness_table =
+          sem_ir_->insts().GetAs<ImplWitnessTable>(witness_table_inst_id);
       if (!witness_table.impl_id.has_value()) {
         // TODO: The witness comes from a facet value. Can we get the
         // interface names from it? Store the facet value instruction in the
@@ -567,16 +566,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(Call inst): {
-        auto callee_function =
-            SemIR::GetCalleeFunction(*sem_ir_, inst.callee_id);
+        auto callee_function = GetCalleeFunction(*sem_ir_, inst.callee_id);
         if (!callee_function.function_id.has_value()) {
           break;
         }
         const auto& function =
             sem_ir_->functions().Get(callee_function.function_id);
         // Name the call's result based on the callee.
-        if (function.builtin_function_kind !=
-            SemIR::BuiltinFunctionKind::None) {
+        if (function.builtin_function_kind != BuiltinFunctionKind::None) {
           // For a builtin, use the builtin name. Otherwise, we'd typically pick
           // the name `Op` below, which is probably not very useful.
           add_inst_name(function.builtin_function_kind.name().str());
@@ -819,7 +816,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case OutParamPattern::Kind:
       case RefParamPattern::Kind:
       case ValueParamPattern::Kind: {
-        add_inst_name_id(SemIR::GetPrettyNameFromPatternId(*sem_ir_, inst_id),
+        add_inst_name_id(GetPrettyNameFromPatternId(*sem_ir_, inst_id),
                          ".param_patt");
         continue;
       }

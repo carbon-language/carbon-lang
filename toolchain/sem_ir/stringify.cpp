@@ -64,7 +64,7 @@ class StepStack {
 
   // Starts a new stack, which always contains the first instruction to
   // stringify.
-  explicit StepStack(const SemIR::File* file) : sem_ir_(file) {}
+  explicit StepStack(const File* file) : sem_ir_(file) {}
 
   // These push basic entries onto the stack.
   auto PushInstId(InstId inst_id) -> void { steps_.push_back(inst_id); }
@@ -185,7 +185,7 @@ class StepStack {
     PushString("(");
   }
 
-  const SemIR::File* sem_ir_;
+  const File* sem_ir_;
   // Remaining steps to take.
   llvm::SmallVector<Step> steps_;
 };
@@ -193,13 +193,13 @@ class StepStack {
 // Provides `StringifyInst` overloads for each instruction.
 class Stringifier {
  public:
-  explicit Stringifier(const SemIR::File* sem_ir, StepStack* step_stack,
+  explicit Stringifier(const File* sem_ir, StepStack* step_stack,
                        llvm::raw_ostream* out)
       : sem_ir_(sem_ir), step_stack_(step_stack), out_(out) {}
 
   // By default try to print a constant, but otherwise may fail to
   // stringify.
-  auto StringifyInstDefault(SemIR::InstId inst_id, Inst inst) -> void {
+  auto StringifyInstDefault(InstId inst_id, Inst inst) -> void {
     // We don't know how to print this instruction, but it might have a
     // constant value that we can print.
     auto const_inst_id = sem_ir_->constant_values().GetConstantInstId(inst_id);
@@ -215,7 +215,7 @@ class Stringifier {
   }
 
   template <typename InstT>
-  auto StringifyInst(SemIR::InstId inst_id, InstT inst) -> void {
+  auto StringifyInst(InstId inst_id, InstT inst) -> void {
     // This doesn't use requires so that more specific overloads are chosen when
     // provided.
     static_assert(InstT::Kind.is_type() != InstIsType::Always ||
@@ -229,32 +229,30 @@ class Stringifier {
   // Singleton instructions use their IR name as a label.
   template <typename InstT>
     requires(IsSingletonInstKind(InstT::Kind))
-  auto StringifyInst(SemIR::InstId /*inst_id*/, InstT /*inst*/) -> void {
+  auto StringifyInst(InstId /*inst_id*/, InstT /*inst*/) -> void {
     *out_ << InstT::Kind.ir_name();
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, ArrayType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, ArrayType inst) -> void {
     *out_ << "array(";
     step_stack_->Push(inst.element_type_inst_id, ", ", inst.bound_id, ")");
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, AssociatedConstantDecl inst)
-      -> void {
+  auto StringifyInst(InstId /*inst_id*/, AssociatedConstantDecl inst) -> void {
     const auto& assoc_const =
         sem_ir_->associated_constants().Get(inst.assoc_const_id);
     step_stack_->PushQualifiedName(assoc_const.parent_scope_id,
                                    assoc_const.name_id);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, AssociatedEntityType inst)
-      -> void {
+  auto StringifyInst(InstId /*inst_id*/, AssociatedEntityType inst) -> void {
     *out_ << "<associated entity in ";
     step_stack_->Push(">");
     step_stack_->PushSpecificInterface(
         SpecificInterface{inst.interface_id, inst.interface_specific_id});
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, BoolLiteral inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, BoolLiteral inst) -> void {
     step_stack_->Push(inst.value.ToBool() ? "true" : "false");
   }
 
@@ -262,11 +260,11 @@ class Stringifier {
     requires(std::same_as<InstT, BindAlias> ||
              std::same_as<InstT, BindSymbolicName> ||
              std::same_as<InstT, ExportDecl>)
-  auto StringifyInst(SemIR::InstId /*inst_id*/, InstT inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, InstT inst) -> void {
     step_stack_->PushEntityNameId(inst.entity_name_id);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, ClassType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, ClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     if (auto literal_info = NumericTypeLiteralInfo::ForType(*sem_ir_, inst);
         literal_info.is_valid()) {
@@ -276,12 +274,12 @@ class Stringifier {
     step_stack_->PushEntityName(class_info, inst.specific_id);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, ConstType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, ConstType inst) -> void {
     *out_ << "const ";
 
     // Add parentheses if required.
     if (GetPrecedence(sem_ir_->insts().Get(inst.inner_id).kind()) <
-        GetPrecedence(SemIR::ConstType::Kind)) {
+        GetPrecedence(ConstType::Kind)) {
       *out_ << "(";
       // Note the `inst.inner_id` ends up here.
       step_stack_->PushString(")");
@@ -290,12 +288,12 @@ class Stringifier {
     step_stack_->PushInstId(inst.inner_id);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, FacetAccessType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, FacetAccessType inst) -> void {
     // Given `T:! I`, print `T as type` as simply `T`.
     step_stack_->PushInstId(inst.facet_value_inst_id);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, FacetType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, FacetType inst) -> void {
     const FacetTypeInfo& facet_type_info =
         sem_ir_->facet_types().Get(inst.facet_type_id);
     // Output `where` restrictions.
@@ -338,12 +336,12 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, FacetValue inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, FacetValue inst) -> void {
     // No need to output the witness.
     step_stack_->Push(inst.type_inst_id, " as ", inst.type_id);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, FloatType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, FloatType inst) -> void {
     // TODO: Is this okay?
     if (auto width_value =
             sem_ir_->insts().TryGetAs<IntValue>(inst.bit_width_id)) {
@@ -355,16 +353,16 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, FunctionType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {
     const auto& fn = sem_ir_->functions().Get(inst.function_id);
     *out_ << "<type of ";
     step_stack_->Push(
         StepStack::QualifiedNameItem{fn.parent_scope_id, fn.name_id}, ">");
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, FunctionTypeWithSelfType inst)
+  auto StringifyInst(InstId /*inst_id*/, FunctionTypeWithSelfType inst)
       -> void {
-    StepStack::PushItem fn_name = SemIR::InstId::None;
+    StepStack::PushItem fn_name = InstId::None;
     if (auto fn_inst = sem_ir_->insts().TryGetAs<FunctionType>(
             inst.interface_function_type_id)) {
       const auto& fn = sem_ir_->functions().Get(fn_inst->function_id);
@@ -377,7 +375,7 @@ class Stringifier {
     step_stack_->Push(fn_name, " in ", inst.self_id, ">");
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, GenericClassType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, GenericClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     *out_ << "<type of ";
     step_stack_->Push(StepStack::QualifiedNameItem{class_info.parent_scope_id,
@@ -385,8 +383,7 @@ class Stringifier {
                       ">");
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, GenericInterfaceType inst)
-      -> void {
+  auto StringifyInst(InstId /*inst_id*/, GenericInterfaceType inst) -> void {
     const auto& interface = sem_ir_->interfaces().Get(inst.interface_id);
     *out_ << "<type of ";
     step_stack_->Push(StepStack::QualifiedNameItem{interface.parent_scope_id,
@@ -397,10 +394,10 @@ class Stringifier {
   // Determine the specific interface that an impl witness instruction provides
   // an implementation of.
   // TODO: Should we track this in the type?
-  auto TryGetSpecificInterfaceForImplWitness(SemIR::InstId impl_witness_id)
+  auto TryGetSpecificInterfaceForImplWitness(InstId impl_witness_id)
       -> std::optional<SpecificInterface> {
-    if (auto lookup = sem_ir_->insts().TryGetAs<SemIR::LookupImplWitness>(
-            impl_witness_id)) {
+    if (auto lookup =
+            sem_ir_->insts().TryGetAs<LookupImplWitness>(impl_witness_id)) {
       return sem_ir_->specific_interfaces().Get(
           lookup->query_specific_interface_id);
     }
@@ -409,8 +406,7 @@ class Stringifier {
     return std::nullopt;
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, ImplWitnessAccess inst)
-      -> void {
+  auto StringifyInst(InstId /*inst_id*/, ImplWitnessAccess inst) -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
     if (auto specific_interface =
@@ -453,7 +449,7 @@ class Stringifier {
               lookup->query_self_inst_id)) {
         auto name_id =
             sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
-        period_self = (name_id == SemIR::NameId::PeriodSelf);
+        period_self = (name_id == NameId::PeriodSelf);
       }
       if (!period_self) {
         step_stack_->PushInstId(lookup->query_self_inst_id);
@@ -464,8 +460,7 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, ImportRefUnloaded inst)
-      -> void {
+  auto StringifyInst(InstId /*inst_id*/, ImportRefUnloaded inst) -> void {
     if (inst.entity_name_id.has_value()) {
       step_stack_->PushEntityNameId(inst.entity_name_id);
     } else {
@@ -473,7 +468,7 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, IntType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, IntType inst) -> void {
     *out_ << "<builtin ";
     step_stack_->PushString(">");
     if (auto width_value =
@@ -486,33 +481,32 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, IntValue inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, IntValue inst) -> void {
     sem_ir_->ints().Get(inst.int_id).print(*out_, /*isSigned=*/true);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, LookupImplWitness inst)
-      -> void {
+  auto StringifyInst(InstId /*inst_id*/, LookupImplWitness inst) -> void {
     step_stack_->Push(
         inst.query_self_inst_id, " as ",
         sem_ir_->specific_interfaces().Get(inst.query_specific_interface_id));
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, NameRef inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, NameRef inst) -> void {
     *out_ << sem_ir_->names().GetFormatted(inst.name_id);
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, Namespace inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, Namespace inst) -> void {
     const auto& name_scope = sem_ir_->name_scopes().Get(inst.name_scope_id);
     step_stack_->PushQualifiedName(name_scope.parent_scope_id(),
                                    name_scope.name_id());
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, PointerType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, PointerType inst) -> void {
     step_stack_->Push(inst.pointee_id, "*");
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, SpecificFunction inst) -> void {
-    auto callee = SemIR::GetCalleeFunction(*sem_ir_, inst.callee_id);
+  auto StringifyInst(InstId /*inst_id*/, SpecificFunction inst) -> void {
+    auto callee = GetCalleeFunction(*sem_ir_, inst.callee_id);
     if (callee.function_id.has_value()) {
       step_stack_->PushEntityName(sem_ir_->functions().Get(callee.function_id),
                                   inst.specific_id);
@@ -521,9 +515,8 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, SpecificImplFunction inst)
-      -> void {
-    auto callee = SemIR::GetCalleeFunction(*sem_ir_, inst.callee_id);
+  auto StringifyInst(InstId /*inst_id*/, SpecificImplFunction inst) -> void {
+    auto callee = GetCalleeFunction(*sem_ir_, inst.callee_id);
     if (callee.function_id.has_value()) {
       // TODO: The specific_id here is for the interface member, but the
       // entity we're passing is the impl member. This might result in
@@ -535,7 +528,7 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, StructType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, StructType inst) -> void {
     auto fields = sem_ir_->struct_type_fields().Get(inst.fields_id);
     if (fields.empty()) {
       *out_ << "{}";
@@ -549,7 +542,7 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, StructValue inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, StructValue inst) -> void {
     auto field_values = sem_ir_->inst_blocks().Get(inst.elements_id);
     if (field_values.empty()) {
       *out_ << "{}";
@@ -571,7 +564,7 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, TupleType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, TupleType inst) -> void {
     auto refs = sem_ir_->inst_blocks().Get(inst.type_elements_id);
     if (refs.empty()) {
       *out_ << "()";
@@ -590,7 +583,7 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, TupleValue inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, TupleValue inst) -> void {
     auto refs = sem_ir_->inst_blocks().Get(inst.elements_id);
     if (refs.empty()) {
       *out_ << "()";
@@ -609,7 +602,7 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(SemIR::InstId inst_id, TypeOfInst /*inst*/) -> void {
+  auto StringifyInst(InstId inst_id, TypeOfInst /*inst*/) -> void {
     // Print the constant value if we've already computed the inst.
     auto const_inst_id = sem_ir_->constant_values().GetConstantInstId(inst_id);
     if (const_inst_id.has_value() && const_inst_id != inst_id) {
@@ -619,25 +612,24 @@ class Stringifier {
     *out_ << "<dependent type>";
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, UnboundElementType inst)
-      -> void {
+  auto StringifyInst(InstId /*inst_id*/, UnboundElementType inst) -> void {
     *out_ << "<unbound element of class ";
     step_stack_->Push(inst.class_type_inst_id, ">");
   }
 
-  auto StringifyInst(SemIR::InstId /*inst_id*/, VtablePtr /*inst*/) -> void {
+  auto StringifyInst(InstId /*inst_id*/, VtablePtr /*inst*/) -> void {
     *out_ << "<vtable ptr>";
   }
 
  private:
-  const SemIR::File* sem_ir_;
+  const File* sem_ir_;
   StepStack* step_stack_;
   llvm::raw_ostream* out_;
 };
 
 }  // namespace
 
-static auto Stringify(const SemIR::File& sem_ir, StepStack& step_stack)
+static auto Stringify(const File& sem_ir, StepStack& step_stack)
     -> std::string {
   RawStringOstream out;
 
@@ -671,7 +663,7 @@ static auto Stringify(const SemIR::File& sem_ir, StepStack& step_stack)
   return out.TakeStr();
 }
 
-auto StringifyConstantInst(const SemIR::File& sem_ir, InstId outer_inst_id)
+auto StringifyConstantInst(const File& sem_ir, InstId outer_inst_id)
     -> std::string {
   StepStack step_stack(&sem_ir);
   step_stack.PushInstId(outer_inst_id);
@@ -686,14 +678,14 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
   const auto& generic = sem_ir.generics().Get(specific.generic_id);
   auto decl = sem_ir.insts().Get(generic.decl_id);
   CARBON_KIND_SWITCH(decl) {
-    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+    case CARBON_KIND(ClassDecl class_decl): {
       // Print `Core.Int(N)` as `iN`.
       // TODO: This duplicates work done in StringifyInst for ClassType.
       const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
       if (auto literal_info = NumericTypeLiteralInfo::ForType(
-              sem_ir, SemIR::ClassType{.type_id = SemIR::TypeType::TypeId,
-                                       .class_id = class_decl.class_id,
-                                       .specific_id = specific_id});
+              sem_ir, ClassType{.type_id = TypeType::TypeId,
+                                .class_id = class_decl.class_id,
+                                .specific_id = specific_id});
           literal_info.is_valid()) {
         RawStringOstream out;
         literal_info.PrintLiteral(sem_ir, out);
@@ -702,17 +694,17 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
       step_stack.PushEntityName(class_info, specific_id);
       break;
     }
-    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
+    case CARBON_KIND(FunctionDecl function_decl): {
       step_stack.PushEntityName(
           sem_ir.functions().Get(function_decl.function_id), specific_id);
       break;
     }
-    case CARBON_KIND(SemIR::ImplDecl impl_decl): {
+    case CARBON_KIND(ImplDecl impl_decl): {
       step_stack.PushEntityName(sem_ir.impls().Get(impl_decl.impl_id),
                                 specific_id);
       break;
     }
-    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+    case CARBON_KIND(InterfaceDecl interface_decl): {
       step_stack.PushEntityName(
           sem_ir.interfaces().Get(interface_decl.interface_id), specific_id);
       break;

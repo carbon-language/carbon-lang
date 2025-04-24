@@ -135,7 +135,7 @@ class TypeEnum : public Printable<TypeEnum<Types...>> {
 //
 // As instruction operands, the types listed here can appear as fields of typed
 // instructions (`toolchain/sem_ir/typed_insts.h`) and must implement the
-// `FromRaw` and `ToRaw` protocol in `SemIR::Inst`. In most cases this is done
+// `FromRaw` and `ToRaw` protocol in `Inst`. In most cases this is done
 // by inheriting from `IdBase` or `IndexBase`.
 //
 // clang-format off: We want one per line.
