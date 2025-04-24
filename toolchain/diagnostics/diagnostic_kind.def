@@ -315,6 +315,8 @@ CARBON_DIAGNOSTIC_KIND(ImplUnusedBinding)
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
+CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResult)
+CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResultNote)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)

@@ -96,7 +96,8 @@ class [[nodiscard]] EvalImplLookupResult {
 // have found that and not caused us to defer lookup to here.
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
-                                 SemIR::InstId non_canonical_query_self_inst_id)
+                                 SemIR::InstId non_canonical_query_self_inst_id,
+                                 bool poison_concrete_results)
     -> EvalImplLookupResult;
 
 }  // namespace Carbon::Check
