@@ -108,7 +108,7 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     -> std::string {
   RawStringOstream out;
-  loc_id = context.sem_ir().insts().GetResolvedLocId(loc_id);
+  loc_id = context.sem_ir().insts().GetCanonicalLocId(loc_id);
   switch (loc_id.kind()) {
     case SemIR::LocId::Kind::None: {
       out << "LocId(<none>)";

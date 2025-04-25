@@ -825,10 +825,10 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 // In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
 // Note that these can only be used with negative, non-`InstId` values.
 //
-// Use `InstStore::GetResolvedLocId()` to get a resolved `LocId` which will not
-// be backed by an `InstId`. Note that the resolved `LocId` may be `None` even
-// when the original `LocId` was not, so this operation needs to be done before
-// checking `has_value()`. Only resolved locations can be converted with
+// Use `InstStore::GetCanonicalLocId()` to get a canonical `LocId` which will
+// not be backed by an `InstId`. Note that the canonical `LocId` may be `None`
+// even when the original `LocId` was not, so this operation needs to be done
+// before checking `has_value()`. Only canonical locations can be converted with
 // `ToImplicit()` or `ToTokenOnly()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
@@ -859,11 +859,12 @@ struct LocId : public IdBase<LocId> {
       : IdBase(FirstNodeId - node_id.index) {}
 
   // Forms an equivalent LocId for a desugared location. Requires a
-  // resolved location. See `InstStore::GetResolvedLocId()`.
+  // canonical location. See `InstStore::GetCanonicalLocId()`.
+  //
   // TODO: Rename to something like `ToDesugared`.
   auto ToImplicit() const -> LocId {
-    // This should only be called for NodeId or ImportIRInstId, but we only set
-    // the flag for NodeId.
+    // This should only be called for NodeId or ImportIRInstId (i.e. canonical
+    // locations), but we only set the flag for NodeId.
     CARBON_CHECK(kind() != Kind::InstId);
     if (kind() == Kind::NodeId) {
       return LocId(index & ~ImplicitBit);
@@ -872,7 +873,7 @@ struct LocId : public IdBase<LocId> {
   }
 
   // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
-  // a resolved location. See `InstStore::GetResolvedLocId()`.
+  // a canonical location. See `InstStore::GetCanonicalLocId()`.
   auto ToTokenOnly() const -> LocId {
     CARBON_CHECK(kind() != Kind::InstId);
     if (has_value()) {

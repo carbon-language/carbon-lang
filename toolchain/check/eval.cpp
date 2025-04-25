@@ -65,7 +65,7 @@ class EvalContext {
       -> SemIR::LocId {
     for (auto inst_id : inst_ids) {
       if (inst_id.has_value()) {
-        auto loc_id = context_->insts().GetResolvedLocId(inst_id);
+        auto loc_id = context_->insts().GetCanonicalLocId(inst_id);
         if (loc_id.has_value()) {
           return loc_id;
         }

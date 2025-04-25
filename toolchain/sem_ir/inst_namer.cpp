@@ -169,7 +169,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     // This should not happen in valid IR.
     RawStringOstream out;
     out << "<unexpected>." << inst_id;
-    auto loc_id = sem_ir_->insts().GetResolvedLocId(inst_id);
+    auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
     // TODO: Consider handling other kinds.
     if (loc_id.kind() == SemIR::LocId::Kind::NodeId) {
       const auto& tree = sem_ir_->parse_tree();
@@ -262,7 +262,7 @@ auto InstNamer::Namespace::AllocateName(
 
   // Append location information to try to disambiguate.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
-    *loc_id = inst_namer.sem_ir_->insts().GetResolvedLocId(*loc_id);
+    *loc_id = inst_namer.sem_ir_->insts().GetCanonicalLocId(*loc_id);
     // TODO: Consider handling other kinds.
     if (loc_id->kind() == SemIR::LocId::Kind::NodeId) {
       const auto& tree = inst_namer.sem_ir_->parse_tree();
@@ -325,7 +325,7 @@ auto InstNamer::AddBlockLabel(
 // represents some kind of branch.
 auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
                               AnyBranch branch) -> void {
-  loc_id = sem_ir_->insts().GetResolvedLocId(loc_id);
+  loc_id = sem_ir_->insts().GetCanonicalLocId(loc_id);
   if (!loc_id.node_id().has_value()) {
     AddBlockLabel(scope_id, branch.target_id, "", loc_id);
     return;

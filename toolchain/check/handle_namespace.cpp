@@ -81,7 +81,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
             .set_is_closed_import(false);
       } else if (existing->import_id.has_value() &&
                  !context.insts()
-                      .GetResolvedLocId(existing_inst_id)
+                      .GetCanonicalLocId(existing_inst_id)
                       .has_value()) {
         // When the name conflict is an imported namespace, fill the location ID
         // so that future diagnostics point at this declaration.

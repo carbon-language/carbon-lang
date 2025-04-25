@@ -441,7 +441,7 @@ class InstStore {
   // Unresolved LocIds can be backed by an InstId which may or may not have a
   // value after being resolved, so this operation needs to be done before using
   // most operations on LocId.
-  auto GetResolvedLocId(LocId loc_id) const -> LocId {
+  auto GetCanonicalLocId(LocId loc_id) const -> LocId {
     while (loc_id.kind() == LocId::Kind::InstId) {
       auto inst_id = loc_id.inst_id();
       CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
@@ -454,12 +454,12 @@ class InstStore {
 
   // Gets the resolved LocId for an instruction. InstId can directly construct
   // an unresolved LocId. This skips that step when a resolved LocId is needed.
-  auto GetResolvedLocId(InstId inst_id) const -> LocId {
+  auto GetCanonicalLocId(InstId inst_id) const -> LocId {
     CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
     CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}", inst_id.index,
                  loc_ids_.size());
     auto loc_id = loc_ids_[inst_id.index];
-    return GetResolvedLocId(loc_id);
+    return GetCanonicalLocId(loc_id);
   }
 
   // Overwrites a given instruction with a new value.
