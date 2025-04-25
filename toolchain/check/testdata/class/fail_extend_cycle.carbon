@@ -93,11 +93,8 @@ base class A {
 // CHECK:STDOUT: class @A.2 {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
 // CHECK:STDOUT:   %.loc27: %A.elem = base_decl %A.ref, element0 [concrete]
-// CHECK:STDOUT:   %.loc32_8: <error> = field_decl c, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc32_3: <error> = var_pattern %.loc32_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <none>
+// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc32: <error> = field_decl c, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.base.c: type = struct_type {.base: %A.466950.1, .c: <error>} [concrete = <error>]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -107,7 +104,7 @@ base class A {
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc27
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .c = %.loc32_8
+// CHECK:STDOUT:   .c = %.loc32
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

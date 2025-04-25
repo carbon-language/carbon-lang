@@ -226,7 +226,7 @@ static auto CopySingleNameScopeFromImportIR(
     auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id, .parent_scope_id = parent_scope_id});
     auto import_ir_inst_id = context.import_ir_insts().Add(
-        {.ir_id = ir_id, .inst_id = import_inst_id});
+        SemIR::ImportIRInst(ir_id, import_inst_id));
     auto inst_id = AddInstInNoBlock(
         context, MakeImportedLocIdAndInst<SemIR::ImportRefLoaded>(
                      context, import_ir_inst_id,
@@ -354,7 +354,7 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
     auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id, .parent_scope_id = parent_scope_id});
     auto import_ref = AddImportRef(
-        context, {.ir_id = ir_id, .inst_id = import_inst_id}, entity_name_id);
+        context, SemIR::ImportIRInst(ir_id, import_inst_id), entity_name_id);
     entry.result = SemIR::ScopeLookupResult::MakeFound(
         import_ref, SemIR::AccessKind::Public);
 
@@ -444,8 +444,8 @@ static auto ImportScopeFromApiFile(Context& context,
     } else {
       // Add an ImportRef for other instructions.
       AddScopedImportRef(context, impl_scope_id, impl_scope, impl_name_id,
-                         {.ir_id = SemIR::ImportIRId::ApiForImpl,
-                          .inst_id = api_entry.result.target_inst_id()},
+                         SemIR::ImportIRInst(SemIR::ImportIRId::ApiForImpl,
+                                             api_entry.result.target_inst_id()),
                          api_entry.result.access_kind());
     }
   }
@@ -668,7 +668,7 @@ auto ImportNameFromOtherPackage(
       } else {
         result_id = AddScopedImportRef(
             context, scope_id, context.name_scopes().Get(scope_id), name_id,
-            {.ir_id = import_ir_id, .inst_id = import_scope_inst_id},
+            SemIR::ImportIRInst(import_ir_id, import_scope_inst_id),
             SemIR::AccessKind::Public);
         LoadImportRef(context, result_id);
       }

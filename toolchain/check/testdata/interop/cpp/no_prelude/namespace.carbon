@@ -144,7 +144,7 @@ fn MyF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_namespaces.carbon
 // CHECK:STDOUT:
@@ -215,11 +215,11 @@ fn MyF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo1[]();
+// CHECK:STDOUT: fn @foo1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo2[]();
+// CHECK:STDOUT: fn @foo2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo3[]();
+// CHECK:STDOUT: fn @foo3();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_namespace_wrong_name_in_namespace.carbon
 // CHECK:STDOUT:
@@ -365,5 +365,5 @@ fn MyF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:

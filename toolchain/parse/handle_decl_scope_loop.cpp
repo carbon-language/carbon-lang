@@ -44,6 +44,13 @@ static auto ApplyIntroducer(Context& context, Context::State state,
 }
 
 namespace {
+// The kind of context in which a declaration appears.
+enum DeclContextKind : int8_t {
+  NonClassContext = 0,
+  ClassContext = 1,
+  MaxDeclContextKind = ClassContext,
+};
+
 // The kind of declaration introduced by an introducer keyword.
 enum class DeclIntroducerKind : int8_t {
   Unrecognized,
@@ -60,26 +67,41 @@ struct DeclIntroducerInfo {
 }  // namespace
 
 static constexpr auto DeclIntroducers = [] {
-  DeclIntroducerInfo introducers[] = {
-#define CARBON_TOKEN(Name)                              \
-  {.introducer_kind = DeclIntroducerKind::Unrecognized, \
-   .node_kind = NodeKind::InvalidParse,                 \
-   .state_kind = StateKind::Invalid},
+  std::array<DeclIntroducerInfo, MaxDeclContextKind + 1> introducers[] = {
+#define CARBON_TOKEN(Name)                                \
+  {{{.introducer_kind = DeclIntroducerKind::Unrecognized, \
+     .node_kind = NodeKind::InvalidParse,                 \
+     .state_kind = StateKind::Invalid},                   \
+    {.introducer_kind = DeclIntroducerKind::Unrecognized, \
+     .node_kind = NodeKind::InvalidParse,                 \
+     .state_kind = StateKind::Invalid}}},
 #include "toolchain/lex/token_kind.def"
   };
   auto set = [&](Lex::TokenKind token_kind, NodeKind node_kind,
                  StateKind state) {
-    introducers[token_kind.AsInt()] = {
+    for (int i = 0; i <= MaxDeclContextKind; ++i) {
+      introducers[token_kind.AsInt()][i] = {
+          .introducer_kind = DeclIntroducerKind::NonPackagingDecl,
+          .node_kind = node_kind,
+          .state_kind = state};
+    }
+  };
+  auto set_contextual = [&](Lex::TokenKind token_kind,
+                            DeclContextKind context_kind, NodeKind node_kind,
+                            StateKind state) {
+    introducers[token_kind.AsInt()][context_kind] = {
         .introducer_kind = DeclIntroducerKind::NonPackagingDecl,
         .node_kind = node_kind,
         .state_kind = state};
   };
   auto set_packaging = [&](Lex::TokenKind token_kind, NodeKind node_kind,
                            StateKind state) {
-    introducers[token_kind.AsInt()] = {
-        .introducer_kind = DeclIntroducerKind::PackagingDecl,
-        .node_kind = node_kind,
-        .state_kind = state};
+    for (int i = 0; i <= MaxDeclContextKind; ++i) {
+      introducers[token_kind.AsInt()][i] = {
+          .introducer_kind = DeclIntroducerKind::PackagingDecl,
+          .node_kind = node_kind,
+          .state_kind = state};
+    }
   };
 
   set(Lex::TokenKind::Adapt, NodeKind::AdaptIntroducer,
@@ -105,7 +127,10 @@ static constexpr auto DeclIntroducers = [] {
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
   set(Lex::TokenKind::Let, NodeKind::LetIntroducer, StateKind::Let);
-  set(Lex::TokenKind::Var, NodeKind::VariableIntroducer, StateKind::VarAsDecl);
+  set_contextual(Lex::TokenKind::Var, NonClassContext,
+                 NodeKind::VariableIntroducer, StateKind::VarAsRegular);
+  set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
+                 StateKind::FieldDecl);
 
   set_packaging(Lex::TokenKind::Package, NodeKind::PackageIntroducer,
                 StateKind::Package);
@@ -121,8 +146,10 @@ static constexpr auto DeclIntroducers = [] {
 // declaration introducer keyword token, replace the placeholder node and switch
 // to a state to parse the rest of the declaration.
 static auto TryHandleAsDecl(Context& context, Context::State state,
-                            bool saw_modifier) -> bool {
-  const auto& info = DeclIntroducers[context.PositionKind().AsInt()];
+                            bool saw_modifier,
+                            DeclContextKind decl_context_kind) -> bool {
+  const auto& info =
+      DeclIntroducers[context.PositionKind().AsInt()][decl_context_kind];
 
   switch (info.introducer_kind) {
     case DeclIntroducerKind::Unrecognized: {
@@ -246,7 +273,8 @@ static auto TryHandleAsModifier(Context& context) -> bool {
   }
 }
 
-auto HandleDecl(Context& context) -> void {
+static auto HandleDecl(Context& context, DeclContextKind decl_context_kind)
+    -> void {
   auto state = context.PopState();
 
   // Add a placeholder node, to be replaced by the declaration introducer once
@@ -257,12 +285,21 @@ auto HandleDecl(Context& context) -> void {
   while (TryHandleAsModifier(context)) {
     saw_modifier = true;
   }
-  if (!TryHandleAsDecl(context, state, saw_modifier)) {
+  if (!TryHandleAsDecl(context, state, saw_modifier, decl_context_kind)) {
     HandleUnrecognizedDecl(context, state.subtree_start);
   }
 }
 
-auto HandleDeclScopeLoop(Context& context) -> void {
+auto HandleDeclAsClass(Context& context) -> void {
+  HandleDecl(context, ClassContext);
+}
+
+auto HandleDeclAsNonClass(Context& context) -> void {
+  HandleDecl(context, NonClassContext);
+}
+
+static auto HandleDeclScopeLoop(Context& context, StateKind decl_state_kind)
+    -> void {
   // This maintains the current state unless we're at the end of the scope.
   if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace) ||
       context.PositionIs(Lex::TokenKind::FileEnd)) {
@@ -271,7 +308,15 @@ auto HandleDeclScopeLoop(Context& context) -> void {
     return;
   }
 
-  context.PushState(StateKind::Decl);
+  context.PushState(decl_state_kind);
+}
+
+auto HandleDeclScopeLoopAsClass(Context& context) -> void {
+  HandleDeclScopeLoop(context, StateKind::DeclAsClass);
+}
+
+auto HandleDeclScopeLoopAsNonClass(Context& context) -> void {
+  HandleDeclScopeLoop(context, StateKind::DeclAsNonClass);
 }
 
 }  // namespace Carbon::Parse

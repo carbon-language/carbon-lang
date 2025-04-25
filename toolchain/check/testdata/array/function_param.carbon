@@ -106,7 +106,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%arr.param_patt: %array_type, %i.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @F(%arr.param: %array_type, %i.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: %array_type = name_ref arr, %arr
 // CHECK:STDOUT:   %i.ref: %i32 = name_ref i, %i

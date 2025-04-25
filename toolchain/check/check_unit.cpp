@@ -34,7 +34,11 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
     count += package_imports.imports.size();
   }
   if (!unit_and_imports->api_for_impl) {
-    // Leave an empty slot for ImportIRId::ApiForImpl.
+    // Leave an empty slot for `ImportIRId::ApiForImpl`.
+    ++count;
+  }
+  if (!unit_and_imports->cpp_import_names.empty()) {
+    // Leave an empty slot for `ImportIRId::Cpp`.
     ++count;
   }
   return count;
@@ -101,20 +105,20 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
                                  .import_id = SemIR::InstId::None});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
-  // If there is an implicit `api` import, set it first so that it uses the
-  // ImportIRId::ApiForImpl when processed for imports.
+  // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and
+  // `ImportIRId::Cpp` first, as required.
   if (unit_and_imports_->api_for_impl) {
     const auto& names = context_.parse_tree().packaging_decl()->names;
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
         context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
-    SetApiImportIR(context_,
-                   {.decl_id = import_decl_id,
-                    .is_export = false,
-                    .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
+    SetSpecialImportIRs(
+        context_, {.decl_id = import_decl_id,
+                   .is_export = false,
+                   .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
   } else {
-    SetApiImportIR(context_,
-                   {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
+    SetSpecialImportIRs(context_,
+                        {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
   }
 
   // Add import instructions for everything directly imported. Implicit imports
@@ -229,7 +233,9 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       unit_and_imports_->package_imports_map.Lookup(PackageNameId::None);
   if (!import_map_lookup) {
     // Push the scope; there are no names to add.
-    context_.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
+    context_.scope_stack().PushForEntity(
+        package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
+        /*lexical_lookup_has_load_error=*/false);
     return;
   }
   PackageImports& self_import =
@@ -244,7 +250,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       CollectTransitiveImports(self_import.import_decl_id, &self_import,
                                /*api_imports=*/nullptr));
 
-  context_.scope_stack().Push(
+  context_.scope_stack().PushForEntity(
       package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
       context_.name_scopes().Get(SemIR::NameScopeId::Package).has_error());
 }
@@ -325,9 +331,9 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
       if (local_imports) {
         CARBON_CHECK(package_id == api_imports_entry.first);
       } else {
-        auto import_ir_inst_id = context_.import_ir_insts().Add(
-            {.ir_id = SemIR::ImportIRId::ApiForImpl,
-             .inst_id = api_imports->import_decl_id});
+        auto import_ir_inst_id =
+            context_.import_ir_insts().Add(SemIR::ImportIRInst(
+                SemIR::ImportIRId::ApiForImpl, api_imports->import_decl_id));
         import_decl_id =
             AddInst(context_, MakeImportedLocIdAndInst<SemIR::ImportDecl>(
                                   context_, import_ir_inst_id,
@@ -409,7 +415,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
       auto import_ir_id = context_.sem_ir()
                               .import_ir_insts()
                               .Get(function_loc_id.import_ir_inst_id())
-                              .ir_id;
+                              .ir_id();
       auto& import_ir = context_.import_irs().Get(import_ir_id);
       if (import_ir.sem_ir->package_id().has_value() !=
           context_.sem_ir().package_id().has_value()) {

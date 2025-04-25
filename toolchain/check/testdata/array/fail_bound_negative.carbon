@@ -116,5 +116,5 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate.1(%n.param_patt: %i32) -> %i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate.1(%n.param: %i32) -> %i32 = "int.snegate";
 // CHECK:STDOUT:

@@ -136,10 +136,9 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(
-        const InstNamer& inst_namer,
-        std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint,
-        std::string name) -> Name;
+    auto AllocateName(const InstNamer& inst_namer,
+                      std::variant<LocId, uint64_t> loc_id_or_fingerprint,
+                      std::string name) -> Name;
   };
 
   // A named scope that contains named entities.
@@ -157,15 +156,14 @@ class InstNamer {
     return scopes_[static_cast<int>(scope_id)];
   }
 
-  auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
-                     std::string name = "",
-                     std::variant<SemIR::LocId, uint64_t>
-                         loc_id_or_fingerprint = SemIR::LocId::None) -> void;
+  auto AddBlockLabel(
+      ScopeId scope_id, InstBlockId block_id, std::string name = "",
+      std::variant<LocId, uint64_t> loc_id_or_fingerprint = LocId::None)
+      -> void;
 
   // Finds and adds a suitable block label for the given SemIR instruction that
   // represents some kind of branch.
-  auto AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id, AnyBranch branch)
-      -> void;
+  auto AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch) -> void;
 
   auto CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id) -> void;
 

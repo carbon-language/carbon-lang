@@ -225,23 +225,23 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.1(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @A.1(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.2(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @A.2(%n.param: %i32, %m.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.1(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @B.1(%n.param: %i32, %m.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.2(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @B.2(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.1(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.1(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.2(%n.param_patt: %i32, %m.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.2(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:

@@ -21,6 +21,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     ir1:             {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst34}}
@@ -215,7 +216,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%n.param_patt: %empty_tuple.type) -> %return.param_patt: %tuple.type {
+// CHECK:STDOUT: fn @Foo(%n.param: %empty_tuple.type) -> %return.param: %tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
 // CHECK:STDOUT:   %.loc16_15.1: %empty_tuple.type = tuple_literal ()

@@ -168,9 +168,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %a: ref f64 = bind_name a, %.loc8_24.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a.param_patt: f64) -> f64 = "float.negate";
+// CHECK:STDOUT: fn @Negate(%a.param: f64) -> f64 = "float.negate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param_patt: f64, %b.param_patt: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
@@ -412,20 +412,20 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooFew() -> f64;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TooMany(%a.param_patt: f64, %b.param_patt: f64) -> f64;
+// CHECK:STDOUT: fn @TooMany(%a.param: f64, %b.param: f64) -> f64;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @BadReturnType(%a.param_patt: f64) -> bool;
+// CHECK:STDOUT: fn @BadReturnType(%a.param: f64) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @JustRight(%a.param_patt: f64) -> f64 = "float.negate";
+// CHECK:STDOUT: fn @JustRight(%a.param: f64) -> f64 = "float.negate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValidTooFew(%a.param_patt: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCallIsValidTooFew(%a.param: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, file.%TooFew.decl [concrete = constants.%TooFew]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValidTooMany(%a.param_patt: f64, %b.param_patt: f64, %c.param_patt: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCallIsValidTooMany(%a.param: f64, %b.param: f64, %c.param: f64) -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooMany.ref: %TooMany.type = name_ref TooMany, file.%TooMany.decl [concrete = constants.%TooMany]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
@@ -434,7 +434,7 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValidBadReturnType(%a.param_patt: f64, %b.param_patt: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValidBadReturnType(%a.param: f64, %b.param: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %BadReturnType.ref: %BadReturnType.type = name_ref BadReturnType, file.%BadReturnType.decl [concrete = constants.%BadReturnType]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a

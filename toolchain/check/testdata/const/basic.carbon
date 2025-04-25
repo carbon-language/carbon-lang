@@ -93,13 +93,13 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%p.param_patt: %ptr.3bc) -> %ptr.3bc {
+// CHECK:STDOUT: fn @A(%p.param: %ptr.3bc) -> %ptr.3bc {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.3bc = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%p.param_patt: %const.12f) -> %const.12f {
+// CHECK:STDOUT: fn @B(%p.param: %const.12f) -> %const.12f {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.12f = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref

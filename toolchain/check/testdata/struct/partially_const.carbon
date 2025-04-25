@@ -75,7 +75,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make(%n.param_patt: %i32) -> %return.param_patt: %struct_type.a.b.c.0b6 {
+// CHECK:STDOUT: fn @Make(%n.param: %i32) -> %return.param: %struct_type.a.b.c.0b6 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0.loc12_16: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n

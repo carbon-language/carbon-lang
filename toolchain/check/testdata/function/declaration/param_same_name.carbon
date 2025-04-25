@@ -62,7 +62,7 @@ fn G(a: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param_patt: %i32);
+// CHECK:STDOUT: fn @F(%a.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%a.param_patt: %i32);
+// CHECK:STDOUT: fn @G(%a.param: %i32);
 // CHECK:STDOUT:

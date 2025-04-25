@@ -24,12 +24,12 @@
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
 // - Up to two members describing the contents of the struct. These are types
-//   listed in the `SemIR::IdKind` type-enum, typically derived from `IdBase`.
+//   listed in the `IdKind` type-enum, typically derived from `IdBase`.
 //
 // The field names here matter -- the fields must have the names specified
-// above, when present. When converting to a `SemIR::Inst`, the `kind` and
-// `type_id` fields will become the kind and type associated with the
-// type-erased instruction.
+// above, when present. When converting to a `Inst`, the `kind` and `type_id`
+// fields will become the kind and type associated with the type-erased
+// instruction.
 //
 // Each type that describes a single kind of instructions provides a constant
 // `Kind` that associates the type with a particular member of the `InstKind`
@@ -694,24 +694,6 @@ struct FacetAccessType {
   InstId facet_value_inst_id;
 };
 
-// Represents accessing the `witness` field in a facet value, which is
-// notionally a pair of a type and a witness.
-struct FacetAccessWitness {
-  static constexpr auto Kind =
-      InstKind::FacetAccessWitness.Define<Parse::NodeId>(
-          {.ir_name = "facet_access_witness",
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  // Always the builtin witness type.
-  TypeId type_id;
-  // An instruction that evaluates to a `FacetValue`.
-  InstId facet_value_inst_id;
-  // An index to a single `ImplWitness` in the witness block of the `FacetValue`
-  // from `facet_value_inst_id`.
-  ElementIndex index;
-};
-
 // A facet type value.
 struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
@@ -748,7 +730,7 @@ struct FacetValue {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::VarBindingPatternId>(
+      InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
           {.ir_name = "field_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;

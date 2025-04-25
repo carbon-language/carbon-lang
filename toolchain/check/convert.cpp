@@ -1094,14 +1094,17 @@ static auto PerformBuiltinConversion(
         // `FacetAccessType` instruction.
         auto type_inst_id = SemIR::TypeInstId::None;
         if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
-          type_inst_id = AddTypeInst(context, loc_id,
-                                     SemIR::FacetAccessType{
-                                         .type_id = SemIR::TypeType::TypeId,
-                                         .facet_value_inst_id = const_value_id,
-                                     });
+          type_inst_id = AddTypeInst<SemIR::FacetAccessType>(
+              context, loc_id,
+              {.type_id = SemIR::TypeType::TypeId,
+               .facet_value_inst_id = const_value_id});
         } else {
           type_inst_id = context.types().GetAsTypeInstId(const_value_id);
         }
+        // Note that `FacetValue`'s type is the same `FacetType` that was used
+        // to construct the set of witnesses, ie. the query to
+        // `LookupImplWitness()`. This ensures that the witnesses are in the
+        // same order as the `required_interfaces()` in the `FacetValue`'s type.
         return AddInst<SemIR::FacetValue>(
             context, loc_id,
             {.type_id = target.type_id,

@@ -172,9 +172,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Neq(%a.param_patt: f64, %b.param_patt: f64) -> bool = "float.neq";
+// CHECK:STDOUT: fn @Neq(%a.param: f64, %b.param: f64) -> bool = "float.neq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%true_.param_patt: %True, %false_.param_patt: %False) {
+// CHECK:STDOUT: fn @F(%true_.param: %True, %false_.param: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Neq.ref.loc8: %Neq.type = name_ref Neq, file.%Neq.decl [concrete = constants.%Neq]
@@ -217,7 +217,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param_patt: f64, %b.param_patt: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Neq.ref: %Neq.type = name_ref Neq, file.%Neq.decl [concrete = constants.%Neq]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
@@ -285,5 +285,5 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @WrongResult(%a.param_patt: f64, %b.param_patt: f64) -> f64;
+// CHECK:STDOUT: fn @WrongResult(%a.param: f64, %b.param: f64) -> f64;
 // CHECK:STDOUT:

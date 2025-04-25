@@ -192,11 +192,11 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   .Self = constants.%False
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater(%a.param_patt: f64, %b.param_patt: f64) -> bool = "float.greater";
+// CHECK:STDOUT: fn @Greater(%a.param: f64, %b.param: f64) -> bool = "float.greater";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate(%a.param_patt: f64) -> f64 = "float.negate";
+// CHECK:STDOUT: fn @Negate(%a.param: f64) -> f64 = "float.negate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%true_.param_patt: %True, %false_.param_patt: %False) {
+// CHECK:STDOUT: fn @F(%true_.param: %True, %false_.param: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref.loc9: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Greater.ref.loc9: %Greater.type = name_ref Greater, file.%Greater.decl [concrete = constants.%Greater]
@@ -304,7 +304,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param_patt: f64, %b.param_patt: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Greater.ref: %Greater.type = name_ref Greater, file.%Greater.decl [concrete = constants.%Greater]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a

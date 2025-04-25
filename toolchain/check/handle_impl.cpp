@@ -488,7 +488,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (self_type_id != SemIR::ErrorInst::TypeId &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    auto extend_node = introducer.modifier_node_id(ModifierOrder::Decl);
+    auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
     if (impl_info.generic_id.has_value()) {
       constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
           context, context.insts().GetLocId(constraint_type_inst_id),
@@ -537,7 +537,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
                                 context.decl_name_stack().PeekParentScopeId());
 
-  context.scope_stack().Push(
+  context.scope_stack().PushForEntity(
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);

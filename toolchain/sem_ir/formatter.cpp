@@ -190,7 +190,7 @@ class FormatterImpl {
 
   // Determines whether the specified entity should be included in the formatted
   // output.
-  auto ShouldFormatEntity(SemIR::InstId decl_id) -> bool {
+  auto ShouldFormatEntity(InstId decl_id) -> bool {
     if (!decl_id.has_value()) {
       return true;
     }
@@ -439,19 +439,9 @@ class FormatterImpl {
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    FormatParamList(fn.implicit_param_patterns_id, /*is_implicit=*/true);
-    FormatParamList(fn.param_patterns_id, /*is_implicit=*/false);
-
-    if (fn.return_slot_pattern_id.has_value()) {
-      out_ << " -> ";
-      auto return_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
-      if (!fn.body_block_ids.empty() && return_info.is_valid() &&
-          return_info.has_return_slot()) {
-        FormatName(fn.return_slot_pattern_id);
-        out_ << ": ";
-      }
-      FormatTypeOfInst(fn.return_slot_pattern_id);
-    }
+    auto return_type_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
+    FormatParamList(fn.call_params_id, return_type_info.is_valid() &&
+                                           return_type_info.has_return_slot());
 
     if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
       out_ << " = \""
@@ -553,7 +543,7 @@ class FormatterImpl {
     llvm::SaveAndRestore generic_scope(scope_,
                                        inst_namer_->GetScopeFor(generic_id));
 
-    FormatParamList(generic.bindings_id, /*is_implicit=*/false);
+    FormatParamList(generic.bindings_id);
 
     out_ << " ";
     OpenBrace();
@@ -574,9 +564,9 @@ class FormatterImpl {
     // that IR in the output before the `{` or `;`.
     if (first_owning_decl_id.has_value()) {
       auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
-      if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
+      if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
         auto import_ir_id =
-            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
+            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
         const auto* import_file =
             sem_ir_->import_irs().Get(import_ir_id).sem_ir;
         pending_imported_from_ = import_file->filename();
@@ -616,34 +606,52 @@ class FormatterImpl {
     }
   }
 
-  // Formats parameters, eliding them completely if they're empty. Wraps in
-  // parentheses or square brackets based on whether these are implicit
-  // parameters.
-  auto FormatParamList(InstBlockId param_patterns_id, bool is_implicit)
+  // Formats parameters, eliding them completely if they're empty. Wraps input
+  // parameters in parentheses. Formats output parameter as a return type.
+  auto FormatParamList(InstBlockId params_id, bool has_return_slot = false)
       -> void {
-    if (!param_patterns_id.has_value()) {
+    if (!params_id.has_value()) {
+      // TODO: This happens for imported functions, for which we don't currently
+      // import the call parameters list.
       return;
     }
 
-    out_ << (is_implicit ? "[" : "(");
+    llvm::StringLiteral close = ")";
+    out_ << "(";
 
     llvm::ListSeparator sep;
-    for (InstId param_id : sem_ir_->inst_blocks().Get(param_patterns_id)) {
-      out_ << sep;
+    for (InstId param_id : sem_ir_->inst_blocks().Get(params_id)) {
+      auto is_out_param = sem_ir_->insts().Is<OutParam>(param_id);
+      if (is_out_param) {
+        // TODO: An input parameter following an output parameter is formatted a
+        // bit strangely. For example, alternating input and output parameters
+        // produces:
+        //
+        //   fn @F(%in1: %t) -> %out1: %t, %in2: %t -> %out2: %t
+        //
+        // This doesn't actually happen right now, though.
+        out_ << std::exchange(close, llvm::StringLiteral(""));
+        out_ << " -> ";
+      } else {
+        out_ << sep;
+      }
       if (!param_id.has_value()) {
         out_ << "invalid";
         continue;
       }
-      if (auto addr = sem_ir_->insts().TryGetAs<SemIR::AddrPattern>(param_id)) {
-        out_ << "addr ";
-        param_id = addr->inner_id;
+      // Don't include the name of the return slot parameter if the function
+      // doesn't have a return slot; the name won't be used for anything in that
+      // case.
+      // TODO: Should the call parameter even exist in that case? There isn't a
+      // corresponding argument in a `call` instruction.
+      if (!is_out_param || has_return_slot) {
+        FormatName(param_id);
+        out_ << ": ";
       }
-      FormatName(param_id);
-      out_ << ": ";
       FormatTypeOfInst(param_id);
     }
 
-    out_ << (is_implicit ? "]" : ")");
+    out_ << close;
   }
 
   // Prints instructions for a code block.
@@ -683,12 +691,12 @@ class FormatterImpl {
       out_ << ".";
       FormatName(name_id);
       switch (result.access_kind()) {
-        case SemIR::AccessKind::Public:
+        case AccessKind::Public:
           break;
-        case SemIR::AccessKind::Protected:
+        case AccessKind::Protected:
           out_ << " [protected]";
           break;
-        case SemIR::AccessKind::Private:
+        case AccessKind::Private:
           out_ << " [private]";
           break;
       }
@@ -906,7 +914,7 @@ class FormatterImpl {
       // don't include it in the argument list if there is no corresponding
       // specific, that is, when we're not in a generic context.
       if constexpr (std::is_same_v<typename Info::template ArgType<1>,
-                                   SemIR::SpecificId>) {
+                                   SpecificId>) {
         if (!Info::template Get<1>(inst).has_value()) {
           FormatArgs(Info::template Get<0>(inst));
           return;
@@ -1141,7 +1149,7 @@ class FormatterImpl {
                           llvm::StringLiteral loaded_label) -> void {
     out_ << " ";
     auto import_ir_inst = sem_ir_->import_ir_insts().Get(import_ir_inst_id);
-    FormatArg(import_ir_inst.ir_id);
+    FormatArg(import_ir_inst.ir_id());
     out_ << ", ";
     if (entity_name_id.has_value()) {
       // Prefer to show the entity name when possible.
@@ -1149,20 +1157,21 @@ class FormatterImpl {
     } else {
       // Show a name based on the location when possible, or the numeric
       // instruction as a last resort.
-      const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id);
-      auto loc_id = import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id);
+      const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id());
+      auto loc_id =
+          import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id());
       switch (loc_id.kind()) {
-        case SemIR::LocId::Kind::None: {
-          out_ << import_ir_inst.inst_id << " [no loc]";
+        case LocId::Kind::None: {
+          out_ << import_ir_inst.inst_id() << " [no loc]";
           break;
         }
-        case SemIR::LocId::Kind::ImportIRInstId: {
+        case LocId::Kind::ImportIRInstId: {
           // TODO: Probably don't want to format each indirection, but maybe
           // reuse GetCanonicalImportIRInst?
-          out_ << import_ir_inst.inst_id << " [indirect]";
+          out_ << import_ir_inst.inst_id() << " [indirect]";
           break;
         }
-        case SemIR::LocId::Kind::NodeId: {
+        case LocId::Kind::NodeId: {
           // Formats a NodeId from the import.
           const auto& tree = import_ir.sem_ir->parse_tree();
           auto token = tree.node_token(loc_id.node_id());
@@ -1170,7 +1179,7 @@ class FormatterImpl {
                << tree.tokens().GetColumnNumber(token);
           break;
         }
-        case SemIR::LocId::Kind::InstId:
+        case LocId::Kind::InstId:
           CARBON_FATAL("Unexpected LocId: {0}", loc_id);
       }
     }

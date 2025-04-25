@@ -193,8 +193,8 @@ auto HandleParseNode(Context& context,
                                         interface_info.self_param_id);
 
   // Enter the interface scope.
-  context.scope_stack().Push(interface_decl_id, interface_info.scope_id,
-                             self_specific_id);
+  context.scope_stack().PushForEntity(
+      interface_decl_id, interface_info.scope_id, self_specific_id);
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:

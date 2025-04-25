@@ -194,7 +194,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_8.1: type](%N.patt.loc4_18.1: @Int.%T.loc4_8.2 (%T)) -> %empty_struct_type {
+// CHECK:STDOUT:   fn() -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc4_41: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
@@ -254,13 +254,13 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Int(imports.%Core.import_ref.5ab: type, imports.%Core.import_ref.34c: @Int.%T (%T)) [from "prelude_fake_int.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %N: @Int.%T (%T) = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %N.patt.2: @Int.%T (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.2 (constants.%N.patt.51c)]
+// CHECK:STDOUT:   %N.patt: @Int.%T (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.51c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.1: type](%N.patt.1: %T) -> %empty_struct_type;
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -274,16 +274,16 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %N.patt.2 => constants.%N.patt.51c
+// CHECK:STDOUT:   %N.patt => constants.%N.patt.51c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
 // CHECK:STDOUT:   %T => Core.IntLiteral
-// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %N => constants.%int_32
-// CHECK:STDOUT:   %N.patt.2 => constants.%N.patt.4fd
+// CHECK:STDOUT:   %N.patt => constants.%N.patt.4fd
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -343,7 +343,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc8_8.1: type](%N.patt.loc8_18.1: @Int.%T.loc8_8.2 (%T)) -> %empty_tuple.type {
+// CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_41: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]

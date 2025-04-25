@@ -148,7 +148,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc4_20.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_10.2: <specific function> = specific_function constants.%F, @F(%T.loc4_6.2) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc6: type) -> @F.%ptr.loc4_20.2 (%ptr) {
+// CHECK:STDOUT:   fn() -> @F.%ptr.loc4_20.2 (%ptr) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.2 (constants.%T)]
@@ -236,7 +236,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.patt.loc4_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %T.loc4_6.2 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc4_6.1: type, %U.patt.loc4_16.1: type) -> @F.1.%ptr.loc4_30.2 (%ptr.79f);
+// CHECK:STDOUT:   fn() -> @F.1.%ptr.loc4_30.2 (%ptr.79f);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(%T.loc13_6.1: type, %U.loc13_16.1: type) {
@@ -249,7 +249,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc13_30.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc13_6.1: type, %U.patt.loc13_16.1: type) -> @F.2.%ptr.loc13_30.2 (%ptr.b51) {
+// CHECK:STDOUT:   fn() -> @F.2.%ptr.loc13_30.2 (%ptr.b51) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.b25846.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.c41931.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
@@ -341,7 +341,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.patt.loc4_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt.7a9)]
 // CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %T.loc4_6.2 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc4_6.1: type, %U.patt.loc4_16.1: type) -> @F.1.%ptr.loc4_30.2 (%ptr.79f);
+// CHECK:STDOUT:   fn() -> @F.1.%ptr.loc4_30.2 (%ptr.79f);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(%U.loc13_6.1: type, %T.loc13_16.1: type) {
@@ -354,7 +354,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc13_30.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.patt.loc13_6.1: type, %T.patt.loc13_16.1: type) -> @F.2.%ptr.loc13_30.2 (%ptr.b51) {
+// CHECK:STDOUT:   fn() -> @F.2.%ptr.loc13_30.2 (%ptr.b51) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.b25846.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.c41931.1]
 // CHECK:STDOUT:     %T.ref.loc21: type = name_ref T, %T.loc13_16.1 [symbolic = %T.loc13_16.2 (constants.%T.336)]
@@ -446,7 +446,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %U.patt.loc4_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_16.2 (constants.%U.patt.7a9)]
 // CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %T.loc4_6.2 [symbolic = %ptr.loc4_30.2 (constants.%ptr.79f131.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.patt.loc4_6.1: type, %U.patt.loc4_16.1: type) -> @F.1.%ptr.loc4_30.2 (%ptr.79f131.1);
+// CHECK:STDOUT:   fn() -> @F.1.%ptr.loc4_30.2 (%ptr.79f131.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(%U.loc13_6.1: type, %T.loc13_16.1: type) {
@@ -459,7 +459,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc13_30.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.patt.loc13_6.1: type, %T.patt.loc13_16.1: type) -> @F.2.%ptr.loc13_30.2 (%ptr.79f131.2) {
+// CHECK:STDOUT:   fn() -> @F.2.%ptr.loc13_30.2 (%ptr.79f131.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.b25846.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.c41931.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_16.1 [symbolic = %T.loc13_16.2 (constants.%T.336)]

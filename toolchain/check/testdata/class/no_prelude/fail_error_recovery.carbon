@@ -91,7 +91,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT: generic fn @F(%N: <error>) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%N.patt: <error>) {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %C.decl: type = class_decl @C [concrete = <error>] {} {}
 // CHECK:STDOUT:     %D.decl: type = class_decl @D [concrete = <error>] {} {}
@@ -102,7 +102,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT: generic virtual fn @Foo(@F.%N: <error>) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   virtual fn[%self.param_patt: <error>]() {
+// CHECK:STDOUT:   virtual fn(%self.param: <error>) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

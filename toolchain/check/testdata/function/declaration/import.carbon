@@ -341,9 +341,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: fn @B(%b.param: %i32) -> %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.a1c) -> %struct_type.c;
+// CHECK:STDOUT: fn @C(%c.param: %tuple.type.a1c) -> %struct_type.c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -434,9 +434,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: extern fn @B(%b.param: %i32) -> %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.param_patt: %tuple.type.a1c) -> %struct_type.c;
+// CHECK:STDOUT: extern fn @C(%c.param: %tuple.type.a1c) -> %struct_type.c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -564,15 +564,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "api.carbon"];
+// CHECK:STDOUT: fn @A [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "api.carbon"];
+// CHECK:STDOUT: fn @B [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.a1c) -> %struct_type.c [from "api.carbon"];
+// CHECK:STDOUT: fn @C [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D() [from "api.carbon"];
+// CHECK:STDOUT: extern fn @D [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E() [from "api.carbon"];
+// CHECK:STDOUT: fn @E [from "api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -762,15 +762,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "api.carbon"];
+// CHECK:STDOUT: fn @A [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "api.carbon"];
+// CHECK:STDOUT: fn @B [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.a1c) -> %struct_type.c [from "api.carbon"];
+// CHECK:STDOUT: fn @C [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D() [from "api.carbon"];
+// CHECK:STDOUT: extern fn @D [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E() [from "api.carbon"];
+// CHECK:STDOUT: fn @E [from "api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -960,15 +960,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A();
+// CHECK:STDOUT: extern fn @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: extern fn @B;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.param_patt: %tuple.type.dd4) -> %struct_type.c;
+// CHECK:STDOUT: extern fn @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D();
+// CHECK:STDOUT: extern fn @D;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @E();
+// CHECK:STDOUT: extern fn @E;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -1132,15 +1132,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "api.carbon"];
+// CHECK:STDOUT: fn @A [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "api.carbon"];
+// CHECK:STDOUT: fn @B [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.a1c) -> %struct_type.c [from "api.carbon"];
+// CHECK:STDOUT: fn @C [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D() [from "api.carbon"];
+// CHECK:STDOUT: extern fn @D [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E() [from "api.carbon"];
+// CHECK:STDOUT: fn @E [from "api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -1304,15 +1304,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A();
+// CHECK:STDOUT: extern fn @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: extern fn @B;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.param_patt: %tuple.type.a1c) -> %struct_type.c;
+// CHECK:STDOUT: extern fn @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D();
+// CHECK:STDOUT: extern fn @D;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @E();
+// CHECK:STDOUT: extern fn @E;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

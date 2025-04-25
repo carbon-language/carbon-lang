@@ -70,9 +70,9 @@ fn G(x: X) {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %X]();
+// CHECK:STDOUT: fn @F(%self.param: %X);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%x.param_patt: %X) {
+// CHECK:STDOUT: fn @G(%x.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc12_3: %X = name_ref x, %x
 // CHECK:STDOUT:   %x.ref.loc12_6: %X = name_ref x, %x

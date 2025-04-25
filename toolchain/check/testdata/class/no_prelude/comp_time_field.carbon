@@ -31,19 +31,19 @@ class Class {
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+8]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+8]]:8: error: expected `:` in field declaration [ExpectedFieldColon]
   // CHECK:STDERR:   var C:! type = Class;
-  // CHECK:STDERR:       ^~~~~~~~
+  // CHECK:STDERR:        ^~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:16: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   var C:! type = Class;
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var C:! type = Class;
 
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:25: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:7: error: expected identifier in field declaration [ExpectedFieldIdentifier]
   // CHECK:STDERR:   var template D:! type = Class;
-  // CHECK:STDERR:                         ^
+  // CHECK:STDERR:       ^~~~~~~~
   // CHECK:STDERR:
   var template D:! type = Class;
 }

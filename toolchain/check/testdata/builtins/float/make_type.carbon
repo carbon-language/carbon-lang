@@ -85,7 +85,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: %i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param: %i32) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
@@ -168,9 +168,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: %i32) -> type = "float.make_type" [from "types.carbon"];
+// CHECK:STDOUT: fn @Float = "float.make_type" [from "types.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetFloat(%dyn_size.param_patt: %i32) -> type {
+// CHECK:STDOUT: fn @GetFloat(%dyn_size.param: %i32) -> type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: %i32 = name_ref dyn_size, %dyn_size
@@ -278,7 +278,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %dyn: <error> = bind_name dyn, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: %i32) -> type = "float.make_type" [from "types.carbon"];
+// CHECK:STDOUT: fn @Float = "float.make_type" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

@@ -11,7 +11,7 @@
 
 namespace Carbon::SemIR {
 
-// A friend of `SemIR::Inst` that is used to pierce the abstraction.
+// A friend of `Inst` that is used to pierce the abstraction.
 class InstTestHelper {
  public:
   static auto MakeInst(InstKind inst_kind, TypeId type_id, int32_t arg0,

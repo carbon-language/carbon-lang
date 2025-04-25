@@ -221,8 +221,9 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 
       // Verify the decl so that things like aliases are name conflicts.
       const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      if (!import_ir->insts().Is<SemIR::FunctionDecl>(import_ir_inst.inst_id)) {
+          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      if (!import_ir->insts().Is<SemIR::FunctionDecl>(
+              import_ir_inst.inst_id())) {
         break;
       }
 
@@ -233,7 +234,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
                 struct_value->type_id)) {
           prev_function_id = function_type->function_id;
           prev_type_id = struct_value->type_id;
-          prev_import_ir_id = import_ir_inst.ir_id;
+          prev_import_ir_id = import_ir_inst.ir_id();
         }
       }
       break;
@@ -310,12 +311,36 @@ static auto ValidateForEntryPoint(Context& context,
   }
 }
 
+static auto IsGenericFunction(Context& context,
+                              SemIR::GenericId function_generic_id,
+                              SemIR::GenericId class_generic_id) -> bool {
+  if (function_generic_id == SemIR::GenericId::None) {
+    return false;
+  }
+
+  if (class_generic_id == SemIR::GenericId::None) {
+    return true;
+  }
+
+  const auto& function_generic = context.generics().Get(function_generic_id);
+  const auto& class_generic = context.generics().Get(class_generic_id);
+
+  auto function_bindings =
+      context.inst_blocks().Get(function_generic.bindings_id);
+  auto class_bindings = context.inst_blocks().Get(class_generic.bindings_id);
+
+  // If the function's bindings are the same size as the class's bindings,
+  // then there are no extra bindings for the function, so it is effectively
+  // non-generic within the scope of a specific of the class.
+  return class_bindings.size() != function_bindings.size();
+}
+
 // Requests a vtable be created when processing a virtual function.
 static auto RequestVtableIfVirtual(
     Context& context, Parse::AnyFunctionDeclId node_id,
     SemIR::Function::VirtualModifier virtual_modifier,
-    const std::optional<SemIR::Inst>& parent_scope_inst, SemIR::InstId decl_id)
-    -> void {
+    const std::optional<SemIR::Inst>& parent_scope_inst, SemIR::InstId decl_id,
+    SemIR::GenericId generic_id) -> void {
   // In order to request a vtable, the function must be virtual, and in a class
   // scope.
   if (virtual_modifier == SemIR::Function::VirtualModifier::None ||
@@ -333,6 +358,13 @@ static auto RequestVtableIfVirtual(
     CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
     context.emitter().Emit(node_id, ImplWithoutBase);
   }
+
+  if (IsGenericFunction(context, generic_id, class_info.generic_id)) {
+    CARBON_DIAGNOSTIC(GenericVirtual, Error, "generic virtual function");
+    context.emitter().Emit(node_id, GenericVirtual);
+    return;
+  }
+
   // TODO: If this is an `impl` function, check there's a matching base
   // function that's impl or virtual.
   class_info.is_dynamic = true;
@@ -465,8 +497,6 @@ static auto BuildFunctionDecl(Context& context,
                                        SemIR::FunctionId::None,
                                        context.inst_block_stack().Pop()};
   auto decl_id = AddPlaceholderInst(context, node_id, function_decl);
-  RequestVtableIfVirtual(context, node_id, virtual_modifier, parent_scope_inst,
-                         decl_id);
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
@@ -508,6 +538,9 @@ static auto BuildFunctionDecl(Context& context,
     FinishGenericRedecl(context, prev_decl_generic_id);
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
+
+  RequestVtableIfVirtual(context, node_id, virtual_modifier, parent_scope_inst,
+                         decl_id, function_info.generic_id);
 
   // Write the function ID into the FunctionDecl.
   ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
@@ -585,10 +618,9 @@ static auto HandleFunctionDefinitionAfterSignature(
   auto& function = context.functions().Get(function_id);
 
   // Create the function scope and the entry block.
-  context.return_scope_stack().push_back({.decl_id = decl_id});
+  context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  context.scope_stack().Push(decl_id);
   StartGenericDefinition(context);
 
   CheckFunctionDefinitionSignature(context, function);
@@ -645,9 +677,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     }
   }
 
-  context.scope_stack().Pop();
   context.inst_block_stack().Pop();
-  context.return_scope_stack().pop_back();
+  context.scope_stack().Pop();
   context.decl_name_stack().PopScope();
 
   auto& function = context.functions().Get(function_id);
@@ -696,16 +727,16 @@ static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)
     -> bool {
+  // Find the list of call parameters other than the implicit return slot.
+  auto call_params = context.inst_blocks().Get(function.call_params_id);
+  if (function.return_slot_pattern_id.has_value()) {
+    call_params = call_params.drop_back();
+  }
+
   // Form the list of parameter types for the declaration.
   llvm::SmallVector<SemIR::TypeId> param_type_ids;
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
-  auto param_patterns =
-      context.inst_blocks().GetOrEmpty(function.param_patterns_id);
-  param_type_ids.reserve(implicit_param_patterns.size() +
-                         param_patterns.size());
-  for (auto param_id : llvm::concat<const SemIR::InstId>(
-           implicit_param_patterns, param_patterns)) {
+  param_type_ids.reserve(call_params.size());
+  for (auto param_id : call_params) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
     param_type_ids.push_back(context.insts().Get(param_id).type_id());

@@ -161,47 +161,39 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithField {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   adapt_decl %i32 [concrete]
-// CHECK:STDOUT:   %.loc13_8: %AdaptWithField.elem = field_decl n, element<none> [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc13_3: %AdaptWithField.elem = var_pattern %.loc13_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %AdaptWithField.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   adapt_decl %i32.loc8 [concrete]
+// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc13: %AdaptWithField.elem = field_decl n, element<none> [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithField
-// CHECK:STDOUT:   .n = %.loc13_8
+// CHECK:STDOUT:   .n = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithFields {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   adapt_decl %i32 [concrete]
-// CHECK:STDOUT:   %.loc25_8: %AdaptWithFields.elem = field_decl a, element<none> [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc25_3: %AdaptWithFields.elem = var_pattern %.loc25_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc25: ref %AdaptWithFields.elem = var <none>
-// CHECK:STDOUT:   %.loc26_8: %AdaptWithFields.elem = field_decl b, element<none> [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc26_3: %AdaptWithFields.elem = var_pattern %.loc26_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc26: ref %AdaptWithFields.elem = var <none>
-// CHECK:STDOUT:   %.loc27_8: %AdaptWithFields.elem = field_decl c, element<none> [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc27_3: %AdaptWithFields.elem = var_pattern %.loc27_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc27: ref %AdaptWithFields.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   adapt_decl %i32.loc20 [concrete]
+// CHECK:STDOUT:   %int_32.loc25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc25: %AdaptWithFields.elem = field_decl a, element<none> [concrete]
+// CHECK:STDOUT:   %int_32.loc26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc26: %AdaptWithFields.elem = field_decl b, element<none> [concrete]
+// CHECK:STDOUT:   %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc27: %AdaptWithFields.elem = field_decl c, element<none> [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithFields
-// CHECK:STDOUT:   .a = %.loc25_8
-// CHECK:STDOUT:   .b = %.loc26_8
-// CHECK:STDOUT:   .c = %.loc27_8
+// CHECK:STDOUT:   .a = %.loc25
+// CHECK:STDOUT:   .b = %.loc26
+// CHECK:STDOUT:   .c = %.loc27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_with_base_and_fields.carbon
@@ -248,11 +240,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.767 = base_decl %Base.ref, element<none> [concrete]
-// CHECK:STDOUT:   %.loc8_8: %AdaptWithBaseAndFields.elem.ddf = field_decl n, element<none> [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc8_3: %AdaptWithBaseAndFields.elem.ddf = var_pattern %.loc8_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %AdaptWithBaseAndFields.elem.ddf = var <none>
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.ddf = field_decl n, element<none> [concrete]
 // CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc16_11: type = converted %.loc16_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc16_11 [concrete]
@@ -262,7 +252,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBaseAndFields
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT:   .base = %.loc7
-// CHECK:STDOUT:   .n = %.loc8_8
+// CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

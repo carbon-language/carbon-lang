@@ -138,12 +138,12 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run1(%a.param_patt: %i32) {
+// CHECK:STDOUT: fn @Run1(%a.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run2(%a.param_patt: %i32, %b.param_patt: %i32) {
+// CHECK:STDOUT: fn @Run2(%a.param: %i32, %b.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

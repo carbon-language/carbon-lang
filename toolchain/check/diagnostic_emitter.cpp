@@ -5,6 +5,7 @@
 #include "toolchain/check/diagnostic_emitter.h"
 
 #include <algorithm>
+#include <optional>
 #include <string>
 
 #include "common/raw_string_ostream.h"
@@ -16,6 +17,14 @@ namespace Carbon::Check {
 auto DiagnosticEmitter::ConvertLoc(SemIR::LocId loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
+  // TODO: Instead of special casing Clang location here, support it within
+  // `GetAbsoluteNodeId()`. See discussion in
+  // https://github.com/carbon-language/carbon-lang/pull/5262/files#r2040308805.
+  auto converted_clang_loc = TryConvertClangDiagnosticLoc(loc_id);
+  if (converted_clang_loc) {
+    return *converted_clang_loc;
+  }
+
   auto converted = ConvertLocImpl(loc_id, context_fn);
 
   // Use the token when possible, but -1 is the default value.
@@ -58,6 +67,33 @@ auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id,
   }
 
   return ConvertLocInFile(final_node_id, token_only, context_fn);
+}
+
+auto DiagnosticEmitter::TryConvertClangDiagnosticLoc(SemIR::LocId loc_id) const
+    -> std::optional<Diagnostics::ConvertedLoc> {
+  if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
+    return std::nullopt;
+  }
+
+  SemIR::ImportIRInst import_ir_inst =
+      sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id());
+
+  if (import_ir_inst.ir_id() != SemIR::ImportIRId::Cpp) {
+    return std::nullopt;
+  }
+
+  clang::SourceLocation clang_loc =
+      sem_ir_->clang_source_locs().Get(import_ir_inst.clang_source_loc_id());
+
+  CARBON_CHECK(sem_ir_->cpp_ast());
+  clang::PresumedLoc presumed_loc =
+      sem_ir_->cpp_ast()->getSourceManager().getPresumedLoc(clang_loc);
+
+  return Diagnostics::ConvertedLoc{
+      .loc = {.filename = presumed_loc.getFilename(),
+              .line_number = static_cast<int32_t>(presumed_loc.getLine())},
+      // TODO: Set `last_byte_offset` based on the `import Cpp` location.
+      .last_byte_offset = 0};
 }
 
 auto DiagnosticEmitter::ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id,

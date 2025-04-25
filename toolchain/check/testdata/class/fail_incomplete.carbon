@@ -404,28 +404,28 @@ class C {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %ptr.e71) -> %i32 {
+// CHECK:STDOUT: fn @G(%p.param: %ptr.e71) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
 // CHECK:STDOUT:   %.loc52: ref %Class = deref %p.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MemberAccess(%p.param_patt: %ptr.e71) -> %i32 {
+// CHECK:STDOUT: fn @MemberAccess(%p.param: %ptr.e71) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
 // CHECK:STDOUT:   %.loc63: ref %Class = deref %p.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Copy(%p.param_patt: %ptr.e71) -> %Class {
+// CHECK:STDOUT: fn @Copy(%p.param: %ptr.e71) -> %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
 // CHECK:STDOUT:   %.loc74: ref %Class = deref %p.ref
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Let(%p.param_patt: %ptr.e71) {
+// CHECK:STDOUT: fn @Let(%p.param: %ptr.e71) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
@@ -437,11 +437,11 @@ class C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TakeIncomplete(%c.param_patt: %Class);
+// CHECK:STDOUT: fn @TakeIncomplete(%c.param: %Class);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnIncomplete() -> %Class;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallTakeIncomplete(%p.param_patt: %ptr.e71) {
+// CHECK:STDOUT: fn @CallTakeIncomplete(%p.param: %ptr.e71) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeIncomplete.ref.loc103: %TakeIncomplete.type = name_ref TakeIncomplete, file.%TakeIncomplete.decl [concrete = constants.%TakeIncomplete]
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
@@ -460,9 +460,9 @@ class C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[addr %self.param_patt: %ptr.e71]();
+// CHECK:STDOUT: fn @F(%self.param: %ptr.e71);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallIncompleteAddrSelf(%p.param_patt: %ptr.e71) {
+// CHECK:STDOUT: fn @CallIncompleteAddrSelf(%p.param: %ptr.e71) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
 // CHECK:STDOUT:   %IncompleteAddrSelf.ref: type = name_ref IncompleteAddrSelf, file.%IncompleteAddrSelf.decl [concrete = constants.%IncompleteAddrSelf]
@@ -497,11 +497,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc12_8: <error> = field_decl c, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc12_3: <error> = var_pattern %.loc12_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref <error> = var <none>
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc12: <error> = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: <error>} [concrete = <error>]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -509,6 +506,6 @@ class C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .c = %.loc12_8
+// CHECK:STDOUT:   .c = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

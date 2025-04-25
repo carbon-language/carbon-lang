@@ -120,7 +120,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseEmpty(%i.param_patt: %I.type) {
+// CHECK:STDOUT: fn @UseEmpty(%i.param: %I.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
