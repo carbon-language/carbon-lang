@@ -299,7 +299,7 @@ auto DeductionContext::Deduce() -> bool {
     // and the parameter doesn't have a symbolic constant value.
 
     auto param_type_id = ExtractScrutineeType(
-        context().types(), context().insts().Get(param_id).type_id());
+        context().sem_ir(), context().insts().Get(param_id).type_id());
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
       Add(context().types().GetInstId(param_type_id),

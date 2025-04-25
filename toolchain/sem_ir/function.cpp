@@ -96,8 +96,7 @@ auto Function::GetDeclaredReturnType(const File& file,
     return TypeId::None;
   }
   return ExtractScrutineeType(
-      file.types(),
-      GetTypeOfInstInSpecific(file, specific_id, return_slot_pattern_id));
+      file, GetTypeOfInstInSpecific(file, specific_id, return_slot_pattern_id));
 }
 
 }  // namespace Carbon::SemIR

@@ -377,7 +377,7 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto param_pattern_id = context.node_stack().PopPattern();
   if (SemIR::IsSelfPattern(context.sem_ir(), param_pattern_id)) {
     auto param_type_id = ExtractScrutineeType(
-        context.types(), context.insts().Get(param_pattern_id).type_id());
+        context.sem_ir(), context.insts().Get(param_pattern_id).type_id());
     auto pointer_type =
         context.types().TryGetAs<SemIR::PointerType>(param_type_id);
     if (pointer_type) {

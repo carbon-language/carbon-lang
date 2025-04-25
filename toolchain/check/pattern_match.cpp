@@ -299,7 +299,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
             context, context.insts().GetLocId(entry.scrutinee_id),
             entry.scrutinee_id,
             ExtractScrutineeType(
-                context.types(),
+                context.sem_ir(),
                 SemIR::GetTypeOfInstInSpecific(
                     context.sem_ir(), callee_specific_id_, pattern_inst_id))));
       }
@@ -314,7 +314,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       auto param_id = AddInst<SemIR::ValueParam>(
           context, context.insts().GetLocId(pattern_inst_id),
           {.type_id =
-               ExtractScrutineeType(context.types(), param_pattern.type_id),
+               ExtractScrutineeType(context.sem_ir(), param_pattern.type_id),
            .index = param_pattern.index,
            .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
                context.sem_ir(), entry.pattern_id)});
@@ -356,7 +356,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       auto param_id = AddInst<SemIR::RefParam>(
           context, context.insts().GetLocId(pattern_inst_id),
           {.type_id =
-               ExtractScrutineeType(context.types(), param_pattern.type_id),
+               ExtractScrutineeType(context.sem_ir(), param_pattern.type_id),
            .index = param_pattern.index,
            .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
                context.sem_ir(), entry.pattern_id)});
@@ -385,7 +385,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       CARBON_CHECK(
           context.insts().Get(entry.scrutinee_id).type_id() ==
           ExtractScrutineeType(
-              context.types(),
+              context.sem_ir(),
               SemIR::GetTypeOfInstInSpecific(
                   context.sem_ir(), callee_specific_id_, pattern_inst_id)));
       results_.push_back(entry.scrutinee_id);
@@ -402,7 +402,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       auto param_id = AddInst<SemIR::OutParam>(
           context, context.insts().GetLocId(pattern_inst_id),
           {.type_id =
-               ExtractScrutineeType(context.types(), param_pattern.type_id),
+               ExtractScrutineeType(context.sem_ir(), param_pattern.type_id),
            .index = param_pattern.index,
            .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
                context.sem_ir(), entry.pattern_id)});
@@ -422,7 +422,7 @@ auto MatchContext::DoEmitPatternMatch(
     SemIR::InstId pattern_inst_id, WorkItem entry) -> void {
   CARBON_CHECK(kind_ == MatchKind::Callee);
   auto type_id =
-      ExtractScrutineeType(context.types(), return_slot_pattern.type_id);
+      ExtractScrutineeType(context.sem_ir(), return_slot_pattern.type_id);
   auto return_slot_id = AddInst<SemIR::ReturnSlot>(
       context, context.insts().GetLocId(pattern_inst_id),
       {.type_id = type_id,
@@ -461,7 +461,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       storage_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
           context, context.insts().GetLocId(pattern_inst_id),
           {.type_id =
-               ExtractScrutineeType(context.types(), var_pattern.type_id)});
+               ExtractScrutineeType(context.sem_ir(), var_pattern.type_id)});
       CARBON_CHECK(entry.scrutinee_id.has_value());
       break;
     }
@@ -528,7 +528,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   }
 
   auto tuple_type_id =
-      ExtractScrutineeType(context.types(), tuple_pattern.type_id);
+      ExtractScrutineeType(context.sem_ir(), tuple_pattern.type_id);
   auto converted_scrutinee = ConvertToValueOrRefOfType(
       context, context.insts().GetLocId(pattern_inst_id), entry.scrutinee_id,
       tuple_type_id);
