@@ -70,6 +70,11 @@ struct Specific : Printable<Specific> {
     out << "{generic: " << generic_id << ", args: " << args_id << "}";
   }
 
+  // Returns true if this specific has never been resolved. Such specifics are
+  // used to track non-canonical argument values, for example in a non-canonical
+  // `ClassType` that describes how the arguments to the class were written.
+  auto IsUnresolved() const -> bool { return !decl_block_id.has_value(); }
+
   // Returns the value block for this region of the specific. This is a block
   // containing values and instructions produced by evaluating the corresponding
   // eval block of the generic within the context of this specific. These are

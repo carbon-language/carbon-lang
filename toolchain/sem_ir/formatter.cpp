@@ -512,8 +512,7 @@ class FormatterImpl {
       return;
     }
 
-    if (!specific.GetValueBlock(GenericInstIndex::Declaration).has_value() &&
-        !specific.GetValueBlock(GenericInstIndex::Definition).has_value()) {
+    if (specific.IsUnresolved()) {
       // Omit specifics that were never resolved. Such specifics exist only to
       // track the way the arguments were spelled, and that information is
       // conveyed entirely by the name of the specific. These specifics may also
