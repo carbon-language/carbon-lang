@@ -66,7 +66,7 @@ ABSL_FLAG(unsigned int, threads, 0,
 ABSL_FLAG(bool, dump_output, false,
           "Instead of verifying files match test output, directly dump output "
           "to stderr.");
-ABSL_FLAG(int, print_slowest_tests, -1,
+ABSL_FLAG(int, print_slowest_tests, 5,
           "The number of tests to print when showing slowest tests. Set to 0 "
           "to print all tests, ordered by elapsed time. The default of -1 "
           "disables printing.");
@@ -519,7 +519,7 @@ auto FileTestEventListener::OnTestProgramStart(
   // When there are multiple tests, give additional timing details, particularly
   // slowest tests.
   auto print_slowest_tests = absl::GetFlag(FLAGS_print_slowest_tests);
-  if (run_count > 1 && print_slowest_tests >= 0) {
+  if (run_count > 1 && print_slowest_tests != 0) {
     llvm::errs() << "  Slowest tests:\n";
     llvm::sort(tests_, [](const FileTestInfo& lhs, const FileTestInfo& rhs) {
       return lhs.elapsed_ms > rhs.elapsed_ms;
