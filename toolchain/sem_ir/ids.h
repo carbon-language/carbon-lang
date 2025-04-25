@@ -826,7 +826,7 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 // Note that these can only be used with negative, non-`InstId` values.
 //
 // Use `InstStore::GetResolvedLocId()` to get a resolved `LocId` which will not
-// be backed by an `InstId`. Note that the resolves `LocId` may be `None` even
+// be backed by an `InstId`. Note that the resolved `LocId` may be `None` even
 // when the original `LocId` was not, so this operation needs to be done before
 // checking `has_value()`. Only resolved locations can be converted with
 // `ToImplicit()` or `ToTokenOnly()`.
