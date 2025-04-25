@@ -363,21 +363,6 @@ static auto SingleThreaded(llvm::ArrayRef<FileTestInfo> tests) -> bool {
   return true;
 }
 
-// Runs the test in the section that would be inside a lock, possibly inside a
-// CrashRecoveryContext.
-static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
-    -> void {
-  // Add a crash trace entry with the single-file test command.
-  std::string test_command = GetBazelCommand(BazelMode::Test, test.test_name);
-  llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
-
-  if (auto err = RunTestFile(test_instance, absl::GetFlag(FLAGS_dump_output),
-                             **test.test_result);
-      !err.ok()) {
-    test.test_result = std::move(err).error();
-  }
-}
-
 // A small timer for getting elapsed durations.
 class Timer {
  public:
@@ -391,6 +376,24 @@ class Timer {
  private:
   std::chrono::steady_clock::time_point start_;
 };
+
+// Runs the test in the section that would be inside a lock, possibly inside a
+// CrashRecoveryContext.
+static auto RunSingleTestHelper(FileTestInfo& test,
+                                std::chrono::milliseconds& test_elapsed_ms,
+                                FileTestBase& test_instance) -> void {
+  Timer timer;
+  // Add a crash trace entry with the single-file test command.
+  std::string test_command = GetBazelCommand(BazelMode::Test, test.test_name);
+  llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
+
+  if (auto err = RunTestFile(test_instance, absl::GetFlag(FLAGS_dump_output),
+                             **test.test_result);
+      !err.ok()) {
+    test.test_result = std::move(err).error();
+  }
+  test_elapsed_ms += timer.elapsed_ms();
+}
 
 // Runs a single test. Uses a CrashRecoveryContext, and returns false on a
 // crash. For test_elapsed_ms, try to exclude time spent waiting on
@@ -422,20 +425,20 @@ static auto RunSingleTest(FileTestInfo& test,
       output_lock = std::unique_lock<std::mutex>(output_mutex);
     }
 
-    Timer test_timer;
     if (single_threaded) {
-      RunSingleTestHelper(test, *test_instance);
+      RunSingleTestHelper(test, test_elapsed_ms, *test_instance);
     } else {
       // Use a crash recovery context to try to get a stack trace when
       // multiple threads may crash in parallel, which otherwise leads to the
       // program aborting without printing a stack trace.
       llvm::CrashRecoveryContext crc;
       crc.DumpStackAndCleanupOnFailure = true;
-      if (!crc.RunSafely([&] { RunSingleTestHelper(test, *test_instance); })) {
+      if (!crc.RunSafely([&] {
+            RunSingleTestHelper(test, test_elapsed_ms, *test_instance);
+          })) {
         return false;
       }
     }
-    test_elapsed_ms += test_timer.elapsed_ms();
   }
 
   if (!test.test_result->ok()) {
