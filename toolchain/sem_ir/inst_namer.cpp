@@ -734,7 +734,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         auto import_ir_inst =
             sem_ir_->import_ir_insts().Get(inst.import_ir_inst_id);
         const auto& import_ir =
-            *sem_ir_->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+            *sem_ir_->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
         auto package_id = import_ir.package_id();
         if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
           out << import_ir.identifiers().Get(ident_id);

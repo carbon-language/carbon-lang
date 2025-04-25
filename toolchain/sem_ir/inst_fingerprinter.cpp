@@ -293,7 +293,8 @@ struct Worklist {
 
   auto Add(ImportIRInstId ir_inst_id) -> void {
     auto ir_inst = sem_ir->import_ir_insts().Get(ir_inst_id);
-    AddInFile(sem_ir->import_irs().Get(ir_inst.ir_id).sem_ir, ir_inst.inst_id);
+    AddInFile(sem_ir->import_irs().Get(ir_inst.ir_id()).sem_ir,
+              ir_inst.inst_id());
   }
 
   template <typename T>

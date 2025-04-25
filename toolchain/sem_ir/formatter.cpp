@@ -566,7 +566,7 @@ class FormatterImpl {
       auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
       if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
         auto import_ir_id =
-            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
+            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
         const auto* import_file =
             sem_ir_->import_irs().Get(import_ir_id).sem_ir;
         pending_imported_from_ = import_file->filename();
@@ -1149,7 +1149,7 @@ class FormatterImpl {
                           llvm::StringLiteral loaded_label) -> void {
     out_ << " ";
     auto import_ir_inst = sem_ir_->import_ir_insts().Get(import_ir_inst_id);
-    FormatArg(import_ir_inst.ir_id);
+    FormatArg(import_ir_inst.ir_id());
     out_ << ", ";
     if (entity_name_id.has_value()) {
       // Prefer to show the entity name when possible.
@@ -1157,17 +1157,18 @@ class FormatterImpl {
     } else {
       // Show a name based on the location when possible, or the numeric
       // instruction as a last resort.
-      const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id);
-      auto loc_id = import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id);
+      const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id());
+      auto loc_id =
+          import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id());
       switch (loc_id.kind()) {
         case LocId::Kind::None: {
-          out_ << import_ir_inst.inst_id << " [no loc]";
+          out_ << import_ir_inst.inst_id() << " [no loc]";
           break;
         }
         case LocId::Kind::ImportIRInstId: {
           // TODO: Probably don't want to format each indirection, but maybe
           // reuse GetCanonicalImportIRInst?
-          out_ << import_ir_inst.inst_id << " [indirect]";
+          out_ << import_ir_inst.inst_id() << " [indirect]";
           break;
         }
         case LocId::Kind::NodeId: {

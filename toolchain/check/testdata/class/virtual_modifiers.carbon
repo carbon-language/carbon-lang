@@ -295,6 +295,47 @@ class T2 {
   impl fn F1[addr self: Self*]();
 }
 
+// --- fail_generic_virtual.carbon
+
+library "[[@TEST_NAME]]";
+
+base class T1 {
+  // CHECK:STDERR: fail_generic_virtual.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
+  // CHECK:STDERR:   virtual fn F[self: Self, T:! type]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  virtual fn F[self: Self, T:! type]();
+}
+
+// --- fail_generic_virtual_in_generic_class.carbon
+
+library "[[@TEST_NAME]]";
+
+base class T1(T:! type) {
+  // CHECK:STDERR: fail_generic_virtual_in_generic_class.carbon:[[@LINE+4]]:3: error: generic virtual function [GenericVirtual]
+  // CHECK:STDERR:   virtual fn F[self: Self, T:! type]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  virtual fn F[self: Self, T:! type]();
+}
+
+// --- generic_with_virtual.carbon
+
+library "[[@TEST_NAME]]";
+
+base class T1(T:! type) {
+  virtual fn F[self: Self]();
+}
+
+// --- with_dependent_arg.carbon
+
+library "[[@TEST_NAME]]";
+
+base class T1(T:! type) {
+  virtual fn F[self: Self](t: T);
+}
+
+
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -2011,4 +2052,341 @@ class T2 {
 // CHECK:STDOUT: virtual fn @F1.1(%self.param: %ptr.87b);
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F1.2(%self.param: %ptr.63e);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_generic_virtual.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T1: type = class_type @T1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %self.patt: %T1 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %T1 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %T.patt.loc9_28.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %T1 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%T1 [concrete = constants.%T1]
+// CHECK:STDOUT:     %self: %T1 = bind_name self, %self.param
+// CHECK:STDOUT:     %T.loc9_28.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_28.1 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%T1
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F(%T.loc9_28.2: type) {
+// CHECK:STDOUT:   %T.loc9_28.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_28.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc9_28.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: %T1);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T.loc9_28.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc9_28.2 => constants.%T.patt
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_generic_virtual_in_generic_class.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.e01: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T1.type: type = generic_class_type @T1 [concrete]
+// CHECK:STDOUT:   %T1.generic: %T1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %T.336: type = bind_symbolic_name T, 1 [symbolic]
+// CHECK:STDOUT:   %T.patt.7a9: type = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %T1.decl: %T1.type = class_decl @T1 [concrete = constants.%T1.generic] {
+// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt.e01)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T.8b3)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @T1(%T.loc4_15.1: type) {
+// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T.8b3)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt.e01)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.loc4_15.2) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F: @T1.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %F.decl: @T1.%F.type (%F.type) = fn_decl @F [symbolic = @T1.%F (constants.%F)] {
+// CHECK:STDOUT:       %self.patt: @F.%T1 (%T1) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%T1 (%T1) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %T.patt.loc9_28.1: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt.7a9)]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @F.%T1 (%T1) = value_param call_param0
+// CHECK:STDOUT:       %.loc9_22.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
+// CHECK:STDOUT:         %.loc9_22.2: type = specific_constant constants.%T1, @T1(constants.%T.8b3) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc9_22.2 [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @F.%T1 (%T1) = bind_name self, %self.param
+// CHECK:STDOUT:       %T.loc9_28.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc9_28.1 (constants.%T.336)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%T1
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F(@T1.%T.loc4_15.1: type, %T.loc9_28.2: type) {
+// CHECK:STDOUT:   %T.loc9_22: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_22 (constants.%T.8b3)]
+// CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T.loc9_22) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:   %T.loc9_28.1: type = bind_symbolic_name T, 1 [symbolic = %T.loc9_28.1 (constants.%T.336)]
+// CHECK:STDOUT:   %T.patt.loc9_28.2: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt.7a9)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(constants.%T.8b3) {
+// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt.e01
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T.8b3, constants.%T.336) {
+// CHECK:STDOUT:   %T.loc9_22 => constants.%T.8b3
+// CHECK:STDOUT:   %T1 => constants.%T1
+// CHECK:STDOUT:   %T.loc9_28.1 => constants.%T.336
+// CHECK:STDOUT:   %T.patt.loc9_28.2 => constants.%T.patt.7a9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(@F.%T.loc9_22) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(%T.loc4_15.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- generic_with_virtual.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T1.type: type = generic_class_type @T1 [concrete]
+// CHECK:STDOUT:   %T1.generic: %T1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %.db6: <vtable> = vtable (%F) [symbolic]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %T1.decl: %T1.type = class_decl @T1 [concrete = constants.%T1.generic] {
+// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @T1(%T.loc4_15.1: type) {
+// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.loc4_15.2) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F: @T1.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:   %.loc6_1.2: <vtable> = vtable (%F) [symbolic = %.loc6_1.2 (constants.%.db6)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %F.decl: @T1.%F.type (%F.type) = fn_decl @F [symbolic = @T1.%F (constants.%F)] {
+// CHECK:STDOUT:       %self.patt: @F.%T1 (%T1) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%T1 (%T1) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @F.%T1 (%T1) = value_param call_param0
+// CHECK:STDOUT:       %.loc5_22.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
+// CHECK:STDOUT:         %.loc5_22.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc5_22.2 [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @F.%T1 (%T1) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc6_1.1: <vtable> = vtable (%F.decl) [symbolic = %.loc6_1.2 (constants.%.db6)]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%T1
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F(@T1.%T.loc4_15.1: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(constants.%T) {
+// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T1 => constants.%T1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(@F.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(%T.loc4_15.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- with_dependent_arg.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T1.type: type = generic_class_type @T1 [concrete]
+// CHECK:STDOUT:   %T1.generic: %T1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %.db6: <vtable> = vtable (%F) [symbolic]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %T1.decl: %T1.type = class_decl @T1 [concrete = constants.%T1.generic] {
+// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @T1(%T.loc4_15.1: type) {
+// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.loc4_15.2) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F: @T1.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:   %.loc6_1.2: <vtable> = vtable (%F) [symbolic = %.loc6_1.2 (constants.%.db6)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %F.decl: @T1.%F.type (%F.type) = fn_decl @F [symbolic = @T1.%F (constants.%F)] {
+// CHECK:STDOUT:       %self.patt: @F.%T1 (%T1) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%T1 (%T1) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %t.patt: @F.%T (%T) = binding_pattern t
+// CHECK:STDOUT:       %t.param_patt: @F.%T (%T) = value_param_pattern %t.patt, call_param1
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @F.%T1 (%T1) = value_param call_param0
+// CHECK:STDOUT:       %.loc5_22.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
+// CHECK:STDOUT:         %.loc5_22.2: type = specific_constant constants.%T1, @T1(constants.%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc5_22.2 [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @F.%T1 (%T1) = bind_name self, %self.param
+// CHECK:STDOUT:       %t.param: @F.%T (%T) = value_param call_param1
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @T1.%T.loc4_15.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %t: @F.%T (%T) = bind_name t, %t.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.loc6_1.1: <vtable> = vtable (%F.decl) [symbolic = %.loc6_1.2 (constants.%.db6)]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%T1
+// CHECK:STDOUT:     .T = <poisoned>
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F(@T1.%T.loc4_15.1: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1), %t.param: @F.%T (%T));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(constants.%T) {
+// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T1 => constants.%T1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(@F.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T1(%T.loc4_15.2) {}
 // CHECK:STDOUT:

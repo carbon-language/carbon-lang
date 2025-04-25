@@ -79,6 +79,8 @@ WarningsAsErrors: '*'
 # # Only fixes const methods, not non-const, which yields distracting results on
 # # accessors.
 # - '-modernize-use-nodiscard'
+# # We aren't using the ranges library due to performance concerns.
+# - '-modernize-use-ranges'
 # # Duplicates `modernize-pass-by-value`.
 # - '-performance-unnecessary-value-param'
 # # Warns on enums which use the `LastValue = Value` pattern if all the other
@@ -112,10 +114,10 @@ Checks:
   -google-readability-function-size, -google-readability-todo,
   -misc-confusable-identifiers, -misc-use-internal-linkage,
   -modernize-avoid-c-arrays, -modernize-use-designated-initializers,
-  -modernize-use-nodiscard, -performance-unnecessary-value-param,
-  -readability-enum-initial-value, -readability-function-cognitive-complexity,
-  -readability-magic-numbers, -readability-redundant-member-init,
-  -readability-suspicious-call-argument
+  -modernize-use-nodiscard, -modernize-use-ranges,
+  -performance-unnecessary-value-param, -readability-enum-initial-value,
+  -readability-function-cognitive-complexity, -readability-magic-numbers,
+  -readability-redundant-member-init, -readability-suspicious-call-argument
 CheckOptions:
   # Don't warn on structs; done by ignoring when there are only public members.
   - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic

@@ -56,7 +56,7 @@ TEST(SemIRTest, Yaml) {
   auto type_builtin = Pair(type_id, Yaml::Mapping(_));
 
   auto file = Yaml::Mapping(ElementsAre(
-      Pair("import_irs", Yaml::Mapping(SizeIs(1))),
+      Pair("import_irs", Yaml::Mapping(SizeIs(2))),
       Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("entity_names", Yaml::Mapping(SizeIs(1))),

@@ -14,10 +14,19 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 
+// NOLINTNEXTLINE(readability-identifier-naming)
+namespace clang {
+
+// Forward declare indexed types, for integration with ValueStore.
+class SourceLocation;
+
+}  // namespace clang
+
 namespace Carbon::SemIR {
 
 // Forward declare indexed types, for integration with ValueStore.
 class File;
+class ImportIRInst;
 class Inst;
 class NameScope;
 struct AssociatedConstant;
@@ -32,7 +41,6 @@ struct Specific;
 struct SpecificInterface;
 struct ImportCpp;
 struct ImportIR;
-struct ImportIRInst;
 struct Impl;
 struct Interface;
 struct StructTypeField;
@@ -409,10 +417,15 @@ struct ImportIRId : public IdBase<ImportIRId> {
   // instructions.
   static const ImportIRId ApiForImpl;
 
+  // The `Cpp` import. A null entry is added if there is none, in which case
+  // this ID should not show up in instructions.
+  static const ImportIRId Cpp;
+
   using IdBase::IdBase;
 };
 
 constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
+constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
@@ -755,6 +768,14 @@ struct TypeId : public IdBase<TypeId> {
   auto is_concrete() const -> bool { return AsConstantId().is_concrete(); }
 
   auto Print(llvm::raw_ostream& out) const -> void;
+};
+
+// The ID of a Clang Source Location.
+struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
+  static constexpr llvm::StringLiteral Label = "clang_source_loc";
+  using ValueType = clang::SourceLocation;
+
+  using IdBase::IdBase;
 };
 
 // An index for element access, for structs, tuples, and classes.

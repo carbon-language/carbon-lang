@@ -573,13 +573,13 @@ auto CompilationUnit::PostCheck() -> void {
         auto import_ir_inst =
             file->import_ir_insts().Get(loc_id.import_ir_inst_id());
         const auto* import_file =
-            file->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+            file->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
         CARBON_CHECK(import_file);
         if (!IncludeInDumps(import_file->filename())) {
           return false;
         }
         file = import_file;
-        entity_inst_id = import_ir_inst.inst_id;
+        entity_inst_id = import_ir_inst.inst_id();
       }
     };
 

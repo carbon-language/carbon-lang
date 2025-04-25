@@ -37,7 +37,10 @@ static auto InternalAddImportIR(Context& context, SemIR::ImportIR import_ir)
   return context.import_irs().Add(import_ir);
 }
 
-auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void {
+// Adds a special-cased IR and verifies it received the correct ID.
+static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
+                               SemIR::ImportIRId expected_import_ir_id)
+    -> void {
   auto ir_id = SemIR::ImportIRId::None;
   if (import_ir.sem_ir != nullptr) {
     ir_id = AddImportIR(context, import_ir);
@@ -45,8 +48,16 @@ auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void {
     // We don't have a check_ir_id, so add without touching check_ir_map.
     ir_id = InternalAddImportIR(context, import_ir);
   }
-  CARBON_CHECK(ir_id == SemIR::ImportIRId::ApiForImpl,
-               "ApiForImpl must be the first IR");
+  CARBON_CHECK(ir_id == expected_import_ir_id,
+               "Actual ImportIRId ($0) != Expected ImportIRId ({1})", ir_id,
+               expected_import_ir_id);
+}
+
+auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void {
+  SetSpecialImportIR(context, import_ir, SemIR::ImportIRId::ApiForImpl);
+  SetSpecialImportIR(context,
+                     {.decl_id = SemIR::InstId::None, .is_export = false},
+                     SemIR::ImportIRId::Cpp);
 }
 
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
@@ -95,8 +106,8 @@ static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
   context.import_ref_ids().push_back(inst_id);
 
   context.constant_values().Set(inst_id, const_id);
-  context.import_ir_constant_values()[import_ir_inst.ir_id.index].Set(
-      import_ir_inst.inst_id, const_id);
+  context.import_ir_constant_values()[import_ir_inst.ir_id().index].Set(
+      import_ir_inst.inst_id(), const_id);
   return inst_id;
 }
 
@@ -111,8 +122,8 @@ static auto GetCanonicalImportIRInst(Context& context,
     if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
       auto import_ir_inst =
           cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
-      cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      cursor_inst_id = import_ir_inst.inst_id;
+      cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      cursor_inst_id = import_ir_inst.inst_id();
       continue;
     }
 
@@ -135,7 +146,7 @@ static auto GetCanonicalImportIRInst(Context& context,
                                   .is_export = false,
                                   .sem_ir = cursor_ir});
   }
-  return {.ir_id = ir_id, .inst_id = cursor_inst_id};
+  return SemIR::ImportIRInst(ir_id, cursor_inst_id);
 }
 
 auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)
@@ -155,7 +166,7 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
     return;
   }
   auto conflict_id =
-      AddImportRef(context, {.ir_id = new_ir_id, .inst_id = new_inst_id});
+      AddImportRef(context, SemIR::ImportIRInst(new_ir_id, new_inst_id));
   // TODO: Pass the imported name location instead of the conflict id.
   DiagnoseDuplicateName(context, name_id, conflict_id, prev_id);
 }
@@ -609,7 +620,7 @@ class ImportRefResolver : public ImportContext {
       const auto* prev_ir = cursor_ir;
       auto prev_inst_id = cursor_inst_id;
 
-      cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id).sem_ir;
+      cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id()).sem_ir;
       cursor_ir_id =
           local_context().check_ir_map()[cursor_ir->check_ir_id().index];
       if (!cursor_ir_id.has_value()) {
@@ -619,7 +630,7 @@ class ImportRefResolver : public ImportContext {
                                           .is_export = false,
                                           .sem_ir = cursor_ir});
       }
-      cursor_inst_id = ir_inst.inst_id;
+      cursor_inst_id = ir_inst.inst_id();
 
       CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id,
                    "{0}", cursor_ir->insts().Get(cursor_inst_id));
@@ -634,7 +645,7 @@ class ImportRefResolver : public ImportContext {
         return result;
       } else {
         result.indirect_insts.push_back(
-            {.ir_id = cursor_ir_id, .inst_id = cursor_inst_id});
+            SemIR::ImportIRInst(cursor_ir_id, cursor_inst_id));
       }
     }
   }
@@ -646,8 +657,8 @@ class ImportRefResolver : public ImportContext {
     local_constant_values_for_import_insts().Set(inst_id, const_id);
     for (auto indirect_inst : indirect_insts) {
       local_context()
-          .import_ir_constant_values()[indirect_inst.ir_id.index]
-          .Set(indirect_inst.inst_id, const_id);
+          .import_ir_constant_values()[indirect_inst.ir_id().index]
+          .Set(indirect_inst.inst_id(), const_id);
     }
   }
 
@@ -663,7 +674,7 @@ static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id,
                          SemIR::EntityNameId entity_name_id =
                              SemIR::EntityNameId::None) -> SemIR::InstId {
   return AddImportRef(context.local_context(),
-                      {.ir_id = context.import_ir_id(), .inst_id = inst_id},
+                      SemIR::ImportIRInst(context.import_ir_id(), inst_id),
                       entity_name_id);
 }
 
@@ -672,13 +683,13 @@ static auto AddLoadedImportRef(ImportContext& context, SemIR::TypeId type_id,
                                SemIR::ConstantId const_id) -> SemIR::InstId {
   return AddLoadedImportRef(
       context.local_context(), type_id,
-      {.ir_id = context.import_ir_id(), .inst_id = inst_id}, const_id);
+      SemIR::ImportIRInst(context.import_ir_id(), inst_id), const_id);
 }
 
 static auto AddImportIRInst(ImportContext& context, SemIR::InstId inst_id)
     -> SemIR::ImportIRInstId {
   return context.local_import_ir_insts().Add(
-      {.ir_id = context.import_ir_id(), .inst_id = inst_id});
+      SemIR::ImportIRInst(context.import_ir_id(), inst_id));
 }
 
 // Computes, sets, and returns the constant value for an instruction.
@@ -3267,10 +3278,11 @@ static auto GetInstForLoad(Context& context,
   // The first ImportIRInst is added directly because the IR doesn't need to be
   // localized.
   import_ir_insts.push_back(import_ir_inst);
-  const auto* cursor_ir = context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
+  const auto* cursor_ir =
+      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
 
   while (true) {
-    auto cursor_inst = cursor_ir->insts().Get(import_ir_inst.inst_id);
+    auto cursor_inst = cursor_ir->insts().Get(import_ir_inst.inst_id());
 
     auto import_ref = cursor_inst.TryAs<SemIR::ImportRefUnloaded>();
     if (!import_ref) {
@@ -3280,12 +3292,12 @@ static auto GetInstForLoad(Context& context,
 
     import_ir_inst =
         cursor_ir->import_ir_insts().Get(import_ref->import_ir_inst_id);
-    cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-    import_ir_insts.push_back(
-        {.ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::None,
-                                        .is_export = false,
-                                        .sem_ir = cursor_ir}),
-         .inst_id = import_ir_inst.inst_id});
+    cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+    import_ir_insts.push_back(SemIR::ImportIRInst(
+        AddImportIR(context, {.decl_id = SemIR::InstId::None,
+                              .is_export = false,
+                              .sem_ir = cursor_ir}),
+        import_ir_inst.inst_id()));
   }
 }
 
@@ -3302,9 +3314,9 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // The last indirect instruction is the one to resolve. Pop it here because
   // Resolve will assign the constant.
   auto load_ir_inst = indirect_insts.pop_back_val();
-  ImportRefResolver resolver(&context, load_ir_inst.ir_id);
+  ImportRefResolver resolver(&context, load_ir_inst.ir_id());
   auto type_id = resolver.ResolveType(load_type_id);
-  auto constant_id = resolver.Resolve(load_ir_inst.inst_id);
+  auto constant_id = resolver.Resolve(load_ir_inst.inst_id());
 
   // Replace the ImportRefUnloaded instruction with ImportRefLoaded. This
   // doesn't use ReplacePlaceholderImportedInst because it would trigger
@@ -3318,8 +3330,8 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // Store the constant for both the ImportRefLoaded and indirect instructions.
   context.constant_values().Set(inst_id, constant_id);
   for (const auto& import_ir_inst : indirect_insts) {
-    context.import_ir_constant_values()[import_ir_inst.ir_id.index].Set(
-        import_ir_inst.inst_id, constant_id);
+    context.import_ir_constant_values()[import_ir_inst.ir_id().index].Set(
+        import_ir_inst.inst_id(), constant_id);
   }
 }
 
@@ -3370,8 +3382,9 @@ auto CheckCompatibleImportedNodeKind(Context& context,
                                      SemIR::ImportIRInstId imported_loc_id,
                                      SemIR::InstKind kind) -> void {
   auto& import_ir_inst = context.import_ir_insts().Get(imported_loc_id);
-  const auto* import_ir = context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-  auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id).kind();
+  const auto* import_ir =
+      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+  auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id()).kind();
   CARBON_CHECK(
       HasCompatibleImportedNodeKind(imported_kind, kind),
       "Node of kind {0} created with location of imported node of kind {1}",

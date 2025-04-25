@@ -42,7 +42,7 @@ static auto FindAssociatedImportIRs(Context& context,
     if (!decl_id.has_value()) {
       return;
     }
-    if (auto ir_id = GetCanonicalImportIRInst(context, decl_id).ir_id;
+    if (auto ir_id = GetCanonicalImportIRInst(context, decl_id).ir_id();
         ir_id.has_value()) {
       result.push_back(ir_id);
     }
