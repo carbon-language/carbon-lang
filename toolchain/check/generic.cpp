@@ -83,7 +83,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   }
 
   // Check for instructions for which we already have a mapping into the eval
-  // block, and substitute them for the instructions in the eval block.
+  // block, and substitute them with the instructions in the eval block.
   auto Subst(SemIR::InstId& inst_id) const -> bool override {
     auto const_id = context().constant_values().Get(inst_id);
     if (!const_id.has_value()) {
