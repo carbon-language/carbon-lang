@@ -199,7 +199,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   auto tuple_elem_types = sem_ir.inst_blocks().Get(tuple_type.type_elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = SemIR::LocId(value_id);
+  SemIR::LocId value_loc_id(value_id);
 
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -299,7 +299,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   auto dest_elem_types = sem_ir.inst_blocks().Get(dest_type.type_elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = SemIR::LocId(value_id);
+  SemIR::LocId value_loc_id(value_id);
 
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -397,7 +397,7 @@ static auto ConvertStructToStructOrClass(
   auto dest_elem_fields_size = dest_elem_fields.size() - dest_vptr_offset;
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = SemIR::LocId(value_id);
+  SemIR::LocId value_loc_id(value_id);
 
   // If we're initializing from a struct literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the

@@ -261,9 +261,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     default:
       CARBON_DIAGNOSTIC(AddrSelfIsNonRef, Error,
                         "`addr self` method cannot be invoked on a value");
-      context.emitter().Emit(
-          context.insts().GetCanonicalLocId(entry.scrutinee_id).ToTokenOnly(),
-          AddrSelfIsNonRef);
+      context.emitter().Emit(entry.scrutinee_id, AddrSelfIsNonRef);
       // Add fake reference expression to preserve invariants.
       auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
       scrutinee_ref_id = AddInstWithCleanup<SemIR::TemporaryStorage>(

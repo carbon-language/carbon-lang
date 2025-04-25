@@ -392,7 +392,8 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter");
-    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(), AddrOnNonSelfParam);
+    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+                           AddrOnNonSelfParam);
     context.node_stack().Push(node_id, param_pattern_id);
   }
   return true;

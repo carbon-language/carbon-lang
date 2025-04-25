@@ -57,7 +57,7 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
                              SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
-  auto prev_loc_id = SemIR::LocId(prev_class.latest_decl_id());
+  SemIR::LocId prev_loc_id(prev_class.latest_decl_id());
 
   // Check the generic parameters match, if they were specified.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
