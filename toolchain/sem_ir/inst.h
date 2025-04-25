@@ -442,7 +442,7 @@ class InstStore {
   // value after being resolved, so this operation needs to be done before using
   // most operations on `LocId`.
   auto GetResolvedLocId(LocId loc_id) const -> LocId {
-    while (loc_id.kind() == SemIR::LocId::Kind::InstId) {
+    while (loc_id.kind() == LocId::Kind::InstId) {
       auto inst_id = loc_id.inst_id();
       CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
       CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}",

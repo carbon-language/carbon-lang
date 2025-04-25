@@ -102,7 +102,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
        sem_ir->associated_constants().enumerate()) {
     auto assoc_const_scope = GetScopeFor(assoc_const_id);
     GetScopeInfo(assoc_const_scope).name = globals_.AllocateName(
-        *this, SemIR::LocId(assoc_const_info.decl_id),
+        *this, LocId(assoc_const_info.decl_id),
         sem_ir->names().GetIRBaseName(assoc_const_info.name_id).str());
     CollectNamesInGeneric(assoc_const_scope, assoc_const_info.generic_id);
   }
@@ -312,7 +312,7 @@ auto InstNamer::AddBlockLabel(
       loc_id && !loc_id->has_value()) {
     if (const auto& block = sem_ir_->inst_blocks().Get(block_id);
         !block.empty()) {
-      loc_id_or_fingerprint = SemIR::LocId(block.front());
+      loc_id_or_fingerprint = LocId(block.front());
     }
   }
 
@@ -443,7 +443,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         if (scope_id == ScopeId::Constants || scope_id == ScopeId::ImportRefs) {
           loc_id_or_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, inst_id);
         } else {
-          loc_id_or_fingerprint = SemIR::LocId(inst_id);
+          loc_id_or_fingerprint = LocId(inst_id);
         }
         insts_[inst_id.index] = {
             scope_id,
