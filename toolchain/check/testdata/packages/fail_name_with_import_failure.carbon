@@ -22,6 +22,7 @@ var a: () = A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -41,8 +42,8 @@ var a: () = A();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
-// CHECK:STDOUT:     %.loc8_1: %empty_tuple.type = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %.cb1 = binding_pattern a
+// CHECK:STDOUT:     %.loc8_1: %.cb1 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [concrete = constants.%empty_tuple.type] {

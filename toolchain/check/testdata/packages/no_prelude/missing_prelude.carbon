@@ -157,10 +157,13 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
-// CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %.7dc: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %N.patt: %.7dc = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -171,10 +174,10 @@ var n: {} = i32;
 // CHECK:STDOUT:     .Int = %Int.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
-// CHECK:STDOUT:     %T.patt.loc4_8.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %N.patt.loc4_18.1: @Int.%T.loc4_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %T.patt.loc4_8.1: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_8.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %N.patt.loc4_18.1: @Int.%.loc4_18 (%.7dc) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %return.patt: %.a96 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.a96 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_29.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc4_29.2: type = converted %.loc4_29.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -188,9 +191,10 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Int(%T.loc4_8.1: type, %N.loc4_18.1: @Int.%T.loc4_8.2 (%T)) {
 // CHECK:STDOUT:   %T.loc4_8.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_8.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_8.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_8.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_8.2: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %N.loc4_18.2: @Int.%T.loc4_8.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc4_18.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc4_18.2: @Int.%T.loc4_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
+// CHECK:STDOUT:   %.loc4_18: type = pattern_type %T.loc4_8.2 [symbolic = %.loc4_18 (constants.%.7dc)]
+// CHECK:STDOUT:   %N.patt.loc4_18.2: @Int.%.loc4_18 (%.7dc) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -207,6 +211,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T.loc4_8.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc4_8.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc4_18.2 => constants.%N
+// CHECK:STDOUT:   %.loc4_18 => constants.%.7dc
 // CHECK:STDOUT:   %N.patt.loc4_18.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,14 +219,18 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.51c: %T = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %.7dc: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %N.patt.7fd: %.7dc = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
-// CHECK:STDOUT:   %N.patt.4fd: Core.IntLiteral = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %N.patt.e09: %.dc0 = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -241,8 +250,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %empty_struct_type = binding_pattern n
-// CHECK:STDOUT:     %.loc6_1: %empty_struct_type = var_pattern %n.patt
+// CHECK:STDOUT:     %n.patt: %.a96 = binding_pattern n
+// CHECK:STDOUT:     %.loc6_1: %.a96 = var_pattern %n.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
 // CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_struct_type] {
@@ -254,9 +263,10 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Int(imports.%Core.import_ref.5ab: type, imports.%Core.import_ref.34c: @Int.%T (%T)) [from "prelude_fake_int.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %N: @Int.%T (%T) = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %N.patt: @Int.%T (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.51c)]
+// CHECK:STDOUT:   %.1: type = pattern_type %T [symbolic = %.1 (constants.%.7dc)]
+// CHECK:STDOUT:   %N.patt: @Int.%.1 (%.7dc) = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.7fd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -276,14 +286,16 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %N.patt => constants.%N.patt.51c
+// CHECK:STDOUT:   %.1 => constants.%.7dc
+// CHECK:STDOUT:   %N.patt => constants.%N.patt.7fd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
 // CHECK:STDOUT:   %T => Core.IntLiteral
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %N => constants.%int_32
-// CHECK:STDOUT:   %N.patt => constants.%N.patt.4fd
+// CHECK:STDOUT:   %.1 => constants.%.dc0
+// CHECK:STDOUT:   %N.patt => constants.%N.patt.e09
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -292,15 +304,19 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
-// CHECK:STDOUT:   %N.patt.51c: %T = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %.7dc: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %N.patt.7fd: %.7dc = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %N.patt.4fd: Core.IntLiteral = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %N.patt.e09: %.dc0 = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,10 +326,10 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
-// CHECK:STDOUT:     %T.patt.loc8_8.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %N.patt.loc8_18.1: @Int.%T.loc8_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc8_18.2 (constants.%N.patt.51c)]
-// CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %T.patt.loc8_8.1: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %N.patt.loc8_18.1: @Int.%.loc8_18 (%.7dc) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc8_18.2 (constants.%N.patt.7fd)]
+// CHECK:STDOUT:     %return.patt: %.cb1 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.cb1 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_29.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_29.2: type = converted %.loc8_29.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -324,8 +340,8 @@ var n: {} = i32;
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %empty_tuple.type = binding_pattern n
-// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %n.patt
+// CHECK:STDOUT:     %n.patt: %.cb1 = binding_pattern n
+// CHECK:STDOUT:     %.loc10_1: %.cb1 = var_pattern %n.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_tuple.type = var n
 // CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
@@ -337,9 +353,10 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Int(%T.loc8_8.1: type, %N.loc8_18.1: @Int.%T.loc8_8.2 (%T)) {
 // CHECK:STDOUT:   %T.loc8_8.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc8_8.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc8_8.2: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %N.loc8_18.2: @Int.%T.loc8_8.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc8_18.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc8_18.2: @Int.%T.loc8_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc8_18.2 (constants.%N.patt.51c)]
+// CHECK:STDOUT:   %.loc8_18: type = pattern_type %T.loc8_8.2 [symbolic = %.loc8_18 (constants.%.7dc)]
+// CHECK:STDOUT:   %N.patt.loc8_18.2: @Int.%.loc8_18 (%.7dc) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc8_18.2 (constants.%N.patt.7fd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -365,14 +382,16 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T.loc8_8.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc8_18.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc8_18.2 => constants.%N.patt.51c
+// CHECK:STDOUT:   %.loc8_18 => constants.%.7dc
+// CHECK:STDOUT:   %N.patt.loc8_18.2 => constants.%N.patt.7fd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
 // CHECK:STDOUT:   %T.loc8_8.2 => Core.IntLiteral
 // CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc8_18.2 => constants.%int_32
-// CHECK:STDOUT:   %N.patt.loc8_18.2 => constants.%N.patt.4fd
+// CHECK:STDOUT:   %.loc8_18 => constants.%.dc0
+// CHECK:STDOUT:   %N.patt.loc8_18.2 => constants.%N.patt.e09
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

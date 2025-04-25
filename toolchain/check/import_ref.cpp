@@ -2696,6 +2696,20 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::PatternType inst) -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
+  auto scrutinee_type_inst_id =
+      GetLocalConstantInstId(resolver, inst.scrutinee_type_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::PatternType>(
+      resolver, {.type_id = SemIR::TypeType::TypeId,
+                 .scrutinee_type_inst_id = scrutinee_type_inst_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::PointerType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
   auto pointee_id = GetLocalTypeInstId(resolver, inst.pointee_id);
@@ -2990,6 +3004,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::Namespace inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
+    }
+    case CARBON_KIND(SemIR::PatternType inst): {
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::PointerType inst): {
       return TryResolveTypedInst(resolver, inst);

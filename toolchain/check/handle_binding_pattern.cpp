@@ -75,15 +75,16 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                            .value_id = SemIR::InstId::None});
     }
 
+    auto pattern_type_id = GetPatternType(context, cast_type_id);
     auto binding_pattern_id = SemIR::InstId::None;
     if (is_generic) {
       binding_pattern_id = AddPatternInst<SemIR::SymbolicBindingPattern>(
           context, name_node,
-          {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
     } else {
       binding_pattern_id = AddPatternInst<SemIR::BindingPattern>(
           context, name_node,
-          {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
     }
 
     if (is_generic) {
@@ -375,12 +376,15 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto param_pattern_id = context.node_stack().PopPattern();
   if (SemIR::IsSelfPattern(context.sem_ir(), param_pattern_id)) {
-    auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(
-        context.insts().Get(param_pattern_id).type_id());
+    auto param_type_id = ExtractScrutineeType(
+        context.types(), context.insts().Get(param_pattern_id).type_id());
+    auto pointer_type =
+        context.types().TryGetAs<SemIR::PointerType>(param_type_id);
     if (pointer_type) {
       auto addr_pattern_id = AddPatternInst<SemIR::AddrPattern>(
           context, node_id,
-          {.type_id = SemIR::AutoType::TypeId, .inner_id = param_pattern_id});
+          {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
+           .inner_id = param_pattern_id});
       context.node_stack().Push(node_id, addr_pattern_id);
     } else {
       CARBON_DIAGNOSTIC(

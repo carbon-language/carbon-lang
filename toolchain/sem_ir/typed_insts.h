@@ -1320,6 +1320,18 @@ struct ValueParamPattern {
   CallParamIndex index;
 };
 
+// The type of a pattern that matches scrutinees of type
+// `scrutinee_type_inst_id`.
+struct PatternType {
+  static constexpr auto Kind = InstKind::PatternType.Define<Parse::NoneNodeId>(
+      {.ir_name = "pattern_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  InstId scrutinee_type_inst_id;
+};
+
 // Modifies a pointee type to be a pointer. This is tracking the `*` in
 // `x: i32*`, where `pointee_id` is `i32` and `type_id` is `type`.
 struct PointerType {
@@ -1422,8 +1434,8 @@ struct ReturnSlotPattern {
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
 
-  // The type of the value that will be stored in this slot (i.e. the return
-  // type of the function).
+  // The type of the pattern. Its scrutinee type is the return type of the
+  // function.
   TypeId type_id;
 
   // The function return type as originally written by the user. For diagnostics

@@ -107,4 +107,12 @@ auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
   return *int_info;
 }
 
+auto ExtractScrutineeType(const TypeStore& types, SemIR::TypeId type_id)
+    -> SemIR::TypeId {
+  if (auto pattern_type = types.TryGetAs<SemIR::PatternType>(type_id)) {
+    return types.GetTypeIdForTypeInstId(pattern_type->scrutinee_type_inst_id);
+  }
+  return type_id;
+}
+
 }  // namespace Carbon::SemIR

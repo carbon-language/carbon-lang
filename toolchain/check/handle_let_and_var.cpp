@@ -25,6 +25,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -132,7 +133,8 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
   return AddInstWithCleanup(
       context, pattern.loc_id,
       SemIR::VarStorage{
-          .type_id = pattern.inst.type_id(),
+          .type_id =
+              ExtractScrutineeType(context.types(), pattern.inst.type_id()),
           .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
               context.sem_ir(),
               pattern.inst.As<SemIR::VarPattern>().subpattern_id)});

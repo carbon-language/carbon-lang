@@ -23,6 +23,7 @@ fn Run() {
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %str: String = string_literal "hello" [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -46,8 +47,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
-// CHECK:STDOUT:     %.loc16_3: %i32 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %.7ce = binding_pattern x
+// CHECK:STDOUT:     %.loc16_3: %.7ce = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var x
 // CHECK:STDOUT:   %str: String = string_literal "hello" [concrete = constants.%str]
