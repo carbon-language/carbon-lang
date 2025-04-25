@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
@@ -10,7 +10,7 @@ package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testdata",
-    data = glob(["testdata/**/*.carbon"]),
+    srcs = glob(["testdata/**/*.carbon"]),
 )
 
 manifest(
@@ -153,6 +153,7 @@ cc_library(
         ":node_kind",
         "//common:check",
         "//common:error",
+        "//common:find",
         "//common:ostream",
         "//common:struct_reflection",
         "//toolchain/base:value_store",

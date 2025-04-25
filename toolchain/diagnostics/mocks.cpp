@@ -4,6 +4,8 @@
 
 #include "toolchain/diagnostics/mocks.h"
 
+#include <ostream>
+
 namespace Carbon::Diagnostics {
 
 auto PrintTo(const Diagnostic& diagnostic, std::ostream* os) -> void {

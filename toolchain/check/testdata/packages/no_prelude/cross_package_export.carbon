@@ -210,11 +210,10 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_3: %C.elem = var_pattern %.loc5_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete = constants.%struct_type.x]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -293,7 +292,7 @@ alias C = Other.C;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -325,7 +324,7 @@ alias C = Other.C;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -356,9 +355,9 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst24 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -396,7 +395,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -459,7 +458,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -522,7 +521,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Other.import_ref.276 = import_ref Other//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -582,9 +581,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst24 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -644,9 +643,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name_copy
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst24 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -705,9 +704,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name_indirect, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.328: <witness> = import_ref Other//export_name_indirect, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.db8 = import_ref Other//export_name_indirect, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.3ef = import_ref Other//export_name_indirect, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.328: <witness> = import_ref Other//export_name_indirect, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.db8 = import_ref Other//export_name_indirect, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.3ef = import_ref Other//export_name_indirect, inst24 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -772,9 +771,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst24 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -877,7 +876,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: %C.type = bind_alias C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C() [from "conflict.carbon"];
+// CHECK:STDOUT: fn @C [from "conflict.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict_on_export_name.carbon
 // CHECK:STDOUT:
@@ -895,9 +894,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//conflict
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//export_name, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.ad3: <witness> = import_ref Other//export_name, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.6a9 = import_ref Other//export_name, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.f67 = import_ref Other//export_name, inst24 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

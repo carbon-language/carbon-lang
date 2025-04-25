@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
@@ -15,6 +16,10 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
     -> bool {
+  // Aliases can't be generic, but we might have parsed a generic parameter in
+  // their name, so enter a generic scope just in case.
+  StartGenericDecl(context);
+  // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
   context.decl_name_stack().PushScopeAndStartName();
   return true;
@@ -30,6 +35,8 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
 
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Alias));
+
+  DiscardGenericDecl(context);
 
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Alias>();
@@ -56,8 +63,8 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
     CARBON_DIAGNOSTIC(AliasRequiresNameRef, Error,
                       "alias initializer must be a name reference");
     context.emitter().Emit(expr_node, AliasRequiresNameRef);
-    alias_type_id = SemIR::ErrorInst::SingletonTypeId;
-    alias_value_id = SemIR::ErrorInst::SingletonInstId;
+    alias_type_id = SemIR::ErrorInst::TypeId;
+    alias_value_id = SemIR::ErrorInst::InstId;
   }
   auto alias_id = AddInst<SemIR::BindAlias>(context, name_context.loc_id,
                                             {.type_id = alias_type_id,

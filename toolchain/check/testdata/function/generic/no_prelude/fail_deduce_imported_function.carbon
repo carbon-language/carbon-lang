@@ -73,7 +73,7 @@ fn B() {
 // CHECK:STDOUT:       %T.ref: %Z.type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc4_21.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc4_21.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc4_21: type = converted %T.ref, %T.as_type.loc4_21.1 [symbolic = %T.as_type.loc4_21.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %struct_type.a.loc4_22.1: type = struct_type {.a: %T.as_type} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:       %struct_type.a.loc4_22.1: type = struct_type {.a: @A.%T.as_type.loc4_21.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @A.%struct_type.a.loc4_22.2 (%struct_type.a) = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -94,9 +94,9 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a.loc4_22.2: type = struct_type {.a: @A.%T.as_type.loc4_21.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%struct_type.a.loc4_22.2 (%struct_type.a) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_22.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_6.1: %Z.type](%x.param_patt: @A.%struct_type.a.loc4_22.2 (%struct_type.a)) {
+// CHECK:STDOUT:   fn(%x.param: @A.%struct_type.a.loc4_22.2 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -135,7 +135,7 @@ fn B() {
 // CHECK:STDOUT:     import Lib//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Lib.Z: type = import_ref Lib//default, Z, loaded [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Lib.import_ref.f88 = import_ref Lib//default, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Lib.import_ref.f88 = import_ref Lib//default, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Lib.A: %A.type.fad = import_ref Lib//default, A, loaded [concrete = constants.%A.7a0]
 // CHECK:STDOUT:   %Lib.import_ref.be7: %Z.type = import_ref Lib//default, loc4_6, loaded [symbolic = @A.2.%T (constants.%T)]
 // CHECK:STDOUT: }
@@ -162,7 +162,7 @@ fn B() {
 // CHECK:STDOUT:       %T.ref: %Z.type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc4_25.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc4_25.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc4_25: type = converted %T.ref, %T.as_type.loc4_25.1 [symbolic = %T.as_type.loc4_25.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %struct_type.a.loc4_26.1: type = struct_type {.a: %T.as_type} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:       %struct_type.a.loc4_26.1: type = struct_type {.a: @A.1.%T.as_type.loc4_25.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a) = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -182,9 +182,9 @@ fn B() {
 // CHECK:STDOUT:   %struct_type.a.loc4_26.2: type = struct_type {.a: @A.1.%T.as_type.loc4_25.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.1.%struct_type.a.loc4_26.2 (%struct_type.a) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_26.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.loc4_6.1: %Z.type](%x.param_patt: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a)) {
+// CHECK:STDOUT:   fn(%x.param: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -204,14 +204,14 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.2(imports.%Lib.import_ref.be7: %Z.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt.2: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic = %T.as_type (constants.%T.as_type)]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @A.2.%T.as_type (%T.as_type)} [symbolic = %struct_type.a (constants.%struct_type.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.2.%struct_type.a (%struct_type.a) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.patt.1: %Z.type](%x.param_patt: @A.2.%struct_type.a (%struct_type.a));
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.1(constants.%T) {
@@ -223,7 +223,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
 // CHECK:STDOUT: }

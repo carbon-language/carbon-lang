@@ -30,9 +30,9 @@ namespace {
 class TypeCompleter {
  public:
   // `context` mut not be null.
-  TypeCompleter(Context* context, SemIRLoc loc,
+  TypeCompleter(Context* context, SemIR::LocId loc_id,
                 MakeDiagnosticBuilderFn diagnoser)
-      : context_(context), loc_(loc), diagnoser_(diagnoser) {}
+      : context_(context), loc_id_(loc_id), diagnoser_(diagnoser) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
   // false if it could not be completed.
@@ -140,6 +140,10 @@ class TypeCompleter {
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, SemIR::ConstType inst) const
       -> SemIR::CompleteTypeInfo;
 
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::ImplWitnessAssociatedConstant inst) const
+      -> SemIR::CompleteTypeInfo;
+
   template <typename InstT>
     requires(InstT::Kind.constant_kind() ==
                  SemIR::InstConstantKind::SymbolicOnly ||
@@ -161,7 +165,7 @@ class TypeCompleter {
 
   Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
-  SemIRLoc loc_;
+  SemIR::LocId loc_id_;
   MakeDiagnosticBuilderFn diagnoser_;
 };
 }  // namespace
@@ -223,7 +227,7 @@ auto TypeCompleter::ProcessStep() -> bool {
       }
       // For a pointer representation, the pointee also needs to be complete.
       if (info.value_repr.kind == SemIR::ValueRepr::Pointer) {
-        if (info.value_repr.type_id == SemIR::ErrorInst::SingletonTypeId) {
+        if (info.value_repr.type_id == SemIR::ErrorInst::TypeId) {
           break;
         }
         auto pointee_type_id =
@@ -248,13 +252,13 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     }
     case CARBON_KIND(SemIR::StructType inst): {
       for (auto field : context_->struct_type_fields().Get(inst.fields_id)) {
-        Push(field.type_id);
+        Push(context_->types().GetTypeIdForTypeInstId(field.type_inst_id));
       }
       break;
     }
     case CARBON_KIND(SemIR::TupleType inst): {
-      for (auto element_type_id :
-           context_->type_blocks().Get(inst.elements_id)) {
+      for (auto element_type_id : context_->types().GetBlockAsTypeIds(
+               context_->inst_blocks().Get(inst.type_elements_id))) {
         Push(element_type_id);
       }
       break;
@@ -270,7 +274,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         return false;
       }
       if (inst.specific_id.has_value()) {
-        ResolveSpecificDefinition(*context_, loc_, inst.specific_id);
+        ResolveSpecificDefinition(*context_, loc_id_, inst.specific_id);
       }
       if (auto adapted_type_id =
               class_info.GetAdaptedType(context_->sem_ir(), inst.specific_id);
@@ -303,7 +307,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         }
 
         if (req_interface.specific_id.has_value()) {
-          ResolveSpecificDefinition(*context_, loc_, req_interface.specific_id);
+          ResolveSpecificDefinition(*context_, loc_id_,
+                                    req_interface.specific_id);
         }
       }
       break;
@@ -394,11 +399,14 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
   bool same_as_object_rep = true;
   SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
   for (auto field : fields) {
-    auto field_info = GetNestedInfo(field.type_id);
+    auto field_type_id =
+        context_->types().GetTypeIdForTypeInstId(field.type_inst_id);
+    auto field_info = GetNestedInfo(field_type_id);
     if (!field_info.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
-                                                  field.type_id)) {
+                                                  field_type_id)) {
       same_as_object_rep = false;
-      field.type_id = field_info.value_repr.type_id;
+      field.type_inst_id =
+          context_->types().GetInstId(field_info.value_repr.type_id);
     }
     value_rep_fields.push_back(field);
     // Take the first non-None abstract_class_id, if any.
@@ -423,24 +431,25 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
                                      SemIR::TupleType tuple_type) const
     -> SemIR::CompleteTypeInfo {
   // TODO: Share more code with structs.
-  auto elements = context_->type_blocks().Get(tuple_type.elements_id);
+  auto elements = context_->inst_blocks().Get(tuple_type.type_elements_id);
   if (elements.empty()) {
     return {.value_repr = MakeEmptyValueRepr()};
   }
 
   // Find the value representation for each element, and construct a tuple
   // of value representations.
-  llvm::SmallVector<SemIR::TypeId> value_rep_elements;
+  llvm::SmallVector<SemIR::InstId> value_rep_elements;
   value_rep_elements.reserve(elements.size());
   bool same_as_object_rep = true;
   SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
-  for (auto element_type_id : elements) {
+  for (auto element_type_id : context_->types().GetBlockAsTypeIds(elements)) {
     auto element_info = GetNestedInfo(element_type_id);
     if (!element_info.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
                                                     element_type_id)) {
       same_as_object_rep = false;
     }
-    value_rep_elements.push_back(element_info.value_repr.type_id);
+    value_rep_elements.push_back(
+        context_->types().GetInstId(element_info.value_repr.type_id));
     // Take the first non-None abstract_class_id, if any.
     if (element_info.abstract_class_id.has_value() &&
         !abstract_class_id.has_value()) {
@@ -502,6 +511,12 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
   return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
+auto TypeCompleter::BuildInfoForInst(
+    SemIR::TypeId /*type_id*/, SemIR::ImplWitnessAssociatedConstant inst) const
+    -> SemIR::CompleteTypeInfo {
+  return GetNestedInfo(inst.type_id);
+}
+
 // Builds and returns the value representation for the given type. All nested
 // types, as found by AddNestedIncompleteTypes, are known to be complete.
 auto TypeCompleter::BuildInfo(SemIR::TypeId type_id, SemIR::Inst inst) const
@@ -517,9 +532,10 @@ auto TypeCompleter::BuildInfo(SemIR::TypeId type_id, SemIR::Inst inst) const
   }
 }
 
-auto TryToCompleteType(Context& context, SemIR::TypeId type_id, SemIRLoc loc,
-                       MakeDiagnosticBuilderFn diagnoser) -> bool {
-  return TypeCompleter(&context, loc, diagnoser).Complete(type_id);
+auto TryToCompleteType(Context& context, SemIR::TypeId type_id,
+                       SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser)
+    -> bool {
+  return TypeCompleter(&context, loc_id, diagnoser).Complete(type_id);
 }
 
 auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void {
@@ -542,11 +558,12 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   // specific type to be complete.
   if (type_id.is_symbolic()) {
     // TODO: Deduplicate these.
-    AddInstInNoBlock(context, loc_id,
-                     SemIR::RequireCompleteType{
-                         .type_id = GetSingletonType(
-                             context, SemIR::WitnessType::SingletonInstId),
-                         .complete_type_id = type_id});
+    AddInstInNoBlock(
+        context, loc_id,
+        SemIR::RequireCompleteType{
+            .type_id =
+                GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+            .complete_type_inst_id = context.types().GetInstId(type_id)});
   }
 
   return true;
@@ -628,7 +645,7 @@ auto AsCompleteType(Context& context, SemIR::TypeId type_id,
     -> SemIR::TypeId {
   return RequireCompleteType(context, type_id, loc_id, diagnoser)
              ? type_id
-             : SemIR::ErrorInst::SingletonTypeId;
+             : SemIR::ErrorInst::TypeId;
 }
 
 // Returns the type `type_id` if it is a concrete type, or produces an
@@ -641,7 +658,7 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
   return RequireConcreteType(context, type_id, loc_id, diagnoser,
                              abstract_diagnoser)
              ? type_id
-             : SemIR::ErrorInst::SingletonTypeId;
+             : SemIR::ErrorInst::TypeId;
 }
 
 auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,

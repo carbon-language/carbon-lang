@@ -4,6 +4,9 @@
 
 #include <benchmark/benchmark.h>
 
+#include <string>
+#include <string_view>
+
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/string_literal.h"
 

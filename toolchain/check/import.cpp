@@ -4,6 +4,9 @@
 
 #include "toolchain/check/import.h"
 
+#include <optional>
+#include <utility>
+
 #include "common/check.h"
 #include "common/map.h"
 #include "toolchain/base/kind_switch.h"
@@ -105,13 +108,18 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
     // TODO: Either document the use-case for this, or require a location.
     return SemIR::LocIdAndInst::NoLoc(namespace_inst);
   }
-  if (import_loc_id.is_import_ir_inst_id()) {
-    return MakeImportedLocIdAndInst(context, import_loc_id.import_ir_inst_id(),
-                                    namespace_inst);
+  switch (import_loc_id.kind()) {
+    case SemIR::LocId::Kind::ImportIRInstId:
+      return MakeImportedLocIdAndInst(
+          context, import_loc_id.import_ir_inst_id(), namespace_inst);
+    case SemIR::LocId::Kind::NodeId:
+    case SemIR::LocId::Kind::None:
+      return SemIR::LocIdAndInst(context.parse_tree().As<Parse::AnyNamespaceId>(
+                                     import_loc_id.node_id()),
+                                 namespace_inst);
+    case SemIR::LocId::Kind::InstId:
+      CARBON_FATAL("Unexpected LocId kind");
   }
-  return SemIR::LocIdAndInst(
-      context.parse_tree().As<Parse::AnyNamespaceId>(import_loc_id.node_id()),
-      namespace_inst);
 }
 
 auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
@@ -591,7 +599,7 @@ static auto AddNamespaceFromOtherPackage(Context& context,
                                          SemIR::NameId name_id)
     -> SemIR::InstId {
   auto namespace_type_id =
-      GetSingletonType(context, SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context, SemIR::NamespaceType::TypeInstId);
   AddImportNamespaceToScopeResult result = CopySingleNameScopeFromImportIR(
       context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
       import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);
@@ -603,7 +611,7 @@ static auto AddNamespaceFromOtherPackage(Context& context,
 }
 
 auto ImportNameFromOtherPackage(
-    Context& context, SemIRLoc loc, SemIR::NameScopeId scope_id,
+    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
     llvm::ArrayRef<std::pair<SemIR::ImportIRId, SemIR::NameScopeId>>
         import_ir_scopes,
     SemIR::NameId name_id) -> SemIR::InstId {
@@ -621,7 +629,7 @@ auto ImportNameFromOtherPackage(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InNameLookup, Note, "in name lookup for `{0}`",
                           SemIR::NameId);
-        builder.Note(loc, InNameLookup, name_id);
+        builder.Note(loc_id, InNameLookup, name_id);
       });
 
   // Although we track the result here and look in each IR, we pretty much use

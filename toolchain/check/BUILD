@@ -2,14 +2,14 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel/cc_rules:defs.bzl", "cc_library")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testdata",
-    data = glob(["testdata/**/*.carbon"]),
+    srcs = glob(["testdata/**/*.carbon"]),
 )
 
 cc_library(
@@ -17,6 +17,7 @@ cc_library(
     srcs = [
         "action.cpp",
         "call.cpp",
+        "class.cpp",
         "context.cpp",
         "control_flow.cpp",
         "convert.cpp",
@@ -28,6 +29,7 @@ cc_library(
         "function.cpp",
         "generic.cpp",
         "global_init.cpp",
+        "impl.cpp",
         "impl_lookup.cpp",
         "import.cpp",
         "import_cpp.cpp",
@@ -53,6 +55,7 @@ cc_library(
     hdrs = [
         "action.h",
         "call.h",
+        "class.h",
         "context.h",
         "control_flow.h",
         "convert.h",
@@ -66,6 +69,7 @@ cc_library(
         "function.h",
         "generic.h",
         "global_init.h",
+        "impl.h",
         "impl_lookup.h",
         "import.h",
         "import_cpp.h",
@@ -164,10 +168,10 @@ cc_library(
         ":context",
         ":diagnostic_emitter",
         ":dump",
-        ":impl",
         ":pointer_dereference",
         "//common:check",
         "//common:error",
+        "//common:find",
         "//common:map",
         "//common:ostream",
         "//common:variant_helpers",
@@ -218,21 +222,6 @@ cc_library(
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "impl",
-    srcs = ["impl.cpp"],
-    hdrs = ["impl.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/base:kind_switch",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:typed_insts",
     ],
 )
 
@@ -301,7 +290,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:absolute_node_id",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:stringify_type",
+        "//toolchain/sem_ir:stringify",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],

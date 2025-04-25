@@ -6,8 +6,10 @@
 
 #include "toolchain/sem_ir/dump.h"
 
+#include <string>
+
 #include "common/raw_string_ostream.h"
-#include "toolchain/sem_ir/stringify_type.h"
+#include "toolchain/sem_ir/stringify.h"
 
 namespace Carbon::SemIR {
 
@@ -129,8 +131,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
   }
   for (auto rewrite : facet_type.rewrite_constraints) {
     out << "\n"
-        << "  - " << DumpConstantSummary(file, rewrite.lhs_const_id) << "\n"
-        << "  - " << DumpConstantSummary(file, rewrite.rhs_const_id);
+        << "  - " << DumpInstSummary(file, rewrite.lhs_id) << "\n"
+        << "  - " << DumpInstSummary(file, rewrite.rhs_id);
   }
   if (auto identified_id =
           file.identified_facet_types().TryGetId(facet_type_id);
@@ -353,28 +355,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     auto block = file.struct_type_fields().Get(struct_type_fields_id);
     for (auto field : block) {
       out << "\n  - " << field << DumpNameIfValid(file, field.name_id);
-      if (field.type_id.has_value()) {
-        InstId inst_id =
-            file.constant_values().GetInstId(field.type_id.AsConstantId());
-        out << ": " << StringifyTypeExpr(file, inst_id);
+      if (field.type_inst_id.has_value()) {
+        out << ": " << StringifyConstantInst(file, field.type_inst_id);
       }
     }
-  }
-  return out.TakeStr();
-}
-
-LLVM_DUMP_METHOD auto Dump(const File& file, TypeBlockId type_block_id)
-    -> std::string {
-  RawStringOstream out;
-  out << type_block_id;
-  if (!type_block_id.has_value()) {
-    return out.TakeStr();
-  }
-
-  out << ":";
-  auto type_block = file.type_blocks().Get(type_block_id);
-  for (auto type_id : type_block) {
-    out << "\n  - " << Dump(file, type_id);
   }
   return out.TakeStr();
 }
@@ -386,8 +370,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
     return out.TakeStr();
   }
 
-  InstId inst_id = file.constant_values().GetInstId(type_id.AsConstantId());
-  out << ": " << StringifyTypeExpr(file, inst_id) << "; "
+  InstId inst_id = file.types().GetInstId(type_id);
+  out << ": " << StringifyConstantInst(file, inst_id) << "; "
       << file.insts().Get(inst_id);
   return out.TakeStr();
 }
@@ -441,9 +425,6 @@ LLVM_DUMP_METHOD static auto MakeSpecificInterfaceId(int id)
 LLVM_DUMP_METHOD static auto MakeStructTypeFieldsId(int id)
     -> StructTypeFieldsId {
   return StructTypeFieldsId(id);
-}
-LLVM_DUMP_METHOD static auto MakeTypeBlockId(int id) -> TypeBlockId {
-  return TypeBlockId(id);
 }
 LLVM_DUMP_METHOD static auto MakeTypeId(int id) -> TypeId { return TypeId(id); }
 

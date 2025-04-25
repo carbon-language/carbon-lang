@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <system_error>
 
 namespace Carbon::Testing {

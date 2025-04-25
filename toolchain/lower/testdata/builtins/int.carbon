@@ -69,6 +69,58 @@ fn TestGreater(a: i32, b: i32) -> bool { return Greater(a, b); }
 fn GreaterEq(a: i32, b: i32) -> bool = "int.greater_eq";
 fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 
+// --- compound_assign.carbon
+
+library "[[@TEST_NAME]]";
+
+fn SAdd(a: i32*, b: i32) = "int.sadd_assign";
+fn TestSAdd(a: i32*, b: i32) { SAdd(a, b); }
+
+fn SSub(a: i32*, b: i32) = "int.ssub_assign";
+fn TestSSub(a: i32*, b: i32) { SSub(a, b); }
+
+fn SMul(a: i32*, b: i32) = "int.smul_assign";
+fn TestSMul(a: i32*, b: i32) { SMul(a, b); }
+
+fn SDiv(a: i32*, b: i32) = "int.sdiv_assign";
+fn TestSDiv(a: i32*, b: i32) { SDiv(a, b); }
+
+fn SMod(a: i32*, b: i32) = "int.smod_assign";
+fn TestSMod(a: i32*, b: i32) { SMod(a, b); }
+
+fn UAdd(a: i32*, b: i32) = "int.uadd_assign";
+fn TestUAdd(a: i32*, b: i32) { UAdd(a, b); }
+
+fn USub(a: i32*, b: i32) = "int.usub_assign";
+fn TestUSub(a: i32*, b: i32) { USub(a, b); }
+
+fn UMul(a: i32*, b: i32) = "int.umul_assign";
+fn TestUMul(a: i32*, b: i32) { UMul(a, b); }
+
+fn UDiv(a: i32*, b: i32) = "int.udiv_assign";
+fn TestUDiv(a: i32*, b: i32) { UDiv(a, b); }
+
+fn UMod(a: i32*, b: i32) = "int.umod_assign";
+fn TestUMod(a: i32*, b: i32) { UMod(a, b); }
+
+fn And(a: i32*, b: i32) = "int.and_assign";
+fn TestAnd(a: i32*, b: i32) { And(a, b); }
+
+fn Or(a: i32*, b: i32) = "int.or_assign";
+fn TestOr(a: i32*, b: i32) { Or(a, b); }
+
+fn Xor(a: i32*, b: i32) = "int.xor_assign";
+fn TestXor(a: i32*, b: i32) { Xor(a, b); }
+
+fn LeftShift(a: i32*, b: i32) = "int.left_shift_assign";
+fn TestLeftShift(a: i32*, b: i32) { LeftShift(a, b); }
+
+fn ArithmeticRightShift(a: i32*, b: u32) = "int.right_shift_assign";
+fn TestArithmeticRightShift(a: i32*, b: u32) { ArithmeticRightShift(a, b); }
+
+fn LogicalRightShift(a: u32*, b: u32) = "int.right_shift_assign";
+fn TestLogicalRightShift(a: u32*, b: u32) { LogicalRightShift(a, b); }
+
 // --- mixed_shift.carbon
 
 library "[[@TEST_NAME]]";
@@ -351,6 +403,194 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT: !60 = distinct !DISubprogram(name: "TestGreaterEq", linkageName: "_CTestGreaterEq.Main", scope: null, file: !3, line: 59, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !61 = !DILocation(line: 59, column: 51, scope: !60)
 // CHECK:STDOUT: !62 = !DILocation(line: 59, column: 44, scope: !60)
+// CHECK:STDOUT: ; ModuleID = 'compound_assign.carbon'
+// CHECK:STDOUT: source_filename = "compound_assign.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestSAdd.Main(ptr %a, i32 %b) !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.sadd_assign = load i32, ptr %a, align 4, !dbg !7
+// CHECK:STDOUT:   %int.sadd_assign1 = add i32 %int.sadd_assign, %b, !dbg !7
+// CHECK:STDOUT:   store i32 %int.sadd_assign1, ptr %a, align 4, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestSSub.Main(ptr %a, i32 %b) !dbg !9 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.ssub_assign = load i32, ptr %a, align 4, !dbg !10
+// CHECK:STDOUT:   %int.ssub_assign1 = sub i32 %int.ssub_assign, %b, !dbg !10
+// CHECK:STDOUT:   store i32 %int.ssub_assign1, ptr %a, align 4, !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestSMul.Main(ptr %a, i32 %b) !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.smul_assign = load i32, ptr %a, align 4, !dbg !13
+// CHECK:STDOUT:   %int.smul_assign1 = mul i32 %int.smul_assign, %b, !dbg !13
+// CHECK:STDOUT:   store i32 %int.smul_assign1, ptr %a, align 4, !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestSDiv.Main(ptr %a, i32 %b) !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.sdiv_assign = load i32, ptr %a, align 4, !dbg !16
+// CHECK:STDOUT:   %int.sdiv_assign1 = sdiv i32 %int.sdiv_assign, %b, !dbg !16
+// CHECK:STDOUT:   store i32 %int.sdiv_assign1, ptr %a, align 4, !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestSMod.Main(ptr %a, i32 %b) !dbg !18 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.smod_assign = load i32, ptr %a, align 4, !dbg !19
+// CHECK:STDOUT:   %int.smod_assign1 = srem i32 %int.smod_assign, %b, !dbg !19
+// CHECK:STDOUT:   store i32 %int.smod_assign1, ptr %a, align 4, !dbg !19
+// CHECK:STDOUT:   ret void, !dbg !20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestUAdd.Main(ptr %a, i32 %b) !dbg !21 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.uadd_assign = load i32, ptr %a, align 4, !dbg !22
+// CHECK:STDOUT:   %int.uadd_assign1 = add i32 %int.uadd_assign, %b, !dbg !22
+// CHECK:STDOUT:   store i32 %int.uadd_assign1, ptr %a, align 4, !dbg !22
+// CHECK:STDOUT:   ret void, !dbg !23
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestUSub.Main(ptr %a, i32 %b) !dbg !24 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.usub_assign = load i32, ptr %a, align 4, !dbg !25
+// CHECK:STDOUT:   %int.usub_assign1 = sub i32 %int.usub_assign, %b, !dbg !25
+// CHECK:STDOUT:   store i32 %int.usub_assign1, ptr %a, align 4, !dbg !25
+// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestUMul.Main(ptr %a, i32 %b) !dbg !27 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.umul_assign = load i32, ptr %a, align 4, !dbg !28
+// CHECK:STDOUT:   %int.umul_assign1 = mul i32 %int.umul_assign, %b, !dbg !28
+// CHECK:STDOUT:   store i32 %int.umul_assign1, ptr %a, align 4, !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !29
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestUDiv.Main(ptr %a, i32 %b) !dbg !30 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.udiv_assign = load i32, ptr %a, align 4, !dbg !31
+// CHECK:STDOUT:   %int.udiv_assign1 = udiv i32 %int.udiv_assign, %b, !dbg !31
+// CHECK:STDOUT:   store i32 %int.udiv_assign1, ptr %a, align 4, !dbg !31
+// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestUMod.Main(ptr %a, i32 %b) !dbg !33 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.umod_assign = load i32, ptr %a, align 4, !dbg !34
+// CHECK:STDOUT:   %int.umod_assign1 = urem i32 %int.umod_assign, %b, !dbg !34
+// CHECK:STDOUT:   store i32 %int.umod_assign1, ptr %a, align 4, !dbg !34
+// CHECK:STDOUT:   ret void, !dbg !35
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestAnd.Main(ptr %a, i32 %b) !dbg !36 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.and_assign = load i32, ptr %a, align 4, !dbg !37
+// CHECK:STDOUT:   %int.and_assign1 = and i32 %int.and_assign, %b, !dbg !37
+// CHECK:STDOUT:   store i32 %int.and_assign1, ptr %a, align 4, !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !38
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestOr.Main(ptr %a, i32 %b) !dbg !39 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.or_assign = load i32, ptr %a, align 4, !dbg !40
+// CHECK:STDOUT:   %int.or_assign1 = or i32 %int.or_assign, %b, !dbg !40
+// CHECK:STDOUT:   store i32 %int.or_assign1, ptr %a, align 4, !dbg !40
+// CHECK:STDOUT:   ret void, !dbg !41
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestXor.Main(ptr %a, i32 %b) !dbg !42 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.xor_assign = load i32, ptr %a, align 4, !dbg !43
+// CHECK:STDOUT:   %int.xor_assign1 = xor i32 %int.xor_assign, %b, !dbg !43
+// CHECK:STDOUT:   store i32 %int.xor_assign1, ptr %a, align 4, !dbg !43
+// CHECK:STDOUT:   ret void, !dbg !44
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestLeftShift.Main(ptr %a, i32 %b) !dbg !45 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.left_shift_assign = load i32, ptr %a, align 4, !dbg !46
+// CHECK:STDOUT:   %int.left_shift_assign1 = shl i32 %int.left_shift_assign, %b, !dbg !46
+// CHECK:STDOUT:   store i32 %int.left_shift_assign1, ptr %a, align 4, !dbg !46
+// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestArithmeticRightShift.Main(ptr %a, i32 %b) !dbg !48 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.right_shift_assign = load i32, ptr %a, align 4, !dbg !49
+// CHECK:STDOUT:   %int.right_shift_assign1 = ashr i32 %int.right_shift_assign, %b, !dbg !49
+// CHECK:STDOUT:   store i32 %int.right_shift_assign1, ptr %a, align 4, !dbg !49
+// CHECK:STDOUT:   ret void, !dbg !50
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CTestLogicalRightShift.Main(ptr %a, i32 %b) !dbg !51 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.right_shift_assign = load i32, ptr %a, align 4, !dbg !52
+// CHECK:STDOUT:   %int.right_shift_assign1 = lshr i32 %int.right_shift_assign, %b, !dbg !52
+// CHECK:STDOUT:   store i32 %int.right_shift_assign1, ptr %a, align 4, !dbg !52
+// CHECK:STDOUT:   ret void, !dbg !53
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "compound_assign.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestSAdd", linkageName: "_CTestSAdd.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 32, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 1, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestSSub", linkageName: "_CTestSSub.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 32, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 1, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestSMul", linkageName: "_CTestSMul.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 32, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 1, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestSDiv", linkageName: "_CTestSDiv.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 32, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 1, scope: !15)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestSMod", linkageName: "_CTestSMod.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = !DILocation(line: 17, column: 32, scope: !18)
+// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 1, scope: !18)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestUAdd", linkageName: "_CTestUAdd.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 32, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 1, scope: !21)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestUSub", linkageName: "_CTestUSub.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 32, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 1, scope: !24)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestUMul", linkageName: "_CTestUMul.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 26, column: 32, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 26, column: 1, scope: !27)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestUDiv", linkageName: "_CTestUDiv.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 29, column: 32, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 29, column: 1, scope: !30)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestUMod", linkageName: "_CTestUMod.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !34 = !DILocation(line: 32, column: 32, scope: !33)
+// CHECK:STDOUT: !35 = !DILocation(line: 32, column: 1, scope: !33)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "TestAnd", linkageName: "_CTestAnd.Main", scope: null, file: !3, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !37 = !DILocation(line: 35, column: 31, scope: !36)
+// CHECK:STDOUT: !38 = !DILocation(line: 35, column: 1, scope: !36)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "TestOr", linkageName: "_CTestOr.Main", scope: null, file: !3, line: 38, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !40 = !DILocation(line: 38, column: 30, scope: !39)
+// CHECK:STDOUT: !41 = !DILocation(line: 38, column: 1, scope: !39)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "TestXor", linkageName: "_CTestXor.Main", scope: null, file: !3, line: 41, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !43 = !DILocation(line: 41, column: 31, scope: !42)
+// CHECK:STDOUT: !44 = !DILocation(line: 41, column: 1, scope: !42)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "TestLeftShift", linkageName: "_CTestLeftShift.Main", scope: null, file: !3, line: 44, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !46 = !DILocation(line: 44, column: 37, scope: !45)
+// CHECK:STDOUT: !47 = !DILocation(line: 44, column: 1, scope: !45)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "TestArithmeticRightShift", linkageName: "_CTestArithmeticRightShift.Main", scope: null, file: !3, line: 47, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !49 = !DILocation(line: 47, column: 48, scope: !48)
+// CHECK:STDOUT: !50 = !DILocation(line: 47, column: 1, scope: !48)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "TestLogicalRightShift", linkageName: "_CTestLogicalRightShift.Main", scope: null, file: !3, line: 50, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !52 = !DILocation(line: 50, column: 45, scope: !51)
+// CHECK:STDOUT: !53 = !DILocation(line: 50, column: 1, scope: !51)
 // CHECK:STDOUT: ; ModuleID = 'mixed_shift.carbon'
 // CHECK:STDOUT: source_filename = "mixed_shift.carbon"
 // CHECK:STDOUT:

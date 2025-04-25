@@ -10,7 +10,7 @@
 
 // --- unsupported_decl.h
 
-class foo;
+typedef int foo;
 
 // --- fail_import_unsupported_decl.carbon
 
@@ -19,7 +19,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_unsupported_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Declaration type CXXRecord` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_unsupported_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Declaration type Typedef` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_import_unsupported_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]

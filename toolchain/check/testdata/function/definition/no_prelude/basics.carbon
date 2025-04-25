@@ -48,7 +48,7 @@ fn F(n: C) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param_patt: %C) {
+// CHECK:STDOUT: fn @F(%n.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -8,8 +8,7 @@ file_test uses the tests_as_input_file rule to transform test dependencies into
 a file which can be accessed as a list. This avoids long argument parsing.
 """
 
-load("@rules_cc//cc:defs.bzl", "cc_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/cc_rules:defs.bzl", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest", "manifest_as_cpp")
 
 def file_test(
@@ -58,7 +57,6 @@ def file_test(
             deps = deps,
             data = [":" + tests_file] + tests + data,
             args = args,
-            env = cc_env(),
             **kwargs
         )
     else:
@@ -75,6 +73,5 @@ def file_test(
             deps = deps + ["//testing/file_test:manifest_impl"],
             data = tests + data,
             args = args,
-            env = cc_env(),
             **kwargs
         )

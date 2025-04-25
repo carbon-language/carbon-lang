@@ -4,6 +4,10 @@
 
 #include "toolchain/sem_ir/inst_namer.h"
 
+#include <string>
+#include <utility>
+#include <variant>
+
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"
@@ -50,8 +54,8 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     auto fn_loc = Parse::NodeId::None;
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir->names().GetIRBaseName(fn.name_id).str());
-    CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
-    CollectNamesInBlock(fn_scope, fn.param_patterns_id);
+    CollectNamesInBlock(fn_scope, fn.call_params_id);
+    CollectNamesInBlock(fn_scope, fn.pattern_block_id);
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
     }
@@ -72,6 +76,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     GetScopeInfo(class_scope).name = globals_.AllocateName(
         *this, class_loc,
         sem_ir->names().GetIRBaseName(class_info.name_id).str());
+    CollectNamesInBlock(class_scope, class_info.pattern_block_id);
     AddBlockLabel(class_scope, class_info.body_block_id, "class", class_loc);
     CollectNamesInBlock(class_scope, class_info.body_block_id);
     CollectNamesInGeneric(class_scope, class_info.generic_id);
@@ -85,6 +90,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     GetScopeInfo(interface_scope).name = globals_.AllocateName(
         *this, interface_loc,
         sem_ir->names().GetIRBaseName(interface_info.name_id).str());
+    CollectNamesInBlock(interface_scope, interface_info.pattern_block_id);
     AddBlockLabel(interface_scope, interface_info.body_block_id, "interface",
                   interface_loc);
     CollectNamesInBlock(interface_scope, interface_info.body_block_id);
@@ -109,6 +115,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     // TODO: Invent a name based on the self and constraint types.
     GetScopeInfo(impl_scope).name =
         globals_.AllocateName(*this, impl_fingerprint, "impl");
+    CollectNamesInBlock(impl_scope, impl_info.pattern_block_id);
     AddBlockLabel(impl_scope, impl_info.body_block_id, "impl",
                   impl_fingerprint);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
@@ -164,8 +171,8 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     RawStringOstream out;
     out << "<unexpected>." << inst_id;
     auto loc_id = sem_ir_->insts().GetLocId(inst_id);
-    // TODO: Consider handling inst_id cases.
-    if (loc_id.is_node_id()) {
+    // TODO: Consider handling other kinds.
+    if (loc_id.kind() == SemIR::LocId::Kind::NodeId) {
       const auto& tree = sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id.node_id());
       out << ".loc" << tree.tokens().GetLineNumber(token) << "_"
@@ -255,9 +262,9 @@ auto InstNamer::Namespace::AllocateName(
   }
 
   // Append location information to try to disambiguate.
-  // TODO: Consider handling inst_id cases.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
-    if (loc_id->is_node_id()) {
+    // TODO: Consider handling other kinds.
+    if (loc_id->kind() == SemIR::LocId::Kind::NodeId) {
       const auto& tree = inst_namer.sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id->node_id());
       llvm::raw_string_ostream(name)
@@ -462,6 +469,24 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       out << suffix;
       add_inst_name(out.TakeStr());
     };
+    auto add_witness_table_name = [&](InstId witness_table_inst_id,
+                                      std::string name) {
+      auto witness_table = sem_ir_->insts().GetAs<SemIR::ImplWitnessTable>(
+          witness_table_inst_id);
+      if (!witness_table.impl_id.has_value()) {
+        // TODO: The witness comes from a facet value. Can we get the
+        // interface names from it? Store the facet value instruction in the
+        // table?
+        add_inst_name(name);
+        return;
+      }
+      const auto& impl = sem_ir_->impls().Get(witness_table.impl_id);
+      auto name_id =
+          sem_ir_->interfaces().Get(impl.interface.interface_id).name_id;
+
+      std::string suffix = llvm::formatv(".{}", name);
+      add_inst_name_id(name_id, suffix);
+    };
     auto facet_access_name_id = [&](InstId facet_value_inst_id) -> NameId {
       if (auto name = sem_ir_->insts().TryGetAs<NameRef>(facet_value_inst_id)) {
         return name->name_id;
@@ -565,7 +590,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& class_info = sem_ir_->classes().Get(inst.class_id);
         add_inst_name_id(class_info.name_id, ".decl");
         auto class_scope_id = GetScopeFor(inst.class_id);
-        queue_block_id(class_scope_id, class_info.pattern_block_id);
         queue_block_id(class_scope_id, inst.decl_block_id);
         continue;
       }
@@ -594,18 +618,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
           add_inst_name_id(name_id, ".as_type");
         } else {
           add_inst_name("as_type");
-        }
-        continue;
-      }
-      case CARBON_KIND(FacetAccessWitness inst): {
-        auto name_id = facet_access_name_id(inst.facet_value_inst_id);
-        RawStringOstream out;
-        if (name_id.has_value()) {
-          out << ".as_wit.iface" << inst.index.index;
-          add_inst_name_id(name_id, out.TakeStr());
-        } else {
-          out << "as_wit.iface" << inst.index.index;
-          add_inst_name(out.TakeStr());
         }
         continue;
       }
@@ -654,7 +666,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& function_info = sem_ir_->functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
-        queue_block_id(function_scope_id, function_info.pattern_block_id);
         queue_block_id(function_scope_id, inst.decl_block_id);
         continue;
       }
@@ -675,8 +686,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
-        queue_block_id(impl_scope_id,
-                       sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
         queue_block_id(impl_scope_id, inst.decl_block_id);
         break;
       }
@@ -688,10 +697,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             ".lookup_impl_witness");
         continue;
       }
-      case ImplWitness::Kind: {
-        // TODO: Include name of interface (is this available from the
-        // specific?).
-        add_inst_name("impl_witness");
+      case CARBON_KIND(ImplWitness inst): {
+        add_witness_table_name(inst.witness_table_id, "impl_witness");
         continue;
       }
       case CARBON_KIND(ImplWitnessAccess inst): {
@@ -699,6 +706,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         RawStringOstream out;
         out << "impl.elem" << inst.index.index;
         add_inst_name(out.TakeStr());
+        continue;
+      }
+      case ImplWitnessAssociatedConstant::Kind: {
+        add_inst_name("impl_witness_assoc_constant");
+        continue;
+      }
+      case ImplWitnessTable::Kind: {
+        add_witness_table_name(inst_id, "impl_witness_table");
         continue;
       }
       case ImportCppDecl::Kind: {
@@ -767,7 +782,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".decl");
         auto interface_scope_id = GetScopeFor(inst.interface_id);
-        queue_block_id(interface_scope_id, interface_info.pattern_block_id);
         queue_block_id(interface_scope_id, inst.decl_block_id);
         continue;
       }
@@ -905,7 +919,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(TupleType inst): {
-        if (inst.elements_id == TypeBlockId::Empty) {
+        if (inst.type_elements_id == InstBlockId::Empty) {
           add_inst_name("empty_tuple.type");
         } else {
           add_inst_name("tuple.type");
@@ -924,7 +938,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(UnboundElementType inst): {
         if (auto class_ty =
-                sem_ir_->types().TryGetAs<ClassType>(inst.class_type_id)) {
+                sem_ir_->insts().TryGetAs<ClassType>(inst.class_type_inst_id)) {
           add_inst_name_id(sem_ir_->classes().Get(class_ty->class_id).name_id,
                            ".elem");
         } else {

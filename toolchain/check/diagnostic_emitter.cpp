@@ -4,25 +4,28 @@
 
 #include "toolchain/check/diagnostic_emitter.h"
 
+#include <algorithm>
 #include <optional>
+#include <string>
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
-#include "toolchain/sem_ir/stringify_type.h"
+#include "toolchain/sem_ir/stringify.h"
 
 namespace Carbon::Check {
 
-auto DiagnosticEmitter::ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
+auto DiagnosticEmitter::ConvertLoc(SemIR::LocId loc_id,
+                                   ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
   // TODO: Instead of special casing Clang location here, support it within
   // `GetAbsoluteNodeId()`. See discussion in
   // https://github.com/carbon-language/carbon-lang/pull/5262/files#r2040308805.
-  auto converted_clang_loc = TryConvertClangDiagnosticLoc(loc);
+  auto converted_clang_loc = TryConvertClangDiagnosticLoc(loc_id);
   if (converted_clang_loc) {
     return *converted_clang_loc;
   }
 
-  auto converted = ConvertLocImpl(loc, context_fn);
+  auto converted = ConvertLocImpl(loc_id, context_fn);
 
   // Use the token when possible, but -1 is the default value.
   auto last_offset = -1;
@@ -42,12 +45,13 @@ auto DiagnosticEmitter::ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
   return converted;
 }
 
-auto DiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
+auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id,
                                        ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
   llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
-      loc.is_inst_id_ ? SemIR::GetAbsoluteNodeId(sem_ir_, loc.inst_id_)
-                      : SemIR::GetAbsoluteNodeId(sem_ir_, loc.loc_id_);
+      SemIR::GetAbsoluteNodeId(sem_ir_, loc_id);
+  bool token_only =
+      loc_id.kind() != SemIR::LocId::Kind::InstId && loc_id.is_token_only();
 
   auto final_node_id = absolute_node_ids.pop_back_val();
   for (const auto& absolute_node_id : absolute_node_ids) {
@@ -57,26 +61,22 @@ auto DiagnosticEmitter::ConvertLocImpl(SemIRLoc loc,
       continue;
     }
     // TODO: Include the name of the imported library in the diagnostic.
-    auto diag_loc =
-        ConvertLocInFile(absolute_node_id, loc.token_only_, context_fn);
+    auto diag_loc = ConvertLocInFile(absolute_node_id, token_only, context_fn);
     CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
     context_fn(diag_loc.loc, InImport);
   }
 
-  return ConvertLocInFile(final_node_id, loc.token_only_, context_fn);
+  return ConvertLocInFile(final_node_id, token_only, context_fn);
 }
 
-auto DiagnosticEmitter::TryConvertClangDiagnosticLoc(SemIRLoc loc) const
+auto DiagnosticEmitter::TryConvertClangDiagnosticLoc(SemIR::LocId loc_id) const
     -> std::optional<Diagnostics::ConvertedLoc> {
-  if (loc.is_inst_id_) {
-    return std::nullopt;
-  }
-  if (!loc.loc_id_.is_import_ir_inst_id()) {
+  if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
     return std::nullopt;
   }
 
   SemIR::ImportIRInst import_ir_inst =
-      sem_ir_->import_ir_insts().Get(loc.loc_id_.import_ir_inst_id());
+      sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id());
 
   if (import_ir_inst.ir_id() != SemIR::ImportIRId::Cpp) {
     return std::nullopt;
@@ -133,25 +133,26 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     // TODO: Where possible, produce a better description of the type based on
     // the expression.
     return "`" +
-           StringifyTypeExpr(
+           StringifyConstantInst(
                *sem_ir_,
                sem_ir_->types().GetInstId(
                    sem_ir_->insts().Get(type_of_expr->inst_id).type_id())) +
            "`";
   }
-  if (auto* type_expr = llvm::any_cast<InstIdAsType>(&arg)) {
-    return "`" + StringifyTypeExpr(*sem_ir_, type_expr->inst_id) + "`";
+  if (auto* expr = llvm::any_cast<InstIdAsConstant>(&arg)) {
+    return "`" + StringifyConstantInst(*sem_ir_, expr->inst_id) + "`";
   }
   if (auto* type_expr = llvm::any_cast<InstIdAsRawType>(&arg)) {
-    return StringifyTypeExpr(*sem_ir_, type_expr->inst_id);
+    return StringifyConstantInst(*sem_ir_, type_expr->inst_id);
   }
   if (auto* type = llvm::any_cast<TypeIdAsRawType>(&arg)) {
-    return StringifyTypeExpr(*sem_ir_,
-                             sem_ir_->types().GetInstId(type->type_id));
+    return StringifyConstantInst(*sem_ir_,
+                                 sem_ir_->types().GetInstId(type->type_id));
   }
   if (auto* type_id = llvm::any_cast<SemIR::TypeId>(&arg)) {
     return "`" +
-           StringifyTypeExpr(*sem_ir_, sem_ir_->types().GetInstId(*type_id)) +
+           StringifyConstantInst(*sem_ir_,
+                                 sem_ir_->types().GetInstId(*type_id)) +
            "`";
   }
   if (auto* specific_id = llvm::any_cast<SemIR::SpecificId>(&arg)) {

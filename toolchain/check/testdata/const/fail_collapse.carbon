@@ -77,7 +77,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %ptr.3bc) -> %ptr.5d5 {
+// CHECK:STDOUT: fn @G(%p.param: %ptr.3bc) -> %ptr.5d5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.3bc = name_ref p, %p
 // CHECK:STDOUT:   %.loc23: %ptr.5d5 = converted %p.ref, <error> [concrete = <error>]

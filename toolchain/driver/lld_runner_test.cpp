@@ -9,6 +9,8 @@
 
 #include <filesystem>
 #include <fstream>
+#include <string>
+#include <tuple>
 #include <utility>
 
 #include "common/check.h"

@@ -7,6 +7,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <string>
+
 #include "common/check.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"

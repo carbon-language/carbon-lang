@@ -88,7 +88,43 @@ class PrecedenceGroup {
   }
 
  private:
-  enum PrecedenceLevel : int8_t;
+  enum PrecedenceLevel : int8_t {
+    // Sentinel representing the absence of any operator.
+    Highest,
+    // Terms.
+    TermPrefix,
+    // Numeric.
+    IncrementDecrement,
+    NumericPrefix,
+    Modulo,
+    Multiplicative,
+    Additive,
+    // Bitwise.
+    BitwisePrefix,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
+    BitShift,
+    // Type formation.
+    TypePrefix,
+    TypePostfix,
+    // `where` keyword.
+    Where,
+    // Casts.
+    As,
+    // Logical.
+    LogicalPrefix,
+    Relational,
+    LogicalAnd,
+    LogicalOr,
+    // Conditional.
+    If,
+    // Assignment.
+    Assignment,
+    // Sentinel representing a context in which any operator can appear.
+    Lowest,
+  };
+
   struct OperatorPriorityTable;
 
   static const int8_t NumPrecedenceLevels;
@@ -116,43 +152,6 @@ struct PrecedenceGroup::Trailing {
 // Only implementation details below this point.
 //
 ////////////////////////////////////////////////////////////////////////////////
-
-enum PrecedenceGroup::PrecedenceLevel : int8_t {
-  // Sentinel representing the absence of any operator.
-  Highest,
-  // Terms.
-  TermPrefix,
-  // Numeric.
-  IncrementDecrement,
-  NumericPrefix,
-  Modulo,
-  Multiplicative,
-  Additive,
-  // Bitwise.
-  BitwisePrefix,
-  BitwiseAnd,
-  BitwiseOr,
-  BitwiseXor,
-  BitShift,
-  // Type formation.
-  TypePrefix,
-  TypePostfix,
-  // `where` keyword.
-  Where,
-  // Casts.
-  As,
-  // Logical.
-  LogicalPrefix,
-  Relational,
-  LogicalAnd,
-  LogicalOr,
-  // Conditional.
-  If,
-  // Assignment.
-  Assignment,
-  // Sentinel representing a context in which any operator can appear.
-  Lowest,
-};
 
 inline auto PrecedenceGroup::ForPostfixExpr() -> PrecedenceGroup {
   return PrecedenceGroup(Highest);

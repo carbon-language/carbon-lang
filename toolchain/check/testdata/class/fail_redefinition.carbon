@@ -93,6 +93,7 @@ fn Class.I() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type.91d18a.1 = fn_decl @H.1 [concrete = constants.%H.d38c33.1] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type.2b6c8d.1 = fn_decl @I.1 [concrete = constants.%I.c9aec9.1] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -108,6 +109,7 @@ fn Class.I() {}
 // CHECK:STDOUT:   %G.decl: %G.type.621c12.1 = fn_decl @G.1 [concrete = constants.%G.f0cac0.1] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type.91d18a.2 = fn_decl @H.2 [concrete = constants.%H.d38c33.2] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type.2b6c8d.2 = fn_decl @I.2 [concrete = constants.%I.c9aec9.2] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

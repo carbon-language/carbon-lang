@@ -21,6 +21,17 @@ from pathlib import Path
 os.chdir(Path(__file__).parents[2])
 
 print("Compute non-test C++ root targets...")
+query_arg = (
+    "let non_tests = attr("
+    "    testonly, 0, //..."
+    # Exclude tree_sitter because its @platforms dependency errors in
+    # query. Note if it ends up in releases, we might want to do more,
+    # but that should also be caught by check_deps.py.
+    "    except //utils/tree_sitter/..."
+    # Exclude tcmalloc as an optional external library.
+    "    except //bazel/malloc:tcmalloc_if_linux_opt"
+    ") in kind('(cc|pkg)_.* rule', deps($non_tests))"
+)
 non_test_cc_roots_query = subprocess.check_output(
     [
         "./scripts/run_bazel.py",
@@ -29,10 +40,7 @@ non_test_cc_roots_query = subprocess.check_output(
         "--noimplicit_deps",
         "--notool_deps",
         "--output=minrank",
-        (
-            'let non_tests = kind("cc.* rule", attr(testonly, 0, //...))'
-            ' in kind("cc.* rule", deps($non_tests))'
-        ),
+        query_arg,
     ],
     universal_newlines=True,
 )

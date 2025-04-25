@@ -74,6 +74,7 @@ class Class {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %ptr = bind_name b, %b.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -88,10 +89,10 @@ class Class {
 // CHECK:STDOUT:   %a.loc16_13.1: %ptr = bind_symbolic_name a, 0 [symbolic = %a.loc16_13.1 (constants.%a)]
 // CHECK:STDOUT:   %a.patt.loc16_13.2: %ptr = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.2 (constants.%a.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.patt.loc16_13.1: %ptr]();
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b.param_patt: %ptr);
+// CHECK:STDOUT: fn @G(%b.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%a) {
 // CHECK:STDOUT:   %a.loc16_13.1 => constants.%a

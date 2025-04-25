@@ -17,8 +17,9 @@
 //
 // - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
 //   member. These are described below.
-// - Optionally, a `SingletonInstId` if it is a singleton instruction.
-//   Similarly, there may be `SingletonConstantId` and `SingletonTypeId`.
+// - Optionally, a `InstId` if it is a singleton instruction. Similarly, there
+//   may be `ConstantId` and `TypeId`.
+//   - These are named based on the `Id` types they represent.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
@@ -81,7 +82,7 @@ struct AnyFoundationDecl {
   static constexpr InstKind Kinds[] = {InstKind::AdaptDecl, InstKind::BaseDecl};
 
   InstKind kind;
-  InstId foundation_type_inst_id;
+  TypeInstId foundation_type_inst_id;
   // Kind-specific data.
   AnyRawId arg1;
 };
@@ -94,7 +95,7 @@ struct AdaptDecl {
        .is_lowered = false});
 
   // No type_id; this is not a value.
-  InstId adapted_type_inst_id;
+  TypeInstId adapted_type_inst_id;
 };
 
 // Takes the address of a reference expression, such as for the `&` address-of
@@ -188,12 +189,12 @@ struct ArrayType {
       {.ir_name = "array_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
-       .constant_needs_inst_id = true,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .deduce_through = true});
 
   TypeId type_id;
   InstId bound_id;
-  InstId element_type_inst_id;
+  TypeInstId element_type_inst_id;
 };
 
 // Perform a no-op conversion to a compatible type.
@@ -272,11 +273,11 @@ struct AutoType {
       {.ir_name = "auto",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-  static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
-  TypeId type_id;
+  SemIR::TypeId type_id;
 };
 
 // A base in a class, of the form `base: base_type;`. A base class is an
@@ -287,7 +288,7 @@ struct BaseDecl {
       {.ir_name = "base_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;
-  InstId base_type_inst_id;
+  TypeInstId base_type_inst_id;
   ElementIndex index;
 };
 
@@ -427,7 +428,7 @@ struct BoolType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -458,7 +459,7 @@ struct BoundMethodType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -599,7 +600,7 @@ struct CompleteTypeWitness {
   // Always the builtin witness type.
   TypeId type_id;
   // The type that is used as the object representation of this type.
-  TypeId object_repr_id;
+  TypeInstId object_repr_type_inst_id;
 };
 
 // Indicates `const` on a type, such as `var x: const i32`.
@@ -612,7 +613,7 @@ struct ConstType {
            .deduce_through = true});
 
   TypeId type_id;
-  InstId inner_id;
+  TypeInstId inner_id;
 };
 
 // An action that performs simple conversion to a value expression of a given
@@ -626,7 +627,7 @@ struct ConvertToValueAction {
 
   TypeId type_id;
   MetaInstId inst_id;
-  TypeId target_type_id;
+  TypeInstId target_type_inst_id;
 };
 
 // Records that a type conversion `original as new_type` was done, producing the
@@ -660,13 +661,12 @@ struct ErrorInst {
       {.ir_name = "<error>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-  static constexpr auto SingletonConstantId =
-      ConstantId::ForConcreteConstant(SingletonInstId);
-  static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(SingletonConstantId);
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr SemIR::InstId InstId = TypeInstId;
+  static constexpr auto ConstantId = ConstantId::ForConcreteConstant(InstId);
+  static constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
 
-  TypeId type_id;
+  SemIR::TypeId type_id;
 };
 
 // An `export bind_name` declaration.
@@ -688,27 +688,10 @@ struct FacetAccessType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::SymbolicOnly});
 
+  // Always the builtin type TypeType.
   TypeId type_id;
   // An instruction that evaluates to a `FacetValue`.
   InstId facet_value_inst_id;
-};
-
-// Represents accessing the `witness` field in a facet value, which is
-// notionally a pair of a type and a witness.
-struct FacetAccessWitness {
-  static constexpr auto Kind =
-      InstKind::FacetAccessWitness.Define<Parse::NodeId>(
-          {.ir_name = "facet_access_witness",
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  // Always the builtin witness type.
-  TypeId type_id;
-  // An instruction that evaluates to a `FacetValue`.
-  InstId facet_value_inst_id;
-  // An index to a single `ImplWitness` in the witness block of the `FacetValue`
-  // from `facet_value_inst_id`.
-  ElementIndex index;
 };
 
 // A facet type value.
@@ -735,7 +718,7 @@ struct FacetValue {
   // A `FacetType`.
   TypeId type_id;
   // The type that you will get if you cast this value to `type`.
-  InstId type_inst_id;
+  TypeInstId type_inst_id;
   // The set of `ImplWitness` instructions for a `FacetType`. The witnesses are
   // in the same order as the set of `required_interfaces` in the
   // `IdentifiedFacetType` of the `FacetType` from `type_id`, so that an index
@@ -747,7 +730,7 @@ struct FacetValue {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::VarBindingPatternId>(
+      InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
           {.ir_name = "field_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;
@@ -772,7 +755,7 @@ struct FloatType {
       {.ir_name = "float_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
-       .constant_needs_inst_id = true,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .deduce_through = true});
 
   TypeId type_id;
@@ -792,7 +775,7 @@ struct LegacyFloatType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -838,8 +821,9 @@ struct FunctionTypeWithSelfType {
   // The type of the function within the interface. This includes the
   // interface's SpecificId if applicable. This will be a `FunctionType` except
   // in error cases.
-  InstId interface_function_type_id;
-  // The value to use for `Self` in this function.
+  TypeInstId interface_function_type_id;
+  // The value to use for `Self` in this function. May be a type or a facet
+  // value.
   InstId self_id;
 };
 
@@ -900,7 +884,10 @@ struct ImplWitness {
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
-  AbsoluteInstBlockId elements_id;
+  // An `ImplWitnessTable` instruction.
+  InstId witness_table_id;
+  // The specific to be applied to instructions from the witness table to get
+  // their constant values.
   SpecificId specific_id;
 };
 
@@ -911,12 +898,92 @@ struct ImplWitnessAccess {
           {.ir_name = "impl_witness_access",
            .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOnly,
-           .constant_needs_inst_id = true,
+           .constant_needs_inst_id =
+               InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
 
   TypeId type_id;
   InstId witness_id;
   ElementIndex index;
+};
+
+// An instruction that just points to an associated constant, which exists to
+// live inside the generic for an `impl` and be rewritten in the generic eval
+// block, unlike the instruction which it points to. This allows a symbolic
+// constant value of this instruction to be be substituted to be associated with
+// the generic.
+struct ImplWitnessAssociatedConstant {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessAssociatedConstant.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_assoc_constant",
+           .is_type = InstIsType::Maybe,
+           // TODO: For dynamic dispatch, we might want to lower witness tables
+           // as constants.
+           .is_lowered = false});
+
+  // The type of the `inst_id`.
+  TypeId type_id;
+  // The instruction of the associated constant.
+  InstId inst_id;
+};
+
+// The witness table contains an instruction for each associated constant and
+// function in the impl declaration (and definition, if seen). The `specific_id`
+// from the `ImplWitness` should be applied to those instructions. Instructions
+// will be `ImplWitnessTablePlaceholder` until a value is seen for them.
+//
+// An `ImplWitnessTable` can be shared by multiple `ImplWitness` instructions,
+// to avoid the work of importing the full table with each witness.
+//
+// The instruction uses `constant_kind` of `Unique` to ensure the table is not
+// substituted or re-evaluated in a generic context. The table is built up
+// across multiple check steps (checking an impl declaration and definition), so
+// we need there to be only a single table per `ImplId`. The constant values of
+// instructions in the table are found lazily by explicitly applying the
+// `specific_id` from an `ImplWitness` to them.
+//
+// Since the table itself is unique and not re-evaluated into the generic eval
+// block, it is imperative that any symbolic instructions found in the table,
+// for a generic impl, have an instruction in the generic's eval block. See
+// `ImplWitnessAssociatedConstant` which serves this purpose for associated
+// constant values.
+struct ImplWitnessTable {
+  static constexpr auto Kind = InstKind::ImplWitnessTable.Define<Parse::NodeId>(
+      {.ir_name = "impl_witness_table",
+       .constant_kind = InstConstantKind::Unique,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
+       .is_lowered = false});
+
+  // The witness table of instructions.
+  //
+  // We use AbsoluteInstBlockId since this block on import will contain
+  // ImportRefLoaded instructions, and they can not be evaluated. We store
+  // ImportRefLoaded instructions so that we can lazily load only the witness
+  // table entries that are used.
+  AbsoluteInstBlockId elements_id;
+
+  // The `Impl` which this table is constructed for. This may be `None` in the
+  // future if the witness was constructed from a facet value directly.
+  //
+  // TODO: When constructing from a facet value, should we store the facet value
+  // instruction (and the `ImplDecl` instruction) in here, as that lets us get
+  // the FacetType and its interface names?
+  ImplId impl_id;
+};
+
+// A singleton placeholder instruction used in the `ImplWitness` table of
+// instructions for members of the impl. These are replaced as values are seen
+// for the witness table in the impl declaration or definition.
+struct ImplWitnessTablePlaceholder {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessTablePlaceholder.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_table_placeholder",
+           .constant_kind = InstConstantKind::Unique,
+           .is_lowered = false});
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+
+  TypeId type_id;
 };
 
 // An `import Cpp` declaration.
@@ -993,11 +1060,11 @@ struct InstType {
       {.ir_name = "<instruction>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-  static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
-  TypeId type_id;
+  SemIR::TypeId type_id;
 };
 
 // A value of type `InstType` that refers to an instruction. This is used to
@@ -1048,7 +1115,7 @@ struct IntLiteralType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1061,7 +1128,7 @@ struct IntType {
       {.ir_name = "int_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
-       .constant_needs_inst_id = true,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::DuringEvaluation,
        .deduce_through = true});
 
   TypeId type_id;
@@ -1086,7 +1153,8 @@ struct LookupImplWitness {
       InstKind::LookupImplWitness.Define<Parse::NodeId>(
           {.ir_name = "lookup_impl_witness",
            .constant_kind = InstConstantKind::SymbolicOnly,
-           .constant_needs_inst_id = true,
+           .constant_needs_inst_id =
+               InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
 
   // Always the type of the builtin `WitnessType` singleton instruction.
@@ -1147,7 +1215,7 @@ struct NamespaceType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1263,7 +1331,7 @@ struct PointerType {
            .deduce_through = true});
 
   TypeId type_id;
-  InstId pointee_id;
+  TypeInstId pointee_id;
 };
 
 // An action that performs type refinement for an instruction, by creating an
@@ -1276,7 +1344,7 @@ struct RefineTypeAction {
 
   TypeId type_id;
   MetaInstId inst_id;
-  TypeId inst_type_id;
+  TypeInstId inst_type_inst_id;
 };
 
 // Requires a type to be complete. This is only created for generic types and
@@ -1290,12 +1358,13 @@ struct RequireCompleteType {
       InstKind::RequireCompleteType.Define<Parse::NodeId>(
           {.ir_name = "require_complete_type",
            .constant_kind = InstConstantKind::SymbolicOnly,
-           .constant_needs_inst_id = true,
+           .constant_needs_inst_id =
+               InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
-  // Always the builtin witness type.
+  // Always the builtin `WitnessType` type.
   TypeId type_id;
   // The type that is required to be complete.
-  TypeId complete_type_id;
+  TypeInstId complete_type_inst_id;
 };
 
 struct Return {
@@ -1337,7 +1406,7 @@ struct ReturnSlot {
   // The function return type as originally written by the user. For diagnostics
   // only; this has no semantic significance, and is not preserved across
   // imports.
-  InstId type_inst_id;
+  TypeInstId type_inst_id;
 
   // The storage that will be initialized by the function.
   InstId storage_id;
@@ -1360,7 +1429,7 @@ struct ReturnSlotPattern {
   // The function return type as originally written by the user. For diagnostics
   // only; this has no semantic significance, and is not preserved across
   // imports.
-  InstId type_inst_id;
+  TypeInstId type_inst_id;
 };
 
 // An `expr == expr` clause in a `where` expression or `require` declaration.
@@ -1430,7 +1499,8 @@ struct SpecificFunction {
   static constexpr auto Kind = InstKind::SpecificFunction.Define<Parse::NodeId>(
       {.ir_name = "specific_function",
        .constant_kind = InstConstantKind::Conditional,
-       .constant_needs_inst_id = true});
+       // InstId is added to definitions_required_by_use.
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;
@@ -1450,7 +1520,7 @@ struct SpecificFunctionType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1467,7 +1537,8 @@ struct SpecificImplFunction {
       InstKind::SpecificImplFunction.Define<Parse::NodeId>(
           {.ir_name = "specific_impl_function",
            .constant_kind = InstConstantKind::SymbolicOnly,
-           .constant_needs_inst_id = true});
+           // InstId is added to definitions_required_by_use.
+           .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent});
 
   // Always the builtin SpecificFunctionType.
   TypeId type_id;
@@ -1524,7 +1595,7 @@ struct StringType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1565,12 +1636,12 @@ struct StructLiteral {
 
 // The type of a struct.
 struct StructType {
-  static constexpr auto Kind =
-      InstKind::StructType.Define<Parse::StructTypeLiteralId>(
-          {.ir_name = "struct_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible,
-           .deduce_through = true});
+  static constexpr auto Kind = InstKind::StructType.Define<
+      Parse::NodeIdOneOf<Parse::StructTypeLiteralId, Parse::ClassDefinitionId>>(
+      {.ir_name = "struct_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::WheneverPossible,
+       .deduce_through = true});
 
   TypeId type_id;
   StructTypeFieldsId fields_id;
@@ -1662,7 +1733,7 @@ struct TupleType {
        .deduce_through = true});
 
   TypeId type_id;
-  TypeBlockId elements_id;
+  InstBlockId type_elements_id;
 };
 
 // A tuple value.
@@ -1701,11 +1772,11 @@ struct TypeType {
       {.ir_name = "type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-  static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
-  TypeId type_id;
+  SemIR::TypeId type_id;
 };
 
 // The `not` operator, such as `not operand`.
@@ -1729,10 +1800,10 @@ struct UnboundElementType {
        .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
-  // The class that a value of this type is an element of.
-  TypeId class_type_id;
+  // The `ClassType` that a value of this type is an element of.
+  TypeInstId class_type_inst_id;
   // The type of the element.
-  TypeId element_type_id;
+  TypeInstId element_type_inst_id;
 };
 
 // Converts from a value expression to an ephemeral reference expression, in
@@ -1796,7 +1867,7 @@ struct VtableType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1833,9 +1904,11 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness` and `ImplSymbolicType` instructions. The latter
+// The type of `ImplWitness` and `LookupImplWitness` instructions. The latter
 // will evaluate at some point during specific computation into the former, and
 // their types should not change in the process.
+//
+// Also the type of `RequireCompleteType` instructions.
 struct WitnessType {
   static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
       {.ir_name = "<witness>",
@@ -1843,7 +1916,7 @@ struct WitnessType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };

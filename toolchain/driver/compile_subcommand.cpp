@@ -4,6 +4,13 @@
 
 #include "toolchain/driver/compile_subcommand.h"
 
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <system_error>
+#include <utility>
+
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -560,7 +567,7 @@ auto CompilationUnit::PostCheck() -> void {
       const SemIR::File* file = &*sem_ir_;
       while (true) {
         auto loc_id = file->insts().GetLocId(entity_inst_id);
-        if (!loc_id.is_import_ir_inst_id()) {
+        if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
           return true;
         }
         auto import_ir_inst =

@@ -4,6 +4,11 @@
 
 #include "toolchain/lower/file_context.h"
 
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
@@ -154,9 +159,9 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
     return const_value;
   }
 
-  // If we want a pointer to the constant, materialize a global to hold it.
-  // TODO: We could reuse the same global if the constant is used more than
-  // once.
+  if (auto result = global_variables().Lookup(const_inst_id)) {
+    return result.value();
+  }
 
   // Include both the name of the constant, if any, and the point of use in
   // the name of the variable.
@@ -177,10 +182,13 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
   }
   llvm::StringRef sep = (use_name[0] == '.') ? "" : ".";
 
-  return new llvm::GlobalVariable(
+  auto* global_variable = new llvm::GlobalVariable(
       llvm_module(), GetType(sem_ir().GetPointeeType(value_rep.type_id)),
       /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage, const_value,
       const_name + sep + use_name);
+
+  global_variables_.Insert(const_inst_id, global_variable);
+  return global_variable;
 }
 
 auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
@@ -256,7 +264,7 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
   auto return_param_id = SemIR::InstId::None;
   if (return_info.has_return_slot()) {
     param_types.push_back(
-        llvm::PointerType::get(return_type, /*AddressSpace=*/0));
+        llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
     return_param_id = function.return_slot_pattern_id;
     param_inst_ids.push_back(return_param_id);
   }
@@ -565,6 +573,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
+static auto BuildTypeForInst(FileContext& context,
+                             SemIR::ImplWitnessAssociatedConstant inst)
+    -> llvm::Type* {
+  return context.GetType(inst.type_id);
+}
+
 static auto BuildTypeForInst(FileContext& /*context*/,
                              SemIR::ErrorInst /*inst*/) -> llvm::Type* {
   // This is a complete type but uses of it should never be lowered.
@@ -603,7 +617,8 @@ static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(fields.size());
   for (auto field : fields) {
-    subtypes.push_back(context.GetType(field.type_id));
+    subtypes.push_back(context.GetType(
+        context.sem_ir().types().GetTypeIdForTypeInstId(field.type_inst_id)));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }
@@ -614,11 +629,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   // can be collectively replaced with LLVM's void, particularly around
   // function returns. LLVM doesn't allow declaring variables with a void
   // type, so that may require significant special casing.
-  auto elements = context.sem_ir().type_blocks().Get(inst.elements_id);
+  auto elements = context.sem_ir().inst_blocks().Get(inst.type_elements_id);
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(elements.size());
-  for (auto element_id : elements) {
-    subtypes.push_back(context.GetType(element_id));
+  for (auto type_id : context.sem_ir().types().GetBlockAsTypeIds(elements)) {
+    subtypes.push_back(context.GetType(type_id));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }
@@ -717,12 +732,18 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info)
     return nullptr;
   }
 
+  // Vtables can't be generated for generics, only for their specifics - and
+  // must be done lazily based on the use of those specifics.
+  if (class_info.generic_id != SemIR::GenericId::None) {
+    return nullptr;
+  }
+
   Mangler m(*this);
   std::string mangled_name = m.MangleVTable(class_info);
 
   auto first_owning_decl_loc =
       sem_ir().insts().GetLocId(class_info.first_owning_decl_id);
-  if (first_owning_decl_loc.is_import_ir_inst_id()) {
+  if (first_owning_decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
     // Emit a declaration of an imported vtable using a(n opaque) pointer type.
     // This doesn't have to match the definition that appears elsewhere, it'll
     // still get merged correctly.

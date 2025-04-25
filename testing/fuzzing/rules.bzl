@@ -4,7 +4,7 @@
 
 """Rules for building fuzz tests."""
 
-load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_test")
 
 def _cc_fuzz_test(corpus, args, data, **kwargs):
     """Generates a single test target.

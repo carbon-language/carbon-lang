@@ -4,6 +4,9 @@
 
 #include "toolchain/sem_ir/formatter.h"
 
+#include <string>
+#include <utility>
+
 #include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
@@ -354,7 +357,7 @@ class FormatterImpl {
     out_ << " ";
     FormatName(assoc_const.name_id);
     out_ << ":! ";
-    FormatArg(sem_ir_->insts().Get(assoc_const.decl_id).type_id());
+    FormatTypeOfInst(assoc_const.decl_id);
     if (assoc_const.default_value_id.has_value()) {
       out_ << " = ";
       FormatArg(assoc_const.default_value_id);
@@ -436,19 +439,9 @@ class FormatterImpl {
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
-    FormatParamList(fn.implicit_param_patterns_id, /*is_implicit=*/true);
-    FormatParamList(fn.param_patterns_id, /*is_implicit=*/false);
-
-    if (fn.return_slot_pattern_id.has_value()) {
-      out_ << " -> ";
-      auto return_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
-      if (!fn.body_block_ids.empty() && return_info.is_valid() &&
-          return_info.has_return_slot()) {
-        FormatName(fn.return_slot_pattern_id);
-        out_ << ": ";
-      }
-      FormatType(sem_ir_->insts().Get(fn.return_slot_pattern_id).type_id());
-    }
+    auto return_type_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
+    FormatParamList(fn.call_params_id, return_type_info.is_valid() &&
+                                           return_type_info.has_return_slot());
 
     if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
       out_ << " = \""
@@ -550,7 +543,7 @@ class FormatterImpl {
     llvm::SaveAndRestore generic_scope(scope_,
                                        inst_namer_->GetScopeFor(generic_id));
 
-    FormatParamList(generic.bindings_id, /*is_implicit=*/false);
+    FormatParamList(generic.bindings_id);
 
     out_ << " ";
     OpenBrace();
@@ -571,7 +564,7 @@ class FormatterImpl {
     // that IR in the output before the `{` or `;`.
     if (first_owning_decl_id.has_value()) {
       auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
-      if (loc_id.is_import_ir_inst_id()) {
+      if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
         auto import_ir_id =
             sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
         const auto* import_file =
@@ -613,34 +606,52 @@ class FormatterImpl {
     }
   }
 
-  // Formats parameters, eliding them completely if they're empty. Wraps in
-  // parentheses or square brackets based on whether these are implicit
-  // parameters.
-  auto FormatParamList(InstBlockId param_patterns_id, bool is_implicit)
+  // Formats parameters, eliding them completely if they're empty. Wraps input
+  // parameters in parentheses. Formats output parameter as a return type.
+  auto FormatParamList(InstBlockId params_id, bool has_return_slot = false)
       -> void {
-    if (!param_patterns_id.has_value()) {
+    if (!params_id.has_value()) {
+      // TODO: This happens for imported functions, for which we don't currently
+      // import the call parameters list.
       return;
     }
 
-    out_ << (is_implicit ? "[" : "(");
+    llvm::StringLiteral close = ")";
+    out_ << "(";
 
     llvm::ListSeparator sep;
-    for (InstId param_id : sem_ir_->inst_blocks().Get(param_patterns_id)) {
-      out_ << sep;
+    for (InstId param_id : sem_ir_->inst_blocks().Get(params_id)) {
+      auto is_out_param = sem_ir_->insts().Is<OutParam>(param_id);
+      if (is_out_param) {
+        // TODO: An input parameter following an output parameter is formatted a
+        // bit strangely. For example, alternating input and output parameters
+        // produces:
+        //
+        //   fn @F(%in1: %t) -> %out1: %t, %in2: %t -> %out2: %t
+        //
+        // This doesn't actually happen right now, though.
+        out_ << std::exchange(close, llvm::StringLiteral(""));
+        out_ << " -> ";
+      } else {
+        out_ << sep;
+      }
       if (!param_id.has_value()) {
         out_ << "invalid";
         continue;
       }
-      if (auto addr = sem_ir_->insts().TryGetAs<SemIR::AddrPattern>(param_id)) {
-        out_ << "addr ";
-        param_id = addr->inner_id;
+      // Don't include the name of the return slot parameter if the function
+      // doesn't have a return slot; the name won't be used for anything in that
+      // case.
+      // TODO: Should the call parameter even exist in that case? There isn't a
+      // corresponding argument in a `call` instruction.
+      if (!is_out_param || has_return_slot) {
+        FormatName(param_id);
+        out_ << ": ";
       }
-      FormatName(param_id);
-      out_ << ": ";
-      FormatType(sem_ir_->insts().Get(param_id).type_id());
+      FormatTypeOfInst(param_id);
     }
 
-    out_ << (is_implicit ? "]" : ")");
+    out_ << close;
   }
 
   // Prints instructions for a code block.
@@ -861,7 +872,7 @@ class FormatterImpl {
             out_ << "init ";
             break;
         }
-        FormatType(inst.type_id());
+        FormatTypeOfInst(inst_id);
         out_ << " = ";
         break;
       case InstValueKind::None:
@@ -884,6 +895,12 @@ class FormatterImpl {
   // Print ImportRefUnloaded with type-like semantics even though it lacks a
   // type_id.
   auto FormatInstLhs(InstId inst_id, ImportRefUnloaded /*inst*/) -> void {
+    FormatName(inst_id);
+    out_ << " = ";
+  }
+
+  // Format ImplWitnessTable with its name even though it lacks a type_id.
+  auto FormatInstLhs(InstId inst_id, ImplWitnessTable /*inst*/) -> void {
     FormatName(inst_id);
     out_ << " = ";
   }
@@ -1143,20 +1160,27 @@ class FormatterImpl {
       const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id());
       auto loc_id =
           import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id());
-      if (!loc_id.has_value()) {
-        out_ << import_ir_inst.inst_id() << " [no loc]";
-      } else if (loc_id.is_import_ir_inst_id()) {
-        // TODO: Probably don't want to format each indirection, but maybe reuse
-        // GetCanonicalImportIRInst?
-        out_ << import_ir_inst.inst_id() << " [indirect]";
-      } else if (loc_id.is_node_id()) {
-        // Formats a NodeId from the import.
-        const auto& tree = import_ir.sem_ir->parse_tree();
-        auto token = tree.node_token(loc_id.node_id());
-        out_ << "loc" << tree.tokens().GetLineNumber(token) << "_"
-             << tree.tokens().GetColumnNumber(token);
-      } else {
-        CARBON_FATAL("Unexpected LocId: {0}", loc_id);
+      switch (loc_id.kind()) {
+        case SemIR::LocId::Kind::None: {
+          out_ << import_ir_inst.inst_id() << " [no loc]";
+          break;
+        }
+        case SemIR::LocId::Kind::ImportIRInstId: {
+          // TODO: Probably don't want to format each indirection, but maybe
+          // reuse GetCanonicalImportIRInst?
+          out_ << import_ir_inst.inst_id() << " [indirect]";
+          break;
+        }
+        case SemIR::LocId::Kind::NodeId: {
+          // Formats a NodeId from the import.
+          const auto& tree = import_ir.sem_ir->parse_tree();
+          auto token = tree.node_token(loc_id.node_id());
+          out_ << "loc" << tree.tokens().GetLineNumber(token) << "_"
+               << tree.tokens().GetColumnNumber(token);
+          break;
+        }
+        case SemIR::LocId::Kind::InstId:
+          CARBON_FATAL("Unexpected LocId: {0}", loc_id);
       }
     }
     out_ << ", " << loaded_label;
@@ -1200,7 +1224,7 @@ class FormatterImpl {
       out_ << sep << ".";
       FormatName(field.name_id);
       out_ << ": ";
-      FormatType(field.type_id);
+      FormatInstAsType(field.type_inst_id);
     }
     out_ << "}";
   }
@@ -1277,9 +1301,9 @@ class FormatterImpl {
       }
       for (auto rewrite : info.rewrite_constraints) {
         out_ << and_sep;
-        FormatConstant(rewrite.lhs_const_id);
+        FormatArg(rewrite.lhs_id);
         out_ << " = ";
-        FormatConstant(rewrite.rhs_const_id);
+        FormatArg(rewrite.rhs_id);
       }
       if (info.other_requirements) {
         out_ << and_sep << "TODO";
@@ -1348,18 +1372,6 @@ class FormatterImpl {
          << '"';
   }
 
-  auto FormatArg(TypeId id) -> void { FormatType(id); }
-
-  auto FormatArg(TypeBlockId id) -> void {
-    out_ << '(';
-    llvm::ListSeparator sep;
-    for (auto type_id : sem_ir_->type_blocks().Get(id)) {
-      out_ << sep;
-      FormatArg(type_id);
-    }
-    out_ << ')';
-  }
-
   auto FormatReturnSlotArg(InstId dest_id) -> void {
     out_ << " to ";
     FormatArg(dest_id);
@@ -1411,6 +1423,10 @@ class FormatterImpl {
     }
   }
 
+  auto FormatName(TypeInstId id) -> void {
+    FormatName(static_cast<InstId>(id));
+  }
+
   auto FormatLabel(InstBlockId id) -> void {
     out_ << inst_namer_->GetLabelFor(scope_, id);
   }
@@ -1442,15 +1458,36 @@ class FormatterImpl {
     FormatName(sem_ir_->constant_values().GetInstId(id));
   }
 
-  auto FormatType(TypeId id) -> void {
+  auto FormatInstAsType(InstId id) -> void {
     if (!id.has_value()) {
       out_ << "invalid";
-    } else {
-      // Types are formatted in the `constants` scope because they only refer to
-      // constants.
-      llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
-      FormatConstant(sem_ir_->types().GetConstantId(id));
+      return;
     }
+
+    // Types are formatted in the `constants` scope because they typically refer
+    // to constants.
+    llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
+    if (auto const_id = sem_ir_->constant_values().Get(id);
+        const_id.has_value()) {
+      FormatConstant(const_id);
+    } else {
+      // Type instruction didn't have a constant value. Fall back to printing
+      // the instruction name.
+      FormatArg(id);
+    }
+  }
+
+  auto FormatTypeOfInst(InstId id) -> void {
+    auto type_id = sem_ir_->insts().Get(id).type_id();
+    if (!type_id.has_value()) {
+      out_ << "invalid";
+      return;
+    }
+
+    // Types are formatted in the `constants` scope because they typically refer
+    // to constants.
+    llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
+    FormatConstant(sem_ir_->types().GetConstantId(type_id));
   }
 
   // Returns the label for the indicated IR.

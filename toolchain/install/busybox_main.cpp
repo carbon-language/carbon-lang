@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <cstdlib>
+#include <string>
 
 #include "common/bazel_working_dir.h"
 #include "common/error.h"

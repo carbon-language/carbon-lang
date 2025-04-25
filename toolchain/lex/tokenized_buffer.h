@@ -85,6 +85,18 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     LineIndex start_line;
   };
 
+  // A range of tokens marked by `//@dump-semir-[start|end]`. The end token is
+  // non-inclusive: [start, end).
+  //
+  // The particular syntax was chosen because it can be lexed efficiently. It
+  // only occurs in invalid comment strings, so shouldn't slow down lexing of
+  // correct code. It's also comment-like because its presence won't affect
+  // parse/check.
+  struct DumpSemIRRange {
+    TokenIndex start;
+    TokenIndex end;
+  };
+
   auto GetKind(TokenIndex token) const -> TokenKind;
   auto GetLine(TokenIndex token) const -> LineIndex;
 
@@ -196,6 +208,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   }
 
   auto comments_size() const -> size_t { return comments_.size(); }
+
+  auto dump_sem_ir_ranges() -> llvm::ArrayRef<DumpSemIRRange> {
+    return dump_sem_ir_ranges_;
+  }
 
   // This is an upper bound on the number of output parse nodes in the absence
   // of errors.
@@ -481,6 +497,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Comments in the file.
   llvm::SmallVector<CommentData> comments_;
+
+  // Ranges of SemIR to dump.
+  llvm::SmallVector<DumpSemIRRange> dump_sem_ir_ranges_;
 
   // An upper bound on the number of parse tree nodes that we expect to be
   // created for the tokens in this buffer.

@@ -41,11 +41,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (imports.%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness %ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
-// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
+// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
@@ -64,7 +65,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [concrete]
 // CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %PartiallyConstant.type: type = fn_type @PartiallyConstant [concrete]
 // CHECK:STDOUT:   %PartiallyConstant: %PartiallyConstant.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -152,7 +153,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @A() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_25.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_25.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]
@@ -165,7 +166,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @B() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc12_25.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Convert.bound.ef9]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_25.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method.b92]
@@ -231,7 +232,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc23_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]
@@ -252,7 +253,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.else.loc23:
 // CHECK:STDOUT:   %int_32.loc23_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc23_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %ptr.loc23: type = ptr_type %i32.loc23_32 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %ptr.loc23: type = ptr_type %i32.loc23_32 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   br !if.expr.result.loc23(%ptr.loc23)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc23:
@@ -262,12 +263,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !.loc23_7:
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %ptr = binding_pattern w
-// CHECK:STDOUT:     %.loc24_3: %ptr = var_pattern %w.patt
+// CHECK:STDOUT:     %w.patt: %ptr.235 = binding_pattern w
+// CHECK:STDOUT:     %.loc24_3: %ptr.235 = var_pattern %w.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %ptr = var w
+// CHECK:STDOUT:   %w.var: ref %ptr.235 = var w
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
-// CHECK:STDOUT:   %addr: %ptr = addr_of %v.ref
+// CHECK:STDOUT:   %addr: %ptr.235 = addr_of %v.ref
 // CHECK:STDOUT:   assign %w.var, %addr
 // CHECK:STDOUT:   br !.loc24_13
 // CHECK:STDOUT:
@@ -283,23 +284,23 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.else.loc24:
 // CHECK:STDOUT:   %int_32.loc24_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc24_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %ptr.loc24: type = ptr_type %i32.loc24_33 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %ptr.loc24: type = ptr_type %i32.loc24_33 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   br !if.expr.result.loc24(%ptr.loc24)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc24:
-// CHECK:STDOUT:   %.loc24_10: type = block_arg !if.expr.result.loc24 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %.loc24_10: type = block_arg !if.expr.result.loc24 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   br !.loc24_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc24_7:
-// CHECK:STDOUT:   %w: ref %ptr = bind_name w, %w.var
-// CHECK:STDOUT:   %w.ref: ref %ptr = name_ref w, %w
-// CHECK:STDOUT:   %.loc25_11: %ptr = bind_value %w.ref
+// CHECK:STDOUT:   %w: ref %ptr.235 = bind_name w, %w.var
+// CHECK:STDOUT:   %w.ref: ref %ptr.235 = name_ref w, %w
+// CHECK:STDOUT:   %.loc25_11: %ptr.235 = bind_value %w.ref
 // CHECK:STDOUT:   %.loc25_10.1: ref %i32 = deref %.loc25_11
 // CHECK:STDOUT:   %.loc25_10.2: %i32 = bind_value %.loc25_10.1
 // CHECK:STDOUT:   return %.loc25_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartiallyConstant(%t.param_patt: type) -> %i32 {
+// CHECK:STDOUT: fn @PartiallyConstant(%t.param: type) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %i32 = binding_pattern v
@@ -307,7 +308,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc29_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc29_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]
@@ -336,12 +337,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !.loc29_7:
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %ptr = binding_pattern w
-// CHECK:STDOUT:     %.loc30_3: %ptr = var_pattern %w.patt
+// CHECK:STDOUT:     %w.patt: %ptr.235 = binding_pattern w
+// CHECK:STDOUT:     %.loc30_3: %ptr.235 = var_pattern %w.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %ptr = var w
+// CHECK:STDOUT:   %w.var: ref %ptr.235 = var w
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
-// CHECK:STDOUT:   %addr: %ptr = addr_of %v.ref
+// CHECK:STDOUT:   %addr: %ptr.235 = addr_of %v.ref
 // CHECK:STDOUT:   assign %w.var, %addr
 // CHECK:STDOUT:   br !.loc30_13
 // CHECK:STDOUT:
@@ -356,17 +357,17 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.else.loc30:
 // CHECK:STDOUT:   %int_32.loc30: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc30: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32.loc30 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32.loc30 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   br !if.expr.result.loc30(%ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc30:
-// CHECK:STDOUT:   %.loc30_10: type = block_arg !if.expr.result.loc30 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %.loc30_10: type = block_arg !if.expr.result.loc30 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   br !.loc30_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc30_7:
-// CHECK:STDOUT:   %w: ref %ptr = bind_name w, %w.var
-// CHECK:STDOUT:   %w.ref: ref %ptr = name_ref w, %w
-// CHECK:STDOUT:   %.loc31_11: %ptr = bind_value %w.ref
+// CHECK:STDOUT:   %w: ref %ptr.235 = bind_name w, %w.var
+// CHECK:STDOUT:   %w.ref: ref %ptr.235 = name_ref w, %w
+// CHECK:STDOUT:   %.loc31_11: %ptr.235 = bind_value %w.ref
 // CHECK:STDOUT:   %.loc31_10.1: ref %i32 = deref %.loc31_11
 // CHECK:STDOUT:   %.loc31_10.2: %i32 = bind_value %.loc31_10.1
 // CHECK:STDOUT:   return %.loc31_10.2

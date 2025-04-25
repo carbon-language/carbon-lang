@@ -38,7 +38,7 @@ static auto DecayIntLiteralToSizedInt(Context& context, Parse::NodeId node_id,
                                       SemIR::InstId operand_id)
     -> SemIR::InstId {
   if (context.types().GetInstId(context.insts().Get(operand_id).type_id()) ==
-      SemIR::IntLiteralType::SingletonInstId) {
+      SemIR::IntLiteralType::TypeInstId) {
     operand_id = ConvertToValueOfType(
         context, node_id, operand_id,
         MakeIntType(context, node_id, SemIR::IntKind::Signed,
@@ -64,10 +64,10 @@ auto HandleParseNode(Context& context, Parse::IfExprThenId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::IfExprElseId node_id) -> bool {
-  if (context.return_scope_stack().empty()) {
-    context.TODO(node_id,
-                 "Control flow expressions are currently only supported inside "
-                 "functions.");
+  if (!context.scope_stack().IsInFunctionScope()) {
+    return context.TODO(node_id,
+                        "Control flow expressions are currently only supported "
+                        "inside functions.");
   }
   // Alias node_id for if/then/else consistency.
   auto& else_node = node_id;

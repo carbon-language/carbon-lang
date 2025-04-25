@@ -286,7 +286,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddressOfParam(%param.param_patt: %i32) {
+// CHECK:STDOUT: fn @AddressOfParam(%param.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %param_addr.patt: %ptr.235 = binding_pattern param_addr

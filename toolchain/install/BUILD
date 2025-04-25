@@ -6,9 +6,8 @@ load(
     "@llvm-project//:vars.bzl",
     "LLVM_VERSION_MAJOR",
 )
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_python//python:defs.bzl", "py_test")
-load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest")
 load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
@@ -104,7 +103,6 @@ cc_test(
 cc_binary(
     name = "carbon-busybox",
     srcs = ["busybox_main.cpp"],
-    env = cc_env(),
     deps = [
         ":busybox_info",
         ":install_paths",

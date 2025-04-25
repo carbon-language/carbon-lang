@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/inst.h"
 
+#include <utility>
+
 namespace Carbon::SemIR {
 
 auto Inst::Print(llvm::raw_ostream& out) const -> void {

@@ -7,6 +7,7 @@
 #include <variant>
 
 #include "toolchain/check/action.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/impl_lookup.h"
@@ -114,18 +115,21 @@ auto EvalConstantInst(Context& context, SemIR::ClassElementAccess inst)
 
 auto EvalConstantInst(Context& context, SemIR::ClassDecl inst)
     -> ConstantEvalResult {
+  const auto& class_info = context.classes().Get(inst.class_id);
+
   // If the class has generic parameters, we don't produce a class type, but a
   // callable whose return value is a class type.
-  if (context.classes().Get(inst.class_id).has_parameters()) {
+  if (class_info.has_parameters()) {
     return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
         .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
   }
 
   // A non-generic class declaration evaluates to the class type.
-  return ConstantEvalResult::NewSamePhase(
-      SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = inst.class_id,
-                       .specific_id = SemIR::SpecificId::None});
+  return ConstantEvalResult::NewAnyPhase(SemIR::ClassType{
+      .type_id = SemIR::TypeType::TypeId,
+      .class_id = inst.class_id,
+      .specific_id =
+          context.generics().GetSelfSpecific(class_info.generic_id)});
 }
 
 auto EvalConstantInst(Context& /*context*/, SemIR::ClassInit inst)
@@ -177,23 +181,6 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::FacetAccessWitness inst)
-    -> ConstantEvalResult {
-  // TODO: The `index` we are given is an index into the required_interfaces of
-  // the original facet type, but we're using it to index into the witnesses of
-  // the substituted facet type. There is no reason to expect those witnesses to
-  // be in the same order, or even for there to be the same number of witnesses.
-
-  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
-          inst.facet_value_inst_id)) {
-    auto impl_witness_inst_id = context.inst_blocks().Get(
-        facet_value->witnesses_block_id)[inst.index.index];
-    return ConstantEvalResult::Existing(
-        context.constant_values().Get(impl_witness_inst_id));
-  }
-  return ConstantEvalResult::NewSamePhase(inst);
-}
-
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::FloatType inst) -> ConstantEvalResult {
   return ValidateFloatType(context, inst_id, inst)
@@ -212,8 +199,16 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::LookupImplWitness inst) -> ConstantEvalResult {
-  auto result = EvalLookupSingleImplWitness(
-      context, context.insts().GetLocId(inst_id), inst);
+  // The self value is canonicalized in order to produce a canonical
+  // LookupImplWitness instruction. We save the non-canonical instruction as it
+  // may be a concrete `FacetValue` that contains a concrete witness.
+  auto non_canonical_query_self_inst_id = inst.query_self_inst_id;
+  inst.query_self_inst_id =
+      GetCanonicalizedFacetOrTypeValue(context, inst.query_self_inst_id);
+
+  auto result =
+      EvalLookupSingleImplWitness(context, context.insts().GetLocId(inst_id),
+                                  inst, non_canonical_query_self_inst_id);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
@@ -233,7 +228,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
-    auto elements = context.inst_blocks().Get(witness->elements_id);
+    auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
+        witness->witness_table_id);
+    auto elements = context.inst_blocks().Get(witness_table.elements_id);
     // `elements` can be empty if there is only a forward declaration of the
     // impl.
     if (!elements.empty()) {
@@ -255,6 +252,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   }
 
   return ConstantEvalResult::NewSamePhase(inst);
+}
+
+auto EvalConstantInst(Context& context,
+                      SemIR::ImplWitnessAssociatedConstant inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.inst_id));
 }
 
 auto EvalConstantInst(Context& /*context*/, SemIR::ImportRefUnloaded inst)
@@ -280,16 +284,19 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::InterfaceDecl inst)
     -> ConstantEvalResult {
+  const auto& interface_info = context.interfaces().Get(inst.interface_id);
+
   // If the interface has generic parameters, we don't produce an interface
   // type, but a callable whose return value is an interface type.
-  if (context.interfaces().Get(inst.interface_id).has_parameters()) {
+  if (interface_info.has_parameters()) {
     return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
         .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
   }
 
-  // A non-generic interface declaration evaluates to a facet type.
-  return ConstantEvalResult::NewSamePhase(FacetTypeFromInterface(
-      context, inst.interface_id, SemIR::SpecificId::None));
+  // A non-parameterized interface declaration evaluates to a facet type.
+  return ConstantEvalResult::NewAnyPhase(FacetTypeFromInterface(
+      context, inst.interface_id,
+      context.generics().GetSelfSpecific(interface_info.generic_id)));
 }
 
 auto EvalConstantInst(Context& context, SemIR::NameRef inst)
@@ -302,27 +309,29 @@ auto EvalConstantInst(Context& context, SemIR::NameRef inst)
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::RequireCompleteType inst) -> ConstantEvalResult {
   auto witness_type_id =
-      GetSingletonType(context, SemIR::WitnessType::SingletonInstId);
+      GetSingletonType(context, SemIR::WitnessType::TypeInstId);
 
   // If the type is a concrete constant, require it to be complete now.
-  auto complete_type_id = inst.complete_type_id;
-  if (context.types().GetConstantId(complete_type_id).is_concrete()) {
+  auto complete_type_id =
+      context.types().GetTypeIdForTypeInstId(inst.complete_type_inst_id);
+  if (complete_type_id.is_concrete()) {
     if (!TryToCompleteType(context, complete_type_id, inst_id, [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
                             "{0} evaluates to incomplete type {1}",
-                            SemIR::TypeId, SemIR::TypeId);
+                            InstIdAsType, InstIdAsType);
           return context.emitter().Build(
               inst_id, IncompleteTypeInMonomorphization,
               context.insts()
                   .GetAs<SemIR::RequireCompleteType>(inst_id)
-                  .complete_type_id,
-              complete_type_id);
+                  .complete_type_inst_id,
+              inst.complete_type_inst_id);
         })) {
       return ConstantEvalResult::Error;
     }
     return ConstantEvalResult::NewSamePhase(SemIR::CompleteTypeWitness{
         .type_id = witness_type_id,
-        .object_repr_id = context.types().GetObjectRepr(complete_type_id)});
+        .object_repr_type_inst_id = context.types().GetInstId(
+            context.types().GetObjectRepr(complete_type_id))});
   }
 
   // If it's not a concrete constant, require it to be complete once it

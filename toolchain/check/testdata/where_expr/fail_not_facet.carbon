@@ -82,7 +82,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T: <error>) {
-// CHECK:STDOUT:   fn(%T.patt: <error>);
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(<error>) {}
@@ -128,7 +128,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%U: <error>) {
-// CHECK:STDOUT:   fn(%U.patt: <error>);
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(<error>) {}

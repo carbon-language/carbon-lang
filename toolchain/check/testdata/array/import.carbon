@@ -111,7 +111,7 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n.param_patt: %i32) -> %i32 {
+// CHECK:STDOUT: fn @G(%n.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc5_12.1: ref %array_type = temporary_storage
@@ -125,5 +125,5 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:   return %.loc5_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %array_type [from "library.carbon"];
+// CHECK:STDOUT: fn @F [from "library.carbon"];
 // CHECK:STDOUT:
