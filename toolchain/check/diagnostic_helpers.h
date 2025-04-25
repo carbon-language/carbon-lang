@@ -13,7 +13,6 @@
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
-class Context;
 
 class LocIdForDiagnostics {
  public:
