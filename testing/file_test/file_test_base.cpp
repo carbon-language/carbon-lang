@@ -68,8 +68,7 @@ ABSL_FLAG(bool, dump_output, false,
           "to stderr.");
 ABSL_FLAG(int, print_slowest_tests, 5,
           "The number of tests to print when showing slowest tests. Set to 0 "
-          "to print all tests, ordered by elapsed time. The default of -1 "
-          "disables printing.");
+          "to disabling printing. Set to -1 to print all tests.");
 
 namespace Carbon::Testing {
 
