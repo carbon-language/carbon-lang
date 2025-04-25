@@ -298,13 +298,15 @@ fn Foo1 {
 
 fn Foo2 {
   my_list.Sort(
-    fn => $0 < $1  // ❌ Invalid: Foo2 is already using positional parameters
+    // ❌ Invalid: Foo2 is already using positional parameters
+    fn => $0 < $1
   );
 }
 
 fn Foo3() {
   my_list.Sort(
-    fn => $0 < $1  // ✅ Valid: Foo3 has explicit parameters
+    // ✅ Valid: Foo3 has explicit parameters
+    fn => $0 < $1
   );
 }
 
@@ -363,8 +365,10 @@ fn Example() {
   var b: i32 = 0;
 
 let lambda: auto = fn [a, var b] {
-  a += 1;  // ❌ Invalid: by-value captures are immutable (default `let`)
-  b += 1;  // ✅ Valid: `b` is a mutable copy (captured with `var`)
+  // ❌ Invalid: by-value captures are immutable (default `let`)
+  a += 1;
+  // ✅ Valid: `b` is a mutable copy (captured with `var`)
+  b += 1;
 };
 
   lambda();
@@ -403,8 +407,9 @@ thing to appear in the square brackets.
 fn Foo1() {
   let handle: Handle = Handle.Get();
   fn MyThread[var]() {
-    handle.Process();  // `handle` is captured by-object due to the default capture
-                       // mode specifier of `var`
+    // `handle` is captured by-object due to the default capture
+    // mode specifier of `var`
+    handle.Process();
   }
   var thread: Thread = Thread.Make(MyThread);
   thread.Join();
@@ -413,8 +418,9 @@ fn Foo1() {
 fn Foo2() {
   let handle: Handle = Handle.Get();
   fn MyThread[let]() {
-    handle.Process();  // `handle` is captured by-value due to the default capture
-                       // mode specifier of `let`
+    // `handle` is captured by-value due to the default capture
+    // mode specifier of `let`
+    handle.Process();
   }
   var thread: Thread = Thread.Make(MyThread);
   thread.Join();
