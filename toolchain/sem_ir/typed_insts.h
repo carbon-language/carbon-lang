@@ -27,9 +27,9 @@
 //   listed in the `IdKind` type-enum, typically derived from `IdBase`.
 //
 // The field names here matter -- the fields must have the names specified
-// above, when present. When converting to a `Inst`, the `kind` and
-// `type_id` fields will become the kind and type associated with the
-// type-erased instruction.
+// above, when present. When converting to a `Inst`, the `kind` and `type_id`
+// fields will become the kind and type associated with the type-erased
+// instruction.
 //
 // Each type that describes a single kind of instructions provides a constant
 // `Kind` that associates the type with a particular member of the `InstKind`
