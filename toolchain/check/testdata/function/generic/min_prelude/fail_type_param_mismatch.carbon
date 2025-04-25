@@ -24,9 +24,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
-// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
@@ -48,8 +46,8 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc14_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %U.patt.loc14_16.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14_16.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %U.patt: type = symbolic_binding_pattern U, 1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc14_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.loc14_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_16.2 (constants.%U)]
@@ -58,9 +56,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc14_6.1: type, %U.loc14_16.1: type) {
 // CHECK:STDOUT:   %T.loc14_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc14_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %U.loc14_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_16.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc14_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr.loc15_11.2: type = ptr_type %T.loc14_6.2 [symbolic = %ptr.loc15_11.2 (constants.%ptr)]
@@ -94,9 +90,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc14_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc14_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc14_16.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc14_16.2 => constants.%U.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/destroy.carbon

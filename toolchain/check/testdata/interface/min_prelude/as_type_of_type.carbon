@@ -23,7 +23,6 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [concrete]
 // CHECK:STDOUT:   %Self: %Empty.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: %Empty.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %Empty.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
@@ -45,7 +44,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc16_6.1: %Empty.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %Empty.type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
 // CHECK:STDOUT:     %T.loc16_6.1: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc16_6.2 (constants.%T)]
@@ -62,7 +61,6 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc16_6.1: %Empty.type) {
 // CHECK:STDOUT:   %T.loc16_6.2: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc16_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc16_6.2: %Empty.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc17_10.2: type = facet_access_type %T.loc16_6.2 [symbolic = %T.as_type.loc17_10.2 (constants.%T.as_type)]
@@ -87,7 +85,6 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc16_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc16_6.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/destroy.carbon

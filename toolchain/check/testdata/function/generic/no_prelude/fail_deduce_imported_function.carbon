@@ -47,7 +47,6 @@ fn B() {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %Z.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
@@ -62,7 +61,7 @@ fn B() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %T.patt.loc4_6.1: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %Z.type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @A.%struct_type.a.loc4_22.2 (%struct_type.a) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @A.%struct_type.a.loc4_22.2 (%struct_type.a) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -89,7 +88,6 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A(%T.loc4_6.1: %Z.type) {
 // CHECK:STDOUT:   %T.loc4_6.2: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_6.2: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.as_type.loc4_21.2: type = facet_access_type %T.loc4_6.2 [symbolic = %T.as_type.loc4_21.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %struct_type.a.loc4_22.2: type = struct_type {.a: @A.%T.as_type.loc4_21.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:
@@ -104,7 +102,6 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc4_21.2 => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a.loc4_22.2 => constants.%struct_type.a
 // CHECK:STDOUT: }
@@ -114,7 +111,6 @@ fn B() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %Z.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %A.type.00d: type = fn_type @A.1 [concrete]
@@ -148,7 +144,7 @@ fn B() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Lib.import = import Lib
 // CHECK:STDOUT:   %A.decl: %A.type.00d = fn_decl @A.1 [concrete = constants.%A.1db] {
-// CHECK:STDOUT:     %T.patt.loc4_6.1: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %Z.type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @A.1.%struct_type.a.loc4_26.2 (%struct_type.a) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -177,7 +173,6 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.1(%T.loc4_6.1: %Z.type) {
 // CHECK:STDOUT:   %T.loc4_6.2: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_6.2: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.as_type.loc4_25.2: type = facet_access_type %T.loc4_6.2 [symbolic = %T.as_type.loc4_25.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %struct_type.a.loc4_26.2: type = struct_type {.a: @A.1.%T.as_type.loc4_25.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:
@@ -204,7 +199,6 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.2(imports.%Lib.import_ref.be7: %Z.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: %Z.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic = %T.as_type (constants.%T.as_type)]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @A.2.%T.as_type (%T.as_type)} [symbolic = %struct_type.a (constants.%struct_type.a)]
 // CHECK:STDOUT:
@@ -216,14 +210,12 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type.loc4_25.2 => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a.loc4_26.2 => constants.%struct_type.a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T.as_type => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
 // CHECK:STDOUT: }

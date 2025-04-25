@@ -86,7 +86,6 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %Dest.patt: type = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.96f: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.96f = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.07f: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
@@ -103,7 +102,7 @@ interface C {
 // CHECK:STDOUT:     .ImplicitAs = %ImplicitAs.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
-// CHECK:STDOUT:     %Dest.patt.loc3_22.1: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_22.2 (constants.%Dest.patt)]
+// CHECK:STDOUT:     %Dest.patt: type = symbolic_binding_pattern Dest, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Dest.loc3_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc3_22.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
@@ -111,7 +110,6 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(%Dest.loc3_22.1: type) {
 // CHECK:STDOUT:   %Dest.loc3_22.2: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc3_22.2 (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt.loc3_22.2: type = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc3_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest.loc3_22.2)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.07f)]
@@ -162,7 +160,6 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc3_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc3_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self) {
@@ -264,7 +261,6 @@ interface C {
 // CHECK:STDOUT:   %assoc0.25f: %I2.assoc_type = assoc_entity element0, @I2.%T2 [concrete]
 // CHECK:STDOUT:   %J2.type: type = facet_type <@J2> [concrete]
 // CHECK:STDOUT:   %V: %J2.type = bind_symbolic_name V, 0 [symbolic]
-// CHECK:STDOUT:   %V.patt: %J2.type = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %V.as_type: type = facet_access_type %V [symbolic]
 // CHECK:STDOUT:   %.Self: %I2.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
@@ -302,7 +298,7 @@ interface C {
 // CHECK:STDOUT:   %I2.decl: type = interface_decl @I2 [concrete = constants.%I2.type] {} {}
 // CHECK:STDOUT:   %J2.decl.loc9: type = interface_decl @J2 [concrete = constants.%J2.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {
-// CHECK:STDOUT:     %V.patt.loc11_14.1: %J2.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc11_14.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.patt: %J2.type = symbolic_binding_pattern V, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %V.ref: %J2.type = name_ref V, %V.loc11_14.1 [symbolic = %V.loc11_14.2 (constants.%V)]
 // CHECK:STDOUT:     %V.as_type.loc11_22.1: type = facet_access_type %V.ref [symbolic = %V.as_type.loc11_22.2 (constants.%V.as_type)]
@@ -379,7 +375,6 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(%V.loc11_14.1: %J2.type) {
 // CHECK:STDOUT:   %V.loc11_14.2: %J2.type = bind_symbolic_name V, 0 [symbolic = %V.loc11_14.2 (constants.%V)]
-// CHECK:STDOUT:   %V.patt.loc11_14.2: %J2.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc11_14.2 (constants.%V.patt)]
 // CHECK:STDOUT:   %V.as_type.loc11_22.2: type = facet_access_type %V.loc11_14.2 [symbolic = %V.as_type.loc11_22.2 (constants.%V.as_type)]
 // CHECK:STDOUT:   %I2.impl_witness: <witness> = impl_witness file.%I2.impl_witness_table, @impl(%V.loc11_14.2) [symbolic = %I2.impl_witness (constants.%I2.impl_witness.2ab13d.1)]
 // CHECK:STDOUT:
@@ -407,7 +402,6 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%V) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc11_22.2 => constants.%V.as_type
 // CHECK:STDOUT:   %I2.impl_witness => constants.%I2.impl_witness.2ab13d.1
 // CHECK:STDOUT: }
@@ -416,7 +410,6 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%Self.541) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%Self.541
-// CHECK:STDOUT:   %V.patt.loc11_14.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.as_type.loc11_22.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %I2.impl_witness => constants.%I2.impl_witness.2ab13d.2
 // CHECK:STDOUT:

@@ -128,7 +128,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %array_type.743: type = array_type %int_3, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -181,7 +180,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc6_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_29.2 (%array_type.743) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_29.2 (%array_type.743) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @F.%T.loc6_6.2 (%T) = return_slot_pattern
@@ -220,7 +219,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc6_6.1: type) {
 // CHECK:STDOUT:   %T.loc6_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc6_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %array_type.loc6_29.2: type = array_type constants.%int_3, %T.loc6_6.2 [symbolic = %array_type.loc6_29.2 (constants.%array_type.743)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -290,13 +288,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %array_type.loc6_29.2 => constants.%array_type.743
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %array_type.loc6_29.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -313,7 +309,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %array_type.6a2: type = array_type %N, %C [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -370,7 +365,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc6_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0
 // CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_42.2 (%array_type.6a2) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_42.2 (%array_type.6a2) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -418,7 +413,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc6_6.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc6_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc6_6.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc6_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:   %array_type.loc6_42.2: type = array_type %N.loc6_6.2, constants.%C [symbolic = %array_type.loc6_42.2 (constants.%array_type.6a2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -485,13 +479,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc6_42.2 => constants.%array_type.6a2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_3.1ba) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%int_3.1ba
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc6_42.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -508,12 +500,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 1 [symbolic]
-// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %array_type.bb5: type = array_type %N, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -551,8 +541,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc6_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %N.patt.loc6_16.1: Core.IntLiteral = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_16.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 1
 // CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_52.2 (%array_type.bb5) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_52.2 (%array_type.bb5) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -587,9 +577,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc6_6.1: type, %N.loc6_16.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %T.loc6_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc6_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %N.loc6_16.2: Core.IntLiteral = bind_symbolic_name N, 1 [symbolic = %N.loc6_16.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc6_16.2: Core.IntLiteral = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_16.2 (constants.%N.patt)]
 // CHECK:STDOUT:   %array_type.loc6_52.2: type = array_type %N.loc6_16.2, %T.loc6_6.2 [symbolic = %array_type.loc6_52.2 (constants.%array_type.bb5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -643,17 +631,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc6_16.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc6_16.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc6_52.2 => constants.%array_type.bb5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C, constants.%int_3) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %N.loc6_16.2 => constants.%int_3
-// CHECK:STDOUT:   %N.patt.loc6_16.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc6_52.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -667,7 +651,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %array_type.9d4: type = array_type %int_2, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -721,7 +704,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc6_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_29.2 (%array_type.9d4) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_29.2 (%array_type.9d4) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @F.%T.loc6_6.2 (%T) = return_slot_pattern
@@ -760,7 +743,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc6_6.1: type) {
 // CHECK:STDOUT:   %T.loc6_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc6_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %array_type.loc6_29.2: type = array_type constants.%int_2, %T.loc6_6.2 [symbolic = %array_type.loc6_29.2 (constants.%array_type.9d4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -830,13 +812,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %array_type.loc6_29.2 => constants.%array_type.9d4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %array_type.loc6_29.2 => constants.%array_type.15a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -854,7 +834,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %array_type.6a2: type = array_type %N, %C [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -914,7 +893,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc7_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc7_6.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0
 // CHECK:STDOUT:     %a.patt: @F.%array_type.loc7_42.2 (%array_type.6a2) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc7_42.2 (%array_type.6a2) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -971,7 +950,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc7_6.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc7_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc7_6.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc7_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc7_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:   %array_type.loc7_42.2: type = array_type %N.loc7_6.2, constants.%C [symbolic = %array_type.loc7_42.2 (constants.%array_type.6a2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1038,13 +1016,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc7_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc7_42.2 => constants.%array_type.6a2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_3.1ba) {
 // CHECK:STDOUT:   %N.loc7_6.2 => constants.%int_3.1ba
-// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %array_type.loc7_42.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1063,7 +1039,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.8e2: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2fd: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %Convert.type.71e: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1d9 = impl_witness_table (imports.%Core.import_ref.85c), @impl.971 [concrete]
@@ -1111,7 +1086,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc6_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT:     %N.patt: %i32 = symbolic_binding_pattern N, 0
 // CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_28.2 (%array_type.b2f) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_28.2 (%array_type.b2f) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -1163,7 +1138,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc6_6.1: %i32) {
 // CHECK:STDOUT:   %N.loc6_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc6_6.2 (constants.%N.51e)]
-// CHECK:STDOUT:   %N.patt.loc6_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:   %bound_method.loc6_27.3: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc6_27.3 (constants.%bound_method)]
 // CHECK:STDOUT:   %int.convert_checked.loc6_27.2: init Core.IntLiteral = call %bound_method.loc6_27.3(%N.loc6_6.2) [symbolic = %int.convert_checked.loc6_27.2 (constants.%int.convert_checked)]
@@ -1218,7 +1192,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.patt.8e2
 // CHECK:STDOUT:   %Convert.bound => constants.%Convert.bound
 // CHECK:STDOUT:   %bound_method.loc6_27.3 => constants.%bound_method
 // CHECK:STDOUT:   %int.convert_checked.loc6_27.2 => constants.%int.convert_checked

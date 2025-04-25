@@ -62,7 +62,6 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [concrete]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [concrete]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
@@ -136,7 +135,7 @@ fn Test() {
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: %Source.type = fn_decl @Source [concrete = constants.%Source] {
-// CHECK:STDOUT:     %T.patt.loc27_11.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %return.patt: @Source.%T.loc27_11.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Source.%T.loc27_11.2 (%T) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -233,7 +232,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Source(%T.loc27_11.1: type) {
 // CHECK:STDOUT:   %T.loc27_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc27_11.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc27_11.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc27_11.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
@@ -288,7 +286,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
@@ -299,7 +296,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%X) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%X
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.54b
@@ -308,7 +304,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%i32) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a

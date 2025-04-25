@@ -43,7 +43,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
@@ -78,7 +77,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc4_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0
 // CHECK:STDOUT:     %n.patt: @F.%Int.loc4_42.2 (%Int) = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: @F.%Int.loc4_42.2 (%Int) = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
@@ -132,7 +131,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc4_6.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc4_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc4_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:   %Int.loc4_42.2: type = class_type @Int, @Int(%N.loc4_6.2) [symbolic = %Int.loc4_42.2 (constants.%Int)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -158,13 +156,11 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %Int.loc4_42.2 => constants.%Int
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_64) {
 // CHECK:STDOUT:   %N.loc4_6.2 => constants.%int_64
-// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.patt
 // CHECK:STDOUT:   %Int.loc4_42.2 => constants.%i64
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -177,7 +173,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -206,9 +201,9 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc9_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc9_6.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0
 // CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: <error> = value_param_pattern %n.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %n.param_patt: <error> = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
@@ -264,7 +259,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc9_6.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc9_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc9_6.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc9_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc9_6.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -284,6 +278,5 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc9_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc9_6.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -759,7 +759,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
@@ -796,12 +795,12 @@ fn G() { F({}); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_18.1: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_18.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0, template
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_18.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_18.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc6_15.1: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc6_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0, template
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc6_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc6_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -810,7 +809,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc4_18.1: type) {
 // CHECK:STDOUT:   %T.loc4_18.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_18.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_18.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_18.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -826,7 +824,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc6_15.1: type) {
 // CHECK:STDOUT:   %T.loc6_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc6_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc6_15.2: type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc6_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.loc7_13.2: type = class_type @C, @C(%T.loc6_15.2) [template = %C.loc7_13.2 (constants.%C.f2e)]
@@ -866,21 +863,18 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_18.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_15.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(@F.%T.loc6_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc6_15.2 => constants.%empty_struct_type
-// CHECK:STDOUT:   %T.patt.loc6_15.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.loc7_13.2 => constants.%C.7a7
@@ -892,7 +886,6 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc4_18.2 => constants.%empty_struct_type
-// CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

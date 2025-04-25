@@ -55,7 +55,6 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Defined.type: type = fn_type @Defined [concrete]
 // CHECK:STDOUT:   %Defined: %Defined.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
@@ -98,7 +97,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Defined.decl: %Defined.type = fn_decl @Defined [concrete = constants.%Defined] {
-// CHECK:STDOUT:     %T.patt.loc4_12.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @Defined.%T.loc4_12.2 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Defined.%T.loc4_12.2 (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Defined.%T.loc4_12.2 (%T) = return_slot_pattern
@@ -125,7 +124,6 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Defined(%T.loc4_12.1: type) {
 // CHECK:STDOUT:   %T.loc4_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_12.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_12.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_12.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
@@ -159,12 +157,10 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_12.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_12.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -174,7 +170,6 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Defined.type: type = fn_type @Defined [concrete]
 // CHECK:STDOUT:   %Defined: %Defined.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -217,7 +212,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Defined.decl.loc4: %Defined.type = fn_decl @Defined [concrete = constants.%Defined] {
-// CHECK:STDOUT:     %T.patt.loc10: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @Defined.%T.loc4_12.2 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Defined.%T.loc4_12.2 (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Defined.%T.loc4_12.2 (%T) = return_slot_pattern
@@ -241,7 +236,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Defined.decl.loc10: %Defined.type = fn_decl @Defined [concrete = constants.%Defined] {
-// CHECK:STDOUT:     %T.patt.loc10: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @Defined.%T.loc4_12.2 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Defined.%T.loc4_12.2 (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Defined.%T.loc4_12.2 (%T) = return_slot_pattern
@@ -259,7 +254,6 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Defined(%T.loc4_12.1: type) {
 // CHECK:STDOUT:   %T.loc4_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_12.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_12.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
@@ -293,12 +287,10 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Defined(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_12.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -308,7 +300,6 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Undefined.type: type = fn_type @Undefined [concrete]
 // CHECK:STDOUT:   %Undefined: %Undefined.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -348,7 +339,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Undefined.decl: %Undefined.type = fn_decl @Undefined [concrete = constants.%Undefined] {
-// CHECK:STDOUT:     %T.patt.loc4_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %x.patt: @Undefined.%T.loc4_14.2 (%T) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @Undefined.%T.loc4_14.2 (%T) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @Undefined.%T.loc4_14.2 (%T) = return_slot_pattern
@@ -375,7 +366,6 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Undefined(%T.loc4_14.1: type) {
 // CHECK:STDOUT:   %T.loc4_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @Undefined.%T.loc4_14.2 (%T)) -> @Undefined.%T.loc4_14.2 (%T);
 // CHECK:STDOUT: }
@@ -402,11 +392,9 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Undefined(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Undefined(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_14.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
