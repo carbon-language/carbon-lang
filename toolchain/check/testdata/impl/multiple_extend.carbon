@@ -187,7 +187,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasG.facet: %HasG.type = facet_value %C, (%HasG.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.c48: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.a44: type = fn_type_with_self_type %F.type.b7b, %HasF.facet [concrete]
@@ -214,8 +214,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasG.decl: type = interface_decl @HasG [concrete = constants.%HasG.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %c.patt: %.c48 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %.c48 = value_param_pattern %c.patt, call_param0
+// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -364,7 +364,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasA2.facet: %HasA2.type = facet_value %D, (%HasA2.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.510: type = pattern_type %D [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -389,8 +389,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasA2.decl: type = interface_decl @HasA2 [concrete = constants.%HasA2.type] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
-// CHECK:STDOUT:     %d.patt: %.510 = binding_pattern d
-// CHECK:STDOUT:     %d.param_patt: %.510 = value_param_pattern %d.patt, call_param0
+// CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d
+// CHECK:STDOUT:     %d.param_patt: %pattern_type = value_param_pattern %d.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc21: type = name_ref D, file.%D.decl [concrete = constants.%D]
@@ -521,7 +521,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasI.facet: %HasI.type = facet_value %E, (%HasI.impl_witness) [concrete]
 // CHECK:STDOUT:   %struct_type.base.0ff: type = struct_type {.base: %B} [concrete]
 // CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base.0ff [concrete]
-// CHECK:STDOUT:   %.a4a: type = pattern_type %E [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %E [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.06f: type = fn_type_with_self_type %I.type.9bd, %HasI.facet [concrete]
@@ -547,8 +547,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %E.decl: type = class_decl @E [concrete = constants.%E] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %e.patt: %.a4a = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %.a4a = value_param_pattern %e.patt, call_param0
+// CHECK:STDOUT:     %e.patt: %pattern_type = binding_pattern e
+// CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern %e.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %E = value_param call_param0
 // CHECK:STDOUT:     %E.ref.loc19: type = name_ref E, file.%E.decl [concrete = constants.%E]
@@ -672,7 +672,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasK.facet: %HasK.type = facet_value %L, (%HasK.impl_witness) [concrete]
 // CHECK:STDOUT:   %struct_type.base.b1e: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base.b1e [concrete]
-// CHECK:STDOUT:   %.dd6: type = pattern_type %L [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %L [concrete]
 // CHECK:STDOUT:   %M.type: type = fn_type @M [concrete]
 // CHECK:STDOUT:   %M: %M.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -697,8 +697,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasK.decl: type = interface_decl @HasK [concrete = constants.%HasK.type] {} {}
 // CHECK:STDOUT:   %L.decl: type = class_decl @L [concrete = constants.%L] {} {}
 // CHECK:STDOUT:   %M.decl: %M.type = fn_decl @M [concrete = constants.%M] {
-// CHECK:STDOUT:     %l.patt: %.dd6 = binding_pattern l
-// CHECK:STDOUT:     %l.param_patt: %.dd6 = value_param_pattern %l.patt, call_param0
+// CHECK:STDOUT:     %l.patt: %pattern_type = binding_pattern l
+// CHECK:STDOUT:     %l.param_patt: %pattern_type = value_param_pattern %l.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %l.param: %L = value_param call_param0
 // CHECK:STDOUT:     %L.ref.loc19: type = name_ref L, file.%L.decl [concrete = constants.%L]
@@ -822,7 +822,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %N.cc3: %N.type.8b4 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.9c6: type = struct_type {.base: %NBase} [concrete]
 // CHECK:STDOUT:   %complete_type.121: <witness> = complete_type_witness %struct_type.base.9c6 [concrete]
-// CHECK:STDOUT:   %.873: type = pattern_type %O [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %O [concrete]
 // CHECK:STDOUT:   %P.type: type = fn_type @P [concrete]
 // CHECK:STDOUT:   %P: %P.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -849,8 +849,8 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasN2.decl: type = interface_decl @HasN2 [concrete = constants.%HasN2.type] {} {}
 // CHECK:STDOUT:   %O.decl: type = class_decl @O [concrete = constants.%O] {} {}
 // CHECK:STDOUT:   %P.decl: %P.type = fn_decl @P [concrete = constants.%P] {
-// CHECK:STDOUT:     %o.patt: %.873 = binding_pattern o
-// CHECK:STDOUT:     %o.param_patt: %.873 = value_param_pattern %o.patt, call_param0
+// CHECK:STDOUT:     %o.patt: %pattern_type = binding_pattern o
+// CHECK:STDOUT:     %o.param_patt: %pattern_type = value_param_pattern %o.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %o.param: %O = value_param call_param0
 // CHECK:STDOUT:     %O.ref.loc27: type = name_ref O, file.%O.decl [concrete = constants.%O]

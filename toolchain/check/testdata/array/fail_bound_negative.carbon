@@ -21,7 +21,7 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.1 [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type.15b = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -69,10 +69,10 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Negate.decl: %Negate.type.15b = fn_decl @Negate.1 [concrete = constants.%Negate] {
-// CHECK:STDOUT:     %n.patt: %.7ce = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %.7ce = value_param_pattern %n.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.7ce = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.7ce = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

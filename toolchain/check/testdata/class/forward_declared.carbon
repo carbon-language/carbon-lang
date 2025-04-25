@@ -17,7 +17,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Class [concrete]
-// CHECK:STDOUT:   %.796: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -38,10 +38,10 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.patt: %.796 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.796 = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.796 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.796 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc13_20: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %ptr.loc13_25: type = ptr_type %Class.ref.loc13_20 [concrete = constants.%ptr]

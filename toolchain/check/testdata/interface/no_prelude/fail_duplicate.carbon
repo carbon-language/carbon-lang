@@ -124,7 +124,7 @@ interface Class { }
 // CHECK:STDOUT:   %Interface.type.d726c6.2: type = facet_type <@Interface.2> [concrete]
 // CHECK:STDOUT:   %Self.719cbb.2: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.719cbb.2 [symbolic]
-// CHECK:STDOUT:   %.23b: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface.2 [concrete]
@@ -150,8 +150,8 @@ interface Class { }
 // CHECK:STDOUT: interface @Interface.2 {
 // CHECK:STDOUT:   %Self: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.719cbb.2]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: @F.%.loc14_8 (%.23b) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.%.loc14_8 (%.23b) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: @F.%pattern_type (%pattern_type) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc14_14.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc14_14.1: type = splice_block %.loc14_14.2 [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)] {
@@ -172,7 +172,7 @@ interface Class { }
 // CHECK:STDOUT: generic fn @F(@Interface.2.%Self: %Interface.type.d726c6.2) {
 // CHECK:STDOUT:   %Self: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.719cbb.2)]
 // CHECK:STDOUT:   %Self.as_type.loc14_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %.loc14_8: type = pattern_type %Self.as_type.loc14_14.1 [symbolic = %.loc14_8 (constants.%.23b)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc14_14.1 [symbolic = %pattern_type (constants.%pattern_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @F.%Self.as_type.loc14_14.1 (%Self.as_type));
 // CHECK:STDOUT: }
@@ -180,7 +180,7 @@ interface Class { }
 // CHECK:STDOUT: specific @F(constants.%Self.719cbb.2) {
 // CHECK:STDOUT:   %Self => constants.%Self.719cbb.2
 // CHECK:STDOUT:   %Self.as_type.loc14_14.1 => constants.%Self.as_type
-// CHECK:STDOUT:   %.loc14_8 => constants.%.23b
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon

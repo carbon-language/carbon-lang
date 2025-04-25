@@ -24,12 +24,12 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:   %const.20a: type = const_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr.36b: type = ptr_type %const.20a [concrete]
 // CHECK:STDOUT:   %ptr.3bc: type = ptr_type %ptr.36b [concrete]
-// CHECK:STDOUT:   %.1d4: type = pattern_type %ptr.3bc [concrete]
+// CHECK:STDOUT:   %pattern_type.1d4: type = pattern_type %ptr.3bc [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %const.12f: type = const_type %ptr.235 [concrete]
-// CHECK:STDOUT:   %.63b: type = pattern_type %const.12f [concrete]
+// CHECK:STDOUT:   %pattern_type.63b: type = pattern_type %const.12f [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -50,10 +50,10 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %p.patt: %.1d4 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.1d4 = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.1d4 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1d4 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.1d4 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.1d4 = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.1d4 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.1d4 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -73,10 +73,10 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %return: ref %ptr.3bc = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
-// CHECK:STDOUT:     %p.patt: %.63b = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.63b = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.63b = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.63b = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.63b = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.63b = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.63b = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.63b = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

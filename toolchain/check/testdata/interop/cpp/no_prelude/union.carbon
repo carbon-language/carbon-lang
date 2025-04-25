@@ -256,7 +256,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %.146: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -277,8 +277,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "union_definition.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %.146 = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %.146 = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -310,7 +310,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %.146: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -331,8 +331,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "union_declaration_and_definition.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %.146 = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %.146 = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -474,7 +474,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %.146: type = pattern_type %ptr.f68 [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -495,8 +495,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "union_public_member_function.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %.146 = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %.146 = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr.f68] {
@@ -537,7 +537,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %.146: type = pattern_type %ptr.f68 [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -570,7 +570,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bar.patt: %.146 = binding_pattern bar
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc18_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref.loc18_26: type = name_ref Bar, %Bar.decl [concrete = constants.%Bar]
@@ -594,7 +594,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %.146: type = pattern_type %ptr.f68 [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -615,8 +615,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "union_public_static_data_member.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %.146 = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %.146 = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6 [concrete = constants.%ptr.f68] {
@@ -643,7 +643,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %foo_bar.patt: %.146 = binding_pattern foo_bar
+// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = binding_pattern foo_bar
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc18_30: ref %Bar = deref %bar.ref

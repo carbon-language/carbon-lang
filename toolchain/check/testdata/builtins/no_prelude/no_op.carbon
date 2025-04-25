@@ -89,7 +89,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -103,8 +103,8 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {
-// CHECK:STDOUT:     %return.patt: %.cb1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.cb1 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_15.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_15.2: type = converted %.loc4_15.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -127,7 +127,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -141,10 +141,10 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {
-// CHECK:STDOUT:     %x.patt: %.cb1 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %.cb1 = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.cb1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.cb1 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_20.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_20.2: type = converted %.loc4_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -178,7 +178,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,8 +189,8 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %.cb1 = binding_pattern x
-// CHECK:STDOUT:     %.loc6_1: %.cb1 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
+// CHECK:STDOUT:     %.loc6_1: %pattern_type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
@@ -214,7 +214,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %.a96: type = pattern_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -224,8 +224,8 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:     .NoOp = %NoOp.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {
-// CHECK:STDOUT:     %return.patt: %.a96 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.a96 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_15.2: type = converted %.loc8_15.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

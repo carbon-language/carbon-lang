@@ -52,29 +52,29 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: --- core.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete]
 // CHECK:STDOUT:   %Self.b3d: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.f73: type = facet_access_type %Self.b3d [symbolic]
-// CHECK:STDOUT:   %.8f9: type = pattern_type %Self.as_type.f73 [symbolic]
+// CHECK:STDOUT:   %pattern_type.8f9: type = pattern_type %Self.as_type.f73 [symbolic]
 // CHECK:STDOUT:   %Op.type.31b: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Op.d59: %Op.type.31b = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0.82c: %Add.assoc_type = assoc_entity element0, @Add.%Op.decl [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %As.type.b51: type = generic_interface_type @As [concrete]
 // CHECK:STDOUT:   %As.generic: %As.type.b51 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.type.8ba: type = facet_type <@As, @As(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.b4e: %As.type.8ba = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.7f0: type = facet_access_type %Self.b4e [symbolic]
-// CHECK:STDOUT:   %.947: type = pattern_type %Self.as_type.7f0 [symbolic]
-// CHECK:STDOUT:   %.7dc: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.947: type = pattern_type %Self.as_type.7f0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Convert.type.ad1: type = fn_type @Convert.1, @As(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.0ed: %Convert.type.ad1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %As.assoc_type.a21: type = assoc_entity_type @As, @As(%T) [symbolic]
@@ -84,7 +84,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type.07f: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.0f3: %ImplicitAs.type.07f = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.419: type = facet_access_type %Self.0f3 [symbolic]
-// CHECK:STDOUT:   %.a93: type = pattern_type %Self.as_type.419 [symbolic]
+// CHECK:STDOUT:   %pattern_type.a93: type = pattern_type %Self.as_type.419 [symbolic]
 // CHECK:STDOUT:   %Convert.type.4cf: type = fn_type @Convert.2, @ImplicitAs(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.147: %Convert.type.4cf = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.095: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%T) [symbolic]
@@ -92,7 +92,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness file.%Add.impl_witness_table [concrete]
-// CHECK:STDOUT:   %.956: type = pattern_type %i32.builtin [concrete]
+// CHECK:STDOUT:   %pattern_type.956: type = pattern_type %i32.builtin [concrete]
 // CHECK:STDOUT:   %Op.type.c2a: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.4e3: %Op.type.c2a = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %i32.builtin, (%Add.impl_witness) [concrete]
@@ -137,17 +137,17 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .ImplicitAs = %ImplicitAs.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IntLiteral.decl: %IntLiteral.type = fn_decl @IntLiteral [concrete = constants.%IntLiteral] {
-// CHECK:STDOUT:     %return.patt: %.98f = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.98f = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
-// CHECK:STDOUT:     %N.patt: %.dc0 = binding_pattern N
-// CHECK:STDOUT:     %N.param_patt: %.dc0 = value_param_pattern %N.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.98f = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.98f = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = binding_pattern N
+// CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern %N.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc5_22.1: type = splice_block %.loc5_22.3 [concrete = Core.IntLiteral] {
@@ -162,12 +162,12 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Add.decl: type = interface_decl @Add [concrete = constants.%Add.type] {} {}
 // CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [concrete = constants.%As.generic] {
-// CHECK:STDOUT:     %T.patt.loc11_14.1: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc11_14.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
-// CHECK:STDOUT:     %T.patt.loc15_22.1: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_22.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc15_22.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc15_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_22.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -227,12 +227,12 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.b3d]
 // CHECK:STDOUT:   %Op.decl: %Op.type.31b = fn_decl @Op.1 [concrete = constants.%Op.d59] {
-// CHECK:STDOUT:     %self.patt: @Op.1.%.loc8_9 (%.8f9) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @Op.1.%.loc8_9 (%.8f9) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %other.patt: @Op.1.%.loc8_9 (%.8f9) = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: @Op.1.%.loc8_9 (%.8f9) = value_param_pattern %other.patt, call_param1
-// CHECK:STDOUT:     %return.patt: @Op.1.%.loc8_9 (%.8f9) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Op.1.%.loc8_9 (%.8f9) = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: @Op.1.%pattern_type (%pattern_type.8f9) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @Op.1.%pattern_type (%pattern_type.8f9) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %other.patt: @Op.1.%pattern_type (%pattern_type.8f9) = binding_pattern other
+// CHECK:STDOUT:     %other.param_patt: @Op.1.%pattern_type (%pattern_type.8f9) = value_param_pattern %other.patt, call_param1
+// CHECK:STDOUT:     %return.patt: @Op.1.%pattern_type (%pattern_type.8f9) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @Op.1.%pattern_type (%pattern_type.8f9) = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc8_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self.b3d)]
 // CHECK:STDOUT:     %Self.as_type.loc8_37: type = facet_access_type %Self.ref.loc8_37 [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type.f73)]
@@ -264,7 +264,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(%T.loc11_14.1: type) {
 // CHECK:STDOUT:   %T.loc11_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_14.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc11_14.2: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc11_14.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%T.loc11_14.2)> [symbolic = %As.type (constants.%As.type.8ba)]
@@ -277,10 +277,10 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @As.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b4e)]
 // CHECK:STDOUT:     %Convert.decl: @As.%Convert.type (%Convert.type.ad1) = fn_decl @Convert.1 [symbolic = @As.%Convert (constants.%Convert.0ed)] {
-// CHECK:STDOUT:       %self.patt: @Convert.1.%.loc12_14 (%.947) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.1.%.loc12_14 (%.947) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %return.patt: @Convert.1.%.loc12_28 (%.7dc) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.1.%.loc12_28 (%.7dc) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @Convert.1.%pattern_type.loc12_14 (%pattern_type.947) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @Convert.1.%pattern_type.loc12_14 (%pattern_type.947) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %return.patt: @Convert.1.%pattern_type.loc12_28 (%pattern_type.7dc) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @Convert.1.%pattern_type.loc12_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @As.%T.loc11_14.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @Convert.1.%Self.as_type.loc12_20.1 (%Self.as_type.7f0) = value_param call_param0
@@ -306,7 +306,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(%T.loc15_22.1: type) {
 // CHECK:STDOUT:   %T.loc15_22.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_22.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc15_22.2: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_22.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc15_22.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc15_22.2)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.07f)]
@@ -319,10 +319,10 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.0f3)]
 // CHECK:STDOUT:     %Convert.decl: @ImplicitAs.%Convert.type (%Convert.type.4cf) = fn_decl @Convert.2 [symbolic = @ImplicitAs.%Convert (constants.%Convert.147)] {
-// CHECK:STDOUT:       %self.patt: @Convert.2.%.loc16_14 (%.a93) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.2.%.loc16_14 (%.a93) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %return.patt: @Convert.2.%.loc16_28 (%.7dc) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.2.%.loc16_28 (%.7dc) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @Convert.2.%pattern_type.loc16_14 (%pattern_type.a93) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @Convert.2.%pattern_type.loc16_14 (%pattern_type.a93) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %return.patt: @Convert.2.%pattern_type.loc16_28 (%pattern_type.7dc) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @Convert.2.%pattern_type.loc16_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc15_22.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @Convert.2.%Self.as_type.loc16_20.1 (%Self.as_type.419) = value_param call_param0
@@ -348,12 +348,12 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.c45: %.loc19_6.2 as %Add.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.c2a = fn_decl @Op.2 [concrete = constants.%Op.4e3] {
-// CHECK:STDOUT:     %self.patt: %.956 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.956 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %other.patt: %.956 = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: %.956 = value_param_pattern %other.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %.956 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.956 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.956 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.956 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %other.patt: %pattern_type.956 = binding_pattern other
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.956 = value_param_pattern %other.patt, call_param1
+// CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc20_37: type = name_ref Self, @impl.c45.%.loc19_6.2 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %self.param: %i32.builtin = value_param call_param0
@@ -373,10 +373,10 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.028: %.loc23_17.2 as %As.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.fc9 = fn_decl @Convert.3 [concrete = constants.%Convert.33c] {
-// CHECK:STDOUT:     %self.patt: %.dc0 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.dc0 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.956 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.956 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.dc0 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.dc0 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [concrete = constants.%i32.builtin]
@@ -396,10 +396,10 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.e13: %.loc27_17.2 as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.c2a = fn_decl @Convert.4 [concrete = constants.%Convert.40d] {
-// CHECK:STDOUT:     %self.patt: %.dc0 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.dc0 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.956 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.956 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.dc0 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.dc0 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [concrete = constants.%i32.builtin]
@@ -419,10 +419,10 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.3df: %.loc31_6.2 as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.295 = fn_decl @Convert.5 [concrete = constants.%Convert.2bf] {
-// CHECK:STDOUT:     %self.patt: %.956 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.956 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %.dc0 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.dc0 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.956 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.956 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.dc0 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.dc0 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
@@ -448,7 +448,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: generic fn @Op.1(@Add.%Self: %Add.type) {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.b3d)]
 // CHECK:STDOUT:   %Self.as_type.loc8_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type.f73)]
-// CHECK:STDOUT:   %.loc8_9: type = pattern_type %Self.as_type.loc8_15.1 [symbolic = %.loc8_9 (constants.%.8f9)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc8_15.1 [symbolic = %pattern_type (constants.%pattern_type.8f9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Op.1.%Self.as_type.loc8_15.1 (%Self.as_type.f73), %other.param: @Op.1.%Self.as_type.loc8_15.1 (%Self.as_type.f73)) -> @Op.1.%Self.as_type.loc8_15.1 (%Self.as_type.f73);
 // CHECK:STDOUT: }
@@ -458,8 +458,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%T)> [symbolic = %As.type (constants.%As.type.8ba)]
 // CHECK:STDOUT:   %Self: @Convert.1.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.b4e)]
 // CHECK:STDOUT:   %Self.as_type.loc12_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_20.1 (constants.%Self.as_type.7f0)]
-// CHECK:STDOUT:   %.loc12_14: type = pattern_type %Self.as_type.loc12_20.1 [symbolic = %.loc12_14 (constants.%.947)]
-// CHECK:STDOUT:   %.loc12_28: type = pattern_type %T [symbolic = %.loc12_28 (constants.%.7dc)]
+// CHECK:STDOUT:   %pattern_type.loc12_14: type = pattern_type %Self.as_type.loc12_20.1 [symbolic = %pattern_type.loc12_14 (constants.%pattern_type.947)]
+// CHECK:STDOUT:   %pattern_type.loc12_28: type = pattern_type %T [symbolic = %pattern_type.loc12_28 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Convert.1.%Self.as_type.loc12_20.1 (%Self.as_type.7f0)) -> @Convert.1.%T (%T);
 // CHECK:STDOUT: }
@@ -469,8 +469,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.07f)]
 // CHECK:STDOUT:   %Self: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.0f3)]
 // CHECK:STDOUT:   %Self.as_type.loc16_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc16_20.1 (constants.%Self.as_type.419)]
-// CHECK:STDOUT:   %.loc16_14: type = pattern_type %Self.as_type.loc16_20.1 [symbolic = %.loc16_14 (constants.%.a93)]
-// CHECK:STDOUT:   %.loc16_28: type = pattern_type %T [symbolic = %.loc16_28 (constants.%.7dc)]
+// CHECK:STDOUT:   %pattern_type.loc16_14: type = pattern_type %Self.as_type.loc16_20.1 [symbolic = %pattern_type.loc16_14 (constants.%pattern_type.a93)]
+// CHECK:STDOUT:   %pattern_type.loc16_28: type = pattern_type %T [symbolic = %pattern_type.loc16_28 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Convert.2.%Self.as_type.loc16_20.1 (%Self.as_type.419)) -> @Convert.2.%T (%T);
 // CHECK:STDOUT: }
@@ -486,7 +486,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: specific @Op.1(constants.%Self.b3d) {
 // CHECK:STDOUT:   %Self => constants.%Self.b3d
 // CHECK:STDOUT:   %Self.as_type.loc8_15.1 => constants.%Self.as_type.f73
-// CHECK:STDOUT:   %.loc8_9 => constants.%.8f9
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8f9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%T) {
@@ -499,8 +499,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %As.type => constants.%As.type.8ba
 // CHECK:STDOUT:   %Self => constants.%Self.b4e
 // CHECK:STDOUT:   %Self.as_type.loc12_20.1 => constants.%Self.as_type.7f0
-// CHECK:STDOUT:   %.loc12_14 => constants.%.947
-// CHECK:STDOUT:   %.loc12_28 => constants.%.7dc
+// CHECK:STDOUT:   %pattern_type.loc12_14 => constants.%pattern_type.947
+// CHECK:STDOUT:   %pattern_type.loc12_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(@Convert.1.%T) {}
@@ -517,8 +517,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.07f
 // CHECK:STDOUT:   %Self => constants.%Self.0f3
 // CHECK:STDOUT:   %Self.as_type.loc16_20.1 => constants.%Self.as_type.419
-// CHECK:STDOUT:   %.loc16_14 => constants.%.a93
-// CHECK:STDOUT:   %.loc16_28 => constants.%.7dc
+// CHECK:STDOUT:   %pattern_type.loc16_14 => constants.%pattern_type.a93
+// CHECK:STDOUT:   %pattern_type.loc16_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%T) {}
@@ -528,7 +528,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: specific @Op.1(constants.%Add.facet) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet
 // CHECK:STDOUT:   %Self.as_type.loc8_15.1 => constants.%i32.builtin
-// CHECK:STDOUT:   %.loc8_9 => constants.%.956
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.956
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%i32.builtin) {
@@ -549,8 +549,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %As.type => constants.%As.type.a09
 // CHECK:STDOUT:   %Self => constants.%As.facet
 // CHECK:STDOUT:   %Self.as_type.loc12_20.1 => Core.IntLiteral
-// CHECK:STDOUT:   %.loc12_14 => constants.%.dc0
-// CHECK:STDOUT:   %.loc12_28 => constants.%.956
+// CHECK:STDOUT:   %pattern_type.loc12_14 => constants.%pattern_type.dc0
+// CHECK:STDOUT:   %pattern_type.loc12_28 => constants.%pattern_type.956
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%i32.builtin) {
@@ -571,8 +571,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.11a
 // CHECK:STDOUT:   %Self => constants.%ImplicitAs.facet.bcb
 // CHECK:STDOUT:   %Self.as_type.loc16_20.1 => Core.IntLiteral
-// CHECK:STDOUT:   %.loc16_14 => constants.%.dc0
-// CHECK:STDOUT:   %.loc16_28 => constants.%.956
+// CHECK:STDOUT:   %pattern_type.loc16_14 => constants.%pattern_type.dc0
+// CHECK:STDOUT:   %pattern_type.loc16_28 => constants.%pattern_type.956
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(Core.IntLiteral) {
@@ -593,8 +593,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.9fc
 // CHECK:STDOUT:   %Self => constants.%ImplicitAs.facet.a85
 // CHECK:STDOUT:   %Self.as_type.loc16_20.1 => constants.%i32.builtin
-// CHECK:STDOUT:   %.loc16_14 => constants.%.956
-// CHECK:STDOUT:   %.loc16_28 => constants.%.dc0
+// CHECK:STDOUT:   %pattern_type.loc16_14 => constants.%pattern_type.956
+// CHECK:STDOUT:   %pattern_type.loc16_28 => constants.%pattern_type.dc0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- user.carbon
@@ -603,18 +603,18 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %As.type.eed: type = facet_type <@As, @As(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.65a: %As.type.eed = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %T.patt: %.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Convert.type.843: type = fn_type @Convert.1, @As(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.95f: %Convert.type.843 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type.04d: type = facet_access_type %Self.65a [symbolic]
-// CHECK:STDOUT:   %.ca4: type = pattern_type %Self.as_type.04d [symbolic]
-// CHECK:STDOUT:   %.7dc: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.ca4: type = pattern_type %Self.as_type.04d [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %As.assoc_type.760: type = assoc_entity_type @As, @As(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0.076: %As.assoc_type.760 = assoc_entity element0, imports.%Core.import_ref.708 [symbolic]
 // CHECK:STDOUT:   %As.type.a6d: type = facet_type <@As, @As(%i32.builtin)> [concrete]
@@ -632,7 +632,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert.2, @ImplicitAs(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type.40a: type = facet_access_type %Self.519 [symbolic]
-// CHECK:STDOUT:   %.f3e: type = pattern_type %Self.as_type.40a [symbolic]
+// CHECK:STDOUT:   %pattern_type.f3e: type = pattern_type %Self.as_type.40a [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ca0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0.dc001e.1: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207961.1 [symbolic]
 // CHECK:STDOUT:   %Self.d28: %ImplicitAs.type.61e = bind_symbolic_name Self, 1 [symbolic]
@@ -661,7 +661,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %assoc0.c7d: %Add.assoc_type = assoc_entity element0, imports.%Core.import_ref.6dd [concrete]
 // CHECK:STDOUT:   %Op.type.545: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Self.as_type.da9: type = facet_access_type %Self.a99 [symbolic]
-// CHECK:STDOUT:   %.26e: type = pattern_type %Self.as_type.da9 [symbolic]
+// CHECK:STDOUT:   %pattern_type.26e: type = pattern_type %Self.as_type.da9 [symbolic]
 // CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (imports.%Core.import_ref.db4), @impl.a1d [concrete]
 // CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness %Add.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %i32.builtin, (%Add.impl_witness) [concrete]
@@ -680,7 +680,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.bound.65a: <bound method> = bound_method %int_3.a0f, %Convert.b32 [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32.builtin [concrete]
-// CHECK:STDOUT:   %.9e2: type = pattern_type %array_type [concrete]
+// CHECK:STDOUT:   %pattern_type.9e2: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %Convert.bound.94d: <bound method> = bound_method %int_3.1ba, %Convert.5bc [concrete]
 // CHECK:STDOUT:   %Convert.bound.8fc: <bound method> = bound_method %int_4.0c1, %Convert.5bc [concrete]
@@ -747,8 +747,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %arr.patt: %.9e2 = binding_pattern arr
-// CHECK:STDOUT:     %.loc4_1: %.9e2 = var_pattern %arr.patt
+// CHECK:STDOUT:     %arr.patt: %pattern_type.9e2 = binding_pattern arr
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.9e2 = var_pattern %arr.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr.var: ref %array_type = var arr
 // CHECK:STDOUT:   %.loc4_44: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -793,7 +793,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%T)> [symbolic = %As.type (constants.%As.type.eed)]
@@ -820,7 +820,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.3: type) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: %.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
@@ -865,8 +865,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%T)> [symbolic = %As.type (constants.%As.type.eed)]
 // CHECK:STDOUT:   %Self: @Convert.1.%As.type (%As.type.eed) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.65a)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.04d)]
-// CHECK:STDOUT:   %.1: type = pattern_type %Self.as_type [symbolic = %.1 (constants.%.ca4)]
-// CHECK:STDOUT:   %.2: type = pattern_type %T [symbolic = %.2 (constants.%.7dc)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.ca4)]
+// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -876,8 +876,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.d62)]
 // CHECK:STDOUT:   %Self: @Convert.2.%ImplicitAs.type (%ImplicitAs.type.d62) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.519)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.40a)]
-// CHECK:STDOUT:   %.1: type = pattern_type %Self.as_type [symbolic = %.1 (constants.%.f3e)]
-// CHECK:STDOUT:   %.2: type = pattern_type %T [symbolic = %.2 (constants.%.7dc)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.f3e)]
+// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -887,7 +887,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: generic fn @Op.1(imports.%Core.import_ref.442: %Add.type) [from "core.carbon"] {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.a99)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.da9)]
-// CHECK:STDOUT:   %.1: type = pattern_type %Self.as_type [symbolic = %.1 (constants.%.26e)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.26e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -963,8 +963,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %As.type => constants.%As.type.eed
 // CHECK:STDOUT:   %Self => constants.%Self.65a
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.04d
-// CHECK:STDOUT:   %.1 => constants.%.ca4
-// CHECK:STDOUT:   %.2 => constants.%.7dc
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.ca4
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%i32.builtin) {
@@ -1007,8 +1007,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
 // CHECK:STDOUT:   %Self => constants.%Self.519
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.40a
-// CHECK:STDOUT:   %.1 => constants.%.f3e
-// CHECK:STDOUT:   %.2 => constants.%.7dc
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.f3e
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(Core.IntLiteral) {
@@ -1027,6 +1027,6 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: specific @Op.1(constants.%Self.a99) {
 // CHECK:STDOUT:   %Self => constants.%Self.a99
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.da9
-// CHECK:STDOUT:   %.1 => constants.%.26e
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.26e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

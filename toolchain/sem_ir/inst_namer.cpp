@@ -820,6 +820,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                          ".param_patt");
         continue;
       }
+      case PatternType::Kind: {
+        add_inst_name("pattern_type");
+        continue;
+      }
       case PointerType::Kind: {
         add_inst_name("ptr");
         continue;

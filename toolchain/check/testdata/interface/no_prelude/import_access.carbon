@@ -203,7 +203,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def.type: type = facet_type <@Def> [concrete]
-// CHECK:STDOUT:   %.92e: type = pattern_type %Def.type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Def.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -221,8 +221,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: %.92e = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: %.92e = value_param_pattern %i.patt, call_param0
+// CHECK:STDOUT:     %i.patt: %pattern_type = binding_pattern i
+// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %Def.type = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def.type]
@@ -311,7 +311,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef.type: type = facet_type <@ForwardWithDef> [concrete]
-// CHECK:STDOUT:   %.09d: type = pattern_type %ForwardWithDef.type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ForwardWithDef.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -329,8 +329,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: %.09d = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: %.09d = value_param_pattern %i.patt, call_param0
+// CHECK:STDOUT:     %i.patt: %pattern_type = binding_pattern i
+// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %ForwardWithDef.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef.type]
