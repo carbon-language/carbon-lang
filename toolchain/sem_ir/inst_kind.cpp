@@ -15,7 +15,7 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(InstKind) = {
 
 auto InstKind::definition_info(InstKind inst_kind) -> const DefinitionInfo& {
   static constexpr InstKind::DefinitionInfo DefinitionInfos[] = {
-#define CARBON_SEM_IR_INST_KIND(Name) Name::Kind.info_,
+#define CARBON_SEM_IR_INST_KIND(Name) SemIR::Name::Kind.info_,
 #include "toolchain/sem_ir/inst_kind.def"
   };
   return DefinitionInfos[inst_kind.AsInt()];
@@ -23,8 +23,9 @@ auto InstKind::definition_info(InstKind inst_kind) -> const DefinitionInfo& {
 
 auto InstKind::value_kind() const -> InstValueKind {
   static constexpr InstValueKind Table[] = {
-#define CARBON_SEM_IR_INST_KIND(Name) \
-  Internal::HasTypeIdMember<Name> ? InstValueKind::Typed : InstValueKind::None,
+#define CARBON_SEM_IR_INST_KIND(Name)                           \
+  Internal::HasTypeIdMember<SemIR::Name> ? InstValueKind::Typed \
+                                         : InstValueKind::None,
 #include "toolchain/sem_ir/inst_kind.def"
   };
   return Table[AsInt()];
