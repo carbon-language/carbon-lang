@@ -91,6 +91,9 @@ struct FileTestInfo {
   // changed) the test file. This may be true even if output passes test
   // expectations.
   bool autoupdate_differs = false;
+
+  // Time spent in the test total, including processing and autoupdate.
+  std::chrono::milliseconds elapsed_ms = std::chrono::milliseconds(0);
 };
 
 // Adapts a `FileTestBase` instance to gtest for outputting results.
@@ -364,25 +367,10 @@ static auto SingleThreaded(llvm::ArrayRef<FileTestInfo> tests) -> bool {
   return true;
 }
 
-// A small timer for getting elapsed durations.
-class Timer {
- public:
-  explicit Timer() : start_(std::chrono::steady_clock::now()) {}
-
-  auto elapsed_ms() -> std::chrono::milliseconds {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - start_);
-  }
-
- private:
-  std::chrono::steady_clock::time_point start_;
-};
-
 // Runs the test in the section that would be inside a lock, possibly inside a
 // CrashRecoveryContext.
-static auto RunSingleTestHelper(FileTestInfo& test,
-                                std::chrono::milliseconds& test_elapsed_ms,
-                                FileTestBase& test_instance) -> void {
+static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
+    -> void {
   Timer timer;
   // Add a crash trace entry with the single-file test command.
   std::string test_command = GetBazelCommand(BazelMode::Test, test.test_name);
@@ -393,16 +381,14 @@ static auto RunSingleTestHelper(FileTestInfo& test,
       !err.ok()) {
     test.test_result = std::move(err).error();
   }
-  test_elapsed_ms += timer.elapsed_ms();
+  test.elapsed_ms += timer.elapsed_ms();
 }
 
 // Runs a single test. Uses a CrashRecoveryContext, and returns false on a
 // crash. For test_elapsed_ms, try to exclude time spent waiting on
 // output_mutex.
-static auto RunSingleTest(FileTestInfo& test,
-                          std::chrono::milliseconds& test_elapsed_ms,
-                          bool single_threaded, std::mutex& output_mutex)
-    -> bool {
+static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
+                          std::mutex& output_mutex) -> bool {
   std::unique_ptr<FileTestBase> test_instance(test.factory_fn());
 
   if (absl::GetFlag(FLAGS_dump_output)) {
@@ -414,7 +400,7 @@ static auto RunSingleTest(FileTestInfo& test,
   Timer process_timer;
   test.test_result = ProcessTestFile(test_instance->test_name(),
                                      absl::GetFlag(FLAGS_autoupdate));
-  test_elapsed_ms = process_timer.elapsed_ms();
+  test.elapsed_ms = process_timer.elapsed_ms();
 
   if (test.test_result->ok()) {
     // Execution must be serialized for either serial tests or console
@@ -427,16 +413,14 @@ static auto RunSingleTest(FileTestInfo& test,
     }
 
     if (single_threaded) {
-      RunSingleTestHelper(test, test_elapsed_ms, *test_instance);
+      RunSingleTestHelper(test, *test_instance);
     } else {
       // Use a crash recovery context to try to get a stack trace when
       // multiple threads may crash in parallel, which otherwise leads to the
       // program aborting without printing a stack trace.
       llvm::CrashRecoveryContext crc;
       crc.DumpStackAndCleanupOnFailure = true;
-      if (!crc.RunSafely([&] {
-            RunSingleTestHelper(test, test_elapsed_ms, *test_instance);
-          })) {
+      if (!crc.RunSafely([&] { RunSingleTestHelper(test, *test_instance); })) {
         return false;
       }
     }
@@ -452,7 +436,7 @@ static auto RunSingleTest(FileTestInfo& test,
   test.autoupdate_differs =
       RunAutoupdater(test_instance.get(), **test.test_result,
                      /*dry_run=*/!absl::GetFlag(FLAGS_autoupdate));
-  test_elapsed_ms += autoupdate_timer.elapsed_ms();
+  test.elapsed_ms += autoupdate_timer.elapsed_ms();
 
   std::unique_lock<std::mutex> lock(output_mutex);
   if (absl::GetFlag(FLAGS_dump_output)) {
@@ -490,20 +474,14 @@ auto FileTestEventListener::OnTestProgramStart(
                  << " thread(s)\n";
   }
 
-  llvm::SmallVector<std::pair<FileTestInfo*, std::chrono::milliseconds>> tests;
-  tests.reserve(tests_.size());
-  for (auto& test : tests_) {
-    tests.push_back({&test, std::chrono::milliseconds(0)});
-  }
-
   // Guard access to output (stdout and stderr).
   std::mutex output_mutex;
 
   std::atomic<bool> crashed = false;
   Timer all_timer;
   int run_count = 0;
-  for (auto& [test, elapsed_ms] : tests) {
-    if (!test->registered_test->should_run()) {
+  for (auto& test : tests_) {
+    if (!test.registered_test->should_run()) {
       continue;
     }
     ++run_count;
@@ -514,7 +492,7 @@ auto FileTestEventListener::OnTestProgramStart(
         return;
       }
 
-      if (!RunSingleTest(*test, elapsed_ms, single_threaded, output_mutex)) {
+      if (!RunSingleTest(test, single_threaded, output_mutex)) {
         crashed = true;
       }
     });
@@ -530,8 +508,8 @@ auto FileTestEventListener::OnTestProgramStart(
   // Calculate the total test time.
   auto all_elapsed_ms = all_timer.elapsed_ms();
   auto total_elapsed_ms = std::chrono::milliseconds(0);
-  for (auto& [_, elapsed_ms] : tests) {
-    total_elapsed_ms += elapsed_ms;
+  for (auto& test : tests_) {
+    total_elapsed_ms += test.elapsed_ms;
   }
 
   llvm::errs() << "\nRan " << run_count << " tests in "
@@ -543,14 +521,18 @@ auto FileTestEventListener::OnTestProgramStart(
   auto print_slowest_tests = absl::GetFlag(FLAGS_print_slowest_tests);
   if (run_count > 1 && print_slowest_tests >= 0) {
     llvm::errs() << "  Slowest tests:\n";
-    llvm::sort(tests, [](const auto& lhs, const auto& rhs) {
-      return lhs.second > rhs.second;
+    llvm::sort(tests_, [](const FileTestInfo& lhs, const FileTestInfo& rhs) {
+      return lhs.elapsed_ms > rhs.elapsed_ms;
     });
     int count = print_slowest_tests > 0 ? print_slowest_tests : run_count;
-    for (const auto& [test, elapsed_ms] :
-         llvm::ArrayRef(tests).take_front(count)) {
-      llvm::errs() << "  - " << test->test_name << ": " << elapsed_ms.count()
-                   << " ms\n";
+    for (const auto& test : tests_.take_front(count)) {
+      std::chrono::milliseconds run_ms(0);
+      if (test.test_result && test.test_result->ok()) {
+        run_ms = test.test_result.value()->run_elapsed_ms;
+      }
+      llvm::errs() << "  - " << test.test_name << ": "
+                   << test.elapsed_ms.count() << " ms, " << run_ms.count()
+                   << " ms in Run\n";
     }
   }
 }
