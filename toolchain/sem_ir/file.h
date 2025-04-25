@@ -59,7 +59,7 @@ struct ExprRegion {
 class File : public Printable<File> {
  public:
   using IdentifiedFacetTypeStore =
-      RelationalValueStore<SemIR::FacetTypeId, SemIR::IdentifiedFacetTypeId>;
+      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId>;
 
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
@@ -103,12 +103,12 @@ class File : public Printable<File> {
 
   // Returns true if this file is an `impl`.
   auto is_impl() -> bool {
-    return import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir != nullptr;
+    return import_irs().Get(ImportIRId::ApiForImpl).sem_ir != nullptr;
   }
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
   auto package_id() const -> PackageNameId { return package_id_; }
-  auto library_id() const -> SemIR::LibraryNameId { return library_id_; }
+  auto library_id() const -> LibraryNameId { return library_id_; }
 
   // Directly expose SharedValueStores members.
   auto identifiers() -> SharedValueStores::IdentifierStore& {

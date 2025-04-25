@@ -635,11 +635,11 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 class InstBlockIdOrError {
  public:
   // NOLINTNEXTLINE(google-explicit-constructor)
-  InstBlockIdOrError(SemIR::InstBlockId inst_block_id)
+  InstBlockIdOrError(InstBlockId inst_block_id)
       : InstBlockIdOrError(inst_block_id, false) {}
 
   static auto MakeError() -> InstBlockIdOrError {
-    return {SemIR::InstBlockId::None, true};
+    return {InstBlockId::None, true};
   }
 
   // Returns whether this class contains either an InstBlockId (other than
@@ -659,16 +659,16 @@ class InstBlockIdOrError {
   // false.
   //
   // Only valid to call if `has_error_value()` is false.
-  auto inst_block_id() const -> SemIR::InstBlockId {
+  auto inst_block_id() const -> InstBlockId {
     CARBON_CHECK(!has_error_value());
     return inst_block_id_;
   }
 
  private:
-  InstBlockIdOrError(SemIR::InstBlockId inst_block_id, bool error)
+  InstBlockIdOrError(InstBlockId inst_block_id, bool error)
       : inst_block_id_(inst_block_id), error_(error) {}
 
-  SemIR::InstBlockId inst_block_id_;
+  InstBlockId inst_block_id_;
   bool error_;
 };
 

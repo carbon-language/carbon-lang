@@ -320,19 +320,19 @@ struct Worklist {
   // null IdKind as a parameter in order to get the type pack.
   template <typename... Types>
   static constexpr auto MakeAddTable(TypeEnum<Types...>* /*id_kind*/)
-      -> std::array<AddFnT*, SemIR::IdKind::NumValues> {
-    std::array<AddFnT*, SemIR::IdKind::NumValues> table = {};
-    ((table[SemIR::IdKind::template For<Types>.ToIndex()] =
+      -> std::array<AddFnT*, IdKind::NumValues> {
+    std::array<AddFnT*, IdKind::NumValues> table = {};
+    ((table[IdKind::template For<Types>.ToIndex()] =
           [](Worklist& worklist, int32_t arg) {
             worklist.Add(Inst::FromRaw<Types>(arg));
           }),
      ...);
-    table[SemIR::IdKind::Invalid.ToIndex()] = [](Worklist& /*worklist*/,
-                                                 int32_t /*arg*/) {
+    table[IdKind::Invalid.ToIndex()] = [](Worklist& /*worklist*/,
+                                          int32_t /*arg*/) {
       CARBON_FATAL("Unexpected invalid argument kind");
     };
-    table[SemIR::IdKind::None.ToIndex()] = [](Worklist& /*worklist*/,
-                                              int32_t /*arg*/) {};
+    table[IdKind::None.ToIndex()] = [](Worklist& /*worklist*/,
+                                       int32_t /*arg*/) {};
     return table;
   }
 

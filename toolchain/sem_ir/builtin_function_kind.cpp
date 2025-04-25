@@ -72,11 +72,10 @@ template <typename PointeeT>
 struct PointerTo {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (!sem_ir.types().Is<SemIR::PointerType>(type_id)) {
+    if (!sem_ir.types().Is<PointerType>(type_id)) {
       return false;
     }
-    return SemIR::Check<PointeeT>(sem_ir, state,
-                                  sem_ir.GetPointeeType(type_id));
+    return Check<PointeeT>(sem_ir, state, sem_ir.GetPointeeType(type_id));
   }
 };
 
@@ -85,7 +84,7 @@ struct PointerTo {
 struct NoReturn {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
                     TypeId type_id) -> bool {
-    auto tuple = sem_ir.types().TryGetAs<SemIR::TupleType>(type_id);
+    auto tuple = sem_ir.types().TryGetAs<TupleType>(type_id);
     if (!tuple) {
       return false;
     }
@@ -575,11 +574,11 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
 static auto AnyIntLiteralTypes(const File& sem_ir,
                                llvm::ArrayRef<InstId> arg_ids,
                                TypeId return_type_id) -> bool {
-  if (sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id)) {
+  if (sem_ir.types().Is<IntLiteralType>(return_type_id)) {
     return true;
   }
   for (auto arg_id : arg_ids) {
-    if (sem_ir.types().Is<SemIR::IntLiteralType>(
+    if (sem_ir.types().Is<IntLiteralType>(
             sem_ir.insts().Get(arg_id).type_id())) {
       return true;
     }

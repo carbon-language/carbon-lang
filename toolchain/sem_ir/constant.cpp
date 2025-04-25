@@ -14,7 +14,7 @@ auto ConstantStore::GetOrAdd(Inst inst, ConstantDependence dependence)
     auto inst_id = sem_ir_->insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
     ConstantId const_id = ConstantId::None;
     if (dependence == ConstantDependence::None) {
-      const_id = SemIR::ConstantId::ForConcreteConstant(inst_id);
+      const_id = ConstantId::ForConcreteConstant(inst_id);
     } else {
       // The instruction in the constants store is an abstract symbolic
       // constant, not associated with any particular generic.

@@ -19,7 +19,7 @@ namespace Carbon::SemIR {
 //
 // This is intended to avoid an unnecessary block allocation in the case where
 // the new block ends up being exactly the same as the original block.
-template <typename BlockIdType, auto (SemIR::File::*ValueStore)()>
+template <typename BlockIdType, auto (File::*ValueStore)()>
 class CopyOnWriteBlock {
  public:
   struct UninitializedBlock {
@@ -28,12 +28,12 @@ class CopyOnWriteBlock {
 
   // Constructs the block. `source_id` is used as the initial value of the
   // block. `file` must not be null.
-  explicit CopyOnWriteBlock(SemIR::File* file, BlockIdType source_id)
+  explicit CopyOnWriteBlock(File* file, BlockIdType source_id)
       : file_(file), source_id_(source_id) {}
 
   // Constructs the block, treating the original block as an uninitialized block
   // with `size` elements. `file` must not be null.
-  explicit CopyOnWriteBlock(SemIR::File* file, UninitializedBlock uninit)
+  explicit CopyOnWriteBlock(File* file, UninitializedBlock uninit)
       : file_(file),
         source_id_(BlockIdType::None),
         id_((file_->*ValueStore)().AddUninitialized(uninit.size)) {}
@@ -62,7 +62,7 @@ class CopyOnWriteBlock {
   }
 
  private:
-  SemIR::File* file_;
+  File* file_;
   BlockIdType source_id_;
   BlockIdType id_ = source_id_;
 };

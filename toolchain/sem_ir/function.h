@@ -50,7 +50,7 @@ struct FunctionFields {
 
   // The implicit self parameter, if any, in implicit_param_patterns_id from
   // EntityWithParamsBase.
-  InstId self_param_id = SemIR::InstId::None;
+  InstId self_param_id = InstId::None;
 
   // The following member is set on the first call to the function, or at the
   // point where the function is defined.
@@ -126,16 +126,16 @@ class File;
 
 struct CalleeFunction {
   // The function. `None` if not a function.
-  SemIR::FunctionId function_id;
+  FunctionId function_id;
   // The specific that contains the function.
-  SemIR::SpecificId enclosing_specific_id;
+  SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
-  SemIR::SpecificId resolved_specific_id;
+  SpecificId resolved_specific_id;
   // The bound `Self` type or facet value. `None` if not a bound interface
   // member.
-  SemIR::InstId self_type_id;
+  InstId self_type_id;
   // The bound `self` parameter. `None` if not a method.
-  SemIR::InstId self_id;
+  InstId self_id;
   // True if an error instruction was found.
   bool is_error;
 };

@@ -136,14 +136,14 @@ class Inst : public Printable<Inst> {
     // Converts to `IdT`, validating the `kind` matches.
     template <typename IdT>
     auto As() const -> IdT {
-      CARBON_DCHECK(kind_ == SemIR::IdKind::For<IdT>);
+      CARBON_DCHECK(kind_ == IdKind::For<IdT>);
       return IdT(value_);
     }
 
     // Converts to `IdT`, returning nullopt if the kind is incorrect.
     template <typename IdT>
     auto TryAs() const -> std::optional<IdT> {
-      if (kind_ != SemIR::IdKind::For<IdT>) {
+      if (kind_ != IdKind::For<IdT>) {
         return std::nullopt;
       }
       return IdT(value_);
@@ -369,7 +369,7 @@ struct LocIdAndInst {
   // node.
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
-  LocIdAndInst(SemIR::LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
+  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;
@@ -504,7 +504,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   // Sets the contents of a placeholder block to the given content.
   auto ReplacePlaceholder(InstBlockId block_id, llvm::ArrayRef<InstId> content)
       -> void {
-    CARBON_CHECK(block_id != SemIR::InstBlockId::Empty);
+    CARBON_CHECK(block_id != InstBlockId::Empty);
     CARBON_CHECK(Get(block_id).empty(),
                  "inst block content set more than once");
     values().Get(block_id) = AllocateCopy(content);

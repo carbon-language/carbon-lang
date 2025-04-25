@@ -190,7 +190,7 @@ class FormatterImpl {
 
   // Determines whether the specified entity should be included in the formatted
   // output.
-  auto ShouldFormatEntity(SemIR::InstId decl_id) -> bool {
+  auto ShouldFormatEntity(InstId decl_id) -> bool {
     if (!decl_id.has_value()) {
       return true;
     }
@@ -564,7 +564,7 @@ class FormatterImpl {
     // that IR in the output before the `{` or `;`.
     if (first_owning_decl_id.has_value()) {
       auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
-      if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
+      if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
         auto import_ir_id =
             sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
         const auto* import_file =
@@ -691,12 +691,12 @@ class FormatterImpl {
       out_ << ".";
       FormatName(name_id);
       switch (result.access_kind()) {
-        case SemIR::AccessKind::Public:
+        case AccessKind::Public:
           break;
-        case SemIR::AccessKind::Protected:
+        case AccessKind::Protected:
           out_ << " [protected]";
           break;
-        case SemIR::AccessKind::Private:
+        case AccessKind::Private:
           out_ << " [private]";
           break;
       }
@@ -914,7 +914,7 @@ class FormatterImpl {
       // don't include it in the argument list if there is no corresponding
       // specific, that is, when we're not in a generic context.
       if constexpr (std::is_same_v<typename Info::template ArgType<1>,
-                                   SemIR::SpecificId>) {
+                                   SpecificId>) {
         if (!Info::template Get<1>(inst).has_value()) {
           FormatArgs(Info::template Get<0>(inst));
           return;
@@ -1161,17 +1161,17 @@ class FormatterImpl {
       auto loc_id =
           import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id());
       switch (loc_id.kind()) {
-        case SemIR::LocId::Kind::None: {
+        case LocId::Kind::None: {
           out_ << import_ir_inst.inst_id() << " [no loc]";
           break;
         }
-        case SemIR::LocId::Kind::ImportIRInstId: {
+        case LocId::Kind::ImportIRInstId: {
           // TODO: Probably don't want to format each indirection, but maybe
           // reuse GetCanonicalImportIRInst?
           out_ << import_ir_inst.inst_id() << " [indirect]";
           break;
         }
-        case SemIR::LocId::Kind::NodeId: {
+        case LocId::Kind::NodeId: {
           // Formats a NodeId from the import.
           const auto& tree = import_ir.sem_ir->parse_tree();
           auto token = tree.node_token(loc_id.node_id());
@@ -1179,7 +1179,7 @@ class FormatterImpl {
                << tree.tokens().GetColumnNumber(token);
           break;
         }
-        case SemIR::LocId::Kind::InstId:
+        case LocId::Kind::InstId:
           CARBON_FATAL("Unexpected LocId: {0}", loc_id);
       }
     }

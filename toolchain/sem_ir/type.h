@@ -68,7 +68,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // GetAsTypeInstId().
   auto GetBlockAsTypeInstIds(llvm::ArrayRef<InstId> array
                              [[clang::lifetimebound]]) const -> auto {
-    return llvm::map_range(array, [&](SemIR::InstId type_inst_id) {
+    return llvm::map_range(array, [&](InstId type_inst_id) {
       return GetAsTypeInstId(type_inst_id);
     });
   }
@@ -77,7 +77,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // GetTypeIdForTypeInstId().
   auto GetBlockAsTypeIds(llvm::ArrayRef<InstId> array
                          [[clang::lifetimebound]]) const -> auto {
-    return llvm::map_range(array, [&](SemIR::InstId type_inst_id) {
+    return llvm::map_range(array, [&](InstId type_inst_id) {
       return GetTypeIdForTypeInstId(type_inst_id);
     });
   }
@@ -166,8 +166,8 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo;
 
   // Returns whether `type_id` represents a facet type.
-  auto IsFacetType(SemIR::TypeId type_id) const -> bool {
-    return type_id == SemIR::TypeType::TypeId || Is<SemIR::FacetType>(type_id);
+  auto IsFacetType(TypeId type_id) const -> bool {
+    return type_id == TypeType::TypeId || Is<FacetType>(type_id);
   }
 
   // Returns a list of types that were completed in this file, in the order in

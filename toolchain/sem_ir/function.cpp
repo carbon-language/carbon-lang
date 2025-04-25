@@ -55,7 +55,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
 
   auto fn_type = fn_type_inst.TryAs<FunctionType>();
   if (!fn_type) {
-    result.is_error = fn_type_inst.Is<SemIR::ErrorInst>();
+    result.is_error = fn_type_inst.Is<ErrorInst>();
     return result;
   }
 
@@ -70,12 +70,12 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   auto inst_id = pattern_id;
   auto inst = sem_ir.insts().Get(inst_id);
 
-  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
+  if (auto addr_pattern = inst.TryAs<AddrPattern>()) {
     inst_id = addr_pattern->inner_id;
     inst = sem_ir.insts().Get(inst_id);
   }
 
-  auto param_pattern_inst = inst.TryAs<SemIR::AnyParamPattern>();
+  auto param_pattern_inst = inst.TryAs<AnyParamPattern>();
   if (!param_pattern_inst) {
     return std::nullopt;
   }
