@@ -296,7 +296,6 @@ static auto MaybeApplyFileTestsFlag(llvm::StringRef factory_name) -> void {
   llvm::ListSeparator sep(":");
   for (const auto& file : absl::GetFlag(FLAGS_file_tests)) {
     filter << sep << factory_name << "." << file;
-    llvm::errs() << file << "\n";
   }
   absl::SetFlag(&FLAGS_gtest_filter, filter.TakeStr());
 }
