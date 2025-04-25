@@ -40,8 +40,7 @@ class ImportIRInst : public Printable<ImportIRInst> {
 
   // Constructor for a `Cpp` import.
   explicit ImportIRInst(ClangSourceLocId clang_source_loc_id)
-      : ir_id_(SemIR::ImportIRId::Cpp),
-        clang_source_loc_id_(clang_source_loc_id) {}
+      : ir_id_(ImportIRId::Cpp), clang_source_loc_id_(clang_source_loc_id) {}
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{ir_id: " << ir_id() << ", ";
