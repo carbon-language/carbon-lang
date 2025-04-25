@@ -101,12 +101,12 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
       return true;
     }
 
-    // If this constant value has a defining instruction in the eval block, replace the
-    // instruction in the body of the generic with the one from the eval block.
+    // If this constant value has a defining instruction in the eval block,
+    // replace the instruction in the body of the generic with the one from the
+    // eval block.
     if (auto result = constants_in_generic_.Lookup(
             context().constant_values().GetInstId(const_id))) {
       inst_id = result.value();
-      CARBON_CHECK(inst_id.has_value());
       return true;
     }
 
@@ -198,9 +198,8 @@ class RebuildTemplateActionInEvalBlockCallbacks final
 }  // namespace
 
 // Adds instructions to compute the substituted version of `type_id` in each
-// specific into the eval block for the generic, which is the current
-// instruction block. Returns a symbolic type ID that refers to the substituted
-// type in each specific.
+// specific into the eval block for the current generic region. Returns a
+// symbolic type ID that refers to the substituted type in each specific.
 static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
                                       SemIR::TypeId type_id) -> SemIR::TypeId {
   // Substitute into the type's constant instruction and rebuild it in the eval
@@ -213,9 +212,9 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
 }
 
 // Adds instructions to compute the substituted value of `inst_id` in each
-// specific into the eval block for the generic, which is the current
-// instruction block. Returns a symbolic constant instruction ID that refers to
-// the substituted constant value in each specific.
+// specific into the eval block for the current generic region. Returns a
+// symbolic constant instruction ID that refers to the substituted constant
+// value in each specific.
 static auto AddGenericConstantToEvalBlock(Context& context,
                                           SemIR::InstId inst_id)
     -> SemIR::ConstantId {
@@ -299,6 +298,8 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // declaration in this case instead of attempting to attach the new
   // declaration to a generic region that we're no longer within.
   if (context.generic_region_stack().Empty()) {
+    // This should only happen for `*Decl` instructions, never for template
+    // actions.
     CARBON_CHECK((dep_kind & DependentInst::Template) == DependentInst::None);
     return;
   }
@@ -589,6 +590,18 @@ auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
   if (auto [old_inst_id, new_inst_id] = FirstDifferenceBetweenEvalBlocks(
           context, old_eval_block, new_eval_block);
       new_inst_id.has_value()) {
+    // This shouldn't be possible: we should have already checked that the
+    // syntax of the redeclaration matches the prior declaration, and none of
+    // the name lookups or semantic checks should be allowed to differ between
+    // the two declarations, so we should have built the same eval block as in
+    // the prior declaration.
+    //
+    // However, that isn't a strong enough invariant that it seems appropriate
+    // to CHECK-fail here, so we produce a diagnostic with context.TODO()
+    // instead.
+    //
+    // TODO: Add something like context.UNEXPECTED() instead of using
+    // context.TODO() here because there's not really anything to do.
     context.TODO(new_inst_id,
                  "generic redeclaration differs from previous declaration");
     if (old_inst_id.has_value()) {
