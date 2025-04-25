@@ -22,6 +22,7 @@
 #include "testing/file_test/file_test_base.h"
 
 #include <atomic>
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <functional>
@@ -65,6 +66,9 @@ ABSL_FLAG(unsigned int, threads, 0,
 ABSL_FLAG(bool, dump_output, false,
           "Instead of verifying files match test output, directly dump output "
           "to stderr.");
+ABSL_FLAG(int, print_slowest_tests, 5,
+          "The number of tests to print when showing slowest tests. Set to 0 "
+          "to print all tests, ordered by elapsed time.");
 
 namespace Carbon::Testing {
 
@@ -292,6 +296,7 @@ static auto MaybeApplyFileTestsFlag(llvm::StringRef factory_name) -> void {
   llvm::ListSeparator sep(":");
   for (const auto& file : absl::GetFlag(FLAGS_file_tests)) {
     filter << sep << factory_name << "." << file;
+    llvm::errs() << file << "\n";
   }
   absl::SetFlag(&FLAGS_gtest_filter, filter.TakeStr());
 }
@@ -374,10 +379,27 @@ static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
   }
 }
 
+// A small timer for getting elapsed durations.
+class Timer {
+ public:
+  explicit Timer() : start_(std::chrono::steady_clock::now()) {}
+
+  auto elapsed_ms() -> std::chrono::milliseconds {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start_);
+  }
+
+ private:
+  std::chrono::steady_clock::time_point start_;
+};
+
 // Runs a single test. Uses a CrashRecoveryContext, and returns false on a
-// crash.
-static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
-                          std::mutex& output_mutex) -> bool {
+// crash. For test_elapsed_ms, try to exclude time spent waiting on
+// output_mutex.
+static auto RunSingleTest(FileTestInfo& test,
+                          std::chrono::milliseconds& test_elapsed_ms,
+                          bool single_threaded, std::mutex& output_mutex)
+    -> bool {
   std::unique_ptr<FileTestBase> test_instance(test.factory_fn());
 
   if (absl::GetFlag(FLAGS_dump_output)) {
@@ -386,8 +408,11 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
   }
 
   // Load expected output.
+  Timer process_timer;
   test.test_result = ProcessTestFile(test_instance->test_name(),
                                      absl::GetFlag(FLAGS_autoupdate));
+  test_elapsed_ms = process_timer.elapsed_ms();
+
   if (test.test_result->ok()) {
     // Execution must be serialized for either serial tests or console
     // output.
@@ -398,6 +423,7 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
       output_lock = std::unique_lock<std::mutex>(output_mutex);
     }
 
+    Timer test_timer;
     if (single_threaded) {
       RunSingleTestHelper(test, *test_instance);
     } else {
@@ -410,6 +436,7 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
         return false;
       }
     }
+    test_elapsed_ms += test_timer.elapsed_ms();
   }
 
   if (!test.test_result->ok()) {
@@ -418,9 +445,11 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
     return true;
   }
 
+  Timer autoupdate_timer;
   test.autoupdate_differs =
       RunAutoupdater(test_instance.get(), **test.test_result,
                      /*dry_run=*/!absl::GetFlag(FLAGS_autoupdate));
+  test_elapsed_ms += autoupdate_timer.elapsed_ms();
 
   std::unique_lock<std::mutex> lock(output_mutex);
   if (absl::GetFlag(FLAGS_dump_output)) {
@@ -447,22 +476,34 @@ auto FileTestEventListener::OnTestProgramStart(
   } else {
     // Enable the CRC for use in `RunSingleTest`.
     llvm::CrashRecoveryContext::Enable();
-    pool = std::make_unique<llvm::DefaultThreadPool>(llvm::ThreadPoolStrategy{
-        .ThreadsRequested = absl::GetFlag(FLAGS_threads)});
+    llvm::ThreadPoolStrategy thread_strategy = {
+        .ThreadsRequested = absl::GetFlag(FLAGS_threads),
+        // Disable hyper threads to reduce contention.
+        .UseHyperThreads = false};
+    pool = std::make_unique<llvm::DefaultThreadPool>(thread_strategy);
   }
   if (!absl::GetFlag(FLAGS_dump_output)) {
     llvm::errs() << "Running tests with " << pool->getMaxConcurrency()
                  << " thread(s)\n";
   }
 
+  llvm::SmallVector<std::pair<FileTestInfo*, std::chrono::milliseconds>> tests;
+  tests.reserve(tests_.size());
+  for (auto& test : tests_) {
+    tests.push_back({&test, std::chrono::milliseconds(0)});
+  }
+
   // Guard access to output (stdout and stderr).
   std::mutex output_mutex;
-  std::atomic<bool> crashed = false;
 
-  for (auto& test : tests_) {
-    if (!test.registered_test->should_run()) {
+  std::atomic<bool> crashed = false;
+  Timer all_timer;
+  int run_count = 0;
+  for (auto& [test, elapsed_ms] : tests) {
+    if (!test->registered_test->should_run()) {
       continue;
     }
+    ++run_count;
 
     pool->async([&] {
       // If any thread crashed, don't try running more.
@@ -470,7 +511,7 @@ auto FileTestEventListener::OnTestProgramStart(
         return;
       }
 
-      if (!RunSingleTest(test, single_threaded, output_mutex)) {
+      if (!RunSingleTest(*test, elapsed_ms, single_threaded, output_mutex)) {
         crashed = true;
       }
     });
@@ -482,7 +523,35 @@ auto FileTestEventListener::OnTestProgramStart(
     // We expect to have leaked memory if one or more of our tests crashed.
     std::abort();
   }
-  llvm::errs() << "\nDone!\n";
+
+  auto all_elapsed_ms = all_timer.elapsed_ms();
+  llvm::errs() << "\n"
+               << "Ran " << run_count << " tests!\n"
+               << "  - Wall time: " << all_elapsed_ms.count() << " ms\n";
+
+  // When there are multiple tests, give additional timing details, particularly
+  // slowest tests.
+  if (run_count > 1) {
+    // Calculate the total test time.
+    auto total_elapsed_ms = std::chrono::milliseconds(0);
+    for (auto& [_, elapsed_ms] : tests) {
+      total_elapsed_ms += elapsed_ms;
+    }
+
+    llvm::errs() << "  - Total test time: " << total_elapsed_ms.count()
+                 << " ms\n"
+                 << "  - Slowest tests:\n";
+    llvm::sort(tests, [](const auto& lhs, const auto& rhs) {
+      return lhs.second > rhs.second;
+    });
+    auto count_flag = absl::GetFlag(FLAGS_print_slowest_tests);
+    int count = count_flag > 0 ? count_flag : run_count;
+    for (const auto& [test, elapsed_ms] :
+         llvm::ArrayRef(tests).take_front(count)) {
+      llvm::errs() << "    - " << test->test_name << ": " << elapsed_ms.count()
+                   << " ms\n";
+    }
+  }
 }
 
 // Implements main() within the Carbon::Testing namespace for convenience.
