@@ -2699,7 +2699,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::PatternType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
   auto scrutinee_type_inst_id =
-      GetLocalConstantInstId(resolver, inst.scrutinee_type_inst_id);
+      GetLocalTypeInstId(resolver, inst.scrutinee_type_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }

@@ -1329,7 +1329,7 @@ struct PatternType {
        .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
-  InstId scrutinee_type_inst_id;
+  TypeInstId scrutinee_type_inst_id;
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in
