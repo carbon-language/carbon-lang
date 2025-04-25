@@ -66,9 +66,10 @@ ABSL_FLAG(unsigned int, threads, 0,
 ABSL_FLAG(bool, dump_output, false,
           "Instead of verifying files match test output, directly dump output "
           "to stderr.");
-ABSL_FLAG(int, print_slowest_tests, 5,
+ABSL_FLAG(int, print_slowest_tests, -1,
           "The number of tests to print when showing slowest tests. Set to 0 "
-          "to print all tests, ordered by elapsed time.");
+          "to print all tests, ordered by elapsed time. The default of -1 "
+          "disables printing.");
 
 namespace Carbon::Testing {
 
@@ -526,31 +527,29 @@ auto FileTestEventListener::OnTestProgramStart(
     std::abort();
   }
 
+  // Calculate the total test time.
   auto all_elapsed_ms = all_timer.elapsed_ms();
-  llvm::errs() << "\n"
-               << "Ran " << run_count << " tests!\n"
-               << "  - Wall time: " << all_elapsed_ms.count() << " ms\n";
+  auto total_elapsed_ms = std::chrono::milliseconds(0);
+  for (auto& [_, elapsed_ms] : tests) {
+    total_elapsed_ms += elapsed_ms;
+  }
+
+  llvm::errs() << "\nRan " << run_count << " tests in "
+               << all_elapsed_ms.count() << " ms wall time, "
+               << total_elapsed_ms.count() << " ms across threads\n";
 
   // When there are multiple tests, give additional timing details, particularly
   // slowest tests.
-  if (run_count > 1) {
-    // Calculate the total test time.
-    auto total_elapsed_ms = std::chrono::milliseconds(0);
-    for (auto& [_, elapsed_ms] : tests) {
-      total_elapsed_ms += elapsed_ms;
-    }
-
-    llvm::errs() << "  - Total test time: " << total_elapsed_ms.count()
-                 << " ms\n"
-                 << "  - Slowest tests:\n";
+  auto print_slowest_tests = absl::GetFlag(FLAGS_print_slowest_tests);
+  if (run_count > 1 && print_slowest_tests >= 0) {
+    llvm::errs() << "  Slowest tests:\n";
     llvm::sort(tests, [](const auto& lhs, const auto& rhs) {
       return lhs.second > rhs.second;
     });
-    auto count_flag = absl::GetFlag(FLAGS_print_slowest_tests);
-    int count = count_flag > 0 ? count_flag : run_count;
+    int count = print_slowest_tests > 0 ? print_slowest_tests : run_count;
     for (const auto& [test, elapsed_ms] :
          llvm::ArrayRef(tests).take_front(count)) {
-      llvm::errs() << "    - " << test->test_name << ": " << elapsed_ms.count()
+      llvm::errs() << "  - " << test->test_name << ": " << elapsed_ms.count()
                    << " ms\n";
     }
   }
