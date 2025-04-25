@@ -520,7 +520,7 @@ static auto BuildFunctionDecl(Context& context,
           SemIR::Function::VirtualModifier::Abstract) {
     CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
                       "definition of `abstract` function");
-    context.emitter().Emit(TokenOnly(context, node_id),
+    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
                            DefinedAbstractFunction);
   }
 
@@ -641,7 +641,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
-      context.emitter().Emit(TokenOnly(context, node_id),
+      context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
                              MissingReturnStatement);
     } else {
       AddReturnCleanupBlock(context, node_id);

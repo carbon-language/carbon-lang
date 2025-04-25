@@ -12,9 +12,6 @@
 namespace Carbon::Check {
 class Context;
 
-auto TokenOnly(Context& context, Parse::NodeId node_id) -> SemIR::LocId;
-auto TokenOnly(Context& context, SemIR::LocId loc_id) -> SemIR::LocId;
-
 // We define the emitter separately for dependencies, so only provide a base
 // here.
 using DiagnosticEmitterBase = Diagnostics::Emitter<SemIR::LocId>;

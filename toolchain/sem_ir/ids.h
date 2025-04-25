@@ -902,8 +902,11 @@ struct LocId : public IdBase<LocId> {
     return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
   }
 
-  // Returns true if the location is token-only for diagnostics. Requires a
-  // non-`InstId` location.
+  // Returns true if the location is token-only for diagnostics.
+  //
+  // This means the displayed location will include only the location's specific
+  // parse node, instead of also including its descendants. As such, this can
+  // only be true for locations backed by a `NodeId`.
   auto is_token_only() const -> bool {
     return kind() != Kind::InstId && (index & TokenOnlyBit) == 0;
   }
@@ -939,8 +942,8 @@ struct LocId : public IdBase<LocId> {
   // for `NodeId`.
   static constexpr int32_t ImplicitBit = 1 << 30;
 
-  // See `token_only` for the use. This only applies for `NodeId` and
-  // `ImportIRInstId`.
+  // See `is_token_only` for the use. This only applies for canonical locations
+  // (i.e. those containing `NodeId` or `ImportIRInstId`).
   static constexpr int32_t TokenOnlyBit = 1 << 29;
 
   // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
