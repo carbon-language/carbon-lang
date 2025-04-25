@@ -72,7 +72,7 @@ class ImportIRInst : public Printable<ImportIRInst> {
 };
 
 // Returns the canonical `File` and `InstId` for an entity, tracing imported
-// instructions. Note the returned `File` may not be directly imported by the
+// instructions. Note the returned `File` might not be directly imported by the
 // input `sem_ir`.
 auto GetCanonicalFileAndInstId(const File* sem_ir, SemIR::InstId inst_id)
     -> std::pair<const File*, InstId>;
