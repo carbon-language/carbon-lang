@@ -14,7 +14,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 
-namespace clang {
+namespace clang {  // NOLINT
 
 // Forward declare indexed types, for integration with ValueStore.
 class SourceLocation;
