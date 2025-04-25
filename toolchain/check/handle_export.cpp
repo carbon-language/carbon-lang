@@ -63,9 +63,10 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
         .Build(node_id, ExportRedundant)
         // Use the location of the export itself, not the exported instruction.
         //
-        // TODO: This is a bit too magical. It prevents GetAbsoluteNodeIdImpl()
-        // from seeing the `ExportDecl` instruction, which prevents it from
-        // chasing through it to the entity being exported.
+        // TODO: This construction of a LocId that does not just contain the
+        // InstId prevents GetAbsoluteNodeIdImpl() from seeing the `ExportDecl`
+        // instruction, which prevents it from chasing through it to the entity
+        // being exported. It might be nice to make this more explicit.
         .Note(context.insts().GetCanonicalLocId(inst_id), ExportPrevious)
         .Emit();
     return true;
