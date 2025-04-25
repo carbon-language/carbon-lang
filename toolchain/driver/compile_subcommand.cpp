@@ -25,6 +25,7 @@
 #include "toolchain/parse/parse.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/formatter.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst_namer.h"
 #include "toolchain/source/source_buffer.h"
 
@@ -562,25 +563,9 @@ auto CompilationUnit::PostCheck() -> void {
   if (vlog_stream_ || print) {
     // Omit entities imported from files that we are not dumping.
     auto should_format_entity = [&](SemIR::InstId entity_inst_id) -> bool {
-      // TODO: Reuse `GetCanonicalImportIRInst`. Currently it depends on
-      // `Check::Context`, which we don't have access to here.
-      const SemIR::File* file = &*sem_ir_;
-      while (true) {
-        auto loc_id = file->insts().GetLocId(entity_inst_id);
-        if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
-          return true;
-        }
-        auto import_ir_inst =
-            file->import_ir_insts().Get(loc_id.import_ir_inst_id());
-        const auto* import_file =
-            file->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-        CARBON_CHECK(import_file);
-        if (!IncludeInDumps(import_file->filename())) {
-          return false;
-        }
-        file = import_file;
-        entity_inst_id = import_ir_inst.inst_id();
-      }
+      auto [import_ir, _] =
+          SemIR::GetCanonicalFileAndInstId(&*sem_ir_, entity_inst_id);
+      return IncludeInDumps(import_ir->filename());
     };
 
     SemIR::Formatter formatter(&*sem_ir_, should_format_entity);

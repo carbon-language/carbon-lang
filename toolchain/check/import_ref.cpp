@@ -112,41 +112,21 @@ static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
 }
 
 static auto GetCanonicalImportIRInst(Context& context,
-                                     const SemIR::File* cursor_ir,
-                                     SemIR::InstId cursor_inst_id)
+                                     const SemIR::File* target_ir,
+                                     SemIR::InstId target_inst_id)
     -> SemIR::ImportIRInst {
-  while (true) {
-    // Step through an instruction with an imported location to the imported
-    // instruction.
-    auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
-    if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
-      auto import_ir_inst =
-          cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
-      cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      cursor_inst_id = import_ir_inst.inst_id();
-      continue;
-    }
-
-    // Step through export declarations to their exported value.
-    if (auto export_decl =
-            cursor_ir->insts().TryGetAs<SemIR::ExportDecl>(cursor_inst_id)) {
-      cursor_inst_id = export_decl->value_id;
-      continue;
-    }
-
-    // Reached a non-imported entity.
-    break;
-  }
+  auto [canonical_ir, canonical_inst_id] =
+      GetCanonicalFileAndInstId(target_ir, target_inst_id);
 
   auto ir_id = SemIR::ImportIRId::None;
-  if (cursor_ir != &context.sem_ir()) {
+  if (canonical_ir != &context.sem_ir()) {
     // This uses AddImportIR in case it was indirectly found, which can
     // happen with two or more steps of exports.
     ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::None,
                                   .is_export = false,
-                                  .sem_ir = cursor_ir});
+                                  .sem_ir = canonical_ir});
   }
-  return SemIR::ImportIRInst(ir_id, cursor_inst_id);
+  return SemIR::ImportIRInst(ir_id, canonical_inst_id);
 }
 
 auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)

@@ -26,7 +26,9 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
                   SemIR::EntityNameId entity_name_id) -> SemIR::InstId;
 
 // Returns the canonical IR inst for an entity. Returns an `ImportIRInst` with
-// a `None` ir_id for an entity that was not imported.
+// a `None` ir_id for an entity that was not imported. This may add an
+// `ImportIR` if it finds an indirectly referenced `File` that hasn't previously
+// been found.
 auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)
     -> SemIR::ImportIRInst;
 
