@@ -108,8 +108,9 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     -> std::string {
   RawStringOstream out;
-  // FIXME: If the canonical is None but the original is InstId, should we dump
-  // the inst id anyway even though it has no location?
+  // TODO: If the canonical location is None but the original is an InstId,
+  // should we dump the InstId anyway even though it has no location? Is that
+  // ever useful?
   loc_id = context.sem_ir().insts().GetCanonicalLocId(loc_id);
   switch (loc_id.kind()) {
     case SemIR::LocId::Kind::None: {

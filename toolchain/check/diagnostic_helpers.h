@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_HELPERS_H_
 #define CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_HELPERS_H_
 
+#include <concepts>
+#include <variant>
+
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
@@ -12,9 +15,23 @@
 namespace Carbon::Check {
 class Context;
 
+class LocIdForDiagnostics {
+ public:
+  template <class T>
+    requires std::constructible_from<SemIR::LocId, T>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  LocIdForDiagnostics(T loc_id) : loc_id_(SemIR::LocId(loc_id)) {}
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  operator SemIR::LocId() const { return loc_id_; }
+
+ private:
+  SemIR::LocId loc_id_;
+};
+
 // We define the emitter separately for dependencies, so only provide a base
 // here.
-using DiagnosticEmitterBase = Diagnostics::Emitter<SemIR::LocId>;
+using DiagnosticEmitterBase = Diagnostics::Emitter<LocIdForDiagnostics>;
 
 using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 
