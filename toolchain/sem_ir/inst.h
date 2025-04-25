@@ -440,13 +440,13 @@ class InstStore {
   //
   // Unresolved LocIds can be backed by an InstId which may or may not have a
   // value after being resolved, so this operation needs to be done before using
-  // most operations on `LocId`.
+  // most operations on LocId.
   auto GetResolvedLocId(LocId loc_id) const -> LocId {
     while (loc_id.kind() == LocId::Kind::InstId) {
       auto inst_id = loc_id.inst_id();
       CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
-      CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}",
-                   inst_id.index, loc_ids_.size());
+      CARBON_CHECK(static_cast<size_t>(inst_id.index) < loc_ids_.size(),
+                   "{0} {1}", inst_id.index, loc_ids_.size());
       loc_id = loc_ids_[inst_id.index];
     }
     return loc_id;
