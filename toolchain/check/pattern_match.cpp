@@ -172,7 +172,7 @@ static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
       return region.result_id;
     }
     return AddInst<SemIR::SpliceBlock>(
-        context, SemIR::LocId(region.result_id),
+        context, region.result_id,
         {.type_id = context.insts().Get(region.result_id).type_id(),
          .block_id = region.block_ids.front(),
          .result_id = region.result_id});
@@ -273,7 +273,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   auto scrutinee_ref_type_inst_id =
       context.types().GetInstId(scrutinee_ref.type_id());
   auto new_scrutinee = AddInst<SemIR::AddrOf>(
-      context, SemIR::LocId(scrutinee_ref_id),
+      context, scrutinee_ref_id,
       {.type_id = GetPointerType(context, scrutinee_ref_type_inst_id),
        .lvalue_id = scrutinee_ref_id});
   AddWork({.pattern_id = addr_pattern.inner_id, .scrutinee_id = new_scrutinee});
@@ -307,7 +307,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       param_pattern.index = NextRuntimeIndex();
       ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::ValueParam>(
-          context, SemIR::LocId(pattern_inst_id),
+          context, pattern_inst_id,
           {.type_id = param_pattern.type_id,
            .index = param_pattern.index,
            .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
@@ -390,7 +390,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       param_pattern.index = NextRuntimeIndex();
       ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::OutParam>(
-          context, SemIR::LocId(pattern_inst_id),
+          context, pattern_inst_id,
           {.type_id = param_pattern.type_id,
            .index = param_pattern.index,
            .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
@@ -411,7 +411,7 @@ auto MatchContext::DoEmitPatternMatch(
     SemIR::InstId pattern_inst_id, WorkItem entry) -> void {
   CARBON_CHECK(kind_ == MatchKind::Callee);
   auto return_slot_id = AddInst<SemIR::ReturnSlot>(
-      context, SemIR::LocId(pattern_inst_id),
+      context, pattern_inst_id,
       {.type_id = return_slot_pattern.type_id,
        .type_inst_id = return_slot_pattern.type_inst_id,
        .storage_id = entry.scrutinee_id});
@@ -446,8 +446,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     }
     case MatchKind::Caller: {
       storage_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
-          context, SemIR::LocId(pattern_inst_id),
-          {.type_id = var_pattern.type_id});
+          context, pattern_inst_id, {.type_id = var_pattern.type_id});
       CARBON_CHECK(entry.scrutinee_id.has_value());
       break;
     }
@@ -463,7 +462,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                               storage_id, entry.scrutinee_id);
     // TODO: Consider using different instruction kinds for assignment
     // versus initialization.
-    AddInst<SemIR::Assign>(context, SemIR::LocId(pattern_inst_id),
+    AddInst<SemIR::Assign>(context, pattern_inst_id,
                            {.lhs_id = storage_id, .rhs_id = init_id});
   }
   AddWork(

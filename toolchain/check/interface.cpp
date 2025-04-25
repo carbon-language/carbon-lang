@@ -43,7 +43,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
   auto type_id =
       GetAssociatedEntityType(context, interface_id, interface_specific_id);
   return AddInst<SemIR::AssociatedEntity>(
-      context, SemIR::LocId(decl_id),
+      context, decl_id,
       {.type_id = type_id, .index = index, .decl_id = decl_id});
 }
 

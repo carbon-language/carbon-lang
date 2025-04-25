@@ -355,7 +355,7 @@ struct LocIdAndInst {
 
   // Unsafely form a pair of a location and an instruction. Used in the cases
   // where we can't statically enforce the type matches.
-  static auto UncheckedLoc(SemIR::LocId loc_id, Inst inst) -> LocIdAndInst {
+  static auto UncheckedLoc(LocId loc_id, Inst inst) -> LocIdAndInst {
     return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
   }
 
@@ -369,10 +369,10 @@ struct LocIdAndInst {
   // node.
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
-  LocIdAndInst(SemIR::LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
+  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
-  LocIdAndInst(SemIR::InstId loc_inst_id, InstT inst)
+  LocIdAndInst(InstId loc_inst_id, InstT inst)
       : loc_id(loc_inst_id), inst(inst) {}
 
   LocId loc_id;
