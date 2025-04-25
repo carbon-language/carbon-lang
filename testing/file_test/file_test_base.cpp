@@ -488,7 +488,7 @@ auto FileTestEventListener::OnTestProgramStart(
 // Implements main() within the Carbon::Testing namespace for convenience.
 static auto Main(int argc, char** argv) -> ErrorOr<int> {
   // Default to brief because we expect lots of tests, and `FileTestBase`
-  // provides some summaries. Note `--test_arg=--gtest_brief=1` works to restore
+  // provides some summaries. Note `--test_arg=--gtest_brief=0` works to restore
   // output.
   absl::SetFlag(&FLAGS_gtest_brief, 1);
 
