@@ -109,8 +109,7 @@ static auto BuildInterfaceDecl(Context& context,
       }
     } else {
       // This is a redeclaration of something other than a interface.
-      DiagnoseDuplicateName(context, name_context.name_id,
-                            SemIR::LocId(name_context.loc_id),
+      DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
                             SemIR::LocId(existing_id));
     }
   }

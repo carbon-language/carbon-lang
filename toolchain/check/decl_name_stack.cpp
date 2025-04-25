@@ -182,8 +182,8 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
     DiagnosePoisonedName(*context_, name_context.name_id_for_new_inst(),
                          name_context.poisoning_loc_id, name_context.loc_id);
   } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
-    DiagnoseDuplicateName(*context_, name_context.name_id,
-                          SemIR::LocId(name_context.loc_id), SemIR::LocId(id));
+    DiagnoseDuplicateName(*context_, name_context.name_id, name_context.loc_id,
+                          SemIR::LocId(id));
   } else {
     AddName(name_context, target_id, access_kind);
   }

@@ -243,8 +243,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
   }
 
   if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, name_context.name_id,
-                          SemIR::LocId(name_context.loc_id),
+    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
                           SemIR::LocId(prev_id));
     return;
   }
