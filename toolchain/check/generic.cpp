@@ -101,7 +101,8 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
       return true;
     }
 
-    // If this instruction is in the map, return the known result.
+    // If this constant value has a defining instruction in the eval block, replace the
+    // instruction in the body of the generic with the one from the eval block.
     if (auto result = constants_in_generic_.Lookup(
             context().constant_values().GetInstId(const_id))) {
       inst_id = result.value();
