@@ -740,8 +740,7 @@ static auto IsValidBuiltinDeclaration(Context& context,
   for (auto param_id : call_params) {
     // TODO: We also need to track whether the parameter is declared with
     // `var`.
-    param_type_ids.push_back(ExtractScrutineeType(
-        context.sem_ir(), context.insts().Get(param_id).type_id()));
+    param_type_ids.push_back(context.insts().Get(param_id).type_id());
   }
 
   // Get the return type. This is `()` if none was specified.

@@ -298,8 +298,12 @@ auto DeductionContext::Deduce() -> bool {
     // TODO: Bail out if there's nothing to deduce: if we're not in a pattern
     // and the parameter doesn't have a symbolic constant value.
 
-    auto param_type_id = ExtractScrutineeType(
-        context().sem_ir(), context().insts().Get(param_id).type_id());
+    auto param_type_id = context().insts().Get(param_id).type_id();
+    if (auto pattern_type =
+            context().types().TryGetAs<SemIR::PatternType>(param_type_id)) {
+      param_type_id = context().types().GetTypeIdForTypeInstId(
+          pattern_type->scrutinee_type_inst_id);
+    }
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
       Add(context().types().GetInstId(param_type_id),

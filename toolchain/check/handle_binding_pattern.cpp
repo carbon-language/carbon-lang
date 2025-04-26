@@ -122,7 +122,18 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // true binding, so we handle it separately.
   if (auto parent_interface_decl =
           context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
-      parent_interface_decl.has_value() && is_generic) {
+      parent_interface_decl.has_value()) {
+    // TODO: diagnose this during parsing, to avoid near-duplicate error
+    // messages.
+    if (!is_generic) {
+      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
+                        "pattern in associated constant declaration must be a "
+                        "`:!` binding");
+      context.emitter().Emit(node_id,
+                             ExpectedSymbolicBindingInAssociatedConstant);
+      context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+      return true;
+    }
     if (name_id == SemIR::NameId::Underscore) {
       // The action item here may be to document this as not allowed, and
       // add a proper diagnostic.

@@ -319,6 +319,7 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInAssociatedConstant)
+CARBON_DIAGNOSTIC_KIND(ExpectedSingleBindingInAssociatedConstant)
 
 // Pattern checking.
 CARBON_DIAGNOSTIC_KIND(TemplateBindingInAssociatedConstantDecl)

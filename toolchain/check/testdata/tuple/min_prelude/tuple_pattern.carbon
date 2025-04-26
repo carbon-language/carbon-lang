@@ -61,7 +61,15 @@ let (x: {}, y: {}) = ({}, {});
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+12]]:8: error: pattern in associated constant declaration must be a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR:   let (x: {}, y: {});
+  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+8]]:15: error: pattern in associated constant declaration must be a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR:   let (x: {}, y: {});
+  // CHECK:STDERR:               ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSingleBindingInAssociatedConstant]
   // CHECK:STDERR:   let (x: {}, y: {});
   // CHECK:STDERR:       ^~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -552,8 +560,6 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .x = <unexpected>.inst25.loc9_8
-// CHECK:STDOUT:   .y = <unexpected>.inst30.loc9_15
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }

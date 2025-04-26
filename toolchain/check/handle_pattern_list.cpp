@@ -74,6 +74,15 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::TuplePatternStart>();
 
+  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+    CARBON_DIAGNOSTIC(ExpectedSingleBindingInAssociatedConstant, Error,
+                      "pattern in associated constant declaration must be a "
+                      "single `:!` binding");
+    context.emitter().Emit(node_id, ExpectedSingleBindingInAssociatedConstant);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    EndSubpatternAsNonExpr(context);
+    return true;
+  }
   const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
   type_inst_ids.reserve(inst_block.size());
