@@ -87,9 +87,9 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
   type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
-    auto type_id = ExtractScrutineeType(context.sem_ir(),
-                                        context.insts().Get(inst).type_id());
-    type_inst_ids.push_back(context.types().GetInstId(type_id));
+    auto type_inst_id = ExtractScrutineeType(
+        context.sem_ir(), context.insts().Get(inst).type_id());
+    type_inst_ids.push_back(type_inst_id);
   }
   auto type_id = GetPatternType(context, GetTupleType(context, type_inst_ids));
   context.node_stack().Push(

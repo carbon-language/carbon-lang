@@ -108,16 +108,16 @@ auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
 }
 
 auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
-    -> SemIR::TypeId {
+    -> SemIR::TypeInstId {
   if (auto pattern_type =
           sem_ir.types().TryGetAs<SemIR::PatternType>(type_id)) {
-    return sem_ir.types().GetTypeIdForTypeInstId(
-        pattern_type->scrutinee_type_inst_id);
+    return pattern_type->scrutinee_type_inst_id;
+  } else {
+    CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId,
+                 "Inst kind doesn't have scrutinee type: {0}",
+                 sem_ir.types().GetAsInst(type_id).kind());
+    return SemIR::TypeInstId::UnsafeMake(sem_ir.types().GetInstId(type_id));
   }
-  CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId,
-               "Inst kind doesn't have scrutinee type: {0}",
-               sem_ir.types().GetAsInst(type_id).kind());
-  return type_id;
 }
 
 }  // namespace Carbon::SemIR
