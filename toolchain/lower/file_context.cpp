@@ -275,10 +275,9 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     if (!param_pattern_info) {
       continue;
     }
-    auto param_type_id =
-        sem_ir().types().GetTypeIdForTypeInstId(ExtractScrutineeType(
-            sem_ir(), SemIR::GetTypeOfInstInSpecific(
-                          sem_ir(), specific_id, param_pattern_info->inst_id)));
+    auto param_type_id = ExtractScrutineeType(
+        sem_ir(), SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id,
+                                                 param_pattern_info->inst_id));
     CARBON_CHECK(
         !param_type_id.AsConstantId().is_symbolic(),
         "Found symbolic type id after resolution when lowering type {0}.",
