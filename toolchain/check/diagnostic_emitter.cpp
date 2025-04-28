@@ -19,7 +19,7 @@ auto DiagnosticEmitter::ConvertLoc(SemIR::LocId loc_id,
     -> Diagnostics::ConvertedLoc {
   // TODO: Instead of special casing Clang location here, support it within
   // `GetAbsoluteNodeId()`. See discussion in
-  // https://github.com/carbon-language/carbon-lang/pull/5262/files#r2040308805.
+  // https://github.com/carbon-language/carbon-lang/pull/5262/files/20a3f9dcfab5c6f6c5089554fd5e22d5f1ca75a3#r2040308805.
   auto converted_clang_loc = TryConvertClangDiagnosticLoc(loc_id);
   if (converted_clang_loc) {
     return *converted_clang_loc;
