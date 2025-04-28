@@ -28,6 +28,7 @@ class A {
 // CHECK:STDOUT:   %DefaultConstructible.type: type = facet_type <@DefaultConstructible> [concrete]
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.839: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %Make.type.068: type = fn_type @Make.1 [concrete]
 // CHECK:STDOUT:   %Make.606: %Make.type.068 = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.assoc_type: type = assoc_entity_type @DefaultConstructible [concrete]
@@ -37,6 +38,7 @@ class A {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness @A.%DefaultConstructible.impl_witness_table [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Make.type.351: type = fn_type @Make.2 [concrete]
 // CHECK:STDOUT:   %Make.b73: %Make.type.351 = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, (%DefaultConstructible.impl_witness) [concrete]
@@ -57,8 +59,8 @@ class A {
 // CHECK:STDOUT: interface @DefaultConstructible {
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Make.decl: %Make.type.068 = fn_decl @Make.1 [concrete = constants.%Make.606] {
-// CHECK:STDOUT:     %return.patt: @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: @Make.1.%pattern_type (%pattern_type.839) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @Make.1.%pattern_type (%pattern_type.839) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %DefaultConstructible.type = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc12_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
@@ -76,8 +78,8 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %DefaultConstructible.ref {
 // CHECK:STDOUT:   %Make.decl: %Make.type.351 = fn_decl @Make.2 [concrete = constants.%Make.b73] {
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
@@ -118,6 +120,7 @@ class A {
 // CHECK:STDOUT: generic fn @Make.1(@DefaultConstructible.%Self: %DefaultConstructible.type) {
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc12_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc12_16.1 [symbolic = %pattern_type (constants.%pattern_type.839)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type);
 // CHECK:STDOUT: }
@@ -133,10 +136,12 @@ class A {
 // CHECK:STDOUT: specific @Make.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.839
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%DefaultConstructible.facet) {
 // CHECK:STDOUT:   %Self => constants.%DefaultConstructible.facet
 // CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%C
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

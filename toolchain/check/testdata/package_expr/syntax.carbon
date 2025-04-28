@@ -46,6 +46,7 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -78,8 +79,8 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
-// CHECK:STDOUT:     %.loc4_1: %i32 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.7ce = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var x
 // CHECK:STDOUT:   %.loc4_8: type = splice_block %i32.loc4 [concrete = constants.%i32] {
@@ -88,8 +89,8 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
-// CHECK:STDOUT:     %.loc5_1: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y
+// CHECK:STDOUT:     %.loc5_1: %pattern_type.7ce = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %.loc5_8: type = splice_block %i32.loc5 [concrete = constants.%i32] {
@@ -121,6 +122,7 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -159,8 +161,8 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
-// CHECK:STDOUT:     %.loc4_1: %i32 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.7ce = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var x
 // CHECK:STDOUT:   %.loc4_8: type = splice_block %i32 [concrete = constants.%i32] {
@@ -174,8 +176,8 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
-// CHECK:STDOUT:     %.loc7_3.1: %i32 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x
+// CHECK:STDOUT:     %.loc7_3.1: %pattern_type.7ce = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var x
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -192,8 +194,8 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
-// CHECK:STDOUT:     %.loc9_3: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y
+// CHECK:STDOUT:     %.loc9_3: %pattern_type.7ce = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [concrete = package]

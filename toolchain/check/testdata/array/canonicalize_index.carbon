@@ -20,9 +20,11 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Add.type.b1f: type = fn_type @Add.1 [concrete]
 // CHECK:STDOUT:   %Add: %Add.type.b1f = struct_value () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.4a9: type = pattern_type %u32 [concrete]
 // CHECK:STDOUT:   %ConvertToU32.type: type = fn_type @ConvertToU32 [concrete]
 // CHECK:STDOUT:   %ConvertToU32: %ConvertToU32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -57,11 +59,13 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.f01: type = ptr_type %array_type [concrete]
+// CHECK:STDOUT:   %pattern_type.5d8: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %Convert.bound.b30: <bound method> = bound_method %int_3.1ba, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.047: <bound method> = bound_method %int_3.1ba, %Convert.specific_fn.b6f [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_1.5d2, %int_2.ef8, %int_3.822) [concrete]
+// CHECK:STDOUT:   %pattern_type.743: type = pattern_type %ptr.f01 [concrete]
 // CHECK:STDOUT:   %int_3.d14: %u32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.6ad = impl_witness_table (imports.%Core.import_ref.823), @impl.750 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.a110: <witness> = impl_witness %ImplicitAs.impl_witness_table.6ad, @impl.750(%int_32) [concrete]
@@ -95,12 +99,12 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Add.decl: %Add.type.b1f = fn_decl @Add.1 [concrete = constants.%Add] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -120,10 +124,10 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertToU32.decl: %ConvertToU32.type = fn_decl @ConvertToU32 [concrete = constants.%ConvertToU32] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %u32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %u32 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.4a9 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.4a9 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc12_28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
@@ -137,8 +141,8 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:     %return: ref %u32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
-// CHECK:STDOUT:     %.loc14_1: %array_type = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.5d8 = binding_pattern a
+// CHECK:STDOUT:     %.loc14_1: %pattern_type.5d8 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
 // CHECK:STDOUT:   %.loc14_28: type = splice_block %array_type.loc14 [concrete = constants.%array_type] {
@@ -175,7 +179,7 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %ptr.f01 = binding_pattern b
+// CHECK:STDOUT:     %b.patt: %pattern_type.743 = binding_pattern b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: type = splice_block %ptr.loc15 [concrete = constants.%ptr.f01] {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -186,7 +190,7 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.f01 = bind_name b, @__global_init.%addr.loc15
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %ptr.f01 = binding_pattern c
+// CHECK:STDOUT:     %c.patt: %pattern_type.743 = binding_pattern c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_35: type = splice_block %ptr.loc16 [concrete = constants.%ptr.f01] {
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

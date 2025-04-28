@@ -98,6 +98,7 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -118,8 +119,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %empty_struct_type = binding_pattern v
-// CHECK:STDOUT:     %.loc9_11: %empty_struct_type = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v
+// CHECK:STDOUT:     %.loc9_11: %pattern_type = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_struct_type = var v
 // CHECK:STDOUT:   %.loc9_19.1: type = splice_block %.loc9_19.3 [concrete = constants.%empty_struct_type] {
@@ -128,8 +129,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_struct_type = bind_name v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %empty_struct_type = binding_pattern w
-// CHECK:STDOUT:     %.loc14_13: %empty_struct_type = var_pattern %w.patt
+// CHECK:STDOUT:     %w.patt: %pattern_type = binding_pattern w
+// CHECK:STDOUT:     %.loc14_13: %pattern_type = var_pattern %w.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %empty_struct_type = var w
 // CHECK:STDOUT:   %.loc14_21.1: type = splice_block %.loc14_21.3 [concrete = constants.%empty_struct_type] {

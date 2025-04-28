@@ -24,7 +24,7 @@ namespace Carbon::Parse {
 //
 // TODO: Decide whether we want to avoid lookahead altogether.
 //
-// NOLINTNEXTLINE(performance-enum-size): Deliberately matches index size.
+// The size of the enum deliberately matches the index size.
 enum class Lookahead : int32_t {
   CurrentToken = 0,
   NextToken = 1,

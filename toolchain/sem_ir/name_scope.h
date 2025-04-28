@@ -138,7 +138,7 @@ class NameScope : public Printable<NameScope> {
 
   // Disallow copy, allow move.
   NameScope(NameScope&& other) = default;
-  auto operator=(NameScope&& other) -> NameScope& = default;
+  auto operator=(NameScope&& other) noexcept -> NameScope& = default;
 
   explicit NameScope(InstId inst_id, NameId name_id,
                      NameScopeId parent_scope_id)

@@ -15,6 +15,7 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
@@ -24,8 +25,8 @@ var x: {.v: ()} = {.v = ()};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.v = binding_pattern x
-// CHECK:STDOUT:     %.loc11_1: %struct_type.v = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %pattern_type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var x
 // CHECK:STDOUT:   %.loc11_15: type = splice_block %struct_type.v [concrete = constants.%struct_type.v] {

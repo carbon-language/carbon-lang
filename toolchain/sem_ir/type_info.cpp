@@ -45,8 +45,8 @@ auto ValueRepr::IsCopyOfObjectRepr(const File& file, TypeId orig_type_id) const
     -> bool {
   // If aggregate_kind is ValueAggregate, then the representations are known to
   // be different in some way even, if they're represented by the same type.
-  return (kind == SemIR::ValueRepr::Copy || kind == SemIR::ValueRepr::None) &&
-         aggregate_kind != SemIR::ValueRepr::ValueAggregate &&
+  return (kind == ValueRepr::Copy || kind == ValueRepr::None) &&
+         aggregate_kind != ValueRepr::ValueAggregate &&
          type_id == file.types().GetObjectRepr(orig_type_id);
 }
 

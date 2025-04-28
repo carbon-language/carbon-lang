@@ -20,6 +20,7 @@ var x: type = 42;
 // CHECK:STDOUT: --- fail_non_type_as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -38,8 +39,8 @@ var x: type = 42;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: type = binding_pattern x
-// CHECK:STDOUT:     %.loc18: type = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.98f = binding_pattern x
+// CHECK:STDOUT:     %.loc18: %pattern_type.98f = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var

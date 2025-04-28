@@ -66,6 +66,7 @@ cc_library(
         "function.cpp",
         "generic.cpp",
         "impl.cpp",
+        "import_ir.cpp",
         "inst.cpp",
         "name.cpp",
         "name_scope.cpp",

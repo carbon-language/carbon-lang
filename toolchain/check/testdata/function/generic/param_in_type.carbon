@@ -16,7 +16,8 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.8e2: %i32 = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %N.patt.f2c: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2fd: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %Convert.type.71e: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1d9 = impl_witness_table (imports.%Core.import_ref.85c), @impl.971 [concrete]
@@ -31,6 +32,7 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %bound_method(%N.51e) [symbolic]
 // CHECK:STDOUT:   %array_type: type = array_type %int.convert_checked, %i32 [symbolic]
 // CHECK:STDOUT:   %ptr.0ad: type = ptr_type %array_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.c7e: type = pattern_type %ptr.0ad [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -51,9 +53,9 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc11_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.8e2)]
-// CHECK:STDOUT:     %a.patt: @F.%ptr.loc11_31.2 (%ptr.0ad) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%ptr.loc11_31.2 (%ptr.0ad) = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %N.patt.loc11_6.1: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.f2c)]
+// CHECK:STDOUT:     %a.patt: @F.%pattern_type (%pattern_type.c7e) = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type (%pattern_type.c7e) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_10: type = splice_block %i32.loc11_10 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc11_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -81,23 +83,25 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc11_6.1: %i32) {
 // CHECK:STDOUT:   %N.loc11_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc11_6.2 (constants.%N.51e)]
-// CHECK:STDOUT:   %N.patt.loc11_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT:   %N.patt.loc11_6.2: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.f2c)]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc11_6.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:   %bound_method.loc11_29.3: <bound method> = bound_method %N.loc11_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc11_29.3 (constants.%bound_method)]
 // CHECK:STDOUT:   %int.convert_checked.loc11_29.2: init Core.IntLiteral = call %bound_method.loc11_29.3(%N.loc11_6.2) [symbolic = %int.convert_checked.loc11_29.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %array_type.loc11_30.2: type = array_type %int.convert_checked.loc11_29.2, constants.%i32 [symbolic = %array_type.loc11_30.2 (constants.%array_type)]
 // CHECK:STDOUT:   %ptr.loc11_31.2: type = ptr_type %array_type.loc11_30.2 [symbolic = %ptr.loc11_31.2 (constants.%ptr.0ad)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc11_31.2 [symbolic = %pattern_type (constants.%pattern_type.c7e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @F.%ptr.loc11_31.2 (%ptr.0ad));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc11_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc11_6.2 => constants.%N.patt.8e2
+// CHECK:STDOUT:   %N.patt.loc11_6.2 => constants.%N.patt.f2c
 // CHECK:STDOUT:   %Convert.bound => constants.%Convert.bound
 // CHECK:STDOUT:   %bound_method.loc11_29.3 => constants.%bound_method
 // CHECK:STDOUT:   %int.convert_checked.loc11_29.2 => constants.%int.convert_checked
 // CHECK:STDOUT:   %array_type.loc11_30.2 => constants.%array_type
 // CHECK:STDOUT:   %ptr.loc11_31.2 => constants.%ptr.0ad
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c7e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

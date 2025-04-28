@@ -20,6 +20,7 @@ let d: c = {};
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -39,7 +40,7 @@ let d: c = {};
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %b [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %C = binding_pattern d
+// CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc15_13.1: ref %C = temporary_storage

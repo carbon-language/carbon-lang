@@ -28,7 +28,8 @@ class Class {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %a: %ptr = bind_symbolic_name a, 0 [symbolic]
-// CHECK:STDOUT:   %a.patt: %ptr = symbolic_binding_pattern a, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -55,7 +56,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt.loc16_13.1: %ptr = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc16_13.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
@@ -64,8 +65,8 @@ class Class {
 // CHECK:STDOUT:     %a.loc16_13.2: %ptr = bind_symbolic_name a, 0 [symbolic = %a.loc16_13.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %b.patt: %ptr = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %ptr = value_param_pattern %b.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc22: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -87,7 +88,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%a.loc16_13.2: %ptr) {
 // CHECK:STDOUT:   %a.loc16_13.1: %ptr = bind_symbolic_name a, 0 [symbolic = %a.loc16_13.1 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc16_13.2: %ptr = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.patt.loc16_13.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

@@ -49,7 +49,6 @@ class NodeCategory : public Printable<NodeCategory> {
   // instances just due to the duplication of declarations that would cause.
   //
   // We expect this to grow, so are using a bigger size than needed.
-  // NOLINTNEXTLINE(performance-enum-size)
   enum RawEnumType : uint32_t {
 #define CARBON_NODE_CATEGORY_FOR_BIT_MASK(Name) \
   Name = 1 << static_cast<uint8_t>(BitShift::Name),

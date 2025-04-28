@@ -21,6 +21,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.ddf: type = struct_type {.a: f64, .b: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.7fd: type = pattern_type %struct_type.a.b.ddf [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.fbb: type = struct_type {.a: f64, .b: Core.IntLiteral} [concrete]
@@ -33,6 +34,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
@@ -58,8 +60,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.a.b.ddf = binding_pattern x
-// CHECK:STDOUT:     %.loc11_1: %struct_type.a.b.ddf = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.7fd = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.7fd = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b.ddf = var x
 // CHECK:STDOUT:   %.loc11_25: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.ddf] {
@@ -73,8 +75,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.ddf = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
-// CHECK:STDOUT:     %.loc12_1: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.7ce = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %.loc12_8: type = splice_block %i32.loc12 [concrete = constants.%i32] {
@@ -83,8 +85,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %z.patt: %i32 = binding_pattern z
-// CHECK:STDOUT:     %.loc13_1: %i32 = var_pattern %z.patt
+// CHECK:STDOUT:     %z.patt: %pattern_type.7ce = binding_pattern z
+// CHECK:STDOUT:     %.loc13_1: %pattern_type.7ce = var_pattern %z.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z.var: ref %i32 = var z
 // CHECK:STDOUT:   %.loc13_8: type = splice_block %i32.loc13 [concrete = constants.%i32] {

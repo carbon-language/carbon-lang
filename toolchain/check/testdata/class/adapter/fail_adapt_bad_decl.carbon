@@ -108,6 +108,7 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bad: type = class_type @Bad [concrete]
 // CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete]
+// CHECK:STDOUT:   %pattern_type.fc4: type = pattern_type %Bad [concrete]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -129,8 +130,8 @@ class C {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [concrete = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
-// CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type.fc4 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.fc4 = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %Bad = value_param call_param0
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [concrete = constants.%Bad]
@@ -162,6 +163,7 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bad: type = class_type @Bad [concrete]
 // CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete]
+// CHECK:STDOUT:   %pattern_type.fc4: type = pattern_type %Bad [concrete]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -183,8 +185,8 @@ class C {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Bad.decl: type = class_decl @Bad [concrete = constants.%Bad] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
-// CHECK:STDOUT:     %b.patt: %Bad = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %Bad = value_param_pattern %b.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type.fc4 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.fc4 = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %Bad = value_param call_param0
 // CHECK:STDOUT:     %Bad.ref: type = name_ref Bad, file.%Bad.decl [concrete = constants.%Bad]

@@ -68,6 +68,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %F.eb5: %F.type.505 = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1.c80: %ForwardDeclared.assoc_type = assoc_entity element1, @ForwardDeclared.%F.decl [concrete]
 // CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.f [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,8 +82,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Basic.decl: type = interface_decl @Basic [concrete = constants.%Basic.type] {} {}
 // CHECK:STDOUT:   %ForwardDeclared.decl: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f_ref.patt: %struct_type.f = binding_pattern f_ref
-// CHECK:STDOUT:     %.loc20_1: %struct_type.f = var_pattern %f_ref.patt
+// CHECK:STDOUT:     %f_ref.patt: %pattern_type = binding_pattern f_ref
+// CHECK:STDOUT:     %.loc20_1: %pattern_type = var_pattern %f_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var f_ref
 // CHECK:STDOUT:   %.loc20_32: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
@@ -158,12 +159,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty> [concrete]
+// CHECK:STDOUT:   %pattern_type.6c3: type = pattern_type %Empty.type [concrete]
 // CHECK:STDOUT:   %UseEmpty.type: type = fn_type @UseEmpty [concrete]
 // CHECK:STDOUT:   %UseEmpty: %UseEmpty.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Basic.type: type = facet_type <@Basic> [concrete]
+// CHECK:STDOUT:   %pattern_type.d8e: type = pattern_type %Basic.type [concrete]
 // CHECK:STDOUT:   %UseBasic.type: type = fn_type @UseBasic [concrete]
 // CHECK:STDOUT:   %UseBasic: %UseBasic.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
+// CHECK:STDOUT:   %pattern_type.fe1: type = pattern_type %ForwardDeclared.type [concrete]
 // CHECK:STDOUT:   %UseForwardDeclared.type: type = fn_type @UseForwardDeclared [concrete]
 // CHECK:STDOUT:   %UseForwardDeclared: %UseForwardDeclared.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Basic.assoc_type: type = assoc_entity_type @Basic [concrete]
@@ -173,6 +177,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %assoc0.d40: %ForwardDeclared.assoc_type = assoc_entity element0, imports.%Main.import_ref.69a [concrete]
 // CHECK:STDOUT:   %assoc1.e3d: %ForwardDeclared.assoc_type = assoc_entity element1, imports.%Main.import_ref.1cc [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared.type [concrete]
+// CHECK:STDOUT:   %pattern_type.97e: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -211,24 +216,24 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [concrete = constants.%UseEmpty] {
-// CHECK:STDOUT:     %e.patt: %Empty.type = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %Empty.type = value_param_pattern %e.patt, call_param0
+// CHECK:STDOUT:     %e.patt: %pattern_type.6c3 = binding_pattern e
+// CHECK:STDOUT:     %e.param_patt: %pattern_type.6c3 = value_param_pattern %e.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Empty.type = value_param call_param0
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty.type]
 // CHECK:STDOUT:     %e: %Empty.type = bind_name e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [concrete = constants.%UseBasic] {
-// CHECK:STDOUT:     %e.patt: %Basic.type = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %Basic.type = value_param_pattern %e.patt, call_param0
+// CHECK:STDOUT:     %e.patt: %pattern_type.d8e = binding_pattern e
+// CHECK:STDOUT:     %e.param_patt: %pattern_type.d8e = value_param_pattern %e.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Basic.type = value_param call_param0
 // CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
 // CHECK:STDOUT:     %e: %Basic.type = bind_name e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [concrete = constants.%UseForwardDeclared] {
-// CHECK:STDOUT:     %f.patt: %ForwardDeclared.type = binding_pattern f
-// CHECK:STDOUT:     %f.param_patt: %ForwardDeclared.type = value_param_pattern %f.patt, call_param0
+// CHECK:STDOUT:     %f.patt: %pattern_type.fe1 = binding_pattern f
+// CHECK:STDOUT:     %f.param_patt: %pattern_type.fe1 = value_param_pattern %f.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %f.param: %ForwardDeclared.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
@@ -247,8 +252,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %F.ref.loc14: %ForwardDeclared.assoc_type = name_ref F, imports.%Main.import_ref.339 [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   %UseForwardDeclaredF: %ForwardDeclared.assoc_type = bind_alias UseForwardDeclaredF, imports.%Main.import_ref.339 [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %ptr = binding_pattern f
-// CHECK:STDOUT:     %.loc16_1: %ptr = var_pattern %f.patt
+// CHECK:STDOUT:     %f.patt: %pattern_type.97e = binding_pattern f
+// CHECK:STDOUT:     %.loc16_1: %pattern_type.97e = var_pattern %f.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %ptr = var f
 // CHECK:STDOUT:   %.loc16_23: type = splice_block %ptr [concrete = constants.%ptr] {

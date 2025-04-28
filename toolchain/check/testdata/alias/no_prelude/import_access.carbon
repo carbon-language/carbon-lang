@@ -86,6 +86,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,8 +106,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: %C = binding_pattern inst
-// CHECK:STDOUT:     %.loc4: %C = var_pattern %inst.patt
+// CHECK:STDOUT:     %inst.patt: %pattern_type = binding_pattern inst
+// CHECK:STDOUT:     %.loc4: %pattern_type = var_pattern %inst.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref %C = var inst
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]

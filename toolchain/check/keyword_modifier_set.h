@@ -25,7 +25,6 @@ class KeywordModifierSet {
   // instances just due to the duplication of declarations that would cause.
   //
   // We expect this to grow, so are using a bigger size than needed.
-  // NOLINTNEXTLINE(performance-enum-size)
   enum RawEnumType : uint32_t {
     // At most one of these access modifiers allowed for a given declaration,
     // and if present it must be first:

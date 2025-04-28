@@ -132,8 +132,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
       // Verify the decl so that things like aliases are name conflicts.
       const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id)) {
+          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id())) {
         break;
       }
 
@@ -142,12 +142,12 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
           context.constant_values().GetConstantInstId(prev_id));
       if (auto class_type = decl_value.TryAs<SemIR::ClassType>()) {
         prev_class_id = class_type->class_id;
-        prev_import_ir_id = import_ir_inst.ir_id;
+        prev_import_ir_id = import_ir_inst.ir_id();
       } else if (auto generic_class_type =
                      context.types().TryGetAs<SemIR::GenericClassType>(
                          decl_value.type_id())) {
         prev_class_id = generic_class_type->class_id;
-        prev_import_ir_id = import_ir_inst.ir_id;
+        prev_import_ir_id = import_ir_inst.ir_id();
       }
       break;
     }

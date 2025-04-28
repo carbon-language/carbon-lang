@@ -21,6 +21,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -41,7 +42,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_test.patt: bool = binding_pattern a_test
+// CHECK:STDOUT:     %a_test.patt: %pattern_type.831 = binding_pattern a_test
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_13.1: type = splice_block %.loc16_13.3 [concrete = bool] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]

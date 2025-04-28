@@ -18,12 +18,15 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.a98: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -58,14 +61,14 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param0
-// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param1
-// CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
-// CHECK:STDOUT:     %m.param_patt: %i32 = value_param_pattern %m.patt, call_param2
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param3
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param1
+// CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m
+// CHECK:STDOUT:     %m.param_patt: %pattern_type.7ce = value_param_pattern %m.patt, call_param2
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param3
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11_34: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_34: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -96,8 +99,8 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: fn @F(%b.param: bool, %n.param: %i32, %m.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %array_type = binding_pattern x
-// CHECK:STDOUT:     %.loc12_3.1: %array_type = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.a98 = binding_pattern x
+// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.a98 = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %array_type = var x
 // CHECK:STDOUT:   %int_0.loc12_27: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]

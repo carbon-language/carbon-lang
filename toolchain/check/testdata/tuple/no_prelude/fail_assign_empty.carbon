@@ -19,6 +19,7 @@ var x: ((),) = ();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -26,8 +27,8 @@ var x: ((),) = ();
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %tuple.type = binding_pattern x
-// CHECK:STDOUT:     %.loc15_1: %tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
+// CHECK:STDOUT:     %.loc15_1: %pattern_type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type = var x
 // CHECK:STDOUT:   %.loc15_12.1: type = splice_block %.loc15_12.4 [concrete = constants.%tuple.type] {

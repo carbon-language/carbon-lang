@@ -21,7 +21,7 @@ auto StringifyConstantInst(const File& sem_ir, InstId outer_inst_id)
 
 // Produces a string version of the name of a specific. Generally, this should
 // not be called directly. To format a string into a diagnostic, use a
-// diagnostic parameter of type `SemIR::SpecificId`.
+// diagnostic parameter of type `SpecificId`.
 auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
     -> std::string;
 
