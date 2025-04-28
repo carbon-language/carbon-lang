@@ -182,17 +182,17 @@ class Formatter {
   auto FormatInstLhs(InstId inst_id, Inst inst) -> void;
 
   // Format ImportCppDecl name.
-  auto FormatInstLhs(InstId inst_id, ImportCppDecl /*inst*/) -> void;
+  auto FormatInstLhs(InstId inst_id, ImportCppDecl inst) -> void;
 
   // Format ImportDecl with its name.
-  auto FormatInstLhs(InstId inst_id, ImportDecl /*inst*/) -> void;
+  auto FormatInstLhs(InstId inst_id, ImportDecl inst) -> void;
 
   // Print ImportRefUnloaded with type-like semantics even though it lacks a
   // type_id.
-  auto FormatInstLhs(InstId inst_id, ImportRefUnloaded /*inst*/) -> void;
+  auto FormatInstLhs(InstId inst_id, ImportRefUnloaded inst) -> void;
 
   // Format ImplWitnessTable with its name even though it lacks a type_id.
-  auto FormatInstLhs(InstId inst_id, ImplWitnessTable /*inst*/) -> void;
+  auto FormatInstLhs(InstId inst_id, ImplWitnessTable inst) -> void;
 
   template <typename InstT>
   auto FormatInstRhs(InstT inst) -> void;
