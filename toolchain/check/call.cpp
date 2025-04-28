@@ -151,7 +151,7 @@ static auto BuildCalleeSpecificFunction(
     // specific function in the impl that corresponds to the specific function
     // we deduced.
     callee_id =
-        GetOrAddInst(context, context.insts().GetLocId(generic_callee_id),
+        GetOrAddInst(context, SemIR::LocId(generic_callee_id),
                      SemIR::SpecificImplFunction{
                          .type_id = GetSingletonType(
                              context, SemIR::SpecificFunctionType::TypeInstId),
@@ -161,7 +161,7 @@ static auto BuildCalleeSpecificFunction(
     // This is a regular generic function. The callee is the specific function
     // we deduced.
     callee_id =
-        GetOrAddInst(context, context.insts().GetLocId(generic_callee_id),
+        GetOrAddInst(context, SemIR::LocId(generic_callee_id),
                      SemIR::SpecificFunction{
                          .type_id = GetSingletonType(
                              context, SemIR::SpecificFunctionType::TypeInstId),

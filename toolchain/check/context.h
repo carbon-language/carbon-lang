@@ -58,6 +58,7 @@ class Context {
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
+  auto TODO(SemIR::InstId loc_inst_id, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
@@ -118,10 +119,7 @@ class Context {
 
   auto scope_stack() -> ScopeStack& { return scope_stack_; }
 
-  // Conveneicne functions for frequently-used `scope_stack` members.
-  auto return_scope_stack() -> llvm::SmallVector<ScopeStack::ReturnScope>& {
-    return scope_stack().return_scope_stack();
-  }
+  // Convenience functions for frequently-used `scope_stack` members.
   auto break_continue_stack()
       -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
     return scope_stack().break_continue_stack();

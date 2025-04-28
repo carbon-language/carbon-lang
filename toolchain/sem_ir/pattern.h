@@ -23,7 +23,7 @@ auto IsSelfPattern(const File& sem_ir, InstId pattern_id) -> bool;
 // This should only be used for decorative purposes such as SemIR
 // pretty-printing or LLVM parameter naming.
 auto GetPrettyNameFromPatternId(const File& sem_ir, InstId pattern_id)
-    -> SemIR::NameId;
+    -> NameId;
 
 }  // namespace Carbon::SemIR
 

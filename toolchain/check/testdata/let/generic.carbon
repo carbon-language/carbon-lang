@@ -20,10 +20,13 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.afe: type = pattern_type %ptr [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -46,14 +49,14 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32 [symbolic = constants.%T]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
-// CHECK:STDOUT:     %.loc13_3: %ptr = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: %pattern_type.afe = binding_pattern p
+// CHECK:STDOUT:     %.loc13_3: %pattern_type.afe = var_pattern %p.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
 // CHECK:STDOUT:   %.loc13_11: type = splice_block %ptr [symbolic = constants.%ptr] {
@@ -62,8 +65,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %T = binding_pattern a
-// CHECK:STDOUT:     %.loc14_3: %T = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.7dc = binding_pattern a
+// CHECK:STDOUT:     %.loc14_3: %pattern_type.7dc = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %T = var a
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p

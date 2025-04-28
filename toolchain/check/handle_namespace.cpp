@@ -71,7 +71,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
               .is_closed_import()) {
         // The existing name is a package name, so this is a name conflict.
         DiagnoseDuplicateName(context, name_context.name_id,
-                              name_context.loc_id, existing_inst_id);
+                              name_context.loc_id,
+                              SemIR::LocId(existing_inst_id));
 
         // Treat this as a local namespace name from now on to avoid further
         // diagnostics.
@@ -79,14 +80,16 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
             .Get(existing->name_scope_id)
             .set_is_closed_import(false);
       } else if (existing->import_id.has_value() &&
-                 !context.insts().GetLocId(existing_inst_id).has_value()) {
+                 !context.insts()
+                      .GetCanonicalLocId(existing_inst_id)
+                      .has_value()) {
         // When the name conflict is an imported namespace, fill the location ID
         // so that future diagnostics point at this declaration.
         SetNamespaceNodeId(context, existing_inst_id, node_id);
       }
     } else {
       DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                            existing_inst_id);
+                            SemIR::LocId(existing_inst_id));
     }
   }
 

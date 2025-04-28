@@ -83,12 +83,6 @@ static auto PushOperand(Context& context, Worklist& worklist,
       }
       break;
     }
-    case CARBON_KIND(SemIR::MetaInstId inst_id): {
-      if (inst_id.has_value()) {
-        worklist.Push(inst_id);
-      }
-      break;
-    }
     case CARBON_KIND(SemIR::TypeInstId inst_id): {
       if (inst_id.has_value()) {
         worklist.Push(inst_id);
@@ -170,12 +164,6 @@ static auto PopOperand(Context& context, Worklist& worklist,
 
   CARBON_KIND_SWITCH(arg) {
     case CARBON_KIND(SemIR::InstId inst_id): {
-      if (!inst_id.has_value()) {
-        return arg.value();
-      }
-      return worklist.Pop().index;
-    }
-    case CARBON_KIND(SemIR::MetaInstId inst_id): {
       if (!inst_id.has_value()) {
         return arg.value();
       }
@@ -398,7 +386,8 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
     auto const_id = EvalOrAddInst(
         *context_,
         SemIR::LocIdAndInst::UncheckedLoc(
-            context_->insts().GetLocId(old_inst_id).ToImplicit(), new_inst));
+            context_->insts().GetCanonicalLocId(old_inst_id).ToImplicit(),
+            new_inst));
     CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");
     return context_->constant_values().GetInstId(const_id);

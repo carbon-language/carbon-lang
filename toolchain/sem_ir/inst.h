@@ -136,14 +136,14 @@ class Inst : public Printable<Inst> {
     // Converts to `IdT`, validating the `kind` matches.
     template <typename IdT>
     auto As() const -> IdT {
-      CARBON_DCHECK(kind_ == SemIR::IdKind::For<IdT>);
+      CARBON_DCHECK(kind_ == IdKind::For<IdT>);
       return IdT(value_);
     }
 
     // Converts to `IdT`, returning nullopt if the kind is incorrect.
     template <typename IdT>
     auto TryAs() const -> std::optional<IdT> {
-      if (kind_ != SemIR::IdKind::For<IdT>) {
+      if (kind_ != IdKind::For<IdT>) {
         return std::nullopt;
       }
       return IdT(value_);
@@ -369,7 +369,7 @@ struct LocIdAndInst {
   // node.
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
-  LocIdAndInst(SemIR::LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
+  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;
@@ -398,7 +398,7 @@ class InstStore {
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst::UncheckedLoc(GetLocId(inst_id), Get(inst_id));
+    return LocIdAndInst::UncheckedLoc(LocId(inst_id), Get(inst_id));
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -431,11 +431,31 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  auto GetLocId(InstId inst_id) const -> LocId {
+  // Returns a resolved LocId, which will point to a parse node, an import, or
+  // be None.
+  //
+  // Unresolved LocIds can be backed by an InstId which may or may not have a
+  // value after being resolved, so this operation needs to be done before using
+  // most operations on LocId.
+  auto GetCanonicalLocId(LocId loc_id) const -> LocId {
+    while (loc_id.kind() == LocId::Kind::InstId) {
+      auto inst_id = loc_id.inst_id();
+      CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
+      CARBON_CHECK(static_cast<size_t>(inst_id.index) < loc_ids_.size(),
+                   "{0} {1}", inst_id.index, loc_ids_.size());
+      loc_id = loc_ids_[inst_id.index];
+    }
+    return loc_id;
+  }
+
+  // Gets the resolved LocId for an instruction. InstId can directly construct
+  // an unresolved LocId. This skips that step when a resolved LocId is needed.
+  auto GetCanonicalLocId(InstId inst_id) const -> LocId {
     CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
     CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}", inst_id.index,
                  loc_ids_.size());
-    return loc_ids_[inst_id.index];
+    auto loc_id = loc_ids_[inst_id.index];
+    return GetCanonicalLocId(loc_id);
   }
 
   // Overwrites a given instruction with a new value.
@@ -504,7 +524,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   // Sets the contents of a placeholder block to the given content.
   auto ReplacePlaceholder(InstBlockId block_id, llvm::ArrayRef<InstId> content)
       -> void {
-    CARBON_CHECK(block_id != SemIR::InstBlockId::Empty);
+    CARBON_CHECK(block_id != InstBlockId::Empty);
     CARBON_CHECK(Get(block_id).empty(),
                  "inst block content set more than once");
     values().Get(block_id) = AllocateCopy(content);

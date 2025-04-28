@@ -23,6 +23,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_2, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.ae7: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
@@ -36,18 +37,19 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.132: <bound method> = bound_method %int_42.20e, %Convert.956 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.8c1: <bound method> = bound_method %int_42.20e, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.c68: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_42.c68, %int_42.c68) [concrete]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete]
-// CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.13 [concrete]
+// CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.23 [concrete]
 // CHECK:STDOUT:   %Negate.impl_witness_table.e09 = impl_witness_table (imports.%Core.import_ref.c15), @impl.8cb [concrete]
 // CHECK:STDOUT:   %Negate.impl_witness.561: <witness> = impl_witness %Negate.impl_witness_table.e09 [concrete]
 // CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value Core.IntLiteral, (%Negate.impl_witness.561) [concrete]
 // CHECK:STDOUT:   %.63a: type = fn_type_with_self_type %Op.type.e42, %Negate.facet [concrete]
-// CHECK:STDOUT:   %Op.type.1be: type = fn_type @Op.14 [concrete]
+// CHECK:STDOUT:   %Op.type.1be: type = fn_type @Op.24 [concrete]
 // CHECK:STDOUT:   %Op.bba: %Op.type.1be = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %Op.bba [concrete]
 // CHECK:STDOUT:   %int_-10.06d: Core.IntLiteral = int_value -10 [concrete]
@@ -74,8 +76,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %array_type = binding_pattern c
-// CHECK:STDOUT:     %.loc11_1: %array_type = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.ae7 = binding_pattern c
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.ae7 = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %array_type = var c
 // CHECK:STDOUT:   %.loc11_20: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -86,8 +88,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %array_type = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %i32 = binding_pattern d
-// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %d.patt
+// CHECK:STDOUT:     %d.patt: %pattern_type.7ce = binding_pattern d
+// CHECK:STDOUT:     %.loc16_1: %pattern_type.7ce = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
 // CHECK:STDOUT:   %.loc16_8: type = splice_block %i32.loc16 [concrete = constants.%i32] {

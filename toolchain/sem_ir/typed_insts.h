@@ -24,12 +24,12 @@
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
 // - Up to two members describing the contents of the struct. These are types
-//   listed in the `SemIR::IdKind` type-enum, typically derived from `IdBase`.
+//   listed in the `IdKind` type-enum, typically derived from `IdBase`.
 //
 // The field names here matter -- the fields must have the names specified
-// above, when present. When converting to a `SemIR::Inst`, the `kind` and
-// `type_id` fields will become the kind and type associated with the
-// type-erased instruction.
+// above, when present. When converting to a `Inst`, the `kind` and `type_id`
+// fields will become the kind and type associated with the type-erased
+// instruction.
 //
 // Each type that describes a single kind of instructions provides a constant
 // `Kind` that associates the type with a particular member of the `InstKind`
@@ -118,6 +118,8 @@ struct AddrPattern {
        .constant_kind = InstConstantKind::Never,
        .is_lowered = false});
 
+  // Always a PatternType whose scrutinee type represents the pointee type
+  // corresponding to the pointer type of `inner_id`.
   TypeId type_id;
   // The `self` binding.
   InstId inner_id;
@@ -369,6 +371,9 @@ struct AnyBindingPattern {
                                        InstKind::SymbolicBindingPattern};
 
   InstKind kind;
+
+  // Always a PatternType whose scrutinee type is the declared type of the
+  // binding.
   TypeId type_id;
 
   // The name declared by the binding pattern. `None` indicates that the
@@ -694,24 +699,6 @@ struct FacetAccessType {
   InstId facet_value_inst_id;
 };
 
-// Represents accessing the `witness` field in a facet value, which is
-// notionally a pair of a type and a witness.
-struct FacetAccessWitness {
-  static constexpr auto Kind =
-      InstKind::FacetAccessWitness.Define<Parse::NodeId>(
-          {.ir_name = "facet_access_witness",
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  // Always the builtin witness type.
-  TypeId type_id;
-  // An instruction that evaluates to a `FacetValue`.
-  InstId facet_value_inst_id;
-  // An index to a single `ImplWitness` in the witness block of the `FacetValue`
-  // from `facet_value_inst_id`.
-  ElementIndex index;
-};
-
 // A facet type value.
 struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
@@ -748,7 +735,7 @@ struct FacetValue {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::VarBindingPatternId>(
+      InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
           {.ir_name = "field_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;
@@ -1295,6 +1282,9 @@ struct AnyParamPattern {
                                        InstKind::ValueParamPattern};
 
   InstKind kind;
+
+  // Always a PatternType that represents the same type as the type of
+  // `subpattern_id`.
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
@@ -1336,6 +1326,19 @@ struct ValueParamPattern {
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
+};
+
+// The type of a pattern that matches scrutinees of type
+// `scrutinee_type_inst_id`.
+struct PatternType {
+  static constexpr auto Kind = InstKind::PatternType.Define<Parse::NoneNodeId>(
+      {.ir_name = "pattern_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  TypeInstId scrutinee_type_inst_id;
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in
@@ -1440,8 +1443,8 @@ struct ReturnSlotPattern {
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
 
-  // The type of the value that will be stored in this slot (i.e. the return
-  // type of the function).
+  // Always a PatternType whose scrutinee type is the return type of the
+  // function.
   TypeId type_id;
 
   // The function return type as originally written by the user. For diagnostics
@@ -1738,6 +1741,8 @@ struct TuplePattern {
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
 
+  // Always a PatternType whose scrutinee type is a tuple of the scrutinee
+  // types of the elements.
   TypeId type_id;
   InstBlockId elements_id;
 };
@@ -1857,6 +1862,8 @@ struct VarPattern {
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
 
+  // Always a PatternType that represents the same type as the type of
+  // `subpattern_id`.
   TypeId type_id;
   InstId subpattern_id;
 };

@@ -213,7 +213,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_function_decl_use_different_name.carbon
 // CHECK:STDOUT:
@@ -315,7 +315,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @base[]();
+// CHECK:STDOUT: fn @base();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_overloaded_function_decl.carbon
 // CHECK:STDOUT:

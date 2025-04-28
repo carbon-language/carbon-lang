@@ -26,6 +26,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -39,7 +40,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -59,8 +61,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_orig.patt: %i32 = binding_pattern a_orig
-// CHECK:STDOUT:     %.loc4_1: %i32 = var_pattern %a_orig.patt
+// CHECK:STDOUT:     %a_orig.patt: %pattern_type.7ce = binding_pattern a_orig
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.7ce = var_pattern %a_orig.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_orig.var: ref %i32 = var a_orig
 // CHECK:STDOUT:   %.loc4_13: type = splice_block %i32.loc4 [concrete = constants.%i32] {
@@ -69,16 +71,16 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_orig: ref %i32 = bind_name a_orig, %a_orig.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ref.patt: %ptr = binding_pattern a_ref
-// CHECK:STDOUT:     %.loc5_1: %ptr = var_pattern %a_ref.patt
+// CHECK:STDOUT:     %a_ref.patt: %pattern_type.fe8 = binding_pattern a_ref
+// CHECK:STDOUT:     %.loc5_1: %pattern_type.fe8 = var_pattern %a_ref.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ref.var: ref %ptr = var a_ref
-// CHECK:STDOUT:   %.loc5_15: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %a_ref.var: ref %ptr.235 = var a_ref
+// CHECK:STDOUT:   %.loc5_15: type = splice_block %ptr [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc5 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc5 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ref: ref %ptr = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %a_ref: ref %ptr.235 = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -92,7 +94,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %.loc4: init %i32 = converted %int_0, %int.convert_checked [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   assign file.%a_orig.var, %.loc4
 // CHECK:STDOUT:   %a_orig.ref: ref %i32 = name_ref a_orig, file.%a_orig
-// CHECK:STDOUT:   %addr: %ptr = addr_of %a_orig.ref
+// CHECK:STDOUT:   %addr: %ptr.235 = addr_of %a_orig.ref
 // CHECK:STDOUT:   assign file.%a_ref.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -102,12 +104,13 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %ptr.9e1: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.f6a: type = pattern_type %ptr.9e1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Implicit.a_orig = import_ref Implicit//default, a_orig, unloaded
-// CHECK:STDOUT:   %Implicit.a_ref: ref %ptr = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %Implicit.a_ref: ref %ptr.9e1 = import_ref Implicit//default, a_ref, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
@@ -126,22 +129,22 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %ptr = binding_pattern a
-// CHECK:STDOUT:     %.loc4_1: %ptr = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.f6a = binding_pattern a
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.f6a = var_pattern %a.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %ptr = var a
-// CHECK:STDOUT:   %.loc4_11: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %a.var: ref %ptr.9e1 = var a
+// CHECK:STDOUT:   %.loc4_11: type = splice_block %ptr [concrete = constants.%ptr.9e1] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.9e1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %ptr.9e1 = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %ptr = name_ref a_ref, imports.%Implicit.a_ref
-// CHECK:STDOUT:   %.loc4: %ptr = bind_value %a_ref.ref
+// CHECK:STDOUT:   %a_ref.ref: ref %ptr.9e1 = name_ref a_ref, imports.%Implicit.a_ref
+// CHECK:STDOUT:   %.loc4: %ptr.9e1 = bind_value %a_ref.ref
 // CHECK:STDOUT:   assign file.%a.var, %.loc4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

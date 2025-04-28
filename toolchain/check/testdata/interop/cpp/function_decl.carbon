@@ -226,6 +226,7 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Carbon_foo.type: type = fn_type @Carbon_foo [concrete]
 // CHECK:STDOUT:   %Carbon_foo: %Carbon_foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -258,8 +259,8 @@ fn F() {
 // CHECK:STDOUT:     import Cpp "int_return_function_decl.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Carbon_foo.decl: %Carbon_foo.type = fn_decl @Carbon_foo [concrete = constants.%Carbon_foo] {
-// CHECK:STDOUT:     %val.patt: %i32 = binding_pattern val
-// CHECK:STDOUT:     %val.param_patt: %i32 = value_param_pattern %val.patt, call_param0
+// CHECK:STDOUT:     %val.patt: %pattern_type.7ce = binding_pattern val
+// CHECK:STDOUT:     %val.param_patt: %pattern_type.7ce = value_param_pattern %val.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %val.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %i32 [concrete = constants.%i32] {
@@ -271,7 +272,7 @@ fn F() {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Carbon_foo(%val.param_patt: %i32);
+// CHECK:STDOUT: fn @Carbon_foo(%val.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
@@ -288,7 +289,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo_int[]() -> %i32;
+// CHECK:STDOUT: fn @foo_int();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_float_return_function_decl.carbon
 // CHECK:STDOUT:
@@ -398,7 +399,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%b.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_int_params_function_decl.carbon
 // CHECK:STDOUT:
@@ -484,7 +485,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%a.param_patt: %i32, %b.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_functions_with_int_params.carbon
 // CHECK:STDOUT:
@@ -605,9 +606,9 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo1[](%a.param_patt: %i32, %b.param_patt: %i32);
+// CHECK:STDOUT: fn @foo1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo2[](%c.param_patt: %i32, %b.param_patt: %i32);
+// CHECK:STDOUT: fn @foo2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_unnamed_int_param_function_decl.carbon
 // CHECK:STDOUT:
@@ -679,7 +680,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%_.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_default_param_parameterless_call.carbon
 // CHECK:STDOUT:
@@ -727,7 +728,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%a.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_int_default_param_sucessful_call_function_decl.carbon
 // CHECK:STDOUT:
@@ -799,7 +800,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[](%a.param_patt: %i32);
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_ref_param_function_decl.carbon
 // CHECK:STDOUT:
@@ -808,6 +809,7 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -852,8 +854,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc7_3.1: %i32 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %.loc7_3.1: %pattern_type.7ce = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -882,6 +884,7 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -895,7 +898,7 @@ fn F() {
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -927,8 +930,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc7_3.1: %i32 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %.loc7_3.1: %pattern_type.7ce = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -947,7 +950,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %addr: %ptr = addr_of %a.ref
+// CHECK:STDOUT:   %addr: %ptr.235 = addr_of %a.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -69,7 +69,8 @@ static auto CheckAssociatedFunctionImplementation(
   // parameters.
   auto interface_function_specific_id =
       GetSelfSpecificForInterfaceMemberWithSelfType(
-          context, impl_decl_id, interface_function_type.specific_id,
+          context, SemIR::LocId(impl_decl_id),
+          interface_function_type.specific_id,
           context.functions()
               .Get(interface_function_type.function_id)
               .generic_id,
@@ -97,8 +98,8 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
   }
 
   return InitialFacetTypeImplWitness(
-      context, context.insts().GetLocId(impl.latest_decl_id()),
-      impl.constraint_id, impl.self_id, impl.interface,
+      context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id,
+      impl.self_id, impl.interface,
       context.generics().GetSelfSpecific(impl.generic_id), has_definition);
 }
 
@@ -122,7 +123,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   if (witness_table.elements_id != SemIR::InstBlockId::Empty &&
       witness_block.empty()) {
     if (!RequireCompleteFacetTypeForImplDefinition(
-            context, impl.latest_decl_id(), impl.constraint_id)) {
+            context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
       return;
     }
 
@@ -205,8 +206,8 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
         }
         auto& fn = context.functions().Get(fn_type->function_id);
         auto lookup_result =
-            LookupNameInExactScope(context, context.insts().GetLocId(decl_id),
-                                   fn.name_id, impl.scope_id, impl_scope);
+            LookupNameInExactScope(context, SemIR::LocId(decl_id), fn.name_id,
+                                   impl.scope_id, impl_scope);
         if (lookup_result.is_found()) {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_value = CheckAssociatedFunctionImplementation(

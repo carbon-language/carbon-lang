@@ -103,20 +103,18 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
     return SemIR::LocIdAndInst::NoLoc(namespace_inst);
   }
 
-  SemIR::LocId import_loc_id = context.insts().GetLocId(import_id);
-  if (!import_loc_id.has_value()) {
-    // TODO: Either document the use-case for this, or require a location.
-    return SemIR::LocIdAndInst::NoLoc(namespace_inst);
-  }
+  SemIR::LocId import_loc_id = context.insts().GetCanonicalLocId(import_id);
   switch (import_loc_id.kind()) {
     case SemIR::LocId::Kind::ImportIRInstId:
       return MakeImportedLocIdAndInst(
           context, import_loc_id.import_ir_inst_id(), namespace_inst);
     case SemIR::LocId::Kind::NodeId:
-    case SemIR::LocId::Kind::None:
       return SemIR::LocIdAndInst(context.parse_tree().As<Parse::AnyNamespaceId>(
                                      import_loc_id.node_id()),
                                  namespace_inst);
+    case SemIR::LocId::Kind::None:
+      // TODO: Either document the use-case for this, or require a location.
+      return SemIR::LocIdAndInst::NoLoc(namespace_inst);
     case SemIR::LocId::Kind::InstId:
       CARBON_FATAL("Unexpected LocId kind");
   }
@@ -164,7 +162,8 @@ auto AddImportNamespaceToScope(
           CARBON_CHECK(import_id.has_value());
           // TODO: Pass the import package name location instead of the import
           // id to get more accurate location.
-          DiagnoseDuplicateName(context, name_id, import_id, prev_inst_id);
+          DiagnoseDuplicateName(context, name_id, SemIR::LocId(import_id),
+                                SemIR::LocId(prev_inst_id));
         }
         return {.add_result = {.name_scope_id = namespace_inst->name_scope_id,
                                .inst_id = prev_inst_id},
@@ -192,8 +191,9 @@ auto AddImportNamespaceToScope(
   if (!lookup_result.is_poisoned() && !inserted) {
     // TODO: Pass the import namespace name location instead of the namespace
     // id to get more accurate location.
-    DiagnoseDuplicateName(context, name_id, result.add_result.inst_id,
-                          lookup_result.target_inst_id());
+    DiagnoseDuplicateName(context, name_id,
+                          SemIR::LocId(result.add_result.inst_id),
+                          SemIR::LocId(lookup_result.target_inst_id()));
   }
   lookup_result = SemIR::ScopeLookupResult::MakeFound(
       result.add_result.inst_id, SemIR::AccessKind::Public);
@@ -226,7 +226,7 @@ static auto CopySingleNameScopeFromImportIR(
     auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id, .parent_scope_id = parent_scope_id});
     auto import_ir_inst_id = context.import_ir_insts().Add(
-        {.ir_id = ir_id, .inst_id = import_inst_id});
+        SemIR::ImportIRInst(ir_id, import_inst_id));
     auto inst_id = AddInstInNoBlock(
         context, MakeImportedLocIdAndInst<SemIR::ImportRefLoaded>(
                      context, import_ir_inst_id,
@@ -354,7 +354,7 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
     auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id, .parent_scope_id = parent_scope_id});
     auto import_ref = AddImportRef(
-        context, {.ir_id = ir_id, .inst_id = import_inst_id}, entity_name_id);
+        context, SemIR::ImportIRInst(ir_id, import_inst_id), entity_name_id);
     entry.result = SemIR::ScopeLookupResult::MakeFound(
         import_ref, SemIR::AccessKind::Public);
 
@@ -444,8 +444,8 @@ static auto ImportScopeFromApiFile(Context& context,
     } else {
       // Add an ImportRef for other instructions.
       AddScopedImportRef(context, impl_scope_id, impl_scope, impl_name_id,
-                         {.ir_id = SemIR::ImportIRId::ApiForImpl,
-                          .inst_id = api_entry.result.target_inst_id()},
+                         SemIR::ImportIRInst(SemIR::ImportIRId::ApiForImpl,
+                                             api_entry.result.target_inst_id()),
                          api_entry.result.access_kind());
     }
   }
@@ -668,7 +668,7 @@ auto ImportNameFromOtherPackage(
       } else {
         result_id = AddScopedImportRef(
             context, scope_id, context.name_scopes().Get(scope_id), name_id,
-            {.ir_id = import_ir_id, .inst_id = import_scope_inst_id},
+            SemIR::ImportIRInst(import_ir_id, import_scope_inst_id),
             SemIR::AccessKind::Public);
         LoadImportRef(context, result_id);
       }

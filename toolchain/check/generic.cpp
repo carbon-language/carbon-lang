@@ -256,8 +256,8 @@ static auto AddGenericConstantToEvalBlock(
   // we've not encountered it before.
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   auto callbacks = RebuildGenericConstantInEvalBlockCallbacks(
-      &context, generic_id, region, context.insts().GetLocId(inst_id),
-      constants_in_generic, inside_redeclaration);
+      &context, generic_id, region, SemIR::LocId(inst_id), constants_in_generic,
+      inside_redeclaration);
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
   CARBON_CHECK(new_inst_id != const_inst_id,
                "No substitutions performed for generic constant {0}",
@@ -275,11 +275,11 @@ static auto AddTemplateActionToEvalBlock(
     ConstantsInGenericMap& constants_in_generic, bool inside_redeclaration,
     SemIR::InstId inst_id) -> void {
   // Substitute into the constant value and rebuild it in the eval block.
-  auto new_inst_id = SubstInst(
-      context, inst_id,
-      RebuildTemplateActionInEvalBlockCallbacks(
-          &context, generic_id, region, context.insts().GetLocId(inst_id),
-          constants_in_generic, inside_redeclaration, inst_id));
+  auto new_inst_id =
+      SubstInst(context, inst_id,
+                RebuildTemplateActionInEvalBlockCallbacks(
+                    &context, generic_id, region, SemIR::LocId(inst_id),
+                    constants_in_generic, inside_redeclaration, inst_id));
   CARBON_CHECK(new_inst_id == inst_id,
                "Substitution changed InstId of template action");
   constants_in_generic.Insert(inst_id, inst_id);
@@ -341,7 +341,7 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
         GenericRegionStack::DependencyKind::None) {
       auto inst = context.insts().Get(inst_id);
       auto type_id = AddGenericTypeToEvalBlock(
-          context, generic_id, region, context.insts().GetLocId(inst_id),
+          context, generic_id, region, SemIR::LocId(inst_id),
           constants_in_generic, inside_redeclaration, inst.type_id());
       // If the generic declaration is invalid, it can result in an error.
       if (type_id == SemIR::ErrorInst::TypeId) {
@@ -485,7 +485,7 @@ auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId {
   SemIR::GenericId generic_id = BuildGeneric(context, decl_id);
   if (generic_id.has_value()) {
-    FinishGenericDecl(context, decl_id, generic_id);
+    FinishGenericDecl(context, SemIR::LocId(decl_id), generic_id);
   }
   return generic_id;
 }

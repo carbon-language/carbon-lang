@@ -73,12 +73,13 @@ var f: () = F();
 // CHECK:STDOUT:   %F: %F.type = export F, imports.%Main.F [concrete = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "base.carbon"];
+// CHECK:STDOUT: fn @F [from "base.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -94,8 +95,8 @@ var f: () = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
-// CHECK:STDOUT:     %.loc6_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f
+// CHECK:STDOUT:     %.loc6_1: %pattern_type = var_pattern %f.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
 // CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
@@ -105,7 +106,7 @@ var f: () = F();
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "export.carbon"];
+// CHECK:STDOUT: fn @F [from "export.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

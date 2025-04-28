@@ -25,6 +25,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -106,6 +107,13 @@ auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
   return HandleIntroducer<Lex::TokenKind::Var>(context, node_id);
 }
 
+auto HandleParseNode(Context& context, Parse::FieldIntroducerId node_id)
+    -> bool {
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
+  context.node_stack().Push(node_id);
+  return true;
+}
+
 // Returns a VarStorage inst for the given `var` pattern. If the pattern
 // is the body of a returned var, this reuses the return slot, and otherwise it
 // adds a new inst.
@@ -125,7 +133,8 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
   return AddInstWithCleanup(
       context, pattern.loc_id,
       SemIR::VarStorage{
-          .type_id = pattern.inst.type_id(),
+          .type_id =
+              ExtractScrutineeType(context.sem_ir(), pattern.inst.type_id()),
           .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
               context.sem_ir(),
               pattern.inst.As<SemIR::VarPattern>().subpattern_id)});
@@ -211,6 +220,12 @@ auto HandleParseNode(Context& context, Parse::VariableInitializerId node_id)
   return HandleInitializer(context, node_id);
 }
 
+auto HandleParseNode(Context& context, Parse::FieldInitializerId node_id)
+    -> bool {
+  context.node_stack().Push(node_id);
+  return true;
+}
+
 namespace {
 // State from HandleDecl, returned for type-specific handling.
 struct DeclInfo {
@@ -280,16 +295,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
 static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
                                      SemIR::InterfaceId interface_id,
                                      DeclInfo& decl_info) -> void {
-  auto decl = context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(
-      decl_info.pattern_id);
-  if (!decl) {
-    if (decl_info.pattern_id != SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
-                        "pattern in associated constant declaration must be a "
-                        "single `:!` binding");
-      context.emitter().Emit(context.insts().GetLocId(decl_info.pattern_id),
-                             ExpectedSymbolicBindingInAssociatedConstant);
-    }
+  if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
     context.name_scopes()
         .Get(context.interfaces().Get(interface_id).scope_id)
         .set_has_error();
@@ -299,6 +305,8 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
     context.inst_block_stack().Pop();
     return;
   }
+  auto decl = context.insts().GetAs<SemIR::AssociatedConstantDecl>(
+      decl_info.pattern_id);
 
   if (decl_info.introducer.modifier_set.HasAnyOf(
           KeywordModifierSet::Interface)) {
@@ -309,10 +317,9 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   // If there was an initializer, convert it and store it on the constant.
   if (decl_info.init_id.has_value()) {
     // TODO: Diagnose if the `default` modifier was not used.
-    auto default_value_id = ConvertToValueOfType(
-        context, node_id, decl_info.init_id, decl->type_id);
-    auto& assoc_const =
-        context.associated_constants().Get(decl->assoc_const_id);
+    auto default_value_id =
+        ConvertToValueOfType(context, node_id, decl_info.init_id, decl.type_id);
+    auto& assoc_const = context.associated_constants().Get(decl.assoc_const_id);
     assoc_const.default_value_id = default_value_id;
     FinishGenericDefinition(context, assoc_const.generic_id);
   } else {
@@ -321,8 +328,8 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   }
 
   // Store the decl block on the declaration.
-  decl->decl_block_id = context.inst_block_stack().Pop();
-  ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, *decl);
+  decl.decl_block_id = context.inst_block_stack().Pop();
+  ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, decl);
 
   context.inst_block_stack().AddInstId(decl_info.pattern_id);
 }
@@ -357,7 +364,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
         "expected `=`; `let` declaration must have an initializer");
-    context.emitter().Emit(TokenOnly(node_id), ExpectedInitializerAfterLet);
+    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+                           ExpectedInitializerAfterLet);
   }
   return true;
 }
@@ -371,26 +379,6 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
 
-  if (auto class_scope =
-          context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>()) {
-    auto var = context.insts().GetAs<SemIR::VarPattern>(decl_info.pattern_id);
-    if (!context.insts().TryGetAs<SemIR::FieldDecl>(var.subpattern_id)) {
-      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInFieldDecl, Error,
-                        "pattern in field declaration is not a "
-                        "single `:` binding");
-      context.emitter().Emit(context.insts().GetLocId(var.subpattern_id),
-                             ExpectedSymbolicBindingInFieldDecl);
-      context.name_scopes()
-          .Get(context.classes().Get(class_scope->class_id).scope_id)
-          .set_has_error();
-    }
-    if (decl_info.init_id.has_value()) {
-      // TODO: In a class scope, we should instead save the initializer
-      // somewhere so that we can use it as a default.
-      context.TODO(node_id, "Field initializer");
-    }
-    return true;
-  }
   if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
                       "`var` declaration in interface");
@@ -399,6 +387,29 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::FieldDeclId node_id) -> bool {
+  if (context.node_stack().PeekNextIs(Parse::NodeKind::FieldInitializer)) {
+    // TODO: In a class scope, we should instead save the initializer
+    // somewhere so that we can use it as a default.
+    context.TODO(node_id, "Field initializer");
+    context.node_stack().PopExpr();
+    context.node_stack()
+        .PopAndDiscardSoloNodeId<Parse::NodeKind::FieldInitializer>();
+  }
+
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::FieldIntroducer>();
+  auto parent_scope_inst =
+      context.name_scopes()
+          .GetInstIfValid(context.scope_stack().PeekNameScopeId())
+          .second;
+  auto introducer =
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
+  CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Access);
   return true;
 }
 

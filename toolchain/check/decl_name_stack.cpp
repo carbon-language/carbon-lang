@@ -62,7 +62,7 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
   decl_name_stack_.push_back(MakeEmptyNameContext());
 
   // Create a scope for any parameters introduced in this name.
-  context_->scope_stack().Push();
+  context_->scope_stack().PushForDeclName();
 }
 
 auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
@@ -183,7 +183,7 @@ auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
                          name_context.poisoning_loc_id, name_context.loc_id);
   } else if (auto id = name_context.prev_inst_id(); id.has_value()) {
     DiagnoseDuplicateName(*context_, name_context.name_id, name_context.loc_id,
-                          id);
+                          SemIR::LocId(id));
   } else {
     AddName(name_context, target_id, access_kind);
   }
@@ -233,8 +233,8 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
   // providing the definition.
   StartGenericDecl(context);
 
-  context.scope_stack().Push(scope_inst_id, scope_id, self_specific_id,
-                             has_error);
+  context.scope_stack().PushForEntity(scope_inst_id, scope_id, self_specific_id,
+                                      has_error);
 
   // An interface also introduces its 'Self' parameter into scope, despite it
   // not being redeclared as part of the qualifier.
@@ -246,7 +246,7 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
   }
 
   // Enter a parameter scope in case the qualified name itself has parameters.
-  context.scope_stack().Push();
+  context.scope_stack().PushForSameRegion();
 }
 
 auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
@@ -443,14 +443,14 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
       // This is specifically for qualified name handling.
       if (!CheckRedeclParamsMatch(
               *context_, new_params,
-              DeclParams(name_context.resolved_inst_id, Parse::NodeId::None,
-                         Parse::NodeId::None, SemIR::InstBlockId::None,
-                         SemIR::InstBlockId::None))) {
+              DeclParams(SemIR::LocId(name_context.resolved_inst_id),
+                         Parse::NodeId::None, Parse::NodeId::None,
+                         SemIR::InstBlockId::None, SemIR::InstBlockId::None))) {
         return InvalidResult;
       }
       if (scope.is_closed_import()) {
         DiagnoseQualifiedDeclInImportedPackage(*context_, name_context.loc_id,
-                                               scope.inst_id());
+                                               SemIR::LocId(scope.inst_id()));
         // Only error once per package. Recover by allowing this package name to
         // be used as a name qualifier.
         scope.set_is_closed_import(false);
@@ -458,8 +458,9 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
       return {scope_id, SemIR::GenericId::None};
     }
     default: {
-      DiagnoseQualifiedDeclInNonScope(*context_, name_context.loc_id,
-                                      name_context.resolved_inst_id);
+      DiagnoseQualifiedDeclInNonScope(
+          *context_, name_context.loc_id,
+          SemIR::LocId(name_context.resolved_inst_id));
       return InvalidResult;
     }
   }

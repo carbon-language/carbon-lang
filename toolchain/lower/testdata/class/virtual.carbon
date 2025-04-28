@@ -87,6 +87,13 @@ fn Use(b: Base) {
   b.F();
 }
 
+// --- generic.carbon
+
+library "[[@TEST_NAME]]";
+
+base class Base(T:! type) {
+  virtual fn F[self: Self]();
+}
 
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
 // CHECK:STDOUT: source_filename = "classes.carbon"
@@ -316,3 +323,13 @@ fn Use(b: Base) {
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 8, column: 1, scope: !4)
+// CHECK:STDOUT: ; ModuleID = 'generic.carbon'
+// CHECK:STDOUT: source_filename = "generic.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "generic.carbon", directory: "")

@@ -89,7 +89,7 @@ class TypeCompleter {
              SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
              SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatType,
              SemIR::IntType, SemIR::IntLiteralType, SemIR::LegacyFloatType,
-             SemIR::NamespaceType, SemIR::PointerType,
+             SemIR::NamespaceType, SemIR::PatternType, SemIR::PointerType,
              SemIR::SpecificFunctionType, SemIR::TypeType, SemIR::VtableType,
              SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const

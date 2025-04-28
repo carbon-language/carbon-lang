@@ -44,9 +44,7 @@ library "[[@TEST_NAME]]";
 
 fn NoOp() = "no_op";
 
-fn F() {
-  var x: () = NoOp();
-}
+var x: () = NoOp();
 
 // --- fail_signature.carbon
 
@@ -91,6 +89,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -104,8 +103,8 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {
-// CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_15.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_15.2: type = converted %.loc4_15.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -128,6 +127,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -141,10 +141,10 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {
-// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_20.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_20.2: type = converted %.loc4_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -160,7 +160,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NoOp(%x.param_patt: %empty_tuple.type) -> %empty_tuple.type = "no_op";
+// CHECK:STDOUT: fn @NoOp(%x.param: %empty_tuple.type) -> %empty_tuple.type = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
@@ -178,37 +178,35 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .NoOp = %NoOp.decl
-// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
+// CHECK:STDOUT:     %.loc6_1: %pattern_type = var_pattern %x.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoOp() = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %.loc7_3: %empty_tuple.type = var_pattern %x.patt
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %NoOp.ref: %NoOp.type = name_ref NoOp, file.%NoOp.decl [concrete = constants.%NoOp]
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %NoOp.ref() [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var, %no_op
-// CHECK:STDOUT:   %.loc7_11.1: type = splice_block %.loc7_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc7_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc7_11.3: type = converted %.loc7_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   assign file.%x.var, %no_op
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,6 +214,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %NoOp.type: type = fn_type @NoOp [concrete]
 // CHECK:STDOUT:   %NoOp: %NoOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -225,8 +224,8 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:     .NoOp = %NoOp.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NoOp.decl: %NoOp.type = fn_decl @NoOp [concrete = constants.%NoOp] {
-// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_15.2: type = converted %.loc8_15.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

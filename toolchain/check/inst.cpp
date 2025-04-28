@@ -94,6 +94,9 @@ auto AddDependentActionInst(Context& context,
 
 auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
+  auto type_id = loc_id_and_inst.inst.type_id();
+  CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId ||
+               context.types().Is<SemIR::PatternType>(type_id));
   auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
   context.pattern_block_stack().AddInstId(inst_id);
   return inst_id;
@@ -110,6 +113,12 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     // the instruction.
     if (!const_id.is_constant()) {
       return SemIR::InstId::None;
+    }
+
+    if (const_id.is_symbolic()) {
+      // TODO: Only add this instruction to the eval block, and don't
+      // re-evaluate it.
+      return AddInst(context, loc_id_and_inst);
     }
 
     CARBON_VLOG_TO(context.vlog_stream(), "GetOrAddInst: constant: {0}\n",

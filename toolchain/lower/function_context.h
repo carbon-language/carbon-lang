@@ -92,6 +92,9 @@ class FunctionContext {
     return file_context_->GetType(type_id);
   }
 
+  // Returns the type of the given instruction in the current specific.
+  auto GetTypeOfInst(SemIR::InstId inst_id) -> SemIR::TypeId;
+
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {
     return file_context_->GetTypeAsValue();

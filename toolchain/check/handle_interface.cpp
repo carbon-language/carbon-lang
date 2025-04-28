@@ -81,8 +81,8 @@ static auto BuildInterfaceDecl(Context& context,
           context.interfaces().Get(existing_interface_decl->interface_id);
       if (CheckRedeclParamsMatch(
               context,
-              DeclParams(interface_decl_id, name.first_param_node_id,
-                         name.last_param_node_id,
+              DeclParams(SemIR::LocId(interface_decl_id),
+                         name.first_param_node_id, name.last_param_node_id,
                          name.implicit_param_patterns_id,
                          name.param_patterns_id),
               DeclParams(existing_interface))) {
@@ -92,7 +92,8 @@ static auto BuildInterfaceDecl(Context& context,
         DiagnoseIfInvalidRedecl(
             context, Lex::TokenKind::Interface, existing_interface.name_id,
             RedeclInfo(interface_info, node_id, is_definition),
-            RedeclInfo(existing_interface, existing_interface.latest_decl_id(),
+            RedeclInfo(existing_interface,
+                       SemIR::LocId(existing_interface.latest_decl_id()),
                        existing_interface.has_definition_started()),
             /*prev_import_ir_id=*/SemIR::ImportIRId::None);
 
@@ -109,7 +110,7 @@ static auto BuildInterfaceDecl(Context& context,
     } else {
       // This is a redeclaration of something other than a interface.
       DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                            existing_id);
+                            SemIR::LocId(existing_id));
     }
   }
 
@@ -193,8 +194,8 @@ auto HandleParseNode(Context& context,
                                         interface_info.self_param_id);
 
   // Enter the interface scope.
-  context.scope_stack().Push(interface_decl_id, interface_info.scope_id,
-                             self_specific_id);
+  context.scope_stack().PushForEntity(
+      interface_decl_id, interface_info.scope_id, self_specific_id);
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:

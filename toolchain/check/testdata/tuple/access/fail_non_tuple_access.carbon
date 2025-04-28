@@ -34,6 +34,7 @@ fn Main() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_2, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.ae7: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -45,6 +46,7 @@ fn Main() {
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_5.64b, %Convert.956 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_5.64b, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_5.0f6: %i32 = int_value 5 [concrete]
@@ -75,8 +77,8 @@ fn Main() {
 // CHECK:STDOUT:   %int_0.loc16: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %non_tuple.patt: %array_type = binding_pattern non_tuple
-// CHECK:STDOUT:     %.loc18_3.1: %array_type = var_pattern %non_tuple.patt
+// CHECK:STDOUT:     %non_tuple.patt: %pattern_type.ae7 = binding_pattern non_tuple
+// CHECK:STDOUT:     %.loc18_3.1: %pattern_type.ae7 = var_pattern %non_tuple.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %non_tuple.var: ref %array_type = var non_tuple
 // CHECK:STDOUT:   %int_5.loc18_35: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
@@ -111,8 +113,8 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %non_tuple: ref %array_type = bind_name non_tuple, %non_tuple.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %first.patt: %i32 = binding_pattern first
-// CHECK:STDOUT:     %.loc23_3: %i32 = var_pattern %first.patt
+// CHECK:STDOUT:     %first.patt: %pattern_type.7ce = binding_pattern first
+// CHECK:STDOUT:     %.loc23_3: %pattern_type.7ce = var_pattern %first.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %first.var: ref %i32 = var first
 // CHECK:STDOUT:   %non_tuple.ref: ref %array_type = name_ref non_tuple, %non_tuple

@@ -78,7 +78,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %NotGenericButParams.type.014: type = facet_type <@NotGenericButParams> [concrete]
 // CHECK:STDOUT:   %Self.43b: %NotGenericButParams.type.014 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.type.cde: type = generic_interface_type @GenericAndParams.1 [concrete]
 // CHECK:STDOUT:   %GenericAndParams.generic.827: %GenericAndParams.type.cde = struct_value () [concrete]
 // CHECK:STDOUT:   %GenericAndParams.type.73e: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(%T)> [symbolic]
@@ -89,7 +90,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %GenericNoParams.type.b79: type = facet_type <@GenericNoParams, @GenericNoParams(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.0f6: %GenericNoParams.type.b79 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
-// CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
+// CHECK:STDOUT:   %U.patt: %pattern_type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.type.597: type = generic_interface_type @GenericAndParams.2, @C(%T) [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.generic.2ec: %GenericAndParams.type.597 = struct_value () [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.type.d96: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(%T, %U)> [symbolic]
@@ -124,12 +125,12 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   %NotGenericNoParams.decl: type = interface_decl @NotGenericNoParams [concrete = constants.%NotGenericNoParams.type] {} {}
 // CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type.f26 = interface_decl @NotGenericButParams [concrete = constants.%NotGenericButParams.generic] {} {}
 // CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.cde = interface_decl @GenericAndParams.1 [concrete = constants.%GenericAndParams.generic.827] {
-// CHECK:STDOUT:     %T.patt.loc6_28.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_28.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc6_28.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc6_28.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_28.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %T.patt.loc8_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_9.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc8_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -197,7 +198,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @GenericAndParams.1(%T.loc6_28.1: type) {
 // CHECK:STDOUT:   %T.loc6_28.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_28.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc6_28.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_28.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc6_28.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericAndParams.type: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(%T.loc6_28.2)> [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.73e)]
@@ -229,7 +230,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @GenericAndParams.2(@C.%T.loc8_9.1: type, %U.loc10_30.1: type) {
 // CHECK:STDOUT:   %U.loc10_30.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc10_30.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc10_30.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_30.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.patt.loc10_30.2: %pattern_type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_30.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
@@ -272,7 +273,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc8_9.1: type) {
 // CHECK:STDOUT:   %T.loc8_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_9.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc8_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc8_9.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericNoParams.type: type = facet_type <@GenericNoParams, @GenericNoParams(%T.loc8_9.2)> [symbolic = %GenericNoParams.type (constants.%GenericNoParams.type.b79)]
@@ -282,7 +283,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GenericNoParams.decl: type = interface_decl @GenericNoParams [symbolic = @C.%GenericNoParams.type (constants.%GenericNoParams.type.b79)] {} {}
 // CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.597) = interface_decl @GenericAndParams.2 [symbolic = @C.%GenericAndParams.generic (constants.%GenericAndParams.generic.2ec)] {
-// CHECK:STDOUT:       %U.patt.loc10_30.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_30.2 (constants.%U.patt)]
+// CHECK:STDOUT:       %U.patt.loc10_30.1: %pattern_type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_30.2 (constants.%U.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.loc10_30.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc10_30.2 (constants.%U)]
 // CHECK:STDOUT:     }
@@ -445,7 +446,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Bar.type.982: type = generic_interface_type @Bar [concrete]
 // CHECK:STDOUT:   %Bar.generic: %Bar.type.982 = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.type.7ed: type = facet_type <@Bar, @Bar(%T)> [symbolic]
@@ -457,7 +459,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:     .Bar = %Bar.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type.982 = interface_decl @Bar [concrete = constants.%Bar.generic] {
-// CHECK:STDOUT:     %T.patt.loc8_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_15.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc8_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -465,7 +467,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Bar(%T.loc8_15.1: type) {
 // CHECK:STDOUT:   %T.loc8_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc8_15.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc8_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar, @Bar(%T.loc8_15.2)> [symbolic = %Bar.type (constants.%Bar.type.7ed)]

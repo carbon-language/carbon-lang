@@ -32,9 +32,11 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.a65: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %pattern_type.bff: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,8 +56,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %const = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %const = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.a65 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a65 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -64,8 +66,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     %return: ref %const = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ref.patt: %const = binding_pattern a_ref
-// CHECK:STDOUT:     %.loc6_1: %const = var_pattern %a_ref.patt
+// CHECK:STDOUT:     %a_ref.patt: %pattern_type.a65 = binding_pattern a_ref
+// CHECK:STDOUT:     %.loc6_1: %pattern_type.a65 = var_pattern %a_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %const = var a_ref
 // CHECK:STDOUT:   %.loc6_12: type = splice_block %const.loc6 [concrete = constants.%const] {
@@ -75,8 +77,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %const = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ptr_ref.patt: %ptr = binding_pattern a_ptr_ref
-// CHECK:STDOUT:     %.loc7_1: %ptr = var_pattern %a_ptr_ref.patt
+// CHECK:STDOUT:     %a_ptr_ref.patt: %pattern_type.bff = binding_pattern a_ptr_ref
+// CHECK:STDOUT:     %.loc7_1: %pattern_type.bff = var_pattern %a_ptr_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr_ref.var: ref %ptr = var a_ptr_ref
 // CHECK:STDOUT:   %.loc7_25: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -108,6 +110,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %pattern_type.bff: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -134,8 +137,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %ptr = binding_pattern a
-// CHECK:STDOUT:     %.loc6_1: %ptr = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.bff = binding_pattern a
+// CHECK:STDOUT:     %.loc6_1: %pattern_type.bff = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
 // CHECK:STDOUT:   %.loc6_17: type = splice_block %ptr.loc6 [concrete = constants.%ptr] {
@@ -146,8 +149,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ptr.patt: %ptr = binding_pattern a_ptr
-// CHECK:STDOUT:     %.loc7_1: %ptr = var_pattern %a_ptr.patt
+// CHECK:STDOUT:     %a_ptr.patt: %pattern_type.bff = binding_pattern a_ptr
+// CHECK:STDOUT:     %.loc7_1: %pattern_type.bff = var_pattern %a_ptr.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ptr.var: ref %ptr = var a_ptr
 // CHECK:STDOUT:   %.loc7_21: type = splice_block %ptr.loc7 [concrete = constants.%ptr] {

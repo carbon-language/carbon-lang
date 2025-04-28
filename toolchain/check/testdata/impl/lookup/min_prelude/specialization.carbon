@@ -238,10 +238,10 @@ fn F[D:! Y](d: D) {
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
   //
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `(C(D) as Z).(Z.X)` [ConversionFailure]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+7]]:23: error: cannot implicitly convert expression of type `()` to `C(D).(Z.X)` [ConversionFailure]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs((C(D) as Z).(Z.X))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:23: note: type `()` does not implement interface `Core.ImplicitAs(C(D).(Z.X))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: C(D).(Z.X) = ();
   // CHECK:STDERR:                       ^~
   // CHECK:STDERR:
@@ -445,4 +445,60 @@ fn F(T:! Z(C)) -> T.(Z(C).X) {
 fn G() {
     // This won't typecheck if the first impl is selected.
     let a: () = F(C);
+}
+
+// --- extend_impl_as_specialization.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+impl forall [T:! type, S:! type] T as Z(S) where .X = {} {}
+
+class C(S:! type) {
+  extend impl as Z(S) where .X = () {}
+  fn CC(a: Self.(Z(S).X)) -> Self.(Z(S).X) { return a; }
+}
+
+fn F() {
+  let a: () = C(()).CC(());
+  let b: C(()).X = a;
+}
+
+// --- final_impl_as_specialization.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+impl forall [T:! type, S:! type] T as Z(S) where .X = {} {}
+
+class C(S:! type) {
+  final impl as Z(S) where .X = () {}
+  fn CC() -> Self.(Z(S).X) { return (); }
+}
+
+fn F() {
+  let a: () = C(()).CC();
+}
+
+// --- final_extend_impl_as_specialization.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+impl forall [T:! type, S:! type] T as Z(S) where .X = {} {}
+
+class C(S:! type) {
+  extend final impl as Z(S) where .X = () {}
+  fn CC() -> Self.(Z(S).X) { return (); }
+}
+
+fn F() {
+  let a: () = C(()).CC();
+  let b: C(()).X = a;
 }

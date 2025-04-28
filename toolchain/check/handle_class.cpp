@@ -57,7 +57,7 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
                              SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
-  SemIR::LocId prev_loc_id = prev_class.latest_decl_id();
+  SemIR::LocId prev_loc_id(prev_class.latest_decl_id());
 
   // Check the generic parameters match, if they were specified.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
@@ -132,8 +132,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
       // Verify the decl so that things like aliases are name conflicts.
       const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id)) {
+          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id())) {
         break;
       }
 
@@ -142,12 +142,12 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
           context.constant_values().GetConstantInstId(prev_id));
       if (auto class_type = decl_value.TryAs<SemIR::ClassType>()) {
         prev_class_id = class_type->class_id;
-        prev_import_ir_id = import_ir_inst.ir_id;
+        prev_import_ir_id = import_ir_inst.ir_id();
       } else if (auto generic_class_type =
                      context.types().TryGetAs<SemIR::GenericClassType>(
                          decl_value.type_id())) {
         prev_class_id = generic_class_type->class_id;
-        prev_import_ir_id = import_ir_inst.ir_id;
+        prev_import_ir_id = import_ir_inst.ir_id();
       }
       break;
     }
@@ -158,7 +158,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
   if (!prev_class_id.has_value()) {
     // This is a redeclaration of something other than a class.
     DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          prev_id);
+                          SemIR::LocId(prev_id));
     return;
   }
 
@@ -278,7 +278,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   StartClassDefinition(context, class_info, class_decl_id);
 
   // Enter the class scope.
-  context.scope_stack().Push(
+  context.scope_stack().PushForEntity(
       class_decl_id, class_info.scope_id,
       context.generics().GetSelfSpecific(class_info.generic_id));
   StartGenericDefinition(context);
@@ -368,7 +368,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
   if (class_info.adapt_id.has_value()) {
-    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.adapt_id,
+    DiagnoseClassSpecificDeclRepeated(context, node_id,
+                                      SemIR::LocId(class_info.adapt_id),
                                       Lex::TokenKind::Adapt);
     return true;
   }
@@ -502,7 +503,8 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
   if (class_info.base_id.has_value()) {
-    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.base_id,
+    DiagnoseClassSpecificDeclRepeated(context, node_id,
+                                      SemIR::LocId(class_info.base_id),
                                       Lex::TokenKind::Base);
     return true;
   }

@@ -75,15 +75,16 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                            .value_id = SemIR::InstId::None});
     }
 
+    auto pattern_type_id = GetPatternType(context, cast_type_id);
     auto binding_pattern_id = SemIR::InstId::None;
     if (is_generic) {
       binding_pattern_id = AddPatternInst<SemIR::SymbolicBindingPattern>(
           context, name_node,
-          {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
     } else {
       binding_pattern_id = AddPatternInst<SemIR::BindingPattern>(
           context, name_node,
-          {.type_id = cast_type_id, .entity_name_id = entity_name_id});
+          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
     }
 
     if (is_generic) {
@@ -117,60 +118,22 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
   }
 
-  // A `var` binding in a class scope declares a field, not a true binding,
-  // so we handle it separately.
-  if (auto parent_class_decl =
-          context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
-      parent_class_decl.has_value() && !is_generic &&
-      node_kind == Parse::NodeKind::VarBindingPattern) {
-    if (name_id == SemIR::NameId::Underscore) {
-      // The action item here may be to document this as not allowed, and
-      // add a proper diagnostic.
-      context.TODO(node_id, "_ used as field name");
-    }
-    cast_type_id = AsConcreteType(
-        context, cast_type_id, type_node,
-        [&] {
-          CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Error,
-                            "field has incomplete type {0}", SemIR::TypeId);
-          return context.emitter().Build(type_node, IncompleteTypeInFieldDecl,
-                                         cast_type_id);
-        },
-        [&] {
-          CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, Error,
-                            "field has abstract type {0}", SemIR::TypeId);
-          return context.emitter().Build(type_node, AbstractTypeInFieldDecl,
-                                         cast_type_id);
-        });
-    if (cast_type_id == SemIR::ErrorInst::TypeId) {
-      cast_type_inst_id = SemIR::ErrorInst::TypeInstId;
-    }
-    auto binding_id =
-        context.parse_tree().As<Parse::VarBindingPatternId>(node_id);
-    auto& class_info = context.classes().Get(parent_class_decl->class_id);
-    auto field_type_id = GetUnboundElementType(
-        context, context.types().GetInstId(class_info.self_type_id),
-        cast_type_inst_id);
-    auto field_id =
-        AddInst<SemIR::FieldDecl>(context, binding_id,
-                                  {.type_id = field_type_id,
-                                   .name_id = name_id,
-                                   .index = SemIR::ElementIndex::None});
-    context.field_decls_stack().AppendToTop(field_id);
-
-    context.node_stack().Push(node_id, field_id);
-    auto name_context =
-        context.decl_name_stack().MakeUnqualifiedName(node_id, name_id);
-    context.decl_name_stack().AddNameOrDiagnose(
-        name_context, field_id, introducer.modifier_set.GetAccessKind());
-    return true;
-  }
-
   // A binding in an interface scope declares an associated constant, not a
   // true binding, so we handle it separately.
   if (auto parent_interface_decl =
           context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
-      parent_interface_decl.has_value() && is_generic) {
+      parent_interface_decl.has_value()) {
+    // TODO: diagnose this during parsing, to avoid near-duplicate error
+    // messages.
+    if (!is_generic) {
+      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
+                        "found runtime binding pattern in associated constant "
+                        "declaration; expected a `:!` binding");
+      context.emitter().Emit(node_id,
+                             ExpectedSymbolicBindingInAssociatedConstant);
+      context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+      return true;
+    }
     if (name_id == SemIR::NameId::Underscore) {
       // The action item here may be to document this as not allowed, and
       // add a proper diagnostic.
@@ -373,15 +336,66 @@ auto HandleParseNode(Context& context,
   return HandleAnyBindingPattern(context, node_id, node_kind);
 }
 
+auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
+    -> bool {
+  auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
+  auto [cast_type_inst_id, cast_type_id] =
+      ExprAsType(context, type_node, parsed_type_id);
+  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+
+  auto parent_class_decl =
+      context.scope_stack().GetCurrentScopeAs<SemIR::ClassDecl>();
+  CARBON_CHECK(parent_class_decl);
+  cast_type_id = AsConcreteType(
+      context, cast_type_id, type_node,
+      [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Error,
+                          "field has incomplete type {0}", SemIR::TypeId);
+        return context.emitter().Build(type_node, IncompleteTypeInFieldDecl,
+                                       cast_type_id);
+      },
+      [&] {
+        CARBON_DIAGNOSTIC(AbstractTypeInFieldDecl, Error,
+                          "field has abstract type {0}", SemIR::TypeId);
+        return context.emitter().Build(type_node, AbstractTypeInFieldDecl,
+                                       cast_type_id);
+      });
+  if (cast_type_id == SemIR::ErrorInst::TypeId) {
+    cast_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
+  auto field_type_id = GetUnboundElementType(
+      context, context.types().GetInstId(class_info.self_type_id),
+      cast_type_inst_id);
+  auto field_id =
+      AddInst<SemIR::FieldDecl>(context, node_id,
+                                {.type_id = field_type_id,
+                                 .name_id = name_id,
+                                 .index = SemIR::ElementIndex::None});
+  context.field_decls_stack().AppendToTop(field_id);
+
+  auto name_context =
+      context.decl_name_stack().MakeUnqualifiedName(node_id, name_id);
+  context.decl_name_stack().AddNameOrDiagnose(
+      name_context, field_id,
+      context.decl_introducer_state_stack()
+          .innermost()
+          .modifier_set.GetAccessKind());
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   auto param_pattern_id = context.node_stack().PopPattern();
   if (SemIR::IsSelfPattern(context.sem_ir(), param_pattern_id)) {
-    auto pointer_type = context.types().TryGetAs<SemIR::PointerType>(
-        context.insts().Get(param_pattern_id).type_id());
+    auto param_type_id = ExtractScrutineeType(
+        context.sem_ir(), context.insts().Get(param_pattern_id).type_id());
+    auto pointer_type =
+        context.types().TryGetAs<SemIR::PointerType>(param_type_id);
     if (pointer_type) {
       auto addr_pattern_id = AddPatternInst<SemIR::AddrPattern>(
           context, node_id,
-          {.type_id = SemIR::AutoType::TypeId, .inner_id = param_pattern_id});
+          {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
+           .inner_id = param_pattern_id});
       context.node_stack().Push(node_id, addr_pattern_id);
     } else {
       CARBON_DIAGNOSTIC(
@@ -393,7 +407,8 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter");
-    context.emitter().Emit(TokenOnly(node_id), AddrOnNonSelfParam);
+    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+                           AddrOnNonSelfParam);
     context.node_stack().Push(node_id, param_pattern_id);
   }
   return true;
