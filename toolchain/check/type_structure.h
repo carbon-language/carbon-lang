@@ -45,6 +45,15 @@ class TypeStructure : public Printable<TypeStructure> {
         });
   }
 
+  // Equality of type structures. This compares that the structures are
+  // identical, which is a stronger requirement than that they are ordered the
+  // same.
+  friend auto operator==(const TypeStructure& lhs, const TypeStructure& rhs)
+      -> bool {
+    return lhs.structure_ == rhs.structure_ &&
+           lhs.concrete_types_ == rhs.concrete_types_;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "TypeStructure = ";
     for (auto s : structure_) {
@@ -75,18 +84,35 @@ class TypeStructure : public Printable<TypeStructure> {
     Symbolic,
   };
 
+  struct ConcreteNoneType {
+    friend auto operator==(ConcreteNoneType /*a*/, ConcreteNoneType /*b*/)
+        -> bool {
+      return true;
+    }
+  };
+  using ConcreteType = std::variant<ConcreteNoneType, SemIR::TypeId,
+                                    SemIR::ClassId, SemIR::InterfaceId>;
+
   static constexpr int InfiniteDistance = -1;
 
   TypeStructure(llvm::SmallVector<Structural> structure,
-                llvm::SmallVector<int> symbolic_type_indices)
+                llvm::SmallVector<int> symbolic_type_indices,
+                llvm::SmallVector<ConcreteType> concrete_types)
       : structure_(std::move(structure)),
-        symbolic_type_indices_(std::move(symbolic_type_indices)) {}
+        symbolic_type_indices_(std::move(symbolic_type_indices)),
+        concrete_types_(std::move(concrete_types)) {}
 
   // The structural position of concrete and symbolic values in the type.
   llvm::SmallVector<Structural> structure_;
 
   // Indices of the symbolic entries in structure_.
   llvm::SmallVector<int> symbolic_type_indices_;
+
+  // The value of concrete types indidated by `Concrete` and `ConcreteOpenParen`
+  // entries in the `structure_`, in the same order. It may contain a
+  // `ConcreteNoneType` when there was no relevant type information in that
+  // position, especially for `ConcreteOpenParen`.
+  llvm::SmallVector<ConcreteType> concrete_types_;
 };
 
 // Constructs the TypeStructure for a self type or facet value and an interface

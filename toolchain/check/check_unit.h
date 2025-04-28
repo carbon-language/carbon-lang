@@ -170,6 +170,16 @@ class CheckUnit {
   // same witnesses.
   auto CheckPoisonedConcreteImplLookupQueries() -> void;
 
+  // Look for `impl` declarations that overlap in ways that are invalid.
+  //
+  // - The self + constraint of a `impl` must not match against (be fully
+  // subsumed by) any final `impl` visible from the file.
+  // - The type structure each non-final `impl` must differ from all other
+  // non-final `impl` for the same interface visible from the file.
+  auto CheckOverlappingImpls() -> void;
+  auto CheckOverappingImplsForInterface(llvm::ArrayRef<SemIR::Impl> impls)
+      -> void;
+
   // Does work after processing the parse tree, such as finishing the IR and
   // checking for missing contents.
   auto FinishRun() -> void;

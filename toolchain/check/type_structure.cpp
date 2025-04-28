@@ -4,6 +4,7 @@
 
 #include "toolchain/check/type_structure.h"
 
+#include <utility>
 #include <variant>
 
 #include "toolchain/base/kind_switch.h"
@@ -122,8 +123,9 @@ class TypeStructureBuilder {
            SemIR::SpecificInterface interface_constraint) -> TypeStructure {
     CARBON_CHECK(work_list_.empty());
 
-    symbolic_type_indices_.clear();
     structure_.clear();
+    symbolic_type_indices_.clear();
+    concrete_types_.clear();
 
     // The self type comes first in the type structure, so we push it last, as
     // the queue works from the back.
@@ -136,7 +138,8 @@ class TypeStructureBuilder {
     // TODO: This requires 4 SmallVector moves (two here and two in the
     // constructor). Find a way to reduce that.
     return TypeStructure(std::exchange(structure_, {}),
-                         std::exchange(symbolic_type_indices_, {}));
+                         std::exchange(symbolic_type_indices_, {}),
+                         std::exchange(concrete_types_, {}));
   }
 
  private:
@@ -154,9 +157,11 @@ class TypeStructureBuilder {
               std::get_if<SemIR::SpecificInterface>(&next)) {
         auto args = GetSpecificArgs(interface->specific_id);
         if (args.empty()) {
-          AppendStructural(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete,
+                           interface->interface_id);
         } else {
-          AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
+          AppendStructural(TypeStructure::Structural::ConcreteOpenParen,
+                           interface->interface_id);
           Push(CloseType());
           PushArgs(args);
         }
@@ -174,12 +179,13 @@ class TypeStructureBuilder {
         // `{TypeWithPossibleNestedTypes, Concrete}`.
         // We might want a different bracket marker than ConcreteOpenParen for
         // this so that it can look different in the type structure when dumped.
-        AppendStructural(TypeStructure::Structural::Concrete);
+        AppendStructural(TypeStructure::Structural::Concrete,
+                         SemIR::ErrorInst::TypeId);
         continue;
       }
 
-      SemIR::TypeId next_type_id = std::get<SemIR::TypeId>(next);
-      auto inst_id = context_->types().GetInstId(next_type_id);
+      SemIR::TypeId type_id = std::get<SemIR::TypeId>(next);
+      auto inst_id = context_->types().GetInstId(type_id);
       auto inst = context_->insts().Get(inst_id);
       CARBON_KIND_SWITCH(inst) {
           // ==== Symbolic types ====
@@ -213,30 +219,30 @@ class TypeStructureBuilder {
         case SemIR::NamespaceType::Kind:
         case SemIR::StringType::Kind:
         case SemIR::TypeType::Kind:
-        case SemIR::WitnessType::Kind: {
-          AppendStructural(TypeStructure::Structural::Concrete);
+        case SemIR::WitnessType::Kind:
+          AppendStructural(TypeStructure::Structural::Concrete, type_id);
           break;
-        }
 
         case CARBON_KIND(SemIR::FacetType facet_type): {
           (void)facet_type;
-          // A `FacetType` instruction shows up in the self type of impl lookup
-          // queries like `C(D)` where `C` requires its parameter to satisfy
-          // some `FacetType` `Z`. The `D` argument is converted to a
+          // A `FacetType` instruction shows up in the self type of impl
+          // lookup queries like `C(D)` where `C` requires its parameter to
+          // satisfy some `FacetType` `Z`. The `D` argument is converted to a
           // `FacetValue` satisfying `Z`, and the type of `C` in the self type
           // has a specific with the type of that `FacetValue`, which is the
           // `FacetType` satisfying `Z` we see here.
           //
           // The `FacetValue` may still be symbolic in generic code but its
           // type, the `FacetType` here, is concrete.
-          AppendStructural(TypeStructure::Structural::Concrete);
+          AppendStructural(TypeStructure::Structural::Concrete, type_id);
           break;
         }
         case CARBON_KIND(SemIR::IntType int_type): {
-          if (context_->constant_values().Get(inst_id).is_concrete()) {
-            AppendStructural(TypeStructure::Structural::Concrete);
+          if (type_id.is_concrete()) {
+            AppendStructural(TypeStructure::Structural::Concrete, type_id);
           } else {
-            AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
+            AppendStructural(TypeStructure::Structural::ConcreteOpenParen,
+                             type_id);
             Push(CloseType());
             PushArgs({int_type.bit_width_id});
           }
@@ -246,7 +252,8 @@ class TypeStructureBuilder {
           // ==== Aggregate types ====
 
         case CARBON_KIND(SemIR::ArrayType array_type): {
-          AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
+          AppendStructural(TypeStructure::Structural::ConcreteOpenParen,
+                           TypeStructure::ConcreteNoneType());
           Push(CloseType());
           PushInstId(array_type.element_type_inst_id);
           PushInstId(array_type.bound_id);
@@ -255,9 +262,11 @@ class TypeStructureBuilder {
         case CARBON_KIND(SemIR::ClassType class_type): {
           auto args = GetSpecificArgs(class_type.specific_id);
           if (args.empty()) {
-            AppendStructural(TypeStructure::Structural::Concrete);
+            AppendStructural(TypeStructure::Structural::Concrete,
+                             class_type.class_id);
           } else {
-            AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
+            AppendStructural(TypeStructure::Structural::ConcreteOpenParen,
+                             type_id);
             Push(CloseType());
             PushArgs(args);
           }
@@ -274,7 +283,8 @@ class TypeStructureBuilder {
           break;
         }
         case CARBON_KIND(SemIR::PointerType pointer_type): {
-          AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
+          AppendStructural(TypeStructure::Structural::ConcreteOpenParen,
+                           TypeStructure::ConcreteNoneType());
           Push(CloseType());
           PushInstId(pointer_type.pointee_id);
           break;
@@ -283,9 +293,10 @@ class TypeStructureBuilder {
           auto inner_types =
               context_->inst_blocks().Get(tuple_type.type_elements_id);
           if (inner_types.empty()) {
-            AppendStructural(TypeStructure::Structural::Concrete);
+            AppendStructural(TypeStructure::Structural::Concrete, type_id);
           } else {
-            AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
+            AppendStructural(TypeStructure::Structural::ConcreteOpenParen,
+                             TypeStructure::ConcreteNoneType());
             Push(CloseType());
             PushArgs(context_->inst_blocks().Get(tuple_type.type_elements_id));
           }
@@ -295,9 +306,10 @@ class TypeStructureBuilder {
           auto fields =
               context_->struct_type_fields().Get(struct_type.fields_id);
           if (fields.empty()) {
-            AppendStructural(TypeStructure::Structural::Concrete);
+            AppendStructural(TypeStructure::Structural::Concrete, type_id);
           } else {
-            AppendStructural(TypeStructure::Structural::ConcreteOpenParen);
+            AppendStructural(TypeStructure::Structural::ConcreteOpenParen,
+                             type_id);
             Push(CloseType());
             for (const auto& field : llvm::reverse(fields)) {
               PushInstId(field.type_inst_id);
@@ -316,7 +328,10 @@ class TypeStructureBuilder {
   // A work item to mark a symbolic type.
   struct SymbolicType {};
   // A work item to mark a non-type value.
-  struct NonTypeValue {};
+  struct NonTypeValue {
+    // The type of the value.
+    SemIR::TypeId type_id;
+  };
 
   using WorkItem = std::variant<SemIR::TypeId, SymbolicType, NonTypeValue,
                                 SemIR::SpecificInterface, CloseType>;
@@ -387,7 +402,7 @@ class TypeStructureBuilder {
                type_id.has_value()) {
       Push(type_id);
     } else {
-      Push(NonTypeValue());
+      Push(NonTypeValue{.type_id = context_->insts().Get(inst_id).type_id()});
     }
   }
 
@@ -395,7 +410,16 @@ class TypeStructureBuilder {
   auto Push(WorkItem item) -> void { work_list_.push_back(item); }
 
   // Append a structural element to the TypeStructure being built.
-  auto AppendStructural(TypeStructure::Structural structural) -> void {
+  auto AppendStructural(TypeStructure::Structural structural,
+                        TypeStructure::ConcreteType type =
+                            TypeStructure::ConcreteNoneType()) -> void {
+    if (structural == TypeStructure::Structural::Concrete ||
+        structural == TypeStructure::Structural::ConcreteOpenParen) {
+      concrete_types_.push_back(type);
+    } else {
+      CARBON_CHECK(
+          std::holds_alternative<TypeStructure::ConcreteNoneType>(type));
+    }
     if (structural == TypeStructure::Structural::Symbolic) {
       symbolic_type_indices_.push_back(structure_.size());
     }
@@ -404,8 +428,9 @@ class TypeStructureBuilder {
 
   Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
-  llvm::SmallVector<int> symbolic_type_indices_;
   llvm::SmallVector<TypeStructure::Structural> structure_;
+  llvm::SmallVector<int> symbolic_type_indices_;
+  llvm::SmallVector<TypeStructure::ConcreteType> concrete_types_;
 };
 
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,
