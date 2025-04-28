@@ -2585,7 +2585,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ImplWitnessTable inst) -> ResolveResult {
+                                SemIR::ImplWitnessTable inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
   const auto& import_impl = resolver.import_impls().Get(inst.impl_id);
   auto import_decl_inst_id = import_impl.first_decl_id();
   auto local_decl_inst_id =
@@ -2598,8 +2599,16 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_insts().GetAs<SemIR::ImplDecl>(local_decl_inst_id);
   auto impl_id = impl_decl.impl_id;
   auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
-  return ResolveAs<SemIR::ImplWitnessTable>(
-      resolver, {.elements_id = elements_id, .impl_id = impl_id});
+
+  // Create a corresponding instruction to represent the table.
+  auto inst_id = AddImportedInst<SemIR::ImplWitnessTable>(
+      resolver, import_inst_id,
+      {.elements_id = elements_id, .impl_id = impl_id});
+  // The table can be referenced by `ImplWitness` instructions, so also add it
+  // to the imports block so it's visible in SemIR.
+  resolver.local_context().import_ref_ids().push_back(inst_id);
+  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
+                             inst_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2968,7 +2977,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitnessTable inst): {
-      return TryResolveTypedInst(resolver, inst);
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::ImportRefLoaded inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);

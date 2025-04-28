@@ -463,8 +463,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.f18741.2: %Action.assoc_type.32e = assoc_entity element0, imports.%Main.import_ref.0e3753.2 [symbolic]
-// CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (imports.%Main.import_ref.d0b), @impl [concrete]
-// CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness %Action.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness imports.%Action.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Action.facet: %Action.type.cb0 = facet_value %A, (%Action.impl_witness) [concrete]
 // CHECK:STDOUT:   %.6c7: type = fn_type_with_self_type %Op.type.54d, %Action.facet [concrete]
 // CHECK:STDOUT:   %Op.type.4b4: type = fn_type @Op.2 [concrete]
@@ -498,6 +497,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.1f6: @Action.%Op.type (%Op.type.036) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%Op (constants.%Op.6ed)]
 // CHECK:STDOUT:   %Main.import_ref.0e3753.2 = import_ref Main//action, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.d0b: %Op.type.4b4 = import_ref Main//action, loc13_23, loaded [concrete = constants.%Op.40d]
+// CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (%Main.import_ref.d0b), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1111,8 +1111,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %MakeB.type: type = fn_type @MakeB [concrete]
 // CHECK:STDOUT:   %MakeB: %MakeB.type = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.46d25f.2: %Factory.assoc_type.207 = assoc_entity element0, imports.%Main.import_ref.21018a.2 [symbolic]
-// CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (imports.%Main.import_ref.9ec, imports.%Main.import_ref.7dd), @impl [concrete]
-// CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness %Factory.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness imports.%Factory.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Factory.facet: %Factory.type.a5d = facet_value %A, (%Factory.impl_witness) [concrete]
 // CHECK:STDOUT:   %.711: type = fn_type_with_self_type %Make.type.c59, %Factory.facet [concrete]
 // CHECK:STDOUT:   %Make.type.ec4: type = fn_type @Make.2 [concrete]
@@ -1159,6 +1158,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.21018a.2 = import_ref Main//factory, loc6_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9ec: %Make.type.ec4 = import_ref Main//factory, loc15_17, loaded [concrete = constants.%Make.377]
 // CHECK:STDOUT:   %Main.import_ref.7dd: %Method.type.af5 = import_ref Main//factory, loc16_31, loaded [concrete = constants.%Method.3d4]
+// CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (%Main.import_ref.9ec, %Main.import_ref.7dd), @impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.46fc3c.2 = import_ref Main//factory, loc8_31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

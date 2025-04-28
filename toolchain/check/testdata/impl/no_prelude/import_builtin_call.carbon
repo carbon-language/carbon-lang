@@ -454,13 +454,12 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Op.d59: %Op.type.31b = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.8f9: type = pattern_type %Self.as_type [symbolic]
-// CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (imports.%Main.import_ref.19b), @impl [concrete]
-// CHECK:STDOUT:   %Add.impl_witness.e7c: <witness> = impl_witness %Add.impl_witness_table, @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Add.impl_witness.e7c: <witness> = impl_witness imports.%Add.impl_witness_table, @impl(%N) [symbolic]
 // CHECK:STDOUT:   %Op.type.883: type = fn_type @Op.2, @impl(%N) [symbolic]
 // CHECK:STDOUT:   %Op.8bc: %Op.type.883 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.a71: type = pattern_type %MyInt.09f [symbolic]
 // CHECK:STDOUT:   %require_complete.fc7: <witness> = require_complete_type %MyInt.09f [symbolic]
-// CHECK:STDOUT:   %Add.impl_witness.976: <witness> = impl_witness %Add.impl_witness_table, @impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Add.impl_witness.976: <witness> = impl_witness imports.%Add.impl_witness_table, @impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Op.type.5a6: type = fn_type @Op.2, @impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Op.cf9: %Op.type.5a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.facet.434: %Add.type = facet_value %MyInt.f30, (%Add.impl_witness.976) [concrete]
@@ -497,6 +496,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.import_ref.719: type = import_ref Main//generic_impl, loc15_39, loaded [symbolic = @impl.%MyInt (constants.%MyInt.09f)]
 // CHECK:STDOUT:   %Main.import_ref.bf0: type = import_ref Main//generic_impl, loc15_44, loaded [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Main.import_ref.19b: @impl.%Op.type (%Op.type.883) = import_ref Main//generic_impl, loc16_42, loaded [symbolic = @impl.%Op (constants.%Op.8bc)]
+// CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (%Main.import_ref.19b), @impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.3: Core.IntLiteral = import_ref Main//generic_impl, loc15_14, loaded [symbolic = @impl.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.4: Core.IntLiteral = import_ref Main//generic_impl, loc19_11, loaded [symbolic = @Double.%N (constants.%N)]
 // CHECK:STDOUT: }
@@ -563,7 +563,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %N.patt: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:   %MyInt: type = class_type @MyInt, @MyInt(%N) [symbolic = %MyInt (constants.%MyInt.09f)]
-// CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness constants.%Add.impl_witness_table, @impl(%N) [symbolic = %Add.impl_witness (constants.%Add.impl_witness.e7c)]
+// CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness imports.%Add.impl_witness_table, @impl(%N) [symbolic = %Add.impl_witness (constants.%Add.impl_witness.e7c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.883)]

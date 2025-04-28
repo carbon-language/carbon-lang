@@ -43,10 +43,9 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (imports.%Core.import_ref.344), @impl.2c2 [concrete]
 // CHECK:STDOUT:   %Op.type.52d: type = fn_type @Op.2, @impl.2c2(%N) [symbolic]
 // CHECK:STDOUT:   %Op.12d: %Op.type.52d = struct_value () [symbolic]
-// CHECK:STDOUT:   %Add.impl_witness.dbc: <witness> = impl_witness %Add.impl_witness_table, @impl.2c2(%int_32) [concrete]
+// CHECK:STDOUT:   %Add.impl_witness.dbc: <witness> = impl_witness imports.%Add.impl_witness_table, @impl.2c2(%int_32) [concrete]
 // CHECK:STDOUT:   %Op.type.210: type = fn_type @Op.2, @impl.2c2(%int_32) [concrete]
 // CHECK:STDOUT:   %Op.c82: %Op.type.210 = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %i32, (%Add.impl_witness.dbc) [concrete]
@@ -63,6 +62,7 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %Core.Add: type = import_ref Core//prelude/operators/arithmetic, Add, loaded [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.import_ref.344: @impl.2c2.%Op.type (%Op.type.52d) = import_ref Core//prelude/types/int, loc58_42, loaded [symbolic = @impl.2c2.%Op (constants.%Op.12d)]
+// CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (%Core.import_ref.344), @impl.2c2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
