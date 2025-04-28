@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_in_interface.carbon
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+8]]:7: error: pattern in associated constant declaration must be a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+8]]:7: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
   // CHECK:STDERR:   var v: ();
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:

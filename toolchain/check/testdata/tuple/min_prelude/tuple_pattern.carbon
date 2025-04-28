@@ -61,15 +61,15 @@ let (x: {}, y: {}) = ({}, {});
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+12]]:8: error: pattern in associated constant declaration must be a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+12]]:8: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
   // CHECK:STDERR:   let (x: {}, y: {});
   // CHECK:STDERR:        ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+8]]:15: error: pattern in associated constant declaration must be a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+8]]:15: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
   // CHECK:STDERR:   let (x: {}, y: {});
   // CHECK:STDERR:               ^~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSingleBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: found tuple pattern in associated constant declaration; expected symbolic binding pattern [ExpectedSingleBindingInAssociatedConstant]
   // CHECK:STDERR:   let (x: {}, y: {});
   // CHECK:STDERR:       ^~~~~~~~~~~~~~
   // CHECK:STDERR:

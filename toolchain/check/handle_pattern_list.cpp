@@ -76,8 +76,8 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
 
   if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
     CARBON_DIAGNOSTIC(ExpectedSingleBindingInAssociatedConstant, Error,
-                      "pattern in associated constant declaration must be a "
-                      "single `:!` binding");
+                      "found tuple pattern in associated constant declaration; "
+                      "expected symbolic binding pattern");
     context.emitter().Emit(node_id, ExpectedSingleBindingInAssociatedConstant);
     context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
     EndSubpatternAsNonExpr(context);

@@ -127,8 +127,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     // messages.
     if (!is_generic) {
       CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
-                        "pattern in associated constant declaration must be a "
-                        "`:!` binding");
+                        "found runtime binding pattern in associated constant "
+                        "declaration; expected a `:!` binding");
       context.emitter().Emit(node_id,
                              ExpectedSymbolicBindingInAssociatedConstant);
       context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);

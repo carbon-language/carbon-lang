@@ -207,8 +207,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   llvm::SmallVector<TypeId> complete_types_;
 };
 
-// If `type_id` is a `PatternType`, returns its scrutinee type; otherwise,
-// returns `type_id` unchanged.
+// Returns the scrutinee type of `type_id`, which must be a `PatternType`.
 auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
     -> SemIR::TypeId;
 
