@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FORMATTER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FORMATTER_H_
 
+#include <concepts>
+
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -280,32 +282,16 @@ class Formatter {
   // equivalent name formatting from InstNamer, although there are a few special
   // formats below.
   template <typename IdT>
+  // Force `InstId` children to use the `InstId` overload.
+    requires(!std::derived_from<IdT, InstId>)
   auto FormatName(IdT id) -> void {
     out_ << inst_namer_.GetNameFor(id);
   }
 
-  // TODO: Consider generic handling for children of `InstId`.
-  auto FormatName(AbsoluteInstId id) -> void {
-    FormatName(static_cast<InstId>(id));
-  }
-
-  auto FormatName(DestInstId id) -> void {
-    FormatName(static_cast<InstId>(id));
-  }
-
-  auto FormatName(MetaInstId id) -> void {
-    FormatName(static_cast<InstId>(id));
-  }
-
   auto FormatName(NameId id) -> void;
   auto FormatName(InstId id) -> void;
-
   auto FormatName(SpecificId id) -> void;
   auto FormatName(SpecificInterfaceId id) -> void;
-
-  auto FormatName(TypeInstId id) -> void {
-    FormatName(static_cast<InstId>(id));
-  }
 
   auto FormatLabel(InstBlockId id) -> void;
 
