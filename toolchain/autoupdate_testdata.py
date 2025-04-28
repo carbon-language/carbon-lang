@@ -17,7 +17,7 @@ from pathlib import Path
 
 def main() -> None:
     bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
-    configs = []
+    configs = ["--keep_going"]
     # Use the most recently used build mode, or `fastbuild` if missing
     # `bazel-bin`.
     build_mode = "fastbuild"

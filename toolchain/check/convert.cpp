@@ -71,7 +71,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
                  "initialized multiple times? Have {0}",
                  sem_ir.insts().Get(return_slot_arg_id));
     auto init = sem_ir.insts().Get(init_id);
-    return AddInst<SemIR::Temporary>(context, init_id,
+    return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
                                      {.type_id = init.type_id(),
                                       .storage_id = return_slot_arg_id,
                                       .init_id = init_id});
@@ -88,8 +88,8 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // initialize a temporary, rather than two separate instructions.
   auto init = sem_ir.insts().Get(init_id);
   auto temporary_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
-      context, init_id, {.type_id = init.type_id()});
-  return AddInst<SemIR::Temporary>(context, init_id,
+      context, SemIR::LocId(init_id), {.type_id = init.type_id()});
+  return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
                                    {.type_id = init.type_id(),
                                     .storage_id = temporary_id,
                                     .init_id = init_id});
@@ -584,7 +584,7 @@ static auto ConvertStructToClass(
     target.kind = ConversionTarget::Initializer;
     target.init_block = &target_block;
     target.init_id = target_block.AddInstWithCleanup<SemIR::TemporaryStorage>(
-        value_id, {.type_id = target.type_id});
+        SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
@@ -593,7 +593,7 @@ static auto ConvertStructToClass(
 
   if (need_temporary) {
     target_block.InsertHere();
-    result_id = AddInst<SemIR::Temporary>(context, value_id,
+    result_id = AddInst<SemIR::Temporary>(context, SemIR::LocId(value_id),
                                           {.type_id = target.type_id,
                                            .storage_id = target.init_id,
                                            .init_id = result_id});
@@ -1356,7 +1356,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
       expr_id = AddInst<SemIR::BindValue>(
-          context, expr_id, {.type_id = target.type_id, .value_id = expr_id});
+          context, SemIR::LocId(expr_id),
+          {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.
       [[fallthrough]];
 

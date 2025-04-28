@@ -370,10 +370,6 @@ struct LocIdAndInst {
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
   LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
-  template <typename InstT>
-    requires(Internal::HasUntypedNodeId<InstT>)
-  LocIdAndInst(InstId loc_inst_id, InstT inst)
-      : loc_id(loc_inst_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;

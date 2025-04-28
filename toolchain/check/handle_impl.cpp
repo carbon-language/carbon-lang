@@ -492,7 +492,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
     if (impl_info.generic_id.has_value()) {
       constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
-          context, constraint_type_inst_id,
+          context, SemIR::LocId(constraint_type_inst_id),
           {.type_id = SemIR::TypeType::TypeId,
            .inst_id = constraint_type_inst_id,
            .specific_id =
