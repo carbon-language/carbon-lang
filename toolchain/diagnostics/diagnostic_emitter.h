@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_EMITTER_H_
 
-#include <concepts>
 #include <cstdint>
 #include <string>
 #include <type_traits>

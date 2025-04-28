@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_HELPERS_H_
 
 #include <concepts>
-#include <variant>
 
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/parse/node_ids.h"
@@ -16,13 +15,12 @@ namespace Carbon::Check {
 
 class LocIdForDiagnostics {
  public:
-  template <class T>
-    requires std::constructible_from<SemIR::LocId, T>
+  template <class LocT>
+    requires std::constructible_from<SemIR::LocId, LocT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  LocIdForDiagnostics(T loc_id) : loc_id_(SemIR::LocId(loc_id)) {}
+  LocIdForDiagnostics(LocT loc_id) : loc_id_(SemIR::LocId(loc_id)) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  operator SemIR::LocId() const { return loc_id_; }
+  explicit operator SemIR::LocId() const { return loc_id_; }
 
  private:
   SemIR::LocId loc_id_;

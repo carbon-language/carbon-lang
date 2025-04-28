@@ -16,7 +16,8 @@ namespace Carbon::Check {
 auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
-  auto converted = ConvertLocImpl(loc_id, context_fn);
+  auto converted =
+      ConvertLocImpl(static_cast<SemIR::LocId>(loc_id), context_fn);
 
   // Use the token when possible, but -1 is the default value.
   auto last_offset = -1;
