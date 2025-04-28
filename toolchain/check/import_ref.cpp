@@ -695,6 +695,9 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
       context.local_context(), AddImportIRInst(context, import_inst_id), inst));
   CARBON_VLOG_TO(context.local_context().vlog_stream(),
                  "AddImportedInst: {0}\n", static_cast<SemIR::Inst>(inst));
+  // Track the instruction in the imports block so that it's included in
+  // formatted SemIR if it's referenced.
+  context.local_context().import_ref_ids().push_back(inst_id);
   return inst_id;
 }
 
@@ -2604,9 +2607,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto inst_id = AddImportedInst<SemIR::ImplWitnessTable>(
       resolver, import_inst_id,
       {.elements_id = elements_id, .impl_id = impl_id});
-  // The table can be referenced by `ImplWitness` instructions, so also add it
-  // to the imports block so it's visible in SemIR.
-  resolver.local_context().import_ref_ids().push_back(inst_id);
   return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
                              inst_id);
 }
