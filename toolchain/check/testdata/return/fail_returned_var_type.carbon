@@ -25,11 +25,13 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Mismatch.type: type = fn_type @Mismatch [concrete]
 // CHECK:STDOUT:   %Mismatch: %Mismatch.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.3de: type = pattern_type f64 [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -49,8 +51,8 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Mismatch.decl: %Mismatch.type = fn_decl @Mismatch [concrete = constants.%Mismatch] {
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -62,8 +64,8 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: fn @Mismatch() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: f64 = binding_pattern v
-// CHECK:STDOUT:     %.loc19_12: f64 = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type.3de = binding_pattern v
+// CHECK:STDOUT:     %.loc19_12: %pattern_type.3de = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref f64 = var v
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]

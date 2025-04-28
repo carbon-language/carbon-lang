@@ -36,6 +36,8 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %As.type.602: type = facet_type <@As, @As(%X)> [concrete]
 // CHECK:STDOUT:   %Convert.type.35b: type = fn_type @Convert.1, @As(%X) [concrete]
 // CHECK:STDOUT:   %As.impl_witness.cf1: <witness> = impl_witness file.%As.impl_witness_table.loc15 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %Convert.type.0e3: type = fn_type @Convert.2 [concrete]
 // CHECK:STDOUT:   %Convert.311: %Convert.type.0e3 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet.f77: %As.type.602 = facet_value %i32, (%As.impl_witness.cf1) [concrete]
@@ -100,7 +102,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %As.impl_witness_table.loc19 = impl_witness_table (@impl.18a.%Convert.decl), @impl.18a [concrete]
 // CHECK:STDOUT:   %As.impl_witness.loc19: <witness> = impl_witness %As.impl_witness_table.loc19 [concrete = constants.%As.impl_witness.031]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -111,10 +113,10 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.d8c: %i32 as %As.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.0e3 = fn_decl @Convert.2 [concrete = constants.%Convert.311] {
-// CHECK:STDOUT:     %self.patt: %i32 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %i32 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.7ce = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.019 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.019 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
@@ -135,10 +137,10 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.18a: %X.ref as %As.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.c23 = fn_decl @Convert.3 [concrete = constants.%Convert.8bb] {
-// CHECK:STDOUT:     %self.patt: %X = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %X = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.019 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.019 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

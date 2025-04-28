@@ -27,12 +27,17 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
+// CHECK:STDOUT:   %pattern_type.796: type = pattern_type %ptr.e71 [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [concrete]
@@ -56,11 +61,11 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt.loc17_17: %ptr.e71 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt.loc17_21: %ptr.e71 = value_param_pattern %self.patt.loc17_17, call_param0
-// CHECK:STDOUT:     %.loc17_12: auto = addr_pattern %self.param_patt.loc17_21
-// CHECK:STDOUT:     %self.patt.loc17_30: %i32 = binding_pattern r#self
-// CHECK:STDOUT:     %self.param_patt.loc17_36: %i32 = value_param_pattern %self.patt.loc17_30, call_param1
+// CHECK:STDOUT:     %self.patt.loc17_17: %pattern_type.796 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt.loc17_21: %pattern_type.796 = value_param_pattern %self.patt.loc17_17, call_param0
+// CHECK:STDOUT:     %.loc17_12: %pattern_type.f6d = addr_pattern %self.param_patt.loc17_21
+// CHECK:STDOUT:     %self.patt.loc17_30: %pattern_type.7ce = binding_pattern r#self
+// CHECK:STDOUT:     %self.param_patt.loc17_36: %pattern_type.7ce = value_param_pattern %self.patt.loc17_30, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc17_21: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc17_27: type = splice_block %ptr.loc17 [concrete = constants.%ptr.e71] {
@@ -76,12 +81,12 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.loc17_30: %i32 = bind_name r#self, %self.param.loc17_36
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %self.patt.loc21_12: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt.loc21_16: %Class = value_param_pattern %self.patt.loc21_12, call_param0
-// CHECK:STDOUT:     %self.patt.loc21_24: %i32 = binding_pattern r#self
-// CHECK:STDOUT:     %self.param_patt.loc21_30: %i32 = value_param_pattern %self.patt.loc21_24, call_param1
-// CHECK:STDOUT:     %return.patt: %tuple.type.d07 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt.loc21_12: %pattern_type.761 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt.loc21_16: %pattern_type.761 = value_param_pattern %self.patt.loc21_12, call_param0
+// CHECK:STDOUT:     %self.patt.loc21_24: %pattern_type.7ce = binding_pattern r#self
+// CHECK:STDOUT:     %self.param_patt.loc21_30: %pattern_type.7ce = value_param_pattern %self.patt.loc21_24, call_param1
+// CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc21_41: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21_41: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -105,11 +110,11 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt.loc17_17: %ptr.e71 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt.loc17_21: %ptr.e71 = value_param_pattern %self.patt.loc17_17, call_param0
-// CHECK:STDOUT:     %.loc17_12: auto = addr_pattern %self.param_patt.loc17_21
-// CHECK:STDOUT:     %self.patt.loc17_30: %i32 = binding_pattern r#self
-// CHECK:STDOUT:     %self.param_patt.loc17_36: %i32 = value_param_pattern %self.patt.loc17_30, call_param1
+// CHECK:STDOUT:     %self.patt.loc17_17: %pattern_type.796 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt.loc17_21: %pattern_type.796 = value_param_pattern %self.patt.loc17_17, call_param0
+// CHECK:STDOUT:     %.loc17_12: %pattern_type.f6d = addr_pattern %self.param_patt.loc17_21
+// CHECK:STDOUT:     %self.patt.loc17_30: %pattern_type.7ce = binding_pattern r#self
+// CHECK:STDOUT:     %self.param_patt.loc17_36: %pattern_type.7ce = value_param_pattern %self.patt.loc17_30, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc12_17: %ptr.e71 = value_param call_param0
 // CHECK:STDOUT:     %.loc12_23: type = splice_block %ptr.loc12 [concrete = constants.%ptr.e71] {
@@ -125,12 +130,12 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.loc12_26: %i32 = bind_name r#self, %self.param.loc12_32
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %self.patt.loc21_12: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt.loc21_16: %Class = value_param_pattern %self.patt.loc21_12, call_param0
-// CHECK:STDOUT:     %self.patt.loc21_24: %i32 = binding_pattern r#self
-// CHECK:STDOUT:     %self.param_patt.loc21_30: %i32 = value_param_pattern %self.patt.loc21_24, call_param1
-// CHECK:STDOUT:     %return.patt: %tuple.type.d07 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt.loc21_12: %pattern_type.761 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt.loc21_16: %pattern_type.761 = value_param_pattern %self.patt.loc21_12, call_param0
+// CHECK:STDOUT:     %self.patt.loc21_24: %pattern_type.7ce = binding_pattern r#self
+// CHECK:STDOUT:     %self.param_patt.loc21_30: %pattern_type.7ce = value_param_pattern %self.patt.loc21_24, call_param1
+// CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc13_37: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13_37: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

@@ -44,6 +44,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %F.type.649: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.485: %F.type.649 = struct_value () [concrete]
@@ -53,6 +55,8 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %A [concrete]
 // CHECK:STDOUT:   %struct_type.a.72c: type = struct_type {.a: %A} [concrete]
 // CHECK:STDOUT:   %complete_type.2b9: <witness> = complete_type_witness %struct_type.a.72c [concrete]
+// CHECK:STDOUT:   %pattern_type.c19: type = pattern_type %struct_type.a.72c [concrete]
+// CHECK:STDOUT:   %pattern_type.049: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -75,10 +79,10 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {
-// CHECK:STDOUT:     %s.patt: %struct_type.a.72c = binding_pattern s
-// CHECK:STDOUT:     %s.param_patt: %struct_type.a.72c = value_param_pattern %s.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %B = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %B = value_param_pattern %b.patt, call_param1
+// CHECK:STDOUT:     %s.patt: %pattern_type.c19 = binding_pattern s
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.c19 = value_param_pattern %s.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type.049 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.049 = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %struct_type.a.72c = value_param call_param0
 // CHECK:STDOUT:     %.loc19: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.72c] {
@@ -94,9 +98,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.649 = fn_decl @F.1 [concrete = constants.%F.485] {
-// CHECK:STDOUT:     %self.patt: %ptr.6db = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.6db = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %self.patt: %pattern_type.5f8 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.5f8 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %.loc12_8: %pattern_type.f6d = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.6db = value_param call_param0
 // CHECK:STDOUT:     %.loc12_20: type = splice_block %ptr [concrete = constants.%ptr.6db] {

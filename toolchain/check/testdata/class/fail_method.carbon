@@ -54,6 +54,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %NoSelf.type: type = fn_type @NoSelf [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NoSelf: %NoSelf.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %WithSelf.type: type = fn_type @WithSelf [concrete]
 // CHECK:STDOUT:   %WithSelf: %WithSelf.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -82,8 +83,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.ref: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [concrete = constants.%WithSelf]
 // CHECK:STDOUT:   %A: %WithSelf.type = bind_alias A, @Class.%WithSelf.decl [concrete = constants.%WithSelf]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %Class = value_param_pattern %c.patt, call_param0
+// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
@@ -94,8 +95,8 @@ fn F(c: Class) {
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %NoSelf.decl: %NoSelf.type = fn_decl @NoSelf [concrete = constants.%NoSelf] {} {}
 // CHECK:STDOUT:   %WithSelf.decl: %WithSelf.type = fn_decl @WithSelf [concrete = constants.%WithSelf] {
-// CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]

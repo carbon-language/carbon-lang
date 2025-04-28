@@ -20,7 +20,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -32,10 +34,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %n.patt: %empty_tuple.type = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %empty_tuple.type = value_param_pattern %n.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %tuple.type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern %n.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.5b8 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %empty_tuple.type = tuple_literal ()

@@ -20,6 +20,7 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array_type.0cb: type = array_type %int_1.5b8, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.a98: type = pattern_type %array_type.0cb [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -40,12 +41,14 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %array_type.ce7: type = array_type %int_2, f64 [concrete]
+// CHECK:STDOUT:   %pattern_type.e85: type = pattern_type %array_type.ce7 [concrete]
 // CHECK:STDOUT:   %float.6e4: f64 = float_literal 11.100000000000001 [concrete]
 // CHECK:STDOUT:   %float.9f7: f64 = float_literal 2.2000000000000002 [concrete]
 // CHECK:STDOUT:   %tuple.type.bdb: type = tuple_type (f64, f64) [concrete]
 // CHECK:STDOUT:   %array.6a2: %array_type.ce7 = tuple_value (%float.6e4, %float.9f7) [concrete]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %array_type.c13: type = array_type %int_5, %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %pattern_type.d84: type = pattern_type %array_type.c13 [concrete]
 // CHECK:STDOUT:   %tuple.type.5b2: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
@@ -72,8 +75,8 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %array_type.0cb = binding_pattern a
-// CHECK:STDOUT:     %.loc11_1: %array_type.0cb = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.a98 = binding_pattern a
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.a98 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type.0cb = var a
 // CHECK:STDOUT:   %.loc11_20: type = splice_block %array_type.loc11 [concrete = constants.%array_type.0cb] {
@@ -84,8 +87,8 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type.0cb = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %array_type.ce7 = binding_pattern b
-// CHECK:STDOUT:     %.loc12_1: %array_type.ce7 = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.e85 = binding_pattern b
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.e85 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %array_type.ce7 = var b
 // CHECK:STDOUT:   %.loc12_20: type = splice_block %array_type.loc12 [concrete = constants.%array_type.ce7] {
@@ -98,8 +101,8 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %array_type.ce7 = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %array_type.c13 = binding_pattern c
-// CHECK:STDOUT:     %.loc13_1: %array_type.c13 = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.d84 = binding_pattern c
+// CHECK:STDOUT:     %.loc13_1: %pattern_type.d84 = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %array_type.c13 = var c
 // CHECK:STDOUT:   %.loc13_19: type = splice_block %array_type.loc13 [concrete = constants.%array_type.c13] {

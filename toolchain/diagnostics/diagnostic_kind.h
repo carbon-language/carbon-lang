@@ -13,7 +13,6 @@ namespace Carbon::Diagnostics {
 
 // Although this currently fits into int8_t, it shouldn't be expected to
 // long-term.
-// NOLINTNEXTLINE(performance-enum-size)
 CARBON_DEFINE_RAW_ENUM_CLASS(Kind, uint16_t) {
 #define CARBON_DIAGNOSTIC_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/diagnostics/diagnostic_kind.def"

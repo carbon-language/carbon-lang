@@ -17,6 +17,7 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_9.988: Core.IntLiteral = int_value 9 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_9.988, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.b3e: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
@@ -82,8 +83,8 @@ var a: array(i32, 9) = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
-// CHECK:STDOUT:     %.loc11_1: %array_type = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.b3e = binding_pattern a
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.b3e = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
 // CHECK:STDOUT:   %.loc11_20: type = splice_block %array_type [concrete = constants.%array_type] {

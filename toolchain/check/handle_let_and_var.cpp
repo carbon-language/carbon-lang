@@ -25,6 +25,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -132,7 +133,8 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
   return AddInstWithCleanup(
       context, pattern.loc_id,
       SemIR::VarStorage{
-          .type_id = pattern.inst.type_id(),
+          .type_id =
+              ExtractScrutineeType(context.sem_ir(), pattern.inst.type_id()),
           .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
               context.sem_ir(),
               pattern.inst.As<SemIR::VarPattern>().subpattern_id)});
@@ -293,16 +295,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
 static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
                                      SemIR::InterfaceId interface_id,
                                      DeclInfo& decl_info) -> void {
-  auto decl = context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(
-      decl_info.pattern_id);
-  if (!decl) {
-    if (decl_info.pattern_id != SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
-                        "pattern in associated constant declaration must be a "
-                        "single `:!` binding");
-      context.emitter().Emit(SemIR::LocId(decl_info.pattern_id),
-                             ExpectedSymbolicBindingInAssociatedConstant);
-    }
+  if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
     context.name_scopes()
         .Get(context.interfaces().Get(interface_id).scope_id)
         .set_has_error();
@@ -312,6 +305,8 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
     context.inst_block_stack().Pop();
     return;
   }
+  auto decl = context.insts().GetAs<SemIR::AssociatedConstantDecl>(
+      decl_info.pattern_id);
 
   if (decl_info.introducer.modifier_set.HasAnyOf(
           KeywordModifierSet::Interface)) {
@@ -322,10 +317,9 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   // If there was an initializer, convert it and store it on the constant.
   if (decl_info.init_id.has_value()) {
     // TODO: Diagnose if the `default` modifier was not used.
-    auto default_value_id = ConvertToValueOfType(
-        context, node_id, decl_info.init_id, decl->type_id);
-    auto& assoc_const =
-        context.associated_constants().Get(decl->assoc_const_id);
+    auto default_value_id =
+        ConvertToValueOfType(context, node_id, decl_info.init_id, decl.type_id);
+    auto& assoc_const = context.associated_constants().Get(decl.assoc_const_id);
     assoc_const.default_value_id = default_value_id;
     FinishGenericDefinition(context, assoc_const.generic_id);
   } else {
@@ -334,8 +328,8 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   }
 
   // Store the decl block on the declaration.
-  decl->decl_block_id = context.inst_block_stack().Pop();
-  ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, *decl);
+  decl.decl_block_id = context.inst_block_stack().Pop();
+  ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, decl);
 
   context.inst_block_stack().AddInstId(decl_info.pattern_id);
 }

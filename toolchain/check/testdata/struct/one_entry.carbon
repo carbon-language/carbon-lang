@@ -17,6 +17,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.ba9: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a.ba9 [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -51,8 +52,8 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.a.ba9 = binding_pattern x
-// CHECK:STDOUT:     %.loc11_1: %struct_type.a.ba9 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.268 = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.268 = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.ba9 = var x
 // CHECK:STDOUT:   %.loc11_16: type = splice_block %struct_type.a.loc11 [concrete = constants.%struct_type.a.ba9] {
@@ -62,8 +63,8 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.ba9 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %struct_type.a.ba9 = binding_pattern y
-// CHECK:STDOUT:     %.loc12_1: %struct_type.a.ba9 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.268 = binding_pattern y
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.268 = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.a.ba9 = var y
 // CHECK:STDOUT:   %.loc12_16: type = splice_block %struct_type.a.loc12 [concrete = constants.%struct_type.a.ba9] {

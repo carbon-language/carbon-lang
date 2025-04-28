@@ -107,6 +107,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -137,8 +138,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc6_1: %i32 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %.loc6_1: %pattern_type.7ce = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %.loc6_8: type = splice_block %i32.loc6 [concrete = constants.%i32] {
@@ -147,8 +148,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %.loc7_1: %i32 = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b
+// CHECK:STDOUT:     %.loc7_1: %pattern_type.7ce = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %.loc7_8: type = splice_block %i32.loc7 [concrete = constants.%i32] {
@@ -157,8 +158,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %i32 = binding_pattern c
-// CHECK:STDOUT:     %.loc8_1: %i32 = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.7ce = binding_pattern c
+// CHECK:STDOUT:     %.loc8_1: %pattern_type.7ce = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %i32 = var c
 // CHECK:STDOUT:   %.loc8_8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
@@ -167,8 +168,8 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %i32 = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %i32 = binding_pattern d
-// CHECK:STDOUT:     %.loc9_1: %i32 = var_pattern %d.patt
+// CHECK:STDOUT:     %d.patt: %pattern_type.7ce = binding_pattern d
+// CHECK:STDOUT:     %.loc9_1: %pattern_type.7ce = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
 // CHECK:STDOUT:   %.loc9_8: type = splice_block %i32.loc9 [concrete = constants.%i32] {

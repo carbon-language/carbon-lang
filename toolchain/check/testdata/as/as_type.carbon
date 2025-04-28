@@ -13,6 +13,7 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT: --- as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
@@ -34,7 +35,7 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: type = binding_pattern t
+// CHECK:STDOUT:     %t.patt: %pattern_type.98f = binding_pattern t
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: type = bind_name t, @__global_init.%.loc11_26
 // CHECK:STDOUT: }

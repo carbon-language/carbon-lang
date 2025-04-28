@@ -239,7 +239,7 @@ base class Base(T:! type) {
 
 class Derived {
   extend base: Base(T1);
-  // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE+7]]:25: error: type `T1` of parameter 1 in redeclaration differs from previous parameter type `T` [RedeclParamDiffersType]
+  // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE+7]]:25: error: type `<pattern for T1>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T>` [RedeclParamDiffersType]
   // CHECK:STDERR:   impl fn F[self: Self](t: T1);
   // CHECK:STDERR:                         ^~~~~
   // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE-8]]:28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
@@ -340,6 +340,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %pattern_type.bcc: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
@@ -347,6 +348,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %pattern_type.41e: type = pattern_type %Abstract [concrete]
 // CHECK:STDOUT:   %J.type: type = fn_type @J [concrete]
 // CHECK:STDOUT:   %J: %J.type = struct_value () [concrete]
 // CHECK:STDOUT:   %K.type: type = fn_type @K [concrete]
@@ -374,8 +376,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.bcc = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.bcc = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
@@ -393,16 +395,16 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [concrete = constants.%J] {
-// CHECK:STDOUT:     %self.patt: %Abstract = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Abstract = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.41e = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.41e = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Abstract [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %self: %Abstract = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [concrete = constants.%K] {
-// CHECK:STDOUT:     %self.patt: %Abstract = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Abstract = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.41e = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.41e = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Abstract [concrete = constants.%Abstract]
@@ -434,6 +436,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
+// CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %H.type.dba: type = fn_type @H.1 [concrete]
 // CHECK:STDOUT:   %H.bce: %H.type.dba = struct_value () [concrete]
 // CHECK:STDOUT:   %.dce: <vtable> = vtable (%H.bce) [concrete]
@@ -478,8 +481,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Modifiers.Base [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc7: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %H.decl: %H.type.dba = fn_decl @H.1 [concrete = constants.%H.bce] {
-// CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.fb9 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fb9 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
@@ -513,8 +516,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
-// CHECK:STDOUT:     %.loc12_3.1: %Derived = var_pattern %d.patt
+// CHECK:STDOUT:     %d.patt: %pattern_type.fb9 = binding_pattern d
+// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.fb9 = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %Derived = var d
 // CHECK:STDOUT:   %.loc12_30.1: %empty_struct_type = struct_literal ()
@@ -537,6 +540,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
@@ -579,8 +583,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.fb9 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fb9 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
@@ -623,6 +627,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -664,8 +669,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %Base = binding_pattern v
-// CHECK:STDOUT:     %.loc7_3.1: %Base = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v
+// CHECK:STDOUT:     %.loc7_3.1: %pattern_type = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %Base = var v
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal ()
@@ -687,6 +692,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A1: type = class_type @A1 [concrete]
+// CHECK:STDOUT:   %pattern_type.ddb: type = pattern_type %A1 [concrete]
 // CHECK:STDOUT:   %F.type.13a: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.df5: %F.type.13a = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -695,6 +701,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %A2: type = class_type @A2 [concrete]
 // CHECK:STDOUT:   %A2.elem: type = unbound_element_type %A2, %A1 [concrete]
+// CHECK:STDOUT:   %pattern_type.b21: type = pattern_type %A2 [concrete]
 // CHECK:STDOUT:   %F.type.4ae: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.1d5: %F.type.4ae = struct_value () [concrete]
 // CHECK:STDOUT:   %.943: <vtable> = vtable (%F.1d5) [concrete]
@@ -722,8 +729,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
 // CHECK:STDOUT:   %F.decl: %F.type.13a = fn_decl @F.1 [concrete = constants.%F.df5] {
-// CHECK:STDOUT:     %self.patt: %A1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %A1 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.ddb = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.ddb = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %A1 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A1 [concrete = constants.%A1]
@@ -743,8 +750,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %A1.ref: type = name_ref A1, file.%A1.decl [concrete = constants.%A1]
 // CHECK:STDOUT:   %.loc9: %A2.elem = base_decl %A1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.4ae = fn_decl @F.2 [concrete = constants.%F.1d5] {
-// CHECK:STDOUT:     %self.patt: %A2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %A2 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.b21 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.b21 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %A2 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A2 [concrete = constants.%A2]
@@ -771,6 +778,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B1: type = class_type @B1 [concrete]
+// CHECK:STDOUT:   %pattern_type.e47: type = pattern_type %B1 [concrete]
 // CHECK:STDOUT:   %F.type.e4c: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.8f5: %F.type.e4c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -779,6 +787,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %B2: type = class_type @B2 [concrete]
 // CHECK:STDOUT:   %B2.elem: type = unbound_element_type %B2, %B1 [concrete]
+// CHECK:STDOUT:   %pattern_type.b19: type = pattern_type %B2 [concrete]
 // CHECK:STDOUT:   %F.type.b26: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.d48: %F.type.b26 = struct_value () [concrete]
 // CHECK:STDOUT:   %.579: <vtable> = vtable (%F.d48) [concrete]
@@ -786,6 +795,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.5ac: <witness> = complete_type_witness %struct_type.base.508 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %B2 [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %F.type.c29: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.437: %F.type.c29 = struct_value () [concrete]
 // CHECK:STDOUT:   %.5f6: <vtable> = vtable (%F.437) [concrete]
@@ -822,8 +832,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
 // CHECK:STDOUT:   %F.decl: %F.type.e4c = fn_decl @F.1 [concrete = constants.%F.8f5] {
-// CHECK:STDOUT:     %self.patt: %B1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %B1 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.e47 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.e47 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %B1 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B1 [concrete = constants.%B1]
@@ -843,8 +853,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
 // CHECK:STDOUT:   %.loc9: %B2.elem = base_decl %B1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.b26 = fn_decl @F.2 [concrete = constants.%F.d48] {
-// CHECK:STDOUT:     %self.patt: %B2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %B2 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.b19 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.b19 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %B2 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B2 [concrete = constants.%B2]
@@ -867,8 +877,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
 // CHECK:STDOUT:   %.loc14: %C.elem = base_decl %B2.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.3 [concrete = constants.%F.437] {
-// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
@@ -896,8 +906,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b1.patt: %B1 = binding_pattern b1
-// CHECK:STDOUT:     %.loc19_3.1: %B1 = var_pattern %b1.patt
+// CHECK:STDOUT:     %b1.patt: %pattern_type.e47 = binding_pattern b1
+// CHECK:STDOUT:     %.loc19_3.1: %pattern_type.e47 = var_pattern %b1.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b1.var: ref %B1 = var b1
 // CHECK:STDOUT:   %.loc19_17.1: %empty_struct_type = struct_literal ()
@@ -910,8 +920,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
 // CHECK:STDOUT:   %b1: ref %B1 = bind_name b1, %b1.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b2.patt: %B2 = binding_pattern b2
-// CHECK:STDOUT:     %.loc20_3.1: %B2 = var_pattern %b2.patt
+// CHECK:STDOUT:     %b2.patt: %pattern_type.b19 = binding_pattern b2
+// CHECK:STDOUT:     %.loc20_3.1: %pattern_type.b19 = var_pattern %b2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b2.var: ref %B2 = var b2
 // CHECK:STDOUT:   %.loc20_26.1: %empty_struct_type = struct_literal ()
@@ -928,8 +938,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
 // CHECK:STDOUT:   %b2: ref %B2 = bind_name b2, %b2.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %.loc21_3.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c
+// CHECK:STDOUT:     %.loc21_3.1: %pattern_type.c48 = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %.loc21_33.1: %empty_struct_type = struct_literal ()
@@ -956,6 +966,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
@@ -982,8 +993,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
@@ -1008,6 +1019,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.bcc: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -1016,6 +1028,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.cf7: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [concrete]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -1069,8 +1082,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %Base.elem = field_decl m2, element2 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [concrete = constants.%F.d17] {
-// CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.bcc = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.bcc = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
@@ -1093,8 +1106,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %i32 = binding_pattern i
-// CHECK:STDOUT:     %.loc12_3.1: %i32 = var_pattern %i.patt
+// CHECK:STDOUT:     %i.patt: %pattern_type.7ce = binding_pattern i
+// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.7ce = var_pattern %i.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %i32 = var i
 // CHECK:STDOUT:   %int_3.loc12: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -1111,8 +1124,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: ref %i32 = bind_name i, %i.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b1.patt: %Base = binding_pattern b1
-// CHECK:STDOUT:     %.loc14_3.1: %Base = var_pattern %b1.patt
+// CHECK:STDOUT:     %b1.patt: %pattern_type.bcc = binding_pattern b1
+// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.bcc = var_pattern %b1.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b1.var: ref %Base = var b1
 // CHECK:STDOUT:   %i.ref.loc14_25: ref %i32 = name_ref i, %i
@@ -1133,8 +1146,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %Base.ref.loc14: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %b1: ref %Base = bind_name b1, %b1.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b2.patt: %Base = binding_pattern b2
-// CHECK:STDOUT:     %.loc15_3.1: %Base = var_pattern %b2.patt
+// CHECK:STDOUT:     %b2.patt: %pattern_type.bcc = binding_pattern b2
+// CHECK:STDOUT:     %.loc15_3.1: %pattern_type.bcc = var_pattern %b2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b2.var: ref %Base = var b2
 // CHECK:STDOUT:   %int_3.loc15: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -1186,6 +1199,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -1225,8 +1239,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Base.ref, element1 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
@@ -1251,6 +1265,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %AbstractBase: type = class_type @AbstractBase [concrete]
+// CHECK:STDOUT:   %pattern_type.27c: type = pattern_type %AbstractBase [concrete]
 // CHECK:STDOUT:   %F.type.85b: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.6e9: %F.type.85b = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -1263,6 +1278,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.2d3: <witness> = complete_type_witness %struct_type.base.efd [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %AbstractIntermediate [concrete]
+// CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [concrete]
 // CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [concrete]
@@ -1292,8 +1308,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractBase {
 // CHECK:STDOUT:   %F.decl: %F.type.85b = fn_decl @F.1 [concrete = constants.%F.6e9] {
-// CHECK:STDOUT:     %self.patt: %AbstractBase = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractBase = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.27c = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.27c = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %AbstractBase = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractBase [concrete = constants.%AbstractBase]
@@ -1328,8 +1344,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %AbstractIntermediate.ref: type = name_ref AbstractIntermediate, file.%AbstractIntermediate.decl [concrete = constants.%AbstractIntermediate]
 // CHECK:STDOUT:   %.loc13: %Derived.elem = base_decl %AbstractIntermediate.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
-// CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.fb9 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fb9 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
@@ -1356,6 +1372,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %VirtualBase: type = class_type @VirtualBase [concrete]
+// CHECK:STDOUT:   %pattern_type.ad4: type = pattern_type %VirtualBase [concrete]
 // CHECK:STDOUT:   %F.type.e62: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.3e7: %F.type.e62 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -1368,6 +1385,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.f09: <witness> = complete_type_witness %struct_type.base.61e [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %VirtualIntermediate [concrete]
+// CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [concrete]
 // CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [concrete]
@@ -1397,8 +1415,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @VirtualBase {
 // CHECK:STDOUT:   %F.decl: %F.type.e62 = fn_decl @F.1 [concrete = constants.%F.3e7] {
-// CHECK:STDOUT:     %self.patt: %VirtualBase = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %VirtualBase = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.ad4 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.ad4 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %VirtualBase = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%VirtualBase [concrete = constants.%VirtualBase]
@@ -1433,8 +1451,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %VirtualIntermediate.ref: type = name_ref VirtualIntermediate, file.%VirtualIntermediate.decl [concrete = constants.%VirtualIntermediate]
 // CHECK:STDOUT:   %.loc13: %Derived.elem = base_decl %VirtualIntermediate.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
-// CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.fb9 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fb9 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
@@ -1461,6 +1479,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %pattern_type.bcc: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -1469,8 +1488,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
+// CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [concrete]
 // CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [concrete]
@@ -1499,8 +1520,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [concrete = constants.%F.d17] {
-// CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.bcc = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.bcc = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
@@ -1520,10 +1541,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc9: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
-// CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %v.patt: %i32 = binding_pattern v
-// CHECK:STDOUT:     %v.param_patt: %i32 = value_param_pattern %v.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.fb9 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fb9 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v
+// CHECK:STDOUT:     %v.param_patt: %pattern_type.7ce = value_param_pattern %v.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
@@ -1563,10 +1584,13 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e40: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness file.%ImplicitAs.impl_witness_table [concrete]
+// CHECK:STDOUT:   %pattern_type.682: type = pattern_type %T2 [concrete]
+// CHECK:STDOUT:   %pattern_type.28b: type = pattern_type %T1 [concrete]
 // CHECK:STDOUT:   %Convert.type.c41: type = fn_type @Convert.2 [concrete]
 // CHECK:STDOUT:   %Convert.f35: %Convert.type.c41 = struct_value () [concrete]
 // CHECK:STDOUT:   %T1.val: %T1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %pattern_type.bcc: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -1575,6 +1599,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
+// CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [concrete]
 // CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [concrete]
@@ -1617,10 +1642,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %T2.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.c41 = fn_decl @Convert.2 [concrete = constants.%Convert.f35] {
-// CHECK:STDOUT:     %self.patt: %T2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %T2 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %T1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.682 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.682 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.28b = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.28b = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:     %self.param: %T2 = value_param call_param0
@@ -1656,10 +1681,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [concrete = constants.%F.d17] {
-// CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %T1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %T1 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.bcc = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.bcc = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.28b = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.28b = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
@@ -1684,10 +1709,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc21: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
-// CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %T2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %T2 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.fb9 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fb9 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.682 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.682 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
@@ -1729,10 +1754,13 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [concrete]
 // CHECK:STDOUT:   %Base.generic: %Base.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.370: type = class_type @Base, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %pattern_type.9f7: type = pattern_type %Base.370 [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %F.type.f17: type = fn_type @F.1, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %F.e26: %F.type.f17 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -1745,6 +1773,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %F.d25: %F.type.d82 = struct_value () [concrete]
 // CHECK:STDOUT:   %.611: <vtable> = vtable (%F.d25) [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base.ea5 [concrete]
+// CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
+// CHECK:STDOUT:   %pattern_type.28b: type = pattern_type %T1 [concrete]
 // CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [concrete]
 // CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [concrete]
@@ -1769,7 +1799,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
 // CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [concrete = constants.%Base.generic] {
-// CHECK:STDOUT:     %T.patt.loc7_17.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc7_17.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc7_17.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_17.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -1787,7 +1817,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Base(%T.loc7_17.1: type) {
 // CHECK:STDOUT:   %T.loc7_17.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_17.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc7_17.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc7_17.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @Base(%T.loc7_17.2) [symbolic = %F.type (constants.%F.type.f17)]
@@ -1796,10 +1826,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Base.%F.type (%F.type.f17) = fn_decl @F.1 [symbolic = @Base.%F (constants.%F.e26)] {
-// CHECK:STDOUT:       %self.patt: @F.1.%Base (%Base.370) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.1.%Base (%Base.370) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %t.patt: @F.1.%T (%T) = binding_pattern t
-// CHECK:STDOUT:       %t.param_patt: @F.1.%T (%T) = value_param_pattern %t.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @F.1.%pattern_type.loc8_16 (%pattern_type.9f7) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.1.%pattern_type.loc8_16 (%pattern_type.9f7) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %t.patt: @F.1.%pattern_type.loc8_28 (%pattern_type.7dc) = binding_pattern t
+// CHECK:STDOUT:       %t.param_patt: @F.1.%pattern_type.loc8_28 (%pattern_type.7dc) = value_param_pattern %t.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @F.1.%Base (%Base.370) = value_param call_param0
 // CHECK:STDOUT:       %.loc8_22.1: type = splice_block %Self.ref [symbolic = %Base (constants.%Base.370)] {
@@ -1830,10 +1860,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(constants.%T1) [concrete = constants.%Base.ea5]
 // CHECK:STDOUT:   %.loc12: %Derived.elem = base_decl %Base, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
-// CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %t.patt: %T1 = binding_pattern t
-// CHECK:STDOUT:     %t.param_patt: %T1 = value_param_pattern %t.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.fb9 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fb9 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %t.patt: %pattern_type.28b = binding_pattern t
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.28b = value_param_pattern %t.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
@@ -1859,6 +1889,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT: generic virtual fn @F.1(@Base.%T.loc7_17.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.370)]
+// CHECK:STDOUT:   %pattern_type.loc8_16: type = pattern_type %Base [symbolic = %pattern_type.loc8_16 (constants.%pattern_type.9f7)]
+// CHECK:STDOUT:   %pattern_type.loc8_28: type = pattern_type %T [symbolic = %pattern_type.loc8_28 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: @F.1.%Base (%Base.370), %t.param: @F.1.%T (%T));
 // CHECK:STDOUT: }
@@ -1873,6 +1905,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT: specific @F.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Base => constants.%Base.370
+// CHECK:STDOUT:   %pattern_type.loc8_16 => constants.%pattern_type.9f7
+// CHECK:STDOUT:   %pattern_type.loc8_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(@F.1.%T) {}
@@ -1965,6 +1999,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T1: type = class_type @T1 [concrete]
 // CHECK:STDOUT:   %ptr.87b: type = ptr_type %T1 [concrete]
+// CHECK:STDOUT:   %pattern_type.a36: type = pattern_type %ptr.87b [concrete]
 // CHECK:STDOUT:   %F1.type.b96: type = fn_type @F1.1 [concrete]
 // CHECK:STDOUT:   %F1.765: %F1.type.b96 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
@@ -1974,6 +2009,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %T2: type = class_type @T2 [concrete]
 // CHECK:STDOUT:   %T2.elem: type = unbound_element_type %T2, %T1 [concrete]
 // CHECK:STDOUT:   %ptr.63e: type = ptr_type %T2 [concrete]
+// CHECK:STDOUT:   %pattern_type.fb8: type = pattern_type %ptr.63e [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %F1.type.b0d: type = fn_type @F1.2 [concrete]
 // CHECK:STDOUT:   %F1.0ce: %F1.type.b0d = struct_value () [concrete]
 // CHECK:STDOUT:   %.20a: <vtable> = vtable (%F1.0ce) [concrete]
@@ -2001,8 +2038,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T1 {
 // CHECK:STDOUT:   %F1.decl: %F1.type.b96 = fn_decl @F1.1 [concrete = constants.%F1.765] {
-// CHECK:STDOUT:     %self.patt: %ptr.87b = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.87b = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.a36 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a36 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.87b = value_param call_param0
 // CHECK:STDOUT:     %.loc5: type = splice_block %ptr [concrete = constants.%ptr.87b] {
@@ -2025,9 +2062,9 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:   %.loc9: %T2.elem = base_decl %T1.ref, element0 [concrete]
 // CHECK:STDOUT:   %F1.decl: %F1.type.b0d = fn_decl @F1.2 [concrete = constants.%F1.0ce] {
-// CHECK:STDOUT:     %self.patt: %ptr.63e = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.63e = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc17_14: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %self.patt: %pattern_type.fb8 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fb8 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %.loc17_14: %pattern_type.f6d = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.63e = value_param call_param0
 // CHECK:STDOUT:     %.loc17_29: type = splice_block %ptr [concrete = constants.%ptr.63e] {
@@ -2057,8 +2094,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T1: type = class_type @T1 [concrete]
+// CHECK:STDOUT:   %pattern_type.28b: type = pattern_type %T1 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -2083,9 +2122,9 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T1 {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %T1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %T1 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %T.patt.loc9_28.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %self.patt: %pattern_type.28b = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.28b = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %T.patt.loc9_28.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %T1 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%T1 [concrete = constants.%T1]
@@ -2103,7 +2142,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic virtual fn @F(%T.loc9_28.2: type) {
 // CHECK:STDOUT:   %T.loc9_28.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_28.1 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc9_28.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc9_28.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: %T1);
 // CHECK:STDOUT: }
@@ -2117,12 +2156,14 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.e01: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.250: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T1.type: type = generic_class_type @T1 [concrete]
 // CHECK:STDOUT:   %T1.generic: %T1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %T1 [symbolic]
 // CHECK:STDOUT:   %T.336: type = bind_symbolic_name T, 1 [symbolic]
-// CHECK:STDOUT:   %T.patt.7a9: type = symbolic_binding_pattern T, 1 [symbolic]
+// CHECK:STDOUT:   %T.patt.cec: %pattern_type.98f = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -2143,7 +2184,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T1.decl: %T1.type = class_decl @T1 [concrete = constants.%T1.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt.e01)]
+// CHECK:STDOUT:     %T.patt.loc4_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt.250)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
@@ -2151,7 +2192,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @T1(%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T.8b3)]
-// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt.e01)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt.250)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.loc4_15.2) [symbolic = %F.type (constants.%F.type)]
@@ -2159,9 +2200,9 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @T1.%F.type (%F.type) = fn_decl @F [symbolic = @T1.%F (constants.%F)] {
-// CHECK:STDOUT:       %self.patt: @F.%T1 (%T1) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.%T1 (%T1) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %T.patt.loc9_28.1: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt.7a9)]
+// CHECK:STDOUT:       %self.patt: @F.%pattern_type (%pattern_type.48e) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%pattern_type (%pattern_type.48e) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %T.patt.loc9_28.1: %pattern_type.98f = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt.cec)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @F.%T1 (%T1) = value_param call_param0
 // CHECK:STDOUT:       %.loc9_22.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
@@ -2184,22 +2225,24 @@ base class T1(T:! type) {
 // CHECK:STDOUT: generic virtual fn @F(@T1.%T.loc4_15.1: type, %T.loc9_28.2: type) {
 // CHECK:STDOUT:   %T.loc9_22: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_22 (constants.%T.8b3)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T.loc9_22) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T1 [symbolic = %pattern_type (constants.%pattern_type.48e)]
 // CHECK:STDOUT:   %T.loc9_28.1: type = bind_symbolic_name T, 1 [symbolic = %T.loc9_28.1 (constants.%T.336)]
-// CHECK:STDOUT:   %T.patt.loc9_28.2: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt.7a9)]
+// CHECK:STDOUT:   %T.patt.loc9_28.2: %pattern_type.98f = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc9_28.2 (constants.%T.patt.cec)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T.8b3
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt.e01
+// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt.250
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.8b3, constants.%T.336) {
 // CHECK:STDOUT:   %T.loc9_22 => constants.%T.8b3
 // CHECK:STDOUT:   %T1 => constants.%T1
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.48e
 // CHECK:STDOUT:   %T.loc9_28.1 => constants.%T.336
-// CHECK:STDOUT:   %T.patt.loc9_28.2 => constants.%T.patt.7a9
+// CHECK:STDOUT:   %T.patt.loc9_28.2 => constants.%T.patt.cec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(@F.%T.loc9_22) {}
@@ -2210,10 +2253,12 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T1.type: type = generic_class_type @T1 [concrete]
 // CHECK:STDOUT:   %T1.generic: %T1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %T1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
@@ -2236,7 +2281,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T1.decl: %T1.type = class_decl @T1 [concrete = constants.%T1.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -2244,7 +2289,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @T1(%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.loc4_15.2) [symbolic = %F.type (constants.%F.type)]
@@ -2253,8 +2298,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @T1.%F.type (%F.type) = fn_decl @F [symbolic = @T1.%F (constants.%F)] {
-// CHECK:STDOUT:       %self.patt: @F.%T1 (%T1) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.%T1 (%T1) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %self.patt: @F.%pattern_type (%pattern_type.48e) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%pattern_type (%pattern_type.48e) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @F.%T1 (%T1) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_22.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
@@ -2277,6 +2322,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT: generic virtual fn @F(@T1.%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T1 [symbolic = %pattern_type (constants.%pattern_type.48e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1));
 // CHECK:STDOUT: }
@@ -2289,6 +2335,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T1 => constants.%T1
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.48e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(@F.%T) {}
@@ -2299,10 +2346,13 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T1.type: type = generic_class_type @T1 [concrete]
 // CHECK:STDOUT:   %T1.generic: %T1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %T1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
@@ -2325,7 +2375,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T1.decl: %T1.type = class_decl @T1 [concrete = constants.%T1.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_15.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -2333,7 +2383,7 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @T1(%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_15.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.loc4_15.2) [symbolic = %F.type (constants.%F.type)]
@@ -2342,10 +2392,10 @@ base class T1(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @T1.%F.type (%F.type) = fn_decl @F [symbolic = @T1.%F (constants.%F)] {
-// CHECK:STDOUT:       %self.patt: @F.%T1 (%T1) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.%T1 (%T1) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %t.patt: @F.%T (%T) = binding_pattern t
-// CHECK:STDOUT:       %t.param_patt: @F.%T (%T) = value_param_pattern %t.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @F.%pattern_type.loc5_16 (%pattern_type.48e) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.%pattern_type.loc5_16 (%pattern_type.48e) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %t.patt: @F.%pattern_type.loc5_28 (%pattern_type.7dc) = binding_pattern t
+// CHECK:STDOUT:       %t.param_patt: @F.%pattern_type.loc5_28 (%pattern_type.7dc) = value_param_pattern %t.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @F.%T1 (%T1) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_22.1: type = splice_block %Self.ref [symbolic = %T1 (constants.%T1)] {
@@ -2372,6 +2422,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT: generic virtual fn @F(@T1.%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
+// CHECK:STDOUT:   %pattern_type.loc5_16: type = pattern_type %T1 [symbolic = %pattern_type.loc5_16 (constants.%pattern_type.48e)]
+// CHECK:STDOUT:   %pattern_type.loc5_28: type = pattern_type %T [symbolic = %pattern_type.loc5_28 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1), %t.param: @F.%T (%T));
 // CHECK:STDOUT: }
@@ -2384,6 +2436,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T1 => constants.%T1
+// CHECK:STDOUT:   %pattern_type.loc5_16 => constants.%pattern_type.48e
+// CHECK:STDOUT:   %pattern_type.loc5_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(@F.%T) {}

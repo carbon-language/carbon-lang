@@ -50,6 +50,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   %Procedure.type: type = fn_type @Procedure [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Procedure: %Procedure.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,8 +73,8 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %empty_tuple.type = binding_pattern v
-// CHECK:STDOUT:     %.loc12_12.1: %empty_tuple.type = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v
+// CHECK:STDOUT:     %.loc12_12.1: %pattern_type = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
 // CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal ()
@@ -94,6 +95,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   %ForgotReturnType.type: type = fn_type @ForgotReturnType [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ForgotReturnType: %ForgotReturnType.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -116,8 +118,8 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @ForgotReturnType() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %empty_tuple.type = binding_pattern v
-// CHECK:STDOUT:     %.loc12_12.1: %empty_tuple.type = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v
+// CHECK:STDOUT:     %.loc12_12.1: %pattern_type = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
 // CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal ()

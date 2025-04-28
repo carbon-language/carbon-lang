@@ -27,13 +27,15 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.8b3: type = bind_symbolic_name F, 0 [symbolic]
-// CHECK:STDOUT:   %F.patt: type = symbolic_binding_pattern F, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %F.patt: %pattern_type.98f = symbolic_binding_pattern F, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%F.8b3) [symbolic]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%F.8b3) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.8b3) [symbolic]
 // CHECK:STDOUT:   %F.3fa: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Inner(%F.8b3) [symbolic]
@@ -72,13 +74,13 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %F.patt.loc5_13.1: type = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_13.2 (constants.%F.patt)]
+// CHECK:STDOUT:     %F.patt.loc5_13.1: %pattern_type.98f = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_13.2 (constants.%F.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %F.loc5_13.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc5_13.2 (constants.%F.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: @Inner.%G.type (%G.type) = fn_decl @G [symbolic = constants.%G] {
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %F.loc13_10: type = bind_symbolic_name F, 0 [symbolic = @Class.%F.loc5_13.2 (constants.%F.8b3)]
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -90,7 +92,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%F.loc5_13.1: type) {
 // CHECK:STDOUT:   %F.loc5_13.2: type = bind_symbolic_name F, 0 [symbolic = %F.loc5_13.2 (constants.%F.8b3)]
-// CHECK:STDOUT:   %F.patt.loc5_13.2: type = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_13.2 (constants.%F.patt)]
+// CHECK:STDOUT:   %F.patt.loc5_13.2: %pattern_type.98f = symbolic_binding_pattern F, 0 [symbolic = %F.patt.loc5_13.2 (constants.%F.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(%F.loc5_13.2) [symbolic = %Inner (constants.%Inner)]
@@ -117,8 +119,8 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Inner.%F.type (%F.type) = fn_decl @F [symbolic = @Inner.%F.loc8_19.2 (constants.%F.3fa)] {
-// CHECK:STDOUT:       %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:       %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -126,8 +128,8 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:       %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.decl: @Inner.%G.type (%G.type) = fn_decl @G [symbolic = @Inner.%G (constants.%G)] {
-// CHECK:STDOUT:       %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:       %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
