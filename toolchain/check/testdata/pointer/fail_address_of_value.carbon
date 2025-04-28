@@ -105,9 +105,11 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a.ba9: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a.ba9 [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddressOfLiteral.type: type = fn_type @AddressOfLiteral [concrete]
@@ -143,6 +145,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1, %int_2) [concrete]
 // CHECK:STDOUT:   %AddressOfParam.type: type = fn_type @AddressOfParam [concrete]
 // CHECK:STDOUT:   %AddressOfParam: %AddressOfParam.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -167,8 +170,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -176,8 +179,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %return.patt: %struct_type.a.ba9 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %struct_type.a.ba9 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.268 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.268 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -191,8 +194,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfType.decl: %AddressOfType.type = fn_decl @AddressOfType [concrete = constants.%AddressOfType] {} {}
 // CHECK:STDOUT:   %AddressOfTupleElementValue.decl: %AddressOfTupleElementValue.type = fn_decl @AddressOfTupleElementValue [concrete = constants.%AddressOfTupleElementValue] {} {}
 // CHECK:STDOUT:   %AddressOfParam.decl: %AddressOfParam.type = fn_decl @AddressOfParam [concrete = constants.%AddressOfParam] {
-// CHECK:STDOUT:     %param.patt: %i32 = binding_pattern param
-// CHECK:STDOUT:     %param.param_patt: %i32 = value_param_pattern %param.patt, call_param0
+// CHECK:STDOUT:     %param.patt: %pattern_type.7ce = binding_pattern param
+// CHECK:STDOUT:     %param.param_patt: %pattern_type.7ce = value_param_pattern %param.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc95: type = splice_block %i32.loc95 [concrete = constants.%i32] {
@@ -289,8 +292,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: fn @AddressOfParam(%param.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %param_addr.patt: %ptr.235 = binding_pattern param_addr
-// CHECK:STDOUT:     %.loc100_3: %ptr.235 = var_pattern %param_addr.patt
+// CHECK:STDOUT:     %param_addr.patt: %pattern_type.fe8 = binding_pattern param_addr
+// CHECK:STDOUT:     %.loc100_3: %pattern_type.fe8 = var_pattern %param_addr.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %param_addr.var: ref %ptr.235 = var param_addr
 // CHECK:STDOUT:   %param.ref: %i32 = name_ref param, %param

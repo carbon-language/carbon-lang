@@ -236,10 +236,12 @@ fn Var5() {
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.32b: type = pattern_type %Abstract3 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple.type.fa1: type = tuple_type (%Abstract3) [concrete]
+// CHECK:STDOUT:   %pattern_type.3cf: type = pattern_type %tuple.type.fa1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -257,8 +259,8 @@ fn Var5() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %Abstract3 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %Abstract3 = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type.32b = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.32b = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
@@ -278,7 +280,7 @@ fn Var5() {
 // CHECK:STDOUT: fn @F(%a.param: %Abstract3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %tuple.type.fa1 = binding_pattern l
+// CHECK:STDOUT:     %l.patt: %pattern_type.3cf = binding_pattern l
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
 // CHECK:STDOUT:   %.loc7_28: %tuple.type.fa1 = tuple_literal (%a.ref)

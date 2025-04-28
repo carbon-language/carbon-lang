@@ -13,10 +13,7 @@ namespace Carbon::SemIR {
 
 // A reference to an imported IR.
 struct ImportIR : public Printable<ImportIR> {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{decl_id: " << decl_id
-        << ", is_export: " << (is_export ? "true" : "false") << "}";
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 
   // The `import` declaration.
   InstId decl_id;
@@ -42,15 +39,7 @@ class ImportIRInst : public Printable<ImportIRInst> {
   explicit ImportIRInst(ClangSourceLocId clang_source_loc_id)
       : ir_id_(ImportIRId::Cpp), clang_source_loc_id_(clang_source_loc_id) {}
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{ir_id: " << ir_id() << ", ";
-    if (ir_id() == ImportIRId::Cpp) {
-      out << "clang_source_loc_id: " << clang_source_loc_id();
-    } else {
-      out << "inst_id: " << inst_id();
-    }
-    out << "}";
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 
   friend auto operator==(const ImportIRInst& lhs, const ImportIRInst& rhs)
       -> bool {
@@ -80,6 +69,12 @@ class ImportIRInst : public Printable<ImportIRInst> {
     ClangSourceLocId clang_source_loc_id_;
   };
 };
+
+// Returns the canonical `File` and `InstId` for an entity, tracing imported
+// instructions. Note the returned `File` might not be directly imported by the
+// input `sem_ir`.
+auto GetCanonicalFileAndInstId(const File* sem_ir, SemIR::InstId inst_id)
+    -> std::pair<const File*, InstId>;
 
 }  // namespace Carbon::SemIR
 

@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_INST_H_
 #define CARBON_TOOLCHAIN_CHECK_INST_H_
 
+#include <concepts>
+
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -19,7 +21,8 @@ auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 //
 // As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
-  requires(!InstT::Kind.has_cleanup())
+  requires(!InstT::Kind.has_cleanup() &&
+           std::convertible_to<LocT, SemIR::LocId>)
 auto AddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
@@ -27,7 +30,8 @@ auto AddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
 // Like AddInst, but for instructions with a type_id of `TypeType`, which is
 // encoded in the return type of `TypeInstId`.
 template <typename InstT, typename LocT>
-  requires(!InstT::Kind.has_cleanup())
+  requires(!InstT::Kind.has_cleanup() &&
+           std::convertible_to<LocT, SemIR::LocId>)
 auto AddTypeInst(Context& context, LocT loc, InstT inst) -> SemIR::TypeInstId {
   return context.types().GetAsTypeInstId(
       AddInst(context, SemIR::LocIdAndInst(loc, inst)));
@@ -54,7 +58,8 @@ auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 //
 // As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
-  requires(!InstT::Kind.has_cleanup())
+  requires(!InstT::Kind.has_cleanup() &&
+           std::convertible_to<LocT, SemIR::LocId>)
 auto AddInstInNoBlock(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));
 }
@@ -68,7 +73,8 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 //
 // As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
-  requires(!InstT::Kind.has_cleanup())
+  requires(!InstT::Kind.has_cleanup() &&
+           std::convertible_to<LocT, SemIR::LocId>)
 auto GetOrAddInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return GetOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
@@ -84,7 +90,8 @@ auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 //
 // As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
-  requires(!InstT::Kind.has_cleanup())
+  requires(!InstT::Kind.has_cleanup() &&
+           std::convertible_to<LocT, SemIR::LocId>)
 auto EvalOrAddInst(Context& context, LocT loc, InstT inst)
     -> SemIR::ConstantId {
   return EvalOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
@@ -99,6 +106,7 @@ auto AddDependentActionInst(Context& context,
 
 // Convenience wrapper for AddDependentActionInst.
 template <typename InstT, typename LocT>
+  requires std::convertible_to<LocT, SemIR::LocId>
 auto AddDependentActionInst(Context& context, LocT loc, InstT inst)
     -> SemIR::InstId {
   return AddDependentActionInst(context, SemIR::LocIdAndInst(loc, inst));
@@ -107,6 +115,7 @@ auto AddDependentActionInst(Context& context, LocT loc, InstT inst)
 // Like AddDependentActionInst, but for instructions with a type_id of
 // `TypeType`, which is encoded in the return type of `TypeInstId`.
 template <typename InstT, typename LocT>
+  requires std::convertible_to<LocT, SemIR::LocId>
 auto AddDependentActionTypeInst(Context& context, LocT loc, InstT inst)
     -> SemIR::TypeInstId {
   return context.types().GetAsTypeInstId(
@@ -158,7 +167,8 @@ auto AddPlaceholderInstInNoBlock(Context& context,
 //
 // As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
-  requires(!InstT::Kind.has_cleanup())
+  requires(!InstT::Kind.has_cleanup() &&
+           std::convertible_to<LocT, SemIR::LocId>)
 auto AddPlaceholderInstInNoBlock(Context& context, LocT loc, InstT inst)
     -> SemIR::InstId {
   return AddPlaceholderInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));

@@ -24,6 +24,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -43,7 +44,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %tuple.type.d07 = binding_pattern n
+// CHECK:STDOUT:     %n.patt: %pattern_type.511 = binding_pattern n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18_17.1: type = splice_block %.loc18_17.3 [concrete = constants.%tuple.type.d07] {
 // CHECK:STDOUT:     %int_32.loc18_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

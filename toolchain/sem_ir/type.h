@@ -207,6 +207,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   llvm::SmallVector<TypeId> complete_types_;
 };
 
+// Returns the scrutinee type of `type_id`, which must be a `PatternType`.
+auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
+    -> SemIR::TypeId;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_TYPE_H_

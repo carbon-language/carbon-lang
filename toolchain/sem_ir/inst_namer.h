@@ -18,7 +18,6 @@ namespace Carbon::SemIR {
 class InstNamer {
  public:
   // int32_t matches the input value size.
-  // NOLINTNEXTLINE(performance-enum-size)
   enum class ScopeId : int32_t {
     None = -1,
     File = 0,

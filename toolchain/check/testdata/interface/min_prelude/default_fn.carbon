@@ -33,12 +33,14 @@ class C {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.b2f: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %F.type.0b5: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.20c: %F.type.0b5 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %F.type.4a2: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.eb2: %F.type.4a2 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
@@ -67,8 +69,8 @@ class C {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.0b5 = fn_decl @F.1 [concrete = constants.%F.20c] {
-// CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: @F.1.%pattern_type (%pattern_type.b2f) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.1.%pattern_type (%pattern_type.b2f) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc17_16.1: type = splice_block %.loc17_16.2 [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)] {
@@ -90,8 +92,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.4a2 = fn_decl @F.2 [concrete = constants.%F.eb2] {
-// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [concrete = constants.%C]
@@ -124,6 +126,7 @@ class C {
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc17_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc17_16.1 [symbolic = %pattern_type (constants.%pattern_type.b2f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc17_16.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -131,8 +134,8 @@ class C {
 // CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:       %.loc19_7.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:       %c.patt: %pattern_type.c48 = binding_pattern c
+// CHECK:STDOUT:       %.loc19_7.1: %pattern_type.c48 = var_pattern %c.patt
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref %C = var c
 // CHECK:STDOUT:     %.loc19_19.1: %empty_struct_type = struct_literal ()
@@ -160,11 +163,13 @@ class C {
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc17_16.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b2f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type.loc17_16.1 => constants.%C
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/destroy.carbon

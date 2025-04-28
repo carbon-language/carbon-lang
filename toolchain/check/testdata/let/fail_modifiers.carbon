@@ -89,6 +89,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -127,7 +128,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_18: type = splice_block %i32.loc15 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -142,7 +143,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc15_24.2: %i32 = converted @__global_init.%int_1.loc15, %.loc15_24.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %b: %i32 = bind_name b, %.loc15_24.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %i32 = binding_pattern c
+// CHECK:STDOUT:     %c.patt: %pattern_type.7ce = binding_pattern c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_16: type = splice_block %i32.loc21 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -157,7 +158,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc21_22.2: %i32 = converted @__global_init.%int_1.loc21, %.loc21_22.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %c: %i32 = bind_name c, %.loc21_22.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %i32 = binding_pattern d
+// CHECK:STDOUT:     %d.patt: %pattern_type.7ce = binding_pattern d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc27_14: type = splice_block %i32.loc27 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -172,7 +173,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc27_20.2: %i32 = converted @__global_init.%int_1.loc27, %.loc27_20.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %d: %i32 = bind_name d, %.loc27_20.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %i32 = binding_pattern e
+// CHECK:STDOUT:     %e.patt: %pattern_type.7ce = binding_pattern e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc33_16: type = splice_block %i32.loc33 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -187,7 +188,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc33_22.2: %i32 = converted @__global_init.%int_1.loc33, %.loc33_22.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %e: %i32 = bind_name e, %.loc33_22.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %i32 = binding_pattern f
+// CHECK:STDOUT:     %f.patt: %pattern_type.7ce = binding_pattern f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc46_22: type = splice_block %i32.loc46 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc46: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -202,7 +203,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc46_28.2: %i32 = converted @__global_init.%int_1.loc46, %.loc46_28.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %f: %i32 = bind_name f, %.loc46_28.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %g.patt: %i32 = binding_pattern g
+// CHECK:STDOUT:     %g.patt: %pattern_type.7ce = binding_pattern g
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc59_24: type = splice_block %i32.loc59 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc59: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -217,7 +218,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc59_30.2: %i32 = converted @__global_init.%int_1.loc59, %.loc59_30.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %g: %i32 = bind_name g, %.loc59_30.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %h.patt: %i32 = binding_pattern h
+// CHECK:STDOUT:     %h.patt: %pattern_type.7ce = binding_pattern h
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc72_26: type = splice_block %i32.loc72 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc72: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -232,7 +233,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc72_32.2: %i32 = converted @__global_init.%int_1.loc72, %.loc72_32.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %h: %i32 = bind_name h, %.loc72_32.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %i32 = binding_pattern i
+// CHECK:STDOUT:     %i.patt: %pattern_type.7ce = binding_pattern i
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc85_28: type = splice_block %i32.loc85 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc85: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

@@ -19,6 +19,7 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple.type.a1c: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.3d5: type = struct_type {.a: %i32, .b: %tuple.type.a1c} [concrete]
+// CHECK:STDOUT:   %pattern_type.b4d: type = pattern_type %struct_type.a.b.3d5 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
@@ -59,8 +60,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.a.b.3d5 = binding_pattern x
-// CHECK:STDOUT:     %.loc11_1: %struct_type.a.b.3d5 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.b4d = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.b4d = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b.3d5 = var x
 // CHECK:STDOUT:   %.loc11_28: type = splice_block %struct_type.a.b.loc11 [concrete = constants.%struct_type.a.b.3d5] {
@@ -74,8 +75,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.3d5 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %struct_type.a.b.3d5 = binding_pattern y
-// CHECK:STDOUT:     %.loc12_1: %struct_type.a.b.3d5 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.b4d = binding_pattern y
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.b4d = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.a.b.3d5 = var y
 // CHECK:STDOUT:   %.loc12_28: type = splice_block %struct_type.a.b.loc12 [concrete = constants.%struct_type.a.b.3d5] {

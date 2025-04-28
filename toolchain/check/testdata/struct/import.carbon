@@ -58,6 +58,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.ba9: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a.ba9 [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -77,6 +78,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %tuple.type.a1c: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %struct_type.b.c.929: type = struct_type {.b: %i32, .c: %tuple.type.a1c} [concrete]
 // CHECK:STDOUT:   %struct_type.a.d.3d9: type = struct_type {.a: %struct_type.b.c.929, .d: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.665: type = pattern_type %struct_type.a.d.3d9 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %struct_type.b.c.9af: type = struct_type {.b: Core.IntLiteral, .c: %tuple.type.985} [concrete]
 // CHECK:STDOUT:   %struct_type.a.d.b82: type = struct_type {.a: %struct_type.b.c.9af, .d: Core.IntLiteral} [concrete]
@@ -85,6 +87,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %struct.20d: %struct_type.a.d.3d9 = struct_value (%struct.381, %int_0.6a9) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.501: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %S: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.851: type = pattern_type %struct_type.a.b.501 [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.775: type = class_type @C, @C(%S) [symbolic]
@@ -101,6 +104,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct.ed5: %struct_type.a.b.501 = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %C.c8f: type = class_type @C, @C(%struct.ed5) [concrete]
+// CHECK:STDOUT:   %pattern_type.4f9: type = pattern_type %C.c8f [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -124,8 +128,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ref.patt: %struct_type.a.ba9 = binding_pattern a_ref
-// CHECK:STDOUT:     %.loc4_1: %struct_type.a.ba9 = var_pattern %a_ref.patt
+// CHECK:STDOUT:     %a_ref.patt: %pattern_type.268 = binding_pattern a_ref
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.268 = var_pattern %a_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %struct_type.a.ba9 = var a_ref
 // CHECK:STDOUT:   %.loc4_20: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.ba9] {
@@ -135,8 +139,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %struct_type.a.ba9 = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b_ref.patt: %struct_type.a.d.3d9 = binding_pattern b_ref
-// CHECK:STDOUT:     %.loc5_1: %struct_type.a.d.3d9 = var_pattern %b_ref.patt
+// CHECK:STDOUT:     %b_ref.patt: %pattern_type.665 = binding_pattern b_ref
+// CHECK:STDOUT:     %.loc5_1: %pattern_type.665 = var_pattern %b_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref.var: ref %struct_type.a.d.3d9 = var b_ref
 // CHECK:STDOUT:   %.loc5_47: type = splice_block %struct_type.a.d [concrete = constants.%struct_type.a.d.3d9] {
@@ -153,7 +157,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref: ref %struct_type.a.d.3d9 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %S.patt: %struct_type.a.b.501 = symbolic_binding_pattern S, 0
+// CHECK:STDOUT:     %S.patt: %pattern_type.851 = symbolic_binding_pattern S, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
 // CHECK:STDOUT:       %int_32.loc8_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -165,8 +169,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %S.loc8_9.1: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S.loc8_9.2 (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %C.c8f = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.c8f = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.4f9 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.4f9 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -280,10 +284,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.b54: type = pattern_type %struct_type.a [concrete]
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple.type.dd4: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %struct_type.b.c: type = struct_type {.b: %i32, .c: %tuple.type.dd4} [concrete]
 // CHECK:STDOUT:   %struct_type.a.d.9db: type = struct_type {.a: %struct_type.b.c, .d: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.020: type = pattern_type %struct_type.a.d.9db [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -309,6 +315,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %int_2.d0d: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.5ca = struct_value (%int_1.47b, %int_2.d0d) [concrete]
 // CHECK:STDOUT:   %C.a8a: type = class_type @C, @C(%struct) [concrete]
+// CHECK:STDOUT:   %pattern_type.a5a: type = pattern_type %C.a8a [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -326,7 +333,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1359 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1423 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -344,8 +351,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %struct_type.a = binding_pattern a
-// CHECK:STDOUT:     %.loc4_1: %struct_type.a = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.b54 = binding_pattern a
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.b54 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.a = var a
 // CHECK:STDOUT:   %.loc4_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
@@ -355,8 +362,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %struct_type.a = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %struct_type.a.d.9db = binding_pattern b
-// CHECK:STDOUT:     %.loc5_1: %struct_type.a.d.9db = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.020 = binding_pattern b
+// CHECK:STDOUT:     %.loc5_1: %pattern_type.020 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %struct_type.a.d.9db = var b
 // CHECK:STDOUT:   %.loc5_43: type = splice_block %struct_type.a.d [concrete = constants.%struct_type.a.d.9db] {
@@ -373,8 +380,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %struct_type.a.d.9db = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %C.a8a = binding_pattern c
-// CHECK:STDOUT:     %.loc6_1: %C.a8a = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.a5a = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %pattern_type.a5a = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C.a8a = var c
 // CHECK:STDOUT:   %.loc6_26.1: type = splice_block %C [concrete = constants.%C.a8a] {
@@ -499,7 +506,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1359 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1423 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -593,6 +600,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %int_4.ea3: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct.8e6: %struct_type.a.b.5ca = struct_value (%int_3.d47, %int_4.ea3) [concrete]
 // CHECK:STDOUT:   %C.5a7: type = class_type @C, @C(%struct.8e6) [concrete]
+// CHECK:STDOUT:   %pattern_type.366: type = pattern_type %C.5a7 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_2: %i32 = int_value 2 [concrete]
@@ -613,7 +621,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1359 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst1423 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -629,8 +637,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c_bad.patt: %C.5a7 = binding_pattern c_bad
-// CHECK:STDOUT:     %.loc10_1: %C.5a7 = var_pattern %c_bad.patt
+// CHECK:STDOUT:     %c_bad.patt: %pattern_type.366 = binding_pattern c_bad
+// CHECK:STDOUT:     %.loc10_1: %pattern_type.366 = var_pattern %c_bad.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_bad.var: ref %C.5a7 = var c_bad
 // CHECK:STDOUT:   %.loc10_30.1: type = splice_block %C [concrete = constants.%C.5a7] {

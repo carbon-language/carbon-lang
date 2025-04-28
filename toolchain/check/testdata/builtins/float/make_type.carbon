@@ -50,6 +50,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -69,10 +71,10 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Float.decl: %Float.type = fn_decl @Float [concrete = constants.%Float] {
-// CHECK:STDOUT:     %size.patt: %i32 = binding_pattern size
-// CHECK:STDOUT:     %size.param_patt: %i32 = value_param_pattern %size.patt, call_param0
-// CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %size.patt: %pattern_type.7ce = binding_pattern size
+// CHECK:STDOUT:     %size.param_patt: %pattern_type.7ce = value_param_pattern %size.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %size.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
@@ -94,6 +96,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.501: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %int_64.fab: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.9ba: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.6da: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -107,6 +111,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.16d, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_64.fab, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_64.198: %i32 = int_value 64 [concrete]
+// CHECK:STDOUT:   %pattern_type.3de: type = pattern_type f64 [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
 // CHECK:STDOUT:   %GetFloat.type: type = fn_type @GetFloat [concrete]
 // CHECK:STDOUT:   %GetFloat: %GetFloat.type = struct_value () [concrete]
@@ -132,8 +137,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: f64 = binding_pattern f
-// CHECK:STDOUT:     %.loc6_1: f64 = var_pattern %f.patt
+// CHECK:STDOUT:     %f.patt: %pattern_type.3de = binding_pattern f
+// CHECK:STDOUT:     %.loc6_1: %pattern_type.3de = var_pattern %f.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref f64 = var f
 // CHECK:STDOUT:   %.loc6_16.1: type = splice_block %.loc6_16.3 [concrete = f64] {
@@ -152,10 +157,10 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var
 // CHECK:STDOUT:   %GetFloat.decl: %GetFloat.type = fn_decl @GetFloat [concrete = constants.%GetFloat] {
-// CHECK:STDOUT:     %dyn_size.patt: %i32 = binding_pattern dyn_size
-// CHECK:STDOUT:     %dyn_size.param_patt: %i32 = value_param_pattern %dyn_size.patt, call_param0
-// CHECK:STDOUT:     %return.patt: type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %dyn_size.patt: %pattern_type.501 = binding_pattern dyn_size
+// CHECK:STDOUT:     %dyn_size.param_patt: %pattern_type.501 = value_param_pattern %dyn_size.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %dyn_size.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc8: type = splice_block %i32 [concrete = constants.%i32] {
@@ -194,6 +199,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32.be0: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32.be0) [concrete]
+// CHECK:STDOUT:   %pattern_type.501: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.9ba: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.6da: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (imports.%Core.import_ref.a86), @impl.c81 [concrete]
@@ -253,8 +259,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %invalid_float: <error> = bind_name invalid_float, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %dyn_size.patt: %i32 = binding_pattern dyn_size
-// CHECK:STDOUT:     %.loc12_1: %i32 = var_pattern %dyn_size.patt
+// CHECK:STDOUT:     %dyn_size.patt: %pattern_type.501 = binding_pattern dyn_size
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.501 = var_pattern %dyn_size.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %dyn_size.var: ref %i32 = var dyn_size
 // CHECK:STDOUT:   %.loc12_15: type = splice_block %i32 [concrete = constants.%i32] {

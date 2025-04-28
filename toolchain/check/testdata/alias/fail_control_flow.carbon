@@ -61,7 +61,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(<unexpected>.inst27.loc4_14: bool) {
+// CHECK:STDOUT: generic class @C(<unexpected>.inst28.loc4_14: bool) {
 // CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic = %B (constants.%B.7dd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -77,7 +77,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst31.loc4_24 [concrete = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst33.loc4_24 [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %true.loc12_20: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc12: bool = not %true.loc12_20 [concrete = constants.%false]
 // CHECK:STDOUT:   %true.loc12_25: bool = bool_literal true [concrete = constants.%true]

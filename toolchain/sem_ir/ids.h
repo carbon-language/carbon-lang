@@ -845,6 +845,12 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //
 // In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
 // Note that these can only be used with negative, non-`InstId` values.
+//
+// Use `InstStore::GetCanonicalLocId()` to get a canonical `LocId` which will
+// not be backed by an `InstId`. Note that the canonical `LocId` may be `None`
+// even when the original `LocId` was not, so this operation needs to be done
+// before checking `has_value()`. Only canonical locations can be converted with
+// `ToImplicit()` or `ToTokenOnly()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -864,8 +870,7 @@ struct LocId : public IdBase<LocId> {
                    ? FirstImportIRInstId - import_ir_inst_id.index
                    : NoneIndex) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
+  explicit constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NoneNodeId /*none*/) : IdBase(NoneIndex) {}
@@ -874,12 +879,13 @@ struct LocId : public IdBase<LocId> {
   constexpr LocId(Parse::NodeId node_id)
       : IdBase(FirstNodeId - node_id.index) {}
 
-  // Forms an equivalent LocId for a desugared location.  Requires a
-  // non-`InstId` location.
+  // Forms an equivalent LocId for a desugared location. Requires a
+  // canonical location. See `InstStore::GetCanonicalLocId()`.
+  //
   // TODO: Rename to something like `ToDesugared`.
   auto ToImplicit() const -> LocId {
-    // This should only be called for NodeId or ImportIRInstId, but we only set
-    // the flag for NodeId.
+    // This should only be called for NodeId or ImportIRInstId (i.e. canonical
+    // locations), but we only set the flag for NodeId.
     CARBON_CHECK(kind() != Kind::InstId);
     if (kind() == Kind::NodeId) {
       return LocId(index & ~ImplicitBit);
@@ -887,8 +893,12 @@ struct LocId : public IdBase<LocId> {
     return *this;
   }
 
-  // Forms an equivalent `LocId` for a token-only diagnostic location.  Requires
-  // a non-`InstId` location.
+  // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
+  // a canonical location. See `InstStore::GetCanonicalLocId()`.
+  //
+  // TODO: Consider making this a part of check/ diagnostics instead, as a free
+  // function operation on `LocIdForDiagnostics`?
+  // https://github.com/carbon-language/carbon-lang/pull/5355#discussion_r2064113186
   auto ToTokenOnly() const -> LocId {
     CARBON_CHECK(kind() != Kind::InstId);
     if (has_value()) {
@@ -914,15 +924,16 @@ struct LocId : public IdBase<LocId> {
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
   auto is_implicit() const -> bool {
-    CARBON_CHECK(kind() != Kind::InstId);
     return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
   }
 
-  // Returns true if the location is token-only for diagnostics. Requires a
-  // non-`InstId` location.
+  // Returns true if the location is token-only for diagnostics.
+  //
+  // This means the displayed location will include only the location's specific
+  // parse node, instead of also including its descendants. As such, this can
+  // only be true for locations backed by a `NodeId`.
   auto is_token_only() const -> bool {
-    CARBON_CHECK(kind() != Kind::InstId);
-    return (index & TokenOnlyBit) == 0;
+    return kind() != Kind::InstId && (index & TokenOnlyBit) == 0;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
@@ -956,8 +967,8 @@ struct LocId : public IdBase<LocId> {
   // for `NodeId`.
   static constexpr int32_t ImplicitBit = 1 << 30;
 
-  // See `token_only` for the use. This only applies for `NodeId` and
-  // `ImportIRInstId`.
+  // See `is_token_only` for the use. This only applies for canonical locations
+  // (i.e. those containing `NodeId` or `ImportIRInstId`).
   static constexpr int32_t TokenOnlyBit = 1 << 29;
 
   // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.

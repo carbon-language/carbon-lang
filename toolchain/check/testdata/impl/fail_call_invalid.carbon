@@ -30,6 +30,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [concrete]
 // CHECK:STDOUT:   %Self.3c9: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.716: type = facet_access_type %Self.3c9 [symbolic]
+// CHECK:STDOUT:   %pattern_type.f88: type = pattern_type %Self.as_type.716 [symbolic]
 // CHECK:STDOUT:   %G.type.b60: type = fn_type @G.1 [concrete]
 // CHECK:STDOUT:   %G.cb0: %G.type.b60 = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
@@ -40,6 +41,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %G.type.c98: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.e73: %G.type.c98 = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, (%Simple.impl_witness) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.0aa: type = fn_type_with_self_type %G.type.b60, %Simple.facet [concrete]
@@ -70,8 +72,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (<error>), @impl.006 [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
-// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc23: type = splice_block %i32 [concrete = constants.%i32] {
@@ -85,8 +87,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.3c9]
 // CHECK:STDOUT:   %G.decl: %G.type.b60 = fn_decl @G.1 [concrete = constants.%G.cb0] {
-// CHECK:STDOUT:     %self.patt: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type.716) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type.716) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: @G.1.%pattern_type (%pattern_type.f88) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @G.1.%pattern_type (%pattern_type.f88) = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type.716) = value_param call_param0
 // CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.716)] {
@@ -123,6 +125,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %Simple.type) {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.3c9)]
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.716)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc12_14.1 [symbolic = %pattern_type (constants.%pattern_type.f88)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type.716));
 // CHECK:STDOUT: }
@@ -141,10 +144,12 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: specific @G.1(constants.%Self.3c9) {
 // CHECK:STDOUT:   %Self => constants.%Self.3c9
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type.716
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Simple.facet) {
 // CHECK:STDOUT:   %Self => constants.%Simple.facet
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%i32
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -62,9 +62,12 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.a.ba9: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a.ba9 [concrete]
 // CHECK:STDOUT:   %struct_type.b.c: type = struct_type {.b: %i32, .c: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.366: type = pattern_type %struct_type.b.c [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT: }
@@ -115,7 +118,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %i32 = binding_pattern w
+// CHECK:STDOUT:     %w.patt: %pattern_type.7ce = binding_pattern w
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc36: type = splice_block %i32.loc36 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc36: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -123,8 +126,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: %i32 = bind_name w, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.a.ba9 = binding_pattern x
-// CHECK:STDOUT:     %.loc45_1: %struct_type.a.ba9 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.268 = binding_pattern x
+// CHECK:STDOUT:     %.loc45_1: %pattern_type.268 = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.ba9 = var x
 // CHECK:STDOUT:   %.loc45_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.ba9] {
@@ -134,8 +137,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.ba9 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %struct_type.b.c = binding_pattern y
-// CHECK:STDOUT:     %.loc54_1: %struct_type.b.c = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.366 = binding_pattern y
+// CHECK:STDOUT:     %.loc54_1: %pattern_type.366 = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.c = var y
 // CHECK:STDOUT:   %.loc54_25: type = splice_block %struct_type.b.c [concrete = constants.%struct_type.b.c] {

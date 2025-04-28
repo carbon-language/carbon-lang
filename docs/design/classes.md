@@ -1199,7 +1199,11 @@ Interface methods may be implemented using virtual methods when the
 those methods by way of the interface will do virtual dispatch just like a
 direct call to the method does.
 
-[Class functions](#class-functions) may not be declared virtual.
+[Class functions](#class-functions) may not be declared virtual. Neither may
+functions with [compile-time parameters](/docs/design/generics/overview.md),
+whether those are `template` or checked, explicit or deduced. Compile-time
+parameters on the enclosing scope are allowed, though, so generic classes may
+have virtual methods.
 
 ##### Virtual modifier keywords
 

@@ -71,7 +71,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
                  "initialized multiple times? Have {0}",
                  sem_ir.insts().Get(return_slot_arg_id));
     auto init = sem_ir.insts().Get(init_id);
-    return AddInst<SemIR::Temporary>(context, sem_ir.insts().GetLocId(init_id),
+    return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
                                      {.type_id = init.type_id(),
                                       .storage_id = return_slot_arg_id,
                                       .init_id = init_id});
@@ -87,10 +87,9 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
   // TODO: Consider using `None` to mean that we immediately materialize and
   // initialize a temporary, rather than two separate instructions.
   auto init = sem_ir.insts().Get(init_id);
-  auto loc_id = sem_ir.insts().GetLocId(init_id);
   auto temporary_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
-      context, loc_id, {.type_id = init.type_id()});
-  return AddInst<SemIR::Temporary>(context, loc_id,
+      context, SemIR::LocId(init_id), {.type_id = init.type_id()});
+  return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
                                    {.type_id = init.type_id(),
                                     .storage_id = temporary_id,
                                     .init_id = init_id});
@@ -200,7 +199,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   auto tuple_elem_types = sem_ir.inst_blocks().Get(tuple_type.type_elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = sem_ir.insts().GetLocId(value_id);
+  SemIR::LocId value_loc_id(value_id);
 
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -300,7 +299,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   auto dest_elem_types = sem_ir.inst_blocks().Get(dest_type.type_elements_id);
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = sem_ir.insts().GetLocId(value_id);
+  SemIR::LocId value_loc_id(value_id);
 
   // If we're initializing from a tuple literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -398,7 +397,7 @@ static auto ConvertStructToStructOrClass(
   auto dest_elem_fields_size = dest_elem_fields.size() - dest_vptr_offset;
 
   auto value = sem_ir.insts().Get(value_id);
-  auto value_loc_id = sem_ir.insts().GetLocId(value_id);
+  SemIR::LocId value_loc_id(value_id);
 
   // If we're initializing from a struct literal, we will use its elements
   // directly. Otherwise, materialize a temporary if needed and index into the
@@ -585,7 +584,7 @@ static auto ConvertStructToClass(
     target.kind = ConversionTarget::Initializer;
     target.init_block = &target_block;
     target.init_id = target_block.AddInstWithCleanup<SemIR::TemporaryStorage>(
-        context.insts().GetLocId(value_id), {.type_id = target.type_id});
+        SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
@@ -594,11 +593,10 @@ static auto ConvertStructToClass(
 
   if (need_temporary) {
     target_block.InsertHere();
-    result_id =
-        AddInst<SemIR::Temporary>(context, context.insts().GetLocId(value_id),
-                                  {.type_id = target.type_id,
-                                   .storage_id = target.init_id,
-                                   .init_id = result_id});
+    result_id = AddInst<SemIR::Temporary>(context, SemIR::LocId(value_id),
+                                          {.type_id = target.type_id,
+                                           .storage_id = target.init_id,
+                                           .init_id = result_id});
   }
   return result_id;
 }
@@ -1358,7 +1356,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
       expr_id = AddInst<SemIR::BindValue>(
-          context, context.insts().GetLocId(expr_id),
+          context, SemIR::LocId(expr_id),
           {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.
       [[fallthrough]];
@@ -1398,14 +1396,14 @@ auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId target_id,
 
 auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
-  return Convert(context, context.insts().GetLocId(expr_id), expr_id,
+  return Convert(context, SemIR::LocId(expr_id), expr_id,
                  {.kind = ConversionTarget::Value,
                   .type_id = context.insts().Get(expr_id).type_id()});
 }
 
 auto ConvertToValueOrRefExpr(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
-  return Convert(context, context.insts().GetLocId(expr_id), expr_id,
+  return Convert(context, SemIR::LocId(expr_id), expr_id,
                  {.kind = ConversionTarget::ValueOrRef,
                   .type_id = context.insts().Get(expr_id).type_id()});
 }

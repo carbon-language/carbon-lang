@@ -18,6 +18,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT: --- fail_var_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [concrete]
@@ -41,8 +42,8 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: type = binding_pattern x
-// CHECK:STDOUT:     %.loc11: type = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.98f = binding_pattern x
+// CHECK:STDOUT:     %.loc11: %pattern_type.98f = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref type = var x
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var

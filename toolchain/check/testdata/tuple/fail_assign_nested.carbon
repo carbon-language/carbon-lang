@@ -23,6 +23,7 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %tuple.type.1c9: type = tuple_type (%tuple.type.24b, %tuple.type.24b) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.ff1: type = tuple_type (%tuple.type.d07, %tuple.type.d07) [concrete]
+// CHECK:STDOUT:   %pattern_type.72b: type = pattern_type %tuple.type.ff1 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
@@ -48,8 +49,8 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %tuple.type.ff1 = binding_pattern x
-// CHECK:STDOUT:     %.loc15_1: %tuple.type.ff1 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.72b = binding_pattern x
+// CHECK:STDOUT:     %.loc15_1: %pattern_type.72b = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type.ff1 = var x
 // CHECK:STDOUT:   %.loc15_31.1: type = splice_block %.loc15_31.5 [concrete = constants.%tuple.type.ff1] {

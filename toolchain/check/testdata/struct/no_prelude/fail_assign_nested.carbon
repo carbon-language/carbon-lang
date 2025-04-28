@@ -19,6 +19,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.225 [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %empty_struct_type} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -27,8 +28,8 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.a.225 = binding_pattern x
-// CHECK:STDOUT:     %.loc15_1: %struct_type.a.225 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
+// CHECK:STDOUT:     %.loc15_1: %pattern_type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var x
 // CHECK:STDOUT:   %.loc15_15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.225] {

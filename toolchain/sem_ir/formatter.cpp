@@ -563,7 +563,7 @@ class FormatterImpl {
     // If this entity was imported from a different IR, annotate the name of
     // that IR in the output before the `{` or `;`.
     if (first_owning_decl_id.has_value()) {
-      auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
+      auto loc_id = sem_ir_->insts().GetCanonicalLocId(first_owning_decl_id);
       if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
         auto import_ir_id =
             sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
@@ -1159,7 +1159,7 @@ class FormatterImpl {
       // instruction as a last resort.
       const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id());
       auto loc_id =
-          import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id());
+          import_ir.sem_ir->insts().GetCanonicalLocId(import_ir_inst.inst_id());
       switch (loc_id.kind()) {
         case LocId::Kind::None: {
           out_ << import_ir_inst.inst_id() << " [no loc]";

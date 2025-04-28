@@ -64,9 +64,11 @@ class EvalContext {
   auto GetDiagnosticLoc(llvm::ArrayRef<SemIR::InstId> inst_ids)
       -> SemIR::LocId {
     for (auto inst_id : inst_ids) {
-      if (inst_id.has_value() &&
-          context_->insts().GetLocId(inst_id).has_value()) {
-        return inst_id;
+      if (inst_id.has_value()) {
+        auto loc_id = context_->insts().GetCanonicalLocId(inst_id);
+        if (loc_id.has_value()) {
+          return loc_id;
+        }
       }
     }
     return fallback_loc_id_;
@@ -745,7 +747,7 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
 
 auto AddImportedConstant(Context& context, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  EvalContext eval_context(&context, SemIR::InstId::None);
+  EvalContext eval_context(&context, SemIR::LocId::None);
   Phase phase = Phase::Concrete;
   switch (inst.kind().value_kind()) {
     case SemIR::InstValueKind::Typed:
@@ -1683,7 +1685,7 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIR::LocId loc_id,
 
 // Given an instruction, compute its phase based on its operands.
 static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
-  EvalContext eval_context(&context, SemIR::InstId::None);
+  EvalContext eval_context(&context, SemIR::LocId::None);
 
   auto phase = GetPhase(context.constant_values(),
                         context.types().GetConstantId(inst.type_id()));
@@ -1753,8 +1755,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       return MakeConstantResult(eval_context.context(), inst, phase);
     } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
       auto result_inst_id = PerformDelayedAction(
-          eval_context.context(), eval_context.insts().GetLocId(inst_id),
-          inst.As<InstT>());
+          eval_context.context(), SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {
         // The result is an instruction.
         return MakeConstantResult(
@@ -1975,7 +1976,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
 auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
                        SemIR::Inst inst) -> SemIR::ConstantId {
-  EvalContext eval_context(&context, inst_id);
+  EvalContext eval_context(&context, SemIR::LocId(inst_id));
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 

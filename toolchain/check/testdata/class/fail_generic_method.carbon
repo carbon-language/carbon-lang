@@ -15,7 +15,7 @@ class Class(T:! type) {
 
 // TODO: The follow-on errors here aren't great. Investigate whether we can
 // enter the scope anyway if the parameters don't match.
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+15]]:10: error: type `i32` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+15]]:10: error: type `<pattern for i32>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for type>` [RedeclParamDiffersType]
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:          ^
 // CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
@@ -36,11 +36,14 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.3c1: type = pattern_type %Class [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %F.type.6d6: type = fn_type @F.1, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %F.cca: %F.type.6d6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T} [symbolic]
@@ -68,7 +71,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -108,10 +111,10 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc12: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [concrete]
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type.6d6) = fn_decl @F.1 [symbolic = @Class.%F (constants.%F.cca)] {
-// CHECK:STDOUT:       %self.patt: @F.1.%Class (%Class) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.1.%Class (%Class) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %n.patt: @F.1.%T (%T) = binding_pattern n
-// CHECK:STDOUT:       %n.param_patt: @F.1.%T (%T) = value_param_pattern %n.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @F.1.%pattern_type.loc13_8 (%pattern_type.3c1) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @F.1.%pattern_type.loc13_8 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %n.patt: @F.1.%pattern_type.loc13_20 (%pattern_type.7dc) = binding_pattern n
+// CHECK:STDOUT:       %n.param_patt: @F.1.%pattern_type.loc13_20 (%pattern_type.7dc) = value_param_pattern %n.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @F.1.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:       %.loc13_14.1: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
@@ -138,6 +141,8 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT: generic fn @F.1(@Class.%T.loc11_13.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:   %pattern_type.loc13_8: type = pattern_type %Class [symbolic = %pattern_type.loc13_8 (constants.%pattern_type.3c1)]
+// CHECK:STDOUT:   %pattern_type.loc13_20: type = pattern_type %T [symbolic = %pattern_type.loc13_20 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @F.1.%Class (%Class), %n.param: @F.1.%T (%T));
 // CHECK:STDOUT: }
@@ -160,6 +165,8 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT: specific @F.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
+// CHECK:STDOUT:   %pattern_type.loc13_8 => constants.%pattern_type.3c1
+// CHECK:STDOUT:   %pattern_type.loc13_20 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@F.1.%T) {}
