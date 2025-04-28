@@ -8,6 +8,7 @@
 #include <concepts>
 
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
@@ -22,7 +23,8 @@ class Formatter {
       llvm::function_ref<auto(InstId decl_inst_id)->bool>;
 
   explicit Formatter(const File* sem_ir,
-                     ShouldFormatEntityFn should_format_entity);
+                     ShouldFormatEntityFn should_format_entity,
+                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees);
 
   // Prints the SemIR into an internal buffer.
   //
@@ -77,11 +79,19 @@ class Formatter {
   // is.
   auto IncludeChunkInOutput(size_t chunk) -> void;
 
+  // Returns true if the node subtree for the instruction or body overlaps with
+  // a dump range, or if there are no ranges.
+  auto OverlapsWithDumpSemIRRange(InstId inst_id,
+                                  llvm::ArrayRef<InstBlockId> body_block_ids)
+      -> bool;
+
   // Determines whether the specified entity should be included in the formatted
   // output.
-  auto ShouldFormatEntity(InstId decl_id) -> bool;
+  auto ShouldFormatEntity(InstId decl_id,
+                          llvm::ArrayRef<InstBlockId> body_block_ids) -> bool;
 
-  auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool;
+  auto ShouldFormatEntity(const EntityWithParamsBase& entity,
+                          llvm::ArrayRef<InstBlockId> body_block_ids) -> bool;
 
   // Begins a braced block. Writes an open brace, and prepares to insert a
   // newline after it if the braced block is non-empty.
@@ -307,6 +317,7 @@ class Formatter {
   const File* sem_ir_;
   InstNamer inst_namer_;
   ShouldFormatEntityFn should_format_entity_;
+  Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
 
   // The output stream buffer.
   std::string buffer_;

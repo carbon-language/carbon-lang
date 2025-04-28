@@ -440,4 +440,20 @@ auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
   return converted;
 }
 
+auto TokenizedBuffer::OverlapsWithDumpSemIRRange(TokenIndex begin,
+                                                 TokenIndex end) const -> bool {
+  if (dump_sem_ir_ranges_.empty()) {
+    return true;
+  }
+
+  // Ranges are ordered, so we can decide overlap as soon as we find a range
+  // that ends after `begin`.
+  for (auto range : dump_sem_ir_ranges_) {
+    if (range.end > begin) {
+      return range.begin <= end;
+    }
+  }
+  return false;
+}
+
 }  // namespace Carbon::Lex

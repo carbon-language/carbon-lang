@@ -568,7 +568,8 @@ auto CompilationUnit::PostCheck() -> void {
       return IncludeInDumps(import_ir->filename());
     };
 
-    SemIR::Formatter formatter(&*sem_ir_, should_format_entity);
+    SemIR::Formatter formatter(&*sem_ir_, should_format_entity,
+                               *tree_and_subtrees_getter_);
     formatter.Format();
     if (vlog_stream_) {
       CARBON_VLOG("*** SemIR::File ***\n");
