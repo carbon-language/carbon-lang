@@ -168,6 +168,10 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %A: <namespace> = namespace %Same.A, [concrete] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same.B: <namespace> = import_ref Same//b, B, loaded
+// CHECK:STDOUT:   %B: <namespace> = namespace %Same.B, [concrete] {
+// CHECK:STDOUT:     .C = file.%C
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Same.F = import_ref Same//b, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
@@ -197,6 +201,14 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %Same.A: <namespace> = import_ref Same//c, A, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %Same.A, [concrete] {
 // CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same.B: <namespace> = import_ref Same//c, B, loaded
+// CHECK:STDOUT:   %B: <namespace> = namespace %Same.B, [concrete] {
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same.C: <namespace> = import_ref Same//c, C, loaded
+// CHECK:STDOUT:   %C: <namespace> = namespace %Same.C, [concrete] {
+// CHECK:STDOUT:     .D = file.%D.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
@@ -295,6 +307,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %A: <namespace> = namespace %Same.A, [concrete] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same.B: <namespace> = import_ref Same//b, B, loaded
+// CHECK:STDOUT:   %B: <namespace> = namespace %Same.B, [concrete] {}
 // CHECK:STDOUT:   %Same.F: %F.type = import_ref Same//b, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude

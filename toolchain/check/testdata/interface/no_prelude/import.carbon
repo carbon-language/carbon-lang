@@ -197,6 +197,10 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Main.import_ref.339: %ForwardDeclared.assoc_type = import_ref Main//a, loc17_9, loaded [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   %Main.T.6ee = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.5d0 = import_ref Main//a, F, unloaded
+// CHECK:STDOUT:   %Main.import_ref.a4a = import_ref Main//a, loc8_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.0be = import_ref Main//a, loc9_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.69a = import_ref Main//a, loc16_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.1cc = import_ref Main//a, loc17_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

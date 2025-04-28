@@ -74,6 +74,8 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %pattern_type.381: type = pattern_type %WrongSelf [concrete]
 // CHECK:STDOUT:   %CallWrongSelf.type: type = fn_type @CallWrongSelf [concrete]
 // CHECK:STDOUT:   %CallWrongSelf: %CallWrongSelf.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,6 +84,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

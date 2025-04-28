@@ -413,9 +413,11 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.e54: @I.%F.type (%F.type.2ae) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%F (constants.%F.bb2)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//impl_in_interface_args, loc5_24, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.bf8 = import_ref Main//impl_in_interface_args, inst20 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.479 = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e08: <witness> = import_ref Main//impl_in_interface_args, loc7_30, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.956: type = import_ref Main//impl_in_interface_args, loc7_6, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Main.import_ref.e8c: type = import_ref Main//impl_in_interface_args, loc7_28, loaded [concrete = constants.%I.type.e45]
+// CHECK:STDOUT:   %Main.import_ref.7f5: %F.type.b63 = import_ref Main//impl_in_interface_args, loc7_51, loaded [concrete = constants.%F.d5f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -798,9 +800,11 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.e54: @I.%F.type (%F.type.2ae) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%F (constants.%F.bb2)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst70 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.479 = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.import_ref.a72: <witness> = import_ref Main//impl_in_class_args, loc7_29, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.d6e: type = import_ref Main//impl_in_class_args, loc7_19, loaded [concrete = constants.%C.23b]
 // CHECK:STDOUT:   %Main.import_ref.208: type = import_ref Main//impl_in_class_args, loc7_27, loaded [concrete = constants.%I.type.45c]
+// CHECK:STDOUT:   %Main.import_ref.ae4: %F.type.fab = import_ref Main//impl_in_class_args, loc7_50, loaded [concrete = constants.%F.7ab]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

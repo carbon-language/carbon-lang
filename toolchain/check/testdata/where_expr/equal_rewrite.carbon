@@ -322,6 +322,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -422,7 +423,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %E.facet: %E.type = facet_value %.Self.as_type, (%E.lookup_impl_witness) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %E.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %E_where.type: type = facet_type <@E where %impl.elem0 = %i32> [concrete]
 // CHECK:STDOUT:   %G: %E_where.type = bind_symbolic_name G, 0 [symbolic]
@@ -449,6 +452,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -671,6 +675,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -833,7 +838,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %O.facet: %O.type = facet_value %.Self.as_type, (%O.lookup_impl_witness.c7a) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %O.lookup_impl_witness.c7a, element0 [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %O_where.type.e27: type = facet_type <@O where %impl.elem0 = %i32> [concrete]
 // CHECK:STDOUT:   %Q: %O_where.type.e27 = bind_symbolic_name Q, 0 [symbolic]
@@ -862,6 +869,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1197,6 +1206,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D.patt: %pattern_type.24c = symbolic_binding_pattern D, 0 [symbolic]
 // CHECK:STDOUT:   %D: %A_where.type.2d0 = bind_symbolic_name D, 0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1215,12 +1226,14 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Main.import_ref.56b = import_ref Main//equal_constraint, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.P = import_ref Main//equal_constraint, P, unloaded
 // CHECK:STDOUT:   %Main.import_ref.0bb: %N_where.type = import_ref Main//equal_constraint, loc8_10, loaded [symbolic = @Equal.1.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT:   %Main.import_ref.b61 = import_ref Main//nested_rewrites, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.38f = import_ref Main//nested_rewrites, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.30f = import_ref Main//nested_rewrites, loc6_8, unloaded
 // CHECK:STDOUT:   %Main.B = import_ref Main//nested_rewrites, B, unloaded
 // CHECK:STDOUT:   %Main.C = import_ref Main//nested_rewrites, C, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5fe: %A_where.type.2d0 = import_ref Main//nested_rewrites, loc9_18, loaded [symbolic = @NestedRewrite.%D (constants.%D)]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1299,6 +1312,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%I.lookup_impl_witness) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %RewriteTypeMismatch.type: type = fn_type @RewriteTypeMismatch [concrete]
 // CHECK:STDOUT:   %RewriteTypeMismatch: %RewriteTypeMismatch.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1309,6 +1324,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1586,6 +1602,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %E.facet.3c4: %E.type = facet_value %.Self.as_type.eab, (%E.lookup_impl_witness.d64) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem1.072: type = impl_witness_access %E.lookup_impl_witness.d64, element1 [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %E_where.type.a0d: type = facet_type <@E where %impl.elem0 = %empty_struct_type and %impl.elem1.072 = %i32> [concrete]
 // CHECK:STDOUT:   %pattern_type.562: type = pattern_type %E_where.type.a0d [concrete]
@@ -1601,6 +1619,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/types, Float, loaded [concrete = constants.%Float]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -42,10 +42,22 @@ class FormatterImpl {
         inst_namer_(inst_namer),
         should_format_entity_(should_format_entity),
         indent_(indent) {
-    // Create the first chunk and assign it to all instructions that don't have
-    // a chunk of their own.
+    // Create a placeholder visible chunk and assign it to all instructions that
+    // don't have a chunk of their own.
     auto first_chunk = AddChunkNoFlush(true);
     tentative_inst_chunks_.resize(sem_ir_->insts().size(), first_chunk);
+
+    // Create empty placeholder chunks for instructions that we output lazily.
+    for (auto lazy_insts :
+         {sem_ir_->constants().array_ref(),
+          sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs)}) {
+      for (auto inst_id : lazy_insts) {
+        tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
+      }
+    }
+
+    // Create a real chunk for the start of the output.
+    AddChunkNoFlush(true);
   }
 
   // Prints the SemIR.
@@ -131,8 +143,14 @@ class FormatterImpl {
   // A scope in which output should be buffered because we don't yet know
   // whether to include it in the final formatted SemIR.
   struct TentativeOutputScope {
-    explicit TentativeOutputScope(FormatterImpl& f) : formatter(f) {
-      index = formatter.AddChunk(false);
+    explicit TentativeOutputScope(FormatterImpl& f, size_t parent_chunk)
+        : formatter(f) {
+      // If our parent is not known to be included, create a new chunk and
+      // include it only if the parent is later found to be used.
+      if (!f.output_chunks_[parent_chunk].include_in_output) {
+        index = formatter.AddChunk(false);
+        f.output_chunks_[parent_chunk].dependencies.push_back(index);
+      }
     }
     ~TentativeOutputScope() {
       auto next_index = formatter.AddChunk(true);
@@ -266,8 +284,7 @@ class FormatterImpl {
     out_ << inst_namer_->GetScopeName(scope_id) << " {\n";
     indent_ += 2;
     for (const InstId inst_id : block) {
-      TentativeOutputScope scope(*this);
-      tentative_inst_chunks_[inst_id.index] = scope.index;
+      TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
       FormatInst(inst_id);
     }
     out_ << "}\n\n";

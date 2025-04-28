@@ -198,6 +198,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     .AsI32 = %Core.AsI32
 // CHECK:STDOUT:     import Core//core
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//core, Int, loaded [concrete = constants.%Int]
 // CHECK:STDOUT:   %Core.AsIntLiteral: %AsIntLiteral.type = import_ref Core//core, AsIntLiteral, loaded [concrete = constants.%AsIntLiteral]
 // CHECK:STDOUT:   %Core.TestAdd: %TestAdd.type = import_ref Core//core, TestAdd, loaded [concrete = constants.%TestAdd]
 // CHECK:STDOUT:   %Core.AsI32: %AsI32.type = import_ref Core//core, AsI32, loaded [concrete = constants.%AsI32]

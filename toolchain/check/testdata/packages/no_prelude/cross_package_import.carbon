@@ -475,6 +475,8 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type.700976.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.7e9a3e.1: %F.type.700976.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.700976.2: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.7e9a3e.2: %F.type.700976.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -485,6 +487,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Other.F: %F.type.700976.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.7e9a3e.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -314,6 +314,7 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.NSC = import_ref Main//export, NSC, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -680,6 +681,7 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.NSC = import_ref Main//base, NSC, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -729,6 +731,7 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.NSC = import_ref Main//base, NSC, unloaded
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
@@ -974,6 +977,7 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.NSC = import_ref Main//base, NSC, unloaded
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
@@ -1066,6 +1070,7 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .NSC = %Main.NSC
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.NSC = import_ref Main//base, NSC, unloaded
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded

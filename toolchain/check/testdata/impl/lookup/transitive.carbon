@@ -276,6 +276,7 @@ fn Call() {
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [concrete]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.6de: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (imports.%Main.import_ref.742), @impl [concrete]
@@ -298,10 +299,12 @@ fn Call() {
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//i, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c44: %I.assoc_type = import_ref Main//i, loc4_33, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//i, F, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e03: %F.type.cf0 = import_ref Main//i, loc4_33, loaded [concrete = constants.%F.bc6]
 // CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//i, inst19 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.f0d: <witness> = import_ref Main//c, loc7_13, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//c, loc7_6, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.f50: type = import_ref Main//c, loc7_11, loaded [concrete = constants.%I.type]
+// CHECK:STDOUT:   %Main.import_ref.742: %F.type.5d6 = import_ref Main//c, loc7_34, loaded [concrete = constants.%F.a2e]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

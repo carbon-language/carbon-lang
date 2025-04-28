@@ -57,6 +57,8 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Field: type = class_type @Field [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Field.elem: type = unbound_element_type %Field, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [concrete]
@@ -79,6 +81,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -175,9 +178,14 @@ fn Run() {
 // CHECK:STDOUT:   %pattern_type.f46: type = pattern_type %Field [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.x.c96: type = struct_type {.x: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.9ba: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.6da: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (imports.%Core.import_ref.a86), @impl.c81 [concrete]
+// CHECK:STDOUT:   %Convert.type.0b2: type = fn_type @Convert.2, @impl.c81(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.6d7: %Convert.type.0b2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.e34: <witness> = impl_witness %ImplicitAs.impl_witness_table.e36, @impl.c81(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.c81(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [concrete]
@@ -222,6 +230,8 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//a, loc9_1, loaded [concrete = constants.%complete_type.c07]
 // CHECK:STDOUT:   %Main.import_ref.845 = import_ref Main//a, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4d2: %Field.elem = import_ref Main//a, loc8_8, loaded [concrete = %.d33]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.import_ref.a86: @impl.c81.%Convert.type (%Convert.type.0b2) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.c81.%Convert (constants.%Convert.6d7)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst61 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.760: %F.type = import_ref Main//a, loc14_21, loaded [concrete = constants.%F]

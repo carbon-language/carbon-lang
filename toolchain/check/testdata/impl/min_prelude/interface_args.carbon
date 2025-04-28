@@ -495,6 +495,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.835: @Action.%Action.type (%Action.type.cca) = import_ref Main//action, inst29 [no loc], loaded [symbolic = @Action.%Self (constants.%Self.e98)]
 // CHECK:STDOUT:   %Main.import_ref.0e3753.1 = import_ref Main//action, loc5_22, unloaded
+// CHECK:STDOUT:   %Main.import_ref.1f6: @Action.%Op.type (%Op.type.036) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%Op (constants.%Op.6ed)]
+// CHECK:STDOUT:   %Main.import_ref.0e3753.2 = import_ref Main//action, loc5_22, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d0b: %Op.type.4b4 = import_ref Main//action, loc13_23, loaded [concrete = constants.%Op.40d]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -679,8 +682,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.835: @Action.%Action.type (%Action.type.cca) = import_ref Main//action, inst29 [no loc], loaded [symbolic = @Action.%Self (constants.%Self.e98)]
 // CHECK:STDOUT:   %Main.import_ref.1f6: @Action.%Op.type (%Op.type.036) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%Op (constants.%Op.6ed)]
+// CHECK:STDOUT:   %Main.import_ref.0e3753.1 = import_ref Main//action, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst70 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.0e3753.2 = import_ref Main//action, loc5_22, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1149,6 +1154,12 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.91b53a.2: @Factory.%Factory.type (%Factory.type.c96) = import_ref Main//factory, inst29 [no loc], loaded [symbolic = @Factory.%Self (constants.%Self.9ba)]
 // CHECK:STDOUT:   %Main.import_ref.46fc3c.1 = import_ref Main//factory, loc8_31, unloaded
+// CHECK:STDOUT:   %Main.import_ref.1aa: @Factory.%Make.type (%Make.type.598) = import_ref Main//factory, loc6_17, loaded [symbolic = @Factory.%Make (constants.%Make.737)]
+// CHECK:STDOUT:   %Main.import_ref.5be: @Factory.%Method.type (%Method.type.7ee) = import_ref Main//factory, loc8_31, loaded [symbolic = @Factory.%Method (constants.%Method.a71)]
+// CHECK:STDOUT:   %Main.import_ref.21018a.2 = import_ref Main//factory, loc6_17, unloaded
+// CHECK:STDOUT:   %Main.import_ref.9ec: %Make.type.ec4 = import_ref Main//factory, loc15_17, loaded [concrete = constants.%Make.377]
+// CHECK:STDOUT:   %Main.import_ref.7dd: %Method.type.af5 = import_ref Main//factory, loc16_31, loaded [concrete = constants.%Method.3d4]
+// CHECK:STDOUT:   %Main.import_ref.46fc3c.2 = import_ref Main//factory, loc8_31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1405,6 +1416,10 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.91b53a.2: @Factory.%Factory.type (%Factory.type.c96) = import_ref Main//factory, inst29 [no loc], loaded [symbolic = @Factory.%Self (constants.%Self.9ba)]
 // CHECK:STDOUT:   %Main.import_ref.5be: @Factory.%Method.type (%Method.type.7ee) = import_ref Main//factory, loc8_31, loaded [symbolic = @Factory.%Method (constants.%Method.a71)]
+// CHECK:STDOUT:   %Main.import_ref.21018a.1 = import_ref Main//factory, loc6_17, unloaded
+// CHECK:STDOUT:   %Main.import_ref.46fc3c.1 = import_ref Main//factory, loc8_31, unloaded
+// CHECK:STDOUT:   %Main.import_ref.21018a.2 = import_ref Main//factory, loc6_17, unloaded
+// CHECK:STDOUT:   %Main.import_ref.46fc3c.2 = import_ref Main//factory, loc8_31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

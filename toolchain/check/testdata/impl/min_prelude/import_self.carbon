@@ -145,6 +145,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op: %Op.type.31b = import_ref Main//a, Op, loaded [concrete = constants.%Op.d59]
 // CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//a, inst19 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.5a3: %Op.type.31b = import_ref Main//a, loc5_41, loaded [concrete = constants.%Op.d59]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

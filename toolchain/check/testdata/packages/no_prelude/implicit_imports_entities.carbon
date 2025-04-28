@@ -467,6 +467,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %NS: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .C = %Main.C
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.C = import_ref Main//ns, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

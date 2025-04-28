@@ -93,6 +93,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %IndexWith: type = class_type @IndexWith [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -102,6 +103,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
 // CHECK:STDOUT:     import Core//core_wrong_index_with
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.IndexWith: type = import_ref Core//core_wrong_index_with, IndexWith, loaded [concrete = constants.%IndexWith]
 // CHECK:STDOUT:   %Core.import_ref.8f2: <witness> = import_ref Core//core_wrong_index_with, loc4_18, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Core.import_ref.4c7 = import_ref Core//core_wrong_index_with, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -311,6 +313,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2) = import_ref Core//core_wrong_arg_count, inst27 [no loc], loaded [symbolic = @IndexWith.%Self (constants.%Self.30a)]
 // CHECK:STDOUT:   %Core.import_ref.e99: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
+// CHECK:STDOUT:   %Core.import_ref.981 = import_ref Core//core_wrong_arg_count, loc5_52, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
