@@ -43,6 +43,10 @@ auto Context::TODO(SemIR::LocId loc_id, std::string label) -> bool {
   return false;
 }
 
+auto Context::TODO(SemIR::InstId loc_inst_id, std::string label) -> bool {
+  return TODO(SemIR::LocId(loc_inst_id), label);
+}
+
 auto Context::VerifyOnFinish() const -> void {
   // Information in all the various context objects should be cleaned up as
   // various pieces of context go out of scope. At this point, nothing should

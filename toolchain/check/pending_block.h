@@ -44,6 +44,7 @@ class PendingBlock {
   };
 
   template <typename InstT, typename LocT>
+    requires(std::convertible_to<LocT, SemIR::LocId>)
   auto AddInst(LocT loc_id, InstT inst) -> SemIR::InstId {
     auto inst_id = AddInstInNoBlock(*context_, loc_id, inst);
     insts_.push_back(inst_id);
@@ -51,6 +52,7 @@ class PendingBlock {
   }
 
   template <typename InstT, typename LocT>
+    requires(std::convertible_to<LocT, SemIR::LocId>)
   auto AddInstWithCleanup(LocT loc_id, InstT inst) -> SemIR::InstId {
     auto inst_id = AddInstWithCleanupInNoBlock(*context_, loc_id, inst);
     insts_.push_back(inst_id);

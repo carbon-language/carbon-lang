@@ -227,7 +227,7 @@ static auto AddGenericConstantToEvalBlock(Context& context,
   // we've not encountered it before.
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   auto callbacks = RebuildGenericConstantInEvalBlockCallbacks(
-      &context, context.insts().GetLocId(inst_id));
+      &context, SemIR::LocId(inst_id));
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
   CARBON_CHECK(new_inst_id != const_inst_id,
                "No substitutions performed for generic constant {0}",
@@ -242,10 +242,9 @@ static auto AddGenericConstantToEvalBlock(Context& context,
 static auto AddTemplateActionToEvalBlock(Context& context,
                                          SemIR::InstId inst_id) -> void {
   // Substitute into the constant value and rebuild it in the eval block.
-  auto new_inst_id =
-      SubstInst(context, inst_id,
-                RebuildTemplateActionInEvalBlockCallbacks(
-                    &context, context.insts().GetLocId(inst_id), inst_id));
+  auto new_inst_id = SubstInst(context, inst_id,
+                               RebuildTemplateActionInEvalBlockCallbacks(
+                                   &context, SemIR::LocId(inst_id), inst_id));
   CARBON_CHECK(new_inst_id == inst_id,
                "Substitution changed InstId of template action");
   context.generic_region_stack().PeekConstantsInGenericMap().Insert(inst_id,
@@ -309,8 +308,8 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // If the type is symbolic, replace it with a type specific to this generic.
   if ((dep_kind & DependentInst::SymbolicType) != DependentInst::None) {
     auto inst = context.insts().Get(inst_id);
-    auto type_id = AddGenericTypeToEvalBlock(
-        context, context.insts().GetLocId(inst_id), inst.type_id());
+    auto type_id = AddGenericTypeToEvalBlock(context, SemIR::LocId(inst_id),
+                                             inst.type_id());
     // TODO: Eventually, completeness requirements should be modeled as
     // constraints on the generic rather than properties of the type. For now,
     // require the transformed type to be complete if the original was.
@@ -484,7 +483,7 @@ auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId {
   SemIR::GenericId generic_id = BuildGeneric(context, decl_id);
   if (generic_id.has_value()) {
-    FinishGenericDecl(context, decl_id, generic_id);
+    FinishGenericDecl(context, SemIR::LocId(decl_id), generic_id);
   }
   return generic_id;
 }

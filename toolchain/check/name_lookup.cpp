@@ -25,7 +25,8 @@ auto AddNameToLookup(Context& context, SemIR::NameId name_id,
       existing.has_value()) {
     // TODO: Add coverage to this use case and use the location of the name
     // instead of the target.
-    DiagnoseDuplicateName(context, name_id, target_id, existing);
+    DiagnoseDuplicateName(context, name_id, SemIR::LocId(target_id),
+                          SemIR::LocId(existing));
   }
 }
 
@@ -86,7 +87,7 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
   }
 }
 
-auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
+auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                            SemIR::NameId name_id, bool required)
     -> LookupResult {
   // TODO: Check for shadowed lookup results.
@@ -100,7 +101,7 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
   for (auto [index, lookup_scope_id, specific_id] :
        llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result =
-            LookupQualifiedName(context, node_id, name_id,
+            LookupQualifiedName(context, loc_id, name_id,
                                 LookupScope{.name_scope_id = lookup_scope_id,
                                             .specific_id = specific_id},
                                 /*required=*/false);
@@ -121,7 +122,7 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
           SemIR::InstId result_inst_id = GetAssociatedValue(
-              context, node_id, interface.self_param_id,
+              context, loc_id, interface.self_param_id,
               SemIR::GetConstantValueInSpecific(context.sem_ir(),
                                                 non_lexical_result.specific_id,
                                                 target_inst_id),
@@ -140,7 +141,7 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
   if (lexical_result == SemIR::InstId::InitTombstone) {
     CARBON_DIAGNOSTIC(UsedBeforeInitialization, Error,
                       "`{0}` used before initialization", SemIR::NameId);
-    context.emitter().Emit(node_id, UsedBeforeInitialization, name_id);
+    context.emitter().Emit(loc_id, UsedBeforeInitialization, name_id);
     return {.specific_id = SemIR::SpecificId::None,
             .scope_result = SemIR::ScopeLookupResult::MakeError()};
   }
@@ -156,7 +157,7 @@ auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
 
   // We didn't find anything at all.
   if (required) {
-    DiagnoseNameNotFound(context, node_id, name_id);
+    DiagnoseNameNotFound(context, loc_id, name_id);
   }
 
   return {.specific_id = SemIR::SpecificId::None,

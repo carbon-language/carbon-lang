@@ -57,7 +57,7 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
                              SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
-  SemIR::LocId prev_loc_id = prev_class.latest_decl_id();
+  SemIR::LocId prev_loc_id(prev_class.latest_decl_id());
 
   // Check the generic parameters match, if they were specified.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
@@ -158,7 +158,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
   if (!prev_class_id.has_value()) {
     // This is a redeclaration of something other than a class.
     DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          prev_id);
+                          SemIR::LocId(prev_id));
     return;
   }
 
@@ -368,7 +368,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
   if (class_info.adapt_id.has_value()) {
-    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.adapt_id,
+    DiagnoseClassSpecificDeclRepeated(context, node_id,
+                                      SemIR::LocId(class_info.adapt_id),
                                       Lex::TokenKind::Adapt);
     return true;
   }
@@ -502,7 +503,8 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
 
   auto& class_info = context.classes().Get(parent_class_decl->class_id);
   if (class_info.base_id.has_value()) {
-    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.base_id,
+    DiagnoseClassSpecificDeclRepeated(context, node_id,
+                                      SemIR::LocId(class_info.base_id),
                                       Lex::TokenKind::Base);
     return true;
   }
