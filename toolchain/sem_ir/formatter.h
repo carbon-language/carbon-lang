@@ -11,8 +11,7 @@
 
 namespace Carbon::SemIR {
 
-// Formatter for printing textual Semantics IR. Note `Formatter::Print` is
-// provided for simple use.
+// Formatter for printing textual Semantics IR.
 class Formatter {
  public:
   using ShouldFormatEntityFn =
