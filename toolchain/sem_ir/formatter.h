@@ -13,11 +13,6 @@ namespace Carbon::SemIR {
 
 // Formatter for printing textual Semantics IR. Note `Formatter::Print` is
 // provided for simple use.
-//
-// TODO: Consider addressing recursion here, although it's not critical because
-// the formatter isn't required to work on arbitrary code. Still, it may help
-// in the future to debug complex code.
-// NOLINTBEGIN(misc-no-recursion)
 class Formatter {
  public:
   using ShouldFormatEntityFn =
