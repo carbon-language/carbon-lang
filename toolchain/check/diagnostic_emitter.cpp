@@ -20,12 +20,14 @@ auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
   // TODO: Instead of special casing Clang location here, support it within
   // `GetAbsoluteNodeId()`. See discussion in
   // https://github.com/carbon-language/carbon-lang/pull/5262/files/20a3f9dcfab5c6f6c5089554fd5e22d5f1ca75a3#r2040308805.
-  auto converted_clang_loc = TryConvertClangDiagnosticLoc(static_cast<SemIR::LocId>(loc_id));
+  auto converted_clang_loc =
+      TryConvertClangDiagnosticLoc(static_cast<SemIR::LocId>(loc_id));
   if (converted_clang_loc) {
     return *converted_clang_loc;
   }
 
-  auto converted = ConvertLocImpl(static_cast<SemIR::LocId>(loc_id), context_fn);
+  auto converted =
+      ConvertLocImpl(static_cast<SemIR::LocId>(loc_id), context_fn);
 
   // Use the token when possible, but -1 is the default value.
   auto last_offset = -1;
