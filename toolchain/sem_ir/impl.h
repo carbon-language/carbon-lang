@@ -24,7 +24,7 @@ struct ImplFields {
   // The single interface to implement from `constraint_id`.
   // The members are `None` if `constraint_id` isn't complete or doesn't
   // correspond to a single interface.
-  SemIR::SpecificInterface interface;
+  SpecificInterface interface;
 
   // The witness for the impl. This can be `BuiltinErrorInst` or an import
   // reference. Note that the entries in the witness are updated at the end of

@@ -108,8 +108,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   mut_class.self_type_id = self_type_id;
 
   // Enter the choice scope.
-  context.scope_stack().Push(class_decl_id, class_info.scope_id,
-                             self_specific_id);
+  context.scope_stack().PushForEntity(class_decl_id, class_info.scope_id,
+                                      self_specific_id);
   // Checking the binding pattern for an alternative requires a non-empty stack.
   // We reuse the Choice token even though we're now checking an alternative
   // inside the Choice, since there's no better token to use.

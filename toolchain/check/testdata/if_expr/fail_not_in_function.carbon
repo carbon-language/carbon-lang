@@ -8,133 +8,166 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/if_expr/fail_not_in_function.carbon
 
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+16]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// --- fail_basic.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_basic.carbon:[[@LINE+12]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:22: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_basic.carbon:[[@LINE+8]]:22: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:                      ^~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_basic.carbon:[[@LINE+4]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: let x: i32 = if true then 1 else 0;
-// CHECK:STDERR:              ^~~~~~~
-// CHECK:STDERR:
 let x: i32 = if true then 1 else 0;
 
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:8: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// --- fail_types.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_types.carbon:[[@LINE+4]]:8: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var y: if true then i32 else f64;
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:8: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: var y: if true then i32 else f64;
-// CHECK:STDERR:        ^~~~~~~
-// CHECK:STDERR:
 var y: if true then i32 else f64;
 
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:9: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// --- fail_in_param.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_in_param.carbon:[[@LINE+4]]:9: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: fn F(a: if true then i32 else f64);
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:9: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: fn F(a: if true then i32 else f64);
-// CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR:
 fn F(a: if true then i32 else f64);
 
+// --- fail_class.carbon
+
+library "[[@TEST_NAME]]";
+
 class C {
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+16]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+12]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:18: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:18: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:                  ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-  // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:
   var n: if true then i32 else f64;
 }
 
-// CHECK:STDOUT: --- fail_not_in_function.carbon
+// --- fail_nested_class.carbon
+
+library "[[@TEST_NAME]]";
+
+base class C(T:! type) {}
+
+fn F() {
+  class B {
+    // CHECK:STDERR: fail_nested_class.carbon:[[@LINE+4]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+    // CHECK:STDERR:     extend base: C(if true then i32 else i32);
+    // CHECK:STDERR:                    ^~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:
+    extend base: C(if true then i32 else i32);
+  }
+}
+
+// CHECK:STDOUT: --- fail_basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_types.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_in_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_class.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
-// CHECK:STDOUT:     .Float = %Core.Float
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .x = %x
-// CHECK:STDOUT:     .y = %y
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc27: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %i32 = bind_name x, <unexpected>.inst1317.loc27_14
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
-// CHECK:STDOUT:     %.loc37: %i32 = var_pattern %y.patt
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %i32 = var y
-// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT: }
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
-// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst1384.loc67_1
+// CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = <unexpected>.inst1381.loc66_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %i32);
+// CHECK:STDOUT: --- fail_nested_class.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
-// CHECK:STDOUT: !entry:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C(<unexpected>.inst17.loc4_14: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc4_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst21.loc4_24 [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   complete_type_witness = invalid
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -17,7 +17,7 @@ from pathlib import Path
 
 def main() -> None:
     bazel = str(Path(__file__).parents[1] / "scripts" / "run_bazel.py")
-    configs = ["--keep_going"]
+    configs = []
     # Use the most recently used build mode, or `fastbuild` if missing
     # `bazel-bin`.
     build_mode = "fastbuild"
@@ -42,6 +42,10 @@ def main() -> None:
     # Parse arguments.
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--non-fatal-checks", action="store_true")
+    parser.add_argument(
+        "--print_slowest_tests", default=0, help="Forwarded to file_test"
+    )
+    parser.add_argument("--threads", help="Forwarded to file_test")
     parser.add_argument("files", nargs="*")
     args = parser.parse_args()
 
@@ -64,7 +68,11 @@ def main() -> None:
         "//toolchain/testing:file_test",
         "--",
         "--autoupdate",
+        "--print_slowest_tests",
+        str(args.print_slowest_tests),
     ]
+    if args.threads:
+        argv += ["--threads", args.threads]
     # Support specifying tests to update, such as:
     # ./autoupdate_testdata.py lex/**/*
     if args.files:

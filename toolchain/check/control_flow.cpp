@@ -139,8 +139,8 @@ auto IsCurrentPositionReachable(Context& context) -> bool {
 
 auto MaybeAddCleanupForInst(Context& context, SemIR::TypeId type_id,
                             SemIR::InstId inst_id) -> void {
-  if (!context.scope_stack().PeekIsLexicalScope()) {
-    // Cleanup can only occur in lexical scopes.
+  if (!context.scope_stack().IsInFunctionScope()) {
+    // Cleanup can only occur in function scopes.
     return;
   }
 

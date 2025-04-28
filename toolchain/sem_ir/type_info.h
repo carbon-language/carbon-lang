@@ -80,7 +80,7 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   ValueRepr value_repr = ValueRepr();
 
   // If this type is abstract, this is id of an abstract class it uses.
-  SemIR::ClassId abstract_class_id = SemIR::ClassId::None;
+  ClassId abstract_class_id = ClassId::None;
 };
 
 // The initializing representation to use when returning by value.

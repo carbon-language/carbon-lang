@@ -54,12 +54,12 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
             constant_values().GetConstantInstId(impl.constraint_id));
         const auto& facet_type_info =
             sem_ir().facet_types().Get(facet_type.facet_type_id);
-        auto interface_type = facet_type_info.TryAsSingleInterface();
-        CARBON_CHECK(interface_type,
+        CARBON_CHECK(facet_type_info.extend_constraints.size() == 1,
                      "Mangling of an impl of something other than a single "
                      "interface is not yet supported.");
+        auto interface_type = facet_type_info.extend_constraints.front();
         const auto& interface =
-            sem_ir().interfaces().Get(interface_type->interface_id);
+            sem_ir().interfaces().Get(interface_type.interface_id);
         names_to_render.push_back(
             {.name_scope_id = interface.scope_id, .prefix = ':'});
 

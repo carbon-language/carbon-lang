@@ -82,7 +82,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(LocIdAsNoneTestWithParam, Test) {
   auto [_, loc_id] = BuildIdAndLocId<Parse::NodeId>();
   EXPECT_FALSE(loc_id.has_value());
-  EXPECT_THAT(loc_id.kind(), Eq(SemIR::LocId::Kind::None));
+  EXPECT_THAT(loc_id.kind(), Eq(LocId::Kind::None));
   EXPECT_FALSE(loc_id.is_implicit());
   EXPECT_THAT(loc_id.import_ir_inst_id(), Eq(ImportIRInstId::None));
   EXPECT_THAT(loc_id.inst_id(), Eq(InstId::None));
@@ -99,7 +99,7 @@ INSTANTIATE_TEST_SUITE_P(Test, LocIdAsImportIRInstIdTest,
 TEST_P(LocIdAsImportIRInstIdTest, Test) {
   auto [import_ir_inst_id, loc_id] = BuildIdAndLocId<ImportIRInstId>();
   EXPECT_TRUE(loc_id.has_value());
-  ASSERT_THAT(loc_id.kind(), Eq(SemIR::LocId::Kind::ImportIRInstId));
+  ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::ImportIRInstId));
   EXPECT_THAT(loc_id.import_ir_inst_id(), import_ir_inst_id);
   EXPECT_FALSE(loc_id.is_implicit());
   EXPECT_THAT(loc_id.is_token_only(), Eq(is_token_only()));
@@ -115,7 +115,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(LocIdAsInstIdTest, Test) {
   auto [inst_id, loc_id] = BuildIdAndLocId<InstId>();
   EXPECT_TRUE(loc_id.has_value());
-  ASSERT_THAT(loc_id.kind(), Eq(SemIR::LocId::Kind::InstId));
+  ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::InstId));
   EXPECT_THAT(loc_id.inst_id(), inst_id);
   // Note that `is_implicit` and `is_token_only` are invalid to use with
   // `InstId`.
@@ -129,7 +129,7 @@ INSTANTIATE_TEST_SUITE_P(Test, LocIdAsNodeIdTest,
 TEST_P(LocIdAsNodeIdTest, Test) {
   auto [node_id, loc_id] = BuildIdAndLocId<Parse::NodeId>();
   EXPECT_TRUE(loc_id.has_value());
-  ASSERT_THAT(loc_id.kind(), Eq(SemIR::LocId::Kind::NodeId));
+  ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::NodeId));
   EXPECT_THAT(loc_id.node_id(), node_id);
   EXPECT_THAT(loc_id.is_implicit(), Eq(is_implicit()));
   EXPECT_THAT(loc_id.is_token_only(), Eq(is_token_only()));

@@ -52,6 +52,17 @@ static auto GenerateCppIncludesHeaderCode(
 
 namespace {
 
+// Adds the given source location and an `ImportIRInst` referring to it in
+// `ImportIRId::Cpp`.
+static auto AddImportIRInst(Context& context,
+                            clang::SourceLocation clang_source_loc)
+    -> SemIR::ImportIRInstId {
+  SemIR::ClangSourceLocId clang_source_loc_id =
+      context.sem_ir().clang_source_locs().Add(clang_source_loc);
+  return context.import_ir_insts().Add(
+      SemIR::ImportIRInst(clang_source_loc_id));
+}
+
 // Used to convert Clang diagnostics to Carbon diagnostics.
 class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
@@ -65,6 +76,9 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
                         const clang::Diagnostic& info) -> void override {
     DiagnosticConsumer::HandleDiagnostic(diag_level, info);
+
+    SemIR::ImportIRInstId clang_import_ir_inst_id =
+        AddImportIRInst(*context_, info.getLocation());
 
     llvm::SmallString<256> message;
     info.FormatDiagnostic(message);
@@ -84,40 +98,48 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
     std::string diagnostics_str = diagnostics_stream.TakeStr();
 
-    switch (diag_level) {
-      case clang::DiagnosticsEngine::Ignored:
-      case clang::DiagnosticsEngine::Note:
-      case clang::DiagnosticsEngine::Remark: {
-        context_->TODO(
-            loc_id_,
-            llvm::formatv(
-                "Unsupported: C++ diagnostic level for diagnostic\n{0}",
-                diagnostics_str));
-        return;
-      }
-      case clang::DiagnosticsEngine::Warning:
-      case clang::DiagnosticsEngine::Error:
-      case clang::DiagnosticsEngine::Fatal: {
-        // TODO: Adjust diagnostics to drop the Carbon file here, and then
-        // remove the "C++:\n" prefix.
-        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "C++:\n{0}",
-                          std::string);
-        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "C++:\n{0}",
-                          std::string);
-        // TODO: This should be part of the location, instead of added as a note
-        // here.
-        CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
+    diagnostic_infos_.push_back({.level = diag_level,
+                                 .import_ir_inst_id = clang_import_ir_inst_id,
+                                 .message = diagnostics_str});
+  }
 
-        // TODO: Use a more specific location.
-        context_->emitter()
-            .Build(SemIR::LocId::None,
-                   diag_level == clang::DiagnosticsEngine::Warning
-                       ? CppInteropParseWarning
-                       : CppInteropParseError,
-                   diagnostics_str)
-            .Note(loc_id_, InCppImport)
-            .Emit();
-        return;
+  // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
+  // be called after the AST is set in the context.
+  auto EmitDiagnostics() -> void {
+    for (const ClangDiagnosticInfo& info : diagnostic_infos_) {
+      switch (info.level) {
+        case clang::DiagnosticsEngine::Ignored:
+        case clang::DiagnosticsEngine::Note:
+        case clang::DiagnosticsEngine::Remark: {
+          context_->TODO(
+              SemIR::LocId(info.import_ir_inst_id),
+              llvm::formatv(
+                  "Unsupported: C++ diagnostic level for diagnostic\n{0}",
+                  info.message));
+          break;
+        }
+        case clang::DiagnosticsEngine::Warning:
+        case clang::DiagnosticsEngine::Error:
+        case clang::DiagnosticsEngine::Fatal: {
+          // TODO: Adjust diagnostics to drop the Carbon file here, and then
+          // remove the "C++:\n" prefix.
+          CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "C++:\n{0}",
+                            std::string);
+          CARBON_DIAGNOSTIC(CppInteropParseError, Error, "C++:\n{0}",
+                            std::string);
+          // TODO: This should be part of the location, instead of added as a
+          // note here.
+          CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
+          context_->emitter()
+              .Build(SemIR::LocId(info.import_ir_inst_id),
+                     info.level == clang::DiagnosticsEngine::Warning
+                         ? CppInteropParseWarning
+                         : CppInteropParseError,
+                     info.message)
+              .Note(loc_id_, InCppImport)
+              .Emit();
+          break;
+        }
       }
     }
   }
@@ -128,13 +150,32 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
   // The location that triggered calling Clang.
   SemIR::LocId loc_id_;
+
+  // Information on a Clang diagnostic that can be converted to a Carbon
+  // diagnostic.
+  struct ClangDiagnosticInfo {
+    // The Clang diagnostic level.
+    clang::DiagnosticsEngine::Level level;
+
+    // The ID of the ImportIR instruction referring to the Clang source
+    // location.
+    SemIR::ImportIRInstId import_ir_inst_id;
+
+    // The Clang diagnostic textual message.
+    std::string message;
+  };
+
+  // Collects the information for all Clang diagnostics to be converted to
+  // Carbon diagnostics after the context has been initialized with the Clang
+  // AST.
+  llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
 };
 
 }  // namespace
 
 // Returns an AST for the C++ imports and a bool that represents whether
 // compilation errors where encountered or the generated AST is null due to an
-// error.
+// error. Sets the AST in the context's `sem_ir`.
 // TODO: Consider to always have a (non-null) AST.
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
@@ -156,6 +197,10 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
   // Remove link to the diagnostics consumer before its deletion.
   ast->getDiagnostics().setClient(nullptr);
+
+  // In order to emit diagnostics, we need the AST.
+  context.sem_ir().set_cpp_ast(ast.get());
+  diagnostics_consumer.EmitDiagnostics();
 
   return {std::move(ast), !ast || diagnostics_consumer.getNumErrors() > 0};
 }
@@ -211,8 +256,6 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   name_scope.set_is_closed_import(true);
   name_scope.set_cpp_decl_context(
       generated_ast->getASTContext().getTranslationUnitDecl());
-
-  context.sem_ir().set_cpp_ast(generated_ast.get());
 
   if (ast_has_error) {
     name_scope.set_has_error();

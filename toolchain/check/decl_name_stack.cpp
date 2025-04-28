@@ -62,7 +62,7 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
   decl_name_stack_.push_back(MakeEmptyNameContext());
 
   // Create a scope for any parameters introduced in this name.
-  context_->scope_stack().Push();
+  context_->scope_stack().PushForDeclName();
 }
 
 auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
@@ -233,8 +233,8 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
   // providing the definition.
   StartGenericDecl(context);
 
-  context.scope_stack().Push(scope_inst_id, scope_id, self_specific_id,
-                             has_error);
+  context.scope_stack().PushForEntity(scope_inst_id, scope_id, self_specific_id,
+                                      has_error);
 
   // An interface also introduces its 'Self' parameter into scope, despite it
   // not being redeclared as part of the qualifier.
@@ -246,7 +246,7 @@ static auto PushNameQualifierScope(Context& context, SemIR::LocId loc_id,
   }
 
   // Enter a parameter scope in case the qualified name itself has parameters.
-  context.scope_stack().Push();
+  context.scope_stack().PushForSameRegion();
 }
 
 auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
