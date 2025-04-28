@@ -295,14 +295,15 @@ class Formatter {
     FormatName(static_cast<InstId>(id));
   }
 
+  auto FormatName(NameId id) -> void;
+  auto FormatName(InstId id) -> void;
+
+  auto FormatName(SpecificId id) -> void;
+  auto FormatName(SpecificInterfaceId id) -> void;
+
   auto FormatName(TypeInstId id) -> void {
     FormatName(static_cast<InstId>(id));
   }
-
-  auto FormatName(NameId id) -> void;
-  auto FormatName(InstId id) -> void;
-  auto FormatName(SpecificId id) -> void;
-  auto FormatName(SpecificInterfaceId id) -> void;
 
   auto FormatLabel(InstBlockId id) -> void;
 
