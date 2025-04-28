@@ -13,6 +13,9 @@
 
 namespace Carbon::Check {
 
+// The `Diagnostics::Emitter` for `check/` is templated on this type so that
+// diagnostics can be passed an `InstId` as a location, without having to
+// explicitly construct a `LocId` from it first.
 class LocIdForDiagnostics {
  public:
   template <class LocT>
