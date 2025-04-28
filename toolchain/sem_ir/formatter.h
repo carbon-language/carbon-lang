@@ -14,6 +14,8 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
+  // A callback that indicates whether a specific entity, identified by its
+  // declaration, should be included in the output.
   using ShouldFormatEntityFn =
       llvm::function_ref<auto(InstId decl_inst_id)->bool>;
 
