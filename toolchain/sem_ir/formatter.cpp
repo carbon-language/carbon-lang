@@ -563,16 +563,8 @@ class FormatterImpl {
     // If this entity was imported from a different IR, annotate the name of
     // that IR in the output before the `{` or `;`.
     if (first_owning_decl_id.has_value()) {
-<<<<<<< HEAD
       auto loc_id = sem_ir_->insts().GetCanonicalLocId(first_owning_decl_id);
-      if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
-||||||| 51498547c
-      auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
-      if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
-=======
-      auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
       if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
->>>>>>> trunk
         auto import_ir_id =
             sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
         const auto* import_file =

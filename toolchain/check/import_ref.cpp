@@ -115,56 +115,8 @@ static auto GetCanonicalImportIRInst(Context& context,
                                      const SemIR::File* target_ir,
                                      SemIR::InstId target_inst_id)
     -> SemIR::ImportIRInst {
-<<<<<<< HEAD
-  while (true) {
-    // Step through an instruction with an imported location to the imported
-    // instruction.
-    auto loc_id = cursor_ir->insts().GetCanonicalLocId(cursor_inst_id);
-    if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
-      auto import_ir_inst =
-          cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
-      cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      cursor_inst_id = import_ir_inst.inst_id;
-      continue;
-    }
-
-    // Step through export declarations to their exported value.
-    if (auto export_decl =
-            cursor_ir->insts().TryGetAs<SemIR::ExportDecl>(cursor_inst_id)) {
-      cursor_inst_id = export_decl->value_id;
-      continue;
-    }
-
-    // Reached a non-imported entity.
-    break;
-  }
-||||||| 51498547c
-  while (true) {
-    // Step through an instruction with an imported location to the imported
-    // instruction.
-    auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
-    if (loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
-      auto import_ir_inst =
-          cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
-      cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      cursor_inst_id = import_ir_inst.inst_id;
-      continue;
-    }
-
-    // Step through export declarations to their exported value.
-    if (auto export_decl =
-            cursor_ir->insts().TryGetAs<SemIR::ExportDecl>(cursor_inst_id)) {
-      cursor_inst_id = export_decl->value_id;
-      continue;
-    }
-
-    // Reached a non-imported entity.
-    break;
-  }
-=======
   auto [canonical_ir, canonical_inst_id] =
       GetCanonicalFileAndInstId(target_ir, target_inst_id);
->>>>>>> trunk
 
   auto ir_id = SemIR::ImportIRId::None;
   if (canonical_ir != &context.sem_ir()) {
