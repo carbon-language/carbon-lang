@@ -72,6 +72,7 @@ fn Main() {
 // CHECK:STDOUT:   %Run0: %Run0.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Run1.type: type = fn_type @Run1 [concrete]
 // CHECK:STDOUT:   %Run1: %Run1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Run2.type: type = fn_type @Run2 [concrete]
@@ -101,8 +102,8 @@ fn Main() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run0.decl: %Run0.type = fn_decl @Run0 [concrete = constants.%Run0] {} {}
 // CHECK:STDOUT:   %Run1.decl: %Run1.type = fn_decl @Run1 [concrete = constants.%Run1] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc12: type = splice_block %i32 [concrete = constants.%i32] {
@@ -112,10 +113,10 @@ fn Main() {
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [concrete = constants.%Run2] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_12: type = splice_block %i32.loc13_12 [concrete = constants.%i32] {

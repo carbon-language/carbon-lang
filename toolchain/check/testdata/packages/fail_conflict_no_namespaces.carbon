@@ -66,6 +66,7 @@ import library "var";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -83,8 +84,8 @@ import library "var";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Foo.patt: %i32 = binding_pattern Foo
-// CHECK:STDOUT:     %.loc4_1: %i32 = var_pattern %Foo.patt
+// CHECK:STDOUT:     %Foo.patt: %pattern_type.7ce = binding_pattern Foo
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.7ce = var_pattern %Foo.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.var: ref %i32 = var Foo
 // CHECK:STDOUT:   %.loc4_10: type = splice_block %i32 [concrete = constants.%i32] {

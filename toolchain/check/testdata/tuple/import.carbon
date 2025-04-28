@@ -61,6 +61,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple.type.a1c: type = tuple_type (%i32) [concrete]
+// CHECK:STDOUT:   %pattern_type.b74: type = pattern_type %tuple.type.a1c [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -82,6 +83,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %tuple.type.fe6: type = tuple_type (%tuple.type.a1c, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.fc1: type = tuple_type (%tuple.type.fe6, %tuple.type.d07) [concrete]
+// CHECK:STDOUT:   %pattern_type.811: type = pattern_type %tuple.type.fc1 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %tuple.type.186: type = tuple_type (%tuple.type.985, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
@@ -101,7 +103,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %tuple.11a: %tuple.type.d07 = tuple_value (%int_2.ef8, %int_3.822) [concrete]
 // CHECK:STDOUT:   %tuple.ba9: %tuple.type.fc1 = tuple_value (%tuple.236, %tuple.11a) [concrete]
 // CHECK:STDOUT:   %X: %tuple.type.d07 = bind_symbolic_name X, 0 [symbolic]
-// CHECK:STDOUT:   %X.patt: %tuple.type.d07 = symbolic_binding_pattern X, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
+// CHECK:STDOUT:   %X.patt: %pattern_type.511 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.54f: type = class_type @C, @C(%X) [symbolic]
@@ -109,6 +112,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %tuple.21c: %tuple.type.d07 = tuple_value (%int_1.5d2, %int_2.ef8) [concrete]
 // CHECK:STDOUT:   %C.ee0: type = class_type @C, @C(%tuple.21c) [concrete]
+// CHECK:STDOUT:   %pattern_type.7fe: type = pattern_type %C.ee0 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -132,8 +136,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_ref.patt: %tuple.type.a1c = binding_pattern a_ref
-// CHECK:STDOUT:     %.loc4_1: %tuple.type.a1c = var_pattern %a_ref.patt
+// CHECK:STDOUT:     %a_ref.patt: %pattern_type.b74 = binding_pattern a_ref
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.b74 = var_pattern %a_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %tuple.type.a1c = var a_ref
 // CHECK:STDOUT:   %.loc4_17.1: type = splice_block %.loc4_17.3 [concrete = constants.%tuple.type.a1c] {
@@ -144,8 +148,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %tuple.type.a1c = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b_ref.patt: %tuple.type.fc1 = binding_pattern b_ref
-// CHECK:STDOUT:     %.loc5_1: %tuple.type.fc1 = var_pattern %b_ref.patt
+// CHECK:STDOUT:     %b_ref.patt: %pattern_type.811 = binding_pattern b_ref
+// CHECK:STDOUT:     %.loc5_1: %pattern_type.811 = var_pattern %b_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref.var: ref %tuple.type.fc1 = var b_ref
 // CHECK:STDOUT:   %.loc5_38.1: type = splice_block %.loc5_38.6 [concrete = constants.%tuple.type.fc1] {
@@ -168,7 +172,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref: ref %tuple.type.fc1 = bind_name b_ref, %b_ref.var
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %X.patt.loc7_9.1: %tuple.type.d07 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.patt.loc7_9.1: %pattern_type.511 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_22.1: type = splice_block %.loc7_22.3 [concrete = constants.%tuple.type.d07] {
 // CHECK:STDOUT:       %int_32.loc7_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -181,8 +185,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %X.loc7_9.1: %tuple.type.d07 = bind_symbolic_name X, 0 [symbolic = %X.loc7_9.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %C.ee0 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.ee0 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.7fe = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7fe = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -212,7 +216,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%X.loc7_9.1: %tuple.type.d07) {
 // CHECK:STDOUT:   %X.loc7_9.2: %tuple.type.d07 = bind_symbolic_name X, 0 [symbolic = %X.loc7_9.2 (constants.%X)]
-// CHECK:STDOUT:   %X.patt.loc7_9.2: %tuple.type.d07 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
+// CHECK:STDOUT:   %X.patt.loc7_9.2: %pattern_type.511 = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -313,18 +317,21 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple.type.dd4: type = tuple_type (%i32) [concrete]
+// CHECK:STDOUT:   %pattern_type.2e8: type = pattern_type %tuple.type.dd4 [concrete]
 // CHECK:STDOUT:   %tuple.type.8c7: type = tuple_type (%tuple.type.85c, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.58c: type = tuple_type (%tuple.type.8c7, %tuple.type.24b) [concrete]
 // CHECK:STDOUT:   %tuple.type.154: type = tuple_type (%tuple.type.dd4, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.c2c: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.cfa: type = tuple_type (%tuple.type.154, %tuple.type.c2c) [concrete]
+// CHECK:STDOUT:   %pattern_type.ab9: type = pattern_type %tuple.type.cfa [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic]
-// CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.073: type = pattern_type %tuple.type.c2c [concrete]
+// CHECK:STDOUT:   %X.patt: %pattern_type.073 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
@@ -344,6 +351,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %int_2.d0d: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.c2c = tuple_value (%int_1.47b, %int_2.d0d) [concrete]
 // CHECK:STDOUT:   %C.cf0: type = class_type @C, @C(%tuple) [concrete]
+// CHECK:STDOUT:   %pattern_type.7e2: type = pattern_type %C.cf0 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -361,7 +369,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1431 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1495 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -379,8 +387,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %tuple.type.dd4 = binding_pattern a
-// CHECK:STDOUT:     %.loc4_1: %tuple.type.dd4 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.2e8 = binding_pattern a
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.2e8 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %tuple.type.dd4 = var a
 // CHECK:STDOUT:   %.loc4_13.1: type = splice_block %.loc4_13.3 [concrete = constants.%tuple.type.dd4] {
@@ -391,8 +399,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %tuple.type.dd4 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %tuple.type.cfa = binding_pattern b
-// CHECK:STDOUT:     %.loc5_1: %tuple.type.cfa = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.ab9 = binding_pattern b
+// CHECK:STDOUT:     %.loc5_1: %pattern_type.ab9 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %tuple.type.cfa = var b
 // CHECK:STDOUT:   %.loc5_34.1: type = splice_block %.loc5_34.6 [concrete = constants.%tuple.type.cfa] {
@@ -415,8 +423,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %tuple.type.cfa = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %C.cf0 = binding_pattern c
-// CHECK:STDOUT:     %.loc6_1: %C.cf0 = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.7e2 = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %pattern_type.7e2 = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C.cf0 = var c
 // CHECK:STDOUT:   %.loc6_16.1: type = splice_block %C [concrete = constants.%C.cf0] {
@@ -447,7 +455,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
+// CHECK:STDOUT:   %X.patt: %pattern_type.073 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -530,7 +538,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %tuple.type.c2c: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic]
-// CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.073: type = pattern_type %tuple.type.c2c [concrete]
+// CHECK:STDOUT:   %X.patt: %pattern_type.073 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
@@ -554,7 +563,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1431 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1495 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -586,7 +595,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
+// CHECK:STDOUT:   %X.patt: %pattern_type.073 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -633,7 +642,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %tuple.type.c2c: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic]
-// CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.073: type = pattern_type %tuple.type.c2c [concrete]
+// CHECK:STDOUT:   %X.patt: %pattern_type.073 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
@@ -653,6 +663,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %int_4.ea3: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %tuple.5de: %tuple.type.c2c = tuple_value (%int_3.d47, %int_4.ea3) [concrete]
 // CHECK:STDOUT:   %C.ed5: type = class_type @C, @C(%tuple.5de) [concrete]
+// CHECK:STDOUT:   %pattern_type.b05: type = pattern_type %C.ed5 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_2: %i32 = int_value 2 [concrete]
@@ -673,7 +684,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1431 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1495 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -689,8 +700,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c_bad.patt: %C.ed5 = binding_pattern c_bad
-// CHECK:STDOUT:     %.loc11_1: %C.ed5 = var_pattern %c_bad.patt
+// CHECK:STDOUT:     %c_bad.patt: %pattern_type.b05 = binding_pattern c_bad
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.b05 = var_pattern %c_bad.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_bad.var: ref %C.ed5 = var c_bad
 // CHECK:STDOUT:   %.loc11_20.1: type = splice_block %C [concrete = constants.%C.ed5] {
@@ -721,7 +732,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.c2c = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:   %X.patt: %tuple.type.c2c = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
+// CHECK:STDOUT:   %X.patt: %pattern_type.073 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:

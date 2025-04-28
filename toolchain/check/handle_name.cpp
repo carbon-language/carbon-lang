@@ -54,8 +54,9 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
                       "cannot apply `->` operator to non-pointer type {0}",
                       SemIR::TypeId);
 
-    auto builder = context.emitter().Build(
-        TokenOnly(node_id), ArrowOperatorOfNonPointer, not_pointer_type_id);
+    auto builder =
+        context.emitter().Build(SemIR::LocId(node_id).ToTokenOnly(),
+                                ArrowOperatorOfNonPointer, not_pointer_type_id);
     builder.Emit();
   };
 

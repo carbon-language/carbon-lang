@@ -31,8 +31,10 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr.36b: type = ptr_type %const [concrete]
 // CHECK:STDOUT:   %ptr.3bc: type = ptr_type %ptr.36b [concrete]
+// CHECK:STDOUT:   %pattern_type.1d4: type = pattern_type %ptr.3bc [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr.5d5: type = ptr_type %ptr.235 [concrete]
+// CHECK:STDOUT:   %pattern_type.d91: type = pattern_type %ptr.5d5 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -53,10 +55,10 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %p.patt: %ptr.3bc = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.3bc = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %ptr.5d5 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.5d5 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.1d4 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.1d4 = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.d91 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d91 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

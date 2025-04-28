@@ -373,7 +373,7 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
   // If this entity was imported from a different IR, annotate the name of
   // that IR in the output before the `{` or `;`.
   if (first_owning_decl_id.has_value()) {
-    auto loc_id = sem_ir_->insts().GetLocId(first_owning_decl_id);
+    auto loc_id = sem_ir_->insts().GetCanonicalLocId(first_owning_decl_id);
     if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
       auto import_ir_id =
           sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();

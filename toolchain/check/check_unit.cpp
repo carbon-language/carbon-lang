@@ -409,7 +409,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
       auto function_loc_id =
-          context_.insts().GetLocId(function.non_owning_decl_id);
+          context_.insts().GetCanonicalLocId(function.non_owning_decl_id);
       CARBON_CHECK(function_loc_id.kind() ==
                    SemIR::LocId::Kind::ImportIRInstId);
       auto import_ir_id = context_.sem_ir()

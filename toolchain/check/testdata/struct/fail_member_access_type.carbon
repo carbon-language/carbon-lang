@@ -22,10 +22,12 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: f64} [concrete]
+// CHECK:STDOUT:   %pattern_type.d08: type = pattern_type %struct_type.a [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 4 [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%float) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -45,8 +47,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.a = binding_pattern x
-// CHECK:STDOUT:     %.loc11_1: %struct_type.a = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.d08 = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.d08 = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
 // CHECK:STDOUT:   %.loc11_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
@@ -58,8 +60,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
-// CHECK:STDOUT:     %.loc16_1: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y
+// CHECK:STDOUT:     %.loc16_1: %pattern_type.7ce = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %.loc16_8: type = splice_block %i32 [concrete = constants.%i32] {

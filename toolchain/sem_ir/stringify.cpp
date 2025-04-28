@@ -501,6 +501,11 @@ class Stringifier {
                                    name_scope.name_id());
   }
 
+  auto StringifyInst(InstId /*inst_id*/, PatternType inst) -> void {
+    *out_ << "<pattern for ";
+    step_stack_->Push(inst.scrutinee_type_inst_id, ">");
+  }
+
   auto StringifyInst(InstId /*inst_id*/, PointerType inst) -> void {
     step_stack_->Push(inst.pointee_id, "*");
   }

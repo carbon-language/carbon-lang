@@ -183,7 +183,7 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::FloatType inst) -> ConstantEvalResult {
-  return ValidateFloatType(context, inst_id, inst)
+  return ValidateFloatType(context, SemIR::LocId(inst_id), inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
@@ -206,9 +206,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   inst.query_self_inst_id =
       GetCanonicalizedFacetOrTypeValue(context, inst.query_self_inst_id);
 
-  auto result =
-      EvalLookupSingleImplWitness(context, context.insts().GetLocId(inst_id),
-                                  inst, non_canonical_query_self_inst_id);
+  auto result = EvalLookupSingleImplWitness(
+      context, SemIR::LocId(inst_id), inst, non_canonical_query_self_inst_id);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
@@ -277,7 +276,7 @@ auto EvalConstantInst(Context& context, SemIR::InitializeFrom inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::IntType inst) -> ConstantEvalResult {
-  return ValidateIntType(context, inst_id, inst)
+  return ValidateIntType(context, SemIR::LocId(inst_id), inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
@@ -315,17 +314,18 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   auto complete_type_id =
       context.types().GetTypeIdForTypeInstId(inst.complete_type_inst_id);
   if (complete_type_id.is_concrete()) {
-    if (!TryToCompleteType(context, complete_type_id, inst_id, [&] {
-          CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
-                            "{0} evaluates to incomplete type {1}",
-                            InstIdAsType, InstIdAsType);
-          return context.emitter().Build(
-              inst_id, IncompleteTypeInMonomorphization,
-              context.insts()
-                  .GetAs<SemIR::RequireCompleteType>(inst_id)
-                  .complete_type_inst_id,
-              inst.complete_type_inst_id);
-        })) {
+    if (!TryToCompleteType(
+            context, complete_type_id, SemIR::LocId(inst_id), [&] {
+              CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
+                                "{0} evaluates to incomplete type {1}",
+                                InstIdAsType, InstIdAsType);
+              return context.emitter().Build(
+                  inst_id, IncompleteTypeInMonomorphization,
+                  context.insts()
+                      .GetAs<SemIR::RequireCompleteType>(inst_id)
+                      .complete_type_inst_id,
+                  inst.complete_type_inst_id);
+            })) {
       return ConstantEvalResult::Error;
     }
     return ConstantEvalResult::NewSamePhase(SemIR::CompleteTypeWitness{
@@ -392,8 +392,10 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   CARBON_CHECK(static_cast<int>(interface_fn_args.size()) >= remaining_params);
   args.append(interface_fn_args.end() - remaining_params,
               interface_fn_args.end());
-  auto specific_id = MakeSpecific(context, inst_id, generic_id, args);
-  context.definitions_required_by_use().push_back({inst_id, specific_id});
+  auto specific_id =
+      MakeSpecific(context, SemIR::LocId(inst_id), generic_id, args);
+  context.definitions_required_by_use().push_back(
+      {SemIR::LocId(inst_id), specific_id});
 
   return ConstantEvalResult::NewSamePhase(
       SemIR::SpecificFunction{.type_id = inst.type_id,
@@ -408,7 +410,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // This is not an associated function. Those will be required to be defined
     // as part of checking that the impl is complete.
     context.definitions_required_by_use().push_back(
-        {inst_id, inst.specific_id});
+        {SemIR::LocId(inst_id), inst.specific_id});
   }
   // Create new constant for a specific function.
   return ConstantEvalResult::NewSamePhase(inst);

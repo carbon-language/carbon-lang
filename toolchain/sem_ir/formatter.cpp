@@ -991,7 +991,8 @@ auto Formatter::FormatImportRefRhs(ImportIRInstId import_ir_inst_id,
     // Show a name based on the location when possible, or the numeric
     // instruction as a last resort.
     const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id());
-    auto loc_id = import_ir.sem_ir->insts().GetLocId(import_ir_inst.inst_id());
+    auto loc_id =
+        import_ir.sem_ir->insts().GetCanonicalLocId(import_ir_inst.inst_id());
     switch (loc_id.kind()) {
       case LocId::Kind::None: {
         out_ << import_ir_inst.inst_id() << " [no loc]";

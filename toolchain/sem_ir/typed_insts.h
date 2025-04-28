@@ -118,6 +118,8 @@ struct AddrPattern {
        .constant_kind = InstConstantKind::Never,
        .is_lowered = false});
 
+  // Always a PatternType whose scrutinee type represents the pointee type
+  // corresponding to the pointer type of `inner_id`.
   TypeId type_id;
   // The `self` binding.
   InstId inner_id;
@@ -369,6 +371,9 @@ struct AnyBindingPattern {
                                        InstKind::SymbolicBindingPattern};
 
   InstKind kind;
+
+  // Always a PatternType whose scrutinee type is the declared type of the
+  // binding.
   TypeId type_id;
 
   // The name declared by the binding pattern. `None` indicates that the
@@ -1277,6 +1282,9 @@ struct AnyParamPattern {
                                        InstKind::ValueParamPattern};
 
   InstKind kind;
+
+  // Always a PatternType that represents the same type as the type of
+  // `subpattern_id`.
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
@@ -1318,6 +1326,19 @@ struct ValueParamPattern {
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
+};
+
+// The type of a pattern that matches scrutinees of type
+// `scrutinee_type_inst_id`.
+struct PatternType {
+  static constexpr auto Kind = InstKind::PatternType.Define<Parse::NoneNodeId>(
+      {.ir_name = "pattern_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  TypeInstId scrutinee_type_inst_id;
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in
@@ -1422,8 +1443,8 @@ struct ReturnSlotPattern {
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
 
-  // The type of the value that will be stored in this slot (i.e. the return
-  // type of the function).
+  // Always a PatternType whose scrutinee type is the return type of the
+  // function.
   TypeId type_id;
 
   // The function return type as originally written by the user. For diagnostics
@@ -1720,6 +1741,8 @@ struct TuplePattern {
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
 
+  // Always a PatternType whose scrutinee type is a tuple of the scrutinee
+  // types of the elements.
   TypeId type_id;
   InstBlockId elements_id;
 };
@@ -1839,6 +1862,8 @@ struct VarPattern {
            .constant_kind = InstConstantKind::Never,
            .is_lowered = false});
 
+  // Always a PatternType that represents the same type as the type of
+  // `subpattern_id`.
   TypeId type_id;
   InstId subpattern_id;
 };

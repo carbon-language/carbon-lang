@@ -27,14 +27,20 @@ class Declaration(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %ptr.955: type = ptr_type %Class [symbolic]
+// CHECK:STDOUT:   %pattern_type.9e0: type = pattern_type %ptr.955 [symbolic]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.afe: type = pattern_type %ptr.79f [symbolic]
 // CHECK:STDOUT:   %GetAddr.type: type = fn_type @GetAddr, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %GetAddr: %GetAddr.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %pattern_type.3c1: type = pattern_type %Class [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %GetValue.type: type = fn_type @GetValue, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
@@ -63,12 +69,12 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %T.patt.loc11_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc11_13.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Declaration.decl: %Declaration.type = class_decl @Declaration [concrete = constants.%Declaration.generic] {
-// CHECK:STDOUT:     %T.patt.loc24_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc24_19.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc24_19.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc24_19.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -76,7 +82,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc11_13.1: type) {
 // CHECK:STDOUT:   %T.loc11_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc11_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc11_13.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GetAddr.type: type = fn_type @GetAddr, @Class(%T.loc11_13.2) [symbolic = %GetAddr.type (constants.%GetAddr.type)]
@@ -91,11 +97,11 @@ class Declaration(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type) = fn_decl @GetAddr [symbolic = @Class.%GetAddr (constants.%GetAddr)] {
-// CHECK:STDOUT:       %self.patt: @GetAddr.%ptr.loc12_29.1 (%ptr.955) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @GetAddr.%ptr.loc12_29.1 (%ptr.955) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %.loc12_14: auto = addr_pattern %self.param_patt
-// CHECK:STDOUT:       %return.patt: @GetAddr.%ptr.loc12_38.1 (%ptr.79f) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @GetAddr.%ptr.loc12_38.1 (%ptr.79f) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @GetAddr.%pattern_type.loc12_19 (%pattern_type.9e0) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @GetAddr.%pattern_type.loc12_19 (%pattern_type.9e0) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %.loc12_14: %pattern_type.f6d = addr_pattern %self.param_patt
+// CHECK:STDOUT:       %return.patt: @GetAddr.%pattern_type.loc12_34 (%pattern_type.afe) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @GetAddr.%pattern_type.loc12_34 (%pattern_type.afe) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc12_38.2: type = ptr_type %T.ref [symbolic = %ptr.loc12_38.1 (constants.%ptr.79f)]
@@ -110,10 +116,10 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %return: ref @GetAddr.%ptr.loc12_38.1 (%ptr.79f) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GetValue.decl: @Class.%GetValue.type (%GetValue.type) = fn_decl @GetValue [symbolic = @Class.%GetValue (constants.%GetValue)] {
-// CHECK:STDOUT:       %self.patt: @GetValue.%Class (%Class) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @GetValue.%Class (%Class) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %return.patt: @GetValue.%T (%T) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @GetValue.%T (%T) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @GetValue.%pattern_type.loc17_15 (%pattern_type.3c1) = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: @GetValue.%pattern_type.loc17_15 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %return.patt: @GetValue.%pattern_type.loc17_29 (%pattern_type.7dc) = return_slot_pattern
+// CHECK:STDOUT:       %return.param_patt: @GetValue.%pattern_type.loc17_29 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @GetValue.%Class (%Class) = value_param call_param0
@@ -142,7 +148,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Declaration(%T.loc24_19.1: type) {
 // CHECK:STDOUT:   %T.loc24_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc24_19.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc24_19.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc24_19.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc24_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
@@ -151,7 +157,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %ptr.loc12_29.1: type = ptr_type %Class [symbolic = %ptr.loc12_29.1 (constants.%ptr.955)]
+// CHECK:STDOUT:   %pattern_type.loc12_19: type = pattern_type %ptr.loc12_29.1 [symbolic = %pattern_type.loc12_19 (constants.%pattern_type.9e0)]
 // CHECK:STDOUT:   %ptr.loc12_38.1: type = ptr_type %T [symbolic = %ptr.loc12_38.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %pattern_type.loc12_34: type = pattern_type %ptr.loc12_38.1 [symbolic = %pattern_type.loc12_34 (constants.%pattern_type.afe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc12_34: <witness> = require_complete_type %ptr.loc12_38.1 [symbolic = %require_complete.loc12_34 (constants.%require_complete.6e5)]
@@ -173,6 +181,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT: generic fn @GetValue(@Class.%T.loc11_13.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:   %pattern_type.loc17_15: type = pattern_type %Class [symbolic = %pattern_type.loc17_15 (constants.%pattern_type.3c1)]
+// CHECK:STDOUT:   %pattern_type.loc17_29: type = pattern_type %T [symbolic = %pattern_type.loc17_29 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type %Class [symbolic = %require_complete.loc17 (constants.%require_complete.4f8)]
@@ -209,7 +219,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %ptr.loc12_29.1 => constants.%ptr.955
+// CHECK:STDOUT:   %pattern_type.loc12_19 => constants.%pattern_type.9e0
 // CHECK:STDOUT:   %ptr.loc12_38.1 => constants.%ptr.79f
+// CHECK:STDOUT:   %pattern_type.loc12_34 => constants.%pattern_type.afe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@GetAddr.%T) {}
@@ -217,6 +229,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT: specific @GetValue(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
+// CHECK:STDOUT:   %pattern_type.loc17_15 => constants.%pattern_type.3c1
+// CHECK:STDOUT:   %pattern_type.loc17_29 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@GetValue.%T) {}

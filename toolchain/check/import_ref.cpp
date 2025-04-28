@@ -148,7 +148,8 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
   auto conflict_id =
       AddImportRef(context, SemIR::ImportIRInst(new_ir_id, new_inst_id));
   // TODO: Pass the imported name location instead of the conflict id.
-  DiagnoseDuplicateName(context, name_id, conflict_id, prev_id);
+  DiagnoseDuplicateName(context, name_id, SemIR::LocId(conflict_id),
+                        SemIR::LocId(prev_id));
 }
 
 // Returns an instruction that has the specified constant value.
@@ -590,7 +591,7 @@ class ImportRefResolver : public ImportContext {
     auto cursor_inst_id = inst_id;
 
     while (true) {
-      auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+      auto loc_id = cursor_ir->insts().GetCanonicalLocId(cursor_inst_id);
       if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
         return result;
       }
@@ -2676,6 +2677,20 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::PatternType inst) -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
+  auto scrutinee_type_inst_id =
+      GetLocalTypeInstId(resolver, inst.scrutinee_type_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::PatternType>(
+      resolver, {.type_id = SemIR::TypeType::TypeId,
+                 .scrutinee_type_inst_id = scrutinee_type_inst_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::PointerType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
   auto pointee_id = GetLocalTypeInstId(resolver, inst.pointee_id);
@@ -2971,6 +2986,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::Namespace inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
     }
+    case CARBON_KIND(SemIR::PatternType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::PointerType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -3159,8 +3177,8 @@ static auto FinishPendingGeneric(ImportRefResolver& resolver,
   resolver.local_generics().Get(pending.local_id).decl_block_id = decl_block_id;
 
   auto local_decl_id = resolver.local_generics().Get(pending.local_id).decl_id;
-  auto self_specific_id = MakeSelfSpecific(resolver.local_context(),
-                                           local_decl_id, pending.local_id);
+  auto self_specific_id = MakeSelfSpecific(
+      resolver.local_context(), SemIR::LocId(local_decl_id), pending.local_id);
   resolver.local_generics().Get(pending.local_id).self_specific_id =
       self_specific_id;
   resolver.AddPendingSpecific({.import_id = import_generic.self_specific_id,

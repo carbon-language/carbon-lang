@@ -27,6 +27,7 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %AdaptWithVirtual: type = class_type @AdaptWithVirtual [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %AdaptWithVirtual [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -60,8 +61,8 @@ base class AdaptWithVirtual {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithVirtual {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %AdaptWithVirtual = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AdaptWithVirtual = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %AdaptWithVirtual = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AdaptWithVirtual [concrete = constants.%AdaptWithVirtual]

@@ -58,12 +58,16 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %struct_type.base.b.618: type = struct_type {.base: %A2, .b: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.92f: <witness> = complete_type_witness %struct_type.base.b.618 [concrete]
 // CHECK:STDOUT:   %ptr.afe: type = ptr_type %B2 [concrete]
+// CHECK:STDOUT:   %pattern_type.98e: type = pattern_type %ptr.afe [concrete]
 // CHECK:STDOUT:   %ptr.678: type = ptr_type %A1 [concrete]
+// CHECK:STDOUT:   %pattern_type.d72: type = pattern_type %ptr.678 [concrete]
 // CHECK:STDOUT:   %ConvertUnrelated.type: type = fn_type @ConvertUnrelated [concrete]
 // CHECK:STDOUT:   %ConvertUnrelated: %ConvertUnrelated.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
 // CHECK:STDOUT:   %ptr.c62: type = ptr_type %Incomplete [concrete]
+// CHECK:STDOUT:   %pattern_type.275: type = pattern_type %ptr.c62 [concrete]
 // CHECK:STDOUT:   %ptr.590: type = ptr_type %A2 [concrete]
+// CHECK:STDOUT:   %pattern_type.2c5: type = pattern_type %ptr.590 [concrete]
 // CHECK:STDOUT:   %ConvertIncomplete.type: type = fn_type @ConvertIncomplete [concrete]
 // CHECK:STDOUT:   %ConvertIncomplete: %ConvertIncomplete.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -92,10 +96,10 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %A2.decl: type = class_decl @A2 [concrete = constants.%A2] {} {}
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [concrete = constants.%B2] {} {}
 // CHECK:STDOUT:   %ConvertUnrelated.decl: %ConvertUnrelated.type = fn_decl @ConvertUnrelated [concrete = constants.%ConvertUnrelated] {
-// CHECK:STDOUT:     %p.patt: %ptr.afe = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.afe = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %ptr.678 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.678 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.98e = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.98e = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.d72 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d72 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, file.%A1.decl [concrete = constants.%A1]
 // CHECK:STDOUT:     %ptr.loc31_34: type = ptr_type %A1.ref [concrete = constants.%ptr.678]
@@ -110,10 +114,10 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: %ConvertIncomplete.type = fn_decl @ConvertIncomplete [concrete = constants.%ConvertIncomplete] {
-// CHECK:STDOUT:     %p.patt: %ptr.c62 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.c62 = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %ptr.590 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.590 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.275 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.275 = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.2c5 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.2c5 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [concrete = constants.%A2]
 // CHECK:STDOUT:     %ptr.loc42_43: type = ptr_type %A2.ref [concrete = constants.%ptr.590]

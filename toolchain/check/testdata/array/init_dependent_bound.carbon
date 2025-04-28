@@ -41,7 +41,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.8e2: %i32 = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %N.patt.f2c: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.2fd: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
@@ -58,6 +59,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %bound_method(%N.51e) [symbolic]
 // CHECK:STDOUT:   %array_type: type = array_type %int.convert_checked, %i32 [symbolic]
 // CHECK:STDOUT:   %require_complete.7cb: <witness> = require_complete_type %array_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.ccc: type = pattern_type %array_type [symbolic]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
@@ -80,7 +82,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc4_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT:     %N.patt.loc4_6.1: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.f2c)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32.loc4 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc4: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -92,7 +94,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc4_6.1: %i32) {
 // CHECK:STDOUT:   %N.loc4_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N.51e)]
-// CHECK:STDOUT:   %N.patt.loc4_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT:   %N.patt.loc4_6.2: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.f2c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc4_6.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound)]
@@ -100,12 +102,13 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %int.convert_checked.loc9_23.2: init Core.IntLiteral = call %bound_method.loc9_23.3(%N.loc4_6.2) [symbolic = %int.convert_checked.loc9_23.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %array_type.loc9_24.2: type = array_type %int.convert_checked.loc9_23.2, constants.%i32 [symbolic = %array_type.loc9_24.2 (constants.%array_type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc9_24.2 [symbolic = %require_complete (constants.%require_complete.7cb)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc9_24.2 [symbolic = %pattern_type (constants.%pattern_type.ccc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %arr.patt: @F.%array_type.loc9_24.2 (%array_type) = binding_pattern arr
-// CHECK:STDOUT:       %.loc9_3: @F.%array_type.loc9_24.2 (%array_type) = var_pattern %arr.patt
+// CHECK:STDOUT:       %arr.patt: @F.%pattern_type (%pattern_type.ccc) = binding_pattern arr
+// CHECK:STDOUT:       %.loc9_3: @F.%pattern_type (%pattern_type.ccc) = var_pattern %arr.patt
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref @F.%array_type.loc9_24.2 (%array_type) = var arr
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
@@ -133,7 +136,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc4_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.patt.8e2
+// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.patt.f2c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_init_template_dependent_bound.carbon
@@ -143,7 +146,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0, template [template]
-// CHECK:STDOUT:   %N.patt.8e2: %i32 = symbolic_binding_pattern N, 0, template [template]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %N.patt.f2c: %pattern_type.7ce = symbolic_binding_pattern N, 0, template [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
@@ -206,7 +210,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %N.patt.loc5_15.1: %i32 = symbolic_binding_pattern N, 0, template [template = %N.patt.loc5_15.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT:     %N.patt.loc5_15.1: %pattern_type.7ce = symbolic_binding_pattern N, 0, template [template = %N.patt.loc5_15.2 (constants.%N.patt.f2c)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5: type = splice_block %i32.loc5 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -219,7 +223,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%N.loc5_15.1: %i32) {
 // CHECK:STDOUT:   %N.loc5_15.2: %i32 = bind_symbolic_name N, 0, template [template = %N.loc5_15.2 (constants.%N.51e)]
-// CHECK:STDOUT:   %N.patt.loc5_15.2: %i32 = symbolic_binding_pattern N, 0, template [template = %N.patt.loc5_15.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT:   %N.patt.loc5_15.2: %pattern_type.7ce = symbolic_binding_pattern N, 0, template [template = %N.patt.loc5_15.2 (constants.%N.patt.f2c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc10_23.2: <instruction> = convert_to_value_action %N.ref, Core.IntLiteral [template]
@@ -266,12 +270,12 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc5_15.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc5_15.2 => constants.%N.patt.8e2
+// CHECK:STDOUT:   %N.patt.loc5_15.2 => constants.%N.patt.f2c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%int_3.822) {
 // CHECK:STDOUT:   %N.loc5_15.2 => constants.%int_3.822
-// CHECK:STDOUT:   %N.patt.loc5_15.2 => constants.%N.patt.8e2
+// CHECK:STDOUT:   %N.patt.loc5_15.2 => constants.%N.patt.f2c
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc10_23.2 => constants.%inst.splice_block

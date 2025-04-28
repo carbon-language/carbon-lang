@@ -24,6 +24,7 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
@@ -44,8 +45,8 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.v = binding_pattern x
-// CHECK:STDOUT:     %.loc2_1: %struct_type.v = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
+// CHECK:STDOUT:     %.loc2_1: %pattern_type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var x
 // CHECK:STDOUT:   %.loc2_15: type = splice_block %struct_type.v [concrete = constants.%struct_type.v] {
@@ -60,8 +61,8 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %struct_type.v = binding_pattern y
-// CHECK:STDOUT:     %.loc5_3.1: %struct_type.v = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y
+// CHECK:STDOUT:     %.loc5_3.1: %pattern_type = var_pattern %y.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.v = var y
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x

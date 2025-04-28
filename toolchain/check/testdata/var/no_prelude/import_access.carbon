@@ -56,6 +56,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -64,8 +65,8 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     .v [private] = %v
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %empty_tuple.type = binding_pattern v
-// CHECK:STDOUT:     %.loc4_9: %empty_tuple.type = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v
+// CHECK:STDOUT:     %.loc4_9: %pattern_type = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
 // CHECK:STDOUT:   %.loc4_17.1: type = splice_block %.loc4_17.3 [concrete = constants.%empty_tuple.type] {
@@ -88,6 +89,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,8 +105,8 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
-// CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %v2.patt
+// CHECK:STDOUT:     %v2.patt: %pattern_type = binding_pattern v2
+// CHECK:STDOUT:     %.loc4_1: %pattern_type = var_pattern %v2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
 // CHECK:STDOUT:   %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
@@ -127,6 +129,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -136,8 +139,8 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
-// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %v2.patt
+// CHECK:STDOUT:     %v2.patt: %pattern_type = binding_pattern v2
+// CHECK:STDOUT:     %.loc10_1: %pattern_type = var_pattern %v2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
 // CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [concrete = constants.%empty_tuple.type] {
@@ -158,6 +161,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -174,8 +178,8 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v2.patt: %empty_tuple.type = binding_pattern v2
-// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %v2.patt
+// CHECK:STDOUT:     %v2.patt: %pattern_type = binding_pattern v2
+// CHECK:STDOUT:     %.loc10_1: %pattern_type = var_pattern %v2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
 // CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [concrete = constants.%empty_tuple.type] {

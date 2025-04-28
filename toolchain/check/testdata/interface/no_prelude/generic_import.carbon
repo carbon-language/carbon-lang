@@ -31,7 +31,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.b35: type = generic_interface_type @AddWith [concrete]
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.b35 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.type.bc7: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
@@ -47,7 +48,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .AddWith = %AddWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.decl: %AddWith.type.b35 = interface_decl @AddWith [concrete = constants.%AddWith.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc4_19.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_19.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_19.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -55,7 +56,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(%T.loc4_19.1: type) {
 // CHECK:STDOUT:   %T.loc4_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_19.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_19.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt.loc4_19.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T.loc4_19.2)> [symbolic = %AddWith.type (constants.%AddWith.type.bc7)]
@@ -101,7 +102,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.bc7: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.deb: %AddWith.type.bc7 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.fbc: type = fn_type @F.1, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F.be3: %F.type.fbc = struct_value () [symbolic]
 // CHECK:STDOUT:   %AddWith.assoc_type.36e: type = assoc_entity_type @AddWith, @AddWith(%T) [symbolic]
@@ -121,11 +123,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.AddWith: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [concrete = constants.%AddWith.generic]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c77 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT:   %Main.F: @AddWith.%F.type (%F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.be3)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7) = import_ref Main//a, inst26 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.deb)]
+// CHECK:STDOUT:   %Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7) = import_ref Main//a, inst27 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.deb)]
 // CHECK:STDOUT:   %Main.import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -148,7 +150,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(imports.%Main.import_ref.5ab3ec.1: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T)> [symbolic = %AddWith.type (constants.%AddWith.type.bc7)]

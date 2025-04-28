@@ -157,6 +157,17 @@ auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
+auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
+    -> SemIR::TypeId {
+  CARBON_CHECK(!context.types().Is<SemIR::PatternType>(scrutinee_type_id),
+               "Type is already a pattern type");
+  if (scrutinee_type_id == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::TypeId;
+  }
+  return GetTypeImpl<SemIR::PatternType>(
+      context, context.types().GetInstId(scrutinee_type_id));
+}
+
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                            SemIR::TypeInstId element_type_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(context, class_type_id,

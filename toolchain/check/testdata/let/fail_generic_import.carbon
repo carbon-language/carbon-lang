@@ -32,6 +32,7 @@ let a: T = 0;
 // CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
@@ -51,7 +52,7 @@ let a: T = 0;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: type = binding_pattern T
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = binding_pattern T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = bind_name T, @__global_init.%i32
 // CHECK:STDOUT: }
