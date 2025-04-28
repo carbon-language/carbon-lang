@@ -289,6 +289,10 @@ auto Emitter<LocT>::Builder::Emit() & -> void {
   }
   for (auto annotate_fn : llvm::reverse(emitter_->annotate_fns_)) {
     annotate_fn(*this);
+    if (!emitter_) {
+      // Diagnostic was suppressed by annotation function.
+      return;
+    }
   }
   emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));
 }

@@ -1437,25 +1437,19 @@ class FormatterImpl {
       return;
     }
 
-    // For a symbolic constant in a generic, list the constant value in the
-    // generic first, and the canonical constant second.
-    if (id.is_symbolic()) {
-      const auto& symbolic_constant =
-          sem_ir_->constant_values().GetSymbolicConstant(id);
-      if (symbolic_constant.generic_id.has_value()) {
-        const auto& generic =
-            sem_ir_->generics().Get(symbolic_constant.generic_id);
-        FormatName(sem_ir_->inst_blocks().Get(generic.GetEvalBlock(
-            symbolic_constant.index
-                .region()))[symbolic_constant.index.index()]);
-        out_ << " (";
-        FormatName(sem_ir_->constant_values().GetInstId(id));
-        out_ << ")";
-        return;
-      }
-    }
+    auto inst_id = GetInstWithConstantValue(*sem_ir_, id);
+    FormatName(inst_id);
 
-    FormatName(sem_ir_->constant_values().GetInstId(id));
+    // For an attached constant, also list the unattached constant.
+    if (id.is_symbolic() && sem_ir_->constant_values()
+                                .GetSymbolicConstant(id)
+                                .generic_id.has_value()) {
+      // TODO: Skip printing this if it's the same as `inst_id`.
+      auto unattached_inst_id = sem_ir_->constant_values().GetInstId(id);
+      out_ << " (";
+      FormatName(unattached_inst_id);
+      out_ << ")";
+    }
   }
 
   auto FormatInstAsType(InstId id) -> void {

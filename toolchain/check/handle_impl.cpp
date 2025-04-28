@@ -564,9 +564,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
   auto impl_id =
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
 
+  FinishImplWitness(context, impl_id);
+
   auto& impl_info = context.impls().Get(impl_id);
-  CARBON_CHECK(!impl_info.is_complete());
-  FinishImplWitness(context, impl_info);
   impl_info.defined = true;
   FinishGenericDefinition(context, impl_info.generic_id);
 

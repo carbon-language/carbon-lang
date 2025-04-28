@@ -5,7 +5,6 @@
 #include <optional>
 #include <utility>
 
-#include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
@@ -34,7 +33,6 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -83,18 +81,6 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
        .index = SemIR::CallParamIndex::None});
   context.node_stack().Push(node_id, param_pattern_id);
   return true;
-}
-
-// Returns the ID of the self parameter pattern, or None.
-// TODO: Do this during initial traversal of implicit params.
-static auto FindSelfPattern(Context& context,
-                            SemIR::InstBlockId implicit_param_patterns_id)
-    -> SemIR::InstId {
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
-    return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
-  });
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be

@@ -4,29 +4,29 @@
 
 #include "toolchain/check/function.h"
 
+#include "common/find.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/pattern.h"
 
 namespace Carbon::Check {
 
-auto CheckFunctionTypeMatches(Context& context,
-                              const SemIR::Function& new_function,
-                              const SemIR::Function& prev_function,
-                              SemIR::SpecificId prev_specific_id,
-                              bool check_syntax, bool check_self) -> bool {
-  // TODO: When check_syntax is false, the functions should be allowed to have
-  // different signatures as long as we can synthesize a suitable thunk. i.e.,
-  // when there's an implicit conversion from the original parameter types to
-  // the overriding parameter types, and from the overriding return type to the
-  // original return type.
-  // Also, build that thunk.
-  if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
-                              DeclParams(prev_function), prev_specific_id,
-                              /*diagnose=*/true, check_syntax, check_self)) {
-    return false;
-  }
+auto FindSelfPattern(Context& context,
+                     SemIR::InstBlockId implicit_param_patterns_id)
+    -> SemIR::InstId {
+  auto implicit_param_patterns =
+      context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
+  return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
+    return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
+  });
+}
 
+auto CheckFunctionReturnTypeMatches(Context& context,
+                                    const SemIR::Function& new_function,
+                                    const SemIR::Function& prev_function,
+                                    SemIR::SpecificId prev_specific_id,
+                                    bool diagnose) -> bool {
   // TODO: Pass a specific ID for `prev_function` instead of substitutions and
   // use it here.
   auto new_return_type_id =
@@ -39,6 +39,10 @@ auto CheckFunctionTypeMatches(Context& context,
   }
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
                                                   prev_return_type_id)) {
+    if (!diagnose) {
+      return false;
+    }
+
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffers, Error,
         "function redeclaration differs because return type is {0}",
@@ -70,6 +74,21 @@ auto CheckFunctionTypeMatches(Context& context,
   }
 
   return true;
+}
+
+auto CheckFunctionTypeMatches(Context& context,
+                              const SemIR::Function& new_function,
+                              const SemIR::Function& prev_function,
+                              SemIR::SpecificId prev_specific_id,
+                              bool check_syntax, bool check_self, bool diagnose)
+    -> bool {
+  if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
+                              DeclParams(prev_function), prev_specific_id,
+                              diagnose, check_syntax, check_self)) {
+    return false;
+  }
+  return CheckFunctionReturnTypeMatches(context, new_function, prev_function,
+                                        prev_specific_id, diagnose);
 }
 
 auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
