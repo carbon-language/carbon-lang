@@ -215,7 +215,6 @@ auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
   indent_ -= 2;
 }
 
-// Formats a full class.
 auto Formatter::FormatClass(ClassId id) -> void {
   const Class& class_info = sem_ir_->classes().Get(id);
   if (!ShouldFormatEntity(class_info)) {
