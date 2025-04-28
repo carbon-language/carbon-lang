@@ -895,6 +895,10 @@ struct LocId : public IdBase<LocId> {
 
   // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
   // a canonical location. See `InstStore::GetCanonicalLocId()`.
+  //
+  // TODO: Consider making this a part of check/ diagnostics instead, as a free
+  // function operation on `LocIdForDiagnostics`?
+  // https://github.com/carbon-language/carbon-lang/pull/5355#discussion_r2064113186
   auto ToTokenOnly() const -> LocId {
     CARBON_CHECK(kind() != Kind::InstId);
     if (has_value()) {
