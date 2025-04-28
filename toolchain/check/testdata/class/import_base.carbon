@@ -183,7 +183,7 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Base = import_ref Main//a, Base, unloaded
 // CHECK:STDOUT:   %Main.Child: type = import_ref Main//a, Child, loaded [concrete = constants.%Child]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -201,13 +201,14 @@ fn Run() {
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a86: @impl.c81.%Convert.type (%Convert.type.0b2) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.c81.%Convert (constants.%Convert.6d7)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (%Core.import_ref.a86), @impl.c81 [concrete]
+// CHECK:STDOUT:   %.720: %Base.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Base = imports.%Main.Base
 // CHECK:STDOUT:     .Child = imports.%Main.Child
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

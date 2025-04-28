@@ -105,7 +105,7 @@ var b: i32 = a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.a: ref %i32 = import_ref Main//lib, a, loaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -116,7 +116,7 @@ var b: i32 = a;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .a = imports.%Main.a
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_19.1 = import <none>

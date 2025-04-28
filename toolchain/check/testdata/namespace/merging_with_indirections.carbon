@@ -173,7 +173,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
 // CHECK:STDOUT:     .F = %Other.F
-// CHECK:STDOUT:     .NS1 = %NS1
+// CHECK:STDOUT:     .NS1 = %NS1.b9a
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
@@ -181,7 +181,7 @@ fn Run() {
 // CHECK:STDOUT:   %Other.import_ref.8db: <witness> = import_ref Other//b, inst31 [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.bbd = import_ref Other//b, inst32 [indirect], unloaded
 // CHECK:STDOUT:   %Other.NS1: <namespace> = import_ref Other//b, NS1, loaded
-// CHECK:STDOUT:   %NS1: <namespace> = namespace %Other.NS1, [concrete] {
+// CHECK:STDOUT:   %NS1.b9a: <namespace> = namespace %Other.NS1, [concrete] {
 // CHECK:STDOUT:     .A = %Other.A
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
@@ -221,7 +221,7 @@ fn Run() {
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %.loc10_19: type = splice_block %A.ref [concrete = constants.%A] {
 // CHECK:STDOUT:     %Other.ref.loc10: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
-// CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [concrete = imports.%NS1]
+// CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1.b9a [concrete = imports.%NS1.b9a]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Other.A [concrete = constants.%A]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var

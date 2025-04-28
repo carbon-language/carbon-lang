@@ -110,6 +110,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.b93: <witness> = import_ref Main//a, loc11_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.455: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %.354]
+// CHECK:STDOUT:   %.354: %Cycle.elem = field_decl c, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

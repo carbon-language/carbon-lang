@@ -297,7 +297,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.C: %C.type = import_ref Main//adapt_specific_type, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %Main.Adapter: type = import_ref Main//adapt_specific_type, Adapter, loaded [concrete = constants.%Adapter]
 // CHECK:STDOUT:   %Main.Access = import_ref Main//adapt_specific_type, Access, unloaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -309,6 +309,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.c07]
 // CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//adapt_specific_type, inst44 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %.22b: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -316,7 +317,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .Adapter = imports.%Main.Adapter
 // CHECK:STDOUT:     .Access = imports.%Main.Access
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .ImportedAccess = %ImportedAccess.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -682,7 +683,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extend_adapt_specific_type_library, C, unloaded
 // CHECK:STDOUT:   %Main.Adapter: type = import_ref Main//extend_adapt_specific_type_library, Adapter, loaded [concrete = constants.%Adapter]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
@@ -696,6 +697,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst44 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.19d12e.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.239]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %.22b: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -703,7 +705,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = imports.%Main.C
 // CHECK:STDOUT:     .Adapter = imports.%Main.Adapter
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .ImportedAccess = %ImportedAccess.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

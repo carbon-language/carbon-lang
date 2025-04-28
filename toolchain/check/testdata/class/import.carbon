@@ -219,7 +219,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.Field: type = import_ref Main//a, Field, loaded [concrete = constants.%Field]
 // CHECK:STDOUT:   %Main.ForwardDeclared: type = import_ref Main//a, ForwardDeclared, loaded [concrete = constants.%ForwardDeclared.7b34f2.1]
 // CHECK:STDOUT:   %Main.Incomplete: type = import_ref Main//a, Incomplete, loaded [concrete = constants.%Incomplete]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -232,6 +232,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a86: @impl.c81.%Convert.type (%Convert.type.0b2) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.c81.%Convert (constants.%Convert.6d7)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (%Core.import_ref.a86), @impl.c81 [concrete]
+// CHECK:STDOUT:   %.d33: %Field.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst61 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.760: %F.type = import_ref Main//a, loc14_21, loaded [concrete = constants.%F]
@@ -248,7 +249,7 @@ fn Run() {
 // CHECK:STDOUT:     .Field = imports.%Main.Field
 // CHECK:STDOUT:     .ForwardDeclared = imports.%Main.ForwardDeclared
 // CHECK:STDOUT:     .Incomplete = imports.%Main.Incomplete
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

@@ -313,7 +313,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.CompleteClass: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [concrete = constants.%CompleteClass.generic]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
@@ -337,7 +337,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Class = %Class.decl
 // CHECK:STDOUT:     .CompleteClass = imports.%Main.CompleteClass
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_19.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_19.2 = import <none>
@@ -510,6 +510,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.import_ref.e76: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) = import_ref Main//foo, loc7_8, loaded [concrete = %.364]
 // CHECK:STDOUT:   %Main.import_ref.a52: @CompleteClass.%F.type (%F.type.14f) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.874)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
+// CHECK:STDOUT:   %.364: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) = field_decl n, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -694,7 +695,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.Class = import_ref Main//foo, Class, unloaded
 // CHECK:STDOUT:   %Main.CompleteClass: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [concrete = constants.%CompleteClass.generic]
 // CHECK:STDOUT:   %Main.F: %F.type.b25 = import_ref Main//foo, F, loaded [concrete = constants.%F.c41]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
@@ -715,7 +716,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Class = imports.%Main.Class
 // CHECK:STDOUT:     .CompleteClass = imports.%Main.CompleteClass
 // CHECK:STDOUT:     .F = imports.%Main.F
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -830,7 +831,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.Class: %Class.type.cf06d9.1 = import_ref Main//foo, Class, loaded [concrete = constants.%Class.generic.9545f5.1]
 // CHECK:STDOUT:   %Main.CompleteClass = import_ref Main//foo, CompleteClass, unloaded
 // CHECK:STDOUT:   %Main.F = import_ref Main//foo, F, unloaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -842,7 +843,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Class = imports.%Main.Class
 // CHECK:STDOUT:     .CompleteClass = imports.%Main.CompleteClass
 // CHECK:STDOUT:     .F = imports.%Main.F
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_19.1 = import <none>

@@ -94,6 +94,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %Main.import_ref.146: <witness> = import_ref Main//a, loc4_22, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f99: %C.elem = import_ref Main//a, loc4_16, loaded [concrete = %.2fc]
+// CHECK:STDOUT:   %.2fc: %C.elem = field_decl v, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -1174,6 +1174,7 @@ interface J {
 // CHECK:STDOUT:   %Main.import_ref.33a = import_ref Main//to_import, loc4_8, unloaded
 // CHECK:STDOUT:   %Main.T = import_ref Main//to_import, T, unloaded
 // CHECK:STDOUT:   %Main.import_ref.652: type = import_ref Main//to_import, loc4_8, loaded [concrete = %T]
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
 // CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//to_import, inst19 [no loc], loaded [symbolic = constants.%Self.826]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

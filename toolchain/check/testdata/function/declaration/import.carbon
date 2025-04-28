@@ -900,7 +900,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %NS: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .E = file.%E.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
@@ -919,7 +919,7 @@ import library "extern_api";
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .NS = imports.%NS
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c

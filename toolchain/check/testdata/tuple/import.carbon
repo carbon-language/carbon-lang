@@ -377,7 +377,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %Implicit.b_ref: ref %tuple.type.cfa = import_ref Implicit//default, b_ref, loaded
 // CHECK:STDOUT:   %Implicit.C: %C.type = import_ref Implicit//default, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %Implicit.F: %F.type = import_ref Implicit//default, F, loaded [concrete = constants.%F]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
@@ -398,7 +398,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .b_ref = imports.%Implicit.b_ref
 // CHECK:STDOUT:     .C = imports.%Implicit.C
 // CHECK:STDOUT:     .F = imports.%Implicit.F
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
@@ -577,7 +577,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %Implicit.b_ref = import_ref Implicit//default, b_ref, unloaded
 // CHECK:STDOUT:   %Implicit.C: %C.type = import_ref Implicit//default, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %Implicit.F: %F.type = import_ref Implicit//default, F, loaded [concrete = constants.%F]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -592,7 +592,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .b_ref = imports.%Implicit.b_ref
 // CHECK:STDOUT:     .C = imports.%Implicit.C
 // CHECK:STDOUT:     .F = imports.%Implicit.F
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .c_bad = %c_bad
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
@@ -701,7 +701,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %Implicit.b_ref = import_ref Implicit//default, b_ref, unloaded
 // CHECK:STDOUT:   %Implicit.C: %C.type = import_ref Implicit//default, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %Implicit.F: %F.type = import_ref Implicit//default, F, loaded [concrete = constants.%F]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -720,7 +720,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     .b_ref = imports.%Implicit.b_ref
 // CHECK:STDOUT:     .C = imports.%Implicit.C
 // CHECK:STDOUT:     .F = imports.%Implicit.F
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .c_bad = %c_bad
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit

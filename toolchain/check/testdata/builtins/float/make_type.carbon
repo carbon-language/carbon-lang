@@ -128,7 +128,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Float: %Float.type = import_ref Main//types, Float, loaded [concrete = constants.%Float]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
@@ -143,7 +143,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Float = imports.%Main.Float
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .GetFloat = %GetFloat.decl
 // CHECK:STDOUT:   }
@@ -239,7 +239,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Float: %Float.type = import_ref Main//types, Float, loaded [concrete = constants.%Float]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
@@ -254,7 +254,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Float = imports.%Main.Float
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .invalid_float = %invalid_float
 // CHECK:STDOUT:     .dyn_size = %dyn_size
 // CHECK:STDOUT:     .dyn = %dyn

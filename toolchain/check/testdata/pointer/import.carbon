@@ -123,7 +123,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Implicit.a_orig = import_ref Implicit//default, a_orig, unloaded
 // CHECK:STDOUT:   %Implicit.a_ref: ref %ptr.9e1 = import_ref Implicit//default, a_ref, loaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -135,7 +135,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .a_orig = imports.%Implicit.a_orig
 // CHECK:STDOUT:     .a_ref = imports.%Implicit.a_ref
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit

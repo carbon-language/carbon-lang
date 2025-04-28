@@ -286,7 +286,7 @@ fn H() {
 // CHECK:STDOUT:   %Main.Param = import_ref Main//extend_generic_base, Param, unloaded
 // CHECK:STDOUT:   %Main.Derived: type = import_ref Main//extend_generic_base, Derived, loaded [concrete = constants.%Derived]
 // CHECK:STDOUT:   %Main.DoubleFieldAccess = import_ref Main//extend_generic_base, DoubleFieldAccess, unloaded
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -303,6 +303,8 @@ fn H() {
 // CHECK:STDOUT:   %Main.import_ref.d24 = import_ref Main//extend_generic_base, loc13_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.77a301.2: type = import_ref Main//extend_generic_base, loc13_26, loaded [concrete = constants.%Base.7a8]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %.e66: @Base.%Base.elem (%Base.elem.9af) = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.be7: %Param.elem = field_decl y, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -311,7 +313,7 @@ fn H() {
 // CHECK:STDOUT:     .Param = imports.%Main.Param
 // CHECK:STDOUT:     .Derived = imports.%Main.Derived
 // CHECK:STDOUT:     .DoubleFieldAccess = imports.%Main.DoubleFieldAccess
-// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Core = imports.%Core.ece
 // CHECK:STDOUT:     .ImportedDoubleFieldAccess = %ImportedDoubleFieldAccess.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
