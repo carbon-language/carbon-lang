@@ -541,15 +541,14 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
       CARBON_DIAGNOSTIC(
           PoisonedImplLookupConcreteResult, Error,
           "found `impl` that changes the result of a previous use "
-          "of interface `{0}`",
-          SemIR::NameId);
+          "of `{0} as {1}`",
+          InstIdAsType, SemIR::NameId);
       auto builder =
           emitter_.Build(impl.first_decl_id(), PoisonedImplLookupConcreteResult,
-                         interface_name_id);
+                         poison.query.query_self_inst_id, interface_name_id);
       CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNote, Note,
-                        "use of interface `{0}` here", SemIR::NameId);
-      builder.Note(poison.loc_id, PoisonedImplLookupConcreteResultNote,
-                   interface_name_id);
+                        "impl used here");
+      builder.Note(poison.loc_id, PoisonedImplLookupConcreteResultNote);
       builder.Emit();
     }
   }
