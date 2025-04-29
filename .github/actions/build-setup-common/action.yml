@@ -115,11 +115,14 @@ runs:
     - name: Run bazel to sync deps with retry
       shell: bash
       run: |
-        # This is intended to sync down dependencies. GitHub sometimes has a
-        # high failure rate for downloads that Bazel does (even from GitHub
-        # URLs). Bazel exits with `1` on HTTP errors. This command is
-        # effectively rerunning a few times in the hope that one of the
-        # executions succeeds enough that later commands have downloads cached.
+        # GitHub sometimes has a high failure rate for Bazel's downloads (even
+        # from GitHub URLs). Bazel exits with `1` on HTTP errors, which is hard
+        # to distinguish from a normal, permanent error.
+        #
+        # This workaround runs fast commands that should always pass (although
+        # they may be broken by an invalid PR). All errors are retried. The hope
+        # is that this caches necessary downloads, allowing later commands to
+        # more reliably succeed without retrying "permanent" errors.
         #
         # Disable lockfile updates, because some actions want to see
         # differences.
