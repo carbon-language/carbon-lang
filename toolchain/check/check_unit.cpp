@@ -12,6 +12,7 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
@@ -545,18 +546,22 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
       auto prev_impl_id = witness_to_impl_id(poison.impl_witness);
       const auto& prev_impl = context_.impls().Get(prev_impl_id);
 
-      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResult, Error,
-                        "found `impl` that would change the result of a "
-                        "previous use of {0}",
-                        SemIR::ImplId);
+      CARBON_DIAGNOSTIC(
+          PoisonedImplLookupConcreteResult, Error,
+          "found `impl` that would change the result of an earlier "
+          "use of {0} as {1}",
+          InstIdAsType, SemIR::SpecificInterfaceId);
       auto builder =
-          emitter_.Build(bad_impl.first_decl_id(),
-                         PoisonedImplLookupConcreteResult, prev_impl_id);
-      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNoteUse, Note,
-                        "use of impl here");
-      builder.Note(poison.loc_id, PoisonedImplLookupConcreteResultNoteUse);
+          emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
+                         poison.query.query_self_inst_id,
+                         poison.query.query_specific_interface_id);
+      CARBON_DIAGNOSTIC(
+          PoisonedImplLookupConcreteResultNoteUse, Note,
+          "the use would select the `impl` here but it was not found yet");
+      builder.Note(bad_impl.first_decl_id(),
+                   PoisonedImplLookupConcreteResultNoteUse);
       CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
-                        "previous use selected the `impl` here");
+                        "the use had selected the `impl` here");
       builder.Note(prev_impl.first_decl_id(),
                    PoisonedImplLookupConcreteResultNotePreviousImpl);
       builder.Emit();

@@ -169,6 +169,12 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return "`" + StringifySpecificInterface(*sem_ir_, *specific_interface) +
            "`";
   }
+  if (auto* specific_interface_id =
+          llvm::any_cast<SemIR::SpecificInterfaceId>(&arg)) {
+    auto specific_interface =
+        sem_ir_->specific_interfaces().Get(*specific_interface_id);
+    return "`" + StringifySpecificInterface(*sem_ir_, specific_interface) + "`";
+  }
   if (auto* impl_id = llvm::any_cast<SemIR::ImplId>(&arg)) {
     const auto& impl = sem_ir_->impls().Get(*impl_id);
     return "`" + StringifyConstantInst(*sem_ir_, impl.self_id) + " as " +

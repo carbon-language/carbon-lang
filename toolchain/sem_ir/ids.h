@@ -346,6 +346,8 @@ struct SpecificId : public IdBase<SpecificId> {
 
 // The ID of a SpecificInterface, which is an interface and a specific pair.
 struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   static constexpr llvm::StringLiteral Label = "specific_interface";
   using ValueType = SpecificInterface;
 
