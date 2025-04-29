@@ -549,8 +549,8 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
       CARBON_DIAGNOSTIC(
           PoisonedImplLookupConcreteResult, Error,
           "found `impl` that would change the result of an earlier "
-          "use of {0} as {1}",
-          InstIdAsType, SemIR::SpecificInterfaceId);
+          "use of `{0} as {1}`",
+          InstIdAsRawType, SpecificInterfaceIdAsRawType);
       auto builder =
           emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
                          poison.query.query_self_inst_id,

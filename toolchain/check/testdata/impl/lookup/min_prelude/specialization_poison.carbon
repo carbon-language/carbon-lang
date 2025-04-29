@@ -23,7 +23,7 @@ impl forall [U:! type] U as I where .T = () {
   fn F[self: Self]() -> () { return (); }
 }
 
-// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:25: error: found `impl` that would change the result of an earlier use of `C*` as `I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:25: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
 // CHECK:STDERR: fn H[W:! type](v: W) -> W.(I.T) {
 // CHECK:STDERR:                         ^~~~~~~
 fn H[W:! type](v: W) -> W.(I.T) {
@@ -61,7 +61,7 @@ class C {}
 
 fn H[W:! type](v: W) {
   // This concrete impl lookup query poisons any further specializations.
-  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C` as `I` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C as I` [PoisonedImplLookupConcreteResult]
   // CHECK:STDERR:   let a: C.(I.T) = ();
   // CHECK:STDERR:          ^~~~~~~
   let a: C.(I.T) = ();
@@ -92,7 +92,7 @@ impl forall [U:! type] C(U) as I where .T = () {
 
 fn G(c: C(())) -> () {
   // This concrete impl lookup query poisons any further specializations.
-  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C(())` as `I` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C(()) as I` [PoisonedImplLookupConcreteResult]
   // CHECK:STDERR:   return c.(I.F)();
   // CHECK:STDERR:          ^~~~~~~
   return c.(I.F)();
@@ -125,7 +125,7 @@ class C {}
 
 fn G(c: C) -> () {
   // This concrete impl lookup query poisons any further specializations.
-  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C` as `I(C)` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C as I(C)` [PoisonedImplLookupConcreteResult]
   // CHECK:STDERR:   return c.(I(C).F)();
   // CHECK:STDERR:          ^~~~~~~~~~
   return c.(I(C).F)();

@@ -9,6 +9,7 @@
 #include <string>
 
 #include "common/raw_string_ostream.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/stringify.h"
 
@@ -164,21 +165,17 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return llvm::APSInt(typed_int->value,
                         !sem_ir_->types().IsSignedInt(typed_int->type));
   }
-  if (auto* specific_interface =
-          llvm::any_cast<SemIR::SpecificInterface>(&arg)) {
-    return "`" + StringifySpecificInterface(*sem_ir_, *specific_interface) +
-           "`";
-  }
   if (auto* specific_interface_id =
           llvm::any_cast<SemIR::SpecificInterfaceId>(&arg)) {
     auto specific_interface =
         sem_ir_->specific_interfaces().Get(*specific_interface_id);
     return "`" + StringifySpecificInterface(*sem_ir_, specific_interface) + "`";
   }
-  if (auto* impl_id = llvm::any_cast<SemIR::ImplId>(&arg)) {
-    const auto& impl = sem_ir_->impls().Get(*impl_id);
-    return "`" + StringifyConstantInst(*sem_ir_, impl.self_id) + " as " +
-           StringifySpecificInterface(*sem_ir_, impl.interface) + "`";
+  if (auto* specific_interface_raw =
+          llvm::any_cast<SpecificInterfaceIdAsRawType>(&arg)) {
+    auto specific_interface = sem_ir_->specific_interfaces().Get(
+        specific_interface_raw->specific_interface_id);
+    return StringifySpecificInterface(*sem_ir_, specific_interface);
   }
   return DiagnosticEmitterBase::ConvertArg(arg);
 }

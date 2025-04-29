@@ -127,6 +127,16 @@ struct TypedInt {
   llvm::APInt value;
 };
 
+struct SpecificInterfaceIdAsRawType {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  SpecificInterfaceIdAsRawType(SemIR::SpecificInterfaceId specific_interface_id)
+      : specific_interface_id(specific_interface_id) {}
+
+  SemIR::SpecificInterfaceId specific_interface_id;
+};
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_HELPERS_H_
