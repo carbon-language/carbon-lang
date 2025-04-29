@@ -42,7 +42,7 @@ fn F(n: i32, a: array(i32, n)*);
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param1 [concrete = <error>]
+// CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc15_9: type = splice_block %i32.loc15_9 [concrete = constants.%i32] {

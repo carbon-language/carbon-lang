@@ -240,7 +240,7 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
   if (!dump_sem_ir_ranges_.empty()) {
     output_stream << "  dump_sem_ir_ranges:\n";
     for (auto range : dump_sem_ir_ranges_) {
-      output_stream << "  - {start: " << range.start.index
+      output_stream << "  - {begin: " << range.begin.index
                     << ", end: " << range.end.index << "}\n";
     }
   }

@@ -569,12 +569,13 @@ auto CompilationUnit::PostCheck() -> void {
     };
 
     SemIR::Formatter formatter(&*sem_ir_, should_format_entity);
+    formatter.Format();
     if (vlog_stream_) {
       CARBON_VLOG("*** SemIR::File ***\n");
-      formatter.Print(*vlog_stream_);
+      formatter.Write(*vlog_stream_);
     }
     if (print) {
-      formatter.Print(*driver_env_->output_stream);
+      formatter.Write(*driver_env_->output_stream);
     }
   }
   if (sem_ir_->has_errors()) {

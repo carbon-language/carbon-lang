@@ -8,7 +8,6 @@
 #include "common/array_stack.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/formatter.h"
 
 namespace Carbon::Check {
 

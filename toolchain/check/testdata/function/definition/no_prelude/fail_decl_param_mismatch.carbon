@@ -146,7 +146,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl.loc36: %H.type.6826c6.2 = fn_decl @H.2 [concrete = constants.%H.8a6545.2] {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %x: <error> = bind_name x, %x.param

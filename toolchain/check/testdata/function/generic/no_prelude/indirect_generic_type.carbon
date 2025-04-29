@@ -17,7 +17,6 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ptr.a13: type = ptr_type %ptr.79f [symbolic]
 // CHECK:STDOUT:   %pattern_type.12d: type = pattern_type %ptr.a13 [symbolic]
@@ -33,7 +32,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc11_6.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %p.patt: @F.%pattern_type.loc11_16 (%pattern_type.12d) = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: @F.%pattern_type.loc11_16 (%pattern_type.12d) = value_param_pattern %p.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc11_24 (%pattern_type.afe) = return_slot_pattern
@@ -56,7 +55,6 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc11_6.1: type) {
 // CHECK:STDOUT:   %T.loc11_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc11_6.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr.loc11_20.2: type = ptr_type %T.loc11_6.2 [symbolic = %ptr.loc11_20.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:   %ptr.loc11_21.2: type = ptr_type %ptr.loc11_20.2 [symbolic = %ptr.loc11_21.2 (constants.%ptr.a13)]
 // CHECK:STDOUT:   %pattern_type.loc11_16: type = pattern_type %ptr.loc11_21.2 [symbolic = %pattern_type.loc11_16 (constants.%pattern_type.12d)]
@@ -77,7 +75,6 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc11_20.2 => constants.%ptr.79f
 // CHECK:STDOUT:   %ptr.loc11_21.2 => constants.%ptr.a13
 // CHECK:STDOUT:   %pattern_type.loc11_16 => constants.%pattern_type.12d

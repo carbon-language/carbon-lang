@@ -47,7 +47,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %Neq.type: type = fn_type @Neq [concrete]
 // CHECK:STDOUT:   %Neq: %Neq.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic]
-// CHECK:STDOUT:   %B.patt: %pattern_type.831 = symbolic_binding_pattern B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.342: type = class_type @C, @C(%B) [symbolic]
@@ -115,7 +114,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %B.patt.loc6_9.1: %pattern_type.831 = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
+// CHECK:STDOUT:     %B.patt: %pattern_type.831 = symbolic_binding_pattern B, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
@@ -212,7 +211,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%B.loc6_9.1: bool) {
 // CHECK:STDOUT:   %B.loc6_9.2: bool = bind_symbolic_name B, 0 [symbolic = %B.loc6_9.2 (constants.%B)]
-// CHECK:STDOUT:   %B.patt.loc6_9.2: %pattern_type.831 = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -255,19 +253,16 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%B) {
 // CHECK:STDOUT:   %B.loc6_9.2 => constants.%B
-// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%B.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%true) {
 // CHECK:STDOUT:   %B.loc6_9.2 => constants.%true
-// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%B.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%false) {
 // CHECK:STDOUT:   %B.loc6_9.2 => constants.%false
-// CHECK:STDOUT:   %B.patt.loc6_9.2 => constants.%B.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -279,7 +274,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
-// CHECK:STDOUT:   %B.patt: %pattern_type.831 = symbolic_binding_pattern B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.342: type = class_type @C, @C(%B) [symbolic]
@@ -329,7 +323,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %B.patt.loc4_9.1: %pattern_type.831 = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
+// CHECK:STDOUT:     %B.patt: %pattern_type.831 = symbolic_binding_pattern B, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
@@ -430,7 +424,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%B.loc4_9.1: bool) {
 // CHECK:STDOUT:   %B.loc4_9.2: bool = bind_symbolic_name B, 0 [symbolic = %B.loc4_9.2 (constants.%B)]
-// CHECK:STDOUT:   %B.patt.loc4_9.2: %pattern_type.831 = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -471,19 +464,16 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%B) {
 // CHECK:STDOUT:   %B.loc4_9.2 => constants.%B
-// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%B.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%true) {
 // CHECK:STDOUT:   %B.loc4_9.2 => constants.%true
-// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%B.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%false) {
 // CHECK:STDOUT:   %B.loc4_9.2 => constants.%false
-// CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%B.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

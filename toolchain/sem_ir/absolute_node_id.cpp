@@ -58,8 +58,8 @@ static auto FollowImportRef(
   cursor_inst_id = import_ir_inst.inst_id();
 }
 
-// Returns true if this is the final parse node location. If the location is is
-// an import, follows it and returns false.
+// Returns true if this is the final parse node location. If the location is an
+// import, follows it and returns false.
 static auto HandleLocId(llvm::SmallVector<AbsoluteNodeId>& absolute_node_ids,
                         const File*& cursor_ir, InstId& cursor_inst_id,
                         LocId loc_id) -> bool {

@@ -34,7 +34,6 @@ export C2(T:! type);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C1.type: type = generic_class_type @C1 [concrete]
 // CHECK:STDOUT:   %C1.generic: %C1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [concrete]
@@ -47,12 +46,12 @@ export C2(T:! type);
 // CHECK:STDOUT:     .C2 = %C2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C1.decl: %C1.type = class_decl @C1 [concrete = constants.%C1.generic] {
-// CHECK:STDOUT:     %T.patt.loc4_10.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_10.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_10.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: %C2.type = class_decl @C2 [concrete = constants.%C2.generic] {
-// CHECK:STDOUT:     %T.patt.loc5_10.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc5_10.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_10.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -60,26 +59,22 @@ export C2(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C1(%T.loc4_10.1: type) {
 // CHECK:STDOUT:   %T.loc4_10.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_10.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_10.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C2(%T.loc5_10.1: type) {
 // CHECK:STDOUT:   %T.loc5_10.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_10.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc5_10.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_10.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_10.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C2(constants.%T) {
 // CHECK:STDOUT:   %T.loc5_10.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc5_10.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
@@ -88,8 +83,6 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C1.type: type = generic_class_type @C1 [concrete]
 // CHECK:STDOUT:   %C1.generic: %C1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C2.type: type = generic_class_type @C2 [concrete]
 // CHECK:STDOUT:   %C2.generic: %C2.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -114,25 +107,21 @@ export C2(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C1(imports.%Foo.import_ref.5ab3ec.1: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C2(imports.%Foo.import_ref.5ab3ec.2: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -37,7 +37,6 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
 // CHECK:STDOUT:   %T: %I.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2b5: type = pattern_type %I.type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.2b5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
@@ -55,7 +54,7 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
-// CHECK:STDOUT:     %T.patt.loc8_8.1: %pattern_type.2b5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.2b5 = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc8_8.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
@@ -94,7 +93,6 @@ fn Use(T:! I) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Use(%T.loc8_8.1: %I.type) {
 // CHECK:STDOUT:   %T.loc8_8.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc8_8.2: %pattern_type.2b5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc13_4.2: type = facet_access_type %T.loc8_8.2 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
@@ -123,6 +121,5 @@ fn Use(T:! I) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Use(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_8.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_8.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

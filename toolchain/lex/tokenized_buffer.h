@@ -85,15 +85,15 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     LineIndex start_line;
   };
 
-  // A range of tokens marked by `//@dump-semir-[start|end]`. The end token is
-  // non-inclusive: [start, end).
+  // A range of tokens marked by `//@dump-semir-[begin|end]`. The end token is
+  // non-inclusive: [begin, end).
   //
   // The particular syntax was chosen because it can be lexed efficiently. It
   // only occurs in invalid comment strings, so shouldn't slow down lexing of
   // correct code. It's also comment-like because its presence won't affect
   // parse/check.
   struct DumpSemIRRange {
-    TokenIndex start;
+    TokenIndex begin;
     TokenIndex end;
   };
 

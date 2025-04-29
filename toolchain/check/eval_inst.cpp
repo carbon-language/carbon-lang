@@ -504,12 +504,4 @@ auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)
       context.constant_values().Get(inst.init_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::ValueParamPattern inst)
-    -> ConstantEvalResult {
-  // TODO: Treat this as a non-expression (here and in GetExprCategory)
-  // once generic deduction doesn't need patterns to have constant values.
-  return ConstantEvalResult::Existing(
-      context.constant_values().Get(inst.subpattern_id));
-}
-
 }  // namespace Carbon::Check

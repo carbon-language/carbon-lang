@@ -71,7 +71,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -98,7 +97,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc6_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc6_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.7dc) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.7dc) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
@@ -117,7 +116,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc6_15.1: type) {
 // CHECK:STDOUT:   %T.loc6_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc6_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc6_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc6_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc6_15.2 [template = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -138,7 +136,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -153,7 +150,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %c: %C = bind_symbolic_name c, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type.c48 = symbolic_binding_pattern c, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -178,7 +174,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt.loc11_15.1: %pattern_type.c48 = symbolic_binding_pattern c, 0, template [template = %c.patt.loc11_15.2 (constants.%c.patt)]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = symbolic_binding_pattern c, 0, template
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -206,7 +202,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%c.loc11_15.1: %C) {
 // CHECK:STDOUT:   %c.loc11_15.2: %C = bind_symbolic_name c, 0, template [template = %c.loc11_15.2 (constants.%c)]
-// CHECK:STDOUT:   %c.patt.loc11_15.2: %pattern_type.c48 = symbolic_binding_pattern c, 0, template [template = %c.patt.loc11_15.2 (constants.%c.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc16_11.2: <instruction> = access_member_action %c.ref, n [template]
@@ -223,7 +218,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%c) {
 // CHECK:STDOUT:   %c.loc11_15.2 => constants.%c
-// CHECK:STDOUT:   %c.patt.loc11_15.2 => constants.%c.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_unimplemented_convert.carbon
@@ -231,7 +225,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -259,7 +252,7 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc4_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -272,7 +265,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_15.2 [template = %pattern_type (constants.%pattern_type.7dcd0a.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -314,7 +306,6 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

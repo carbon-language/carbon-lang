@@ -42,7 +42,6 @@ fn CallNegative() {
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
-// CHECK:STDOUT:   %N.patt: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %ErrorIfNIsZero.type: type = fn_type @ErrorIfNIsZero [concrete]
 // CHECK:STDOUT:   %ErrorIfNIsZero: %ErrorIfNIsZero.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -78,7 +77,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ErrorIfNIsZero.decl: %ErrorIfNIsZero.type = fn_decl @ErrorIfNIsZero [concrete = constants.%ErrorIfNIsZero] {
-// CHECK:STDOUT:     %N.patt.loc4_19.1: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = symbolic_binding_pattern N, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_39.1: type = splice_block %.loc4_39.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc4: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -94,7 +93,6 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ErrorIfNIsZero(%N.loc4_19.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc4_19.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_19.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc4_19.2: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Int.loc12_20.2: type = class_type @Int, @Int(%N.loc4_19.2) [symbolic = %Int.loc12_20.2 (constants.%Int)]
@@ -130,12 +128,10 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%int_0) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%int_0
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Int.loc12_20.2 => constants.%i0

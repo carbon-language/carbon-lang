@@ -20,7 +20,6 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
@@ -49,7 +48,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %T.patt.loc11_13.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -74,7 +73,6 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc11_13.1: type) {
 // CHECK:STDOUT:   %T.loc11_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc11_13.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc11_13.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
@@ -134,7 +132,6 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae

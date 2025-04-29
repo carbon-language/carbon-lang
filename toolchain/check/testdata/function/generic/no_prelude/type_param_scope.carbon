@@ -18,7 +18,6 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -30,7 +29,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc11_6.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %n.patt: @F.%pattern_type (%pattern_type.7dc) = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: @F.%pattern_type (%pattern_type.7dc) = value_param_pattern %n.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type (%pattern_type.7dc) = return_slot_pattern
@@ -48,7 +47,6 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc11_6.1: type) {
 // CHECK:STDOUT:   %T.loc11_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc11_6.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc11_6.2 [symbolic = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -69,7 +67,6 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

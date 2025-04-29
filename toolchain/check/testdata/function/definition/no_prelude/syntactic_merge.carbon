@@ -697,7 +697,6 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.a02530.1: type = fn_type @Foo.1 [concrete]
 // CHECK:STDOUT:   %Foo.ddeb7d.1: %Foo.type.a02530.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.2: type = fn_type @Foo.2 [concrete]
@@ -714,13 +713,13 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.a02530.1 = fn_decl @Foo.1 [concrete = constants.%Foo.ddeb7d.1] {
-// CHECK:STDOUT:     %a.patt.loc7_8.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc7_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.a02530.2 = fn_decl @Foo.2 [concrete = constants.%Foo.ddeb7d.2] {
-// CHECK:STDOUT:     %a.patt.loc15_8.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_8.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc15_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
@@ -738,14 +737,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Foo.1(%a.loc7_8.1: %C) {
 // CHECK:STDOUT:   %a.loc7_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc7_8.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Foo.2(%a.loc15_8.1: %C) {
 // CHECK:STDOUT:   %a.loc15_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc15_8.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_8.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -757,12 +754,10 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.1(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_8.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc7_8.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.2(constants.%a) {
 // CHECK:STDOUT:   %a.loc15_8.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc15_8.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon

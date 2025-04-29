@@ -235,7 +235,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc13: type = splice_block %ptr [concrete = <error>] {
@@ -757,7 +757,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = splice_block %ptr [concrete = <error>] {

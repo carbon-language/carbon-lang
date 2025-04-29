@@ -280,7 +280,6 @@ fn F() -> {} {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %_: type = bind_symbolic_name _, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -305,7 +304,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt.loc4_6.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %_.patt: %pattern_type = symbolic_binding_pattern _, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.loc4_6.1: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
 // CHECK:STDOUT:   }
@@ -314,7 +313,6 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%_.loc4_6.1: type) {
 // CHECK:STDOUT:   %_.loc4_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
-// CHECK:STDOUT:   %_.patt.loc4_6.2: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -336,12 +334,10 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
 // CHECK:STDOUT:   %_.loc4_6.2 => constants.%_
-// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %_.loc4_6.2 => constants.%empty_struct_type
-// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -351,7 +347,6 @@ fn F() -> {} {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %_: type = bind_symbolic_name _, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -376,7 +371,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt.loc4_6.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %_.patt: %pattern_type = symbolic_binding_pattern _, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.loc4_6.1: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
 // CHECK:STDOUT:   }
@@ -385,7 +380,6 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%_.loc4_6.1: type) {
 // CHECK:STDOUT:   %_.loc4_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
-// CHECK:STDOUT:   %_.patt.loc4_6.2: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -402,12 +396,10 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
 // CHECK:STDOUT:   %_.loc4_6.2 => constants.%_
-// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %_.loc4_6.2 => constants.%empty_struct_type
-// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- function_implict.carbon
@@ -415,7 +407,6 @@ fn F() -> {} {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %_: type = bind_symbolic_name _, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -437,12 +428,12 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt.loc4_6.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %_.patt: %pattern_type = symbolic_binding_pattern _, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.loc4_6.1: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %_.patt.loc6_6.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc6_6.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %_.patt: %pattern_type = symbolic_binding_pattern _, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.loc6_6.1: type = bind_symbolic_name _, 0 [symbolic = %_.loc6_6.2 (constants.%_)]
 // CHECK:STDOUT:   }
@@ -450,14 +441,12 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%_.loc4_6.1: type) {
 // CHECK:STDOUT:   %_.loc4_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc4_6.2 (constants.%_)]
-// CHECK:STDOUT:   %_.patt.loc4_6.2: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_6.2 (constants.%_.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%_.loc6_6.1: type) {
 // CHECK:STDOUT:   %_.loc6_6.2: type = bind_symbolic_name _, 0 [symbolic = %_.loc6_6.2 (constants.%_)]
-// CHECK:STDOUT:   %_.patt.loc6_6.2: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc6_6.2 (constants.%_.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -469,12 +458,10 @@ fn F() -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {
 // CHECK:STDOUT:   %_.loc4_6.2 => constants.%_
-// CHECK:STDOUT:   %_.patt.loc4_6.2 => constants.%_.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%_) {
 // CHECK:STDOUT:   %_.loc6_6.2 => constants.%_
-// CHECK:STDOUT:   %_.patt.loc6_6.2 => constants.%_.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_class.carbon
