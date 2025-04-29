@@ -1227,35 +1227,35 @@ auto Formatter::FormatConstant(ConstantId id) -> void {
     return;
   }
 
-    // For a symbolic constant in a generic, list the constant value in the
-    // generic first, and the canonical constant second.
-    if (id.is_symbolic()) {
-      const auto& symbolic_constant =
-          sem_ir_->constant_values().GetSymbolicConstant(id);
-      if (symbolic_constant.generic_id.has_value()) {
-        const auto& generic =
-            sem_ir_->generics().Get(symbolic_constant.generic_id);
-        if (auto eval_block_id =
-                generic.GetEvalBlock(symbolic_constant.index.region());
-            eval_block_id.has_value()) {
-          auto block = sem_ir_->inst_blocks().Get(eval_block_id);
-          if (symbolic_constant.index.has_value() &&
-              static_cast<size_t>(symbolic_constant.index.index()) <
-                  block.size()) {
-            FormatName(block[symbolic_constant.index.index()]);
-          } else {
-            out_ << "<missing inst for " << symbolic_constant.index
-                 << " in eval block>";
-          }
+  // For a symbolic constant in a generic, list the constant value in the
+  // generic first, and the canonical constant second.
+  if (id.is_symbolic()) {
+    const auto& symbolic_constant =
+        sem_ir_->constant_values().GetSymbolicConstant(id);
+    if (symbolic_constant.generic_id.has_value()) {
+      const auto& generic =
+          sem_ir_->generics().Get(symbolic_constant.generic_id);
+      if (auto eval_block_id =
+              generic.GetEvalBlock(symbolic_constant.index.region());
+          eval_block_id.has_value()) {
+        auto block = sem_ir_->inst_blocks().Get(eval_block_id);
+        if (symbolic_constant.index.has_value() &&
+            static_cast<size_t>(symbolic_constant.index.index()) <
+                block.size()) {
+          FormatName(block[symbolic_constant.index.index()]);
         } else {
-          out_ << "<missing eval block>";
+          out_ << "<missing inst for " << symbolic_constant.index
+               << " in eval block>";
         }
-        out_ << " (";
-        FormatName(sem_ir_->constant_values().GetInstId(id));
-        out_ << ")";
-        return;
+      } else {
+        out_ << "<missing eval block>";
       }
+      out_ << " (";
+      FormatName(sem_ir_->constant_values().GetInstId(id));
+      out_ << ")";
+      return;
     }
+  }
 
   FormatName(sem_ir_->constant_values().GetInstId(id));
 }
