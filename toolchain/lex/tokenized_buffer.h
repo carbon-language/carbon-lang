@@ -181,8 +181,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
       -> Diagnostics::ConvertedLoc;
 
   // Returns true if the given range overlaps with a `DumpSemIRRange`.
-  auto OverlapsWithDumpSemIRRange(TokenIndex begin, TokenIndex end) const
-      -> bool;
+  auto OverlapsWithDumpSemIRRange(TokenIndex begin,
+                                  TokenIndex inclusive_end) const -> bool;
 
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }

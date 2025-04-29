@@ -295,7 +295,7 @@ auto Formatter::FormatClass(ClassId id) -> void {
 
 auto Formatter::FormatInterface(InterfaceId id) -> void {
   const Interface& interface_info = sem_ir_->interfaces().Get(id);
-  if (!ShouldFormatEntity(interface_info, {interface_info.body_block_id})) {
+  if (!ShouldFormatEntity(interface_info, interface_info.body_block_id)) {
     return;
   }
 
@@ -355,7 +355,7 @@ auto Formatter::FormatAssociatedConstant(AssociatedConstantId id) -> void {
 
 auto Formatter::FormatImpl(ImplId id) -> void {
   const Impl& impl_info = sem_ir_->impls().Get(id);
-  if (!ShouldFormatEntity(impl_info, {impl_info.body_block_id})) {
+  if (!ShouldFormatEntity(impl_info, impl_info.body_block_id)) {
     return;
   }
 

@@ -441,7 +441,8 @@ auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
 }
 
 auto TokenizedBuffer::OverlapsWithDumpSemIRRange(TokenIndex begin,
-                                                 TokenIndex end) const -> bool {
+                                                 TokenIndex inclusive_end) const
+    -> bool {
   if (dump_sem_ir_ranges_.empty()) {
     return true;
   }
@@ -450,7 +451,7 @@ auto TokenizedBuffer::OverlapsWithDumpSemIRRange(TokenIndex begin,
   // that ends after `begin`.
   for (auto range : dump_sem_ir_ranges_) {
     if (range.end > begin) {
-      return range.begin <= end;
+      return range.begin <= inclusive_end;
     }
   }
   return false;
