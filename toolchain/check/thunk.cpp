@@ -299,23 +299,21 @@ static auto HasDeclaredReturnType(Context& context,
       .return_slot_pattern_id.has_value();
 }
 
+// Given a declaration of a thunk and the function that it should call, build
+// the thunk body.
 static auto BuildThunkDefinition(Context& context,
+                                 SemIR::FunctionId signature_id,
                                  SemIR::FunctionId function_id,
                                  SemIR::InstId thunk_id,
-                                 SemIR::InstId callee_id) -> bool {
-  // Suppress diagnostics produced when building the thunk.
-  bool any_errors = false;
+                                 SemIR::InstId callee_id) {
+  // TODO: Improve the diagnostics produced here.
   Diagnostics::AnnotationScope annot_scope(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
-        // Suppress any diagnostics being produced while building the thunk.
-        //
-        // TODO: Do an up-front check of whether the thunk obviously won't work,
-        // and diagnose that if not, but otherwise produce the diagnostics we
-        // get when building the thunk.
-        builder = context.emitter().BuildSuppressed();
-
-        // TODO: Distinguish errors from warnings.
-        any_errors = true;
+        CARBON_DIAGNOSTIC(
+            InThunk, Note,
+            "building thunk to match the signature of this function");
+        builder.Note(context.functions().Get(signature_id).first_owning_decl_id,
+                     InThunk);
       });
 
   // TODO: This duplicates much of the handling for FunctionDefinitionStart and
@@ -338,8 +336,6 @@ static auto BuildThunkDefinition(Context& context,
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();
   FinishGenericDefinition(context, function.generic_id);
-
-  return !any_errors;
 }
 
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
@@ -349,11 +345,31 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
 
   // Check whether we can use the given function without a thunk.
   // TODO: For virtual functions, we want different rules for checking `self`.
+  // TODO: This is too strict; for example, we should not compare parameter
+  // names here.
   if (CheckFunctionTypeMatches(
           context, context.functions().Get(callee.function_id),
           context.functions().Get(signature_id), signature_specific_id,
           /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
     return callee_id;
+  }
+
+  // From P3763:
+  //   If the function in the interface does not have a return type, the
+  //   program is invalid if the function in the impl specifies a return type.
+  //
+  // Call into the redeclaration checking logic to produce a suitable error.
+  //
+  // TODO: Consider a different rule: always use an explicit return type for the
+  // thunk, and always convert the result of the wrapped call to the return type
+  // of the thunk.
+  if (!HasDeclaredReturnType(context, signature_id) &&
+      HasDeclaredReturnType(context, callee.function_id)) {
+    bool success = CheckFunctionReturnTypeMatches(
+        context, context.functions().Get(callee.function_id),
+        context.functions().Get(signature_id), signature_specific_id);
+    CARBON_CHECK(!success, "Return type unexpectedly matches");
+    return SemIR::ErrorInst::InstId;
   }
 
   // Create a scope for the function's parameters and generic parameters.
@@ -366,29 +382,12 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
       context, SemIR::LocId(callee_id), signature_id,
       signature_specific_id, callee.function_id);
 
-  // TODO: We need to delay doing this until we get to the end of the enclosing
+  // Define the thunk.
+  // TODO: We should delay doing this until we get to the end of the enclosing
   // deferred definition scope, if there is one. For example, an `impl` inside a
   // `class` definition should have its thunks defined at the end of the class,
   // like they would be if they were defined inline.
-  if (!BuildThunkDefinition(context, function_id, thunk_id, callee_id)) {
-    // If building the thunk failed, produce the basic type mismatch diagnostic.
-    bool success = CheckFunctionTypeMatches(
-        context, context.functions().Get(callee.function_id),
-        context.functions().Get(signature_id), signature_specific_id,
-        /*check_syntax=*/false, /*check_self=*/true);
-    CARBON_CHECK(!success, "Function type unexpectedly started to match");
-  } else if (!HasDeclaredReturnType(context, signature_id) &&
-             HasDeclaredReturnType(context, callee.function_id)) {
-    // P3763:
-    //   If the function in the interface does not have a return type, the
-    //   program is invalid if the function in the impl specifies a return type.
-    //
-    // Call into the redeclaration checking logic to produce a suitable error.
-    bool success = CheckFunctionReturnTypeMatches(
-        context, context.functions().Get(callee.function_id),
-        context.functions().Get(signature_id), signature_specific_id);
-    CARBON_CHECK(!success, "Return type unexpectedly matches");
-  }
+  BuildThunkDefinition(context, signature_id, function_id, thunk_id, callee_id);
 
   context.scope_stack().Pop();
 
