@@ -74,7 +74,9 @@ def main() -> None:
         if not script_args.retry_all_errors and p.returncode in perm_error:
             exit(p.returncode)
 
-        print("Retrying a failure because it may be transient...")
+        print(
+            f"Retrying exit code {p.returncode} because it may be transient..."
+        )
         # Also sleep a bit to try to skip over transient machine load.
         time.sleep(attempt)
 
