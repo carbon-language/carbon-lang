@@ -556,10 +556,10 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
                          poison.query.query_self_inst_id,
                          poison.query.query_specific_interface_id);
       CARBON_DIAGNOSTIC(
-          PoisonedImplLookupConcreteResultNoteUse, Note,
+          PoisonedImplLookupConcreteResultNoteBadImpl, Note,
           "the use would select the `impl` here but it was not found yet");
       builder.Note(bad_impl.first_decl_id(),
-                   PoisonedImplLookupConcreteResultNoteUse);
+                   PoisonedImplLookupConcreteResultNoteBadImpl);
       CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
                         "the use had selected the `impl` here");
       builder.Note(prev_impl.first_decl_id(),
