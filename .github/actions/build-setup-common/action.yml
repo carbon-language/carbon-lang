@@ -111,3 +111,13 @@ runs:
         test --test_output=errors
         EOF
         ./scripts/run_bazel.py info
+
+    - name: Run bazel query to sync deps with retry
+      shell: bash
+      run: |
+        # This is intended to sync down dependencies. GitHub sometimes has a
+        # high failure rate for downloads that Bazel does (even from GitHub
+        # URLs). Bazel exits with `1` on HTTP errors. This command is
+        # effectively rerunning a few times in the hope that one of the
+        # executions succeeds enough that later commands have downloads cached.
+        ./scripts/run_bazel.py --attempts=5 --retry-all-errors query //...

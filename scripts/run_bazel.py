@@ -36,6 +36,11 @@ def main() -> None:
         help="Sets the number of jobs in user.bazelrc on the last attempt. If "
         "there is only one attempt, this will be set immediately.",
     )
+    parser.add_argument(
+        "--retry-all-errors",
+        action="store_true",
+        help="Retries permanent errors in addition to .",
+    )
     script_args, bazel_args = parser.parse_known_args()
 
     bazel = scripts_utils.locate_bazel()
@@ -66,7 +71,8 @@ def main() -> None:
         # Note that `36` is documented as "likely permanent", but we retry
         # it as most of our transient failures actually produce that error
         # code.
-        if p.returncode in (0, 1, 2, 3, 4, 8):
+        perm_error = (0, 1, 2, 3, 4, 8)
+        if not script_args.retry_all_errors and p.returncode in perm_error:
             exit(p.returncode)
 
         print("Retrying a failure because it may be transient...")
