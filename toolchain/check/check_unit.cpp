@@ -542,7 +542,7 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
           PoisonedImplLookupConcreteResult, Error,
           "found `impl` that changes the result of a previous use "
           "of `{0} as {1}`",
-          InstIdAsType, SemIR::NameId);
+          InstIdAsRawType, SemIR::NameId);
       auto builder =
           emitter_.Build(impl.first_decl_id(), PoisonedImplLookupConcreteResult,
                          poison.query.query_self_inst_id, interface_name_id);

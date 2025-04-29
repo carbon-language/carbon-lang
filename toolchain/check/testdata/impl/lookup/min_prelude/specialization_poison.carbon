@@ -34,10 +34,10 @@ fn G(p: C*) -> () {
   return H(p);
 }
 
-// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+7]]:1: error: found `impl` that changes the result of a previous use of interface `I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+7]]:1: error: found `impl` that changes the result of a previous use of `C* as I` [PoisonedImplLookupConcreteResult]
 // CHECK:STDERR: impl C* as I where .T = C {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-14]]:25: note: use of interface `I` here [PoisonedImplLookupConcreteResultNote]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-14]]:25: note: impl used here [PoisonedImplLookupConcreteResultNote]
 // CHECK:STDERR: fn H[W:! type](v: W) -> W.(I.T) {
 // CHECK:STDERR:                         ^~~~~~~
 // CHECK:STDERR:
@@ -61,10 +61,10 @@ fn H[W:! type](v: W) {
   let a: C.(I.T) = ();
 }
 
-// CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+7]]:1: error: found `impl` that changes the result of a previous use of interface `I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+7]]:1: error: found `impl` that changes the result of a previous use of `C as I` [PoisonedImplLookupConcreteResult]
 // CHECK:STDERR: impl C as I where .T = C {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE-6]]:10: note: use of interface `I` here [PoisonedImplLookupConcreteResultNote]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE-6]]:10: note: impl used here [PoisonedImplLookupConcreteResultNote]
 // CHECK:STDERR:   let a: C.(I.T) = ();
 // CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR:
@@ -89,10 +89,10 @@ fn G(c: C(())) -> () {
   return c.(I.F)();
 }
 
-// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+7]]:1: error: found `impl` that changes the result of a previous use of interface `I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+7]]:1: error: found `impl` that changes the result of a previous use of `C(()) as I` [PoisonedImplLookupConcreteResult]
 // CHECK:STDERR: impl C(()) as I where .T = {} {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-6]]:10: note: use of interface `I` here [PoisonedImplLookupConcreteResultNote]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-6]]:10: note: impl used here [PoisonedImplLookupConcreteResultNote]
 // CHECK:STDERR:   return c.(I.F)();
 // CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR:
@@ -119,10 +119,10 @@ fn G(c: C) -> () {
   return c.(I(C).F)();
 }
 
-// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+7]]:1: error: found `impl` that changes the result of a previous use of interface `I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+7]]:1: error: found `impl` that changes the result of a previous use of `C as I` [PoisonedImplLookupConcreteResult]
 // CHECK:STDERR: impl C as I(C) where .T = {} {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-6]]:10: note: use of interface `I` here [PoisonedImplLookupConcreteResultNote]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-6]]:10: note: impl used here [PoisonedImplLookupConcreteResultNote]
 // CHECK:STDERR:   return c.(I(C).F)();
 // CHECK:STDERR:          ^~~~~~~~~~
 // CHECK:STDERR:
