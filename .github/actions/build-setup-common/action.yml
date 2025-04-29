@@ -112,7 +112,7 @@ runs:
         EOF
         ./scripts/run_bazel.py info
 
-    - name: Run bazel query to sync deps with retry
+    - name: Run bazel to sync deps with retry
       shell: bash
       run: |
         # This is intended to sync down dependencies. GitHub sometimes has a
@@ -120,4 +120,8 @@ runs:
         # URLs). Bazel exits with `1` on HTTP errors. This command is
         # effectively rerunning a few times in the hope that one of the
         # executions succeeds enough that later commands have downloads cached.
-        ./scripts/run_bazel.py --attempts=5 --retry-all-errors query //...
+        #
+        # Disable lockfile updates, because some actions want to see
+        # differences.
+        ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
+          mod deps --lockfile_mode=off
