@@ -101,9 +101,8 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   for (auto [assoc_const_id, assoc_const_info] :
        sem_ir->associated_constants().enumerate()) {
     auto assoc_const_scope = GetScopeFor(assoc_const_id);
-    auto assoc_const_loc = sem_ir->insts().GetLocId(assoc_const_info.decl_id);
     GetScopeInfo(assoc_const_scope).name = globals_.AllocateName(
-        *this, assoc_const_loc,
+        *this, LocId(assoc_const_info.decl_id),
         sem_ir->names().GetIRBaseName(assoc_const_info.name_id).str());
     CollectNamesInGeneric(assoc_const_scope, assoc_const_info.generic_id);
   }
@@ -170,7 +169,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     // This should not happen in valid IR.
     RawStringOstream out;
     out << "<unexpected>." << inst_id;
-    auto loc_id = sem_ir_->insts().GetLocId(inst_id);
+    auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
     // TODO: Consider handling other kinds.
     if (loc_id.kind() == LocId::Kind::NodeId) {
       const auto& tree = sem_ir_->parse_tree();
@@ -263,6 +262,7 @@ auto InstNamer::Namespace::AllocateName(
 
   // Append location information to try to disambiguate.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
+    *loc_id = inst_namer.sem_ir_->insts().GetCanonicalLocId(*loc_id);
     // TODO: Consider handling other kinds.
     if (loc_id->kind() == LocId::Kind::NodeId) {
       const auto& tree = inst_namer.sem_ir_->parse_tree();
@@ -312,7 +312,7 @@ auto InstNamer::AddBlockLabel(
       loc_id && !loc_id->has_value()) {
     if (const auto& block = sem_ir_->inst_blocks().Get(block_id);
         !block.empty()) {
-      loc_id_or_fingerprint = sem_ir_->insts().GetLocId(block.front());
+      loc_id_or_fingerprint = LocId(block.front());
     }
   }
 
@@ -325,6 +325,7 @@ auto InstNamer::AddBlockLabel(
 // represents some kind of branch.
 auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
     -> void {
+  loc_id = sem_ir_->insts().GetCanonicalLocId(loc_id);
   if (!loc_id.node_id().has_value()) {
     AddBlockLabel(scope_id, branch.target_id, "", loc_id);
     return;
@@ -441,7 +442,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         if (scope_id == ScopeId::Constants || scope_id == ScopeId::ImportRefs) {
           loc_id_or_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, inst_id);
         } else {
-          loc_id_or_fingerprint = sem_ir_->insts().GetLocId(inst_id);
+          loc_id_or_fingerprint = LocId(inst_id);
         }
         insts_[inst_id.index] = {
             scope_id,
@@ -497,7 +498,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
-      AddBlockLabel(scope_id, sem_ir_->insts().GetLocId(inst_id), *branch);
+      AddBlockLabel(scope_id, LocId(inst_id), *branch);
     }
 
     CARBON_KIND_SWITCH(untyped_inst) {

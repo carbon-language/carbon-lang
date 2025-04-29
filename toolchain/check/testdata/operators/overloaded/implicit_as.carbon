@@ -65,7 +65,6 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [concrete]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.2: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [concrete]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [concrete]
@@ -140,7 +139,7 @@ fn Test() {
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: %Source.type = fn_decl @Source [concrete = constants.%Source] {
-// CHECK:STDOUT:     %T.patt.loc27_11.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %return.patt: @Source.%pattern_type (%pattern_type.7dcd0a.2) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Source.%pattern_type (%pattern_type.7dcd0a.2) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -237,7 +236,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Source(%T.loc27_11.1: type) {
 // CHECK:STDOUT:   %T.loc27_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc27_11.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc27_11.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc27_11.2 [symbolic = %pattern_type (constants.%pattern_type.7dcd0a.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -293,7 +291,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -305,7 +302,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%X) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%X
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.019
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -315,7 +311,6 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%i32) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T.patt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

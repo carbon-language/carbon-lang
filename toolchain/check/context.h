@@ -58,6 +58,7 @@ class Context {
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
+  auto TODO(SemIR::InstId loc_inst_id, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;

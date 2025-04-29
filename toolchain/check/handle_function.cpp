@@ -165,7 +165,7 @@ static auto MergeFunctionRedecl(Context& context,
   DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Fn, prev_function.name_id,
       RedeclInfo(new_function, node_id, new_is_definition),
-      RedeclInfo(prev_function, prev_function.latest_decl_id(),
+      RedeclInfo(prev_function, SemIR::LocId(prev_function.latest_decl_id()),
                  prev_function.has_definition_started()),
       prev_import_ir_id);
   if (new_is_definition && prev_function.has_definition_started()) {
@@ -246,7 +246,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 
   if (!prev_function_id.has_value()) {
     DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          prev_id);
+                          SemIR::LocId(prev_id));
     return;
   }
 
@@ -553,7 +553,8 @@ static auto BuildFunctionDecl(Context& context,
           SemIR::Function::VirtualModifier::Abstract) {
     CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
                       "definition of `abstract` function");
-    context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
+    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+                           DefinedAbstractFunction);
   }
 
   // Add to name lookup if needed, now that the decl is built.
@@ -584,9 +585,9 @@ static auto CheckFunctionDefinitionSignature(Context& context,
 
   // Check the return type is complete.
   if (function.return_slot_pattern_id.has_value()) {
-    CheckFunctionReturnType(
-        context, context.insts().GetLocId(function.return_slot_pattern_id),
-        function, SemIR::SpecificId::None);
+    CheckFunctionReturnType(context,
+                            SemIR::LocId(function.return_slot_pattern_id),
+                            function, SemIR::SpecificId::None);
     params_to_complete = params_to_complete.drop_back();
   }
 
@@ -599,7 +600,7 @@ static auto CheckFunctionDefinitionSignature(Context& context,
     // The parameter types need to be complete.
     RequireCompleteType(
         context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
-        context.insts().GetLocId(param_ref_id), [&] {
+        SemIR::LocId(param_ref_id), [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,
               "parameter has incomplete type {0} in function definition",
@@ -672,7 +673,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
-      context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
+      context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+                             MissingReturnStatement);
     } else {
       AddReturnCleanupBlock(context, node_id);
     }

@@ -47,7 +47,6 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %i32: type = class_type @Int.2, @Int.2(%int_32) [concrete]
 // CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %N.patt.f2c: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.dd3: type = class_type @A, @A(%N.51e) [symbolic]
@@ -134,7 +133,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [concrete = constants.%A.generic] {
-// CHECK:STDOUT:     %N.patt.loc6_9.1: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_9.2 (constants.%N.patt.f2c)]
+// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -177,7 +176,6 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @A(%N.loc6_9.1: %i32) {
 // CHECK:STDOUT:   %N.loc6_9.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc6_9.2 (constants.%N.51e)]
-// CHECK:STDOUT:   %N.patt.loc6_9.2: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_9.2 (constants.%N.patt.f2c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%N.loc6_9.2) [symbolic = %A (constants.%A.dd3)]
@@ -244,14 +242,12 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc6_9.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc6_9.2 => constants.%N.patt.f2c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(%N.loc6_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%int_0.6a9) {
 // CHECK:STDOUT:   %N.loc6_9.2 => constants.%int_0.6a9
-// CHECK:STDOUT:   %N.patt.loc6_9.2 => constants.%N.patt.f2c
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A => constants.%A.6fc

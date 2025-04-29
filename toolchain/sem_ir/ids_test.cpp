@@ -49,7 +49,7 @@ class IdsTestWithParam
   auto BuildIdAndLocId() -> std::pair<IdT, LocId> {
     auto [implicit, token_only, index] = GetParam();
     IdT id(index);
-    LocId loc_id = id;
+    LocId loc_id(id);
     if (implicit) {
       loc_id = loc_id.ToImplicit();
     }

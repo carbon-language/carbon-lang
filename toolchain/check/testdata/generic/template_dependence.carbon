@@ -29,7 +29,6 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [template]
 // CHECK:STDOUT:   %ptr.a13: type = ptr_type %ptr.79f [template]
 // CHECK:STDOUT:   %pattern_type.12d: type = pattern_type %ptr.a13 [template]
@@ -54,7 +53,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc4_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc4_25 (%pattern_type.12d) = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc4_25 (%pattern_type.12d) = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc4_33 (%pattern_type.afe) = return_slot_pattern
@@ -77,7 +76,6 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr.loc4_29.2: type = ptr_type %T.loc4_15.2 [template = %ptr.loc4_29.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:   %ptr.loc4_30.2: type = ptr_type %ptr.loc4_29.2 [template = %ptr.loc4_30.2 (constants.%ptr.a13)]
 // CHECK:STDOUT:   %pattern_type.loc4_25: type = pattern_type %ptr.loc4_30.2 [template = %pattern_type.loc4_25 (constants.%pattern_type.12d)]
@@ -98,7 +96,6 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %ptr.loc4_29.2 => constants.%ptr.79f
 // CHECK:STDOUT:   %ptr.loc4_30.2 => constants.%ptr.a13
 // CHECK:STDOUT:   %pattern_type.loc4_25 => constants.%pattern_type.12d
@@ -110,9 +107,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
-// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.30b: type = tuple_type (%T, %U) [template]
 // CHECK:STDOUT:   %pattern_type.65c: type = pattern_type %tuple.type.30b [template]
@@ -138,8 +133,8 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc4_15.1: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %U.patt.loc4_25.1: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_25.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template
+// CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type (%pattern_type.65c) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type (%pattern_type.65c) = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -156,9 +151,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type, %U.loc4_25.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_15.2: %pattern_type.98f = symbolic_binding_pattern T, 0, template [template = %T.patt.loc4_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %U.loc4_25.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc4_25.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc4_25.2: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc4_25.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc4_15.2, %U.loc4_25.2) [template = %tuple.type (constants.%tuple.type.30b)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %tuple.type [template = %pattern_type (constants.%pattern_type.65c)]
 // CHECK:STDOUT:
@@ -193,9 +186,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %U.loc4_25.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc4_25.2 => constants.%U.patt
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.30b
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.65c
 // CHECK:STDOUT:

@@ -206,7 +206,6 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %pattern_type.68b: type = pattern_type %C [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.a32: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
@@ -233,7 +232,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%pattern_type.loc14_10 (%pattern_type.68b) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @F.%pattern_type.loc14_10 (%pattern_type.68b) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %U.patt.loc20: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1
 // CHECK:STDOUT:     %u.patt: @F.%pattern_type.loc14_32 (%pattern_type.a32) = binding_pattern u
 // CHECK:STDOUT:     %u.param_patt: @F.%pattern_type.loc14_32 (%pattern_type.a32) = value_param_pattern %u.patt, call_param1
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc14_32 (%pattern_type.a32) = return_slot_pattern
@@ -275,7 +274,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: @F.%pattern_type.loc14_10 (%pattern_type.68b) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @F.%pattern_type.loc14_10 (%pattern_type.68b) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %U.patt.loc20: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14 (constants.%U.patt)]
+// CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1
 // CHECK:STDOUT:       %u.patt: @F.%pattern_type.loc14_32 (%pattern_type.a32) = binding_pattern u
 // CHECK:STDOUT:       %u.param_patt: @F.%pattern_type.loc14_32 (%pattern_type.a32) = value_param_pattern %u.patt, call_param1
 // CHECK:STDOUT:       %return.patt: @F.%pattern_type.loc14_32 (%pattern_type.a32) = return_slot_pattern
@@ -310,7 +309,6 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:   %pattern_type.loc14_10: type = pattern_type %C [symbolic = %pattern_type.loc14_10 (constants.%pattern_type.68b)]
 // CHECK:STDOUT:   %U.loc14_22.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_22.1 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc14: %pattern_type.98f = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14 (constants.%U.patt)]
 // CHECK:STDOUT:   %pattern_type.loc14_32: type = pattern_type %U.loc14_22.1 [symbolic = %pattern_type.loc14_32 (constants.%pattern_type.a32)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -336,7 +334,6 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %C => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc14_10 => constants.%pattern_type.68b
 // CHECK:STDOUT:   %U.loc14_22.1 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc14 => constants.%U.patt
 // CHECK:STDOUT:   %pattern_type.loc14_32 => constants.%pattern_type.a32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

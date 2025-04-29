@@ -25,7 +25,6 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Wrap.type: type = generic_class_type @Wrap [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Wrap.generic: %Wrap.type = struct_value () [concrete]
@@ -84,7 +83,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [concrete = constants.%Wrap.generic] {
-// CHECK:STDOUT:     %T.patt.loc11_12.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_12.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -94,7 +93,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Wrap(%T.loc11_12.1: type) {
 // CHECK:STDOUT:   %T.loc11_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc11_12.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T.loc11_12.2) [symbolic = %Make.type (constants.%Make.type.652)]
@@ -218,7 +216,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.652
@@ -244,7 +241,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%i32) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.572
@@ -264,7 +260,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.20e
@@ -284,7 +279,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%C) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.708

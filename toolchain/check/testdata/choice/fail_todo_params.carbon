@@ -159,7 +159,6 @@ choice C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
@@ -183,7 +182,7 @@ choice C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %T.patt.loc3_10.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc3_10.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc3_10.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -191,7 +190,6 @@ choice C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc3_10.1: type) {
 // CHECK:STDOUT:   %T.loc3_10.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc3_10.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc3_10.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc3_10.2 [symbolic = %pattern_type (constants.%pattern_type.7dc)]
@@ -212,7 +210,6 @@ choice C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc3_10.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc3_10.2 => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_self_param.carbon

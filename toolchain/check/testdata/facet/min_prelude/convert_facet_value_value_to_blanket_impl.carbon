@@ -29,12 +29,10 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Self.fd4: %Animal.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %A: %Animal.type = bind_symbolic_name A, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.3b0: type = pattern_type %Animal.type [concrete]
-// CHECK:STDOUT:   %A.patt: %pattern_type.3b0 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %A.as_type: type = facet_access_type %A [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness.8abeaf.1: <witness> = impl_witness file.%Eats.impl_witness_table, @impl(%A) [symbolic]
 // CHECK:STDOUT:   %T.1b5: %Eats.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.a05: type = pattern_type %Eats.type [concrete]
-// CHECK:STDOUT:   %T.patt.cea: %pattern_type.a05 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.27d: type = facet_access_type %T.1b5 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2b4: type = pattern_type %T.as_type.27d [symbolic]
 // CHECK:STDOUT:   %Feed.type: type = fn_type @Feed [concrete]
@@ -42,7 +40,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Feed: %Feed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.c75: <witness> = require_complete_type %T.as_type.27d [symbolic]
 // CHECK:STDOUT:   %T.fd4: %Animal.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt.e5b: %pattern_type.3b0 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.2ad: type = facet_access_type %T.fd4 [symbolic]
 // CHECK:STDOUT:   %pattern_type.36a: type = pattern_type %T.as_type.2ad [symbolic]
 // CHECK:STDOUT:   %HandleAnimal.type: type = fn_type @HandleAnimal [concrete]
@@ -72,7 +69,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Eats.decl: type = interface_decl @Eats [concrete = constants.%Eats.type] {} {}
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {
-// CHECK:STDOUT:     %A.patt.loc17_14.1: %pattern_type.3b0 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc17_14.2 (constants.%A.patt)]
+// CHECK:STDOUT:     %A.patt: %pattern_type.3b0 = symbolic_binding_pattern A, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %Animal.type = name_ref A, %A.loc17_14.1 [symbolic = %A.loc17_14.2 (constants.%A)]
 // CHECK:STDOUT:     %A.as_type.loc17_26.1: type = facet_access_type %A.ref [symbolic = %A.as_type.loc17_26.2 (constants.%A.as_type)]
@@ -84,7 +81,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @impl [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table, @impl(constants.%A) [symbolic = @impl.%Eats.impl_witness (constants.%Eats.impl_witness.8abeaf.1)]
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
-// CHECK:STDOUT:     %T.patt.loc19_9.1: %pattern_type.a05 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_9.2 (constants.%T.patt.cea)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.a05 = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.2b4) = binding_pattern e
 // CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type (%pattern_type.2b4) = value_param_pattern %e.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -99,7 +96,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %e: @Feed.%T.as_type.loc19_22.2 (%T.as_type.27d) = bind_name e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
-// CHECK:STDOUT:     %T.patt.loc21_17.1: %pattern_type.3b0 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_17.2 (constants.%T.patt.e5b)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.3b0 = symbolic_binding_pattern T, 0
 // CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.36a) = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type (%pattern_type.36a) = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
@@ -133,7 +130,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(%A.loc17_14.1: %Animal.type) {
 // CHECK:STDOUT:   %A.loc17_14.2: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc17_14.2 (constants.%A)]
-// CHECK:STDOUT:   %A.patt.loc17_14.2: %pattern_type.3b0 = symbolic_binding_pattern A, 0 [symbolic = %A.patt.loc17_14.2 (constants.%A.patt)]
 // CHECK:STDOUT:   %A.as_type.loc17_26.2: type = facet_access_type %A.loc17_14.2 [symbolic = %A.as_type.loc17_26.2 (constants.%A.as_type)]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table, @impl(%A.loc17_14.2) [symbolic = %Eats.impl_witness (constants.%Eats.impl_witness.8abeaf.1)]
 // CHECK:STDOUT:
@@ -147,7 +143,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Feed(%T.loc19_9.1: %Eats.type) {
 // CHECK:STDOUT:   %T.loc19_9.2: %Eats.type = bind_symbolic_name T, 0 [symbolic = %T.loc19_9.2 (constants.%T.1b5)]
-// CHECK:STDOUT:   %T.patt.loc19_9.2: %pattern_type.a05 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_9.2 (constants.%T.patt.cea)]
 // CHECK:STDOUT:   %T.as_type.loc19_22.2: type = facet_access_type %T.loc19_9.2 [symbolic = %T.as_type.loc19_22.2 (constants.%T.as_type.27d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc19_22.2 [symbolic = %pattern_type (constants.%pattern_type.2b4)]
 // CHECK:STDOUT:
@@ -162,7 +157,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @HandleAnimal(%T.loc21_17.1: %Animal.type) {
 // CHECK:STDOUT:   %T.loc21_17.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc21_17.2 (constants.%T.fd4)]
-// CHECK:STDOUT:   %T.patt.loc21_17.2: %pattern_type.3b0 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_17.2 (constants.%T.patt.e5b)]
 // CHECK:STDOUT:   %T.as_type.loc21_32.2: type = facet_access_type %T.loc21_17.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type.2ad)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc21_32.2 [symbolic = %pattern_type (constants.%pattern_type.36a)]
 // CHECK:STDOUT:
@@ -194,7 +188,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%A) {
 // CHECK:STDOUT:   %A.loc17_14.2 => constants.%A
-// CHECK:STDOUT:   %A.patt.loc17_14.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.as_type.loc17_26.2 => constants.%A.as_type
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.8abeaf.1
 // CHECK:STDOUT: }
@@ -203,21 +196,18 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%T.1b5) {
 // CHECK:STDOUT:   %T.loc19_9.2 => constants.%T.1b5
-// CHECK:STDOUT:   %T.patt.loc19_9.2 => constants.%T.patt.cea
 // CHECK:STDOUT:   %T.as_type.loc19_22.2 => constants.%T.as_type.27d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2b4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T.fd4) {
 // CHECK:STDOUT:   %T.loc21_17.2 => constants.%T.fd4
-// CHECK:STDOUT:   %T.patt.loc21_17.2 => constants.%T.patt.e5b
 // CHECK:STDOUT:   %T.as_type.loc21_32.2 => constants.%T.as_type.2ad
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.36a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T.fd4) {
 // CHECK:STDOUT:   %A.loc17_14.2 => constants.%T.fd4
-// CHECK:STDOUT:   %A.patt.loc17_14.2 => constants.%A.patt
 // CHECK:STDOUT:   %A.as_type.loc17_26.2 => constants.%T.as_type.2ad
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.8abeaf.2
 // CHECK:STDOUT:
@@ -226,7 +216,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Eats.facet) {
 // CHECK:STDOUT:   %T.loc19_9.2 => constants.%Eats.facet
-// CHECK:STDOUT:   %T.patt.loc19_9.2 => constants.%T.patt.cea
 // CHECK:STDOUT:   %T.as_type.loc19_22.2 => constants.%T.as_type.2ad
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.36a
 // CHECK:STDOUT:
@@ -241,7 +230,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic]
 // CHECK:STDOUT:   %As.type.b51: type = generic_interface_type @As [concrete]
 // CHECK:STDOUT:   %As.generic: %As.type.b51 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.type.8ba: type = facet_type <@As, @As(%Dest)> [symbolic]
@@ -271,12 +259,12 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     .ImplicitAs = %ImplicitAs.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [concrete = constants.%As.generic] {
-// CHECK:STDOUT:     %Dest.patt.loc8_14.1: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc8_14.2 (constants.%Dest.patt)]
+// CHECK:STDOUT:     %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Dest.loc8_14.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc8_14.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
-// CHECK:STDOUT:     %Dest.patt.loc12_22.1: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc12_22.2 (constants.%Dest.patt)]
+// CHECK:STDOUT:     %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Dest.loc12_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc12_22.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
@@ -284,7 +272,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(%Dest.loc8_14.1: type) {
 // CHECK:STDOUT:   %Dest.loc8_14.2: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc8_14.2 (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt.loc8_14.2: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc8_14.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%Dest.loc8_14.2)> [symbolic = %As.type (constants.%As.type.8ba)]
@@ -326,7 +313,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(%Dest.loc12_22.1: type) {
 // CHECK:STDOUT:   %Dest.loc12_22.2: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc12_22.2 (constants.%Dest)]
-// CHECK:STDOUT:   %Dest.patt.loc12_22.2: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [symbolic = %Dest.patt.loc12_22.2 (constants.%Dest.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest.loc12_22.2)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.07f)]
@@ -390,7 +376,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc8_14.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc8_14.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.b4e) {
@@ -408,7 +393,6 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
-// CHECK:STDOUT:   %Dest.patt.loc12_22.2 => constants.%Dest.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%Dest, constants.%Self.0f3) {

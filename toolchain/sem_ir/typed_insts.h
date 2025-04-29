@@ -398,7 +398,7 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
-          .constant_kind = InstConstantKind::Always,
+          .constant_kind = InstConstantKind::Never,
           .is_lowered = false,
       });
 
@@ -1321,7 +1321,9 @@ struct ValueParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
-          {.ir_name = "value_param_pattern", .is_lowered = false});
+          {.ir_name = "value_param_pattern",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;

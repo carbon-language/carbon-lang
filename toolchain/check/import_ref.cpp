@@ -148,7 +148,8 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
   auto conflict_id =
       AddImportRef(context, SemIR::ImportIRInst(new_ir_id, new_inst_id));
   // TODO: Pass the imported name location instead of the conflict id.
-  DiagnoseDuplicateName(context, name_id, conflict_id, prev_id);
+  DiagnoseDuplicateName(context, name_id, SemIR::LocId(conflict_id),
+                        SemIR::LocId(prev_id));
 }
 
 // Returns an instruction that has the specified constant value.
@@ -590,7 +591,7 @@ class ImportRefResolver : public ImportContext {
     auto cursor_inst_id = inst_id;
 
     while (true) {
-      auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+      auto loc_id = cursor_ir->insts().GetCanonicalLocId(cursor_inst_id);
       if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
         return result;
       }
@@ -3176,8 +3177,8 @@ static auto FinishPendingGeneric(ImportRefResolver& resolver,
   resolver.local_generics().Get(pending.local_id).decl_block_id = decl_block_id;
 
   auto local_decl_id = resolver.local_generics().Get(pending.local_id).decl_id;
-  auto self_specific_id = MakeSelfSpecific(resolver.local_context(),
-                                           local_decl_id, pending.local_id);
+  auto self_specific_id = MakeSelfSpecific(
+      resolver.local_context(), SemIR::LocId(local_decl_id), pending.local_id);
   resolver.local_generics().Get(pending.local_id).self_specific_id =
       self_specific_id;
   resolver.AddPendingSpecific({.import_id = import_generic.self_specific_id,

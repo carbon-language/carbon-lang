@@ -109,7 +109,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: impl @impl.006: %i32 as %Simple.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.c98 = fn_decl @G.2 [concrete = constants.%G.e73] {
 // CHECK:STDOUT:     %self.patt: <error> = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: <error> = value_param_pattern %self.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %self.param_patt: <error> = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [concrete = <error>]
