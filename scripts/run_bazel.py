@@ -39,7 +39,7 @@ def main() -> None:
     parser.add_argument(
         "--retry-all-errors",
         action="store_true",
-        help="Retries permanent errors in addition to .",
+        help="Retries permanent errors in addition to transient.",
     )
     script_args, bazel_args = parser.parse_known_args()
 
