@@ -526,29 +526,44 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
                                     poison.non_canonical_query_self_inst_id,
                                     /*poison_concrete_results=*/false);
     CARBON_CHECK(witness_result.has_concrete_value());
-    auto witness_id = witness_result.concrete_witness();
-    if (witness_id != poison.impl_witness) {
+    auto found_witness_id = witness_result.concrete_witness();
+    if (found_witness_id != poison.impl_witness) {
+      auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
+        auto table_id = context_.insts()
+                            .GetAs<SemIR::ImplWitness>(witness_id)
+                            .witness_table_id;
+        return context_.insts()
+            .GetAs<SemIR::ImplWitnessTable>(table_id)
+            .impl_id;
+      };
+
       // We can get the `Impl` from the resulting witness here, which is the
       // `Impl` that conflicts with the previous poison query.
-      auto table_id = context_.insts()
-                          .GetAs<SemIR::ImplWitness>(witness_id)
-                          .witness_table_id;
-      auto impl_id =
-          context_.insts().GetAs<SemIR::ImplWitnessTable>(table_id).impl_id;
-      const auto& impl = context_.impls().Get(impl_id);
+      auto bad_impl_id = witness_to_impl_id(found_witness_id);
+      const auto& bad_impl = context_.impls().Get(bad_impl_id);
+
+      auto prev_impl_id = witness_to_impl_id(poison.impl_witness);
+      const auto& prev_impl = context_.impls().Get(prev_impl_id);
+
+      // Both impls will give the same interface name, so doesn't matter which
+      // we used here.
       auto interface_name_id =
-          context_.interfaces().Get(impl.interface.interface_id).name_id;
-      CARBON_DIAGNOSTIC(
-          PoisonedImplLookupConcreteResult, Error,
-          "found `impl` that changes the result of a previous use "
-          "of `{0} as {1}`",
-          InstIdAsRawType, SemIR::NameId);
-      auto builder =
-          emitter_.Build(impl.first_decl_id(), PoisonedImplLookupConcreteResult,
-                         poison.query.query_self_inst_id, interface_name_id);
-      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNote, Note,
-                        "impl used here");
-      builder.Note(poison.loc_id, PoisonedImplLookupConcreteResultNote);
+          context_.interfaces().Get(bad_impl.interface.interface_id).name_id;
+
+      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResult, Error,
+                        "found `impl` that would change the result of a "
+                        "previous use of `{0} as {1}`",
+                        InstIdAsRawType, SemIR::NameId);
+      auto builder = emitter_.Build(
+          bad_impl.first_decl_id(), PoisonedImplLookupConcreteResult,
+          poison.query.query_self_inst_id, interface_name_id);
+      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNoteUse, Note,
+                        "use of impl here");
+      builder.Note(poison.loc_id, PoisonedImplLookupConcreteResultNoteUse);
+      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
+                        "previously got result from `impl` here");
+      builder.Note(prev_impl.first_decl_id(),
+                   PoisonedImplLookupConcreteResultNotePreviousImpl);
       builder.Emit();
     }
   }
