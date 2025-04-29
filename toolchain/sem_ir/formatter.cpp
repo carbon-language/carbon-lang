@@ -144,47 +144,7 @@ auto Formatter::IncludeChunkInOutput(size_t chunk) -> void {
   }
 }
 
-auto Formatter::OverlapsWithDumpSemIRRange(
-    InstId inst_id, llvm::ArrayRef<InstBlockId> body_block_ids) -> bool {
-  if (!sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
-    return true;
-  }
-
-  auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
-  if (loc_id.kind() != LocId::Kind::NodeId) {
-    return false;
-  }
-
-  // For the declaration, we use the helper for checking the full range.
-  auto token_range =
-      get_tree_and_subtrees_().GetSubtreeTokenRange(loc_id.node_id());
-  if (sem_ir_->parse_tree().tokens().OverlapsWithDumpSemIRRange(
-          token_range.begin, token_range.end)) {
-    return true;
-  }
-
-  // If the declaration wasn't in scope, we need to check the body.
-  // TODO: We currently don't track the definition end, so this checks all
-  // instructions in the body. Maybe we should start tracking definition end
-  // nodes on entities?
-  for (auto body_block_id : body_block_ids) {
-    auto block = sem_ir_->inst_blocks().GetOrEmpty(body_block_id);
-    for (auto inst_id : block) {
-      auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
-      if (loc_id.kind() == LocId::Kind::NodeId) {
-        auto token = sem_ir_->parse_tree().node_token(loc_id.node_id());
-        if (sem_ir_->parse_tree().tokens().OverlapsWithDumpSemIRRange(token,
-                                                                      token)) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-auto Formatter::ShouldFormatEntity(InstId decl_id,
-                                   llvm::ArrayRef<InstBlockId> body_block_ids)
+auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
     -> bool {
   if (!decl_id.has_value()) {
     return true;
@@ -192,13 +152,60 @@ auto Formatter::ShouldFormatEntity(InstId decl_id,
   if (!should_format_entity_(decl_id)) {
     return false;
   }
-  return OverlapsWithDumpSemIRRange(decl_id, body_block_ids);
+
+  if (!sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+    return true;
+  }
+
+  // When there are dump ranges, ignore imported instructions.
+  auto loc_id = sem_ir_->insts().GetCanonicalLocId(decl_id);
+  if (loc_id.kind() != LocId::Kind::NodeId) {
+    return false;
+  }
+
+  const auto& tree_and_subtrees = get_tree_and_subtrees_();
+
+  // This takes the earliest token from either the node or its first postorder
+  // child. The first postorder child isn't necessarily the earliest token in
+  // the subtree (for example, it can miss modifiers), but finding the earliest
+  // token requires walking *all* children, whereas this approach is
+  // constant-time.
+  auto begin = sem_ir_->parse_tree().node_token(
+      *tree_and_subtrees.postorder(loc_id.node_id()).begin());
+
+  // Non-defining declarations will be associated with a `Decl` node.
+  // Definitions will have a `DefinitionStart` for which we can use the parent
+  // to find the `Definition`, giving a range that includes the definition's
+  // body.
+  auto end_node_id = loc_id.node_id();
+  if (is_definition_start) {
+    end_node_id = tree_and_subtrees.parent(end_node_id);
+  }
+  auto inclusive_end = sem_ir_->parse_tree().node_token(end_node_id);
+
+  return sem_ir_->parse_tree().tokens().OverlapsWithDumpSemIRRange(
+      begin, inclusive_end);
 }
 
-auto Formatter::ShouldFormatEntity(const EntityWithParamsBase& entity,
-                                   llvm::ArrayRef<InstBlockId> body_block_ids)
-    -> bool {
-  return ShouldFormatEntity(entity.latest_decl_id(), body_block_ids);
+auto Formatter::ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
+  return ShouldFormatEntity(entity.latest_decl_id(),
+                            entity.definition_id.has_value());
+}
+
+auto Formatter::ShouldFormatInst(InstId inst_id) -> bool {
+  if (!sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+    return true;
+  }
+
+  // When there are dump ranges, ignore imported instructions.
+  auto loc_id = sem_ir_->insts().GetCanonicalLocId(inst_id);
+  if (loc_id.kind() != LocId::Kind::NodeId) {
+    return false;
+  }
+
+  auto token = sem_ir_->parse_tree().node_token(loc_id.node_id());
+  return sem_ir_->parse_tree().tokens().OverlapsWithDumpSemIRRange(token,
+                                                                   token);
 }
 
 auto Formatter::OpenBrace() -> void {
@@ -266,7 +273,7 @@ auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
 
 auto Formatter::FormatClass(ClassId id) -> void {
   const Class& class_info = sem_ir_->classes().Get(id);
-  if (!ShouldFormatEntity(class_info, class_info.body_block_id)) {
+  if (!ShouldFormatEntity(class_info)) {
     return;
   }
 
@@ -295,7 +302,7 @@ auto Formatter::FormatClass(ClassId id) -> void {
 
 auto Formatter::FormatInterface(InterfaceId id) -> void {
   const Interface& interface_info = sem_ir_->interfaces().Get(id);
-  if (!ShouldFormatEntity(interface_info, interface_info.body_block_id)) {
+  if (!ShouldFormatEntity(interface_info)) {
     return;
   }
 
@@ -331,7 +338,8 @@ auto Formatter::FormatInterface(InterfaceId id) -> void {
 auto Formatter::FormatAssociatedConstant(AssociatedConstantId id) -> void {
   const AssociatedConstant& assoc_const =
       sem_ir_->associated_constants().Get(id);
-  if (!ShouldFormatEntity(assoc_const.decl_id, /*body_block_ids=*/{})) {
+  if (!ShouldFormatEntity(assoc_const.decl_id,
+                          /*is_definition_start=*/false)) {
     return;
   }
 
@@ -355,7 +363,7 @@ auto Formatter::FormatAssociatedConstant(AssociatedConstantId id) -> void {
 
 auto Formatter::FormatImpl(ImplId id) -> void {
   const Impl& impl_info = sem_ir_->impls().Get(id);
-  if (!ShouldFormatEntity(impl_info, impl_info.body_block_id)) {
+  if (!ShouldFormatEntity(impl_info)) {
     return;
   }
 
@@ -397,7 +405,7 @@ auto Formatter::FormatImpl(ImplId id) -> void {
 
 auto Formatter::FormatFunction(FunctionId id) -> void {
   const Function& fn = sem_ir_->functions().Get(id);
-  if (!ShouldFormatEntity(fn, fn.body_block_ids)) {
+  if (!ShouldFormatEntity(fn)) {
     return;
   }
 
@@ -698,7 +706,7 @@ auto Formatter::FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
 }
 
 auto Formatter::FormatInst(InstId inst_id) -> void {
-  if (!OverlapsWithDumpSemIRRange(inst_id, /*body_block_ids=*/{})) {
+  if (!ShouldFormatInst(inst_id)) {
     return;
   }
 

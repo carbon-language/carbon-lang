@@ -14,7 +14,7 @@ namespace Carbon::Parse {
 TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
                                  const Tree& tree)
     : tokens_(&tokens), tree_(&tree) {
-  subtree_sizes_.reserve(tree_->size());
+  subtree_data_.reserve(tree_->size());
 
   // A stack of nodes which haven't yet been used as children.
   llvm::SmallVector<NodeId> size_stack;
@@ -30,8 +30,8 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
           kind, size_stack.size());
       for (auto i : llvm::seq(kind.child_count())) {
         auto child = size_stack.pop_back_val();
-        CARBON_CHECK(static_cast<size_t>(child.index) < subtree_sizes_.size());
-        size += subtree_sizes_[child.index];
+        CARBON_CHECK(static_cast<size_t>(child.index) < subtree_data_.size());
+        size += subtree_data_[child.index].size;
         if (kind.has_bracket() && i == kind.child_count() - 1) {
           CARBON_CHECK(kind.bracket() == tree.node_kind(child),
                        "Node {0} with child count {1} needs bracket {2}, found "
@@ -45,17 +45,23 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
         CARBON_CHECK(!size_stack.empty(), "Node {0} is missing bracket {1}",
                      kind, kind.bracket());
         auto child = size_stack.pop_back_val();
-        size += subtree_sizes_[child.index];
+        size += subtree_data_[child.index].size;
         if (kind.bracket() == tree.node_kind(child)) {
           break;
         }
       }
     }
     size_stack.push_back(n);
-    subtree_sizes_.push_back(size);
+    subtree_data_.push_back({.size = size});
+
+    if (size > 1) {
+      for (auto child : children(n)) {
+        subtree_data_[child.index].parent = n;
+      }
+    }
   }
 
-  CARBON_CHECK(static_cast<int>(subtree_sizes_.size()) == tree_->size());
+  CARBON_CHECK(static_cast<int>(subtree_data_.size()) == tree_->size());
 
   // Remaining nodes should all be roots in the tree; make sure they line up.
   CARBON_CHECK(
@@ -63,10 +69,11 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
       "{0} {1}", size_stack.back(), tree_->size() - 1);
   int prev_index = -1;
   for (const auto& n : size_stack) {
-    CARBON_CHECK(n.index - subtree_sizes_[n.index] == prev_index,
+    CARBON_CHECK(n.index - subtree_data_[n.index].size == prev_index,
                  "NodeId {0} is a root {1} with subtree_size {2}, but previous "
                  "root was at {3}.",
-                 n, tree_->node_kind(n), subtree_sizes_[n.index], prev_index);
+                 n, tree_->node_kind(n), subtree_data_[n.index].size,
+                 prev_index);
     prev_index = n.index;
   }
 }
@@ -117,14 +124,14 @@ auto TreeAndSubtrees::postorder(NodeId n) const
     -> llvm::iterator_range<Tree::PostorderIterator> {
   // The postorder ends after this node, the root, and begins at the begin of
   // its subtree.
-  int begin_index = n.index - subtree_sizes_[n.index] + 1;
+  int begin_index = n.index - subtree_data_[n.index].size + 1;
   return Tree::PostorderIterator::MakeRange(NodeId(begin_index), n);
 }
 
 auto TreeAndSubtrees::children(NodeId n) const
     -> llvm::iterator_range<SiblingIterator> {
   CARBON_CHECK(n.has_value());
-  int end_index = n.index - subtree_sizes_[n.index];
+  int end_index = n.index - subtree_data_[n.index].size;
   return llvm::iterator_range<SiblingIterator>(
       SiblingIterator(*this, NodeId(n.index - 1)),
       SiblingIterator(*this, NodeId(end_index)));
@@ -133,7 +140,7 @@ auto TreeAndSubtrees::children(NodeId n) const
 auto TreeAndSubtrees::roots() const -> llvm::iterator_range<SiblingIterator> {
   return llvm::iterator_range<SiblingIterator>(
       SiblingIterator(*this,
-                      NodeId(static_cast<int>(subtree_sizes_.size()) - 1)),
+                      NodeId(static_cast<int>(subtree_data_.size()) - 1)),
       SiblingIterator(*this, NodeId(-1)));
 }
 
@@ -153,8 +160,8 @@ auto TreeAndSubtrees::PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
     output << ", has_error: yes";
   }
 
-  if (subtree_sizes_[n.index] > 1) {
-    output << ", subtree_size: " << subtree_sizes_[n.index];
+  if (subtree_data_[n.index].size > 1) {
+    output << ", subtree_size: " << subtree_data_[n.index].size;
     if (preorder) {
       output << ", children: [\n";
       return true;
@@ -170,7 +177,7 @@ auto TreeAndSubtrees::Print(llvm::raw_ostream& output) const -> void {
 
   // Walk the tree just to calculate depths for each node.
   llvm::SmallVector<int> indents;
-  indents.resize(subtree_sizes_.size(), 0);
+  indents.resize(subtree_data_.size(), 0);
 
   llvm::SmallVector<std::pair<NodeId, int>, 16> node_stack;
   for (NodeId n : roots()) {
@@ -239,8 +246,8 @@ auto TreeAndSubtrees::PrintPreorder(llvm::raw_ostream& output) const -> void {
 
 auto TreeAndSubtrees::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "subtree_sizes_"),
-                    subtree_sizes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "subtree_data_"),
+                    subtree_data_);
 }
 
 auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const -> TokenRange {
