@@ -22,7 +22,7 @@ class Formatter {
   explicit Formatter(const File* sem_ir,
                      ShouldFormatEntityFn should_format_entity);
 
-  // Prints the SemIR.
+  // Prints the SemIR into an internal buffer.
   //
   // Constants are printed first and may be referenced by later sections,
   // including file-scoped instructions. The file scope may contain entity
