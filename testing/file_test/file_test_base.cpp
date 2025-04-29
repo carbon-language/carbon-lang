@@ -521,11 +521,8 @@ auto FileTestEventListener::OnTestProgramStart(
   if (run_count > 1 && print_slowest_tests != 0) {
     // Sort in a copy so that `FileTestCase` pointers to the original tests
     // remain stable.
-    llvm::SmallVector<const FileTestInfo*> sorted_tests;
-    sorted_tests.reserve(tests_.size());
-    for (auto& test : tests_) {
-      sorted_tests.push_back(&test);
-    }
+    llvm::SmallVector<const FileTestInfo*> sorted_tests(
+        llvm::make_pointer_range(tests_));
     llvm::sort(sorted_tests,
                [](const FileTestInfo* lhs, const FileTestInfo* rhs) {
                  return lhs->elapsed_ms > rhs->elapsed_ms;
