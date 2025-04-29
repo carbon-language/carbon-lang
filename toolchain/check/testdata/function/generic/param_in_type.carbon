@@ -52,9 +52,9 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0
-// CHECK:STDOUT:     %a.patt: @F.%pattern_type (%pattern_type.c7e) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type (%pattern_type.c7e) = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0 [concrete]
+// CHECK:STDOUT:     %a.patt: @F.%pattern_type (%pattern_type.c7e) = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type (%pattern_type.c7e) = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_10: type = splice_block %i32.loc11_10 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc11_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

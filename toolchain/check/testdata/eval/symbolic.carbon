@@ -79,12 +79,12 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc12_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0
+// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18: type = splice_block %i32.loc18 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -113,8 +113,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %u.patt: @F.%pattern_type.loc13 (%pattern_type.973) = binding_pattern u
-// CHECK:STDOUT:       %.loc13_3: @F.%pattern_type.loc13 (%pattern_type.973) = var_pattern %u.patt
+// CHECK:STDOUT:       %u.patt: @F.%pattern_type.loc13 (%pattern_type.973) = binding_pattern u [concrete]
+// CHECK:STDOUT:       %.loc13_3: @F.%pattern_type.loc13 (%pattern_type.973) = var_pattern %u.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u.var: ref @F.%tuple.type (%tuple.type.4f2) = var u
 // CHECK:STDOUT:     %.loc13_22.1: type = splice_block %.loc13_22.3 [symbolic = %tuple.type (constants.%tuple.type.4f2)] {
@@ -127,8 +127,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.4f2) = bind_name u, %u.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @F.%pattern_type.loc14 (%pattern_type.95a) = binding_pattern v
-// CHECK:STDOUT:       %.loc14_3: @F.%pattern_type.loc14 (%pattern_type.95a) = var_pattern %v.patt
+// CHECK:STDOUT:       %v.patt: @F.%pattern_type.loc14 (%pattern_type.95a) = binding_pattern v [concrete]
+// CHECK:STDOUT:       %.loc14_3: @F.%pattern_type.loc14 (%pattern_type.95a) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%struct_type.a.loc14_16.2 (%struct_type.a) = var v
 // CHECK:STDOUT:     %.loc14_16: type = splice_block %struct_type.a.loc14_16.1 [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)] {
@@ -137,8 +137,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc14_16.2 (%struct_type.a) = bind_name v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %w.patt: @F.%pattern_type.loc15 (%pattern_type.035) = binding_pattern w
-// CHECK:STDOUT:       %.loc15_3: @F.%pattern_type.loc15 (%pattern_type.035) = var_pattern %w.patt
+// CHECK:STDOUT:       %w.patt: @F.%pattern_type.loc15 (%pattern_type.035) = binding_pattern w [concrete]
+// CHECK:STDOUT:       %.loc15_3: @F.%pattern_type.loc15 (%pattern_type.035) = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %w.var: ref @F.%array_type.loc15_20.2 (%array_type.ec2) = var w
 // CHECK:STDOUT:     %.loc15_20: type = splice_block %array_type.loc15_20.1 [symbolic = %array_type.loc15_20.2 (constants.%array_type.ec2)] {
@@ -165,8 +165,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %k.patt: @G.%pattern_type (%pattern_type.ccc) = binding_pattern k
-// CHECK:STDOUT:       %.loc19_3: @G.%pattern_type (%pattern_type.ccc) = var_pattern %k.patt
+// CHECK:STDOUT:       %k.patt: @G.%pattern_type (%pattern_type.ccc) = binding_pattern k [concrete]
+// CHECK:STDOUT:       %.loc19_3: @G.%pattern_type (%pattern_type.ccc) = var_pattern %k.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %k.var: ref @G.%array_type.loc19_22.2 (%array_type.c7c) = var k
 // CHECK:STDOUT:     %.loc19_22: type = splice_block %array_type.loc19_22.1 [symbolic = %array_type.loc19_22.2 (constants.%array_type.c7c)] {

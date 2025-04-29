@@ -77,8 +77,8 @@ fn Main() {
 // CHECK:STDOUT:   %int_0.loc16: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %non_tuple.patt: %pattern_type.ae7 = binding_pattern non_tuple
-// CHECK:STDOUT:     %.loc18_3.1: %pattern_type.ae7 = var_pattern %non_tuple.patt
+// CHECK:STDOUT:     %non_tuple.patt: %pattern_type.ae7 = binding_pattern non_tuple [concrete]
+// CHECK:STDOUT:     %.loc18_3.1: %pattern_type.ae7 = var_pattern %non_tuple.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %non_tuple.var: ref %array_type = var non_tuple
 // CHECK:STDOUT:   %int_5.loc18_35: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
@@ -113,8 +113,8 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %non_tuple: ref %array_type = bind_name non_tuple, %non_tuple.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %first.patt: %pattern_type.7ce = binding_pattern first
-// CHECK:STDOUT:     %.loc23_3: %pattern_type.7ce = var_pattern %first.patt
+// CHECK:STDOUT:     %first.patt: %pattern_type.7ce = binding_pattern first [concrete]
+// CHECK:STDOUT:     %.loc23_3: %pattern_type.7ce = var_pattern %first.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %first.var: ref %i32 = var first
 // CHECK:STDOUT:   %non_tuple.ref: ref %array_type = name_ref non_tuple, %non_tuple

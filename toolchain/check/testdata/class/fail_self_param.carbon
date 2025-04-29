@@ -40,14 +40,14 @@ var v: C(0);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %x.patt: <error> = symbolic_binding_pattern x, 0
+// CHECK:STDOUT:     %x.patt: <error> = symbolic_binding_pattern x, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.ref: <error> = name_ref self, <error> [concrete = <error>]
 // CHECK:STDOUT:     %x: <error> = bind_symbolic_name x, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
-// CHECK:STDOUT:     %.loc16: <error> = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
+// CHECK:STDOUT:     %.loc16: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {

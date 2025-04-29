@@ -89,8 +89,8 @@ var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %tuple_copy.patt: %pattern_type.511 = binding_pattern tuple_copy
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.511 = var_pattern %tuple_copy.patt
+// CHECK:STDOUT:     %tuple_copy.patt: %pattern_type.511 = binding_pattern tuple_copy [concrete]
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.511 = var_pattern %tuple_copy.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_copy.var: ref %tuple.type.d07 = var tuple_copy
 // CHECK:STDOUT:   %.loc11_26.1: type = splice_block %.loc11_26.3 [concrete = constants.%tuple.type.d07] {
@@ -103,8 +103,8 @@ var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_copy: ref %tuple.type.d07 = bind_name tuple_copy, %tuple_copy.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %struct_copy.patt: %pattern_type.8ae = binding_pattern struct_copy
-// CHECK:STDOUT:     %.loc13_1: %pattern_type.8ae = var_pattern %struct_copy.patt
+// CHECK:STDOUT:     %struct_copy.patt: %pattern_type.8ae = binding_pattern struct_copy [concrete]
+// CHECK:STDOUT:     %.loc13_1: %pattern_type.8ae = var_pattern %struct_copy.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_copy.var: ref %struct_type.a.b.c = var struct_copy
 // CHECK:STDOUT:   %.loc13_44: type = splice_block %struct_type.a.b.c [concrete = constants.%struct_type.a.b.c] {
@@ -118,8 +118,8 @@ var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = bind_name struct_copy, %struct_copy.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %tuple_index.patt: %pattern_type.a98 = binding_pattern tuple_index
-// CHECK:STDOUT:     %.loc15_1: %pattern_type.a98 = var_pattern %tuple_index.patt
+// CHECK:STDOUT:     %tuple_index.patt: %pattern_type.a98 = binding_pattern tuple_index [concrete]
+// CHECK:STDOUT:     %.loc15_1: %pattern_type.a98 = var_pattern %tuple_index.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_index.var: ref %array_type = var tuple_index
 // CHECK:STDOUT:   %.loc15_30: type = splice_block %array_type.loc15 [concrete = constants.%array_type] {
@@ -130,8 +130,8 @@ var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_index: ref %array_type = bind_name tuple_index, %tuple_index.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %struct_access.patt: %pattern_type.a98 = binding_pattern struct_access
-// CHECK:STDOUT:     %.loc17_1: %pattern_type.a98 = var_pattern %struct_access.patt
+// CHECK:STDOUT:     %struct_access.patt: %pattern_type.a98 = binding_pattern struct_access [concrete]
+// CHECK:STDOUT:     %.loc17_1: %pattern_type.a98 = var_pattern %struct_access.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_access.var: ref %array_type = var struct_access
 // CHECK:STDOUT:   %.loc17_32: type = splice_block %array_type.loc17 [concrete = constants.%array_type] {

@@ -95,11 +95,15 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst15:          concrete_constant(inst15)
 // CHECK:STDOUT:     inst17:          concrete_constant(inst15)
 // CHECK:STDOUT:     inst19:          concrete_constant(inst19)
+// CHECK:STDOUT:     inst20:          concrete_constant(inst20)
+// CHECK:STDOUT:     inst21:          concrete_constant(inst21)
 // CHECK:STDOUT:     inst24:          concrete_constant(inst24)
 // CHECK:STDOUT:     inst26:          concrete_constant(inst15)
 // CHECK:STDOUT:     inst27:          concrete_constant(inst15)
 // CHECK:STDOUT:     inst28:          concrete_constant(inst24)
 // CHECK:STDOUT:     inst29:          concrete_constant(inst29)
+// CHECK:STDOUT:     inst30:          concrete_constant(inst30)
+// CHECK:STDOUT:     inst31:          concrete_constant(inst31)
 // CHECK:STDOUT:     inst33:          concrete_constant(inst15)
 // CHECK:STDOUT:     inst36:          concrete_constant(inst38)
 // CHECK:STDOUT:     inst37:          concrete_constant(inst37)
@@ -200,10 +204,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern %n.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.5b8 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.5b8 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %empty_tuple.type = tuple_literal ()

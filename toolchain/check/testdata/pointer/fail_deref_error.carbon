@@ -44,7 +44,7 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15: type = splice_block %i32.loc15 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -52,7 +52,7 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: %i32 = bind_name n, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n2.patt: %pattern_type.7ce = binding_pattern n2
+// CHECK:STDOUT:     %n2.patt: %pattern_type.7ce = binding_pattern n2 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20: type = splice_block %i32.loc20 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

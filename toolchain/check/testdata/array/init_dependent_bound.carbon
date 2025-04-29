@@ -81,7 +81,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0
+// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32.loc4 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc4: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -105,8 +105,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %arr.patt: @F.%pattern_type (%pattern_type.ccc) = binding_pattern arr
-// CHECK:STDOUT:       %.loc9_3: @F.%pattern_type (%pattern_type.ccc) = var_pattern %arr.patt
+// CHECK:STDOUT:       %arr.patt: @F.%pattern_type (%pattern_type.ccc) = binding_pattern arr [concrete]
+// CHECK:STDOUT:       %.loc9_3: @F.%pattern_type (%pattern_type.ccc) = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref @F.%array_type.loc9_24.2 (%array_type) = var arr
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
@@ -206,7 +206,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0, template
+// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0, template [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc5: type = splice_block %i32.loc5 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -226,8 +226,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %arr.patt: <error> = binding_pattern arr
-// CHECK:STDOUT:       %.loc10_3: <error> = var_pattern %arr.patt
+// CHECK:STDOUT:       %arr.patt: <error> = binding_pattern arr [concrete]
+// CHECK:STDOUT:       %.loc10_3: <error> = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref <error> = var arr
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]

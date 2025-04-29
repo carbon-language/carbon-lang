@@ -75,8 +75,8 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.a98 = binding_pattern a
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.a98 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.a98 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.a98 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type.0cb = var a
 // CHECK:STDOUT:   %.loc11_20: type = splice_block %array_type.loc11 [concrete = constants.%array_type.0cb] {
@@ -87,8 +87,8 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type.0cb = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.e85 = binding_pattern b
-// CHECK:STDOUT:     %.loc12_1: %pattern_type.e85 = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.e85 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.e85 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %array_type.ce7 = var b
 // CHECK:STDOUT:   %.loc12_20: type = splice_block %array_type.loc12 [concrete = constants.%array_type.ce7] {
@@ -101,8 +101,8 @@ var c: array((), 5) = ((), (), (), (), (),);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %array_type.ce7 = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.d84 = binding_pattern c
-// CHECK:STDOUT:     %.loc13_1: %pattern_type.d84 = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.d84 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc13_1: %pattern_type.d84 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %array_type.c13 = var c
 // CHECK:STDOUT:   %.loc13_19: type = splice_block %array_type.loc13 [concrete = constants.%array_type.c13] {

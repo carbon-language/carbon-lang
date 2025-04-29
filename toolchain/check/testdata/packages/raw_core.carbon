@@ -234,8 +234,8 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Core.decl: type = class_decl @Core [concrete = constants.%Core] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c8a = binding_pattern c
-// CHECK:STDOUT:     %.loc6: %pattern_type.c8a = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.c8a = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc6: %pattern_type.c8a = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Core = var c
 // CHECK:STDOUT:   %Core.ref: type = name_ref r#Core, %Core.decl [concrete = constants.%Core]

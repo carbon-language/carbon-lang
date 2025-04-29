@@ -48,15 +48,15 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
-// CHECK:STDOUT:     %self.patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %n.patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = value_param_pattern %n.patt, call_param1
+// CHECK:STDOUT:     %self.patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %n.patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.param_patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = value_param_pattern %n.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc16: type = bind_symbolic_name T, 0 [symbolic = @Class.%T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %self.param.loc16: @F.%Class (%Class) = value_param call_param0
@@ -87,10 +87,10 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc12: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [concrete]
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
-// CHECK:STDOUT:       %self.patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %n.patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = binding_pattern n
-// CHECK:STDOUT:       %n.param_patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = value_param_pattern %n.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %n.patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = binding_pattern n [concrete]
+// CHECK:STDOUT:       %n.param_patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = value_param_pattern %n.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param.loc13: @F.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:       %.loc13_14.1: type = splice_block %Self.ref.loc13 [symbolic = %Class (constants.%Class)] {

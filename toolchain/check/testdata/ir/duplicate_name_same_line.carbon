@@ -63,8 +63,8 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_18:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc11_26: %pattern_type.7ce = binding_pattern n
-// CHECK:STDOUT:     %.loc11_22.1: %pattern_type.7ce = var_pattern %n.patt.loc11_26
+// CHECK:STDOUT:     %n.patt.loc11_26: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %.loc11_22.1: %pattern_type.7ce = var_pattern %n.patt.loc11_26 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var.loc11_22: ref %i32 = var n
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -88,8 +88,8 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_48:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc11_56: %pattern_type.7ce = binding_pattern n
-// CHECK:STDOUT:     %.loc11_52.1: %pattern_type.7ce = var_pattern %n.patt.loc11_56
+// CHECK:STDOUT:     %n.patt.loc11_56: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %.loc11_52.1: %pattern_type.7ce = var_pattern %n.patt.loc11_56 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var.loc11_52: ref %i32 = var n
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]

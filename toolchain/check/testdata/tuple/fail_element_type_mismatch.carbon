@@ -58,8 +58,8 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.511 = binding_pattern x
-// CHECK:STDOUT:     %.loc18_1: %pattern_type.511 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.511 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc18_1: %pattern_type.511 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type.d07 = var x
 // CHECK:STDOUT:   %.loc18_17.1: type = splice_block %.loc18_17.3 [concrete = constants.%tuple.type.d07] {

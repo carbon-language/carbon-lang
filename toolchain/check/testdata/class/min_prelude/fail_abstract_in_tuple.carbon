@@ -217,8 +217,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
-// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
+// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %.loc13_21.1: type = splice_block %.loc13_21.3 [concrete = constants.%tuple.type.ac6] {
@@ -259,8 +259,8 @@ fn Var5() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.32b = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.32b = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type.32b = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.32b = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
@@ -280,7 +280,7 @@ fn Var5() {
 // CHECK:STDOUT: fn @F(%a.param: %Abstract3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type.3cf = binding_pattern l
+// CHECK:STDOUT:     %l.patt: %pattern_type.3cf = binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
 // CHECK:STDOUT:   %.loc7_28: %tuple.type.fa1 = tuple_literal (%a.ref)
@@ -346,8 +346,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v2.patt: <error> = binding_pattern v2
-// CHECK:STDOUT:     %.loc14_3: <error> = var_pattern %v2.patt
+// CHECK:STDOUT:     %v2.patt: <error> = binding_pattern v2 [concrete]
+// CHECK:STDOUT:     %.loc14_3: <error> = var_pattern %v2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref <error> = var v2
 // CHECK:STDOUT:   %.loc14_32.1: type = splice_block %.loc14_32.3 [concrete = constants.%tuple.type.e3e] {
@@ -401,8 +401,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var3() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v3.patt: <error> = binding_pattern v3
-// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %v3.patt
+// CHECK:STDOUT:     %v3.patt: <error> = binding_pattern v3 [concrete]
+// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %v3.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3.var: ref <error> = var v3
 // CHECK:STDOUT:   %.loc13_25.1: type = splice_block %.loc13_25.4 [concrete = constants.%tuple.type.d93] {
@@ -457,8 +457,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var4() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v4.patt: <error> = binding_pattern v4
-// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %v4.patt
+// CHECK:STDOUT:     %v4.patt: <error> = binding_pattern v4 [concrete]
+// CHECK:STDOUT:     %.loc13_3: <error> = var_pattern %v4.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4.var: ref <error> = var v4
 // CHECK:STDOUT:   %.loc13_25.1: type = splice_block %.loc13_25.4 [concrete = constants.%tuple.type.919] {
@@ -546,8 +546,8 @@ fn Var5() {
 // CHECK:STDOUT: fn @Var5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v5.patt: <error> = binding_pattern v5
-// CHECK:STDOUT:     %.loc14_3: <error> = var_pattern %v5.patt
+// CHECK:STDOUT:     %v5.patt: <error> = binding_pattern v5 [concrete]
+// CHECK:STDOUT:     %.loc14_3: <error> = var_pattern %v5.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5.var: ref <error> = var v5
 // CHECK:STDOUT:   %.loc14_21.1: type = splice_block %.loc14_21.3 [concrete = constants.%tuple.type.555] {

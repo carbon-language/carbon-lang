@@ -111,8 +111,8 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a
-// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.7ce = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12.6a3]
@@ -138,8 +138,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc13: init %i32 = converted %int_9, %int.convert_checked.loc13 [concrete = constants.%int_9.f88]
 // CHECK:STDOUT:   assign %a.ref.loc13, %.loc13
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.511 = binding_pattern b
-// CHECK:STDOUT:     %.loc15_3.1: %pattern_type.511 = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.511 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc15_3.1: %pattern_type.511 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %tuple.type.d07 = var b
 // CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -196,8 +196,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc17: init %i32 = converted %int_4.loc17, %int.convert_checked.loc17 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   assign %tuple.elem1.loc17, %.loc17
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.851 = binding_pattern c
-// CHECK:STDOUT:     %.loc19_3.1: %pattern_type.851 = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.851 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc19_3.1: %pattern_type.851 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %struct_type.a.b.501 = var c
 // CHECK:STDOUT:   %int_1.loc19: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -251,8 +251,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_7: init %i32 = converted %int_4.loc21, %int.convert_checked.loc21 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   assign %.loc21_4, %.loc21_7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.fe8 = binding_pattern p
-// CHECK:STDOUT:     %.loc23_3: %pattern_type.fe8 = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: %pattern_type.fe8 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %.loc23_3: %pattern_type.fe8 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.235 = var p
 // CHECK:STDOUT:   %a.ref.loc23: ref %i32 = name_ref a, %a

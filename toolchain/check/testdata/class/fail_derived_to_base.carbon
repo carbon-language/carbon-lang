@@ -96,10 +96,10 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %A2.decl: type = class_decl @A2 [concrete = constants.%A2] {} {}
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [concrete = constants.%B2] {} {}
 // CHECK:STDOUT:   %ConvertUnrelated.decl: %ConvertUnrelated.type = fn_decl @ConvertUnrelated [concrete = constants.%ConvertUnrelated] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.98e = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.98e = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.d72 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.d72 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.98e = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.98e = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d72 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d72 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, file.%A1.decl [concrete = constants.%A1]
 // CHECK:STDOUT:     %ptr.loc31_34: type = ptr_type %A1.ref [concrete = constants.%ptr.678]
@@ -114,10 +114,10 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: %ConvertIncomplete.type = fn_decl @ConvertIncomplete [concrete = constants.%ConvertIncomplete] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.275 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.275 = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.2c5 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.2c5 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.275 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.275 = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.2c5 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.2c5 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [concrete = constants.%A2]
 // CHECK:STDOUT:     %ptr.loc42_43: type = ptr_type %A2.ref [concrete = constants.%ptr.590]

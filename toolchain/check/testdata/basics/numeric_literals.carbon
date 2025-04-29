@@ -105,8 +105,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ints.patt: %pattern_type.0c8 = binding_pattern ints
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.0c8 = var_pattern %ints.patt
+// CHECK:STDOUT:     %ints.patt: %pattern_type.0c8 = binding_pattern ints [concrete]
+// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.0c8 = var_pattern %ints.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ints.var: ref %array_type.d49 = var ints
 // CHECK:STDOUT:   %int_8.loc15: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
@@ -181,8 +181,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ints: ref %array_type.d49 = bind_name ints, %ints.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %floats.patt: %pattern_type.601 = binding_pattern floats
-// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.601 = var_pattern %floats.patt
+// CHECK:STDOUT:     %floats.patt: %pattern_type.601 = binding_pattern floats [concrete]
+// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.601 = var_pattern %floats.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %floats.var: ref %array_type.72b = var floats
 // CHECK:STDOUT:   %float.loc23: f64 = float_literal 0.90000000000000002 [concrete = constants.%float.952]

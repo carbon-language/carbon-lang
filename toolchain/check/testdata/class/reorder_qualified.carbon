@@ -228,8 +228,8 @@ class A {
 // CHECK:STDOUT: fn @DF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = binding_pattern a
-// CHECK:STDOUT:     %.loc29_7.1: %pattern_type.c10 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc29_7.1: %pattern_type.c10 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -248,8 +248,8 @@ class A {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.98e = binding_pattern b
-// CHECK:STDOUT:     %.loc30_7.1: %pattern_type.98e = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.98e = binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc30_7.1: %pattern_type.98e = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var b
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -268,8 +268,8 @@ class A {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.6d8 = binding_pattern c
-// CHECK:STDOUT:     %.loc31_7.1: %pattern_type.6d8 = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.6d8 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc31_7.1: %pattern_type.6d8 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -288,8 +288,8 @@ class A {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.d58 = binding_pattern d
-// CHECK:STDOUT:     %.loc32_7.1: %pattern_type.d58 = var_pattern %d.patt
+// CHECK:STDOUT:     %d.patt: %pattern_type.d58 = binding_pattern d [concrete]
+// CHECK:STDOUT:     %.loc32_7.1: %pattern_type.d58 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %D = var d
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]

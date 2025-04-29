@@ -81,8 +81,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.851 = binding_pattern s
-// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.851 = var_pattern %s.patt
+// CHECK:STDOUT:     %s.patt: %pattern_type.851 = binding_pattern s [concrete]
+// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.851 = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %struct_type.a.b.501 = var s
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -116,8 +116,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %struct_type.a.b.501 = bind_name s, %s.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.8dd = binding_pattern p
-// CHECK:STDOUT:     %.loc14_3: %pattern_type.8dd = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: %pattern_type.8dd = binding_pattern p [concrete]
+// CHECK:STDOUT:     %.loc14_3: %pattern_type.8dd = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.3ee = var p
 // CHECK:STDOUT:   %s.ref.loc14: ref %struct_type.a.b.501 = name_ref s, %s
@@ -133,8 +133,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.3ee = bind_name p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %q.patt: %pattern_type.fe8 = binding_pattern q
-// CHECK:STDOUT:     %.loc15_3: %pattern_type.fe8 = var_pattern %q.patt
+// CHECK:STDOUT:     %q.patt: %pattern_type.fe8 = binding_pattern q [concrete]
+// CHECK:STDOUT:     %.loc15_3: %pattern_type.fe8 = var_pattern %q.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q.var: ref %ptr.235 = var q
 // CHECK:STDOUT:   %s.ref.loc15: ref %struct_type.a.b.501 = name_ref s, %s
@@ -148,8 +148,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q: ref %ptr.235 = bind_name q, %q.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r.patt: %pattern_type.fe8 = binding_pattern r
-// CHECK:STDOUT:     %.loc16_3: %pattern_type.fe8 = var_pattern %r.patt
+// CHECK:STDOUT:     %r.patt: %pattern_type.fe8 = binding_pattern r [concrete]
+// CHECK:STDOUT:     %.loc16_3: %pattern_type.fe8 = var_pattern %r.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %r.var: ref %ptr.235 = var r
 // CHECK:STDOUT:   %s.ref.loc16: ref %struct_type.a.b.501 = name_ref s, %s
@@ -163,8 +163,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %r: ref %ptr.235 = bind_name r, %r.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.511 = binding_pattern t
-// CHECK:STDOUT:     %.loc18_3.1: %pattern_type.511 = var_pattern %t.patt
+// CHECK:STDOUT:     %t.patt: %pattern_type.511 = binding_pattern t [concrete]
+// CHECK:STDOUT:     %.loc18_3.1: %pattern_type.511 = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %tuple.type.d07 = var t
 // CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -199,8 +199,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %tuple.type.d07 = bind_name t, %t.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t0.patt: %pattern_type.fe8 = binding_pattern t0
-// CHECK:STDOUT:     %.loc19_3: %pattern_type.fe8 = var_pattern %t0.patt
+// CHECK:STDOUT:     %t0.patt: %pattern_type.fe8 = binding_pattern t0 [concrete]
+// CHECK:STDOUT:     %.loc19_3: %pattern_type.fe8 = var_pattern %t0.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t0.var: ref %ptr.235 = var t0
 // CHECK:STDOUT:   %t.ref.loc19: ref %tuple.type.d07 = name_ref t, %t
@@ -215,8 +215,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t0: ref %ptr.235 = bind_name t0, %t0.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t1.patt: %pattern_type.fe8 = binding_pattern t1
-// CHECK:STDOUT:     %.loc20_3: %pattern_type.fe8 = var_pattern %t1.patt
+// CHECK:STDOUT:     %t1.patt: %pattern_type.fe8 = binding_pattern t1 [concrete]
+// CHECK:STDOUT:     %.loc20_3: %pattern_type.fe8 = var_pattern %t1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t1.var: ref %ptr.235 = var t1
 // CHECK:STDOUT:   %t.ref.loc20: ref %tuple.type.d07 = name_ref t, %t

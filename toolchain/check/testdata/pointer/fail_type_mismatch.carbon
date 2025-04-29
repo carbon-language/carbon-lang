@@ -48,10 +48,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [concrete = constants.%ConstMismatch] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.db0 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.db0 = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.db0 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.db0 = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_43: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc11_44: type = converted %.loc11_43, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

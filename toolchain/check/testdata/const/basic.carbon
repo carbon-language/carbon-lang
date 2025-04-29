@@ -50,10 +50,10 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.1d4 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.1d4 = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.1d4 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.1d4 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.1d4 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.1d4 = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.1d4 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.1d4 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -73,10 +73,10 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:     %return: ref %ptr.3bc = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.63b = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.63b = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.63b = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.63b = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.63b = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.63b = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.63b = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.63b = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

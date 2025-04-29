@@ -68,7 +68,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc12: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc12: %pattern_type.7ce = binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc12_10: type = splice_block %i32.loc12 [concrete = constants.%i32] {
@@ -84,7 +84,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_16.2: %i32 = converted %int_1, %.loc12_16.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %a.loc12: %i32 = bind_name a, %.loc12_16.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc20: %pattern_type.7ce = binding_pattern a
+// CHECK:STDOUT:     %a.patt.loc20: %pattern_type.7ce = binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc20_10: type = splice_block %i32.loc20 [concrete = constants.%i32] {

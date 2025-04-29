@@ -55,10 +55,10 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Not.decl: %Not.type = fn_decl @Not [concrete = constants.%Not] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc11_20: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %bool.make_type.loc11_20 [concrete = bool]
@@ -74,7 +74,7 @@ fn Constant() {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = binding_pattern not_true
+// CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = binding_pattern not_true [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_15.1: type = splice_block %.loc15_15.3 [concrete = bool] {
 // CHECK:STDOUT:     %bool.make_type.loc15: init type = call constants.%Bool() [concrete = bool]
@@ -83,7 +83,7 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %not_true: bool = bind_name not_true, @__global_init.%.loc15
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = binding_pattern not_false
+// CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = binding_pattern not_false [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_16.1: type = splice_block %.loc16_16.3 [concrete = bool] {
 // CHECK:STDOUT:     %bool.make_type.loc16: init type = call constants.%Bool() [concrete = bool]
@@ -104,8 +104,8 @@ fn Constant() {
 // CHECK:STDOUT: fn @Constant() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = binding_pattern a
-// CHECK:STDOUT:     %.loc19_3.1: %pattern_type.cb1 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc19_3.1: %pattern_type.cb1 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %.loc19_43.1: %empty_tuple.type = tuple_literal ()
@@ -137,8 +137,8 @@ fn Constant() {
 // CHECK:STDOUT: !.loc19_7:
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %.loc20_3: %pattern_type.831 = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc20_3: %pattern_type.831 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref bool = var b
 // CHECK:STDOUT:   %true.loc20: bool = bool_literal true [concrete = constants.%true]

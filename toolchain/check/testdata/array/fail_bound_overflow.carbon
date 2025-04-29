@@ -49,8 +49,8 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc15_1: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc15_1: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %.loc15_39: type = splice_block %array_type.loc15 [concrete = <error>] {
@@ -61,8 +61,8 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
-// CHECK:STDOUT:     %.loc24_1: <error> = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: <error> = binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc24_1: <error> = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %.loc24_37: type = splice_block %array_type.loc24 [concrete = <error>] {

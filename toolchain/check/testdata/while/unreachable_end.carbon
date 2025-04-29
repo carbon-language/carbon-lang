@@ -61,8 +61,8 @@ fn While() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Cond.decl: %Cond.type = fn_decl @Cond [concrete = constants.%Cond] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %bool.make_type [concrete = bool]

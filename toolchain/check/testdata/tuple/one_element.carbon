@@ -53,8 +53,8 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.b74 = binding_pattern x
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.b74 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.b74 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.b74 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type.a1c = var x
 // CHECK:STDOUT:   %.loc11_13.1: type = splice_block %.loc11_13.3 [concrete = constants.%tuple.type.a1c] {
@@ -65,8 +65,8 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %tuple.type.a1c = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.b74 = binding_pattern y
-// CHECK:STDOUT:     %.loc12_1: %pattern_type.b74 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.b74 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.b74 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %tuple.type.a1c = var y
 // CHECK:STDOUT:   %.loc12_13.1: type = splice_block %.loc12_13.3 [concrete = constants.%tuple.type.a1c] {

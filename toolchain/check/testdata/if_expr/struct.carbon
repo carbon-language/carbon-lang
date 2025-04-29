@@ -69,8 +69,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %s.patt: %pattern_type.851 = binding_pattern s
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.851 = value_param_pattern %s.patt, call_param0
+// CHECK:STDOUT:     %s.patt: %pattern_type.851 = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.851 = value_param_pattern %s.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %struct_type.a.b.501 = value_param call_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
@@ -83,8 +83,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %s: %struct_type.a.b.501 = bind_name s, %s.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %cond.patt: %pattern_type.831 = binding_pattern cond
-// CHECK:STDOUT:     %cond.param_patt: %pattern_type.831 = value_param_pattern %cond.patt, call_param0
+// CHECK:STDOUT:     %cond.patt: %pattern_type.831 = binding_pattern cond [concrete]
+// CHECK:STDOUT:     %cond.param_patt: %pattern_type.831 = value_param_pattern %cond.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %cond.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc13_12.1: type = splice_block %.loc13_12.3 [concrete = bool] {
@@ -101,8 +101,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT: fn @F(%cond.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.851 = binding_pattern a
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.851 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.851 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.851 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.a.b.501 = var a
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]

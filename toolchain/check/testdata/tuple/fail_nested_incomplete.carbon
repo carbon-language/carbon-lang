@@ -52,8 +52,8 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: <error> = binding_pattern t
-// CHECK:STDOUT:     %.loc20_1: <error> = var_pattern %t.patt
+// CHECK:STDOUT:     %t.patt: <error> = binding_pattern t [concrete]
+// CHECK:STDOUT:     %.loc20_1: <error> = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref <error> = var t
 // CHECK:STDOUT:   %.loc20_24.1: type = splice_block %.loc20_24.3 [concrete = constants.%tuple.type.8a4] {
@@ -65,8 +65,8 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: <error> = bind_name t, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.275 = binding_pattern p
-// CHECK:STDOUT:     %.loc22_1: %pattern_type.275 = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: %pattern_type.275 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %.loc22_1: %pattern_type.275 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
 // CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [concrete = constants.%ptr] {

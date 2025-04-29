@@ -104,10 +104,10 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Negate.decl: %Negate.type = fn_decl @Negate [concrete = constants.%Negate] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.loc2_22: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type.loc2_22: init type = call constants.%Float(%int_64.loc2_22) [concrete = f64]
@@ -125,12 +125,12 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallIsValid.decl: %RuntimeCallIsValid.type = fn_decl @RuntimeCallIsValid [concrete = constants.%RuntimeCallIsValid] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.3de = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.3de = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.3de = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.3de = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.loc4_42: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type.loc4_42: init type = call constants.%Float(%int_64.loc4_42) [concrete = f64]
@@ -156,7 +156,7 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_8.1: type = splice_block %.loc8_8.3 [concrete = f64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -237,8 +237,8 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %TooFew.decl: %TooFew.type = fn_decl @TooFew [concrete = constants.%TooFew] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
@@ -248,12 +248,12 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TooMany.decl: %TooMany.type = fn_decl @TooMany [concrete = constants.%TooMany] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.3de = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.3de = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.3de = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.3de = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.loc13_31: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type.loc13_31: init type = call constants.%Float(%int_64.loc13_31) [concrete = f64]
@@ -279,10 +279,10 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %BadReturnType.decl: %BadReturnType.type = fn_decl @BadReturnType [concrete = constants.%BadReturnType] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc18_29.1: type = value_of_initializer %bool.make_type [concrete = bool]
@@ -299,10 +299,10 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %JustRight.decl: %JustRight.type = fn_decl @JustRight [concrete = constants.%JustRight] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.loc19_25: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type.loc19_25: init type = call constants.%Float(%int_64.loc19_25) [concrete = f64]
@@ -320,10 +320,10 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallIsValidTooFew.decl: %RuntimeCallIsValidTooFew.type = fn_decl @RuntimeCallIsValidTooFew [concrete = constants.%RuntimeCallIsValidTooFew] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.loc21_40: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type.loc21_40: init type = call constants.%Float(%int_64.loc21_40) [concrete = f64]
@@ -341,14 +341,14 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallIsValidTooMany.decl: %RuntimeCallIsValidTooMany.type = fn_decl @RuntimeCallIsValidTooMany [concrete = constants.%RuntimeCallIsValidTooMany] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.3de = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.3de = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %c.patt: %pattern_type.3de = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.3de = value_param_pattern %c.patt, call_param2
-// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param3
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.3de = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.3de = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.3de = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.3de = value_param_pattern %c.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param3 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64.loc32_57: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type.loc32_57: init type = call constants.%Float(%int_64.loc32_57) [concrete = f64]
@@ -382,12 +382,12 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCallIsValidBadReturnType.decl: %RuntimeCallIsValidBadReturnType.type = fn_decl @RuntimeCallIsValidBadReturnType [concrete = constants.%RuntimeCallIsValidBadReturnType] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.3de = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.3de = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.3de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.3de = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.3de = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc43_55.1: type = value_of_initializer %bool.make_type [concrete = bool]

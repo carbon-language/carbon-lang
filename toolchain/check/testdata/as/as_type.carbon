@@ -35,7 +35,7 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.98f = binding_pattern t
+// CHECK:STDOUT:     %t.patt: %pattern_type.98f = binding_pattern t [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: type = bind_name t, @__global_init.%.loc11_26
 // CHECK:STDOUT: }

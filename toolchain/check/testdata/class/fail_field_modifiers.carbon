@@ -90,7 +90,7 @@ class Class {
 // CHECK:STDOUT:   %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc23: %Class.elem = field_decl k, element1 [concrete]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %l.patt: %pattern_type.7ce = binding_pattern l
+// CHECK:STDOUT:     %l.patt: %pattern_type.7ce = binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc29_18: type = splice_block %i32.loc29 [concrete = constants.%i32] {
@@ -106,7 +106,7 @@ class Class {
 // CHECK:STDOUT:   %.loc29_24.2: %i32 = converted %int_0, %.loc29_24.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %l: %i32 = bind_name l, %.loc29_24.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m
+// CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc35_16: type = splice_block %i32.loc35 [concrete = constants.%i32] {
