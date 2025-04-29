@@ -28,6 +28,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1, %Incomplete [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -59,8 +60,8 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
-// CHECK:STDOUT:     %.loc22_1: %ptr = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: %pattern_type = binding_pattern p
+// CHECK:STDOUT:     %.loc22_1: %pattern_type = var_pattern %p.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
 // CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [concrete = constants.%ptr] {

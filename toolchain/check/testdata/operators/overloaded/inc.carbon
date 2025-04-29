@@ -32,13 +32,16 @@ fn TestOp() {
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Op.type.e3a: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness file.%Inc.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %Op.type.73a: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.0c9: %Op.type.73a = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.bc7: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [concrete]
 // CHECK:STDOUT: }
@@ -72,9 +75,9 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.c51: %C.ref as %Inc.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.73a = fn_decl @Op.2 [concrete = constants.%Op.0c9] {
-// CHECK:STDOUT:     %self.patt: %ptr.019 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc18_9: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %.loc18_9: %pattern_type.f6d = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc18_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
@@ -104,8 +107,8 @@ fn TestOp() {
 // CHECK:STDOUT: fn @TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %.loc22_3.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c
+// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.c48 = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %.loc22_15.1: %empty_struct_type = struct_literal ()

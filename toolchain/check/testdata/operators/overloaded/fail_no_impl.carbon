@@ -48,6 +48,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %TestUnary.type: type = fn_type @TestUnary [concrete]
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [concrete]
@@ -79,10 +80,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %TestUnary.decl: %TestUnary.type = fn_decl @TestUnary [concrete = constants.%TestUnary] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.c48 = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc15_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
@@ -92,12 +93,12 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [concrete = constants.%TestBinary] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.c48 = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type.c48 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.c48 = value_param_pattern %b.patt, call_param1
+// CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
@@ -110,8 +111,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [concrete = constants.%TestRef] {
-// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type.c48 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.c48 = value_param_pattern %b.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -144,8 +145,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: fn @TestRef(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %.loc32_3.1: %C = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a
+// CHECK:STDOUT:     %.loc32_3.1: %pattern_type.c48 = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var a
 // CHECK:STDOUT:   %.loc32_15.1: %empty_struct_type = struct_literal ()

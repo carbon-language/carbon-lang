@@ -111,6 +111,7 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [concrete]
 // CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [concrete]
 // CHECK:STDOUT:   %AbstractWithDefinition: type = class_type @AbstractWithDefinition [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %AbstractWithDefinition [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -152,8 +153,8 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:   %AbstractAndBase.decl: type = class_decl @AbstractAndBase [concrete = constants.%AbstractAndBase] {} {}
 // CHECK:STDOUT:   %AbstractWithDefinition.decl: type = class_decl @AbstractWithDefinition [concrete = constants.%AbstractWithDefinition] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %self.patt: %AbstractWithDefinition = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractWithDefinition = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc97: %AbstractWithDefinition = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc97: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
@@ -207,16 +208,16 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractWithDefinition {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %AbstractWithDefinition = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractWithDefinition = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %AbstractWithDefinition = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
 // CHECK:STDOUT:     %self: %AbstractWithDefinition = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %self.patt: %AbstractWithDefinition = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %AbstractWithDefinition = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc91: %AbstractWithDefinition = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc91: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]

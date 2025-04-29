@@ -20,6 +20,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Echo.type: type = fn_type @Echo [concrete]
 // CHECK:STDOUT:   %Echo: %Echo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
@@ -33,10 +34,10 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Echo.decl: %Echo.type = fn_decl @Echo [concrete = constants.%Echo] {
-// CHECK:STDOUT:     %a.patt: %empty_struct_type = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %empty_struct_type = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_20.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

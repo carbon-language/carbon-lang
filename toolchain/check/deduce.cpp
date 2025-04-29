@@ -13,6 +13,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
+#include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -298,6 +299,10 @@ auto DeductionContext::Deduce() -> bool {
     // and the parameter doesn't have a symbolic constant value.
 
     auto param_type_id = context().insts().Get(param_id).type_id();
+    if (context().types().Is<SemIR::PatternType>(param_type_id)) {
+      param_type_id =
+          SemIR::ExtractScrutineeType(context().sem_ir(), param_type_id);
+    }
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
       Add(context().types().GetInstId(param_type_id),
@@ -598,8 +603,9 @@ auto DeductionContext::MakeSpecific() -> SemIR::SpecificId {
 auto DeduceGenericCallArguments(
     Context& context, SemIR::LocId loc_id, SemIR::GenericId generic_id,
     SemIR::SpecificId enclosing_specific_id, SemIR::InstId self_type_id,
-    [[maybe_unused]] SemIR::InstBlockId implicit_params_id,
-    SemIR::InstBlockId params_id, [[maybe_unused]] SemIR::InstId self_id,
+    [[maybe_unused]] SemIR::InstBlockId implicit_param_patterns_id,
+    SemIR::InstBlockId param_patterns_id,
+    [[maybe_unused]] SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, generic_id,
                              enclosing_specific_id, self_type_id,
@@ -608,7 +614,7 @@ auto DeduceGenericCallArguments(
   // Prepare to perform deduction of the explicit parameters against their
   // arguments.
   // TODO: Also perform deduction for type of self.
-  deduction.AddAll(params_id, arg_ids, /*needs_substitution=*/true);
+  deduction.AddAll(param_patterns_id, arg_ids, /*needs_substitution=*/true);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::None;

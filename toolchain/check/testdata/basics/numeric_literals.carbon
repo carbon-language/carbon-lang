@@ -38,6 +38,7 @@ fn F() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete]
 // CHECK:STDOUT:   %array_type.d49: type = array_type %int_6, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.0c8: type = pattern_type %array_type.d49 [concrete]
 // CHECK:STDOUT:   %int_8.b85: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %int_9.988: Core.IntLiteral = int_value 9 [concrete]
 // CHECK:STDOUT:   %int_2147483647.d89: Core.IntLiteral = int_value 2147483647 [concrete]
@@ -71,6 +72,7 @@ fn F() {
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %array_type.72b: type = array_type %int_6, f64 [concrete]
+// CHECK:STDOUT:   %pattern_type.601: type = pattern_type %array_type.72b [concrete]
 // CHECK:STDOUT:   %float.952: f64 = float_literal 0.90000000000000002 [concrete]
 // CHECK:STDOUT:   %float.298: f64 = float_literal 8 [concrete]
 // CHECK:STDOUT:   %float.dcb: f64 = float_literal 80 [concrete]
@@ -103,8 +105,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ints.patt: %array_type.d49 = binding_pattern ints
-// CHECK:STDOUT:     %.loc14_3.1: %array_type.d49 = var_pattern %ints.patt
+// CHECK:STDOUT:     %ints.patt: %pattern_type.0c8 = binding_pattern ints
+// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.0c8 = var_pattern %ints.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ints.var: ref %array_type.d49 = var ints
 // CHECK:STDOUT:   %int_8.loc15: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
@@ -179,8 +181,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ints: ref %array_type.d49 = bind_name ints, %ints.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %floats.patt: %array_type.72b = binding_pattern floats
-// CHECK:STDOUT:     %.loc22_3.1: %array_type.72b = var_pattern %floats.patt
+// CHECK:STDOUT:     %floats.patt: %pattern_type.601 = binding_pattern floats
+// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.601 = var_pattern %floats.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %floats.var: ref %array_type.72b = var floats
 // CHECK:STDOUT:   %float.loc23: f64 = float_literal 0.90000000000000002 [concrete = constants.%float.952]

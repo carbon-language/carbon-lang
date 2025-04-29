@@ -277,7 +277,7 @@ auto Emitter<LocT>::Builder::Note(
   CARBON_CHECK(diagnostic_base.Level == Level::Note ||
                    diagnostic_base.Level == Level::LocationInfo,
                "{0}", static_cast<int>(diagnostic_base.Level));
-  AddMessage(loc, diagnostic_base, {emitter_->MakeAny<Args>(args)...});
+  AddMessage(LocT(loc), diagnostic_base, {emitter_->MakeAny<Args>(args)...});
   return *this;
 }
 
@@ -315,7 +315,7 @@ Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
                                 const DiagnosticBase<Args...>& diagnostic_base,
                                 llvm::SmallVector<llvm::Any> args)
     : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
-  AddMessage(loc, diagnostic_base, std::move(args));
+  AddMessage(LocT(loc), diagnostic_base, std::move(args));
   CARBON_CHECK(diagnostic_base.Level != Level::Note);
 }
 

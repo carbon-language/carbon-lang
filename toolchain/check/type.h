@@ -82,6 +82,10 @@ auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)
 auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
     -> SemIR::TypeId;
 
+// Returns a pattern type with the given scrutinee type.
+auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
+    -> SemIR::TypeId;
+
 // Returns an unbound element type.
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                            SemIR::TypeInstId element_type_id) -> SemIR::TypeId;

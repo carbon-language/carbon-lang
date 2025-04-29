@@ -40,6 +40,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.ba8: <witness> = complete_type_witness %struct_type.b [concrete]
+// CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %AccessBInA.type: type = fn_type @AccessBInA [concrete]
 // CHECK:STDOUT:   %AccessBInA: %AccessBInA.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -64,10 +66,10 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %AccessBInA.decl: %AccessBInA.type = fn_decl @AccessBInA [concrete = constants.%AccessBInA] {
-// CHECK:STDOUT:     %a.patt: %A = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.c10 = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

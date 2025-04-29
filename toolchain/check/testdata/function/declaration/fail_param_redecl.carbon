@@ -22,6 +22,7 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -41,10 +42,10 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %n.patt.loc18_6: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt.loc18_7: %i32 = value_param_pattern %n.patt.loc18_6, call_param0
-// CHECK:STDOUT:     %n.patt.loc18_14: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt.loc18_15: %i32 = value_param_pattern %n.patt.loc18_14, call_param1
+// CHECK:STDOUT:     %n.patt.loc18_6: %pattern_type.7ce = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt.loc18_7: %pattern_type.7ce = value_param_pattern %n.patt.loc18_6, call_param0
+// CHECK:STDOUT:     %n.patt.loc18_14: %pattern_type.7ce = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt.loc18_15: %pattern_type.7ce = value_param_pattern %n.patt.loc18_14, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param.loc18_7: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc18_9: type = splice_block %i32.loc18_9 [concrete = constants.%i32] {

@@ -81,6 +81,8 @@ WarningsAsErrors: '*'
 # - '-modernize-use-nodiscard'
 # # We aren't using the ranges library due to performance concerns.
 # - '-modernize-use-ranges'
+# # Low value compared to the engineering cost.
+# - '-performance-enum-size'
 # # Duplicates `modernize-pass-by-value`.
 # - '-performance-unnecessary-value-param'
 # # Warns on enums which use the `LastValue = Value` pattern if all the other
@@ -114,7 +116,7 @@ Checks:
   -google-readability-function-size, -google-readability-todo,
   -misc-confusable-identifiers, -misc-use-internal-linkage,
   -modernize-avoid-c-arrays, -modernize-use-designated-initializers,
-  -modernize-use-nodiscard, -modernize-use-ranges,
+  -modernize-use-nodiscard, -modernize-use-ranges, -performance-enum-size,
   -performance-unnecessary-value-param, -readability-enum-initial-value,
   -readability-function-cognitive-complexity, -readability-magic-numbers,
   -readability-redundant-member-init, -readability-suspicious-call-argument

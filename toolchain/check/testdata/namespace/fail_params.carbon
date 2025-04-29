@@ -47,7 +47,6 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -98,7 +97,6 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.2(%T.loc40_6.1: type) {
 // CHECK:STDOUT:   %T.loc40_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc40_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -110,6 +108,5 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc40_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

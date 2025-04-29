@@ -3793,7 +3793,11 @@ the critical underpinnings of such abstractions.
 
 #### Lambdas
 
-> **TODO:**
+> **TODO:** References need to be evolved. Needs a detailed design and a high
+> level summary provided inline.
+
+> References: [Lambdas](lambdas.md),
+> [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 #### Co-routines
 

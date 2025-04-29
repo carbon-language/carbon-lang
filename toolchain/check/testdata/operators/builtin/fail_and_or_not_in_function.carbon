@@ -81,7 +81,7 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst27.loc5_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst28.loc5_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -122,7 +122,7 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst27.loc5_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst28.loc5_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:

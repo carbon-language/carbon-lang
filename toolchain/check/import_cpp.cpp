@@ -337,7 +337,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   params.reserve(clang_decl.parameters().size());
   for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
     clang::QualType param_type = param->getType().getCanonicalType();
-    SemIR::TypeId type_id = MapType(context, param_type).type_id;
+    SemIR::TypeId type_id =
+        GetPatternType(context, MapType(context, param_type).type_id);
     if (type_id == SemIR::ErrorInst::TypeId) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
                                          param_type.getAsString()));
@@ -386,14 +387,16 @@ static auto GetReturnType(Context& context, SemIR::LocId loc_id,
                                        ret_type.getAsString()));
     return SemIR::ErrorInst::InstId;
   }
+  auto pattern_type_id = GetPatternType(context, type_id);
   SemIR::InstId return_slot_pattern_id = AddInstInNoBlock(
       // TODO: Fill in a location for the return type once available.
-      context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
-                   {.type_id = type_id, .type_inst_id = type_inst_id})));
+      context,
+      SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
+          {.type_id = pattern_type_id, .type_inst_id = type_inst_id})));
   SemIR::InstId param_pattern_id = AddInstInNoBlock(
       // TODO: Fill in a location for the return type once available.
       context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
-                   {.type_id = type_id,
+                   {.type_id = pattern_type_id,
                     .subpattern_id = return_slot_pattern_id,
                     .index = SemIR::CallParamIndex::None})));
   return param_pattern_id;

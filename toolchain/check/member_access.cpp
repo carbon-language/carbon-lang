@@ -69,7 +69,7 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
                                     SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   SemIR::ScopeLookupResult lookup_result =
-      LookupUnqualifiedName(context, loc_id.node_id(), SemIR::NameId::SelfType,
+      LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,
                             /*required=*/false)
           .scope_result;
   CARBON_CHECK(!lookup_result.is_poisoned());
@@ -473,8 +473,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
 
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
-  auto base_loc_id = context.insts().GetLocId(base_id);
-  if (!RequireCompleteType(context, base_type_id, base_loc_id, [&] {
+  if (!RequireCompleteType(context, base_type_id, SemIR::LocId(base_id), [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
                           "member access into object of incomplete type {0}",
                           TypeOfInstId);
@@ -735,9 +734,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   }
 
   SemIR::TypeId element_type_id = SemIR::ErrorInst::TypeId;
-  auto index_node_id = context.insts().GetLocId(index_inst_id);
   index_inst_id = ConvertToValueOfType(
-      context, index_node_id, index_inst_id,
+      context, SemIR::LocId(index_inst_id), index_inst_id,
       GetSingletonType(context, SemIR::IntLiteralType::TypeInstId));
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::ConstantId) {

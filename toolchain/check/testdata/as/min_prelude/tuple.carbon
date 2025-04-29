@@ -37,12 +37,14 @@ fn Var() {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Let.type: type = fn_type @Let [concrete]
 // CHECK:STDOUT:   %Let: %Let.type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.b67: type = tuple_type (%X, %X) [concrete]
+// CHECK:STDOUT:   %pattern_type.bb7: type = pattern_type %tuple.type.b67 [concrete]
 // CHECK:STDOUT:   %Var.type: type = fn_type @Var [concrete]
 // CHECK:STDOUT:   %Var: %Var.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -64,8 +66,8 @@ fn Var() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
-// CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.019 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.019 = out_param_pattern %return.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
@@ -89,7 +91,7 @@ fn Var() {
 // CHECK:STDOUT: fn @Let() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %tuple.type.b67 = binding_pattern a
+// CHECK:STDOUT:     %a.patt: %pattern_type.bb7 = binding_pattern a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.ref.loc12_20: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc12_25.1: ref %X = temporary_storage
@@ -121,8 +123,8 @@ fn Var() {
 // CHECK:STDOUT: fn @Var() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %tuple.type.b67 = binding_pattern b
-// CHECK:STDOUT:     %.loc17_3.1: %tuple.type.b67 = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.bb7 = binding_pattern b
+// CHECK:STDOUT:     %.loc17_3.1: %pattern_type.bb7 = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %tuple.type.b67 = var b
 // CHECK:STDOUT:   %Make.ref.loc17_20: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]

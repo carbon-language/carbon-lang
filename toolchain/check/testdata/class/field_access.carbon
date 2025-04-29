@@ -32,6 +32,7 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type.cf7: <witness> = complete_type_witness %struct_type.j.k [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
@@ -42,6 +43,7 @@ fn Run() {
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
@@ -91,8 +93,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
-// CHECK:STDOUT:     %.loc17: %Class = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.761 = binding_pattern c
+// CHECK:STDOUT:     %.loc17: %pattern_type.761 = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
@@ -120,8 +122,8 @@ fn Run() {
 // CHECK:STDOUT:   %.loc19_7: init %i32 = converted %int_2, %int.convert_checked.loc19 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   assign %.loc19_4, %.loc19_7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cj.patt: %i32 = binding_pattern cj
-// CHECK:STDOUT:     %.loc20_3: %i32 = var_pattern %cj.patt
+// CHECK:STDOUT:     %cj.patt: %pattern_type.7ce = binding_pattern cj
+// CHECK:STDOUT:     %.loc20_3: %pattern_type.7ce = var_pattern %cj.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cj.var: ref %i32 = var cj
 // CHECK:STDOUT:   %c.ref.loc20: ref %Class = name_ref c, %c
@@ -135,8 +137,8 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cj: ref %i32 = bind_name cj, %cj.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ck.patt: %i32 = binding_pattern ck
-// CHECK:STDOUT:     %.loc21_3: %i32 = var_pattern %ck.patt
+// CHECK:STDOUT:     %ck.patt: %pattern_type.7ce = binding_pattern ck
+// CHECK:STDOUT:     %.loc21_3: %pattern_type.7ce = var_pattern %ck.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ck.var: ref %i32 = var ck
 // CHECK:STDOUT:   %c.ref.loc21: ref %Class = name_ref c, %c

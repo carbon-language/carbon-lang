@@ -275,8 +275,9 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     if (!param_pattern_info) {
       continue;
     }
-    auto param_type_id = SemIR::GetTypeOfInstInSpecific(
-        sem_ir(), specific_id, param_pattern_info->inst_id);
+    auto param_type_id = ExtractScrutineeType(
+        sem_ir(), SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id,
+                                                 param_pattern_info->inst_id));
     CARBON_CHECK(
         !param_type_id.AsConstantId().is_symbolic(),
         "Found symbolic type id after resolution when lowering type {0}.",
@@ -611,6 +612,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
   return llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
 }
 
+static auto BuildTypeForInst(FileContext& /*context*/,
+                             SemIR::PatternType /*inst*/) -> llvm::Type* {
+  CARBON_FATAL("Unexpected pattern type in lowering");
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
     -> llvm::Type* {
   auto fields = context.sem_ir().struct_type_fields().Get(inst.fields_id);
@@ -706,7 +712,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  SemIR::AbsoluteNodeId resolved = GetAbsoluteNodeId(sem_ir_, inst_id).back();
+  SemIR::AbsoluteNodeId resolved =
+      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
   const auto& tree_and_subtrees =
       (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
                                                        .index]();
@@ -742,7 +749,7 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info)
   std::string mangled_name = m.MangleVTable(class_info);
 
   auto first_owning_decl_loc =
-      sem_ir().insts().GetLocId(class_info.first_owning_decl_id);
+      sem_ir().insts().GetCanonicalLocId(class_info.first_owning_decl_id);
   if (first_owning_decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
     // Emit a declaration of an imported vtable using a(n opaque) pointer type.
     // This doesn't have to match the definition that appears elsewhere, it'll

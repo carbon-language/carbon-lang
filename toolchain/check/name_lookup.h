@@ -56,7 +56,7 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
                       ScopeIndex scope_index) -> SemIR::ScopeLookupResult;
 
 // Performs an unqualified name lookup, returning the referenced `InstId`.
-auto LookupUnqualifiedName(Context& context, Parse::NodeId node_id,
+auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                            SemIR::NameId name_id, bool required = true)
     -> LookupResult;
 

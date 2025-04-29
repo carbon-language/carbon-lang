@@ -75,6 +75,7 @@ fn Run() {
 // CHECK:STDOUT:   %ptr: type = ptr_type %Cycle [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %ptr} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -110,8 +111,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %ptr = binding_pattern a
-// CHECK:STDOUT:     %.loc7_3: %ptr = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a
+// CHECK:STDOUT:     %.loc7_3: %pattern_type = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
 // CHECK:STDOUT:   %.loc7_15: type = splice_block %ptr [concrete = constants.%ptr] {
