@@ -545,23 +545,18 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
       auto prev_impl_id = witness_to_impl_id(poison.impl_witness);
       const auto& prev_impl = context_.impls().Get(prev_impl_id);
 
-      // Both impls will give the same interface name, so doesn't matter which
-      // we used here.
-      auto interface_name_id =
-          context_.interfaces().Get(bad_impl.interface.interface_id).name_id;
-
       CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResult, Error,
                         "found `impl` that would change the result of a "
-                        "previous use of `{0} as {1}`",
-                        InstIdAsRawType, SemIR::NameId);
-      auto builder = emitter_.Build(
-          bad_impl.first_decl_id(), PoisonedImplLookupConcreteResult,
-          poison.query.query_self_inst_id, interface_name_id);
+                        "previous use of {0}",
+                        SemIR::ImplId);
+      auto builder =
+          emitter_.Build(bad_impl.first_decl_id(),
+                         PoisonedImplLookupConcreteResult, prev_impl_id);
       CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNoteUse, Note,
                         "use of impl here");
       builder.Note(poison.loc_id, PoisonedImplLookupConcreteResultNoteUse);
       CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
-                        "previously got result from `impl` here");
+                        "previous use selected the `impl` here");
       builder.Note(prev_impl.first_decl_id(),
                    PoisonedImplLookupConcreteResultNotePreviousImpl);
       builder.Emit();
