@@ -124,4 +124,6 @@ runs:
         # Disable lockfile updates, because some actions want to see
         # differences.
         ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
-          mod deps --lockfile_mode=off
+          --lockfile_mode=off mod deps
+        ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
+          --lockfile_mode=off query //...
