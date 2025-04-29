@@ -129,4 +129,4 @@ runs:
         ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
           mod --lockfile_mode=off deps
         ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
-          query --lockfile_mode=off //... | wc -l
+          cquery --lockfile_mode=off //... | wc -l
