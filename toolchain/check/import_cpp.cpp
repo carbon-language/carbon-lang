@@ -310,16 +310,27 @@ static auto MakeIntType(Context& context, IntId size_id) -> TypeExpr {
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
-// Maps a C++ type to a Carbon type. Currently only 32-bit `int` is supported.
+// Maps a C++ type to a Carbon type. Currently only 32-bit `int` and `short` are
+// supported.
 // TODO: Support more types.
 static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
   const auto* builtin_type = dyn_cast<clang::BuiltinType>(type);
-  if (builtin_type && builtin_type->getKind() == clang::BuiltinType::Int &&
-      context.ast_context().getTypeSize(type) == 32) {
-    return MakeIntType(context, context.ints().Add(32));
+  if (!builtin_type) {
+    return {.inst_id = SemIR::ErrorInst::TypeInstId,
+            .type_id = SemIR::ErrorInst::TypeId};
   }
-  return {.inst_id = SemIR::ErrorInst::TypeInstId,
-          .type_id = SemIR::ErrorInst::TypeId};
+  switch (builtin_type->getKind()) {
+    case clang::BuiltinType::Short:
+      return MakeIntType(context, context.ints().Add(16));
+    case clang::BuiltinType::Int:
+      if (context.ast_context().getTypeSize(type) == 32) {
+        return MakeIntType(context, context.ints().Add(32));
+      }
+      [[fallthrough]];
+    default:
+      return {.inst_id = SemIR::ErrorInst::TypeInstId,
+              .type_id = SemIR::ErrorInst::TypeId};
+  }
 }
 
 // Returns a block id for the explicit parameters of the given function
@@ -466,8 +477,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   return decl_id;
 }
 
-// Imports a namespace declaration from Clang to Carbon. If successful, returns
-// the new Carbon namespace declaration `InstId`.
+// Imports a namespace declaration from Clang to Carbon. If successful,
+// returns the new Carbon namespace declaration `InstId`.
 static auto ImportNamespaceDecl(Context& context,
                                 SemIR::NameScopeId parent_scope_id,
                                 SemIR::NameId name_id,
