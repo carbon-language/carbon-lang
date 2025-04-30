@@ -228,44 +228,47 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
 // Build an expression that names the value matched by a pattern.
 static auto BuildPatternRef(Context& context, SemIR::FunctionId function_id,
                             SemIR::InstId pattern_id) -> SemIR::InstId {
-  CARBON_KIND_SWITCH(context.insts().Get(pattern_id)) {
-    case CARBON_KIND(SemIR::ValueParamPattern value_param): {
-      // Build a reference to this parameter.
-      auto call_param_id = context.inst_blocks().Get(
-          context.functions()
-              .Get(function_id)
-              .call_params_id)[value_param.index.index];
-      // Use a pretty name for the `name_ref`. While it's suspicious to use a
-      // pretty name in the IR like this, the only reason we include a name at
-      // all here is to make the formatted SemIR more readable.
-      return AddInst<SemIR::NameRef>(
-          context, SemIR::LocId(pattern_id),
-          {.type_id = context.insts().Get(call_param_id).type_id(),
-           .name_id = SemIR::GetPrettyNameFromPatternId(
-               context.sem_ir(), value_param.subpattern_id),
-           .value_id = call_param_id});
-    }
+  auto pattern = context.insts().Get(pattern_id);
 
-    case CARBON_KIND(SemIR::AddrPattern addr): {
-      // TODO: Make non-recursive.
-      auto ptr_id = BuildPatternRef(context, function_id, addr.inner_id);
-      return PerformPointerDereference(
-          context, SemIR::LocId(pattern_id), ptr_id, [](SemIR::TypeId) {
-            CARBON_FATAL("addr subpattern is not a pointer");
-          });
-    }
+  auto addr = pattern.TryAs<SemIR::AddrPattern>();
+  if (addr) {
+    pattern_id = addr->inner_id;
+    pattern = context.insts().Get(pattern_id);
+  }
 
-    case SemIR::ErrorInst::Kind: {
-      return SemIR::ErrorInst::InstId;
-    }
-
-    default: {
+  auto pattern_ref_id = SemIR::InstId::None;
+  if (auto value_param = pattern.TryAs<SemIR::ValueParamPattern>()) {
+    // Build a reference to this parameter.
+    auto call_param_id = context.inst_blocks().Get(
+        context.functions()
+            .Get(function_id)
+            .call_params_id)[value_param->index.index];
+    // Use a pretty name for the `name_ref`. While it's suspicious to use a
+    // pretty name in the IR like this, the only reason we include a name at
+    // all here is to make the formatted SemIR more readable.
+    pattern_ref_id = AddInst<SemIR::NameRef>(
+        context, SemIR::LocId(pattern_id),
+        {.type_id = context.insts().Get(call_param_id).type_id(),
+         .name_id = SemIR::GetPrettyNameFromPatternId(
+             context.sem_ir(), value_param->subpattern_id),
+         .value_id = call_param_id});
+  } else {
+    if (pattern_id != SemIR::ErrorInst::InstId) {
       context.TODO(
           pattern_id,
           "don't know how to build reference to this pattern in thunk");
-      return SemIR::ErrorInst::InstId;
     }
+    return SemIR::ErrorInst::InstId;
   }
+
+  if (addr) {
+    pattern_ref_id = PerformPointerDereference(
+        context, SemIR::LocId(pattern_id), pattern_ref_id, [](SemIR::TypeId) {
+          CARBON_FATAL("addr subpattern is not a pointer");
+        });
+  }
+
+  return pattern_ref_id;
 }
 
 // Build a call to a function that forwards the arguments of the enclosing
