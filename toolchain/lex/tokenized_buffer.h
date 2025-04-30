@@ -85,18 +85,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     LineIndex start_line;
   };
 
-  // A range of tokens marked by `//@dump-semir-[begin|end]`. The end token is
-  // non-inclusive: [begin, end).
-  //
-  // The particular syntax was chosen because it can be lexed efficiently. It
-  // only occurs in invalid comment strings, so shouldn't slow down lexing of
-  // correct code. It's also comment-like because its presence won't affect
-  // parse/check.
-  struct DumpSemIRRange {
-    TokenIndex begin;
-    TokenIndex end;
-  };
-
   auto GetKind(TokenIndex token) const -> TokenKind;
   auto GetLine(TokenIndex token) const -> LineIndex;
 
@@ -192,6 +180,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto TokenToDiagnosticLoc(TokenIndex token) const
       -> Diagnostics::ConvertedLoc;
 
+  // Returns true if the given range overlaps with a `DumpSemIRRange`.
+  auto OverlapsWithDumpSemIRRange(TokenIndex begin,
+                                  TokenIndex inclusive_end) const -> bool;
+
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
 
@@ -209,8 +201,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   auto comments_size() const -> size_t { return comments_.size(); }
 
-  auto dump_sem_ir_ranges() -> llvm::ArrayRef<DumpSemIRRange> {
-    return dump_sem_ir_ranges_;
+  // Returns true if any `DumpSemIRRange`s were provided.
+  auto has_dump_sem_ir_ranges() const -> bool {
+    return !dump_sem_ir_ranges_.empty();
   }
 
   // This is an upper bound on the number of output parse nodes in the absence
@@ -255,6 +248,18 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
    private:
     const TokenizedBuffer* tokens_;
+  };
+
+  // A range of tokens marked by `//@dump-semir-[begin|end]`. The end token is
+  // non-inclusive: [begin, end).
+  //
+  // The particular syntax was chosen because it can be lexed efficiently. It
+  // only occurs in invalid comment strings, so shouldn't slow down lexing of
+  // correct code. It's also comment-like because its presence won't affect
+  // parse/check.
+  struct DumpSemIRRange {
+    TokenIndex begin;
+    TokenIndex end;
   };
 
   // Converts a pointer into the source to a diagnostic location.

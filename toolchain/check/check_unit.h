@@ -166,6 +166,10 @@ class CheckUnit {
   // context.definitions_required_by_use that doesn't have a definition.
   auto CheckRequiredDefinitions() -> void;
 
+  // Re-run every impl lookup with a concrete result and make sure they find the
+  // same witnesses.
+  auto CheckPoisonedConcreteImplLookupQueries() -> void;
+
   // Does work after processing the parse tree, such as finishing the IR and
   // checking for missing contents.
   auto FinishRun() -> void;

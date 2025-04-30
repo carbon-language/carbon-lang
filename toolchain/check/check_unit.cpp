@@ -12,18 +12,22 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -511,9 +515,65 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
   }
 }
 
+auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
+  // Impl lookup can generate instructions (via deduce) which we don't use, as
+  // we're only generating diagnostics here, so we catch and discard them.
+  context_.inst_block_stack().Push();
+  auto poisoned_queries =
+      std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
+  for (const auto& poison : poisoned_queries) {
+    auto witness_result =
+        EvalLookupSingleImplWitness(context_, poison.loc_id, poison.query,
+                                    poison.non_canonical_query_self_inst_id,
+                                    /*poison_concrete_results=*/false);
+    CARBON_CHECK(witness_result.has_concrete_value());
+    auto found_witness_id = witness_result.concrete_witness();
+    if (found_witness_id != poison.impl_witness) {
+      auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
+        auto table_id = context_.insts()
+                            .GetAs<SemIR::ImplWitness>(witness_id)
+                            .witness_table_id;
+        return context_.insts()
+            .GetAs<SemIR::ImplWitnessTable>(table_id)
+            .impl_id;
+      };
+
+      // We can get the `Impl` from the resulting witness here, which is the
+      // `Impl` that conflicts with the previous poison query.
+      auto bad_impl_id = witness_to_impl_id(found_witness_id);
+      const auto& bad_impl = context_.impls().Get(bad_impl_id);
+
+      auto prev_impl_id = witness_to_impl_id(poison.impl_witness);
+      const auto& prev_impl = context_.impls().Get(prev_impl_id);
+
+      CARBON_DIAGNOSTIC(
+          PoisonedImplLookupConcreteResult, Error,
+          "found `impl` that would change the result of an earlier "
+          "use of `{0} as {1}`",
+          InstIdAsRawType, SpecificInterfaceIdAsRawType);
+      auto builder =
+          emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
+                         poison.query.query_self_inst_id,
+                         poison.query.query_specific_interface_id);
+      CARBON_DIAGNOSTIC(
+          PoisonedImplLookupConcreteResultNoteBadImpl, Note,
+          "the use would select the `impl` here but it was not found yet");
+      builder.Note(bad_impl.first_decl_id(),
+                   PoisonedImplLookupConcreteResultNoteBadImpl);
+      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
+                        "the use had selected the `impl` here");
+      builder.Note(prev_impl.first_decl_id(),
+                   PoisonedImplLookupConcreteResultNotePreviousImpl);
+      builder.Emit();
+    }
+  }
+  context_.inst_block_stack().PopAndDiscard();
+}
+
 auto CheckUnit::FinishRun() -> void {
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
+  CheckPoisonedConcreteImplLookupQueries();
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

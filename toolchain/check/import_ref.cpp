@@ -152,35 +152,6 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
                         SemIR::LocId(prev_id));
 }
 
-// Returns an instruction that has the specified constant value.
-static auto GetInstWithConstantValue(const SemIR::File& file,
-                                     SemIR::ConstantId const_id)
-    -> SemIR::InstId {
-  if (!const_id.has_value()) {
-    return SemIR::InstId::None;
-  }
-
-  // For concrete constants, the corresponding instruction has the desired
-  // constant value.
-  if (!const_id.is_symbolic()) {
-    return file.constant_values().GetInstId(const_id);
-  }
-
-  // For abstract symbolic constants, the corresponding instruction has the
-  // desired constant value.
-  const auto& symbolic_const =
-      file.constant_values().GetSymbolicConstant(const_id);
-  if (!symbolic_const.generic_id.has_value()) {
-    return file.constant_values().GetInstId(const_id);
-  }
-
-  // For a symbolic constant in a generic, pick the corresponding instruction
-  // out of the eval block for the generic.
-  const auto& generic = file.generics().Get(symbolic_const.generic_id);
-  auto block = generic.GetEvalBlock(symbolic_const.index.region());
-  return file.inst_blocks().Get(block)[symbolic_const.index.index()];
-}
-
 namespace {
 class ImportRefResolver;
 
