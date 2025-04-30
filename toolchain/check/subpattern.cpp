@@ -5,6 +5,7 @@
 #include "toolchain/check/subpattern.h"
 
 #include "toolchain/check/inst.h"
+#include "toolchain/check/type.h"
 
 namespace Carbon::Check {
 
@@ -43,6 +44,56 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
   // Currently that can fail when ending a tuple pattern in a name binding
   // decl in a class or interface.
   context.region_stack().PopAndDiscardRegion();
+}
+
+auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
+                       SemIR::NameId name_id, SemIR::TypeId type_id,
+                       SemIR::ExprRegionId type_region_id, bool is_generic,
+                       bool is_template) -> BindingPatternInfo {
+  auto entity_name_id = context.entity_names().AddSymbolicBindingName(
+      name_id, context.scope_stack().PeekNameScopeId(),
+      is_generic ? context.scope_stack().AddCompileTimeBinding()
+                 : SemIR::CompileTimeBindIndex::None,
+      is_template);
+
+  auto bind_id = SemIR::InstId::None;
+  if (is_generic) {
+    bind_id = AddInstInNoBlock<SemIR::BindSymbolicName>(
+        context, name_loc,
+        {.type_id = type_id,
+         .entity_name_id = entity_name_id,
+         .value_id = SemIR::InstId::None});
+  } else {
+    bind_id =
+        AddInstInNoBlock<SemIR::BindName>(context, name_loc,
+                                          {.type_id = type_id,
+                                           .entity_name_id = entity_name_id,
+                                           .value_id = SemIR::InstId::None});
+  }
+
+  auto pattern_type_id = GetPatternType(context, type_id);
+  auto binding_pattern_id = SemIR::InstId::None;
+  if (is_generic) {
+    binding_pattern_id = AddPatternInst<SemIR::SymbolicBindingPattern>(
+        context, name_loc,
+        {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  } else {
+    binding_pattern_id = AddPatternInst<SemIR::BindingPattern>(
+        context, name_loc,
+        {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  }
+
+  if (is_generic) {
+    context.scope_stack().PushCompileTimeBinding(bind_id);
+  }
+
+  bool inserted =
+      context.bind_name_map()
+          .Insert(binding_pattern_id, {.bind_name_id = bind_id,
+                                       .type_expr_region_id = type_region_id})
+          .is_inserted();
+  CARBON_CHECK(inserted);
+  return {.pattern_id = binding_pattern_id, .bind_id = bind_id};
 }
 
 }  // namespace Carbon::Check

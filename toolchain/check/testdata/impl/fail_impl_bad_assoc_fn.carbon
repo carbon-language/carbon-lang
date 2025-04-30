@@ -686,9 +686,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.831 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: bool = bind_name self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: %pattern_type.831 = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -727,9 +727,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.831 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: bool = bind_name self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: %pattern_type.831 = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -770,9 +770,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.831 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: bool = bind_name self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: %pattern_type.831 = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -816,9 +816,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.831 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: bool = bind_name self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: %pattern_type.831 = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -862,9 +862,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.831 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: bool = bind_name self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: %pattern_type.831 = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -910,9 +910,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.831 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: bool = bind_name self, %self.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
-// CHECK:STDOUT:     %b: %pattern_type.831 = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -955,7 +955,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f1 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.9c9 = value_param call_param0
-// CHECK:STDOUT:     %x: %pattern_type.a5c = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %tuple.type.9c9 = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %array_type.a41 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %array_type.a41 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -998,7 +998,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.f56 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.eb9 = value_param call_param0
-// CHECK:STDOUT:     %x: %pattern_type.23f = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %tuple.type.eb9 = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %array_type.126 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %array_type.126 = return_slot %return.param
 // CHECK:STDOUT:   }

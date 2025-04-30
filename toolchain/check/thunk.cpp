@@ -14,6 +14,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/return.h"
+#include "toolchain/check/subpattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/function.h"
@@ -25,11 +26,63 @@
 
 namespace Carbon::Check {
 
+// Adds a pattern instruction for a thunk, copying the location from an existing
+// instruction.
+static auto RebuildPatternInst(Context& context, SemIR::InstId orig_inst_id,
+                               SemIR::Inst new_inst) -> SemIR::InstId {
+  // Ensure we built the same kind of instruction. In particular, this ensures
+  // that the location of the old instruction can be reused for the new one.
+  CARBON_CHECK(context.insts().Get(orig_inst_id).kind() == new_inst.kind(),
+               "Rebuilt pattern with the wrong kind: {0} -> {1}",
+               context.insts().Get(orig_inst_id), new_inst);
+  return AddPatternInst(context, SemIR::LocIdAndInst::UncheckedLoc(
+                                     SemIR::LocId(orig_inst_id), new_inst));
+}
+
+// Wrapper to allow the type to be specified as a template argument for API
+// consistency with `AddInst`.
+template <typename InstT>
+static auto RebuildPatternInst(Context& context, SemIR::InstId orig_inst_id,
+                               InstT new_inst) -> SemIR::InstId {
+  return RebuildPatternInst(context, orig_inst_id, SemIR::Inst(new_inst));
+}
+
+static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
+                                SemIR::AnyBindingPattern pattern,
+                                SemIR::TypeId new_pattern_type_id)
+    -> SemIR::InstId {
+  bool is_generic = pattern.kind == SemIR::SymbolicBindingPattern::Kind;
+  auto entity_name = context.entity_names().Get(pattern.entity_name_id);
+  CARBON_CHECK(is_generic == entity_name.bind_index().has_value());
+
+  // Get the transformed type of the binding.
+  if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::InstId;
+  }
+  auto type_inst_id = context.types()
+                          .GetAs<SemIR::PatternType>(new_pattern_type_id)
+                          .scrutinee_type_inst_id;
+  auto type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
+  auto type_expr_region_id = context.sem_ir().expr_regions().Add(
+      {.block_ids = {SemIR::InstBlockId::Empty}, .result_id = type_inst_id});
+
+  // Rebuild the binding pattern.
+  return AddBindingPattern(context, SemIR::LocId(pattern_id),
+                           entity_name.name_id, type_id, type_expr_region_id,
+                           is_generic, entity_name.is_template)
+      .pattern_id;
+}
+
 static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
                          SemIR::InstId pattern_id) -> SemIR::InstId {
   if (!pattern_id.has_value()) {
     return SemIR::InstId::None;
   }
+
+  auto get_type = [&](SemIR::InstId inst_id) -> SemIR::TypeId {
+    return SemIR::GetTypeOfInstInSpecific(context.sem_ir(), specific_id,
+                                          inst_id);
+  };
 
   auto pattern = context.insts().Get(pattern_id);
 
@@ -54,60 +107,14 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
 
   // Finally, either a binding pattern or a return slot pattern.
   auto new_pattern_id = SemIR::InstId::None;
-  auto inner_type_id =
-      SemIR::GetTypeOfInstInSpecific(context.sem_ir(), specific_id, pattern_id);
   if (auto binding = pattern.TryAs<SemIR::AnyBindingPattern>()) {
-    // TODO: This duplicates some of the work done by `HandleAnyBindingPattern`.
-    bool is_generic = pattern.Is<SemIR::SymbolicBindingPattern>();
-
-    // Rebuild the binding name.
-    auto entity_name = context.entity_names().Get(binding->entity_name_id);
-    CARBON_CHECK(is_generic == entity_name.bind_index().has_value());
-    auto entity_name_id = context.entity_names().AddSymbolicBindingName(
-        entity_name.name_id, context.scope_stack().PeekNameScopeId(),
-        is_generic ? context.scope_stack().AddCompileTimeBinding()
-                   : SemIR::CompileTimeBindIndex::None,
-        entity_name.is_template);
-
-    // Rebuild the binding pattern.
-    new_pattern_id = AddPatternInst(
-        context,
-        SemIR::LocIdAndInst::UncheckedLoc(
-            SemIR::LocId(pattern_id),
-            SemIR::AnyBindingPattern{.kind = binding->kind,
-                                     .type_id = inner_type_id,
-                                     .entity_name_id = entity_name_id}));
-
-    // Also create and register the corresponding BindName instruction.
-    auto bind_name_id = AddInstInNoBlock(
-        context, SemIR::LocIdAndInst::UncheckedLoc(
-                     SemIR::LocId(pattern_id),
-                     SemIR::AnyBindName{
-                         .kind = is_generic ? SemIR::BindSymbolicName::Kind
-                                            : SemIR::BindName::Kind,
-                         .type_id = inner_type_id,
-                         .entity_name_id = entity_name_id,
-                         .value_id = SemIR::InstId::None}));
-    if (is_generic) {
-      context.scope_stack().PushCompileTimeBinding(bind_name_id);
-    }
-
-    auto type_expr_region_id = context.sem_ir().expr_regions().Add(
-        {.block_ids = {SemIR::InstBlockId::Empty},
-         .result_id = context.types().GetInstId(inner_type_id)});
-    bool inserted = context.bind_name_map()
-                        .Insert(new_pattern_id,
-                                {.bind_name_id = bind_name_id,
-                                 .type_expr_region_id = type_expr_region_id})
-                        .is_inserted();
-    CARBON_CHECK(inserted);
+    new_pattern_id = CloneBindingPattern(context, pattern_id, *binding,
+                                         get_type(pattern_id));
   } else if (auto return_slot = pattern.TryAs<SemIR::ReturnSlotPattern>()) {
-    new_pattern_id = AddPatternInst(
-        context,
-        SemIR::LocIdAndInst::UncheckedLoc(
-            SemIR::LocId(pattern_id),
-            SemIR::ReturnSlotPattern{.type_id = inner_type_id,
-                                     .type_inst_id = SemIR::TypeInstId::None}));
+    new_pattern_id = RebuildPatternInst<SemIR::ReturnSlotPattern>(
+        context, pattern_id,
+        {.type_id = get_type(pattern_id),
+         .type_inst_id = SemIR::TypeInstId::None});
   } else {
     CARBON_CHECK(pattern.Is<SemIR::ErrorInst>(),
                  "Unexpected pattern {0} in function signature", pattern);
@@ -116,27 +123,19 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
 
   // Rebuild parameter.
   if (param) {
-    auto type_id =
-        SemIR::GetTypeOfInstInSpecific(context.sem_ir(), specific_id, param_id);
-    new_pattern_id = AddPatternInst(
-        context,
-        SemIR::LocIdAndInst::UncheckedLoc(
-            SemIR::LocId(param_id),
-            SemIR::AnyParamPattern{.kind = param->kind,
-                                   .type_id = type_id,
-                                   .subpattern_id = new_pattern_id,
-                                   .index = SemIR::CallParamIndex::None}));
+    new_pattern_id = RebuildPatternInst<SemIR::AnyParamPattern>(
+        context, param_id,
+        {.kind = param->kind,
+         .type_id = get_type(param_id),
+         .subpattern_id = new_pattern_id,
+         .index = SemIR::CallParamIndex::None});
   }
 
   // Rebuild `addr`.
   if (addr) {
-    auto type_id =
-        SemIR::GetTypeOfInstInSpecific(context.sem_ir(), specific_id, addr_id);
-    new_pattern_id = AddPatternInst(
-        context, SemIR::LocIdAndInst::UncheckedLoc(
-                     SemIR::LocId(addr_id),
-                     SemIR::AddrPattern{.type_id = type_id,
-                                        .inner_id = new_pattern_id}));
+    new_pattern_id = RebuildPatternInst<SemIR::AddrPattern>(
+        context, addr_id,
+        {.type_id = get_type(addr_id), .inner_id = new_pattern_id});
   }
 
   return new_pattern_id;
@@ -148,10 +147,10 @@ static auto ClonePatternBlock(Context& context, SemIR::SpecificId specific_id,
   if (!inst_block_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
-  auto orig_block = context.inst_blocks().Get(inst_block_id);
-
-  llvm::SmallVector<SemIR::InstId> block(llvm::map_range(orig_block, [&](SemIR::InstId inst_id) { return ClonePattern(context, specific_id, inst_id)}));
-  return context.inst_blocks().Add(block);
+  return context.inst_blocks().Transform(
+      inst_block_id, [&](SemIR::InstId inst_id) {
+        return ClonePattern(context, specific_id, inst_id);
+      });
 }
 
 static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,

@@ -196,7 +196,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.c65 = value_param_pattern %c.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.d88 = value_param call_param0
-// CHECK:STDOUT:     %c: %pattern_type.c65 = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %C.d88 = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

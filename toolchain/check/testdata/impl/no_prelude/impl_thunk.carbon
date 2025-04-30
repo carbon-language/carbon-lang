@@ -296,7 +296,7 @@ impl C as I {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.c48 = value_param_pattern %x.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %C = value_param call_param0
-// CHECK:STDOUT:     %x: %pattern_type.c48 = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %C = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -459,7 +459,7 @@ impl C as I {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d63 = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %struct_type.a.b.391 = value_param call_param0
-// CHECK:STDOUT:     %x: %pattern_type.bec = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %struct_type.a.b.391 = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c.d.15a = out_param call_param1
 // CHECK:STDOUT:     %return: ref %struct_type.c.d.15a = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -638,9 +638,9 @@ impl C as I {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.960 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.e79 = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.960 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.e79 = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: %ptr.e79 = value_param call_param1
-// CHECK:STDOUT:     %other: %pattern_type.960 = bind_name other, %other.param
+// CHECK:STDOUT:     %other: %ptr.e79 = bind_name other, %other.param
 // CHECK:STDOUT:     %return.param: ref %ptr.e79 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ptr.e79 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -837,9 +837,9 @@ impl C as I {
 // CHECK:STDOUT:     %other.param_patt: %pattern_type.049 = value_param_pattern %other.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %B = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.049 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %B = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: %B = value_param call_param1
-// CHECK:STDOUT:     %other: %pattern_type.049 = bind_name other, %other.param
+// CHECK:STDOUT:     %other: %B = bind_name other, %other.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1044,9 +1044,9 @@ impl C as I {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.960 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.e79 = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.960 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.e79 = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: %ptr.e79 = value_param call_param1
-// CHECK:STDOUT:     %other: %pattern_type.960 = bind_name other, %other.param
+// CHECK:STDOUT:     %other: %ptr.e79 = bind_name other, %other.param
 // CHECK:STDOUT:     %return.param: ref %ptr.e79 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ptr.e79 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1368,7 +1368,7 @@ impl C as I {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.c10 = value_param_pattern %a.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
-// CHECK:STDOUT:     %a: %pattern_type.c10 = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

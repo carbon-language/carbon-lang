@@ -123,7 +123,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern %self.patt, call_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.7ce = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %i32 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

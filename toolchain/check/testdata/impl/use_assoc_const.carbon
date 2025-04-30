@@ -2319,7 +2319,7 @@ fn F() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %u.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %u: %pattern_type.7ce = bind_name u, %u.param
+// CHECK:STDOUT:     %u: %i32 = bind_name u, %u.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -2564,15 +2564,13 @@ fn F() {
 // CHECK:STDOUT:   %F.decl.loc30_33.2: %F.type.f405c5.2 = fn_decl @F.3 [concrete = constants.%F.214a71.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %z.patt: <error> = binding_pattern z
-// CHECK:STDOUT:     %z.param_patt: <error> = value_param_pattern %z.patt, call_param1 [concrete = <error>]
+// CHECK:STDOUT:     %.param_patt: <error> = value_param_pattern <error>, call_param1 [concrete = <error>]
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.cb1 = bind_name self, %self.param
-// CHECK:STDOUT:     %z.param: <error> = value_param call_param1
-// CHECK:STDOUT:     %z: <error> = bind_name z, %z.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
+// CHECK:STDOUT:     %.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param2
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -2604,15 +2602,13 @@ fn F() {
 // CHECK:STDOUT:   %F.decl.loc39_33.2: %F.type.05d6a0.2 = fn_decl @F.5 [concrete = constants.%F.bfa759.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.838 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.838 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %z.patt: <error> = binding_pattern z
-// CHECK:STDOUT:     %z.param_patt: <error> = value_param_pattern %z.patt, call_param1 [concrete = <error>]
+// CHECK:STDOUT:     %.param_patt: <error> = value_param_pattern <error>, call_param1 [concrete = <error>]
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C2 = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.838 = bind_name self, %self.param
-// CHECK:STDOUT:     %z.param: <error> = value_param call_param1
-// CHECK:STDOUT:     %z: <error> = bind_name z, %z.param
+// CHECK:STDOUT:     %self: %C2 = bind_name self, %self.param
+// CHECK:STDOUT:     %.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param2
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -2648,10 +2644,10 @@ fn F() {
 // CHECK:STDOUT:   return %z.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %empty_tuple.type, %z.param: <error>) -> <error> {
+// CHECK:STDOUT: fn @F.3(%self.param: %empty_tuple.type, %.param: <error>) -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %empty_tuple.type = name_ref self, %self.param
-// CHECK:STDOUT:   %z.ref: <error> = name_ref z, %z.param [concrete = <error>]
+// CHECK:STDOUT:   %.ref: <error> = name_ref <none>, %.param [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2661,11 +2657,11 @@ fn F() {
 // CHECK:STDOUT:   return %self.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.5(%self.param: %C2, %z.param: <error>) -> <error> {
+// CHECK:STDOUT: fn @F.5(%self.param: %C2, %.param: <error>) -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C2 = name_ref self, %self.param
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, @impl.8b3.%F.decl.loc39_33.1
-// CHECK:STDOUT:   %z.ref: <error> = name_ref z, %z.param [concrete = <error>]
+// CHECK:STDOUT:   %.ref: <error> = name_ref <none>, %.param [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %C2 = call %F.bound(%self.ref, <error>)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -2842,9 +2838,9 @@ fn F() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.e85 = out_param_pattern %return.patt, call_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %self: %pattern_type.cb1 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
 // CHECK:STDOUT:     %v.param: %struct_type.a = value_param call_param1
-// CHECK:STDOUT:     %v: %pattern_type.e85 = bind_name v, %v.param
+// CHECK:STDOUT:     %v: %struct_type.a = bind_name v, %v.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.a = out_param call_param2
 // CHECK:STDOUT:     %return: ref %struct_type.a = return_slot %return.param
 // CHECK:STDOUT:   }
