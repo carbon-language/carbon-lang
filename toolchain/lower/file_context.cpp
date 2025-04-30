@@ -339,6 +339,24 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   CARBON_CHECK(llvm_function->getName() == mangled_name,
                "Mangled name collision: {0}", mangled_name);
 
+  if (di_compile_unit_) {
+    auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+    CARBON_CHECK(name, "Unexpected special name for function: {0}",
+                 function.name_id);
+    auto loc = GetLocForDI(function.definition_id);
+
+    auto* sp = di_builder_.createFunction(
+        di_compile_unit_, *name, llvm_function->getName(),
+        /*File=*/di_builder_.createFile(loc.filename, ""),
+        /*LineNo=*/loc.line_number,
+        di_builder_.createSubroutineType(
+            di_builder_.getOrCreateTypeArray(std::nullopt)),
+        /*ScopeLine=*/0, llvm::DINode::FlagZero,
+        llvm::DISubprogram::SPFlagDefinition);
+
+    llvm_function->setSubprogram(sp);
+  }
+
   // Set up parameters and the return slot.
   for (auto [inst_id, arg] : llvm::zip_equal(function_type_info.param_inst_ids,
                                              llvm_function->args())) {
@@ -394,7 +412,6 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                 "No function body blocks found during lowering.");
 
   FunctionContext function_lowering(*this, llvm_function, specific_id,
-                                    BuildDISubprogram(function, llvm_function),
                                     vlog_stream_);
 
   // Add parameters to locals.
@@ -495,28 +512,6 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
         llvm_context(), "entry", llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);
   }
-}
-
-auto FileContext::BuildDISubprogram(const SemIR::Function& function,
-                                    const llvm::Function* llvm_function)
-    -> llvm::DISubprogram* {
-  if (!di_compile_unit_) {
-    return nullptr;
-  }
-  auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
-  CARBON_CHECK(name, "Unexpected special name for function: {0}",
-               function.name_id);
-  auto loc = GetLocForDI(function.definition_id);
-  // TODO: Add more details here, including real subroutine type (once type
-  // information is built), etc.
-  return di_builder_.createFunction(
-      di_compile_unit_, *name, llvm_function->getName(),
-      /*File=*/di_builder_.createFile(loc.filename, ""),
-      /*LineNo=*/loc.line_number,
-      di_builder_.createSubroutineType(
-          di_builder_.getOrCreateTypeArray(std::nullopt)),
-      /*ScopeLine=*/0, llvm::DINode::FlagZero,
-      llvm::DISubprogram::SPFlagDefinition);
 }
 
 // BuildTypeForInst is used to construct types for FileContext::BuildType below.

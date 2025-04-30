@@ -17,17 +17,17 @@ fn G() {
 // CHECK:STDOUT: ; ModuleID = 'array_in_place.carbon'
 // CHECK:STDOUT: source_filename = "array_in_place.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main(ptr sret({ i32, i32, i32 }))
+// CHECK:STDOUT: declare !dbg !4 void @_CF.Main(ptr sret({ i32, i32, i32 }))
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
+// CHECK:STDOUT: define void @_CG.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca [2 x { i32, i32, i32 }], align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 24, ptr %v.var), !dbg !7
-// CHECK:STDOUT:   %.loc14_47.2.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, i64 0, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_47.2.array.index), !dbg !9
-// CHECK:STDOUT:   %.loc14_47.4.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, i64 1, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_47.4.array.index), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   %v.var = alloca [2 x { i32, i32, i32 }], align 8, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 24, ptr %v.var), !dbg !8
+// CHECK:STDOUT:   %.loc14_47.2.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, i64 0, !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_47.2.array.index), !dbg !10
+// CHECK:STDOUT:   %.loc14_47.4.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, i64 1, !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_47.4.array.index), !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -42,11 +42,12 @@ fn G() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "array_in_place.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 38, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 39, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 44, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !7)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 38, scope: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 39, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 44, scope: !7)
+// CHECK:STDOUT: !12 = !DILocation(line: 13, column: 1, scope: !7)

@@ -60,15 +60,15 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.NS.A()
+// CHECK:STDOUT: declare !dbg !9 void @_CF.NS.A()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CG.Main() !dbg !9 {
+// CHECK:STDOUT: define i32 @_CG.Main() !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call = call i32 @_CG.NS.A(i32 1), !dbg !10
-// CHECK:STDOUT:   ret i32 %G.call, !dbg !11
+// CHECK:STDOUT:   %G.call = call i32 @_CG.NS.A(i32 1), !dbg !12
+// CHECK:STDOUT:   ret i32 %G.call, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_CG.NS.A(i32)
+// CHECK:STDOUT: declare !dbg !14 i32 @_CG.NS.A(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -82,6 +82,9 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 4, column: 10, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 4, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 6, column: 24, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 17, scope: !9)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.NS.A", scope: null, file: !10, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DIFile(filename: "a.carbon", directory: "")
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DILocation(line: 6, column: 24, scope: !11)
+// CHECK:STDOUT: !13 = !DILocation(line: 6, column: 17, scope: !11)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "G", linkageName: "_CG.NS.A", scope: null, file: !10, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2)

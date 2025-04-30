@@ -20,7 +20,6 @@ class FunctionContext {
  public:
   explicit FunctionContext(FileContext& file_context, llvm::Function* function,
                            SemIR::SpecificId specific_id,
-                           llvm::DISubprogram* di_subprogram,
                            llvm::raw_ostream* vlog_stream);
 
   // Returns a basic block corresponding to the start of the given semantics
@@ -207,8 +206,6 @@ class FunctionContext {
   // The instruction after all allocas. This is used as the insert point for new
   // allocas.
   llvm::Instruction* after_allocas_ = nullptr;
-
-  llvm::DISubprogram* di_subprogram_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

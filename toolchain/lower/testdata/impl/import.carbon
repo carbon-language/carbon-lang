@@ -65,7 +65,7 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @"_CF.A.Main:I.Main"(ptr)
+// CHECK:STDOUT: declare !dbg !9 i32 @"_CF.A.Main:I.Main"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -79,3 +79,5 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 5, column: 10, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main", scope: null, file: !10, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DIFile(filename: "impl_def.carbon", directory: "")

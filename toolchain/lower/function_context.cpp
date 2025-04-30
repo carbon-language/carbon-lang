@@ -14,17 +14,13 @@ namespace Carbon::Lower {
 FunctionContext::FunctionContext(FileContext& file_context,
                                  llvm::Function* function,
                                  SemIR::SpecificId specific_id,
-                                 llvm::DISubprogram* di_subprogram,
                                  llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
       specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
-      di_subprogram_(di_subprogram),
-      vlog_stream_(vlog_stream) {
-  function_->setSubprogram(di_subprogram_);
-}
+      vlog_stream_(vlog_stream) {}
 
 auto FunctionContext::GetBlock(SemIR::InstBlockId block_id)
     -> llvm::BasicBlock* {
@@ -101,14 +97,15 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   auto inst = sem_ir().insts().Get(inst_id);
   CARBON_VLOG("Lowering {0}: {1}\n", inst_id, inst);
   builder_.getInserter().SetCurrentInstId(inst_id);
-  if (di_subprogram_) {
+  if (function_->getSubprogram()) {
     auto loc = file_context_->GetLocForDI(inst_id);
-    CARBON_CHECK(loc.filename == di_subprogram_->getFile()->getFilename(),
-                 "Instructions located in a different file from their "
-                 "enclosing function aren't handled yet");
+    CARBON_CHECK(
+        loc.filename == function_->getSubprogram()->getFile()->getFilename(),
+        "Instructions located in a different file from their "
+        "enclosing function aren't handled yet");
     builder_.SetCurrentDebugLocation(
         llvm::DILocation::get(builder_.getContext(), loc.line_number,
-                              loc.column_number, di_subprogram_));
+                              loc.column_number, function_->getSubprogram()));
   }
 
   CARBON_KIND_SWITCH(inst) {
@@ -121,7 +118,7 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   }
 
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
-  if (di_subprogram_) {
+  if (function_->getSubprogram()) {
     builder_.SetCurrentDebugLocation(llvm::DebugLoc());
   }
 }

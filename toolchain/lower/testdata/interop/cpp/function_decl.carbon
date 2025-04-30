@@ -31,7 +31,7 @@ fn MyF() {
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3foov()
+// CHECK:STDOUT: declare !dbg !9 void @_Z3foov()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -45,3 +45,4 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 6, column: 1, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "foo", linkageName: "_Z3foov", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)

@@ -160,7 +160,7 @@ base class Base(T:! type) {
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes(ptr)
+// CHECK:STDOUT: declare !dbg !15 void @_CFn.Intermediate.Classes(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
@@ -194,6 +194,8 @@ base class Base(T:! type) {
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Create", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 15, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 14, column: 1, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Intermediate.Classes", scope: null, file: !16, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DIFile(filename: "classes.carbon", directory: "")
 // CHECK:STDOUT: ; ModuleID = 'member_init.carbon'
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:
@@ -260,16 +262,16 @@ base class Base(T:! type) {
 // CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
+// CHECK:STDOUT: declare !dbg !4 void @_CF.Base.Main(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CUse.Main() !dbg !4 {
+// CHECK:STDOUT: define void @_CUse.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { { ptr } }, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %v.var), !dbg !7
-// CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc13_31.2.vptr, align 8, !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   %v.var = alloca { { ptr } }, align 8, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %v.var), !dbg !8
+// CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.2.base, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc13_31.2.vptr, align 8, !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -284,26 +286,27 @@ base class Base(T:! type) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "member_brace_init.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 13, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 21, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 30, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 3, scope: !7)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 21, scope: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 30, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'call.carbon'
 // CHECK:STDOUT: source_filename = "call.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
+// CHECK:STDOUT: declare !dbg !4 void @_CF.Base.Main(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CUse.Main(ptr %b) !dbg !4 {
+// CHECK:STDOUT: define void @_CUse.Main(ptr %b) !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call.vtable = load ptr, ptr %b, align 8, !dbg !7
-// CHECK:STDOUT:   %F.call = call ptr @llvm.load.relative.i32(ptr %F.call.vtable, i32 0), !dbg !7
-// CHECK:STDOUT:   call void %F.call(ptr %b), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   %F.call.vtable = load ptr, ptr %b, align 8, !dbg !8
+// CHECK:STDOUT:   %F.call = call ptr @llvm.load.relative.i32(ptr %F.call.vtable, i32 0), !dbg !8
+// CHECK:STDOUT:   call void %F.call(ptr %b), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
@@ -318,11 +321,12 @@ base class Base(T:! type) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 8, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !8 = !DILocation(line: 9, column: 3, scope: !7)
+// CHECK:STDOUT: !9 = !DILocation(line: 8, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'generic.carbon'
 // CHECK:STDOUT: source_filename = "generic.carbon"
 // CHECK:STDOUT:
