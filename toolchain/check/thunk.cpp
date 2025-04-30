@@ -150,11 +150,7 @@ static auto ClonePatternBlock(Context& context, SemIR::SpecificId specific_id,
   }
   auto orig_block = context.inst_blocks().Get(inst_block_id);
 
-  llvm::SmallVector<SemIR::InstId> block;
-  block.reserve(orig_block.size());
-  for (auto inst_id : orig_block) {
-    block.push_back(ClonePattern(context, specific_id, inst_id));
-  }
+  llvm::SmallVector<SemIR::InstId> block(llvm::map_range(orig_block, [&](SemIR::InstId inst_id) { return ClonePattern(context, specific_id, inst_id)}));
   return context.inst_blocks().Add(block);
 }
 
@@ -312,12 +308,12 @@ static auto BuildThunkDefinition(Context& context,
                                  SemIR::InstId callee_id) {
   // TODO: Improve the diagnostics produced here. Specifically, it would likely
   // be better for the primary error message to be that we tried to produce a
-  // thunk because of a type mismatch, but couldn't, with with notes explaining
+  // thunk because of a type mismatch, but couldn't, with notes explaining
   // why, rather than the primary error message being whatever went wrong
   // building the thunk.
 
   {
-    // The check below produces diagnostincs referring to the signature, so also
+    // The check below produces diagnostics referring to the signature, so also
     // note the callee.
     Diagnostics::AnnotationScope annot_scope(
         &context.emitter(), [&](DiagnosticBuilder& builder) {
