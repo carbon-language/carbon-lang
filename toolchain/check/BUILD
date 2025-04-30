@@ -118,7 +118,6 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:frontend",

@@ -11,7 +11,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/min_prelude/specialization_poison.carbon
 
-// --- todo_fail_final_poisoned_concrete_query.carbon
+// --- fail_final_poisoned_concrete_query_in_specific.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -23,6 +23,9 @@ impl forall [U:! type] U as I where .T = () {
   fn F[self: Self]() -> () { return (); }
 }
 
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:25: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fn H[W:! type](v: W) -> W.(I.T) {
+// CHECK:STDERR:                         ^~~~~~~
 fn H[W:! type](v: W) -> W.(I.T) {
   return v.(I.F)();
 }
@@ -34,12 +37,46 @@ fn G(p: C*) -> () {
   return H(p);
 }
 
-// TODO: Diagnose this as a poisoned specialization.
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C* as I where .T = C {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-21]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] U as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C* as I where .T = C {
   fn F[self: Self]() -> C { return *self; }
 }
 
-// --- todo_fail_final_poisoned_concrete_query_nested_type_in_self.carbon
+// --- fail_final_poisoned_concrete_query_in_generic.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let T:! type;
+}
+
+impl forall [U:! type] U as I where .T = () {}
+
+class C {}
+
+fn H[W:! type](v: W) {
+  // This concrete impl lookup query poisons any further specializations.
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C as I` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR:   let a: C.(I.T) = ();
+  // CHECK:STDERR:          ^~~~~~~
+  let a: C.(I.T) = ();
+}
+
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C as I where .T = C {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] U as I where .T = () {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as I where .T = C {}
+
+// --- fail_final_poisoned_concrete_query_nested_type_in_self.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -55,15 +92,24 @@ impl forall [U:! type] C(U) as I where .T = () {
 
 fn G(c: C(())) -> () {
   // This concrete impl lookup query poisons any further specializations.
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C(()) as I` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR:   return c.(I.F)();
+  // CHECK:STDERR:          ^~~~~~~
   return c.(I.F)();
 }
 
-// TODO: Diagnose this as a poisoned specialization.
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C(()) as I where .T = {} {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] C(U) as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C(()) as I where .T = {} {
   fn F[self: Self]() -> {} { return {}; }
 }
 
-// --- todo_fail_final_poisoned_concrete_query_nested_type_in_interface.carbon
+// --- fail_final_poisoned_concrete_query_nested_type_in_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I(U:! type) {
@@ -79,10 +125,19 @@ class C {}
 
 fn G(c: C) -> () {
   // This concrete impl lookup query poisons any further specializations.
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C as I(C)` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR:   return c.(I(C).F)();
+  // CHECK:STDERR:          ^~~~~~~~~~
   return c.(I(C).F)();
 }
 
-// TODO: Diagnose this as a poisoned specialization.
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C as I(C) where .T = {} {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-17]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] U as I(U) where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as I(C) where .T = {} {
   fn F[self: Self]() -> {} { return {}; }
 }
@@ -114,3 +169,62 @@ fn G[X:! type](p: X*) -> (X*).(I.T) {
 final impl forall [V:! type] V* as I where .T = V {
   fn F[self: Self]() -> V { return *self; }
 }
+
+// --- todo_final_overlaps_earlier_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+impl forall [T:! Y] T as Z(T) {}
+
+// TODO: Diagnose overlap with previous impl (query of this matches that).
+final impl forall [T:! type] T as Z(T) {}
+
+// --- todo_final_overlaps_later_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+// TODO: Diagnose overlap with next impl (query of this matches that).
+final impl forall [T:! type] T as Z(T) {}
+
+impl forall [T:! Y] T as Z(T) {}
+
+// --- todo_final_overlaps_earlier_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+final impl forall [T:! Y] T as Z(T) {}
+
+// TODO: Diagnose overlap with previous impl (query of this matches that).
+final impl forall [T:! type] T as Z(T) {}
+
+// --- todo_final_overlaps_later_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+// TODO: Diagnose overlap with next impl (query of this matches that)
+final impl forall [T:! type] T as Z(T) {}
+
+final impl forall [T:! Y] T as Z(T) {}
+
+// --- todo_non_final_overlaps_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+impl forall [T:! Y] T as Z(T) {}
+
+class C(T:! type) {}
+// No diagnosis here as the type structure is unique.
+impl forall [T:! type] T as Z(C(T)) {}
+
+// TODO: Diagnose overlap with first impl (same type structure).
+impl forall [T:! type] T as Z(T) {}

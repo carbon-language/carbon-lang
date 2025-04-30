@@ -219,8 +219,8 @@ class [[clang::internal_linkage]] Lexer {
  private:
   class ErrorRecoveryBuffer;
 
-  // Handles `//@dump-sem-ir-start` for a `DumpSemIRRange`.
-  auto StartDumpSemIRRange(const char* diag_loc) -> void;
+  // Handles `//@dump-sem-ir-begin` for a `DumpSemIRRange`.
+  auto BeginDumpSemIRRange(const char* diag_loc) -> void;
 
   // Handles `//@dump-sem-ir-end` for a `DumpSemIRRange`.
   auto EndDumpSemIRRange(const char* diag_loc) -> void;
@@ -895,23 +895,23 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
   CARBON_CHECK(result, "Failed to form a token!");
 }
 
-auto Lexer::StartDumpSemIRRange(const char* diag_loc) -> void {
+auto Lexer::BeginDumpSemIRRange(const char* diag_loc) -> void {
   EndDumpSemIRRangeIfIncomplete(diag_loc);
 
-  // The start here will be the next token, which may be FileEnd. The end will
+  // The begin here will be the next token, which may be FileEnd. The end will
   // be assigned by either AddDumpSemIREnd or, if invalid,
   // EndDumpSemIRRangeIfIncomplete.
   buffer_.dump_sem_ir_ranges_.push_back(
-      {.start = TokenIndex(buffer_.size()), .end = TokenIndex::None});
+      {.begin = TokenIndex(buffer_.size()), .end = TokenIndex::None});
 }
 
 auto Lexer::EndDumpSemIRRange(const char* diag_loc) -> void {
   if (buffer_.dump_sem_ir_ranges_.empty() ||
       buffer_.dump_sem_ir_ranges_.back().end != TokenIndex::None) {
     CARBON_DIAGNOSTIC(
-        DumpSemIRRangeMissingStart, Error,
-        "missing `//@dump-sem-ir-start` to match `//@dump-sem-ir-end`");
-    emitter_.Emit(diag_loc, DumpSemIRRangeMissingStart);
+        DumpSemIRRangeMissingBegin, Error,
+        "missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end`");
+    emitter_.Emit(diag_loc, DumpSemIRRangeMissingBegin);
     return;
   }
 
@@ -929,7 +929,7 @@ auto Lexer::EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void {
   // better.
   CARBON_DIAGNOSTIC(
       DumpSemIRRangeMissingEnd, Error,
-      "missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-start`");
+      "missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin`");
   emitter_.Emit(diag_loc, DumpSemIRRangeMissingEnd);
 
   EndDumpSemIRRange(diag_loc);
@@ -961,8 +961,8 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     llvm::StringRef comment_text = source_text.substr(position);
-    if (comment_text.starts_with("//@dump-sem-ir-start\n")) {
-      StartDumpSemIRRange(comment_text.begin());
+    if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
+      BeginDumpSemIRRange(comment_text.begin());
       AdvanceToLine(source_text, position, line_index_ + 1);
       return;
     }
