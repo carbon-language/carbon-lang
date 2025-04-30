@@ -75,6 +75,12 @@ auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo;
 
+// Checks that a function declaration's signature is suitable to support a
+// function definition. This requires the parameter types to be complete and the
+// return type to be concrete.
+auto CheckFunctionDefinitionSignature(Context& context,
+                                      SemIR::FunctionId function_id) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FUNCTION_H_

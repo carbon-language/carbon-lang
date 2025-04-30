@@ -192,7 +192,7 @@ impl () as J2 where .U2 = {} {
   // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+7]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   fn F[self: Self](z: {}) -> {} { return z; }
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE-7]]:3: note: building thunk to match the signature of this function [InThunk]
+  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE-7]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn F[self: Self](z: Self.U2) -> Self.U2;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -220,7 +220,7 @@ impl () as K where .V = {.a: ()} {
   // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+7]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   fn F[self: Self](v: {.x: ()}) -> {.x: ()} { return v; }
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-7]]:3: note: building thunk to match the signature of this function [InThunk]
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-7]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn F[self: Self](v: V) -> V;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

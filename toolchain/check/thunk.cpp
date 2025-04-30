@@ -306,15 +306,24 @@ static auto BuildThunkDefinition(Context& context,
                                  SemIR::FunctionId function_id,
                                  SemIR::InstId thunk_id,
                                  SemIR::InstId callee_id) {
-  // TODO: Improve the diagnostics produced here.
-  Diagnostics::AnnotationScope annot_scope(
-      &context.emitter(), [&](DiagnosticBuilder& builder) {
-        CARBON_DIAGNOSTIC(
-            InThunk, Note,
-            "building thunk to match the signature of this function");
-        builder.Note(context.functions().Get(signature_id).first_owning_decl_id,
-                     InThunk);
-      });
+  // TODO: Improve the diagnostics produced here. Specifically, it would likely
+  // be better for the primary error message to be that we tried to produce a
+  // thunk because of a type mismatch, but couldn't, with with notes explaining
+  // why, rather than the primary error message being whatever went wrong
+  // building the thunk.
+
+  {
+    // The check below produces diagnostincs referring to the signature, so also
+    // note the callee.
+    Diagnostics::AnnotationScope annot_scope(
+        &context.emitter(), [&](DiagnosticBuilder& builder) {
+          CARBON_DIAGNOSTIC(ThunkCallee, Note,
+                            "while building thunk calling this function");
+          builder.Note(callee_id, ThunkCallee);
+        });
+
+    CheckFunctionDefinitionSignature(context, function_id);
+  }
 
   // TODO: This duplicates much of the handling for FunctionDefinitionStart and
   // FunctionDefinition parse nodes. Consider refactoring.
@@ -322,6 +331,17 @@ static auto BuildThunkDefinition(Context& context,
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   StartGenericDefinition(context);
+
+  // The checks below produce diagnostics pointing at the callee, so also note
+  // the signature.
+  Diagnostics::AnnotationScope annot_scope(
+      &context.emitter(), [&](DiagnosticBuilder& builder) {
+        CARBON_DIAGNOSTIC(
+            ThunkSignature, Note,
+            "while building thunk to match the signature of this function");
+        builder.Note(context.functions().Get(signature_id).first_owning_decl_id,
+                     ThunkSignature);
+      });
 
   auto call_id = BuildThunkCall(context, function_id, callee_id);
   if (HasDeclaredReturnType(context, function_id)) {

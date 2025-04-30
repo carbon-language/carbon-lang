@@ -563,55 +563,19 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   return true;
 }
 
-static auto CheckFunctionDefinitionSignature(Context& context,
-                                             SemIR::Function& function)
-    -> void {
-  auto params_to_complete =
-      context.inst_blocks().GetOrEmpty(function.call_params_id);
-
-  // Check the return type is complete.
-  if (function.return_slot_pattern_id.has_value()) {
-    CheckFunctionReturnType(context,
-                            SemIR::LocId(function.return_slot_pattern_id),
-                            function, SemIR::SpecificId::None);
-    params_to_complete = params_to_complete.drop_back();
-  }
-
-  // Check the parameter types are complete.
-  for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::ErrorInst::InstId) {
-      continue;
-    }
-
-    // The parameter types need to be complete.
-    RequireCompleteType(
-        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
-        SemIR::LocId(param_ref_id), [&] {
-          CARBON_DIAGNOSTIC(
-              IncompleteTypeInFunctionParam, Error,
-              "parameter has incomplete type {0} in function definition",
-              TypeOfInstId);
-          return context.emitter().Build(
-              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
-        });
-  }
-}
-
 // Processes a function definition after a signature for which we have already
 // built a function ID. This logic is shared between processing regular function
 // definitions and delayed parsing of inline method definitions.
 static auto HandleFunctionDefinitionAfterSignature(
     Context& context, Parse::FunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
-  auto& function = context.functions().Get(function_id);
-
   // Create the function scope and the entry block.
   context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   StartGenericDefinition(context);
 
-  CheckFunctionDefinitionSignature(context, function);
+  CheckFunctionDefinitionSignature(context, function_id);
 
   context.node_stack().Push(node_id, function_id);
 }
@@ -751,8 +715,9 @@ auto HandleParseNode(Context& context,
 
   auto builtin_kind = LookupBuiltinFunctionKind(context, name_id);
   if (builtin_kind != SemIR::BuiltinFunctionKind::None) {
+    CheckFunctionDefinitionSignature(context, function_id);
+
     auto& function = context.functions().Get(function_id);
-    CheckFunctionDefinitionSignature(context, function);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
       function.builtin_function_kind = builtin_kind;
       // Build an empty generic definition if this is a generic builtin.

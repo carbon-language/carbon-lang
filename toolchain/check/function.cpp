@@ -127,4 +127,39 @@ auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
   return return_info;
 }
 
+auto CheckFunctionDefinitionSignature(Context& context,
+                                      SemIR::FunctionId function_id) -> void {
+  auto& function = context.functions().Get(function_id);
+
+  auto params_to_complete =
+      context.inst_blocks().GetOrEmpty(function.call_params_id);
+
+  // Check the return type is complete.
+  if (function.return_slot_pattern_id.has_value()) {
+    CheckFunctionReturnType(context,
+                            SemIR::LocId(function.return_slot_pattern_id),
+                            function, SemIR::SpecificId::None);
+    params_to_complete = params_to_complete.drop_back();
+  }
+
+  // Check the parameter types are complete.
+  for (auto param_ref_id : params_to_complete) {
+    if (param_ref_id == SemIR::ErrorInst::InstId) {
+      continue;
+    }
+
+    // The parameter types need to be complete.
+    RequireCompleteType(
+        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+        SemIR::LocId(param_ref_id), [&] {
+          CARBON_DIAGNOSTIC(
+              IncompleteTypeInFunctionParam, Error,
+              "parameter has incomplete type {0} in function definition",
+              TypeOfInstId);
+          return context.emitter().Build(
+              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
+        });
+  }
+}
+
 }  // namespace Carbon::Check

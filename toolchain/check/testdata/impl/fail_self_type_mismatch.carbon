@@ -32,7 +32,7 @@ impl i32 as I {
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+7]]:8: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn F(c: C(i32));
   // CHECK:STDERR:        ^~~~~~~~~
-  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-14]]:3: note: building thunk to match the signature of this function [InThunk]
+  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-14]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn F(c: C(Self));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
