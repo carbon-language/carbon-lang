@@ -7,7 +7,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/lex/token_index.h"
-#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse {
@@ -140,30 +139,8 @@ class TreeAndSubtrees {
 
   auto tree() const -> const Tree& { return *tree_; }
 
-  auto parent(NodeId n) const -> NodeId {
-    return subtree_data_[n.index].parent;
-  }
-
  private:
   friend class TypedNodesTestPeer;
-
-  struct SubtreeData {
-    // For each node in the tree, the size of the node's subtree. This is the
-    // number of nodes (and thus tokens) that are covered by the node (and its
-    // descendents) in the parse tree. It's one for nodes with no children.
-    //
-    // During a *reverse* postorder (RPO) traversal of the parse tree, this can
-    // also be thought of as the offset to the next non-descendant node. When
-    // the node is not the first child of its parent (which is the last child
-    // visited in RPO), that is the offset to the next sibling. When the node
-    // *is* the first child of its parent, this will be an offset to the node's
-    // parent's next sibling, or if it the parent is also a first child, the
-    // grandparent's next sibling, and so on.
-    int32_t size;
-
-    // The parent node, when there is one.
-    NodeId parent = NodeId::None;
-  };
 
   // Extract a node of type `T` from a sibling range. This is expected to
   // consume the complete sibling range. Malformed tree errors are written
@@ -202,7 +179,18 @@ class TreeAndSubtrees {
   // The associated tree.
   const Tree* tree_;
 
-  llvm::SmallVector<SubtreeData> subtree_data_;
+  // For each node in the tree, the size of the node's subtree. This is the
+  // number of nodes (and thus tokens) that are covered by the node (and its
+  // descendents) in the parse tree. It's one for nodes with no children.
+  //
+  // During a *reverse* postorder (RPO) traversal of the parse tree, this can
+  // also be thought of as the offset to the next non-descendant node. When the
+  // node is not the first child of its parent (which is the last child visited
+  // in RPO), that is the offset to the next sibling. When the node *is* the
+  // first child of its parent, this will be an offset to the node's parent's
+  // next sibling, or if it the parent is also a first child, the grandparent's
+  // next sibling, and so on.
+  llvm::SmallVector<int32_t> subtree_sizes_;
 };
 
 // A standard signature for a callback to support lazy construction.
@@ -236,7 +224,7 @@ class TreeAndSubtrees::SiblingIterator
 
   using iterator_facade_base::operator++;
   auto operator++() -> SiblingIterator& {
-    node_.index -= tree_->subtree_data_[node_.index].size;
+    node_.index -= std::abs(tree_->subtree_sizes_[node_.index]);
     return *this;
   }
 

@@ -65,6 +65,9 @@ class Formatter {
     size_t index;
   };
 
+  // Fills `node_parents_` with parent information. Must only be called once.
+  auto ComputeNodeParents() -> void;
+
   // Flushes the buffered output to the current chunk.
   auto FlushChunk() -> void;
 
@@ -360,6 +363,10 @@ class Formatter {
   // referenced, indexed by the instruction's index. This is resized in advance
   // to the correct size.
   llvm::SmallVector<size_t, 0> tentative_inst_chunks_;
+
+  // Maps nodes to their parents. Only set when dump ranges are in use, because
+  // the parents aren't used otherwise.
+  llvm::SmallVector<Parse::NodeId> node_parents_;
 };
 
 template <typename IdT>

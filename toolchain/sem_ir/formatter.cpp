@@ -43,6 +43,10 @@ Formatter::Formatter(const File* sem_ir,
   // a chunk of their own.
   auto first_chunk = AddChunkNoFlush(true);
   tentative_inst_chunks_.resize(sem_ir_->insts().size(), first_chunk);
+
+  if (sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+    ComputeNodeParents();
+  }
 }
 
 auto Formatter::Format() -> void {
@@ -93,6 +97,16 @@ auto Formatter::Format() -> void {
 
   // End-of-file newline.
   out_ << "\n";
+}
+
+auto Formatter::ComputeNodeParents() -> void {
+  CARBON_CHECK(node_parents_.empty());
+  node_parents_.resize(sem_ir_->parse_tree().size(), Parse::NodeId::None);
+  for (auto n : sem_ir_->parse_tree().postorder()) {
+    for (auto child : get_tree_and_subtrees_().children(n)) {
+      node_parents_[child.index] = n;
+    }
+  }
 }
 
 auto Formatter::Write(llvm::raw_ostream& out) -> void {
@@ -179,7 +193,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
   // body.
   auto end_node_id = loc_id.node_id();
   if (is_definition_start) {
-    end_node_id = tree_and_subtrees.parent(end_node_id);
+    end_node_id = node_parents_[end_node_id.index];
   }
   auto inclusive_end = sem_ir_->parse_tree().node_token(end_node_id);
 
