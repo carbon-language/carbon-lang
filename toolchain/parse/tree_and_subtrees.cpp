@@ -176,8 +176,8 @@ auto TreeAndSubtrees::Print(llvm::raw_ostream& output) const -> void {
     }
   }
 
-  for (NodeId n : tree_->postorder()) {
-    PrintNode(output, n, depths[n.index], /*preorder=*/false);
+  for (auto [n, depth] : llvm::zip(tree_->postorder(), depths)) {
+    PrintNode(output, n, depth, /*preorder=*/false);
     output << ",\n";
   }
   output << "  ]\n";
