@@ -104,6 +104,7 @@ cc_library(
         ":node_stack",
         "//common:array_stack",
         "//common:check",
+        "//common:find",
         "//common:map",
         "//common:ostream",
         "//common:raw_string_ostream",

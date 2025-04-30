@@ -278,7 +278,8 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
   // If we have a self parameter, form `self.<callee_id>`.
   if (function.self_param_id.has_value()) {
     callee_id = PerformCompoundMemberAccess(
-        context, loc_id, BuildPatternRef(context, function_id, function.self_param_id),
+        context, loc_id,
+        BuildPatternRef(context, function_id, function.self_param_id),
         callee_id);
   }
 
@@ -398,9 +399,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // We can't use the function directly. Build a thunk.
   // TODO: Check for and diagnose obvious reasons why this will fail, such as
   // arity mismatch, before trying to build the thunk.
-  auto [function_id, thunk_id] = CloneFunctionDecl(
-      context, SemIR::LocId(callee_id), signature_id,
-      signature_specific_id, callee.function_id);
+  auto [function_id, thunk_id] =
+      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
+                        signature_specific_id, callee.function_id);
 
   // Define the thunk.
   // TODO: We should delay doing this until we get to the end of the enclosing

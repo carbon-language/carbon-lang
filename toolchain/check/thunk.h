@@ -19,4 +19,4 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_FUNCTION_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_THUNK_H_
