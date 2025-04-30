@@ -39,7 +39,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: <error> = binding_pattern T
+// CHECK:STDOUT:     %T.patt: <error> = binding_pattern T [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: <error> = bind_name T, <error>
 // CHECK:STDOUT: }
@@ -63,7 +63,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     .U = %U
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %U.patt: <error> = binding_pattern U
+// CHECK:STDOUT:     %U.patt: <error> = binding_pattern U [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]

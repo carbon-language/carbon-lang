@@ -224,7 +224,7 @@ class TreeAndSubtrees::SiblingIterator
 
   using iterator_facade_base::operator++;
   auto operator++() -> SiblingIterator& {
-    node_.index -= std::abs(tree_->subtree_sizes_[node_.index]);
+    node_.index -= tree_->subtree_sizes_[node_.index];
     return *this;
   }
 

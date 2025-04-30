@@ -9,23 +9,26 @@
 #include <string>
 
 #include "common/raw_string_ostream.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/stringify.h"
 
 namespace Carbon::Check {
 
-auto DiagnosticEmitter::ConvertLoc(SemIR::LocId loc_id,
+auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
   // TODO: Instead of special casing Clang location here, support it within
   // `GetAbsoluteNodeId()`. See discussion in
   // https://github.com/carbon-language/carbon-lang/pull/5262/files/20a3f9dcfab5c6f6c5089554fd5e22d5f1ca75a3#r2040308805.
-  auto converted_clang_loc = TryConvertClangDiagnosticLoc(loc_id);
+  auto converted_clang_loc =
+      TryConvertClangDiagnosticLoc(static_cast<SemIR::LocId>(loc_id));
   if (converted_clang_loc) {
     return *converted_clang_loc;
   }
 
-  auto converted = ConvertLocImpl(loc_id, context_fn);
+  auto converted =
+      ConvertLocImpl(static_cast<SemIR::LocId>(loc_id), context_fn);
 
   // Use the token when possible, but -1 is the default value.
   auto last_offset = -1;
@@ -161,6 +164,18 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
   if (auto* typed_int = llvm::any_cast<TypedInt>(&arg)) {
     return llvm::APSInt(typed_int->value,
                         !sem_ir_->types().IsSignedInt(typed_int->type));
+  }
+  if (auto* specific_interface_id =
+          llvm::any_cast<SemIR::SpecificInterfaceId>(&arg)) {
+    auto specific_interface =
+        sem_ir_->specific_interfaces().Get(*specific_interface_id);
+    return "`" + StringifySpecificInterface(*sem_ir_, specific_interface) + "`";
+  }
+  if (auto* specific_interface_raw =
+          llvm::any_cast<SpecificInterfaceIdAsRawType>(&arg)) {
+    auto specific_interface = sem_ir_->specific_interfaces().Get(
+        specific_interface_raw->specific_interface_id);
+    return StringifySpecificInterface(*sem_ir_, specific_interface);
   }
   return DiagnosticEmitterBase::ConvertArg(arg);
 }

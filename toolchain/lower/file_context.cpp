@@ -712,7 +712,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  SemIR::AbsoluteNodeId resolved = GetAbsoluteNodeId(sem_ir_, inst_id).back();
+  SemIR::AbsoluteNodeId resolved =
+      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
   const auto& tree_and_subtrees =
       (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
                                                        .index]();
@@ -748,7 +749,7 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info)
   std::string mangled_name = m.MangleVTable(class_info);
 
   auto first_owning_decl_loc =
-      sem_ir().insts().GetLocId(class_info.first_owning_decl_id);
+      sem_ir().insts().GetCanonicalLocId(class_info.first_owning_decl_id);
   if (first_owning_decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
     // Emit a declaration of an imported vtable using a(n opaque) pointer type.
     // This doesn't have to match the definition that appears elsewhere, it'll

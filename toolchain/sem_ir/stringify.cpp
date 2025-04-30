@@ -723,4 +723,16 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
   return Stringify(sem_ir, step_stack);
 }
 
+auto StringifySpecificInterface(const File& sem_ir,
+                                SpecificInterface specific_interface)
+    -> std::string {
+  if (specific_interface.specific_id.has_value()) {
+    return StringifySpecific(sem_ir, specific_interface.specific_id);
+  } else {
+    auto name_id =
+        sem_ir.interfaces().Get(specific_interface.interface_id).name_id;
+    return sem_ir.names().GetFormatted(name_id).str();
+  }
+}
+
 }  // namespace Carbon::SemIR

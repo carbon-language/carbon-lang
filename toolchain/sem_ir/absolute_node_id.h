@@ -21,6 +21,9 @@ struct AbsoluteNodeId {
 // files. The vector will have one entry if there were no imports, and multiple
 // entries when imports are traversed. The final entry is the actual
 // declaration.
+//
+// Note that the `LocId` here is typically not canonical, and it uses that fact
+// for non-canonical locations built from an `ExportDecl` instruction.
 auto GetAbsoluteNodeId(const File* sem_ir, LocId loc_id)
     -> llvm::SmallVector<AbsoluteNodeId>;
 

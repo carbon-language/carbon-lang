@@ -168,27 +168,16 @@ auto TreeAndSubtrees::Print(llvm::raw_ostream& output) const -> void {
   output << "- filename: " << tokens_->source().filename() << "\n"
          << "  parse_tree: [\n";
 
-  // Walk the tree just to calculate depths for each node.
-  llvm::SmallVector<int> indents;
-  indents.resize(subtree_sizes_.size(), 0);
-
-  llvm::SmallVector<std::pair<NodeId, int>, 16> node_stack;
-  for (NodeId n : roots()) {
-    node_stack.push_back({n, 0});
-  }
-
-  while (!node_stack.empty()) {
-    NodeId n = NodeId::None;
-    int depth;
-    std::tie(n, depth) = node_stack.pop_back_val();
-    for (NodeId sibling_n : children(n)) {
-      indents[sibling_n.index] = depth + 1;
-      node_stack.push_back({sibling_n, depth + 1});
+  // Walk the tree in reverse, just to calculate depths for each node.
+  llvm::SmallVector<int> depths(tree_->size(), 0);
+  for (auto [n, depth] : llvm::reverse(llvm::zip(tree_->postorder(), depths))) {
+    for (auto child : children(n)) {
+      depths[child.index] = depth + 1;
     }
   }
 
-  for (NodeId n : tree_->postorder()) {
-    PrintNode(output, n, indents[n.index], /*preorder=*/false);
+  for (auto [n, depth] : llvm::zip(tree_->postorder(), depths)) {
+    PrintNode(output, n, depth, /*preorder=*/false);
     output << ",\n";
   }
   output << "  ]\n";
@@ -232,7 +221,7 @@ auto TreeAndSubtrees::PrintPreorder(llvm::raw_ostream& output) const -> void {
 
     // We always end with a comma and a new line as we'll move to the next
     // node at whatever the current level ends up being.
-    output << "  ,\n";
+    output << ",\n";
   }
   output << "  ]\n";
 }

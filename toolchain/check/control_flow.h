@@ -72,7 +72,7 @@ auto MaybeAddCleanupForInst(Context& context, SemIR::TypeId type_id,
 
 // Adds an instruction that has cleanup associated.
 template <typename InstT, typename LocT>
-  requires(InstT::Kind.has_cleanup())
+  requires(InstT::Kind.has_cleanup() && std::convertible_to<LocT, SemIR::LocId>)
 auto AddInstWithCleanup(Context& context, LocT loc, InstT inst)
     -> SemIR::InstId {
   auto inst_id = AddInst(context, SemIR::LocIdAndInst(loc, inst));
@@ -82,7 +82,7 @@ auto AddInstWithCleanup(Context& context, LocT loc, InstT inst)
 
 // Adds an instruction that has cleanup associated.
 template <typename InstT, typename LocT>
-  requires(InstT::Kind.has_cleanup())
+  requires(InstT::Kind.has_cleanup() && std::convertible_to<LocT, SemIR::LocId>)
 auto AddInstWithCleanupInNoBlock(Context& context, LocT loc, InstT inst)
     -> SemIR::InstId {
   auto inst_id = AddInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));

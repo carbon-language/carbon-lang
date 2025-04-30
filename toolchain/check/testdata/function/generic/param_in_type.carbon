@@ -19,7 +19,6 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %N.patt.f2c: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.2fd: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
@@ -63,9 +62,9 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc11_6.1: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.f2c)]
-// CHECK:STDOUT:     %a.patt: @F.%pattern_type (%pattern_type.c7e) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type (%pattern_type.c7e) = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0 [concrete]
+// CHECK:STDOUT:     %a.patt: @F.%pattern_type (%pattern_type.c7e) = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: @F.%pattern_type (%pattern_type.c7e) = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_10: type = splice_block %i32.loc11_10 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc11_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -93,7 +92,6 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc11_6.1: %i32) {
 // CHECK:STDOUT:   %N.loc11_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc11_6.2 (constants.%N.51e)]
-// CHECK:STDOUT:   %N.patt.loc11_6.2: %pattern_type.7ce = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc11_6.2 (constants.%N.patt.f2c)]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc11_6.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:   %bound_method.loc11_29.3: <bound method> = bound_method %N.loc11_6.2, constants.%Convert.specific_fn [symbolic = %bound_method.loc11_29.3 (constants.%bound_method)]
 // CHECK:STDOUT:   %int.convert_checked.loc11_29.2: init Core.IntLiteral = call %bound_method.loc11_29.3(%N.loc11_6.2) [symbolic = %int.convert_checked.loc11_29.2 (constants.%int.convert_checked)]
@@ -106,7 +104,6 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
 // CHECK:STDOUT:   %N.loc11_6.2 => constants.%N.51e
-// CHECK:STDOUT:   %N.patt.loc11_6.2 => constants.%N.patt.f2c
 // CHECK:STDOUT:   %Convert.bound => constants.%Convert.bound
 // CHECK:STDOUT:   %bound_method.loc11_29.3 => constants.%bound_method
 // CHECK:STDOUT:   %int.convert_checked.loc11_29.2 => constants.%int.convert_checked

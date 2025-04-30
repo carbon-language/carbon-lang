@@ -148,36 +148,8 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
   auto conflict_id =
       AddImportRef(context, SemIR::ImportIRInst(new_ir_id, new_inst_id));
   // TODO: Pass the imported name location instead of the conflict id.
-  DiagnoseDuplicateName(context, name_id, conflict_id, prev_id);
-}
-
-// Returns an instruction that has the specified constant value.
-static auto GetInstWithConstantValue(const SemIR::File& file,
-                                     SemIR::ConstantId const_id)
-    -> SemIR::InstId {
-  if (!const_id.has_value()) {
-    return SemIR::InstId::None;
-  }
-
-  // For concrete constants, the corresponding instruction has the desired
-  // constant value.
-  if (!const_id.is_symbolic()) {
-    return file.constant_values().GetInstId(const_id);
-  }
-
-  // For abstract symbolic constants, the corresponding instruction has the
-  // desired constant value.
-  const auto& symbolic_const =
-      file.constant_values().GetSymbolicConstant(const_id);
-  if (!symbolic_const.generic_id.has_value()) {
-    return file.constant_values().GetInstId(const_id);
-  }
-
-  // For a symbolic constant in a generic, pick the corresponding instruction
-  // out of the eval block for the generic.
-  const auto& generic = file.generics().Get(symbolic_const.generic_id);
-  auto block = generic.GetEvalBlock(symbolic_const.index.region());
-  return file.inst_blocks().Get(block)[symbolic_const.index.index()];
+  DiagnoseDuplicateName(context, name_id, SemIR::LocId(conflict_id),
+                        SemIR::LocId(prev_id));
 }
 
 namespace {
@@ -590,7 +562,7 @@ class ImportRefResolver : public ImportContext {
     auto cursor_inst_id = inst_id;
 
     while (true) {
-      auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+      auto loc_id = cursor_ir->insts().GetCanonicalLocId(cursor_inst_id);
       if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
         return result;
       }
@@ -3185,8 +3157,8 @@ static auto FinishPendingGeneric(ImportRefResolver& resolver,
   resolver.local_generics().Get(pending.local_id).decl_block_id = decl_block_id;
 
   auto local_decl_id = resolver.local_generics().Get(pending.local_id).decl_id;
-  auto self_specific_id = MakeSelfSpecific(resolver.local_context(),
-                                           local_decl_id, pending.local_id);
+  auto self_specific_id = MakeSelfSpecific(
+      resolver.local_context(), SemIR::LocId(local_decl_id), pending.local_id);
   resolver.local_generics().Get(pending.local_id).self_specific_id =
       self_specific_id;
   resolver.AddPendingSpecific({.import_id = import_generic.self_specific_id,

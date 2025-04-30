@@ -240,7 +240,7 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
   if (!dump_sem_ir_ranges_.empty()) {
     output_stream << "  dump_sem_ir_ranges:\n";
     for (auto range : dump_sem_ir_ranges_) {
-      output_stream << "  - {start: " << range.start.index
+      output_stream << "  - {begin: " << range.begin.index
                     << ", end: " << range.end.index << "}\n";
     }
   }
@@ -438,6 +438,23 @@ auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
   auto converted = SourcePointerToDiagnosticLoc(token_start);
   converted.loc.length = GetTokenText(token).size();
   return converted;
+}
+
+auto TokenizedBuffer::OverlapsWithDumpSemIRRange(TokenIndex begin,
+                                                 TokenIndex inclusive_end) const
+    -> bool {
+  if (dump_sem_ir_ranges_.empty()) {
+    return true;
+  }
+
+  // Ranges are ordered, so we can decide overlap as soon as we find a range
+  // that ends after `begin`.
+  for (auto range : dump_sem_ir_ranges_) {
+    if (range.end > begin) {
+      return range.begin <= inclusive_end;
+    }
+  }
+  return false;
 }
 
 }  // namespace Carbon::Lex

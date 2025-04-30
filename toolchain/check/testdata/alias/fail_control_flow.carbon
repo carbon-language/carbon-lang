@@ -49,8 +49,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B.7dd: bool = bind_symbolic_name B, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
-// CHECK:STDOUT:   %B.patt: %pattern_type.831 = symbolic_binding_pattern B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%B.7dd) [symbolic]
@@ -65,7 +63,6 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(<unexpected>.inst28.loc4_14: bool) {
 // CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic = %B (constants.%B.7dd)]
-// CHECK:STDOUT:   %B.patt.loc4_14.2: %pattern_type.831 = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_14.2 (constants.%B.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -80,7 +77,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst34.loc4_24 [concrete = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst33.loc4_24 [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %true.loc12_20: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc12: bool = not %true.loc12_20 [concrete = constants.%false]
 // CHECK:STDOUT:   %true.loc12_25: bool = bool_literal true [concrete = constants.%true]
@@ -96,6 +93,5 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%B.7dd) {
 // CHECK:STDOUT:   %B => constants.%B.7dd
-// CHECK:STDOUT:   %B.patt.loc4_14.2 => constants.%B.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
