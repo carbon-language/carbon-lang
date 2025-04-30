@@ -65,7 +65,8 @@ class Formatter {
     size_t index;
   };
 
-  // Fills `node_parents_` with parent information. Must only be called once.
+  // Fills `node_parents_` with parent information. Called at most once during
+  // construction.
   auto ComputeNodeParents() -> void;
 
   // Flushes the buffered output to the current chunk.
