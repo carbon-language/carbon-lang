@@ -8,8 +8,8 @@
 
 namespace Carbon::SemIR {
 
-// Notes an import on the diagnostic and updates cursors to point at the
-// imported IR.
+// Notes an import on the diagnostic. For `Cpp` imports, returns true. Otherwise
+// updates cursors to point at the imported IR and returns false.
 static auto FollowImportRef(
     llvm::SmallVector<AbsoluteNodeId>& absolute_node_ids,
     const File*& cursor_ir, InstId& cursor_inst_id,

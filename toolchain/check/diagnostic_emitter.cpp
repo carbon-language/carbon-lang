@@ -67,6 +67,7 @@ auto DiagnosticEmitter::ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id,
                                          ContextFnT /*context_fn*/) const
     -> Diagnostics::ConvertedLoc {
   if (absolute_node_id.check_ir_id() == SemIR::CheckIRId::Cpp) {
+    // Special handling of Clang source locations.
     // TODO: Add `InCppImport` here using `context_fn` similar to `InImport`
     // instead of a note.
     clang::SourceLocation clang_loc = sem_ir_->clang_source_locs().Get(
