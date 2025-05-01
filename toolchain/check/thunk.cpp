@@ -47,6 +47,8 @@ static auto RebuildPatternInst(Context& context, SemIR::InstId orig_inst_id,
   return RebuildPatternInst(context, orig_inst_id, SemIR::Inst(new_inst));
 }
 
+// Makes a copy of the given binding pattern, with its type adjusted to be
+// `new_pattern_type_id`.
 static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
                                 SemIR::AnyBindingPattern pattern,
                                 SemIR::TypeId new_pattern_type_id)
@@ -73,6 +75,9 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
       .pattern_id;
 }
 
+// Makes a copy of the given pattern instruction, substituting values from a
+// specific as needed. The resulting pattern behaves like a newly-created
+// pattern, so is suitable for running `CalleePatternMatch` against.
 static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
                          SemIR::InstId pattern_id) -> SemIR::InstId {
   if (!pattern_id.has_value()) {
@@ -90,20 +95,12 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   // parameter list are currently fairly restrictive.
 
   // Optional `addr`, only for `self`.
-  auto addr = pattern.TryAs<SemIR::AddrPattern>();
-  auto addr_id = pattern_id;
-  if (addr) {
-    pattern_id = addr->inner_id;
-    pattern = context.insts().Get(pattern_id);
-  }
+  auto [addr, addr_id] = context.insts().TryUnwrap(
+      pattern, pattern_id, &SemIR::AddrPattern::inner_id);
 
   // Optional parameter pattern.
-  auto param = pattern.TryAs<SemIR::AnyParamPattern>();
-  auto param_id = pattern_id;
-  if (param) {
-    pattern_id = param->subpattern_id;
-    pattern = context.insts().Get(pattern_id);
-  }
+  auto [param, param_id] = context.insts().TryUnwrap(
+      pattern, pattern_id, &SemIR::AnyParamPattern::subpattern_id);
 
   // Finally, either a binding pattern or a return slot pattern.
   auto new_pattern_id = SemIR::InstId::None;
@@ -225,11 +222,9 @@ static auto BuildPatternRef(Context& context, SemIR::FunctionId function_id,
                             SemIR::InstId pattern_id) -> SemIR::InstId {
   auto pattern = context.insts().Get(pattern_id);
 
-  auto addr = pattern.TryAs<SemIR::AddrPattern>();
-  if (addr) {
-    pattern_id = addr->inner_id;
-    pattern = context.insts().Get(pattern_id);
-  }
+  auto addr = context.insts()
+                  .TryUnwrap(pattern, pattern_id, &SemIR::AddrPattern::inner_id)
+                  .first;
 
   auto pattern_ref_id = SemIR::InstId::None;
   if (auto value_param = pattern.TryAs<SemIR::ValueParamPattern>()) {

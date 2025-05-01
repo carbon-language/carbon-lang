@@ -431,6 +431,23 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
+  // Attempts to convert the given instruction to the type that contains
+  // `member`. If it can be converted, the instruction ID and instruction are
+  // replaced by the unwrapped value of that member, and the converted wrapper
+  // instruction and its ID are returned. Otherwise returns {nullopt, None}.
+  template <typename InstT, typename InstIdT>
+    requires std::derived_from<InstIdT, InstId>
+  auto TryUnwrap(Inst& inst, InstId& inst_id, InstIdT InstT::* member) const
+      -> std::pair<std::optional<InstT>, InstId> {
+    if (auto wrapped_inst = inst.TryAs<InstT>()) {
+      auto wrapped_inst_id = inst_id;
+      inst_id = (*wrapped_inst).*member;
+      inst = Get(inst_id);
+      return {wrapped_inst, wrapped_inst_id};
+    }
+    return {std::nullopt, InstId::None};
+  }
+
   // Returns a resolved LocId, which will point to a parse node, an import, or
   // be None.
   //

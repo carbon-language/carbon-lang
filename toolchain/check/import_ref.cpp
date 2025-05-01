@@ -1125,26 +1125,18 @@ static auto GetLocalParamPatternsId(ImportContext& context,
       context.import_inst_blocks().Get(param_patterns_id);
   llvm::SmallVector<SemIR::InstId> new_patterns;
   for (auto param_id : param_patterns) {
+    auto param = context.import_insts().Get(param_id);
+
     // Figure out the pattern structure. This echoes
     // Function::GetParamPatternInfoFromPatternId.
-    auto addr_pattern_id = param_id;
-    auto addr_inst =
-        context.import_insts().TryGetAs<SemIR::AddrPattern>(addr_pattern_id);
-    auto param_pattern_id = addr_pattern_id;
-    if (addr_inst) {
-      param_pattern_id = addr_inst->inner_id;
-    }
+    auto [addr_inst, addr_pattern_id] = context.import_insts().TryUnwrap(
+        param, param_id, &SemIR::AddrPattern::inner_id);
 
-    auto param_pattern =
-        context.import_insts().TryGetAs<SemIR::ValueParamPattern>(
-            param_pattern_id);
-    auto binding_id = addr_pattern_id;
-    if (param_pattern) {
-      binding_id = param_pattern->subpattern_id;
-    }
+    auto [param_pattern, param_pattern_id] = context.import_insts().TryUnwrap(
+        param, param_id, &SemIR::ValueParamPattern::subpattern_id);
 
-    auto binding =
-        context.import_insts().GetAs<SemIR::AnyBindingPattern>(binding_id);
+    auto binding_id = param_id;
+    auto binding = param.As<SemIR::AnyBindingPattern>();
 
     // Rebuild the pattern.
     auto entity_name =
