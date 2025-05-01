@@ -179,7 +179,6 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                          return_slot_pattern_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
-
   // Create the `FunctionDecl` instruction.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
                                        SemIR::FunctionId::None, decl_block_id};
