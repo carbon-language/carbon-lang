@@ -65,6 +65,8 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
@@ -75,6 +77,7 @@ import library "var";
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -84,8 +87,8 @@ import library "var";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Foo.patt: %pattern_type.7ce = binding_pattern Foo
-// CHECK:STDOUT:     %.loc4_1: %pattern_type.7ce = var_pattern %Foo.patt
+// CHECK:STDOUT:     %Foo.patt: %pattern_type.7ce = binding_pattern Foo [concrete]
+// CHECK:STDOUT:     %.loc4_1: %pattern_type.7ce = var_pattern %Foo.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.var: ref %i32 = var Foo
 // CHECK:STDOUT:   %.loc4_10: type = splice_block %i32 [concrete = constants.%i32] {

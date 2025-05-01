@@ -71,23 +71,23 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGeneric.decl.loc11: type = interface_decl @NotGeneric.1 [concrete = constants.%NotGeneric.type.10e] {} {}
 // CHECK:STDOUT:   %NotGeneric.decl.loc19: %NotGeneric.type.93b = interface_decl @NotGeneric.2 [concrete = constants.%NotGeneric.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc19_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc19_22.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl.loc21: %Generic.type.c21 = interface_decl @Generic.1 [concrete = constants.%Generic.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc21_19.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_19.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl.loc29: type = interface_decl @Generic.2 [concrete = constants.%Generic.type.c99] {} {}
 // CHECK:STDOUT:   %DifferentParams.decl.loc31: %DifferentParams.type.d40e5c.1 = interface_decl @DifferentParams.1 [concrete = constants.%DifferentParams.generic.d33670.1] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc31_27.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc31_27.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DifferentParams.decl.loc39: %DifferentParams.type.d40e5c.2 = interface_decl @DifferentParams.2 [concrete = constants.%DifferentParams.generic.d33670.2] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.cb1 = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.cb1 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc39_32.1: type = splice_block %.loc39_32.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc39_32.2: %empty_tuple.type = tuple_literal ()

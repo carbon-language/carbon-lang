@@ -49,7 +49,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b
+// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_10: type = splice_block %a.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, %NS [concrete = %NS]
@@ -64,8 +64,8 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc16_23.6: ref %C = converted @__global_init.%.loc16_23, %.loc16_23.5
 // CHECK:STDOUT:   %b: ref %C = bind_name b, %.loc16_23.6
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, file.%NS [concrete = file.%NS]
 // CHECK:STDOUT:     %a.ref: type = name_ref a, file.%a [concrete = constants.%C]

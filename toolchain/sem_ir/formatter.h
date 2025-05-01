@@ -54,8 +54,14 @@ class Formatter {
   // A scope in which output should be buffered because we don't yet know
   // whether to include it in the final formatted SemIR.
   struct TentativeOutputScope {
-    explicit TentativeOutputScope(Formatter& f) : formatter(f) {
-      index = formatter.AddChunk(false);
+    explicit TentativeOutputScope(Formatter& f, size_t parent_chunk_index)
+        : formatter(f) {
+      // If our parent is not known to be included, create a new chunk and
+      // include it only if the parent is later found to be used.
+      if (!f.output_chunks_[parent_chunk_index].include_in_output) {
+        index = formatter.AddChunk(false);
+        f.output_chunks_[parent_chunk_index].dependencies.push_back(index);
+      }
     }
     ~TentativeOutputScope() {
       auto next_index = formatter.AddChunk(true);

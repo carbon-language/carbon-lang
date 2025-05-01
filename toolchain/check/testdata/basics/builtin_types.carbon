@@ -17,14 +17,20 @@ var test_type: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (imports.%Core.import_ref.a5b), @impl.4f9 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness %ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
@@ -50,6 +56,11 @@ var test_type: type = i32;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/types, Float, loaded [concrete = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,8 +73,8 @@ var test_type: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i32.patt: %pattern_type.7ce = binding_pattern test_i32
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.7ce = var_pattern %test_i32.patt
+// CHECK:STDOUT:     %test_i32.patt: %pattern_type.7ce = binding_pattern test_i32 [concrete]
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.7ce = var_pattern %test_i32.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i32.var: ref %i32 = var test_i32
 // CHECK:STDOUT:   %.loc11_15: type = splice_block %i32 [concrete = constants.%i32] {
@@ -72,8 +83,8 @@ var test_type: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i32: ref %i32 = bind_name test_i32, %test_i32.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f64.patt: %pattern_type.3de = binding_pattern test_f64
-// CHECK:STDOUT:     %.loc12_1: %pattern_type.3de = var_pattern %test_f64.patt
+// CHECK:STDOUT:     %test_f64.patt: %pattern_type.3de = binding_pattern test_f64 [concrete]
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.3de = var_pattern %test_f64.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64.var: ref f64 = var test_f64
 // CHECK:STDOUT:   %.loc12_15.1: type = splice_block %.loc12_15.3 [concrete = f64] {
@@ -84,12 +95,12 @@ var test_type: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64: ref f64 = bind_name test_f64, %test_f64.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_str.patt: %pattern_type.b05 = binding_pattern test_str
+// CHECK:STDOUT:     %test_str.patt: %pattern_type.b05 = binding_pattern test_str [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_str: String = bind_name test_str, @__global_init.%str
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_type.patt: %pattern_type.98f = binding_pattern test_type
-// CHECK:STDOUT:     %.loc14: %pattern_type.98f = var_pattern %test_type.patt
+// CHECK:STDOUT:     %test_type.patt: %pattern_type.98f = binding_pattern test_type [concrete]
+// CHECK:STDOUT:     %.loc14: %pattern_type.98f = var_pattern %test_type.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_type.var: ref type = var test_type
 // CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var

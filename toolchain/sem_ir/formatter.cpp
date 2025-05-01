@@ -39,10 +39,22 @@ Formatter::Formatter(const File* sem_ir,
       inst_namer_(sem_ir_),
       should_format_entity_(should_format_entity),
       get_tree_and_subtrees_(get_tree_and_subtrees) {
-  // Create the first chunk and assign it to all instructions that don't have
-  // a chunk of their own.
+  // Create a placeholder visible chunk and assign it to all instructions that
+  // don't have a chunk of their own.
   auto first_chunk = AddChunkNoFlush(true);
   tentative_inst_chunks_.resize(sem_ir_->insts().size(), first_chunk);
+
+  // Create empty placeholder chunks for instructions that we output lazily.
+  for (auto lazy_insts :
+       {sem_ir_->constants().array_ref(),
+        sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs)}) {
+    for (auto inst_id : lazy_insts) {
+      tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
+    }
+  }
+
+  // Create a real chunk for the start of the output.
+  AddChunkNoFlush(true);
 }
 
 auto Formatter::Format() -> void {
@@ -256,8 +268,7 @@ auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
   out_ << inst_namer_.GetScopeName(scope_id) << " {\n";
   indent_ += 2;
   for (const InstId inst_id : block) {
-    TentativeOutputScope scope(*this);
-    tentative_inst_chunks_[inst_id.index] = scope.index;
+    TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
     FormatInst(inst_id);
   }
   out_ << "}\n\n";

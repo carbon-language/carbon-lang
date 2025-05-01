@@ -34,8 +34,8 @@ alias c = *b;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = binding_pattern a
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.cb1 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.cb1 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %.loc11_9.1: type = splice_block %.loc11_9.3 [concrete = constants.%empty_tuple.type] {
@@ -44,8 +44,8 @@ alias c = *b;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.d64 = binding_pattern b
-// CHECK:STDOUT:     %.loc12_1: %pattern_type.d64 = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.d64 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc12_1: %pattern_type.d64 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr = var b
 // CHECK:STDOUT:   %.loc12_10.1: type = splice_block %ptr [concrete = constants.%ptr] {

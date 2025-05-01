@@ -98,6 +98,8 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessBase.type: type = fn_type @AccessBase [concrete]
 // CHECK:STDOUT:   %AccessBase: %AccessBase.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Derived.115: type = class_type @Derived, @Derived(%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.9c5: type = pattern_type %Derived.115 [concrete]
@@ -122,6 +124,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -135,21 +138,21 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [concrete = constants.%Base.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_17.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_17.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: %Derived.type = class_decl @Derived [concrete = constants.%Derived.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc8_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessDerived.decl: %AccessDerived.type = fn_decl @AccessDerived [concrete = constants.%AccessDerived] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %x.patt: @AccessDerived.%pattern_type.loc13_28 (%pattern_type.423) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @AccessDerived.%pattern_type.loc13_28 (%pattern_type.423) = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: @AccessDerived.%pattern_type.loc13_43 (%pattern_type.7dc) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @AccessDerived.%pattern_type.loc13_43 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @AccessDerived.%pattern_type.loc13_28 (%pattern_type.423) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @AccessDerived.%pattern_type.loc13_28 (%pattern_type.423) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: @AccessDerived.%pattern_type.loc13_43 (%pattern_type.7dc) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @AccessDerived.%pattern_type.loc13_43 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc13_46: type = name_ref T, %T.loc13_18.1 [symbolic = %T.loc13_18.2 (constants.%T)]
 // CHECK:STDOUT:     %T.loc13_18.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc13_18.2 (constants.%T)]
@@ -164,11 +167,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %return: ref @AccessDerived.%T.loc13_18.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBase.decl: %AccessBase.type = fn_decl @AccessBase [concrete = constants.%AccessBase] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %x.patt: @AccessBase.%pattern_type.loc17_25 (%pattern_type.423) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @AccessBase.%pattern_type.loc17_25 (%pattern_type.423) = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: @AccessBase.%pattern_type.loc17_40 (%pattern_type.7dc) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @AccessBase.%pattern_type.loc17_40 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @AccessBase.%pattern_type.loc17_25 (%pattern_type.423) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @AccessBase.%pattern_type.loc17_25 (%pattern_type.423) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: @AccessBase.%pattern_type.loc17_40 (%pattern_type.7dc) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @AccessBase.%pattern_type.loc17_40 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc17_43: type = name_ref T, %T.loc17_15.1 [symbolic = %T.loc17_15.2 (constants.%T)]
 // CHECK:STDOUT:     %T.loc17_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc17_15.2 (constants.%T)]
@@ -183,10 +186,10 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %return: ref @AccessBase.%T.loc17_15.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessConcrete.decl: %AccessConcrete.type = fn_decl @AccessConcrete [concrete = constants.%AccessConcrete] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.9c5 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.9c5 = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: %pattern_type.9c5 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.9c5 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc21_39: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21_39: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -412,6 +415,8 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessMissingDerived: %AccessMissingDerived.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.5f4: <witness> = require_complete_type %Derived.85c [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Derived.115: type = class_type @Derived, @Derived(%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.9c5: type = pattern_type %Derived.115 [concrete]
@@ -436,6 +441,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -449,21 +455,21 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [concrete = constants.%Base.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_17.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_17.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: %Derived.type = class_decl @Derived [concrete = constants.%Derived.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc8_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessMissingBase.decl: %AccessMissingBase.type = fn_decl @AccessMissingBase [concrete = constants.%AccessMissingBase] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %x.patt: @AccessMissingBase.%pattern_type.loc13_32 (%pattern_type.9f7) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @AccessMissingBase.%pattern_type.loc13_32 (%pattern_type.9f7) = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: @AccessMissingBase.%pattern_type.loc13_44 (%pattern_type.7dc) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @AccessMissingBase.%pattern_type.loc13_44 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @AccessMissingBase.%pattern_type.loc13_32 (%pattern_type.9f7) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @AccessMissingBase.%pattern_type.loc13_32 (%pattern_type.9f7) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: @AccessMissingBase.%pattern_type.loc13_44 (%pattern_type.7dc) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @AccessMissingBase.%pattern_type.loc13_44 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc13_47: type = name_ref T, %T.loc13_22.1 [symbolic = %T.loc13_22.2 (constants.%T)]
 // CHECK:STDOUT:     %T.loc13_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc13_22.2 (constants.%T)]
@@ -478,11 +484,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %return: ref @AccessMissingBase.%T.loc13_22.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessMissingDerived.decl: %AccessMissingDerived.type = fn_decl @AccessMissingDerived [concrete = constants.%AccessMissingDerived] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %x.patt: @AccessMissingDerived.%pattern_type.loc21_35 (%pattern_type.423) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @AccessMissingDerived.%pattern_type.loc21_35 (%pattern_type.423) = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: @AccessMissingDerived.%pattern_type.loc21_50 (%pattern_type.7dc) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @AccessMissingDerived.%pattern_type.loc21_50 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @AccessMissingDerived.%pattern_type.loc21_35 (%pattern_type.423) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @AccessMissingDerived.%pattern_type.loc21_35 (%pattern_type.423) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: @AccessMissingDerived.%pattern_type.loc21_50 (%pattern_type.7dc) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @AccessMissingDerived.%pattern_type.loc21_50 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc21_53: type = name_ref T, %T.loc21_25.1 [symbolic = %T.loc21_25.2 (constants.%T)]
 // CHECK:STDOUT:     %T.loc21_25.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_25.2 (constants.%T)]
@@ -497,10 +503,10 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %return: ref @AccessMissingDerived.%T.loc21_25.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessMissingConcrete.decl: %AccessMissingConcrete.type = fn_decl @AccessMissingConcrete [concrete = constants.%AccessMissingConcrete] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.9c5 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.9c5 = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: %pattern_type.9c5 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.9c5 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc29_46: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc29_46: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

@@ -56,7 +56,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -75,8 +75,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %MakeSelf.decl: @Class.%MakeSelf.type (%MakeSelf.type) = fn_decl @MakeSelf [symbolic = @Class.%MakeSelf (constants.%MakeSelf)] {
-// CHECK:STDOUT:       %return.patt: @MakeSelf.%pattern_type (%pattern_type.3c1) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @MakeSelf.%pattern_type (%pattern_type.3c1) = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:       %return.patt: @MakeSelf.%pattern_type (%pattern_type.3c1) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @MakeSelf.%pattern_type (%pattern_type.3c1) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc14_20: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc14_20 [symbolic = %Class (constants.%Class)]
@@ -84,8 +84,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %return: ref @MakeSelf.%Class (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %MakeClass.decl: @Class.%MakeClass.type (%MakeClass.type) = fn_decl @MakeClass [symbolic = @Class.%MakeClass (constants.%MakeClass)] {
-// CHECK:STDOUT:       %return.patt: @MakeClass.%pattern_type (%pattern_type.3c1) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @MakeClass.%pattern_type (%pattern_type.3c1) = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:       %return.patt: @MakeClass.%pattern_type (%pattern_type.3c1) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @MakeClass.%pattern_type (%pattern_type.3c1) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
@@ -160,8 +160,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %c.patt: @F.%pattern_type (%pattern_type.3c1) = binding_pattern c
-// CHECK:STDOUT:       %.loc17_5.1: @F.%pattern_type (%pattern_type.3c1) = var_pattern %c.patt
+// CHECK:STDOUT:       %c.patt: @F.%pattern_type (%pattern_type.3c1) = binding_pattern c [concrete]
+// CHECK:STDOUT:       %.loc17_5.1: @F.%pattern_type (%pattern_type.3c1) = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref @F.%Class.loc17_19.2 (%Class) = var c
 // CHECK:STDOUT:     %.loc17_23: @F.%MakeSelf.type (%MakeSelf.type) = specific_constant @Class.%MakeSelf.decl, @Class(constants.%T) [symbolic = %MakeSelf (constants.%MakeSelf)]
@@ -177,8 +177,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: ref @F.%Class.loc17_19.2 (%Class) = bind_name c, %c.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %s.patt: @F.%pattern_type (%pattern_type.3c1) = binding_pattern s
-// CHECK:STDOUT:       %.loc18_5.1: @F.%pattern_type (%pattern_type.3c1) = var_pattern %s.patt
+// CHECK:STDOUT:       %s.patt: @F.%pattern_type (%pattern_type.3c1) = binding_pattern s [concrete]
+// CHECK:STDOUT:       %.loc18_5.1: @F.%pattern_type (%pattern_type.3c1) = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s.var: ref @F.%Class.loc17_19.2 (%Class) = var s
 // CHECK:STDOUT:     %.loc18_19: @F.%MakeClass.type (%MakeClass.type) = specific_constant @Class.%MakeClass.decl, @Class(constants.%T) [symbolic = %MakeClass (constants.%MakeClass)]

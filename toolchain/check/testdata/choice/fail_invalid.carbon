@@ -64,7 +64,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %never.patt: %pattern_type = binding_pattern never
+// CHECK:STDOUT:     %never.patt: %pattern_type = binding_pattern never [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_23.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Never.ref: type = name_ref Never, file.%Never.decl [concrete = constants.%Never]

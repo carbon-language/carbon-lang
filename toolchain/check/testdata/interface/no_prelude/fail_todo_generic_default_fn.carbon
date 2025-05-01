@@ -47,15 +47,15 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type.dac = interface_decl @I [concrete = constants.%I.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.2aef59.2 = fn_decl @F.2 [symbolic = constants.%F.bb2dd4.2] {
-// CHECK:STDOUT:     %self.patt: @F.2.%pattern_type (%pattern_type.4be) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.2.%pattern_type (%pattern_type.4be) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: @F.2.%pattern_type (%pattern_type.4be) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.2.%pattern_type (%pattern_type.4be) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: @F.2.%pattern_type (%pattern_type.4be) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @F.2.%pattern_type (%pattern_type.4be) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: @F.2.%pattern_type (%pattern_type.4be) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.2.%pattern_type (%pattern_type.4be) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc23_6: type = bind_symbolic_name T, 0 [symbolic = @I.%T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc23_35.1: @F.2.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
@@ -89,10 +89,10 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.325) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @I.%F.type (%F.type.2aef59.1) = fn_decl @F.1 [symbolic = @I.%F (constants.%F.bb2dd4.1)] {
-// CHECK:STDOUT:       %self.patt: @F.1.%pattern_type (%pattern_type.4be) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @F.1.%pattern_type (%pattern_type.4be) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %return.patt: @F.1.%pattern_type (%pattern_type.4be) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @F.1.%pattern_type (%pattern_type.4be) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @F.1.%pattern_type (%pattern_type.4be) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @F.1.%pattern_type (%pattern_type.4be) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.patt: @F.1.%pattern_type (%pattern_type.4be) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @F.1.%pattern_type (%pattern_type.4be) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_25.1: @F.1.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.ref.loc13_25: @F.1.%I.type (%I.type.325) = name_ref Self, %.loc13_25.1 [symbolic = %Self (constants.%Self)]

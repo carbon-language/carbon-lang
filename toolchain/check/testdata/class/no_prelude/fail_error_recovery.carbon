@@ -40,7 +40,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt: <error> = symbolic_binding_pattern N, 0
+// CHECK:STDOUT:     %N.patt: <error> = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %error_not_found.ref: <error> = name_ref error_not_found, <error> [concrete = <error>]
 // CHECK:STDOUT:     %N: <error> = bind_symbolic_name N, 0 [concrete = <error>]
@@ -52,8 +52,8 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Foo.decl: <error> = fn_decl @Foo [concrete = <error>] {
-// CHECK:STDOUT:       %self.patt: <error> = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: <error> = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %self.patt: <error> = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: <error> = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: <error> = value_param call_param0
 // CHECK:STDOUT:       %Self.ref: <error> = name_ref Self, <error> [concrete = <error>]

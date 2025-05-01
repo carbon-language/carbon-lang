@@ -313,8 +313,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "struct_declaration.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc13: type = splice_block %ptr [concrete = <error>] {
@@ -356,8 +356,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "struct_definition.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -410,8 +410,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "struct_declaration_and_definition.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -574,8 +574,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "struct_public_member_function.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr.f68] {
@@ -649,7 +649,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc18_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref.loc18_26: type = name_ref Bar, %Bar.decl [concrete = constants.%Bar]
@@ -694,8 +694,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "struct_public_static_data_member.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6 [concrete = constants.%ptr.f68] {
@@ -722,7 +722,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = binding_pattern foo_bar
+// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = binding_pattern foo_bar [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc18_30: ref %Bar = deref %bar.ref
@@ -860,8 +860,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "struct_inheritance_pointers.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF1.decl: %MyF1.type = fn_decl @MyF1 [concrete = constants.%MyF1] {
-// CHECK:STDOUT:     %bar.patt: %pattern_type.3cc = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type.3cc = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type.3cc = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type.3cc = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr.f68] {
@@ -875,8 +875,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF2.decl: %MyF2.type = fn_decl @MyF2 [concrete = constants.%MyF2] {
-// CHECK:STDOUT:     %bar.patt: %pattern_type.92a = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type.92a = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: %pattern_type.92a = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type.92a = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.eca = value_param call_param0
 // CHECK:STDOUT:     %.loc15_23: type = splice_block %ptr [concrete = constants.%ptr.eca] {
@@ -941,8 +941,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "struct_dynamic.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc13: type = splice_block %ptr [concrete = <error>] {
@@ -1131,8 +1131,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp "struct_template.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar
-// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0
+// CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = splice_block %ptr [concrete = <error>] {
