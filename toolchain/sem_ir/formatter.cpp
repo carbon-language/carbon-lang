@@ -196,8 +196,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
   // the subtree (for example, it can miss modifiers), but finding the earliest
   // token requires walking *all* children, whereas this approach is
   // constant-time.
-  auto begin = sem_ir_->parse_tree().node_token(
-      *tree_and_subtrees.postorder(loc_id.node_id()).begin());
+  auto begin_node_id = *tree_and_subtrees.postorder(loc_id.node_id()).begin();
 
   // Non-defining declarations will be associated with a `Decl` node.
   // Definitions will have a `DefinitionStart` for which we can use the parent
@@ -207,10 +206,11 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
   if (is_definition_start) {
     end_node_id = node_parents_[end_node_id.index];
   }
-  auto inclusive_end = sem_ir_->parse_tree().node_token(end_node_id);
 
-  return sem_ir_->parse_tree().tokens().OverlapsWithDumpSemIRRange(
-      begin, inclusive_end);
+  Lex::InclusiveTokenRange range = {
+      .begin = sem_ir_->parse_tree().node_token(begin_node_id),
+      .end = sem_ir_->parse_tree().node_token(end_node_id)};
+  return sem_ir_->parse_tree().tokens().OverlapsWithDumpSemIRRange(range);
 }
 
 auto Formatter::ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
@@ -230,8 +230,8 @@ auto Formatter::ShouldFormatInst(InstId inst_id) -> bool {
   }
 
   auto token = sem_ir_->parse_tree().node_token(loc_id.node_id());
-  return sem_ir_->parse_tree().tokens().OverlapsWithDumpSemIRRange(token,
-                                                                   token);
+  return sem_ir_->parse_tree().tokens().OverlapsWithDumpSemIRRange(
+      Lex::InclusiveTokenRange{.begin = token, .end = token});
 }
 
 auto Formatter::OpenBrace() -> void {

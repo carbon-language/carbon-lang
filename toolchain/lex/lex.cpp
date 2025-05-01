@@ -915,7 +915,7 @@ auto Lexer::EndDumpSemIRRange(const char* diag_loc) -> void {
     return;
   }
 
-  buffer_.dump_sem_ir_ranges_.back().end = TokenIndex(buffer_.size());
+  buffer_.dump_sem_ir_ranges_.back().end = TokenIndex(buffer_.size() - 1);
 }
 
 auto Lexer::EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void {

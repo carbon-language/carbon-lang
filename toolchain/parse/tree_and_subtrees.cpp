@@ -232,9 +232,10 @@ auto TreeAndSubtrees::CollectMemUsage(MemUsage& mem_usage,
                     subtree_sizes_);
 }
 
-auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const -> TokenRange {
-  TokenRange range = {.begin = tree_->node_token(node_id),
-                      .end = Lex::TokenIndex::None};
+auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const
+    -> Lex::InclusiveTokenRange {
+  Lex::InclusiveTokenRange range = {.begin = tree_->node_token(node_id),
+                                    .end = Lex::TokenIndex::None};
   range.end = range.begin;
   for (NodeId desc : postorder(node_id)) {
     Lex::TokenIndex desc_token = tree_->node_token(desc);
@@ -264,7 +265,7 @@ auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
 
   // Construct a location that encompasses all tokens that descend from this
   // node (including the root).
-  TokenRange token_range = GetSubtreeTokenRange(node_id);
+  Lex::InclusiveTokenRange token_range = GetSubtreeTokenRange(node_id);
   auto begin_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.begin);
   if (token_range.begin == token_range.end) {
     return begin_loc;
