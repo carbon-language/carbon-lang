@@ -449,6 +449,7 @@ def _impl(ctx):
         enabled = True,
         requires = [feature_set(["dbg"])],
         implies = [
+            "asan",
             "debug_info_flags",
         ],
     )
