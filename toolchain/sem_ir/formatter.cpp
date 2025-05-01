@@ -33,12 +33,12 @@
 namespace Carbon::SemIR {
 
 Formatter::Formatter(const File* sem_ir,
-                     ShouldFormatEntityFn should_format_entity,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees)
+                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+                     llvm::ArrayRef<bool> include_ir_in_dumps)
     : sem_ir_(sem_ir),
       inst_namer_(sem_ir_),
-      should_format_entity_(should_format_entity),
-      get_tree_and_subtrees_(get_tree_and_subtrees) {
+      get_tree_and_subtrees_(get_tree_and_subtrees),
+      include_ir_in_dumps_(include_ir_in_dumps) {
   // Create a placeholder visible chunk and assign it to all instructions that
   // don't have a chunk of their own.
   auto first_chunk = AddChunkNoFlush(true);
@@ -195,13 +195,18 @@ auto Formatter::OverlapsWithDumpSemIRRange(
   return false;
 }
 
+auto Formatter::ShouldIncludeInstByIR(InstId inst_id) -> bool {
+  const auto* import_ir = GetCanonicalFileAndInstId(sem_ir_, inst_id).first;
+  return include_ir_in_dumps_[import_ir->check_ir_id().index];
+}
+
 auto Formatter::ShouldFormatEntity(InstId decl_id,
                                    llvm::ArrayRef<InstBlockId> body_block_ids)
     -> bool {
   if (!decl_id.has_value()) {
     return true;
   }
-  if (!should_format_entity_(decl_id)) {
+  if (!ShouldIncludeInstByIR(decl_id)) {
     return false;
   }
   return OverlapsWithDumpSemIRRange(decl_id, body_block_ids);
@@ -500,7 +505,7 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
 auto Formatter::FormatSpecific(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   const auto& generic = sem_ir_->generics().Get(specific.generic_id);
-  if (!should_format_entity_(generic.decl_id)) {
+  if (!ShouldIncludeInstByIR(generic.decl_id)) {
     // Omit specifics if we also omitted the generic.
     return;
   }

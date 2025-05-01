@@ -17,14 +17,9 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
-  // A callback that indicates whether a specific entity, identified by its
-  // declaration, should be included in the output.
-  using ShouldFormatEntityFn =
-      llvm::function_ref<auto(InstId decl_inst_id)->bool>;
-
   explicit Formatter(const File* sem_ir,
-                     ShouldFormatEntityFn should_format_entity,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees);
+                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+                     llvm::ArrayRef<bool> include_ir_in_dumps);
 
   // Prints the SemIR into an internal buffer.
   //
@@ -84,6 +79,10 @@ class Formatter {
   // Marks the given chunk as being included in the output if the current chunk
   // is.
   auto IncludeChunkInOutput(size_t chunk) -> void;
+
+  // Returns true if the instruction should be included according to its
+  // originating IR. Typically `ShouldFormatEntity` should be used instead.
+  auto ShouldIncludeInstByIR(InstId inst_id) -> bool;
 
   // Returns true if the node subtree for the instruction or body overlaps with
   // a dump range, or if there are no ranges.
@@ -322,8 +321,10 @@ class Formatter {
 
   const File* sem_ir_;
   InstNamer inst_namer_;
-  ShouldFormatEntityFn should_format_entity_;
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
+
+  // For each CheckIRId, whether entities from it should be formatted.
+  llvm::ArrayRef<bool> include_ir_in_dumps_;
 
   // The output stream buffer.
   std::string buffer_;

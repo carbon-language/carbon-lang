@@ -54,15 +54,16 @@ CheckUnit::CheckUnit(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
+      tree_and_subtrees_getter_(
+          tree_and_subtrees_getters[unit_and_imports->unit->check_ir_id.index]),
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(&emitter_, unit_and_imports_->unit->tree_and_subtrees_getter,
-               unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports),
-               tree_and_subtrees_getters.size(), vlog_stream) {}
+      context_(
+          &emitter_, tree_and_subtrees_getter_, unit_and_imports_->unit->sem_ir,
+          GetImportedIRCount(unit_and_imports), total_ir_count_, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -366,7 +367,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    const auto& tree = unit_and_imports_->unit->tree_and_subtrees_getter();
+    const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
