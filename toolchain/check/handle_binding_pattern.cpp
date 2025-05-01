@@ -8,8 +8,8 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
-#include "toolchain/check/return.h"
 #include "toolchain/check/pattern.h"
+#include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -53,9 +53,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   auto make_binding_pattern = [&]() -> SemIR::InstId {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto binding = AddBindingPattern(context, name_node, name_id, cast_type_id,
-                                     type_expr_region_id, is_generic,
-                                     is_template);
+    auto binding =
+        AddBindingPattern(context, name_node, name_id, cast_type_id,
+                          type_expr_region_id, is_generic, is_template);
 
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
