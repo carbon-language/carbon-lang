@@ -68,12 +68,12 @@ var x: Class = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt: %pattern_type = binding_pattern A
+// CHECK:STDOUT:     %A.patt: %pattern_type = binding_pattern A [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %A: type = bind_name A, %Class.ref.loc9
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %B.patt: %pattern_type = binding_pattern B
+// CHECK:STDOUT:     %B.patt: %pattern_type = binding_pattern B [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.ref.loc15: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %B: type = bind_name B, %Class.ref.loc15

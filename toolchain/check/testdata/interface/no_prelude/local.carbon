@@ -51,8 +51,8 @@ fn F() {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %G.decl: %G.type.bff = fn_decl @G.1 [concrete = constants.%G.f0a] {
-// CHECK:STDOUT:     %self.patt: @G.1.%pattern_type (%pattern_type.744) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @G.1.%pattern_type (%pattern_type.744) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: @G.1.%pattern_type (%pattern_type.744) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @G.1.%pattern_type (%pattern_type.744) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc13_16.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc13_16.1: type = splice_block %.loc13_16.2 [symbolic = %Self.as_type.loc13_16.1 (constants.%Self.as_type)] {
@@ -72,8 +72,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc15_9.2 as %I.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.c84 = fn_decl @G.2 [concrete = constants.%G.5a2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc15_9.2 [concrete = constants.%empty_tuple.type]

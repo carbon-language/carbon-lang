@@ -111,3 +111,22 @@ runs:
         test --test_output=errors
         EOF
         ./scripts/run_bazel.py info
+
+    - name: Run bazel to sync deps with retry
+      shell: bash
+      run: |
+        # GitHub sometimes has a high failure rate for Bazel's downloads (even
+        # from GitHub URLs). Bazel exits with `1` on HTTP errors, which is hard
+        # to distinguish from a normal, permanent error.
+        #
+        # This workaround runs fast commands that should always pass (although
+        # they may be broken by an invalid PR). All errors are retried. The hope
+        # is that this caches necessary downloads, allowing later commands to
+        # more reliably succeed without retrying "permanent" errors.
+        #
+        # Disable lockfile updates, because some actions want to see
+        # differences.
+        ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
+          mod --lockfile_mode=off deps
+        ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
+          cquery --lockfile_mode=off //... | wc -l

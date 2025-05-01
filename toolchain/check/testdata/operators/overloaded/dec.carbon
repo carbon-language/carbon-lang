@@ -75,9 +75,9 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.7f9: %C.ref as %Dec.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.9e0 = fn_decl @Op.2 [concrete = constants.%Op.cf9] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc18_9: %pattern_type.f6d = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc18_9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
 // CHECK:STDOUT:     %.loc18_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
@@ -107,8 +107,8 @@ fn TestOp() {
 // CHECK:STDOUT: fn @TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c
-// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.c48 = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %.loc22_15.1: %empty_struct_type = struct_literal ()

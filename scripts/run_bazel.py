@@ -36,6 +36,11 @@ def main() -> None:
         help="Sets the number of jobs in user.bazelrc on the last attempt. If "
         "there is only one attempt, this will be set immediately.",
     )
+    parser.add_argument(
+        "--retry-all-errors",
+        action="store_true",
+        help="Retries permanent errors in addition to transient.",
+    )
     script_args, bazel_args = parser.parse_known_args()
 
     bazel = scripts_utils.locate_bazel()
@@ -50,12 +55,11 @@ def main() -> None:
 
         p = subprocess.run([bazel] + bazel_args)
 
-        # If this was the last attempt, we're done.
-        if attempt == script_args.attempts:
+        # If this was the last attempt, or it succeeded, we're done.
+        if attempt == script_args.attempts or p.returncode == 0:
             exit(p.returncode)
 
         # Several error codes are reliably permanent, break immediately.
-        # `0`  -- Success.
         # `1`  -- The build failed.
         # `2`  -- Command line or environment problem.
         # `3`  -- Tests failed or timed out, we don't retry at this layer
@@ -66,10 +70,13 @@ def main() -> None:
         # Note that `36` is documented as "likely permanent", but we retry
         # it as most of our transient failures actually produce that error
         # code.
-        if p.returncode in (0, 1, 2, 3, 4, 8):
+        perm_error = (1, 2, 3, 4, 8)
+        if not script_args.retry_all_errors and p.returncode in perm_error:
             exit(p.returncode)
 
-        print("Retrying a failure because it may be transient...")
+        print(
+            f"Retrying exit code {p.returncode} because it may be transient..."
+        )
         # Also sleep a bit to try to skip over transient machine load.
         time.sleep(attempt)
 

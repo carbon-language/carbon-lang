@@ -40,7 +40,7 @@ let d: c = {};
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %b [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d
+// CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc15_13.1: ref %C = temporary_storage

@@ -204,6 +204,21 @@ class Context {
     return impl_lookup_stack_;
   }
 
+  // A concrete impl lookup query and its result.
+  struct PoisonedConcreteImplLookupQuery {
+    // The location the LookupImplWitness originated from.
+    SemIR::LocId loc_id;
+    // The query for a witness of an impl for an interface.
+    SemIR::LookupImplWitness query;
+    SemIR::InstId non_canonical_query_self_inst_id;
+    // The resulting ImplWitness.
+    SemIR::InstId impl_witness;
+  };
+  auto poisoned_concrete_impl_lookup_queries()
+      -> llvm::SmallVector<PoisonedConcreteImplLookupQuery>& {
+    return poisoned_concrete_impl_lookup_queries_;
+  }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -386,6 +401,12 @@ class Context {
   // Tracks all ongoing impl lookups in order to ensure that lookup terminates
   // via the acyclic rule and the termination rule.
   llvm::SmallVector<ImplLookupStackEntry> impl_lookup_stack_;
+
+  // Tracks impl lookup queries that lead to concrete witness results, along
+  // with those results. Used to verify that the same queries produce the same
+  // results at the end of the file. Any difference is diagnosed.
+  llvm::SmallVector<PoisonedConcreteImplLookupQuery>
+      poisoned_concrete_impl_lookup_queries_;
 };
 
 }  // namespace Carbon::Check

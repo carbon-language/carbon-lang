@@ -317,6 +317,8 @@ struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
 
 // The ID of an impl.
 struct ImplId : public IdBase<ImplId> {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   static constexpr llvm::StringLiteral Label = "impl";
   using ValueType = Impl;
 
@@ -344,6 +346,8 @@ struct SpecificId : public IdBase<SpecificId> {
 
 // The ID of a SpecificInterface, which is an interface and a specific pair.
 struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   static constexpr llvm::StringLiteral Label = "specific_interface";
   using ValueType = SpecificInterface;
 
@@ -1006,6 +1010,8 @@ struct AnyRawId : public AnyIdBase {
 
 // A pair of an interface and a specific for that interface.
 struct SpecificInterface {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   InterfaceId interface_id;
   SpecificId specific_id;
 

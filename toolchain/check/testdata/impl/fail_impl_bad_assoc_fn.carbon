@@ -366,6 +366,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %J.facet.974: %J.type = facet_value %FMissingReturnType, (%J.impl_witness.e75) [concrete]
 // CHECK:STDOUT:   %F.type.123d7a.2: type = fn_type @F.13 [concrete]
 // CHECK:STDOUT:   %F.c7d02d.2: %F.type.123d7a.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %FDifferentParamType: type = class_type @FDifferentParamType [concrete]
 // CHECK:STDOUT:   %J.impl_witness.cbe: <witness> = impl_witness @FDifferentParamType.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.b90: type = pattern_type %FDifferentParamType [concrete]
@@ -395,6 +397,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.as_type.e1e: type = facet_access_type %Self.2ff [symbolic]
 // CHECK:STDOUT:   %ptr.e87: type = ptr_type %Self.as_type.e1e [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.81e: type = struct_type {.x: %Self.as_type.e1e, .y: %i32} [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
@@ -446,6 +450,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -505,12 +512,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.ccd]
 // CHECK:STDOUT:   %F.decl: %F.type.c14 = fn_decl @F.7 [concrete = constants.%F.b71] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc99_44: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc99_44.1: type = value_of_initializer %bool.make_type.loc99_44 [concrete = bool]
@@ -543,10 +550,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: interface @SelfNested {
 // CHECK:STDOUT:   %Self: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2ff]
 // CHECK:STDOUT:   %F.decl: %F.type.6ed = fn_decl @F.20 [concrete = constants.%F.998] {
-// CHECK:STDOUT:     %x.patt: @F.20.%pattern_type.loc207_8 (%pattern_type.ced) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @F.20.%pattern_type.loc207_8 (%pattern_type.ced) = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: @F.20.%pattern_type.loc207_41 (%pattern_type.c7e) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.20.%pattern_type.loc207_41 (%pattern_type.c7e) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: @F.20.%pattern_type.loc207_8 (%pattern_type.ced) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.20.%pattern_type.loc207_8 (%pattern_type.ced) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: @F.20.%pattern_type.loc207_41 (%pattern_type.c7e) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.20.%pattern_type.loc207_41 (%pattern_type.c7e) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc207_50: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.2ff)]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
@@ -606,8 +613,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.ddd: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl.loc65_18.1: %F.type.44ef8c.1 = fn_decl @F.2 [concrete = constants.%F.424e9e.1] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc65_13.1: type = splice_block %.loc65_13.3 [concrete = bool] {
@@ -626,8 +633,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.698: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl.loc81_23.1: %F.type.e1abdd.1 = fn_decl @F.4 [concrete = constants.%F.6ff574.1] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.8ae = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.8ae = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.8ae = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.8ae = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %FExtraImplicitParam = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FExtraImplicitParam [concrete = constants.%FExtraImplicitParam]
@@ -642,8 +649,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.77b: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.387 = fn_decl @F.6 [concrete = constants.%F.df5] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc95_15.1: type = value_of_initializer %bool.make_type [concrete = bool]
@@ -659,10 +666,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.5cf: %Self.ref as %J.ref {
 // CHECK:STDOUT:   %F.decl.loc113_31.1: %F.type.69596c.1 = fn_decl @F.8 [concrete = constants.%F.738f31.1] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc113_27: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc113_27.1: type = value_of_initializer %bool.make_type.loc113_27 [concrete = bool]
@@ -678,12 +685,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc113_31.2: %F.type.69596c.2 = fn_decl @F.9 [concrete = constants.%F.738f31.2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %self: bool = bind_name self, %self.param
@@ -700,10 +707,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.bac: %Self.ref as %J.ref {
 // CHECK:STDOUT:   %F.decl.loc126_26.1: %F.type.d97cef.1 = fn_decl @F.10 [concrete = constants.%F.01de92.1] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc126_22: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc126_22.1: type = value_of_initializer %bool.make_type.loc126_22 [concrete = bool]
@@ -719,12 +726,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc126_26.2: %F.type.d97cef.2 = fn_decl @F.11 [concrete = constants.%F.01de92.2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %self: bool = bind_name self, %self.param
@@ -741,10 +748,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1a7: %Self.ref as %J.ref {
 // CHECK:STDOUT:   %F.decl.loc145_30.1: %F.type.123d7a.1 = fn_decl @F.12 [concrete = constants.%F.c7d02d.1] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc145_16.1: type = splice_block %.loc145_16.3 [concrete = bool] {
@@ -762,12 +769,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc145_30.2: %F.type.123d7a.2 = fn_decl @F.13 [concrete = constants.%F.c7d02d.2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %self: bool = bind_name self, %self.param
@@ -784,12 +791,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.f2b: %Self.ref as %J.ref {
 // CHECK:STDOUT:   %F.decl.loc164_38.1: %F.type.6b537d.1 = fn_decl @F.14 [concrete = constants.%F.04313a.1] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.b90 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.b90 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.b90 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.b90 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc164_34: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc164_34.1: type = value_of_initializer %bool.make_type.loc164_34 [concrete = bool]
@@ -808,12 +815,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc164_38.2: %F.type.6b537d.2 = fn_decl @F.15 [concrete = constants.%F.04313a.2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %self: bool = bind_name self, %self.param
@@ -830,12 +837,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.db4: %Self.ref as %J.ref {
 // CHECK:STDOUT:   %F.decl.loc180_38.1: %F.type.d6232a.1 = fn_decl @F.16 [concrete = constants.%F.886f70.1] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.9cc = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.9cc = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.9cc = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.9cc = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type.loc180_34: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc180_34.1: type = value_of_initializer %bool.make_type.loc180_34 [concrete = bool]
@@ -854,12 +861,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc180_38.2: %F.type.d6232a.2 = fn_decl @F.17 [concrete = constants.%F.886f70.2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %self: bool = bind_name self, %self.param
@@ -876,12 +883,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.fcc: %Self.ref as %J.ref {
 // CHECK:STDOUT:   %F.decl.loc199_38.1: %F.type.d3b58f.1 = fn_decl @F.18 [concrete = constants.%F.be86c9.1] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.8ee = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.8ee = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.8ee = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.8ee = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentReturnType [concrete = constants.%FDifferentReturnType]
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
@@ -902,12 +909,12 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return: ref %FDifferentReturnType = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc199_38.2: %F.type.d3b58f.2 = fn_decl @F.19 [concrete = constants.%F.be86c9.2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.831 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: bool = value_param call_param0
 // CHECK:STDOUT:     %self: bool = bind_name self, %self.param
@@ -924,10 +931,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.6a5: %Self.ref as %SelfNested.ref {
 // CHECK:STDOUT:   %F.decl.loc258_87.1: %F.type.f90165.1 = fn_decl @F.21 [concrete = constants.%F.fa8d04.1] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.714 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.714 = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.1f1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.1f1 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: %pattern_type.714 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.714 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.1f1 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.1f1 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SelfNestedBadParam.ref.loc258_65: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [concrete = constants.%SelfNestedBadParam]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
@@ -949,10 +956,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return: ref %array_type.a41 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc258_87.2: %F.type.f90165.2 = fn_decl @F.22 [concrete = constants.%F.fa8d04.2] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.a5c = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.a5c = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.1f1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.1f1 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: %pattern_type.a5c = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.a5c = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.1f1 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.1f1 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.9c9 = value_param call_param0
 // CHECK:STDOUT:     %x: %tuple.type.9c9 = bind_name x, %x.param
@@ -968,10 +975,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.bfc: %Self.ref as %SelfNested.ref {
 // CHECK:STDOUT:   %F.decl.loc294_112.1: %F.type.0e7d1d.1 = fn_decl @F.23 [concrete = constants.%F.0bc78a.1] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.23f = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.23f = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.1f1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.1f1 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: %pattern_type.23f = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.23f = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.1f1 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.1f1 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SelfNestedBadParam.ref: type = name_ref SelfNestedBadParam, file.%SelfNestedBadParam.decl [concrete = constants.%SelfNestedBadParam]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
@@ -992,10 +999,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return: ref %array_type.a41 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc294_112.2: %F.type.0e7d1d.2 = fn_decl @F.24 [concrete = constants.%F.0bc78a.2] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.23f = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.23f = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.f56 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.f56 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %x.patt: %pattern_type.23f = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.23f = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.f56 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.f56 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %tuple.type.eb9 = value_param call_param0
 // CHECK:STDOUT:     %x: %tuple.type.eb9 = bind_name x, %x.param

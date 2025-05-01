@@ -286,7 +286,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
-  if (query_is_concrete || IsImplEffectivelyFinal(context, impl)) {
+  if (query_is_concrete || impl.is_final) {
     // TODO: These final results should be cached somehow. Positive (non-None)
     // results could be cached globally, as they can not change. But
     // negative results can change after a final impl is written, so
@@ -460,8 +460,6 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     }
   }
   stack.pop_back();
-  // TODO: Validate that the witness satisfies the other requirements in
-  // `interface_const_id`.
 
   // All interfaces in the query facet type must have been found to be available
   // through some impl, or directly on the value's facet type if
@@ -470,13 +468,16 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::None;
   }
 
+  // TODO: Validate that the witness satisfies the other requirements in
+  // `interface_const_id`.
+
   return context.inst_blocks().AddCanonical(result_witness_ids);
 }
 
 // Returns whether the query is concrete, it is false if the self type or
 // interface specifics have a symbolic dependency.
 static auto QueryIsConcrete(Context& context, SemIR::ConstantId self_const_id,
-                            SemIR::SpecificInterface& specific_interface)
+                            const SemIR::SpecificInterface& specific_interface)
     -> bool {
   if (!self_const_id.is_concrete()) {
     return false;
@@ -571,7 +572,8 @@ static auto CollectCandidateImplsForQuery(
 
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
-                                 SemIR::InstId non_canonical_query_self_inst_id)
+                                 SemIR::InstId non_canonical_query_self_inst_id,
+                                 bool poison_concrete_results)
     -> EvalImplLookupResult {
   // NOTE: Do not retain this reference to the SpecificInterface obtained from a
   // value store by SpecificInterfaceId. Doing impl lookup does deduce which can
@@ -652,6 +654,22 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
         context, loc_id, query_is_concrete, query_self_const_id,
         query_specific_interface, candidate.impl_id);
     if (result.has_value()) {
+      // Record the query which found a concrete impl witness. It's illegal to
+      // write a final impl afterward that would match the same query.
+      //
+      // If the impl was effectively final, then we don't need to poison here. A
+      // change of query result will already be diagnosed at the point where the
+      // new impl decl was written that changes the result.
+      if (poison_concrete_results && result.has_concrete_value() &&
+          !IsImplEffectivelyFinal(context,
+                                  context.impls().Get(candidate.impl_id))) {
+        context.poisoned_concrete_impl_lookup_queries().push_back(
+            {.loc_id = loc_id,
+             .query = eval_query,
+             .non_canonical_query_self_inst_id =
+                 non_canonical_query_self_inst_id,
+             .impl_witness = result.concrete_witness()});
+      }
       return result;
     }
   }

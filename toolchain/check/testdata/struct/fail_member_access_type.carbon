@@ -26,6 +26,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %float: f64 = float_literal 4 [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%float) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
@@ -37,6 +39,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/types, Float, loaded [concrete = constants.%Float]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,8 +51,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.d08 = binding_pattern x
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.d08 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.d08 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc11_1: %pattern_type.d08 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
 // CHECK:STDOUT:   %.loc11_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
@@ -60,8 +64,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y
-// CHECK:STDOUT:     %.loc16_1: %pattern_type.7ce = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y [concrete]
+// CHECK:STDOUT:     %.loc16_1: %pattern_type.7ce = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %.loc16_8: type = splice_block %i32 [concrete = constants.%i32] {

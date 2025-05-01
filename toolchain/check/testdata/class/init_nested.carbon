@@ -29,6 +29,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete]
@@ -51,6 +53,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -64,8 +67,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [concrete = constants.%Inner] {} {}
 // CHECK:STDOUT:   %MakeInner.decl: %MakeInner.type = fn_decl @MakeInner [concrete = constants.%MakeInner] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:     %return.param: ref %Inner = out_param call_param0
@@ -73,8 +76,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %MakeOuter.decl: %MakeOuter.type = fn_decl @MakeOuter [concrete = constants.%MakeOuter] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.e74 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.e74 = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.e74 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.e74 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:     %return.param: ref %Outer = out_param call_param0

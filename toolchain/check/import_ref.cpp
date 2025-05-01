@@ -152,35 +152,6 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
                         SemIR::LocId(prev_id));
 }
 
-// Returns an instruction that has the specified constant value.
-static auto GetInstWithConstantValue(const SemIR::File& file,
-                                     SemIR::ConstantId const_id)
-    -> SemIR::InstId {
-  if (!const_id.has_value()) {
-    return SemIR::InstId::None;
-  }
-
-  // For concrete constants, the corresponding instruction has the desired
-  // constant value.
-  if (!const_id.is_symbolic()) {
-    return file.constant_values().GetInstId(const_id);
-  }
-
-  // For abstract symbolic constants, the corresponding instruction has the
-  // desired constant value.
-  const auto& symbolic_const =
-      file.constant_values().GetSymbolicConstant(const_id);
-  if (!symbolic_const.generic_id.has_value()) {
-    return file.constant_values().GetInstId(const_id);
-  }
-
-  // For a symbolic constant in a generic, pick the corresponding instruction
-  // out of the eval block for the generic.
-  const auto& generic = file.generics().Get(symbolic_const.generic_id);
-  auto block = generic.GetEvalBlock(symbolic_const.index.region());
-  return file.inst_blocks().Get(block)[symbolic_const.index.index()];
-}
-
 namespace {
 class ImportRefResolver;
 
@@ -696,6 +667,9 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
       context.local_context(), AddImportIRInst(context, import_inst_id), inst));
   CARBON_VLOG_TO(context.local_context().vlog_stream(),
                  "AddImportedInst: {0}\n", static_cast<SemIR::Inst>(inst));
+  // Track the instruction in the imports block so that it's included in
+  // formatted SemIR if it's referenced.
+  context.local_context().import_ref_ids().push_back(inst_id);
   return inst_id;
 }
 
@@ -2578,7 +2552,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ImplWitnessTable inst) -> ResolveResult {
+                                SemIR::ImplWitnessTable inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
   const auto& import_impl = resolver.import_impls().Get(inst.impl_id);
   auto import_decl_inst_id = import_impl.first_decl_id();
   auto local_decl_inst_id =
@@ -2591,8 +2566,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_insts().GetAs<SemIR::ImplDecl>(local_decl_inst_id);
   auto impl_id = impl_decl.impl_id;
   auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
-  return ResolveAs<SemIR::ImplWitnessTable>(
-      resolver, {.elements_id = elements_id, .impl_id = impl_id});
+
+  // Create a corresponding instruction to represent the table.
+  auto inst_id = AddImportedInst<SemIR::ImplWitnessTable>(
+      resolver, import_inst_id,
+      {.elements_id = elements_id, .impl_id = impl_id});
+  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
+                             inst_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2961,7 +2941,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitnessTable inst): {
-      return TryResolveTypedInst(resolver, inst);
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::ImportRefLoaded inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);

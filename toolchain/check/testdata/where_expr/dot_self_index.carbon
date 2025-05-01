@@ -26,7 +26,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %W: type = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %W.patt: %pattern_type.98f = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %Empty.type.d5a: type = generic_interface_type @Empty [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Empty.generic: %Empty.type.d5a = struct_value () [concrete]
@@ -35,7 +34,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty.assoc_type.3cf698.1: type = assoc_entity_type @Empty, @Empty(%W) [symbolic]
 // CHECK:STDOUT:   %assoc0.3715ce.1: %Empty.assoc_type.3cf698.1 = assoc_entity element0, @Empty.%A [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Empty.type.3e5fde.2: type = facet_type <@Empty, @Empty(%T)> [symbolic]
 // CHECK:STDOUT:   %.Self.c95: %Empty.type.3e5fde.2 = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %Self.8c5170.2: %Empty.type.3e5fde.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -50,11 +48,12 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty_where.type.b73: type = facet_type <@Empty, @Empty(%T) where %impl.elem0.c6e = %ptr.79f> [symbolic]
 // CHECK:STDOUT:   %pattern_type.668: type = pattern_type %Empty_where.type.b73 [symbolic]
 // CHECK:STDOUT:   %V: type = bind_symbolic_name V, 1 [symbolic]
-// CHECK:STDOUT:   %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.af8: <witness> = require_complete_type %Empty_where.type.b73 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Empty.type.f0b: type = facet_type <@Empty, @Empty(%i32)> [concrete]
 // CHECK:STDOUT:   %.Self.e6e: %Empty.type.f0b = bind_symbolic_name .Self [symbolic_self]
@@ -84,6 +83,8 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -95,15 +96,15 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Empty.decl: %Empty.type.d5a = interface_decl @Empty [concrete = constants.%Empty.generic] {
-// CHECK:STDOUT:     %W.patt.loc11_17.1: %pattern_type.98f = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_17.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.patt: %pattern_type.98f = symbolic_binding_pattern W, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %W.loc11_17.1: type = bind_symbolic_name W, 0 [symbolic = %W.loc11_17.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %T.patt.loc18_6.1: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %U.patt: @H.%pattern_type (%pattern_type.668) = binding_pattern U
-// CHECK:STDOUT:     %U.param_patt: @H.%pattern_type (%pattern_type.668) = value_param_pattern %U.patt, call_param0
-// CHECK:STDOUT:     %V.patt.loc18_43.1: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: @H.%pattern_type (%pattern_type.668) = binding_pattern U [concrete]
+// CHECK:STDOUT:     %U.param_patt: @H.%pattern_type (%pattern_type.668) = value_param_pattern %U.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc18_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc18_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.param: @H.%Empty_where.type (%Empty_where.type.b73) = value_param call_param0
@@ -128,8 +129,8 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %V.loc18_43.1: type = bind_symbolic_name V, 1 [symbolic = %V.loc18_43.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.012 = binding_pattern U
-// CHECK:STDOUT:     %U.param_patt: %pattern_type.012 = value_param_pattern %U.patt, call_param0
+// CHECK:STDOUT:     %U.patt: %pattern_type.012 = binding_pattern U [concrete]
+// CHECK:STDOUT:     %U.param_patt: %pattern_type.012 = value_param_pattern %U.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %Empty_where.type.fc2 = value_param call_param0
 // CHECK:STDOUT:     %.loc20_20.1: type = splice_block %.loc20_20.2 [concrete = constants.%Empty_where.type.fc2] {
@@ -157,7 +158,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Empty(%W.loc11_17.1: type) {
 // CHECK:STDOUT:   %W.loc11_17.2: type = bind_symbolic_name W, 0 [symbolic = %W.loc11_17.2 (constants.%W)]
-// CHECK:STDOUT:   %W.patt.loc11_17.2: %pattern_type.98f = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_17.2 (constants.%W.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type: type = facet_type <@Empty, @Empty(%W.loc11_17.2)> [symbolic = %Empty.type (constants.%Empty.type.3e5fde.1)]
@@ -184,7 +184,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @H(%T.loc18_6.1: type, %V.loc18_43.1: type) {
 // CHECK:STDOUT:   %T.loc18_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc18_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc18_6.2: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %Empty.type.loc18_26.2: type = facet_type <@Empty, @Empty(%T.loc18_6.2)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3e5fde.2)]
 // CHECK:STDOUT:   %.Self.2: @H.%Empty.type.loc18_26.2 (%Empty.type.3e5fde.2) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.c95)]
 // CHECK:STDOUT:   %require_complete.loc18_34: <witness> = require_complete_type %Empty.type.loc18_26.2 [symbolic = %require_complete.loc18_34 (constants.%require_complete.22f)]
@@ -197,7 +196,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc18_6.2) where %impl.elem0.loc18_34.2 = %ptr.loc18_40.2> [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Empty_where.type [symbolic = %pattern_type (constants.%pattern_type.668)]
 // CHECK:STDOUT:   %V.loc18_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc18_43.2 (constants.%V)]
-// CHECK:STDOUT:   %V.patt.loc18_43.2: %pattern_type.98f = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc18_17: <witness> = require_complete_type %Empty_where.type [symbolic = %require_complete.loc18_17 (constants.%require_complete.af8)]
@@ -224,7 +222,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%W) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%W, constants.%Self.8c5170.1) {}
@@ -233,7 +230,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%T) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%T
-// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type => constants.%Empty.type.3e5fde.2
@@ -246,7 +242,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%T, constants.%V) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.3e5fde.2
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.c95
 // CHECK:STDOUT:   %require_complete.loc18_34 => constants.%require_complete.22f
@@ -259,14 +254,12 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.b73
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.668
 // CHECK:STDOUT:   %V.loc18_43.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc18_43.2 => constants.%V.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(@H.%T.loc18_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%i32) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%i32
-// CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Empty.type => constants.%Empty.type.f0b
@@ -279,7 +272,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%i32, bool) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%T.patt
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.f0b
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.e6e
 // CHECK:STDOUT:   %require_complete.loc18_34 => constants.%complete_type.091
@@ -292,7 +284,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.fc2
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.012
 // CHECK:STDOUT:   %V.loc18_43.2 => bool
-// CHECK:STDOUT:   %V.patt.loc18_43.2 => constants.%V.patt
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc18_17 => constants.%complete_type.a3f

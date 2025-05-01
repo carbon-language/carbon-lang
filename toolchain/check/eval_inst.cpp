@@ -207,7 +207,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       GetCanonicalizedFacetOrTypeValue(context, inst.query_self_inst_id);
 
   auto result = EvalLookupSingleImplWitness(
-      context, SemIR::LocId(inst_id), inst, non_canonical_query_self_inst_id);
+      context, SemIR::LocId(inst_id), inst, non_canonical_query_self_inst_id,
+      /*poison_concrete_results=*/true);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
@@ -502,14 +503,6 @@ auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)
   // operand.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.init_id));
-}
-
-auto EvalConstantInst(Context& context, SemIR::ValueParamPattern inst)
-    -> ConstantEvalResult {
-  // TODO: Treat this as a non-expression (here and in GetExprCategory)
-  // once generic deduction doesn't need patterns to have constant values.
-  return ConstantEvalResult::Existing(
-      context.constant_values().Get(inst.subpattern_id));
 }
 
 }  // namespace Carbon::Check

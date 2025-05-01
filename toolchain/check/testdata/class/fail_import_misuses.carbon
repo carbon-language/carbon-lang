@@ -114,8 +114,8 @@ var a: Incomplete;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty.2 [concrete = constants.%Empty.f48899.2] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc25: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc25: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, imports.%Main.Incomplete [concrete = constants.%Incomplete]
