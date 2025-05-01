@@ -674,8 +674,7 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
   auto inst_id = context.local_insts().AddInNoBlock(MakeImportedLocIdAndInst(
       context.local_context(), AddImportIRInst(context, import_inst_id), inst));
   CARBON_VLOG_TO(context.local_context().vlog_stream(),
-                 "AddPlaceholderImportedInst: {0}\n",
-                 static_cast<SemIR::Inst>(inst));
+                 "AddPlaceholderImportedInst: {0}\n", inst);
   // Track the instruction in the imports block so that it's included in
   // formatted SemIR if it's referenced.
   context.local_context().import_ref_ids().push_back(inst_id);
