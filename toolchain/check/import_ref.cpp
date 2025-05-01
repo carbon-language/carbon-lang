@@ -1280,7 +1280,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 template <typename ParamPatternT>
-  requires SemIR::HasInstCategory<SemIR::AnyParamPattern, ParamPatternT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyParamPattern,
+                                            ParamPatternT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
@@ -1496,7 +1497,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 template <typename BindingPatternT>
-  requires SemIR::HasInstCategory<SemIR::AnyBindingPattern, BindingPatternT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyBindingPattern,
+                                            BindingPatternT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 BindingPatternT inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
@@ -1878,12 +1880,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto param_patterns =
       GetLocalInstBlockContents(resolver, import_function.param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_function.generic_id);
-  auto& new_function = resolver.local_functions().Get(function_id);
   auto self_param_id =
       GetLocalConstantInstId(resolver, import_function.self_param_id);
   auto return_slot_pattern_id =
       GetLocalConstantInstId(resolver, import_function.return_slot_pattern_id);
 
+  auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(function_const_id,
                                 new_function.first_decl_id());
@@ -2781,9 +2783,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::BindingPattern inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
     }
-    case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
-    }
     case SemIR::BindName::Kind: {
       // TODO: Should we be resolving BindNames at all?
       return ResolveResult::Done(SemIR::ConstantId::NotConstant);
@@ -2872,17 +2871,14 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::OutParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
     }
-    case CARBON_KIND(SemIR::RefParamPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
-    }
-    case CARBON_KIND(SemIR::ValueParamPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
-    }
     case CARBON_KIND(SemIR::PatternType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::PointerType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::RefParamPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::RequireCompleteType inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -2902,6 +2898,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::StructValue inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
+    }
     case CARBON_KIND(SemIR::TupleType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -2910,6 +2909,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::UnboundElementType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ValueParamPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::VarPattern inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);

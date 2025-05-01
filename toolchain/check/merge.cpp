@@ -287,7 +287,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
 
         if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
             prev_name_id == SemIR::NameId::SelfValue) {
-          return true;
+          break;
         }
 
         auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(

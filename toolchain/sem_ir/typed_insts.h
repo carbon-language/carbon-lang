@@ -1948,14 +1948,6 @@ struct WitnessType {
   TypeId type_id;
 };
 
-// HasInstCategory is true if T::Kind is an element of AnyInstT::Kinds.
-template <typename AnyInstT, typename T>
-concept HasInstCategory = requires {
-  T::Kind;
-  requires std::find(std::begin(AnyInstT::Kinds), std::end(AnyInstT::Kinds),
-                     T::Kind) != std::end(AnyInstT::Kinds);
-};
-
 // These concepts are an implementation detail of the library, not public API.
 namespace Internal {
 
