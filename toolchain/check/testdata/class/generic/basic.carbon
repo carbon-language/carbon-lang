@@ -220,18 +220,12 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %pattern_type.loc12_34 => constants.%pattern_type.afe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetAddr.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetValue(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %pattern_type.loc17_15 => constants.%pattern_type.3c1
 // CHECK:STDOUT:   %pattern_type.loc17_29 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetValue.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Declaration(constants.%T) {
 // CHECK:STDOUT:   %T.loc24_19.2 => constants.%T

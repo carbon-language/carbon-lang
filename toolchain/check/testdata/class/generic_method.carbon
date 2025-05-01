@@ -52,7 +52,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @F.%pattern_type.loc13_8 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %n.patt: @F.%pattern_type.loc13_20 (%pattern_type.7dc) = binding_pattern n [concrete]
@@ -149,8 +149,4 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %pattern_type.loc13_8 => constants.%pattern_type.3c1
 // CHECK:STDOUT:   %pattern_type.loc13_20 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@F.%T.loc13) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
 // CHECK:STDOUT:

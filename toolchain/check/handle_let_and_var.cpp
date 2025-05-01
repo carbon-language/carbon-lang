@@ -43,12 +43,12 @@ static auto StartAssociatedConstant(Context& context) -> void {
 // called at the `=` or the `;` of the declaration, whichever comes first.
 static auto EndAssociatedConstantDeclRegion(Context& context,
                                             SemIR::InterfaceId interface_id)
-    -> void {
+    -> SemIR::GenericId {
   // TODO: Stop special-casing tuple patterns once they behave like other
   // patterns.
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
     DiscardGenericDecl(context);
-    return;
+    return SemIR::GenericId::None;
   }
 
   // Peek the pattern. For a valid associated constant, the corresponding
@@ -60,7 +60,7 @@ static auto EndAssociatedConstantDeclRegion(Context& context,
     // The pattern wasn't suitable for an associated constant. We'll detect
     // and diagnose this later. For now, just clean up the generic stack.
     DiscardGenericDecl(context);
-    return;
+    return SemIR::GenericId::None;
   }
 
   // Finish the declaration region of this generic.
@@ -80,6 +80,7 @@ static auto EndAssociatedConstantDeclRegion(Context& context,
                          .modifier_set.GetAccessKind();
   context.decl_name_stack().AddNameOrDiagnose(name_context, assoc_id,
                                               access_kind);
+  return assoc_const.generic_id;
 }
 
 template <Lex::TokenKind::RawEnumType Kind>
@@ -206,10 +207,11 @@ auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
     -> bool {
   if (auto interface_decl =
           context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+    auto generic_id =
+        EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
 
     // Start building the definition region of the constant.
-    StartGenericDefinition(context);
+    StartGenericDefinition(context, generic_id);
   }
 
   return HandleInitializer(context, node_id);

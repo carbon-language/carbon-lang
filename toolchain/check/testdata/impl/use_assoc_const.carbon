@@ -1549,8 +1549,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b984e7.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@GenericCallF.%J.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericCallF(constants.%J.facet.ee5) {
 // CHECK:STDOUT:   %T.loc24_17.2 => constants.%J.facet.ee5
 // CHECK:STDOUT:   %T.as_type.loc24_27.2 => constants.%E
@@ -1809,8 +1807,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.aea692.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@GenericAddResult.%J.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- interface_qualified.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -2016,8 +2012,6 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0.loc5_23.1 => constants.%impl.elem0.11fef0.2
 // CHECK:STDOUT:   %pattern_type.loc5_20 => constants.%pattern_type.b984e7.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(@GenericCallInterfaceQualified.%J.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_where.carbon
 // CHECK:STDOUT:
@@ -2239,8 +2233,6 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0.loc5_11.1 => constants.%impl.elem0.db9
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c1e
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@GenericCallFI32.%J.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_associated_constant_in_impl.carbon
 // CHECK:STDOUT:
@@ -3765,10 +3757,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.8bc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc9_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc9_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%D) {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%D

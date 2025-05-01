@@ -32,7 +32,7 @@ auto PerformCompoundMemberAccess(
 // facet (given by base_id). Never does instance binding.
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
-                        SemIR::InstId assoc_entity_inst_id,
+                        SemIR::ConstantId assoc_entity_const_id,
                         SemIR::SpecificInterface interface) -> SemIR::InstId;
 
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`

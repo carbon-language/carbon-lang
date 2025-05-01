@@ -417,7 +417,7 @@ auto Formatter::FormatInst(InstId inst_id, InstT inst) -> void {
   Indent();
   FormatInstLhs(inst_id, inst);
   out_ << InstT::Kind.ir_name();
-  pending_constant_value_ = sem_ir_->constant_values().Get(inst_id);
+  pending_constant_value_ = sem_ir_->constant_values().GetAttached(inst_id);
   pending_constant_value_is_self_ = sem_ir_->constant_values().GetInstIdIfValid(
                                         pending_constant_value_) == inst_id;
   FormatInstRhs(inst);

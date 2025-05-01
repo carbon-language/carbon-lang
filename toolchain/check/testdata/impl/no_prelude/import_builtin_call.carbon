@@ -386,17 +386,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.fc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@impl.%N.loc15_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%N.loc15_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Add.facet.0e5) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet.0e5
@@ -410,15 +404,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Double.%N.loc19_11.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Add.facet.5a7) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet.5a7
 // CHECK:STDOUT:   %Self.as_type.loc5_15.1 => constants.%MyInt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(@Double.%Add.facet.loc20_11) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_generic_impl.carbon
 // CHECK:STDOUT:
@@ -476,7 +466,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.Double: %Double.type = import_ref Main//generic_impl, Double, loaded [concrete = constants.%Double]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.1: Core.IntLiteral = import_ref Main//generic_impl, loc11_13, loaded [symbolic = @MyInt.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.9e9: <witness> = import_ref Main//generic_impl, loc13_1, loaded [symbolic = @MyInt.%complete_type (constants.%complete_type.a87)]
-// CHECK:STDOUT:   %Main.import_ref.697 = import_ref Main//generic_impl, inst91 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.697 = import_ref Main//generic_impl, inst92 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//generic_impl, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//generic_impl, loc5_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//generic_impl, Op, unloaded
@@ -678,12 +668,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.fc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@impl.%N) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%N) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.09f
@@ -709,8 +693,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Double.%N) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.09f
@@ -722,8 +704,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Self.as_type => constants.%MyInt.09f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(@Double.%Add.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%int_64) {
 // CHECK:STDOUT:   %N => constants.%int_64
@@ -1026,8 +1006,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Make.specific_fn.loc9_52.2 => constants.%Make.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(%N.loc9_9.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeFromClass(constants.%N.335) {
 // CHECK:STDOUT:   %N.loc18_18.2 => constants.%N.335
 // CHECK:STDOUT:   %ToLiteral.bound.loc18_40.2 => constants.%ToLiteral.bound
@@ -1039,8 +1017,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.c7d
 // CHECK:STDOUT:   %MakeFromClass.specific_fn.loc18_63.2 => constants.%MakeFromClass.specific_fn
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @MakeFromClass(%N.loc18_18.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_convert_symbolic.carbon
 // CHECK:STDOUT:
@@ -1221,8 +1197,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Make.specific_fn => constants.%Make.specific_fn.8ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(%N) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%int_64.f82) {
 // CHECK:STDOUT:   %N => constants.%int_64.f82
 // CHECK:STDOUT:   %int.convert_checked => constants.%int_64.fab
@@ -1245,8 +1219,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.c7d
 // CHECK:STDOUT:   %MakeFromClass.specific_fn => constants.%MakeFromClass.specific_fn.004
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @MakeFromClass(%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeFromClass(constants.%int_64.06b) {
 // CHECK:STDOUT:   %N => constants.%int_64.06b

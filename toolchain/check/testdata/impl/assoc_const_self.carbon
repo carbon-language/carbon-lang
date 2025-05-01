@@ -695,10 +695,6 @@ fn CallF() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@V.%N) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%N.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%int_-1) {
 // CHECK:STDOUT:   %N.loc4_13.2 => constants.%int_-1
 // CHECK:STDOUT:

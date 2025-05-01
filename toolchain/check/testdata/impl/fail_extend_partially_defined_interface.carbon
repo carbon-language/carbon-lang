@@ -97,7 +97,3 @@ interface I {
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%Self) {}
-// CHECK:STDOUT:

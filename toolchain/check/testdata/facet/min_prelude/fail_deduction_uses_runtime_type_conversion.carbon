@@ -320,7 +320,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %.loc40_19.3: ref %RuntimeConvertTo = temporary %.loc40_19.1, %.loc40_19.2
 // CHECK:STDOUT:   %.loc40_19.4: %RuntimeConvertTo = bind_value %.loc40_19.3
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple, <error>) [concrete = <error>]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%holds_to.ref)
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%holds_to.ref) [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,10 +333,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%Dest, constants.%Self.519) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -376,8 +372,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %HoldsType.loc26_43.2 => constants.%HoldsType.cc9
 // CHECK:STDOUT:   %pattern_type.loc26_29 => constants.%pattern_type.ec6
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc26_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%tuple) {
 // CHECK:STDOUT:   %T.loc16_17.2 => constants.%tuple
@@ -556,10 +550,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %pattern_type.loc9_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT: }
@@ -572,8 +562,4 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %pattern_type.loc14_14 => constants.%pattern_type.a93
 // CHECK:STDOUT:   %pattern_type.loc14_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
 // CHECK:STDOUT:

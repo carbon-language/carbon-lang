@@ -331,7 +331,7 @@ class File : public Printable<File> {
 
   // All instructions. The first entries will always be the singleton
   // instructions.
-  InstStore insts_;
+  InstStore insts_ = InstStore(this);
 
   // Storage for name scopes.
   NameScopeStore name_scopes_ = NameScopeStore(this);

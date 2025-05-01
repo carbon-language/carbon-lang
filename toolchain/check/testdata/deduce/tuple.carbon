@@ -206,8 +206,6 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.dd9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc7_6.2, %U.loc7_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C, constants.%D) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%C
 // CHECK:STDOUT:   %U.loc7_16.2 => constants.%D
@@ -442,8 +440,6 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.loc6_41.2 => constants.%HasPair.568
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.88c
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasPair(@F.%tuple.loc6_40.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasPair(constants.%tuple.21c) {
 // CHECK:STDOUT:   %Pair.loc4_15.2 => constants.%tuple.21c

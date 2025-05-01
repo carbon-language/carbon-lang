@@ -234,8 +234,6 @@ interface J {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DoIt(constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DoIt(@Use.%I.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- assoc_fn_using_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -363,8 +361,6 @@ interface J {
 // CHECK:STDOUT:   %Self.as_type.loc5_16.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6de4e4.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(@Use.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_assoc_method.carbon
 // CHECK:STDOUT:
@@ -514,8 +510,6 @@ interface J {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6de4e4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Copy(@Use.%I.facet) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- access_selfless_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -621,8 +615,6 @@ interface J {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Hello(constants.%I.facet) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Hello(@Use.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_assoc_method_indirect.carbon
 // CHECK:STDOUT:
@@ -772,8 +764,6 @@ interface J {
 // CHECK:STDOUT:   %Self.as_type.loc5_17.1 => constants.%T.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6de4e4.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Copy(@UseIndirect.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_const_associated.carbon
 // CHECK:STDOUT:
@@ -1370,10 +1360,6 @@ interface J {
 // CHECK:STDOUT:   %pattern_type.loc9_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT: }
@@ -1386,8 +1372,4 @@ interface J {
 // CHECK:STDOUT:   %pattern_type.loc14_14 => constants.%pattern_type.a93
 // CHECK:STDOUT:   %pattern_type.loc14_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
 // CHECK:STDOUT:

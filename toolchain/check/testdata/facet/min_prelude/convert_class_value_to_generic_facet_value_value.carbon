@@ -339,8 +339,6 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self.dee8d8.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%Scalar.loc4_19.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc4_19.2 => constants.%GenericParam
 // CHECK:STDOUT:
@@ -377,11 +375,7 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.loc15_54 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc15_22.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Generic.facet.680) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@CallGenericMethod.%T.loc15_22.2, @CallGenericMethod.%Generic.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet.8ff) {
 // CHECK:STDOUT:   %T.loc15_22.2 => constants.%GenericParam
@@ -583,8 +577,6 @@ fn B() {
 // CHECK:STDOUT:   %W.loc3_23.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%V.loc3_13.2, %W.loc3_23.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T.8b3, constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %V.loc3_13.2 => constants.%T.8b3
 // CHECK:STDOUT:   %W.loc3_23.2 => constants.%empty_tuple.type
@@ -600,10 +592,6 @@ fn B() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.5ce
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.989
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.%T.loc7_14.2, constants.%empty_tuple.type) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc7_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type, constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %V.loc3_13.2 => constants.%empty_struct_type
@@ -806,8 +794,6 @@ fn B() {
 // CHECK:STDOUT:   %W.loc3_23.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%V.loc3_13.2, %W.loc3_23.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T.8b3, constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %V.loc3_13.2 => constants.%T.8b3
 // CHECK:STDOUT:   %W.loc3_23.2 => constants.%empty_tuple.type
@@ -823,10 +809,6 @@ fn B() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.5ce
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.989
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.%T.loc7_14.2, constants.%empty_tuple.type) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc7_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type, constants.%empty_struct_type) {
 // CHECK:STDOUT:   %V.loc3_13.2 => constants.%empty_struct_type
@@ -1025,10 +1007,6 @@ fn B() {
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.45b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc7_14.2, constants.%empty_tuple.type) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc7_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T.826) {
 // CHECK:STDOUT:   %T.loc9_6.2 => constants.%T.826
 // CHECK:STDOUT:   %T.as_type.loc9_16.2 => constants.%T.as_type
@@ -1215,10 +1193,6 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.loc9_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT: }
@@ -1231,8 +1205,4 @@ fn B() {
 // CHECK:STDOUT:   %pattern_type.loc14_14 => constants.%pattern_type.a93
 // CHECK:STDOUT:   %pattern_type.loc14_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
 // CHECK:STDOUT:

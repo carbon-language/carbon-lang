@@ -201,8 +201,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.36a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @FeedAnimal(@HandleAnimal.%T.loc18_17.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%Animal.facet) {
 // CHECK:STDOUT:   %T.loc18_17.2 => constants.%Animal.facet
 // CHECK:STDOUT:   %T.as_type.loc18_32.2 => constants.%Goat
@@ -384,10 +382,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc9_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT: }
@@ -400,8 +394,4 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc14_14 => constants.%pattern_type.a93
 // CHECK:STDOUT:   %pattern_type.loc14_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
 // CHECK:STDOUT:

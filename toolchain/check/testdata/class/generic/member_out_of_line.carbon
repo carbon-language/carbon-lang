@@ -145,7 +145,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %n.patt: @F.%pattern_type (%pattern_type.7dc) = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: @F.%pattern_type (%pattern_type.7dc) = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type (%pattern_type.7dc) = return_slot_pattern [concrete]
@@ -159,7 +159,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %return.param.loc10: ref @F.%T.loc5 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return.loc10: ref @F.%T.loc5 (%T) = return_slot %return.param.loc10
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: @Class.%G.type (%G.type) = fn_decl @G [symbolic = constants.%G] {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %self.patt: @G.%pattern_type.loc6_8 (%pattern_type.3c1) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @G.%pattern_type.loc6_8 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @G.%pattern_type.loc6_22 (%pattern_type.7dc) = return_slot_pattern [concrete]
@@ -299,10 +299,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %pattern_type.loc6_22 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T.loc6) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -343,7 +339,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: @B.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%pattern_type.loc6_10 (%pattern_type.13e) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @F.%pattern_type.loc6_10 (%pattern_type.13e) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %a.patt: @F.%pattern_type.loc6_22 (%pattern_type.7dc) = binding_pattern a [concrete]
@@ -468,12 +464,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %pattern_type.loc6_10 => constants.%pattern_type.13e
 // CHECK:STDOUT:   %pattern_type.loc6_22 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(@F.%T.loc6, @F.%N.loc6) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(%T, %N.loc5_11.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(%T.loc4_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_not_generic_vs_generic.carbon
 // CHECK:STDOUT:
@@ -606,8 +596,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TooFew.1(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_too_many_args.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -689,8 +677,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TooMany.1(constants.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TooMany.2(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc15_12.2 => constants.%T
@@ -781,8 +767,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WrongType.1(constants.%T.8b3) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WrongType.2(constants.%T.7a6) {
 // CHECK:STDOUT:   %T.loc15_12.2 => constants.%T.7a6

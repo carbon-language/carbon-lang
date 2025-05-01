@@ -401,8 +401,6 @@ fn F() {
 // CHECK:STDOUT:   %Food.loc20_16.2 => constants.%Food.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(%Food.loc20_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eats(constants.%U.as_type) {
 // CHECK:STDOUT:   %Food.loc20_16.2 => constants.%U.as_type
 // CHECK:STDOUT:
@@ -421,10 +419,6 @@ fn F() {
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.fabf92.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@impl.009.%U.as_type.loc25_49.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.009(%T.loc25_14.2, %U.loc25_26.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eats(constants.%Food.as_type.952) {
 // CHECK:STDOUT:   %Food.loc20_16.2 => constants.%Food.as_type.952
 // CHECK:STDOUT: }
@@ -439,8 +433,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc30_40 => constants.%pattern_type.1a1
 // CHECK:STDOUT:   %pattern_type.loc30_46 => constants.%pattern_type.54f
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@Feed.%Food.as_type.loc30_37.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T.fd4, constants.%Food.5fe) {
 // CHECK:STDOUT:   %T.loc31_17.2 => constants.%T.fd4
@@ -481,10 +473,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc30_41 => constants.%require_complete.234
 // CHECK:STDOUT:   %require_complete.loc30_50 => constants.%require_complete.444
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@HandleAnimal.%Food.as_type.loc31_56.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Feed(@HandleAnimal.%Food.loc31_29.2, @HandleAnimal.%Eats.facet.loc31_76.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%Animal.facet, constants.%Edible.facet) {
 // CHECK:STDOUT:   %T.loc31_17.2 => constants.%Animal.facet
@@ -700,10 +688,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc9_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT: }
@@ -716,8 +700,4 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc14_14 => constants.%pattern_type.a93
 // CHECK:STDOUT:   %pattern_type.loc14_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
 // CHECK:STDOUT:

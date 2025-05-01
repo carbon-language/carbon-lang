@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include "toolchain/sem_ir/file.h"
+
 namespace Carbon::SemIR {
 
 auto Inst::Print(llvm::raw_ostream& out) const -> void {
@@ -51,5 +53,9 @@ const std::pair<IdKind, IdKind> Inst::ArgKindTable[] = {
   {IdKindFor<Name, 0>(), IdKindFor<Name, 1>()},
 #include "toolchain/sem_ir/inst_kind.def"
 };
+
+auto InstStore::GetUnattachedType(TypeId type_id) const -> TypeId {
+  return file_->types().GetUnattachedType(type_id);
+}
 
 }  // namespace Carbon::SemIR

@@ -77,7 +77,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst33.loc4_24 [concrete = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst34.loc4_24 [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %true.loc12_20: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc12: bool = not %true.loc12_20 [concrete = constants.%false]
 // CHECK:STDOUT:   %true.loc12_25: bool = bool_literal true [concrete = constants.%true]

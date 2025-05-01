@@ -526,8 +526,10 @@ struct Call {
   // For a syntactic call, the parse node will be a CallExprStartId. However,
   // calls can arise from other syntaxes, such as operators and implicit
   // conversions.
-  static constexpr auto Kind =
-      InstKind::Call.Define<Parse::NodeId>({.ir_name = "call"});
+  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
+      {.ir_name = "call",
+       .constant_needs_inst_id =
+           InstConstantNeedsInstIdKind::DuringEvaluation});
 
   TypeId type_id;
   InstId callee_id;

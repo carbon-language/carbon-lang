@@ -505,6 +505,15 @@ auto Formatter::FormatSpecific(SpecificId id) -> void {
     return;
   }
 
+  if (specific.IsUnresolved()) {
+    // Omit specifics that were never resolved. Such specifics exist only to
+    // track the way the arguments were spelled, and that information is
+    // conveyed entirely by the name of the specific. These specifics may also
+    // not be referenced by any SemIR that we format, so including them adds
+    // clutter and possibly emits references to instructions we didn't name.
+    return;
+  }
+
   llvm::SaveAndRestore generic_scope(
       scope_, inst_namer_.GetScopeFor(specific.generic_id));
 
@@ -719,7 +728,7 @@ auto Formatter::FormatInst(InstId inst_id) -> void {
     return;
   }
 
-  FormatInst(inst_id, sem_ir_->insts().Get(inst_id));
+  FormatInst(inst_id, sem_ir_->insts().GetWithAttachedType(inst_id));
 }
 
 auto Formatter::FormatPendingImportedFrom(AddSpace space_where) -> void {
@@ -1306,7 +1315,7 @@ auto Formatter::FormatInstAsType(InstId id) -> void {
   // Types are formatted in the `constants` scope because they typically refer
   // to constants.
   llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
-  if (auto const_id = sem_ir_->constant_values().Get(id);
+  if (auto const_id = sem_ir_->constant_values().GetAttached(id);
       const_id.has_value()) {
     FormatConstant(const_id);
   } else {
@@ -1317,7 +1326,7 @@ auto Formatter::FormatInstAsType(InstId id) -> void {
 }
 
 auto Formatter::FormatTypeOfInst(InstId id) -> void {
-  auto type_id = sem_ir_->insts().Get(id).type_id();
+  auto type_id = sem_ir_->insts().GetAttachedType(id);
   if (!type_id.has_value()) {
     out_ << "invalid";
     return;

@@ -232,7 +232,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [concrete = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = constants.%F] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
 // CHECK:STDOUT:     %self.patt: @F.%pattern_type.loc14_10 (%pattern_type.68b) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @F.%pattern_type.loc14_10 (%pattern_type.68b) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
@@ -339,8 +339,4 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %U.loc14_22.1 => constants.%U
 // CHECK:STDOUT:   %pattern_type.loc14_32 => constants.%pattern_type.a32
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%Self) {}
 // CHECK:STDOUT:

@@ -383,6 +383,8 @@ struct LocIdAndInst {
 // Provides a ValueStore wrapper for an API specific to instructions.
 class InstStore {
  public:
+  explicit InstStore(File* file) : file_(file) {}
+
   // Adds an instruction to the instruction list, returning an ID to reference
   // the instruction. Note that this doesn't add the instruction to any
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
@@ -393,8 +395,26 @@ class InstStore {
     return values_.Add(loc_id_and_inst.inst);
   }
 
-  // Returns the requested instruction.
-  auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
+  // Returns the requested instruction. The returned instruction always has an
+  // unattached type, even if an attached type is stored for it.
+  auto Get(InstId inst_id) const -> Inst {
+    Inst result = values_.Get(inst_id);
+    auto type_id = result.type_id();
+    if (type_id.has_value() && type_id.is_symbolic()) {
+      result.SetType(GetUnattachedType(type_id));
+    }
+    return result;
+  }
+
+  // Returns the requested instruction, preserving its attached type.
+  auto GetWithAttachedType(InstId inst_id) const -> Inst {
+    return values_.Get(inst_id);
+  }
+
+  // Returns the type of the instruction as an attached type.
+  auto GetAttachedType(InstId inst_id) const -> TypeId {
+    return GetWithAttachedType(inst_id).type_id();
+  }
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
@@ -507,6 +527,10 @@ class InstStore {
   auto enumerate() const -> auto { return values_.enumerate(); }
 
  private:
+  // Given a symbolic type, get the corresponding unattached type.
+  auto GetUnattachedType(TypeId type_id) const -> TypeId;
+
+  File* file_;
   llvm::SmallVector<LocId> loc_ids_;
   ValueStore<InstId> values_;
 };

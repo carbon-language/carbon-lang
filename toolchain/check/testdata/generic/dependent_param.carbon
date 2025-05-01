@@ -226,10 +226,6 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T, %U.loc5_15.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32
 // CHECK:STDOUT:

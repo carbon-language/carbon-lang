@@ -332,15 +332,11 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %Interface.impl_witness => constants.%Interface.impl_witness.a14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.c3d(%T.loc11_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.793(constants.%T.ccd) {
 // CHECK:STDOUT:   %T.loc12_14.2 => constants.%T.ccd
 // CHECK:STDOUT:   %T.as_type.loc12_21.2 => constants.%T.as_type.3df
 // CHECK:STDOUT:   %Interface.impl_witness => constants.%Interface.impl_witness.608
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.793(%T.loc12_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.c93(constants.%T.09f) {
 // CHECK:STDOUT:   %T.loc13_14.2 => constants.%T.09f
@@ -348,15 +344,11 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %Interface.impl_witness => constants.%Interface.impl_witness.b9e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.c93(%T.loc13_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.9e6(constants.%T.1d2) {
 // CHECK:STDOUT:   %T.loc14_14.2 => constants.%T.1d2
 // CHECK:STDOUT:   %T.as_type.loc14_21.2 => constants.%T.as_type.0ed
 // CHECK:STDOUT:   %Interface.impl_witness => constants.%Interface.impl_witness.e9d
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.9e6(%T.loc14_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_same_self_and_interface_redefined.carbon
 // CHECK:STDOUT:
@@ -461,15 +453,11 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.a529f4.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.bfd509.1(%T.loc7_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.bfd509.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_14.2 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc15_21.2 => constants.%T.as_type
 // CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.a529f4.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.bfd509.2(%T.loc15_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- same_type_different_spelling.carbon
 // CHECK:STDOUT:
@@ -721,8 +709,6 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %A => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.2caff2.1(%T.loc4_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2caff2.2(constants.%T) {
@@ -738,8 +724,6 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %D => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.2caff2.2(%T.loc15_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -747,10 +731,6 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.2caff2.2(@D.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@D.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/destroy.carbon
 // CHECK:STDOUT:

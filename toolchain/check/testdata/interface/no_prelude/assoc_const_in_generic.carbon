@@ -163,13 +163,9 @@ fn H() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.20f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc11_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_6.2 => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@G.%T.loc15_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc15_6.2 => constants.%empty_struct_type

@@ -1919,10 +1919,6 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %pattern_type.loc8_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(@F.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(%T.loc7_17.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T1
 // CHECK:STDOUT:
@@ -2245,10 +2241,6 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %T.loc9_28.1 => constants.%T.336
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(@F.%T.loc9_22) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(%T.loc4_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_with_virtual.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -2334,10 +2326,6 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %T1 => constants.%T1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.48e
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(@F.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(%T.loc4_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_dependent_arg.carbon
 // CHECK:STDOUT:
@@ -2433,8 +2421,4 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %pattern_type.loc5_16 => constants.%pattern_type.48e
 // CHECK:STDOUT:   %pattern_type.loc5_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(@F.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(%T.loc4_15.2) {}
 // CHECK:STDOUT:

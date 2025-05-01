@@ -234,14 +234,10 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.b9e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @InitFromStructGeneric(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_26.2 => constants.%T
 // CHECK:STDOUT:   %pattern_type.loc8 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@InitFromStructGeneric.%T.loc8_26.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32
@@ -408,8 +404,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.loc8_27.2 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Adapt(@InitFromAdaptedGeneric.%T.loc8_27.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Adapt(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32

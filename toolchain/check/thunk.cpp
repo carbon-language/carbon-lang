@@ -322,7 +322,8 @@ static auto BuildThunkDefinition(Context& context,
   context.scope_stack().PushForFunctionBody(thunk_id);
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  StartGenericDefinition(context);
+  StartGenericDefinition(context,
+                         context.functions().Get(function_id).generic_id);
 
   // The checks below produce diagnostics pointing at the callee, so also note
   // the signature.

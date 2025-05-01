@@ -385,7 +385,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageA.C: type = import_ref PackageA//default, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %PackageA.import_ref.8f2: <witness> = import_ref PackageA//default, loc8_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst43 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.HasF: type = import_ref PackageA//default, HasF, loaded [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %PackageA.import_ref.28c = import_ref PackageA//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.c63 = import_ref PackageA//default, loc5_21, unloaded
@@ -613,7 +613,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageA.C: type = import_ref PackageA//default, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %PackageA.import_ref.8f2: <witness> = import_ref PackageA//default, loc8_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst43 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.HasF: type = import_ref PackageA//default, HasF, loaded [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %PackageA.import_ref.28c = import_ref PackageA//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.b36: %HasF.assoc_type = import_ref PackageA//default, loc5_21, loaded [concrete = constants.%assoc0]
@@ -736,7 +736,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageB.D: type = import_ref PackageB//default, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %PackageB.import_ref.8f2: <witness> = import_ref PackageB//default, loc10_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageB.import_ref.cab = import_ref PackageB//default, inst44 [no loc], unloaded
+// CHECK:STDOUT:   %PackageB.import_ref.cab = import_ref PackageB//default, inst45 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.HasF: type = import_ref PackageA//default, HasF, loaded [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %PackageA.import_ref.28c = import_ref PackageA//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.b36: %HasF.assoc_type = import_ref PackageA//default, loc5_21, loaded [concrete = constants.%assoc0]
@@ -745,7 +745,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageA.import_ref.e73: %HasF.type = import_ref PackageA//default, inst19 [no loc], loaded [symbolic = constants.%Self.cf3]
 // CHECK:STDOUT:   %PackageA.import_ref.5cd = import_ref PackageA//default, loc11_16, unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.8f2: <witness> = import_ref PackageA//default, loc8_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst43 [no loc], unloaded
 // CHECK:STDOUT:   %PackageA.import_ref.29a: type = import_ref PackageA//default, loc11_6, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %PackageA.import_ref.e8c: type = import_ref PackageA//default, loc11_11, loaded [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %PackageB.import_ref.5d8 = import_ref PackageB//default, inst21 [no loc], unloaded
@@ -904,7 +904,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageA.C: type = import_ref PackageA//default, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %PackageA.import_ref.8f2: <witness> = import_ref PackageA//default, loc8_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %PackageA.import_ref.2c4 = import_ref PackageA//default, inst43 [no loc], unloaded
 // CHECK:STDOUT:   %PackageB.HasG: type = import_ref PackageB//default, HasG, loaded [concrete = constants.%HasG.type]
 // CHECK:STDOUT:   %PackageB.import_ref.5d8 = import_ref PackageB//default, inst21 [no loc], unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.6c2: %HasG.assoc_type = import_ref PackageB//default, loc7_21, loaded [concrete = constants.%assoc0]
@@ -922,7 +922,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageB.import_ref.cee586.1: type = import_ref PackageB//default, loc13_20, loaded [concrete = constants.%HasG.type]
 // CHECK:STDOUT:   %PackageB.import_ref.5ba = import_ref PackageB//default, loc18_25, unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.8f2: <witness> = import_ref PackageB//default, loc10_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageB.import_ref.cab = import_ref PackageB//default, inst44 [no loc], unloaded
+// CHECK:STDOUT:   %PackageB.import_ref.cab = import_ref PackageB//default, inst45 [no loc], unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.aa9f8a.1: type = import_ref PackageB//default, loc18_6, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %PackageB.import_ref.831: type = import_ref PackageB//default, loc18_19, loaded [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   %PackageB.import_ref.569 = import_ref PackageB//default, loc23_16, unloaded
@@ -1069,7 +1069,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageB.D: type = import_ref PackageB//default, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %PackageB.import_ref.8f2: <witness> = import_ref PackageB//default, loc10_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageB.import_ref.cab = import_ref PackageB//default, inst44 [no loc], unloaded
+// CHECK:STDOUT:   %PackageB.import_ref.cab = import_ref PackageB//default, inst45 [no loc], unloaded
 // CHECK:STDOUT:   %PackageB.HasG: type = import_ref PackageB//default, HasG, loaded [concrete = constants.%HasG.type]
 // CHECK:STDOUT:   %PackageB.import_ref.5d8 = import_ref PackageB//default, inst21 [no loc], unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.6c2: %HasG.assoc_type = import_ref PackageB//default, loc7_21, loaded [concrete = constants.%assoc0]
@@ -1077,12 +1077,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageB.import_ref.70a: %G.type.d9e = import_ref PackageB//default, loc7_21, loaded [concrete = constants.%G.cd6]
 // CHECK:STDOUT:   %PackageB.import_ref.ef5: %HasG.type = import_ref PackageB//default, inst21 [no loc], loaded [symbolic = constants.%Self.fcb]
 // CHECK:STDOUT:   %PackageB.import_ref.ea7 = import_ref PackageB//default, loc13_25, unloaded
-// CHECK:STDOUT:   %PackageB.import_ref.8db: <witness> = import_ref PackageB//default, inst53 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %PackageB.import_ref.6a9 = import_ref PackageB//default, inst54 [indirect], unloaded
+// CHECK:STDOUT:   %PackageB.import_ref.8db: <witness> = import_ref PackageB//default, inst54 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %PackageB.import_ref.6a9 = import_ref PackageB//default, inst55 [indirect], unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.dfb: type = import_ref PackageB//default, loc13_14, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %PackageB.import_ref.cee586.1: type = import_ref PackageB//default, loc13_20, loaded [concrete = constants.%HasG.type]
-// CHECK:STDOUT:   %PackageB.import_ref.96f = import_ref PackageB//default, inst79 [indirect], unloaded
-// CHECK:STDOUT:   %PackageB.import_ref.a0b = import_ref PackageB//default, inst80 [indirect], unloaded
+// CHECK:STDOUT:   %PackageB.import_ref.96f = import_ref PackageB//default, inst80 [indirect], unloaded
+// CHECK:STDOUT:   %PackageB.import_ref.a0b = import_ref PackageB//default, inst81 [indirect], unloaded
 // CHECK:STDOUT:   %PackageB.F = import_ref PackageB//default, F, unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.5ba = import_ref PackageB//default, loc18_25, unloaded
 // CHECK:STDOUT:   %PackageB.import_ref.aa9f8a.1: type = import_ref PackageB//default, loc18_6, loaded [concrete = constants.%D]
@@ -1687,8 +1687,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %U.loc6_28.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(%U.loc6_28.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %X => constants.%X
@@ -1893,8 +1891,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: specific @GenericInterface(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.0da, constants.%GenericInterface.generic) {
 // CHECK:STDOUT:   %T => constants.%GenericInterface.type.0da
@@ -2608,21 +2604,21 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %HasExtraInterfaces.C: %C.type = import_ref HasExtraInterfaces//default, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.5ab: type = import_ref HasExtraInterfaces//default, loc13_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.8f2: <witness> = import_ref HasExtraInterfaces//default, loc13_20, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.4c0 = import_ref HasExtraInterfaces//default, inst58 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.4c0 = import_ref HasExtraInterfaces//default, inst66 [no loc], unloaded
 // CHECK:STDOUT:   %HasExtraInterfaces.I: type = import_ref HasExtraInterfaces//default, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.e5d = import_ref HasExtraInterfaces//default, inst65 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.e5d = import_ref HasExtraInterfaces//default, inst73 [no loc], unloaded
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.be9: %I.assoc_type = import_ref HasExtraInterfaces//default, loc14_33, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %HasExtraInterfaces.F = import_ref HasExtraInterfaces//default, F, unloaded
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.d54: %F.type = import_ref HasExtraInterfaces//default, loc14_33, loaded [concrete = constants.%F]
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.1db: %I.type = import_ref HasExtraInterfaces//default, inst65 [no loc], loaded [symbolic = constants.%Self.013]
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.1db: %I.type = import_ref HasExtraInterfaces//default, inst73 [no loc], loaded [symbolic = constants.%Self.013]
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.bca = import_ref HasExtraInterfaces//default, loc16_79, unloaded
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.9c8 = import_ref HasExtraInterfaces//default, inst47 [no loc], unloaded
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.dfe = import_ref HasExtraInterfaces//default, inst43 [no loc], unloaded
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.6b6 = import_ref HasExtraInterfaces//default, inst39 [no loc], unloaded
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.576 = import_ref HasExtraInterfaces//default, inst35 [no loc], unloaded
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.0dd = import_ref HasExtraInterfaces//default, inst31 [no loc], unloaded
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.f83 = import_ref HasExtraInterfaces//default, inst27 [no loc], unloaded
-// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.975 = import_ref HasExtraInterfaces//default, inst23 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.9c8 = import_ref HasExtraInterfaces//default, inst54 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.dfe = import_ref HasExtraInterfaces//default, inst49 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.6b6 = import_ref HasExtraInterfaces//default, inst44 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.576 = import_ref HasExtraInterfaces//default, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.0dd = import_ref HasExtraInterfaces//default, inst34 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.f83 = import_ref HasExtraInterfaces//default, inst29 [no loc], unloaded
+// CHECK:STDOUT:   %HasExtraInterfaces.import_ref.975 = import_ref HasExtraInterfaces//default, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.a3c = import_ref HasExtraInterfaces//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.aa8: type = import_ref HasExtraInterfaces//default, loc16_72, loaded [concrete = constants.%C.074]
 // CHECK:STDOUT:   %HasExtraInterfaces.import_ref.301: type = import_ref HasExtraInterfaces//default, loc16_77, loaded [concrete = constants.%I.type]

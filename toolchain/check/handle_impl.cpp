@@ -541,7 +541,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   context.scope_stack().PushForEntity(
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, impl_info.generic_id);
   ImplWitnessStartDefinition(context, impl_info);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);

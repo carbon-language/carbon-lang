@@ -174,8 +174,6 @@ class C(C:! type) {
 // CHECK:STDOUT:   %T.loc5_11.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc5_11.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
 // CHECK:STDOUT:   %T.loc5_11.2 => constants.%i32
 // CHECK:STDOUT:

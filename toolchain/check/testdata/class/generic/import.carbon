@@ -246,8 +246,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(%T.loc6_21.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%i32) {
 // CHECK:STDOUT:   %T.loc6_21.2 => constants.%i32
 // CHECK:STDOUT: }
@@ -423,8 +421,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %T.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.1) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
@@ -434,8 +430,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.14f
 // CHECK:STDOUT:   %F => constants.%F.874
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
 // CHECK:STDOUT:
@@ -496,7 +490,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.import_ref.e76: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) = import_ref Main//foo, loc7_8, loaded [concrete = %.364]
 // CHECK:STDOUT:   %Main.import_ref.a52: @CompleteClass.%F.type (%F.type.14f) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.874)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
-// CHECK:STDOUT:   %.364: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.364: %CompleteClass.elem.28a = field_decl n, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -619,8 +613,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.14f
 // CHECK:STDOUT:   %F => constants.%F.874
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
 // CHECK:STDOUT:
@@ -764,8 +756,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.14f
 // CHECK:STDOUT:   %F => constants.%F.874
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CompleteClass(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {}
 // CHECK:STDOUT:

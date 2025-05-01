@@ -263,8 +263,6 @@ impl i32 as I {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4fb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%I.type, @F.1.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%I.type, constants.%I.facet.e8a) {
 // CHECK:STDOUT:   %T.loc11_9.2 => constants.%I.type
 // CHECK:STDOUT:   %X.loc11_19.2 => constants.%I.facet.e8a
