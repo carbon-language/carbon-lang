@@ -64,6 +64,7 @@ cc_library(
         "decl_introducer_state.h",
         "decl_name_stack.h",
         "deduce.h",
+        "deferred_definition_scope.h",
         "diagnostic_helpers.h",
         "eval.h",
         "eval_inst.h",
