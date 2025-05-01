@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_SUBPATTERN_H_
-#define CARBON_TOOLCHAIN_CHECK_SUBPATTERN_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_PATTERN_H_
+#define CARBON_TOOLCHAIN_CHECK_PATTERN_H_
 
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
@@ -44,4 +44,4 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_SUBPATTERN_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_PATTERN_H_

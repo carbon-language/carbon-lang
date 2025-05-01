@@ -14,7 +14,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/return.h"
-#include "toolchain/check/subpattern.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/function.h"
