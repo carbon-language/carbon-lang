@@ -147,14 +147,15 @@ class FunctionContext {
     current_fingerprint_.relevant = true;
 
     RawStringOstream os;
-    // TODO: Replace with id that is translation unit independent.
-    function_id.Print(os);
+    // TODO: Replace index with info that is translation unit independent.
+    // Using a string that includes the function_id string and the index to
+    // avoid possible collisions. This needs revisiting.
+    os << "function_id" << function_id.index;
     current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
-    os.clear();
-    // TODO: Replace with id that is translation unit independent.
-    specific_id.Print(os);
-    current_fingerprint_.function_specific_fingerprint.update(os.TakeStr());
+    // TODO: Replace index with info that is translation unit independent.
     if (specific_id.has_value()) {
+      current_fingerprint_.function_specific_fingerprint.update(
+          specific_id.index);
       function_fingerprint_->calls.push_back(specific_id);
     }
   }
