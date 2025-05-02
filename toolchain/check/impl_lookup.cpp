@@ -690,4 +690,17 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   return EvalImplLookupResult::MakeNone();
 }
 
+auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
+                       SemIR::ConstantId query_self_const_id,
+                       SemIR::SpecificInterface query_specific_interface,
+                       SemIR::ImplId target_impl) -> bool {
+  if (query_self_const_id == SemIR::ErrorInst::ConstantId) {
+    return false;
+  }
+  auto result = GetWitnessIdForImpl(
+      context, loc_id, /*query_is_concrete=*/false, query_self_const_id,
+      query_specific_interface, target_impl);
+  return result.has_value();
+}
+
 }  // namespace Carbon::Check

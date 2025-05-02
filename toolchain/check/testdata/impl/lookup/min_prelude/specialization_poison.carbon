@@ -170,27 +170,43 @@ final impl forall [V:! type] V* as I where .T = V {
   fn F[self: Self]() -> V { return *self; }
 }
 
-// --- todo_final_overlaps_earlier_non_final_impl.carbon
+// --- fail_final_overlaps_earlier_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
 interface Y {}
 
-impl forall [T:! Y] T as Z(T) {}
+// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+4]]:1: error: semantics TODO: `impl is fully overlapped by final impl` [SemanticsTodo]
+// CHECK:STDERR: impl () as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Z(()) {}
 
-// TODO: Diagnose overlap with previous impl (query of this matches that).
+// TODO: Diagnose overlap with previous impl (query of that matches this).
+// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+4]]:1: error: semantics TODO: `final impl here` [SemanticsTodo]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 final impl forall [T:! type] T as Z(T) {}
 
-// --- todo_final_overlaps_later_non_final_impl.carbon
+// --- fail_final_overlaps_later_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
 interface Y {}
 
-// TODO: Diagnose overlap with next impl (query of this matches that).
+// TODO: Diagnose overlap with next impl (query of that matches this).
 final impl forall [T:! type] T as Z(T) {}
 
-impl forall [T:! Y] T as Z(T) {}
+// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+8]]:1: error: semantics TODO: `impl is fully overlapped by final impl` [SemanticsTodo]
+// CHECK:STDERR: impl () as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE-6]]:1: error: semantics TODO: `final impl here` [SemanticsTodo]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Z(()) {}
 
 // --- todo_final_overlaps_earlier_final_impl.carbon
 library "[[@TEST_NAME]]";
@@ -198,9 +214,9 @@ library "[[@TEST_NAME]]";
 interface Z(T:! type) {}
 interface Y {}
 
-final impl forall [T:! Y] T as Z(T) {}
+final impl () as Z(()) {}
 
-// TODO: Diagnose overlap with previous impl (query of this matches that).
+// TODO: Diagnose overlap with previous impl (query of that matches this).
 final impl forall [T:! type] T as Z(T) {}
 
 // --- todo_final_overlaps_later_final_impl.carbon
@@ -209,10 +225,10 @@ library "[[@TEST_NAME]]";
 interface Z(T:! type) {}
 interface Y {}
 
-// TODO: Diagnose overlap with next impl (query of this matches that)
+// TODO: Diagnose overlap with next impl (query of that matches this).
 final impl forall [T:! type] T as Z(T) {}
 
-final impl forall [T:! Y] T as Z(T) {}
+final impl () as Z(()) {}
 
 // --- fail_non_final_overlaps_non_final_impl.carbon
 library "[[@TEST_NAME]]";
@@ -245,3 +261,27 @@ class D;
 
 impl C as Z {}
 impl D as Z {}
+
+// --- final_partial_overlaps_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+impl forall [T:! type] T as Z(T) {}
+
+// Partially overlaps the previous impl, which is fine.
+final impl () as Z(()) {}
+
+
+// --- todo_final_partial_overlaps_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+final impl forall [T:! type] T as Z(T) {}
+
+// Partially overlaps the previous impl, which may or may not be fine, depending
+// how https://github.com/carbon-language/carbon-lang/pull/5337 turns out.
+final impl () as Z(()) {}

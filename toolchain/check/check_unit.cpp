@@ -570,15 +570,87 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   context_.inst_block_stack().PopAndDiscard();
 }
 
+// Check for invalid overlap between impls, given the set of all impls for a
+// single interface.
+static auto CheckOverlappingImplsForInterface(
+    Context& context,
+    llvm::ArrayRef<std::pair<SemIR::ImplId, const SemIR::Impl*>> impls)
+    -> void {
+  for (auto [index_a, impl_a_pair] : llvm::enumerate(impls)) {
+    auto [impl_a_id, impl_a] = impl_a_pair;
+    if (impl_a->witness_id == SemIR::ErrorInst::InstId) {
+      continue;
+    }
+    auto type_structure =
+        BuildTypeStructure(context, impl_a->self_id, impl_a->interface);
+
+    for (const auto& impl_b_pair : llvm::drop_begin(impls, index_a + 1)) {
+      auto [impl_b_id, impl_b] = impl_b_pair;
+      if (impl_b->witness_id == SemIR::ErrorInst::InstId) {
+        continue;
+      }
+
+      // The type structure each non-final `impl` must differ from all other
+      // non-final `impl` for the same interface visible from the file.
+      if (!impl_a->is_final && !impl_b->is_final) {
+        auto type_structure2 =
+            BuildTypeStructure(context, impl_b->self_id, impl_b->interface);
+        if (type_structure == type_structure2) {
+          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinal, Error,
+                            "found non-final `impl` that fully overlaps "
+                            "previous non-final `impl`");
+          auto builder = context.emitter().Build(impl_b->latest_decl_id(),
+                                                 ImplFullyOverlapNonFinal);
+          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinalNote, Note,
+                            "fully overlaps `impl` here");
+          builder.Note(impl_a->latest_decl_id(), ImplFullyOverlapNonFinalNote);
+          builder.Emit();
+          break;
+        }
+      } else if (!impl_a->is_final || !impl_b->is_final) {
+        CARBON_CHECK(impl_a->is_final || impl_b->is_final);
+        auto final_impl_id = impl_a_id;
+        const auto* final_impl = impl_a;
+        auto non_final_impl_id = impl_b_id;
+        const auto* non_final_impl = impl_b;
+        if (impl_b->is_final) {
+          using std::swap;
+          swap(final_impl_id, non_final_impl_id);
+          swap(final_impl, non_final_impl);
+        }
+
+        if (LookupMatchesImpl(
+                context, SemIR::LocId(non_final_impl->latest_decl_id()),
+                context.constant_values().Get(non_final_impl->self_id),
+                non_final_impl->interface, final_impl_id)) {
+          context.TODO(non_final_impl->latest_decl_id(),
+                       "impl is fully overlapped by final impl");
+          context.TODO(final_impl->latest_decl_id(), "final impl here");
+        }
+      }
+    }
+
+    // TODO: The self + constraint of a `impl` must not match against (be
+    // fully subsumed by) any final `impl` visible from the file. Do a
+    // final-only query for all non-final impls?
+  }
+}
+
 auto CheckUnit::CheckOverlappingImpls() -> void {
   // Collect all of the impls sorted into contiguous segments by their
   // interface. We only need to compare impls within each such segment.
-  llvm::SmallVector<SemIR::Impl> impls_by_interface(
-      context_.impls().array_ref());
-  llvm::stable_sort(
-      impls_by_interface, [](const SemIR::Impl& a, const SemIR::Impl& b) {
-        return a.interface.interface_id.index < b.interface.interface_id.index;
-      });
+  llvm::SmallVector<std::pair<SemIR::ImplId, const SemIR::Impl*>>
+      impls_by_interface(llvm::map_range(
+          context_.impls().enumerate(),
+          [](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
+            return std::make_pair(pair.first, &pair.second);
+          }));
+  llvm::stable_sort(impls_by_interface,
+                    [](std::pair<SemIR::ImplId, const SemIR::Impl*> a,
+                       std::pair<SemIR::ImplId, const SemIR::Impl*> b) {
+                      return a.second->interface.interface_id.index <
+                             b.second->interface.interface_id.index;
+                    });
 
   const auto* it = impls_by_interface.begin();
   while (it != impls_by_interface.end()) {
@@ -586,8 +658,8 @@ auto CheckUnit::CheckOverlappingImpls() -> void {
     do {
       ++it;
     } while (it != impls_by_interface.end() &&
-             it->interface.interface_id ==
-                 segment_begin->interface.interface_id);
+             it->second->interface.interface_id ==
+                 segment_begin->second->interface.interface_id);
     const auto* segment_end = it;
 
     if (std::distance(segment_begin, segment_end) == 1) {
@@ -596,47 +668,7 @@ auto CheckUnit::CheckOverlappingImpls() -> void {
     }
 
     CheckOverlappingImplsForInterface(
-        llvm::ArrayRef(segment_begin, segment_end));
-  }
-}
-
-auto CheckUnit::CheckOverlappingImplsForInterface(
-    llvm::ArrayRef<SemIR::Impl> impls) -> void {
-  for (auto [index_a, impl_a] : llvm::enumerate(impls)) {
-    if (impl_a.witness_id == SemIR::ErrorInst::InstId) {
-      continue;
-    }
-    auto impl_a_type_structure =
-        BuildTypeStructure(context_, impl_a.self_id, impl_a.interface);
-
-    for (const auto& impl_b : impls.drop_front(index_a + 1)) {
-      if (impl_b.witness_id == SemIR::ErrorInst::InstId) {
-        continue;
-      }
-
-      // The type structure each non-final `impl` must differ from all other
-      // non-final `impl` for the same interface visible from the file.
-      if (!impl_a.is_final && !impl_b.is_final) {
-        auto impl_b_type_structure =
-            BuildTypeStructure(context_, impl_b.self_id, impl_b.interface);
-        if (impl_a_type_structure == impl_b_type_structure) {
-          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinal, Error,
-                            "found non-final `impl` that fully overlaps "
-                            "previous non-final `impl`");
-          auto builder =
-              emitter_.Build(impl_b.latest_decl_id(), ImplFullyOverlapNonFinal);
-          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinalNote, Note,
-                            "fully overlaps `impl` here");
-          builder.Note(impl_a.latest_decl_id(), ImplFullyOverlapNonFinalNote);
-          builder.Emit();
-          break;
-        }
-      }
-    }
-
-    // TODO: The self + constraint of a `impl` must not match against (be
-    // fully subsumed by) any final `impl` visible from the file. Do a
-    // final-only query for all non-final impls?
+        context_, llvm::ArrayRef(segment_begin, segment_end));
   }
 }
 
