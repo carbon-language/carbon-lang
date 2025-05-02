@@ -256,10 +256,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %pattern_type.loc5_21 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@At.%SubscriptType) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(%SubscriptType.loc4_21.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- wrong_arg_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -415,10 +411,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(%SubscriptType) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@At.1.%SubscriptType) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%SubscriptType, constants.%Self.30a) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType

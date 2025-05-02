@@ -186,8 +186,6 @@ class C {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(%T.loc11_28.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc20_23.2 => constants.%T
 // CHECK:STDOUT:   %GenericInterface.type.loc20_54.2 => constants.%GenericInterface.type.3fe
@@ -198,10 +196,6 @@ class C {
 // CHECK:STDOUT:   %F.type => constants.%F.type.2cb
 // CHECK:STDOUT:   %F => constants.%F.4b1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(@impl.%T.loc20_23.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc20_23.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

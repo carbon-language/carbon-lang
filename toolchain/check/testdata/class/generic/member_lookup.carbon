@@ -333,8 +333,6 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.eaf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(%T.loc4_17.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
 // CHECK:STDOUT:
@@ -349,10 +347,6 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.8ad
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(@Derived.%T.loc8_15.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived(%T.loc8_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessDerived(constants.%T) {
 // CHECK:STDOUT:   %T.loc13_18.2 => constants.%T
 // CHECK:STDOUT:   %Derived.loc13_40.2 => constants.%Derived.85c
@@ -360,18 +354,12 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc13_43 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived(@AccessDerived.%T.loc13_18.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessBase(constants.%T) {
 // CHECK:STDOUT:   %T.loc17_15.2 => constants.%T
 // CHECK:STDOUT:   %Derived.loc17_37.2 => constants.%Derived.85c
 // CHECK:STDOUT:   %pattern_type.loc17_25 => constants.%pattern_type.423
 // CHECK:STDOUT:   %pattern_type.loc17_40 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived(@AccessBase.%T.loc17_15.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(@AccessBase.%T.loc17_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%i32) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%i32
@@ -649,8 +637,6 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.eaf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(%T.loc4_17.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
 // CHECK:STDOUT:
@@ -665,10 +651,6 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.8ad
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(@Derived.%T.loc8_15.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived(%T.loc8_15.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessMissingBase(constants.%T) {
 // CHECK:STDOUT:   %T.loc13_22.2 => constants.%T
 // CHECK:STDOUT:   %Base.loc13_41.2 => constants.%Base.370
@@ -676,18 +658,12 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc13_44 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(@AccessMissingBase.%T.loc13_22.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessMissingDerived(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_25.2 => constants.%T
 // CHECK:STDOUT:   %Derived.loc21_47.2 => constants.%Derived.85c
 // CHECK:STDOUT:   %pattern_type.loc21_35 => constants.%pattern_type.423
 // CHECK:STDOUT:   %pattern_type.loc21_50 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Derived(@AccessMissingDerived.%T.loc21_25.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(@AccessMissingDerived.%T.loc21_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%i32) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%i32

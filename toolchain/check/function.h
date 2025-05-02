@@ -26,6 +26,22 @@ struct SuspendedFunction {
   DeclNameStack::SuspendedName saved_name_state;
 };
 
+// Returns the ID of the self parameter pattern, or None.
+// TODO: Do this during initial traversal of implicit params.
+auto FindSelfPattern(Context& context,
+                     SemIR::InstBlockId implicit_param_patterns_id)
+    -> SemIR::InstId;
+
+// Checks that `new_function` has the same return type as `prev_function`, or if
+// `prev_function_id` is specified, a specific version of `prev_function`.
+// Prints a suitable diagnostic and returns false if not. Never checks for a
+// syntactic match.
+auto CheckFunctionReturnTypeMatches(Context& context,
+                                    const SemIR::Function& new_function,
+                                    const SemIR::Function& prev_function,
+                                    SemIR::SpecificId prev_specific_id,
+                                    bool diagnose = true) -> bool;
+
 // Checks that `new_function` has the same parameter types and return type as
 // `prev_function`, or if `prev_function_id` is specified, a specific version of
 // `prev_function`. Prints a suitable diagnostic and returns false if not.
@@ -38,7 +54,8 @@ auto CheckFunctionTypeMatches(Context& context,
                               const SemIR::Function& new_function,
                               const SemIR::Function& prev_function,
                               SemIR::SpecificId prev_specific_id,
-                              bool check_syntax, bool check_self) -> bool;
+                              bool check_syntax, bool check_self,
+                              bool diagnose = true) -> bool;
 
 inline auto CheckFunctionTypeMatches(Context& context,
                                      const SemIR::Function& new_function,
@@ -57,6 +74,12 @@ auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
                              const SemIR::Function& function,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo;
+
+// Checks that a function declaration's signature is suitable to support a
+// function definition. This requires the parameter types to be complete and the
+// return type to be concrete.
+auto CheckFunctionDefinitionSignature(Context& context,
+                                      SemIR::FunctionId function_id) -> void;
 
 }  // namespace Carbon::Check
 

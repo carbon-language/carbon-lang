@@ -461,8 +461,6 @@ class X {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6b5(%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Zero.1(constants.%Z.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Method.1(constants.%Z.facet) {

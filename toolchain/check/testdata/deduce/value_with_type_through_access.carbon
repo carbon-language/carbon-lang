@@ -267,8 +267,6 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc8_37 => constants.%pattern_type.08e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc8_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%tuple) {
 // CHECK:STDOUT:   %T.loc4_17.2 => constants.%tuple
 // CHECK:STDOUT:
@@ -447,8 +445,6 @@ fn G() {
 // CHECK:STDOUT:   %.loc8_43.3 => constants.%.20a
 // CHECK:STDOUT:   %pattern_type.loc8_39 => constants.%pattern_type.9f0
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc8_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%struct) {
 // CHECK:STDOUT:   %T.loc4_17.2 => constants.%struct
@@ -640,8 +636,6 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.937
 // CHECK:STDOUT:   %.loc21_38.3 => constants.%.2fe
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc21_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%c) {
 // CHECK:STDOUT:   %T.loc8_17.2 => constants.%c
@@ -836,6 +830,4 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.loc12_40.2 => constants.%HoldsType
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.142
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc12_6.2) {}
 // CHECK:STDOUT:

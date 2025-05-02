@@ -8,14 +8,19 @@
 
 namespace Carbon::SemIR {
 
-// Notes an import on the diagnostic and updates cursors to point at the
-// imported IR.
+// Notes an import on the diagnostic. For `Cpp` imports, returns true. Otherwise
+// updates cursors to point at the imported IR and returns false.
 static auto FollowImportRef(
     llvm::SmallVector<AbsoluteNodeId>& absolute_node_ids,
     const File*& cursor_ir, InstId& cursor_inst_id,
-    ImportIRInstId import_ir_inst_id) -> void {
+    ImportIRInstId import_ir_inst_id) -> bool {
   auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
-  CARBON_CHECK(import_ir_inst.ir_id() != ImportIRId::Cpp);
+  if (import_ir_inst.ir_id() == ImportIRId::Cpp) {
+    absolute_node_ids.push_back(
+        AbsoluteNodeId(import_ir_inst.clang_source_loc_id()));
+    return true;
+  }
+
   const auto& import_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id());
   CARBON_CHECK(import_ir.decl_id.has_value(),
                "If we get `None` locations here, we may need to more "
@@ -37,9 +42,8 @@ static auto FollowImportRef(
           implicit_import_ir_inst.inst_id());
       CARBON_CHECK(implicit_loc_id.kind() == LocId::Kind::NodeId,
                    "Should only be one layer of implicit imports");
-      absolute_node_ids.push_back(
-          {.check_ir_id = implicit_ir.sem_ir->check_ir_id(),
-           .node_id = implicit_loc_id.node_id()});
+      absolute_node_ids.push_back(AbsoluteNodeId(
+          implicit_ir.sem_ir->check_ir_id(), implicit_loc_id.node_id()));
       break;
     }
 
@@ -48,14 +52,15 @@ static auto FollowImportRef(
 
     case LocId::Kind::NodeId: {
       // For imports in the current file, the location is simple.
-      absolute_node_ids.push_back({.check_ir_id = cursor_ir->check_ir_id(),
-                                   .node_id = import_loc_id.node_id()});
+      absolute_node_ids.push_back(
+          AbsoluteNodeId(cursor_ir->check_ir_id(), import_loc_id.node_id()));
       break;
     }
   }
 
   cursor_ir = import_ir.sem_ir;
   cursor_inst_id = import_ir_inst.inst_id();
+  return false;
 }
 
 // Returns true if this is the final parse node location. If the location is an
@@ -65,15 +70,14 @@ static auto HandleLocId(llvm::SmallVector<AbsoluteNodeId>& absolute_node_ids,
                         LocId loc_id) -> bool {
   switch (loc_id.kind()) {
     case LocId::Kind::ImportIRInstId: {
-      FollowImportRef(absolute_node_ids, cursor_ir, cursor_inst_id,
-                      loc_id.import_ir_inst_id());
-      return false;
+      return FollowImportRef(absolute_node_ids, cursor_ir, cursor_inst_id,
+                             loc_id.import_ir_inst_id());
     }
 
     case LocId::Kind::NodeId: {
       // Parse nodes always refer to the current IR.
-      absolute_node_ids.push_back({.check_ir_id = cursor_ir->check_ir_id(),
-                                   .node_id = loc_id.node_id()});
+      absolute_node_ids.push_back(
+          AbsoluteNodeId(cursor_ir->check_ir_id(), loc_id.node_id()));
       return true;
     }
 
@@ -115,8 +119,8 @@ static auto GetAbsoluteNodeIdImpl(
   }
 
   // `None` parse node but not an import; just nothing to point at.
-  absolute_node_ids.push_back({.check_ir_id = cursor_ir->check_ir_id(),
-                               .node_id = Parse::NodeId::None});
+  absolute_node_ids.push_back(
+      AbsoluteNodeId(cursor_ir->check_ir_id(), Parse::NodeId::None));
 }
 
 auto GetAbsoluteNodeId(const File* sem_ir, LocId loc_id)
@@ -124,8 +128,8 @@ auto GetAbsoluteNodeId(const File* sem_ir, LocId loc_id)
   llvm::SmallVector<AbsoluteNodeId> absolute_node_ids;
   switch (loc_id.kind()) {
     case LocId::Kind::None:
-      absolute_node_ids.push_back({.check_ir_id = sem_ir->check_ir_id(),
-                                   .node_id = Parse::NodeId::None});
+      absolute_node_ids.push_back(
+          AbsoluteNodeId(sem_ir->check_ir_id(), Parse::NodeId::None));
       break;
 
     case LocId::Kind::InstId:

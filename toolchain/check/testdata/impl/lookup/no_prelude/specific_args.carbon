@@ -174,10 +174,6 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4be
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc5_9.2 => constants.%T
 // CHECK:STDOUT: }
@@ -315,10 +311,6 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self.209) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -494,10 +486,6 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self.209) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -683,10 +671,6 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self.209) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -895,10 +879,6 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: specific @I(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self.209) {
 // CHECK:STDOUT:   %T => constants.%T

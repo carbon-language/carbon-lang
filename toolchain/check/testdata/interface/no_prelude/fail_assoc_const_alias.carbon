@@ -176,10 +176,6 @@ interface C {
 // CHECK:STDOUT:   %pattern_type.loc4_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc3_22.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_alias_to_different_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -415,8 +411,6 @@ interface C {
 // CHECK:STDOUT:   %V.as_type.loc11_22.2 => constants.%V.as_type
 // CHECK:STDOUT:   %I2.impl_witness => constants.%I2.impl_witness.2ab13d.1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%V.loc11_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%Self.541) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%Self.541
@@ -677,6 +671,4 @@ interface C {
 // CHECK:STDOUT:   %Self.as_type.loc6_14.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@G.%C.facet) {}
 // CHECK:STDOUT:

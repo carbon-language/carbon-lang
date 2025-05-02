@@ -240,6 +240,8 @@ CARBON_DIAGNOSTIC_KIND(InvalidMainRunSignature)
 CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
 CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
+CARBON_DIAGNOSTIC_KIND(ThunkSignature)
+CARBON_DIAGNOSTIC_KIND(ThunkCallee)
 
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionOutsideClass)
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionMissingSelf)

@@ -206,7 +206,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::InstId new_param_pattern_id,
                              SemIR::InstId prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
-                             bool check_self) -> bool {
+                             bool check_syntax, bool check_self) -> bool {
   auto orig_new_param_pattern_id = new_param_pattern_id;
   auto orig_prev_param_pattern_id = prev_param_pattern_id;
 
@@ -300,7 +300,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return false;
   }
 
-  if (new_name_id != prev_name_id) {
+  if (check_syntax && new_name_id != prev_name_id) {
     emit_diagnostic();
     return false;
   }
@@ -315,7 +315,7 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
                               SemIR::InstBlockId prev_param_patterns_id,
                               bool is_implicit_param,
                               SemIR::SpecificId prev_specific_id, bool diagnose,
-                              bool check_self) -> bool {
+                              bool check_syntax, bool check_self) -> bool {
   // This will often occur for empty params.
   if (new_param_patterns_id == prev_param_patterns_id) {
     return true;
@@ -373,7 +373,8 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
        llvm::enumerate(new_param_pattern_ids, prev_param_pattern_ids)) {
     if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
-                          prev_specific_id, diagnose, check_self)) {
+                          prev_specific_id, diagnose, check_syntax,
+                          check_self)) {
       return false;
     }
   }
@@ -493,7 +494,8 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(
           context, new_entity.loc_id, new_entity.implicit_param_patterns_id,
           prev_entity.loc_id, prev_entity.implicit_param_patterns_id,
-          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_self)) {
+          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_syntax,
+          check_self)) {
     return false;
   }
   // Don't forward `check_self` here because it's extra cost, and `self` is only
@@ -502,7 +504,7 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                          new_entity.param_patterns_id, prev_entity.loc_id,
                          prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose, /*check_self=*/true)) {
+                         diagnose, check_syntax, /*check_self=*/true)) {
     return false;
   }
   if (check_syntax &&

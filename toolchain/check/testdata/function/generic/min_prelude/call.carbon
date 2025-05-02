@@ -254,8 +254,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Function(@CallGeneric.%T.loc8_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericPtr(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_19.2 => constants.%T
 // CHECK:STDOUT:   %ptr.loc12_33.2 => constants.%ptr.79f
@@ -269,8 +267,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.6e5
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Function(@CallGenericPtr.%ptr.loc12_33.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%C
@@ -475,8 +471,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Function(@CallGeneric.%T.loc8_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericPtr(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_19.2 => constants.%T
 // CHECK:STDOUT:   %ptr.loc12_33.2 => constants.%ptr.79f
@@ -490,8 +484,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.6e5
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Function(@CallGenericPtr.%ptr.loc12_33.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%C

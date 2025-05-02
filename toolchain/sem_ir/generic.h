@@ -56,7 +56,7 @@ struct Generic : public Printable<Generic> {
 class GenericStore : public ValueStore<GenericId> {
  public:
   // Get the self specific for a generic, or `None` if the `id` is `None`.
-  auto GetSelfSpecific(GenericId id) -> SpecificId {
+  auto GetSelfSpecific(GenericId id) const -> SpecificId {
     return id.has_value() ? Get(id).self_specific_id : SpecificId::None;
   }
 };
@@ -69,6 +69,11 @@ struct Specific : Printable<Specific> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{generic: " << generic_id << ", args: " << args_id << "}";
   }
+
+  // Returns true if this specific has never been resolved. Such specifics are
+  // used to track non-canonical argument values, for example in a non-canonical
+  // `ClassType` that describes how the arguments to the class were written.
+  auto IsUnresolved() const -> bool { return !decl_block_id.has_value(); }
 
   // Returns the value block for this region of the specific. This is a block
   // containing values and instructions produced by evaluating the corresponding
@@ -144,12 +149,6 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   ValueStore<SpecificId> specifics_;
   Carbon::Set<SpecificId, 0, KeyContext> lookup_table_;
 };
-
-// Gets the substituted value of a potentially generic constant within a
-// specific. Note that this does not perform substitution, and will return
-// `None` if the substituted constant value is not yet known.
-auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
-                           ConstantId const_id) -> ConstantId;
 
 // Gets the substituted constant value of a potentially generic instruction
 // within a specific. Note that this does not perform substitution, and will

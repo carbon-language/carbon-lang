@@ -17,12 +17,6 @@ namespace Carbon::Parse {
 // This requires a complete tree.
 class TreeAndSubtrees {
  public:
-  // A range of tokens, returned by GetSubtreeTokenRange.
-  struct TokenRange {
-    Lex::TokenIndex begin;
-    Lex::TokenIndex end;
-  };
-
   class SiblingIterator;
 
   explicit TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
@@ -115,7 +109,7 @@ class TreeAndSubtrees {
       -> void;
 
   // Returns the range of tokens in the node's subtree.
-  auto GetSubtreeTokenRange(NodeId node_id) const -> TokenRange;
+  auto GetSubtreeTokenRange(NodeId node_id) const -> Lex::InclusiveTokenRange;
 
   // Converts the node to a diagnostic location, covering either the full
   // subtree or only the token.

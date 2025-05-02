@@ -345,8 +345,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%T.8b3, constants.%Self.2bc) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(%T.loc3_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%S) {
 // CHECK:STDOUT:   %T.loc3_13.2 => constants.%S
 // CHECK:STDOUT:
@@ -375,10 +373,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.d59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(@impl.119.%S.loc9_24.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.119(%T.loc9_14.2, %S.loc9_24.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%C) {
 // CHECK:STDOUT:   %T.loc3_13.2 => constants.%C
 // CHECK:STDOUT:
@@ -398,8 +392,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.093
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.62c(%T.loc11_20.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.62d) {
 // CHECK:STDOUT:   %T.loc13_6.2 => constants.%T.62d
 // CHECK:STDOUT:   %T.as_type.loc13_19.2 => constants.%T.as_type
@@ -416,8 +408,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%C, constants.%Z.facet.2aa) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.62c(@F.%T.as_type.loc13_19.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nonfinal_specialized_symbolic_rewrite.carbon
 // CHECK:STDOUT:
@@ -800,8 +790,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%T.8b3, constants.%Self.2bc) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(%T.loc3_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%S) {
 // CHECK:STDOUT:   %T.loc3_13.2 => constants.%S
 // CHECK:STDOUT:
@@ -830,10 +818,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.d59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(@impl.119.%S.loc10_24.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.119(%T.loc10_14.2, %S.loc10_24.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%C) {
 // CHECK:STDOUT:   %T.loc3_13.2 => constants.%C
 // CHECK:STDOUT:
@@ -853,8 +837,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.093
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.62c(%T.loc12_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.62d) {
 // CHECK:STDOUT:   %T.loc14_6.2 => constants.%T.62d
 // CHECK:STDOUT:   %T.as_type.loc14_19.2 => constants.%T.as_type
@@ -866,10 +848,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.%Dest) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.519) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -897,14 +875,10 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.f92(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op(constants.%T.8b3) {
 // CHECK:STDOUT:   %T => constants.%T.8b3
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@F.%impl.elem0.loc22_11.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_impl_lookup.carbon
 // CHECK:STDOUT:
@@ -1059,8 +1033,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Ptr.impl_witness => constants.%Ptr.impl_witness.e8ce81.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%U.loc7_20.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %U.loc7_20.2 => constants.%T
 // CHECK:STDOUT:   %ptr.loc7_54.2 => constants.%ptr.79f131.2
@@ -1081,8 +1053,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %ptr => constants.%ptr.79f131.2
 // CHECK:STDOUT:   %pattern_type.loc9_26 => constants.%pattern_type.afe
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@F.%T.loc9_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_facet_access_type.carbon
 // CHECK:STDOUT:
@@ -1245,8 +1215,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Ptr.impl_witness => constants.%Ptr.impl_witness.e8c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%U.loc7_20.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T.as_type) {
 // CHECK:STDOUT:   %U.loc7_20.2 => constants.%T.as_type
 // CHECK:STDOUT:   %ptr.loc7_54.2 => constants.%ptr.900
@@ -1267,8 +1235,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %ptr => constants.%ptr.900
 // CHECK:STDOUT:   %pattern_type.loc9_25 => constants.%pattern_type.a95
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@F.%T.as_type.loc9_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_facet_value.carbon
 // CHECK:STDOUT:
@@ -1430,8 +1396,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %Ptr.impl_witness => constants.%Ptr.impl_witness.e8c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%U.loc7_20.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T.as_type) {
 // CHECK:STDOUT:   %U.loc7_20.2 => constants.%T.as_type
 // CHECK:STDOUT:   %ptr.loc7_54.2 => constants.%ptr.900
@@ -1452,8 +1416,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %ptr => constants.%ptr.900
 // CHECK:STDOUT:   %pattern_type.loc9_25 => constants.%pattern_type.a95
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@F.%T.as_type.loc9_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- include_files/facet_types.carbon
 // CHECK:STDOUT:
@@ -1733,10 +1695,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %pattern_type.loc10_28 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc9_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc13_22.2 => constants.%Dest
 // CHECK:STDOUT: }
@@ -1750,10 +1708,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %pattern_type.loc14_28 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc13_22.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Self.e44) {
 // CHECK:STDOUT:   %Self => constants.%Self.e44
 // CHECK:STDOUT:   %Self.as_type.loc18_15.1 => constants.%Self.as_type.560
@@ -1764,8 +1718,6 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %T.loc21_14.2 => constants.%T
 // CHECK:STDOUT:   %BitAnd.impl_witness => constants.%BitAnd.impl_witness
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc21_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
