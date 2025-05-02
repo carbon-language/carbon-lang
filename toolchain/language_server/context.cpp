@@ -146,7 +146,6 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   llvm::SmallVector<Check::Unit> units = {{{.consumer = &consumer,
                                             .value_stores = value_stores_.get(),
                                             .timings = nullptr,
-                                            .check_ir_id = SemIR::CheckIRId(0),
                                             .sem_ir = &sem_ir}}};
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;

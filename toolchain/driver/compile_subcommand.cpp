@@ -614,13 +614,12 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
-  SemIR::CheckIRId ir_id(unit_index_);
-  sem_ir_.emplace(&*parse_tree_, ir_id, parse_tree_->packaging_decl(),
-                  value_stores_, input_filename_);
+  sem_ir_.emplace(&*parse_tree_, SemIR::CheckIRId(unit_index_),
+                  parse_tree_->packaging_decl(), value_stores_,
+                  input_filename_);
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
-          .check_ir_id = ir_id,
           .sem_ir = &*sem_ir_,
           .cpp_ast = &cpp_ast_};
 }

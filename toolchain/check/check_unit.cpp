@@ -55,7 +55,8 @@ CheckUnit::CheckUnit(
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(
-          tree_and_subtrees_getters[unit_and_imports->unit->check_ir_id.index]),
+          tree_and_subtrees_getters
+              [unit_and_imports->unit->sem_ir->check_ir_id().index]),
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),

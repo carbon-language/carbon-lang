@@ -332,7 +332,7 @@ auto CheckParseTrees(
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
       llvm::map_range(units, [&](Unit& unit) {
         return UnitAndImports(
-            &unit, tree_and_subtrees_getters[unit.check_ir_id.index]);
+            &unit, tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index]);
       }));
 
   Map<ImportKey, UnitAndImports*> api_map =

@@ -22,11 +22,6 @@ struct Unit {
   // The `timings` may be null if nothing is to be recorded.
   Timings* timings;
 
-  // The ID which should be used for the unit. This must match the index into
-  // `tree_and_subtrees_getters`, but `tree_and_subtrees_getters` may have
-  // entries without a corresponding `Unit` for files that cannot be checked.
-  SemIR::CheckIRId check_ir_id;
-
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
 
