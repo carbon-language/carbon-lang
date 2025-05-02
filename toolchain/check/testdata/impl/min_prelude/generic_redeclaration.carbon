@@ -11,7 +11,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/min_prelude/generic_redeclaration.carbon
 
-// --- same_self_and_interface.carbon
+// --- fail_same_self_and_interface.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -30,26 +30,26 @@ impl forall [T:! L] T as Interface;
 // These are different impls, so they are not redefinitions, even though the
 // self type and constraint type are the same.
 impl forall [T:! I] T as Interface {}
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! I] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! J] T as Interface {}
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! K] T as Interface {}
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! L] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -116,7 +116,7 @@ impl forall [T:! type] T as I {
   }
 }
 
-// CHECK:STDOUT: --- same_self_and_interface.carbon
+// CHECK:STDOUT: --- fail_same_self_and_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
