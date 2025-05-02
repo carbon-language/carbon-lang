@@ -115,13 +115,13 @@ struct AddrOf {
 struct AddrPattern {
   static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
       {.ir_name = "addr_pattern",
-       .constant_kind = InstConstantKind::Never,
+       .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
   // Always a PatternType whose scrutinee type represents the pointee type
   // corresponding to the pointer type of `inner_id`.
   TypeId type_id;
-  // The `self` binding.
+  // The `self` binding pattern.
   InstId inner_id;
 };
 
@@ -386,7 +386,7 @@ struct AnyBindingPattern {
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
       {.ir_name = "binding_pattern",
-       .constant_kind = InstConstantKind::Never,
+       .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
   TypeId type_id;
@@ -398,7 +398,7 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
-          .constant_kind = InstConstantKind::Never,
+          .constant_kind = InstConstantKind::Unique,
           .is_lowered = false,
       });
 
@@ -526,8 +526,10 @@ struct Call {
   // For a syntactic call, the parse node will be a CallExprStartId. However,
   // calls can arise from other syntaxes, such as operators and implicit
   // conversions.
-  static constexpr auto Kind =
-      InstKind::Call.Define<Parse::NodeId>({.ir_name = "call"});
+  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
+      {.ir_name = "call",
+       .constant_needs_inst_id =
+           InstConstantNeedsInstIdKind::DuringEvaluation});
 
   TypeId type_id;
   InstId callee_id;
@@ -1295,7 +1297,7 @@ struct OutParamPattern {
   static constexpr auto Kind =
       InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "out_param_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1308,7 +1310,7 @@ struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
       {.ir_name = "ref_param_pattern",
-       .constant_kind = InstConstantKind::Never,
+       .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1322,7 +1324,7 @@ struct ValueParamPattern {
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
           {.ir_name = "value_param_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1391,23 +1393,20 @@ struct RequireCompleteType {
 };
 
 struct Return {
-  static constexpr auto Kind =
-      InstKind::Return.Define<Parse::NodeIdOneOf<Parse::FunctionDefinitionId,
-                                                 Parse::ReturnStatementId>>(
-          {.ir_name = "return",
-           .constant_kind = InstConstantKind::Never,
-           .terminator_kind = TerminatorKind::Terminator});
+  static constexpr auto Kind = InstKind::Return.Define<Parse::NodeId>(
+      {.ir_name = "return",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
 };
 
 // A `return expr;` statement.
 struct ReturnExpr {
-  static constexpr auto Kind =
-      InstKind::ReturnExpr.Define<Parse::ReturnStatementId>(
-          {.ir_name = "return",
-           .constant_kind = InstConstantKind::Never,
-           .terminator_kind = TerminatorKind::Terminator});
+  static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
+      {.ir_name = "return",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
   InstId expr_id;
@@ -1442,7 +1441,7 @@ struct ReturnSlotPattern {
   static constexpr auto Kind =
       InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "return_slot_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is the return type of the
@@ -1740,7 +1739,7 @@ struct TuplePattern {
   static constexpr auto Kind =
       InstKind::TuplePattern.Define<Parse::TuplePatternId>(
           {.ir_name = "tuple_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is a tuple of the scrutinee
@@ -1861,7 +1860,7 @@ struct VarPattern {
   static constexpr auto Kind =
       InstKind::VarPattern.Define<Parse::VariablePatternId>(
           {.ir_name = "var_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
   // Always a PatternType that represents the same type as the type of

@@ -14,6 +14,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -76,14 +77,8 @@ static auto CheckAssociatedFunctionImplementation(
               .generic_id,
           impl_enclosing_specific_id, self_type_id, witness_inst_id);
 
-  if (!CheckFunctionTypeMatches(
-          context, context.functions().Get(impl_function_decl->function_id),
-          context.functions().Get(interface_function_type.function_id),
-          interface_function_specific_id, /*check_syntax=*/false,
-          /*check_self=*/true)) {
-    return SemIR::ErrorInst::InstId;
-  }
-  return impl_decl_id;
+  return BuildThunk(context, interface_function_type.function_id,
+                    interface_function_specific_id, impl_decl_id);
 }
 
 // Builds an initial witness from the rewrites in the facet type, if any.
@@ -168,7 +163,11 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
 
 // Adds functions to the witness that the specified impl implements the given
 // interface.
-auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
+auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
+  // Make a copy of the impl. We're going to reference it a lot, and `impl`s
+  // could get invalidated by some of the things we do.
+  const auto impl = context.impls().Get(impl_id);
+
   CARBON_CHECK(impl.is_being_defined());
   CARBON_CHECK(impl.witness_id.has_value());
   if (impl.witness_id == SemIR::ErrorInst::InstId) {

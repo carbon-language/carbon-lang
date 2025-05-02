@@ -14,11 +14,20 @@ namespace Carbon::Check {
 // instruction.
 class SubstInstCallbacks {
  public:
+  explicit SubstInstCallbacks(Context* context) : context_(context) {}
+
+  auto context() const -> Context& { return *context_; }
+
   // Performs any needed substitution into an instruction. The instruction ID
   // should be updated as necessary to represent the new instruction. Returns
   // true if the resulting instruction ID is fully-substituted, or false if
   // substitution may be needed into operands of the instruction.
   virtual auto Subst(SemIR::InstId& inst_id) const -> bool = 0;
+
+  // Rebuilds the type of an instruction from the substituted type instruction.
+  // By default this builds the unattached type described by the given type ID.
+  virtual auto RebuildType(SemIR::TypeInstId type_inst_id) const
+      -> SemIR::TypeId;
 
   // Rebuilds an instruction whose operands were changed by substitution.
   // `orig_inst_id` is the instruction prior to substitution, and `new_inst` is
@@ -35,6 +44,9 @@ class SubstInstCallbacks {
       -> SemIR::InstId {
     return orig_inst_id;
   }
+
+ private:
+  Context* context_;
 };
 
 // Performs substitution into `inst_id` and its operands recursively, using

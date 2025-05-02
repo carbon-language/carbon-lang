@@ -39,14 +39,26 @@ Formatter::Formatter(const File* sem_ir,
       inst_namer_(sem_ir_),
       should_format_entity_(should_format_entity),
       get_tree_and_subtrees_(get_tree_and_subtrees) {
-  // Create the first chunk and assign it to all instructions that don't have
-  // a chunk of their own.
+  // Create a placeholder visible chunk and assign it to all instructions that
+  // don't have a chunk of their own.
   auto first_chunk = AddChunkNoFlush(true);
   tentative_inst_chunks_.resize(sem_ir_->insts().size(), first_chunk);
 
   if (sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
     ComputeNodeParents();
   }
+
+  // Create empty placeholder chunks for instructions that we output lazily.
+  for (auto lazy_insts :
+       {sem_ir_->constants().array_ref(),
+        sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs)}) {
+    for (auto inst_id : lazy_insts) {
+      tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
+    }
+  }
+
+  // Create a real chunk for the start of the output.
+  AddChunkNoFlush(true);
 }
 
 auto Formatter::Format() -> void {
@@ -277,8 +289,7 @@ auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
   out_ << inst_namer_.GetScopeName(scope_id) << " {\n";
   indent_ += 2;
   for (const InstId inst_id : block) {
-    TentativeOutputScope scope(*this);
-    tentative_inst_chunks_[inst_id.index] = scope.index;
+    TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
     FormatInst(inst_id);
   }
   out_ << "}\n\n";
@@ -516,6 +527,15 @@ auto Formatter::FormatSpecific(SpecificId id) -> void {
     return;
   }
 
+  if (specific.IsUnresolved()) {
+    // Omit specifics that were never resolved. Such specifics exist only to
+    // track the way the arguments were spelled, and that information is
+    // conveyed entirely by the name of the specific. These specifics may also
+    // not be referenced by any SemIR that we format, so including them adds
+    // clutter and possibly emits references to instructions we didn't name.
+    return;
+  }
+
   llvm::SaveAndRestore generic_scope(
       scope_, inst_namer_.GetScopeFor(specific.generic_id));
 
@@ -730,7 +750,7 @@ auto Formatter::FormatInst(InstId inst_id) -> void {
     return;
   }
 
-  FormatInst(inst_id, sem_ir_->insts().Get(inst_id));
+  FormatInst(inst_id, sem_ir_->insts().GetWithAttachedType(inst_id));
 }
 
 auto Formatter::FormatPendingImportedFrom(AddSpace space_where) -> void {
@@ -1293,24 +1313,19 @@ auto Formatter::FormatConstant(ConstantId id) -> void {
     return;
   }
 
-  // For a symbolic constant in a generic, list the constant value in the
-  // generic first, and the canonical constant second.
-  if (id.is_symbolic()) {
-    const auto& symbolic_constant =
-        sem_ir_->constant_values().GetSymbolicConstant(id);
-    if (symbolic_constant.generic_id.has_value()) {
-      const auto& generic =
-          sem_ir_->generics().Get(symbolic_constant.generic_id);
-      FormatName(sem_ir_->inst_blocks().Get(generic.GetEvalBlock(
-          symbolic_constant.index.region()))[symbolic_constant.index.index()]);
-      out_ << " (";
-      FormatName(sem_ir_->constant_values().GetInstId(id));
-      out_ << ")";
-      return;
-    }
-  }
+  auto inst_id = GetInstWithConstantValue(*sem_ir_, id);
+  FormatName(inst_id);
 
-  FormatName(sem_ir_->constant_values().GetInstId(id));
+  // For an attached constant, also list the unattached constant.
+  if (id.is_symbolic() && sem_ir_->constant_values()
+                              .GetSymbolicConstant(id)
+                              .generic_id.has_value()) {
+    // TODO: Skip printing this if it's the same as `inst_id`.
+    auto unattached_inst_id = sem_ir_->constant_values().GetInstId(id);
+    out_ << " (";
+    FormatName(unattached_inst_id);
+    out_ << ")";
+  }
 }
 
 auto Formatter::FormatInstAsType(InstId id) -> void {
@@ -1322,7 +1337,7 @@ auto Formatter::FormatInstAsType(InstId id) -> void {
   // Types are formatted in the `constants` scope because they typically refer
   // to constants.
   llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::Constants);
-  if (auto const_id = sem_ir_->constant_values().Get(id);
+  if (auto const_id = sem_ir_->constant_values().GetAttached(id);
       const_id.has_value()) {
     FormatConstant(const_id);
   } else {
@@ -1333,7 +1348,7 @@ auto Formatter::FormatInstAsType(InstId id) -> void {
 }
 
 auto Formatter::FormatTypeOfInst(InstId id) -> void {
-  auto type_id = sem_ir_->insts().Get(id).type_id();
+  auto type_id = sem_ir_->insts().GetAttachedType(id);
   if (!type_id.has_value()) {
     out_ << "invalid";
     return;

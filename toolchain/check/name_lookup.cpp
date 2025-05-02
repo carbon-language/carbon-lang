@@ -13,6 +13,7 @@
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
@@ -113,16 +114,24 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
             non_lexical_result.scope_result.target_inst_id();
         if (auto assoc_type =
                 context.types().TryGetAs<SemIR::AssociatedEntityType>(
-                    context.insts().Get(target_inst_id).type_id())) {
+                    SemIR::GetTypeOfInstInSpecific(
+                        context.sem_ir(), non_lexical_result.specific_id,
+                        target_inst_id))) {
           auto interface_decl =
               context.insts().GetAs<SemIR::InterfaceDecl>(scope.inst_id());
           const auto& interface =
               context.interfaces().Get(interface_decl.interface_id);
           SemIR::InstId result_inst_id = GetAssociatedValue(
-              context, loc_id, interface.self_param_id, target_inst_id,
+              context, loc_id, interface.self_param_id,
+              SemIR::GetConstantValueInSpecific(context.sem_ir(),
+                                                non_lexical_result.specific_id,
+                                                target_inst_id),
               assoc_type->GetSpecificInterface());
-          non_lexical_result.scope_result = SemIR::ScopeLookupResult::MakeFound(
-              result_inst_id, non_lexical_result.scope_result.access_kind());
+          non_lexical_result = {
+              .specific_id = SemIR::SpecificId::None,
+              .scope_result = SemIR::ScopeLookupResult::MakeFound(
+                  result_inst_id,
+                  non_lexical_result.scope_result.access_kind())};
         }
       }
       return non_lexical_result;

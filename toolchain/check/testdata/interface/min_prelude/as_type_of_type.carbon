@@ -46,7 +46,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.6c3 = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.6c3 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
 // CHECK:STDOUT:     %T.loc16_6.1: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc16_6.2 (constants.%T)]
@@ -72,8 +72,8 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %x.patt: @F.%pattern_type (%pattern_type.dad) = binding_pattern x
-// CHECK:STDOUT:       %.loc17_3: @F.%pattern_type (%pattern_type.dad) = var_pattern %x.patt
+// CHECK:STDOUT:       %x.patt: @F.%pattern_type (%pattern_type.dad) = binding_pattern x [concrete]
+// CHECK:STDOUT:       %.loc17_3: @F.%pattern_type (%pattern_type.dad) = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc17_10.2 (%T.as_type) = var x
 // CHECK:STDOUT:     %.loc17_10.1: type = splice_block %.loc17_10.2 [symbolic = %T.as_type.loc17_10.2 (constants.%T.as_type)] {

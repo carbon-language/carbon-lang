@@ -18,15 +18,6 @@ namespace Carbon::Check {
 auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
-  // TODO: Instead of special casing Clang location here, support it within
-  // `GetAbsoluteNodeId()`. See discussion in
-  // https://github.com/carbon-language/carbon-lang/pull/5262/files/20a3f9dcfab5c6f6c5089554fd5e22d5f1ca75a3#r2040308805.
-  auto converted_clang_loc =
-      TryConvertClangDiagnosticLoc(static_cast<SemIR::LocId>(loc_id));
-  if (converted_clang_loc) {
-    return *converted_clang_loc;
-  }
-
   auto converted =
       ConvertLocImpl(static_cast<SemIR::LocId>(loc_id), context_fn);
 
@@ -58,7 +49,7 @@ auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id,
 
   auto final_node_id = absolute_node_ids.pop_back_val();
   for (const auto& absolute_node_id : absolute_node_ids) {
-    if (!absolute_node_id.node_id.has_value()) {
+    if (!absolute_node_id.node_id().has_value()) {
       // TODO: Add an "In implicit import of prelude." note for the case where
       // we don't have a location.
       continue;
@@ -72,40 +63,31 @@ auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id,
   return ConvertLocInFile(final_node_id, token_only, context_fn);
 }
 
-auto DiagnosticEmitter::TryConvertClangDiagnosticLoc(SemIR::LocId loc_id) const
-    -> std::optional<Diagnostics::ConvertedLoc> {
-  if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
-    return std::nullopt;
-  }
-
-  SemIR::ImportIRInst import_ir_inst =
-      sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id());
-
-  if (import_ir_inst.ir_id() != SemIR::ImportIRId::Cpp) {
-    return std::nullopt;
-  }
-
-  clang::SourceLocation clang_loc =
-      sem_ir_->clang_source_locs().Get(import_ir_inst.clang_source_loc_id());
-
-  CARBON_CHECK(sem_ir_->cpp_ast());
-  clang::PresumedLoc presumed_loc =
-      sem_ir_->cpp_ast()->getSourceManager().getPresumedLoc(clang_loc);
-
-  return Diagnostics::ConvertedLoc{
-      .loc = {.filename = presumed_loc.getFilename(),
-              .line_number = static_cast<int32_t>(presumed_loc.getLine())},
-      // TODO: Set `last_byte_offset` based on the `import Cpp` location.
-      .last_byte_offset = 0};
-}
-
 auto DiagnosticEmitter::ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id,
                                          bool token_only,
                                          ContextFnT /*context_fn*/) const
     -> Diagnostics::ConvertedLoc {
+  if (absolute_node_id.check_ir_id() == SemIR::CheckIRId::Cpp) {
+    // Special handling of Clang source locations.
+    // TODO: Refactor to add an `InImport` pointing at the `Cpp` import, and
+    // eliminate `InCppImport`.
+    clang::SourceLocation clang_loc = sem_ir_->clang_source_locs().Get(
+        absolute_node_id.clang_source_loc_id());
+
+    CARBON_CHECK(sem_ir_->cpp_ast());
+    clang::PresumedLoc presumed_loc =
+        sem_ir_->cpp_ast()->getSourceManager().getPresumedLoc(clang_loc);
+
+    return Diagnostics::ConvertedLoc{
+        .loc = {.filename = presumed_loc.getFilename(),
+                .line_number = static_cast<int32_t>(presumed_loc.getLine())},
+        // TODO: Set `last_byte_offset` based on the `import Cpp` location.
+        .last_byte_offset = 0};
+  }
+
   const auto& tree_and_subtrees =
-      tree_and_subtrees_getters_[absolute_node_id.check_ir_id.index]();
-  return tree_and_subtrees.NodeToDiagnosticLoc(absolute_node_id.node_id,
+      tree_and_subtrees_getters_[absolute_node_id.check_ir_id().index]();
+  return tree_and_subtrees.NodeToDiagnosticLoc(absolute_node_id.node_id(),
                                                token_only);
 }
 

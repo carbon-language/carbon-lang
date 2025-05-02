@@ -75,8 +75,15 @@ class ConstantValueStore {
       : default_(default_value) {}
 
   // Returns the constant value of the requested instruction, which is default_
-  // if unallocated.
+  // if unallocated. Always returns an unattached constant.
   auto Get(InstId inst_id) const -> ConstantId {
+    auto const_id = GetAttached(inst_id);
+    return const_id.has_value() ? GetUnattachedConstant(const_id) : const_id;
+  }
+
+  // Returns the constant value of the requested instruction, which is default_
+  // if unallocated. This may be an attached constant.
+  auto GetAttached(InstId inst_id) const -> ConstantId {
     CARBON_DCHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()
                ? default_
@@ -115,7 +122,16 @@ class ConstantValueStore {
   // Given an instruction, returns the unique constant instruction that is
   // equivalent to it. Returns `None` for a non-constant instruction.
   auto GetConstantInstId(InstId inst_id) const -> InstId {
-    return GetInstId(Get(inst_id));
+    return GetInstId(GetAttached(inst_id));
+  }
+
+  // Given a symbolic constant, returns the unattached form of that constant.
+  // For any other constant ID, returns the ID unchanged.
+  auto GetUnattachedConstant(ConstantId const_id) const -> ConstantId {
+    if (const_id.is_symbolic()) {
+      return GetAttached(GetSymbolicConstant(const_id).inst_id);
+    }
+    return const_id;
   }
 
   auto AddSymbolicConstant(SymbolicConstant constant) -> ConstantId {
@@ -186,6 +202,15 @@ class ConstantValueStore {
   // where the constant was used, which is stored here.
   llvm::SmallVector<SymbolicConstant, 0> symbolic_constants_;
 };
+
+// Given a constant ID, returns an instruction that has that constant value.
+// For an unattached constant, the returned instruction is the instruction that
+// defines the constant; for an attached constant, this is the instruction in
+// the eval block that computes the constant value in each specific.
+//
+// Returns InstId::None if the ConstantId is None or NotConstant.
+auto GetInstWithConstantValue(const SemIR::File& file,
+                              SemIR::ConstantId const_id) -> SemIR::InstId;
 
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {

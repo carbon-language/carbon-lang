@@ -138,13 +138,13 @@ fn F() {
 // CHECK:STDOUT:   %Edible.impl_witness: <witness> = impl_witness %Edible.impl_witness_table [concrete = constants.%Edible.impl_witness]
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Eats.decl: %Eats.type.ba2 = interface_decl @Eats [concrete = constants.%Eats.generic] {
-// CHECK:STDOUT:     %Food.patt: %pattern_type.98f = symbolic_binding_pattern Food, 0
+// CHECK:STDOUT:     %Food.patt: %pattern_type.98f = symbolic_binding_pattern Food, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Food.loc20_16.1: type = bind_symbolic_name Food, 0 [symbolic = %Food.loc20_16.2 (constants.%Food.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.009 [concrete] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.3b0 = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %U.patt: %pattern_type.939 = symbolic_binding_pattern U, 1
+// CHECK:STDOUT:     %T.patt: %pattern_type.3b0 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.939 = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: %Animal.type = name_ref T, %T.loc25_14.1 [symbolic = %T.loc25_14.2 (constants.%T.fd4)]
 // CHECK:STDOUT:     %T.as_type.loc25_38.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc25_38.2 (constants.%T.as_type.2ad)]
@@ -169,12 +169,12 @@ fn F() {
 // CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @impl.27e [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
-// CHECK:STDOUT:     %Food.patt: %pattern_type.939 = symbolic_binding_pattern Food, 0
-// CHECK:STDOUT:     %T.patt: @Feed.%pattern_type.loc30_24 (%pattern_type.ed7) = symbolic_binding_pattern T, 1
-// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type.loc30_40 (%pattern_type.1a1) = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type.loc30_40 (%pattern_type.1a1) = value_param_pattern %e.patt, call_param0
-// CHECK:STDOUT:     %food.patt: @Feed.%pattern_type.loc30_46 (%pattern_type.54f) = binding_pattern food
-// CHECK:STDOUT:     %food.param_patt: @Feed.%pattern_type.loc30_46 (%pattern_type.54f) = value_param_pattern %food.patt, call_param1
+// CHECK:STDOUT:     %Food.patt: %pattern_type.939 = symbolic_binding_pattern Food, 0 [concrete]
+// CHECK:STDOUT:     %T.patt: @Feed.%pattern_type.loc30_24 (%pattern_type.ed7) = symbolic_binding_pattern T, 1 [concrete]
+// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type.loc30_40 (%pattern_type.1a1) = binding_pattern e [concrete]
+// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type.loc30_40 (%pattern_type.1a1) = value_param_pattern %e.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %food.patt: @Feed.%pattern_type.loc30_46 (%pattern_type.54f) = binding_pattern food [concrete]
+// CHECK:STDOUT:     %food.param_patt: @Feed.%pattern_type.loc30_46 (%pattern_type.54f) = value_param_pattern %food.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Edible.ref: type = name_ref Edible, file.%Edible.decl [concrete = constants.%Edible.type]
 // CHECK:STDOUT:     %Food.loc30_9.1: %Edible.type = bind_symbolic_name Food, 0 [symbolic = %Food.loc30_9.2 (constants.%Food.9af)]
@@ -202,12 +202,12 @@ fn F() {
 // CHECK:STDOUT:     %food: @Feed.%Food.as_type.loc30_37.2 (%Food.as_type.952) = bind_name food, %food.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.3b0 = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %Food.patt: %pattern_type.939 = symbolic_binding_pattern Food, 1
-// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type.loc31_44 (%pattern_type.36a) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type.loc31_44 (%pattern_type.36a) = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %food.patt: @HandleAnimal.%pattern_type.loc31_50 (%pattern_type.f86) = binding_pattern food
-// CHECK:STDOUT:     %food.param_patt: @HandleAnimal.%pattern_type.loc31_50 (%pattern_type.f86) = value_param_pattern %food.patt, call_param1
+// CHECK:STDOUT:     %T.patt: %pattern_type.3b0 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %Food.patt: %pattern_type.939 = symbolic_binding_pattern Food, 1 [concrete]
+// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type.loc31_44 (%pattern_type.36a) = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type.loc31_44 (%pattern_type.36a) = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %food.patt: @HandleAnimal.%pattern_type.loc31_50 (%pattern_type.f86) = binding_pattern food [concrete]
+// CHECK:STDOUT:     %food.param_patt: @HandleAnimal.%pattern_type.loc31_50 (%pattern_type.f86) = value_param_pattern %food.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %T.loc31_17.1: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc31_17.2 (constants.%T.fd4)]
@@ -401,8 +401,6 @@ fn F() {
 // CHECK:STDOUT:   %Food.loc20_16.2 => constants.%Food.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(%Food.loc20_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eats(constants.%U.as_type) {
 // CHECK:STDOUT:   %Food.loc20_16.2 => constants.%U.as_type
 // CHECK:STDOUT:
@@ -421,10 +419,6 @@ fn F() {
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.fabf92.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@impl.009.%U.as_type.loc25_49.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.009(%T.loc25_14.2, %U.loc25_26.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eats(constants.%Food.as_type.952) {
 // CHECK:STDOUT:   %Food.loc20_16.2 => constants.%Food.as_type.952
 // CHECK:STDOUT: }
@@ -439,8 +433,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc30_40 => constants.%pattern_type.1a1
 // CHECK:STDOUT:   %pattern_type.loc30_46 => constants.%pattern_type.54f
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@Feed.%Food.as_type.loc30_37.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T.fd4, constants.%Food.5fe) {
 // CHECK:STDOUT:   %T.loc31_17.2 => constants.%T.fd4
@@ -481,10 +473,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc30_41 => constants.%require_complete.234
 // CHECK:STDOUT:   %require_complete.loc30_50 => constants.%require_complete.444
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats(@HandleAnimal.%Food.as_type.loc31_56.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Feed(@HandleAnimal.%Food.loc31_29.2, @HandleAnimal.%Eats.facet.loc31_76.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%Animal.facet, constants.%Edible.facet) {
 // CHECK:STDOUT:   %T.loc31_17.2 => constants.%Animal.facet
@@ -572,12 +560,12 @@ fn F() {
 // CHECK:STDOUT:     .ImplicitAs = %ImplicitAs.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %As.decl: %As.type.b51 = interface_decl @As [concrete = constants.%As.generic] {
-// CHECK:STDOUT:     %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0
+// CHECK:STDOUT:     %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Dest.loc8_14.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc8_14.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
-// CHECK:STDOUT:     %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0
+// CHECK:STDOUT:     %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Dest.loc12_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc12_22.2 (constants.%Dest)]
 // CHECK:STDOUT:   }
@@ -597,10 +585,10 @@ fn F() {
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @As.%As.type (%As.type.8ba) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b4e)]
 // CHECK:STDOUT:     %Convert.decl: @As.%Convert.type (%Convert.type.ad1) = fn_decl @Convert.1 [symbolic = @As.%Convert (constants.%Convert.0ed)] {
-// CHECK:STDOUT:       %self.patt: @Convert.1.%pattern_type.loc9_14 (%pattern_type.947) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.1.%pattern_type.loc9_14 (%pattern_type.947) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %return.patt: @Convert.1.%pattern_type.loc9_28 (%pattern_type.7dc) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.1.%pattern_type.loc9_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @Convert.1.%pattern_type.loc9_14 (%pattern_type.947) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Convert.1.%pattern_type.loc9_14 (%pattern_type.947) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.patt: @Convert.1.%pattern_type.loc9_28 (%pattern_type.7dc) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Convert.1.%pattern_type.loc9_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @As.%Dest.loc8_14.1 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:       %self.param: @Convert.1.%Self.as_type.loc9_20.1 (%Self.as_type.7f0) = value_param call_param0
@@ -638,10 +626,10 @@ fn F() {
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.07f) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.0f3)]
 // CHECK:STDOUT:     %Convert.decl: @ImplicitAs.%Convert.type (%Convert.type.4cf) = fn_decl @Convert.2 [symbolic = @ImplicitAs.%Convert (constants.%Convert.147)] {
-// CHECK:STDOUT:       %self.patt: @Convert.2.%pattern_type.loc14_14 (%pattern_type.a93) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @Convert.2.%pattern_type.loc14_14 (%pattern_type.a93) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %return.patt: @Convert.2.%pattern_type.loc14_28 (%pattern_type.7dc) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Convert.2.%pattern_type.loc14_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:       %self.patt: @Convert.2.%pattern_type.loc14_14 (%pattern_type.a93) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Convert.2.%pattern_type.loc14_14 (%pattern_type.a93) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.patt: @Convert.2.%pattern_type.loc14_28 (%pattern_type.7dc) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Convert.2.%pattern_type.loc14_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc12_22.1 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:       %self.param: @Convert.2.%Self.as_type.loc14_20.1 (%Self.as_type.419) = value_param call_param0
@@ -700,10 +688,6 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc9_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%Dest.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.loc12_22.2 => constants.%Dest
 // CHECK:STDOUT: }
@@ -716,8 +700,4 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc14_14 => constants.%pattern_type.a93
 // CHECK:STDOUT:   %pattern_type.loc14_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%Dest) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%Dest.loc12_22.2) {}
 // CHECK:STDOUT:

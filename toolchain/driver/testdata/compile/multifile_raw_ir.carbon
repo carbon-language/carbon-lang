@@ -154,6 +154,7 @@ fn B() {
 // CHECK:STDOUT:     import_refs:
 // CHECK:STDOUT:       0:               inst16
 // CHECK:STDOUT:       1:               inst22
+// CHECK:STDOUT:       2:               inst23
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:     {}
 // CHECK:STDOUT:     inst_block5:
