@@ -425,6 +425,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       }
     }
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
+    // From here on, use the `Impl` from the `ImplStore` instead of `impl_info`
+    // in order to make and see any changes to the `Impl`.
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
 
@@ -477,14 +479,11 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
         // Don't try to match the impl at all, save us work and possible future
         // diagnostics.
         FillImplWitnessWithErrors(context, stored_impl_info);
-        stored_impl_info.witness_id = SemIR::ErrorInst::InstId;
       }
     }
   } else {
     auto& stored_impl_info = context.impls().Get(impl_decl.impl_id);
-
-    auto prev_decl_generic_id = stored_impl_info.generic_id;
-    FinishGenericRedecl(context, prev_decl_generic_id);
+    FinishGenericRedecl(context, stored_impl_info.generic_id);
   }
 
   // Write the impl ID into the ImplDecl.
@@ -509,7 +508,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                     constraint_type_inst_id, constraint_type_id)) {
       // Don't allow the invalid impl to be used.
       FillImplWitnessWithErrors(context, stored_impl_info);
-      stored_impl_info.witness_id = SemIR::ErrorInst::InstId;
     }
   }
 
