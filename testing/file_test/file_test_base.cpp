@@ -519,18 +519,24 @@ auto FileTestEventListener::OnTestProgramStart(
   // slowest tests.
   auto print_slowest_tests = absl::GetFlag(FLAGS_print_slowest_tests);
   if (run_count > 1 && print_slowest_tests != 0) {
+    // Sort in a copy so that `FileTestCase` pointers to the original tests
+    // remain stable.
+    llvm::SmallVector<const FileTestInfo*> sorted_tests(
+        llvm::make_pointer_range(tests_));
+    llvm::sort(sorted_tests,
+               [](const FileTestInfo* lhs, const FileTestInfo* rhs) {
+                 return lhs->elapsed_ms > rhs->elapsed_ms;
+               });
+
     llvm::errs() << "  Slowest tests:\n";
-    llvm::sort(tests_, [](const FileTestInfo& lhs, const FileTestInfo& rhs) {
-      return lhs.elapsed_ms > rhs.elapsed_ms;
-    });
     int count = print_slowest_tests > 0 ? print_slowest_tests : run_count;
-    for (const auto& test : tests_.take_front(count)) {
+    for (const auto* test : llvm::ArrayRef(sorted_tests).take_front(count)) {
       std::chrono::milliseconds run_ms(0);
-      if (test.test_result && test.test_result->ok()) {
-        run_ms = test.test_result.value()->run_elapsed_ms;
+      if (test->test_result && test->test_result->ok()) {
+        run_ms = test->test_result.value()->run_elapsed_ms;
       }
-      llvm::errs() << "  - " << test.test_name << ": "
-                   << test.elapsed_ms.count() << " ms, " << run_ms.count()
+      llvm::errs() << "  - " << test->test_name << ": "
+                   << test->elapsed_ms.count() << " ms, " << run_ms.count()
                    << " ms in Run\n";
     }
   }

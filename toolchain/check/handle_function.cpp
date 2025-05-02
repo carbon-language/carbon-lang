@@ -5,7 +5,6 @@
 #include <optional>
 #include <utility>
 
-#include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
@@ -34,7 +33,6 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
-#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -83,18 +81,6 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
        .index = SemIR::CallParamIndex::None});
   context.node_stack().Push(node_id, param_pattern_id);
   return true;
-}
-
-// Returns the ID of the self parameter pattern, or None.
-// TODO: Do this during initial traversal of implicit params.
-static auto FindSelfPattern(Context& context,
-                            SemIR::InstBlockId implicit_param_patterns_id)
-    -> SemIR::InstId {
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
-    return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
-  });
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -165,7 +151,7 @@ static auto MergeFunctionRedecl(Context& context,
   DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Fn, prev_function.name_id,
       RedeclInfo(new_function, node_id, new_is_definition),
-      RedeclInfo(prev_function, prev_function.latest_decl_id(),
+      RedeclInfo(prev_function, SemIR::LocId(prev_function.latest_decl_id()),
                  prev_function.has_definition_started()),
       prev_import_ir_id);
   if (new_is_definition && prev_function.has_definition_started()) {
@@ -246,7 +232,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 
   if (!prev_function_id.has_value()) {
     DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          prev_id);
+                          SemIR::LocId(prev_id));
     return;
   }
 
@@ -553,7 +539,8 @@ static auto BuildFunctionDecl(Context& context,
           SemIR::Function::VirtualModifier::Abstract) {
     CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
                       "definition of `abstract` function");
-    context.emitter().Emit(TokenOnly(node_id), DefinedAbstractFunction);
+    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+                           DefinedAbstractFunction);
   }
 
   // Add to name lookup if needed, now that the decl is built.
@@ -576,55 +563,20 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   return true;
 }
 
-static auto CheckFunctionDefinitionSignature(Context& context,
-                                             SemIR::Function& function)
-    -> void {
-  auto params_to_complete =
-      context.inst_blocks().GetOrEmpty(function.call_params_id);
-
-  // Check the return type is complete.
-  if (function.return_slot_pattern_id.has_value()) {
-    CheckFunctionReturnType(
-        context, context.insts().GetLocId(function.return_slot_pattern_id),
-        function, SemIR::SpecificId::None);
-    params_to_complete = params_to_complete.drop_back();
-  }
-
-  // Check the parameter types are complete.
-  for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::ErrorInst::InstId) {
-      continue;
-    }
-
-    // The parameter types need to be complete.
-    RequireCompleteType(
-        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
-        context.insts().GetLocId(param_ref_id), [&] {
-          CARBON_DIAGNOSTIC(
-              IncompleteTypeInFunctionParam, Error,
-              "parameter has incomplete type {0} in function definition",
-              TypeOfInstId);
-          return context.emitter().Build(
-              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
-        });
-  }
-}
-
 // Processes a function definition after a signature for which we have already
 // built a function ID. This logic is shared between processing regular function
 // definitions and delayed parsing of inline method definitions.
 static auto HandleFunctionDefinitionAfterSignature(
     Context& context, Parse::FunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
-  auto& function = context.functions().Get(function_id);
-
   // Create the function scope and the entry block.
   context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  StartGenericDefinition(context);
+  StartGenericDefinition(context,
+                         context.functions().Get(function_id).generic_id);
 
-  CheckFunctionDefinitionSignature(context, function);
+  CheckFunctionDefinitionSignature(context, function_id);
 
   context.node_stack().Push(node_id, function_id);
 }
@@ -672,7 +624,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
-      context.emitter().Emit(TokenOnly(node_id), MissingReturnStatement);
+      context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+                             MissingReturnStatement);
     } else {
       AddReturnCleanupBlock(context, node_id);
     }
@@ -763,12 +716,13 @@ auto HandleParseNode(Context& context,
 
   auto builtin_kind = LookupBuiltinFunctionKind(context, name_id);
   if (builtin_kind != SemIR::BuiltinFunctionKind::None) {
+    CheckFunctionDefinitionSignature(context, function_id);
+
     auto& function = context.functions().Get(function_id);
-    CheckFunctionDefinitionSignature(context, function);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
       function.builtin_function_kind = builtin_kind;
       // Build an empty generic definition if this is a generic builtin.
-      StartGenericDefinition(context);
+      StartGenericDefinition(context, function.generic_id);
       FinishGenericDefinition(context, function.generic_id);
     } else {
       CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,

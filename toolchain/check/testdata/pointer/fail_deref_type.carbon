@@ -26,6 +26,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -35,6 +37,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,8 +48,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: <error> = binding_pattern p
-// CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: <error> = binding_pattern p [concrete]
+// CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref <error> = var p
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -56,8 +59,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: <error> = bind_name p, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p2.patt: <error> = binding_pattern p2
-// CHECK:STDOUT:     %.loc23_1: <error> = var_pattern %p2.patt
+// CHECK:STDOUT:     %p2.patt: <error> = binding_pattern p2 [concrete]
+// CHECK:STDOUT:     %.loc23_1: <error> = var_pattern %p2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2.var: ref <error> = var p2
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {

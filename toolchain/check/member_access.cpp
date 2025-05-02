@@ -69,7 +69,7 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
                                     SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   SemIR::ScopeLookupResult lookup_result =
-      LookupUnqualifiedName(context, loc_id.node_id(), SemIR::NameId::SelfType,
+      LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,
                             /*required=*/false)
           .scope_result;
   CARBON_CHECK(!lookup_result.is_poisoned());
@@ -473,8 +473,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
 
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
-  auto base_loc_id = context.insts().GetLocId(base_id);
-  if (!RequireCompleteType(context, base_type_id, base_loc_id, [&] {
+  if (!RequireCompleteType(context, base_type_id, SemIR::LocId(base_id), [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
                           "member access into object of incomplete type {0}",
                           TypeOfInstId);
@@ -617,14 +616,13 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
 
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
-                        SemIR::InstId assoc_entity_inst_id,
+                        SemIR::ConstantId assoc_entity_const_id,
                         SemIR::SpecificInterface interface) -> SemIR::InstId {
   // TODO: This function shares a code with PerformCompoundMemberAccess(),
   // it would be nice to reduce the duplication.
 
   auto value_inst_id =
-      context.constant_values().GetConstantInstId(assoc_entity_inst_id);
-  CARBON_CHECK(value_inst_id.has_value());
+      context.constant_values().GetInstId(assoc_entity_const_id);
   auto assoc_entity =
       context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
   auto decl_id = assoc_entity.decl_id;
@@ -735,9 +733,8 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   }
 
   SemIR::TypeId element_type_id = SemIR::ErrorInst::TypeId;
-  auto index_node_id = context.insts().GetLocId(index_inst_id);
   index_inst_id = ConvertToValueOfType(
-      context, index_node_id, index_inst_id,
+      context, SemIR::LocId(index_inst_id), index_inst_id,
       GetSingletonType(context, SemIR::IntLiteralType::TypeInstId));
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::ConstantId) {

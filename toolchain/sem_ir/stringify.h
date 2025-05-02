@@ -25,6 +25,15 @@ auto StringifyConstantInst(const File& sem_ir, InstId outer_inst_id)
 auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
     -> std::string;
 
+// Produces a string version of the name of a specific interface. If the
+// interface is not generic, this is just the name of the interface. Otheewise,
+// it is the interface name and its generic arguments.  Generally, this should
+// not be called directly. To format a string into a diagnostic, use a
+// diagnostic parameter of type `SpecificInterface`.
+auto StringifySpecificInterface(const File& sem_ir,
+                                SpecificInterface specific_interface)
+    -> std::string;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_STRINGIFY_H_

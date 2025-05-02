@@ -69,8 +69,8 @@ class C {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.0b5 = fn_decl @F.1 [concrete = constants.%F.20c] {
-// CHECK:STDOUT:     %self.patt: @F.1.%pattern_type (%pattern_type.b2f) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%pattern_type (%pattern_type.b2f) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: @F.1.%pattern_type (%pattern_type.b2f) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @F.1.%pattern_type (%pattern_type.b2f) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc17_16.1: type = splice_block %.loc17_16.2 [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)] {
@@ -92,8 +92,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.4a2 = fn_decl @F.2 [concrete = constants.%F.eb2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [concrete = constants.%C]
@@ -134,8 +134,8 @@ class C {
 // CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %c.patt: %pattern_type.c48 = binding_pattern c
-// CHECK:STDOUT:       %.loc19_7.1: %pattern_type.c48 = var_pattern %c.patt
+// CHECK:STDOUT:       %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:       %.loc19_7.1: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref %C = var c
 // CHECK:STDOUT:     %.loc19_19.1: %empty_struct_type = struct_literal ()

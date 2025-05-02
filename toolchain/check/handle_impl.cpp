@@ -191,8 +191,8 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     parent_scope.set_has_error();
   } else {
     bool is_complete = RequireCompleteType(
-        context, constraint_type_id,
-        context.insts().GetLocId(constraint_type_inst_id), [&] {
+        context, constraint_type_id, SemIR::LocId(constraint_type_inst_id),
+        [&] {
           CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Error,
                             "`extend impl as` incomplete facet type {0}",
                             InstIdAsType);
@@ -424,7 +424,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
         // constants from within the impl).
       }
     }
-    FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
+    FinishGenericDecl(context, SemIR::LocId(impl_decl_id),
+                      impl_info.generic_id);
     // From here on, use the `Impl` from the `ImplStore` instead of `impl_info`
     // in order to make and see any changes to the `Impl`.
     impl_decl.impl_id = context.impls().Add(impl_info);
@@ -497,7 +498,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
     if (stored_impl_info.generic_id.has_value()) {
       constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
-          context, context.insts().GetLocId(constraint_type_inst_id),
+          context, SemIR::LocId(constraint_type_inst_id),
           {.type_id = SemIR::TypeType::TypeId,
            .inst_id = constraint_type_inst_id,
            .specific_id = context.generics().GetSelfSpecific(
@@ -545,7 +546,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   context.scope_stack().PushForEntity(
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, impl_info.generic_id);
   ImplWitnessStartDefinition(context, impl_info);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
@@ -568,9 +569,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
   auto impl_id =
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
 
+  FinishImplWitness(context, impl_id);
+
   auto& impl_info = context.impls().Get(impl_id);
-  CARBON_CHECK(!impl_info.is_complete());
-  FinishImplWitness(context, impl_info);
   impl_info.defined = true;
   FinishGenericDefinition(context, impl_info.generic_id);
 
