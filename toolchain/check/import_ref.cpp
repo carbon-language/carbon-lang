@@ -560,7 +560,6 @@ class ImportRefResolver : public ImportContext {
     }
 
     const auto* cursor_ir = &import_ir();
-    auto cursor_ir_id = SemIR::ImportIRId::None;
     auto cursor_inst_id = inst_id;
 
     while (true) {
@@ -575,15 +574,10 @@ class ImportRefResolver : public ImportContext {
       auto prev_inst_id = cursor_inst_id;
 
       cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id()).sem_ir;
-      cursor_ir_id =
-          local_context().check_ir_map()[cursor_ir->check_ir_id().index];
-      if (!cursor_ir_id.has_value()) {
-        // TODO: Should we figure out a location to assign here?
-        cursor_ir_id =
-            AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
-                                          .is_export = false,
-                                          .sem_ir = cursor_ir});
-      }
+      auto cursor_ir_id =
+          AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
+                                        .is_export = false,
+                                        .sem_ir = cursor_ir});
       cursor_inst_id = ir_inst.inst_id();
 
       CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id,
