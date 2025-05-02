@@ -406,7 +406,8 @@ class CompilationUnit {
                llvm::StringLiteral timing_label,
                llvm::function_ref<auto()->void> fn) -> void;
 
-  auto include_in_dumps() -> bool;
+  // Returns true if the current file should be included in debug dumps.
+  auto IncludeInDumps() -> bool;
 
   // The index of the unit amongst all units. Equivalent to a `CheckIRId`.
   int unit_index_;
@@ -431,7 +432,7 @@ class CompilationUnit {
 
   bool success_ = true;
 
-  // Initialized by `InitCache`.
+  // Initialized by `SetMultiUnitCache`.
   MultiUnitCache* cache_ = nullptr;
   // Tracks memory usage of the compile.
   std::optional<MemUsage> mem_usage_;
@@ -451,9 +452,12 @@ class CompilationUnit {
   std::unique_ptr<llvm::Module> module_;
 };
 
-// Caches lists that are shared cross-unit.
+// Caches lists that are shared cross-unit. Accessors do lazy caching because
+// they may not be used.
 class MultiUnitCache {
  public:
+  // This relies on construction after `units` are all initialized, which is
+  // reflected by the `ArrayRef` here.
   explicit MultiUnitCache(
       const CompileOptions* options,
       const llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units)
@@ -527,7 +531,7 @@ CompilationUnit::CompilationUnit(int unit_index, DriverEnv* driver_env,
   }
 }
 
-auto CompilationUnit::include_in_dumps() -> bool {
+auto CompilationUnit::IncludeInDumps() -> bool {
   return cache_->include_in_dumps()[unit_index_];
 }
 
@@ -535,11 +539,11 @@ auto CompilationUnit::SetMultiUnitCache(MultiUnitCache* cache) -> void {
   CARBON_CHECK(!cache_, "Called SetMultiUnitCache twice");
   cache_ = cache;
 
-  if (options_->dump_mem_usage && include_in_dumps()) {
+  if (options_->dump_mem_usage && IncludeInDumps()) {
     CARBON_CHECK(!mem_usage_);
     mem_usage_ = MemUsage();
   }
-  if (options_->dump_timings && include_in_dumps()) {
+  if (options_->dump_timings && IncludeInDumps()) {
     CARBON_CHECK(!timings_);
     timings_ = Timings();
   }
@@ -567,7 +571,7 @@ auto CompilationUnit::RunLex() -> void {
 
   LogCall("Lex::Lex", "lex",
           [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
-  if (options_->dump_tokens && include_in_dumps()) {
+  if (options_->dump_tokens && IncludeInDumps()) {
     consumer_->Flush();
     tokens_->Print(*driver_env_->output_stream,
                    options_->omit_file_boundary_tokens);
@@ -585,7 +589,7 @@ auto CompilationUnit::RunParse() -> void {
   LogCall("Parse::Parse", "parse", [&] {
     parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
   });
-  if (options_->dump_parse_tree && include_in_dumps()) {
+  if (options_->dump_parse_tree && IncludeInDumps()) {
     consumer_->Flush();
     const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
     if (options_->preorder_parse_tree) {
@@ -610,13 +614,13 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
-  sem_ir_.emplace(&*parse_tree_, SemIR::CheckIRId(unit_index_),
-                  parse_tree_->packaging_decl(), value_stores_,
-                  input_filename_);
+  SemIR::CheckIRId ir_id(unit_index_);
+  sem_ir_.emplace(&*parse_tree_, ir_id, parse_tree_->packaging_decl(),
+                  value_stores_, input_filename_);
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
-          .check_ir_id = SemIR::CheckIRId(unit_index_),
+          .check_ir_id = ir_id,
           .sem_ir = &*sem_ir_,
           .cpp_ast = &cpp_ast_};
 }
@@ -633,7 +637,7 @@ auto CompilationUnit::PostCheck() -> void {
     mem_usage_->Collect("sem_ir_", *sem_ir_);
   }
 
-  if (options_->dump_raw_sem_ir && include_in_dumps()) {
+  if (options_->dump_raw_sem_ir && IncludeInDumps()) {
     CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);
     sem_ir_->Print(*driver_env_->output_stream, options_->builtin_sem_ir);
     if (options_->dump_sem_ir) {
@@ -641,7 +645,7 @@ auto CompilationUnit::PostCheck() -> void {
     }
   }
 
-  bool print = options_->dump_sem_ir && include_in_dumps();
+  bool print = options_->dump_sem_ir && IncludeInDumps();
   if (vlog_stream_ || print) {
     SemIR::Formatter formatter(&*sem_ir_, *tree_and_subtrees_getter_,
                                cache_->include_in_dumps());
@@ -679,7 +683,7 @@ auto CompilationUnit::RunLower() -> void {
                    /*ShouldPreserveUseListOrder=*/false,
                    /*IsForDebug=*/true);
   }
-  if (options_->dump_llvm_ir && include_in_dumps()) {
+  if (options_->dump_llvm_ir && IncludeInDumps()) {
     module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
                    /*ShouldPreserveUseListOrder=*/true);
   }
@@ -691,7 +695,7 @@ auto CompilationUnit::RunCodeGen() -> void {
 }
 
 auto CompilationUnit::PostCompile() -> void {
-  if (options_->dump_shared_values && include_in_dumps()) {
+  if (options_->dump_shared_values && IncludeInDumps()) {
     Yaml::Print(*driver_env_->output_stream,
                 value_stores_.OutputYaml(input_filename_));
   }
