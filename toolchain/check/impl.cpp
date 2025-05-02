@@ -255,6 +255,7 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
         elem = SemIR::ErrorInst::InstId;
       }
     }
+    impl.witness_id = SemIR::ErrorInst::InstId;
   }
 }
 
