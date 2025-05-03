@@ -60,7 +60,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:8: error: member name `Def` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:8: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: var c: Test.Def = {};
 // CHECK:STDERR:        ^~~~~~~~
 // CHECK:STDERR:
@@ -90,7 +90,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:8: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:8: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: var c: Test.ForwardWithDef = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -122,7 +122,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:9: error: member name `Forward` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:9: error: member name `Forward` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn F(c: Test.Forward*) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -152,6 +152,7 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Def {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -176,6 +177,7 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -204,13 +206,14 @@ private class Redecl {}
 // CHECK:STDOUT:   %Def: type = class_type @Def [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Def [concrete]
 // CHECK:STDOUT:   %Def.val: %Def = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Def: type = import_ref Test//def, Def, loaded [concrete = constants.%Def]
 // CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//def, loc4_20, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Test.import_ref.4ce = import_ref Test//def, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref.4ce = import_ref Test//def, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -221,8 +224,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %Def = binding_pattern c
-// CHECK:STDOUT:     %.loc4: %Def = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc4: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Def = var c
 // CHECK:STDOUT:   %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def]
@@ -258,8 +261,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
@@ -293,8 +296,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -317,13 +320,14 @@ private class Redecl {}
 // CHECK:STDOUT:   %ForwardWithDef: type = class_type @ForwardWithDef [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ForwardWithDef [concrete]
 // CHECK:STDOUT:   %ForwardWithDef.val: %ForwardWithDef = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.ForwardWithDef: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [concrete = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//forward_with_def, loc6_23, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Test.import_ref.414 = import_ref Test//forward_with_def, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref.414 = import_ref Test//forward_with_def, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -334,8 +338,8 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %ForwardWithDef = binding_pattern c
-// CHECK:STDOUT:     %.loc4: %ForwardWithDef = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc4: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %ForwardWithDef = var c
 // CHECK:STDOUT:   %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef]
@@ -371,8 +375,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
@@ -406,8 +410,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -429,6 +433,7 @@ private class Redecl {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Forward: type = class_type @Forward [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Forward [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -447,13 +452,13 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: %ptr = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %ptr = value_param_pattern %c.patt, call_param0
+// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Forward.ref: type = name_ref Forward, imports.%Test.Forward [concrete = constants.%Forward]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Forward [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Forward.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %ptr = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -461,6 +466,7 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Forward {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -468,7 +474,7 @@ private class Redecl {}
 // CHECK:STDOUT:   .Self = constants.%Forward
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: %ptr) {
+// CHECK:STDOUT: fn @F(%c.param: %ptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -487,8 +493,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
@@ -499,7 +505,7 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%c.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -525,8 +531,8 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
@@ -538,7 +544,7 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%c.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -560,6 +566,7 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Redecl {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

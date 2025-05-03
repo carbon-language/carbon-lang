@@ -21,7 +21,6 @@ using ::testing::AllOf;
 using ::testing::Contains;
 using ::testing::Each;
 using ::testing::ElementsAre;
-using ::testing::Ge;
 using ::testing::IsEmpty;
 using ::testing::MatchesRegex;
 using ::testing::Pair;
@@ -47,7 +46,7 @@ TEST(SemIRTest, Yaml) {
 
   // Matches the ID of an instruction. Instruction counts may change as various
   // support changes, so this code is only doing loose structural checks.
-  auto type_block_id = Yaml::Scalar(MatchesRegex(R"(type_block\d+)"));
+  auto inst_block_id = Yaml::Scalar(MatchesRegex(R"(inst_block(\d+|_empty))"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\d+)"));
   auto constant_id =
       Yaml::Scalar(MatchesRegex(R"(concrete_constant\(inst(\w+|\+\d+)\))"));
@@ -57,7 +56,7 @@ TEST(SemIRTest, Yaml) {
   auto type_builtin = Pair(type_id, Yaml::Mapping(_));
 
   auto file = Yaml::Mapping(ElementsAre(
-      Pair("import_irs", Yaml::Mapping(SizeIs(1))),
+      Pair("import_irs", Yaml::Mapping(SizeIs(2))),
       Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("entity_names", Yaml::Mapping(SizeIs(1))),
@@ -67,7 +66,6 @@ TEST(SemIRTest, Yaml) {
       Pair("specifics", Yaml::Mapping(SizeIs(0))),
       Pair("struct_type_fields", Yaml::Mapping(SizeIs(1))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
-      Pair("type_blocks", Yaml::Mapping(SizeIs(Ge(1)))),
       Pair("insts",
            Yaml::Mapping(AllOf(
                Each(Key(inst_id)),
@@ -79,7 +77,7 @@ TEST(SemIRTest, Yaml) {
                // A 1-arg instruction.
                Contains(Pair(_, Yaml::Mapping(ElementsAre(
                                     Pair("kind", "TupleType"),
-                                    Pair("arg0", type_block_id),
+                                    Pair("arg0", inst_block_id),
                                     Pair("type", "type(TypeType)"))))),
                // A 2-arg instruction.
                Contains(Pair(

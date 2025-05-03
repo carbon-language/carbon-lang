@@ -28,7 +28,7 @@ class Class {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %a: %ptr = bind_symbolic_name a, 0 [symbolic]
-// CHECK:STDOUT:   %a.patt: %ptr = symbolic_binding_pattern a, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -55,25 +55,26 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt.loc16_13.1: %ptr = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc16_13.2: %ptr = bind_symbolic_name a, 0 [symbolic = %a.loc16_13.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %b.patt: %ptr = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %ptr = value_param_pattern %b.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc22: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class [concrete = constants.%ptr]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %ptr = bind_name b, %b.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -86,15 +87,13 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%a.loc16_13.2: %ptr) {
 // CHECK:STDOUT:   %a.loc16_13.1: %ptr = bind_symbolic_name a, 0 [symbolic = %a.loc16_13.1 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc16_13.2: %ptr = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.2 (constants.%a.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.patt.loc16_13.1: %ptr]();
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%b.param_patt: %ptr);
+// CHECK:STDOUT: fn @G(%b.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%a) {
 // CHECK:STDOUT:   %a.loc16_13.1 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc16_13.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

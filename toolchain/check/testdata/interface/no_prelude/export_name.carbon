@@ -68,7 +68,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//base, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref = import_ref Main//base, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref = import_ref Main//base, inst17 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -89,13 +89,14 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %UseEmpty.type: type = fn_type @UseEmpty [concrete]
 // CHECK:STDOUT:   %UseEmpty: %UseEmpty.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//export, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref = import_ref Main//export, inst19 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref = import_ref Main//export, inst20 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -105,8 +106,8 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [concrete = constants.%UseEmpty] {
-// CHECK:STDOUT:     %i.patt: %I.type = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: %I.type = value_param_pattern %i.patt, call_param0
+// CHECK:STDOUT:     %i.patt: %pattern_type = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %I.type = value_param call_param0
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
@@ -120,7 +121,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseEmpty(%i.param_patt: %I.type) {
+// CHECK:STDOUT: fn @UseEmpty(%i.param: %I.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

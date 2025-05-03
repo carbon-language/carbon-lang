@@ -20,8 +20,10 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
+// CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -34,6 +36,7 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,10 +48,10 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:   %Class.decl.loc11: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.decl.loc13: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.761 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.761 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc17: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
@@ -65,10 +68,10 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %b.patt: bool = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.761 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.761 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc14: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Class [concrete = constants.%Class]
@@ -81,6 +84,7 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc14: bool = bind_name b, %b.param.loc14
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -89,7 +93,7 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Class](%b.param_patt: bool) {
+// CHECK:STDOUT: fn @F(%self.param.loc17: %Class, %b.param.loc17: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

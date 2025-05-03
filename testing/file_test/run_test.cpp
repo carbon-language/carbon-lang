@@ -6,6 +6,9 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <utility>
+
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -122,7 +125,7 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
       input_stream = tmpfile();
       fwrite(split->content.c_str(), sizeof(char), split->content.size(),
              input_stream);
-      rewind(input_stream);
+      CARBON_CHECK(!fseek(input_stream, 0, SEEK_SET));
     } else if (!fs->addFile(split->filename, /*ModificationTime=*/0,
                             llvm::MemoryBuffer::getMemBuffer(
                                 split->content, split->filename,
@@ -161,11 +164,13 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
   llvm::raw_svector_ostream output_stream(test_file.actual_stdout);
   llvm::raw_svector_ostream error_stream(test_file.actual_stderr);
 
+  Timer timer;
   ErrorOr<FileTestBase::RunResult> run_result =
       dump_output ? test_base.Run(test_args_ref, fs, input_stream, llvm::outs(),
                                   llvm::errs())
                   : test_base.Run(test_args_ref, fs, input_stream,
                                   output_stream, error_stream);
+  test_file.run_elapsed_ms = timer.elapsed_ms();
 
   // Ensure stdout/stderr are always fetched, even when discarded on error.
   if (test_file.capture_console_output) {

@@ -22,6 +22,8 @@ var x: (1, );
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -30,6 +32,7 @@ var x: (1, );
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -39,8 +42,8 @@ var x: (1, );
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
-// CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: <error> = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {

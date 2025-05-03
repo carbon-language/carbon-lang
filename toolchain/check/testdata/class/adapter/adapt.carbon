@@ -39,7 +39,7 @@ class AdaptNotExtend {
 
 fn F(a: AdaptNotExtend) {
   // `Adapted` is not extended, so lookup for `F` finds nothing.
-  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+4]]:3: error: member name `F` not found in `AdaptNotExtend` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+4]]:3: error: member name `F` not found in `AdaptNotExtend` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
@@ -69,6 +69,8 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %SomeClass: type = class_type @SomeClass [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %SomeClass.elem: type = unbound_element_type %SomeClass, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete]
@@ -83,6 +85,7 @@ interface I {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -99,29 +102,26 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %.loc5_8: %SomeClass.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_3: %SomeClass.elem = var_pattern %.loc5_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc5: ref %SomeClass.elem = var <none>
-// CHECK:STDOUT:   %.loc6_8: %SomeClass.elem = field_decl b, element1 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc6_3: %SomeClass.elem = var_pattern %.loc6_8
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var.loc6: ref %SomeClass.elem = var <none>
+// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc5: %SomeClass.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc6: %SomeClass.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
-// CHECK:STDOUT:   .a = %.loc5_8
-// CHECK:STDOUT:   .b = %.loc6_8
+// CHECK:STDOUT:   .a = %.loc5
+// CHECK:STDOUT:   .b = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [concrete = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass.ref [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [concrete = constants.%complete_type.705]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -136,7 +136,7 @@ interface I {
 // CHECK:STDOUT:   %i32.loc14_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   adapt_decl %struct_type.a.b [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [concrete = constants.%complete_type.705]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -152,6 +152,7 @@ interface I {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %AdaptNotExtend: type = class_type @AdaptNotExtend [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %AdaptNotExtend [concrete]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -174,8 +175,8 @@ interface I {
 // CHECK:STDOUT:   %Adapted.decl: type = class_decl @Adapted [concrete = constants.%Adapted] {} {}
 // CHECK:STDOUT:   %AdaptNotExtend.decl: type = class_decl @AdaptNotExtend [concrete = constants.%AdaptNotExtend] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {
-// CHECK:STDOUT:     %a.patt: %AdaptNotExtend = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %AdaptNotExtend = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %AdaptNotExtend = value_param call_param0
 // CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [concrete = constants.%AdaptNotExtend]
@@ -185,6 +186,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapted {
 // CHECK:STDOUT:   %F.decl: %F.type.967 = fn_decl @F.1 [concrete = constants.%F.9eb] {} {}
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -196,7 +198,7 @@ interface I {
 // CHECK:STDOUT: class @AdaptNotExtend {
 // CHECK:STDOUT:   %Adapted.ref: type = name_ref Adapted, file.%Adapted.decl [concrete = constants.%Adapted]
 // CHECK:STDOUT:   adapt_decl %Adapted.ref [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -207,7 +209,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%a.param_patt: %AdaptNotExtend) {
+// CHECK:STDOUT: fn @F.2(%a.param: %AdaptNotExtend) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %AdaptNotExtend = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]
@@ -220,6 +222,8 @@ interface I {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
@@ -231,6 +235,7 @@ interface I {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

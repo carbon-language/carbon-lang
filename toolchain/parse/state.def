@@ -39,22 +39,22 @@
 #define CARBON_PARSE_STATE(Name)
 #endif
 
-// Use CARBON_PARSE_STATE_VARIANTSN(State, Variant1, Variant2, ...) to generate
-// StateAsVariant1, StateAsVariant2, ... states.
-#define CARBON_PARSE_STATE_VARIANT(State, Variant) \
-  CARBON_PARSE_STATE(State##As##Variant)
-#define CARBON_PARSE_STATE_VARIANTS2(State, Variant1, Variant2) \
-  CARBON_PARSE_STATE_VARIANT(State, Variant1)                   \
-  CARBON_PARSE_STATE_VARIANT(State, Variant2)
-#define CARBON_PARSE_STATE_VARIANTS3(State, Variant1, Variant2, Variant3) \
-  CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
-  CARBON_PARSE_STATE_VARIANTS2(State, Variant2, Variant3)
-#define CARBON_PARSE_STATE_VARIANTS4(State, Variant1, Variant2, Variant3, \
-                                     Variant4)                            \
-  CARBON_PARSE_STATE_VARIANT(State, Variant1)                             \
-  CARBON_PARSE_STATE_VARIANTS3(State, Variant2, Variant3, Variant4)
+// Use CARBON_PARSE_STATE_VARIANTSN(Kind, Variant1, Variant2, ...) to generate
+// KindAsVariant1, KindAsVariant2, ... states.
+#define CARBON_PARSE_STATE_VARIANT(Kind, Variant) \
+  CARBON_PARSE_STATE(Kind##As##Variant)
+#define CARBON_PARSE_STATE_VARIANTS2(Kind, Variant1, Variant2) \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                   \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant2)
+#define CARBON_PARSE_STATE_VARIANTS3(Kind, Variant1, Variant2, Variant3) \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                             \
+  CARBON_PARSE_STATE_VARIANTS2(Kind, Variant2, Variant3)
+#define CARBON_PARSE_STATE_VARIANTS4(Kind, Variant1, Variant2, Variant3, \
+                                     Variant4)                           \
+  CARBON_PARSE_STATE_VARIANT(Kind, Variant1)                             \
+  CARBON_PARSE_STATE_VARIANTS3(Kind, Variant2, Variant3, Variant4)
 
-// Used as a default for StateStackEntry initialization in some cases. Should
+// Used as a default for State initialization in some cases. Should
 // not be put on the state stack.
 CARBON_PARSE_STATE(Invalid)
 
@@ -355,9 +355,13 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~~
 //   1. Package
 //
-// var ...
+// var ...        (variant is NonClass)
 // ^~~
-//   1. VarAsDecl
+//   1. VarAsRegular
+//
+// var ...        (variant is Class)
+// ^~~
+//   1. FieldDecl
 //
 // ;
 // ^
@@ -366,7 +370,7 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ??? ;
 // ^~~~~
 //   (state done)
-CARBON_PARSE_STATE(Decl)
+CARBON_PARSE_STATE_VARIANTS2(Decl, Class, NonClass)
 
 // Handles processing of a declaration scope, which contains a sequence of
 // declarations.
@@ -379,10 +383,10 @@ CARBON_PARSE_STATE(Decl)
 //
 //  ...
 // ^
-//   1. Decl
-//   2. DeclScopeLoop
+//   1. DeclAs(Class|NonClass)
+//   2. DeclScopeLoopAs(Class|NonClass)
 //
-CARBON_PARSE_STATE(DeclScopeLoop)
+CARBON_PARSE_STATE_VARIANTS2(DeclScopeLoop, Class, NonClass)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
 // responsible for handling chaining.
@@ -1274,7 +1278,7 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
 //
 // class/impl/interface/constraint name ( ... ) {
 //                                              ^
-//   1. DeclScopeLoop
+//   1. DeclScopeLoopAs(Class|NonClass)
 //   2. DeclDefinitionFinishAs(Class|Impl|Interface|NamedConstraint)
 //
 // class/impl/interface/constraint name ( ... ) ;
@@ -1360,13 +1364,13 @@ CARBON_PARSE_STATE(ImplAfterForall)
 //   1. Expr
 CARBON_PARSE_STATE(ImplBeforeAs)
 
-// Handles the start of a `var` or `returned var`.
+// Handles the start of a `var` or `returned var` in a non-class context.
 //
-// var ...             (variant is Decl)
+// var ...             (variant is Regular)
 //    ^
 //   1. Pattern
-//   2. VarAfterPattern
-//   3. VarFinishAsDecl
+//   2. VarAfterPatternAsVar
+//   3. VarFinishAsRegular
 //
 // var ...             (variant is For)
 //    ^
@@ -1376,13 +1380,13 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
 //   1. Pattern
-//   2. VarAfterPattern
-//   3. VarFinishAsDecl
+//   2. VarAfterPatternAsVar
+//   3. VarFinishAsRegular
 //
 // returned ??? ;      (variant is Returned)
 // ^~~~~~~~~~~~~~
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(Var, Decl, Returned, For)
+CARBON_PARSE_STATE_VARIANTS3(Var, Regular, Returned, For)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.
@@ -1396,13 +1400,13 @@ CARBON_PARSE_STATE_VARIANTS3(Var, Decl, Returned, For)
 // var ... ...
 //        ^
 //   (state done)
-CARBON_PARSE_STATE(VarAfterPattern)
+CARBON_PARSE_STATE_VARIANTS2(VarAfterPattern, Var, Field)
 
 // Handles `var` parsing at the end.
 //
-// var ... ;        (variant is Semicolon)
+// var ... ;        (variant is Regular or Field)
 //         ^
-// var ... ??? ;    (variant is Semicolon)
+// var ... ??? ;    (variant is Regular or Field)
 //         ^~~~~
 //   (state done)
 //
@@ -1411,7 +1415,22 @@ CARBON_PARSE_STATE(VarAfterPattern)
 // var ... :        (variant is For, invalid)
 //         ^
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS2(VarFinish, Decl, For)
+CARBON_PARSE_STATE_VARIANTS3(VarFinish, Regular, For, Field)
+
+// Handles the beginning of a field declaration (`var` in a class context).
+//
+// var name : type
+//     ^~~~~~
+//   1. Expr
+//   2. VarAfterPatternAsField
+//   3. VarFinishAsField
+//
+// var ??? ;
+//     ^~~~~
+// var name ??? ;
+//     ^~~~~~~~~
+//   (state done)
+CARBON_PARSE_STATE(FieldDecl)
 
 // Handles the start of a `let`.
 //

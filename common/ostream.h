@@ -22,9 +22,11 @@ namespace Carbon {
 template <typename DerivedT>
 class Printable {
   // Provides simple printing for debuggers.
-  LLVM_DUMP_METHOD void Dump() const {
-    static_cast<const DerivedT*>(this)->Print(llvm::errs());
-    llvm::errs() << '\n';
+  LLVM_DUMP_METHOD auto Dump() const -> std::string {
+    std::string buffer;
+    llvm::raw_string_ostream stream(buffer);
+    static_cast<const DerivedT*>(this)->Print(stream);
+    return buffer;
   }
 
   // Supports printing to llvm::raw_ostream.

@@ -237,7 +237,7 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err1.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-Optional [^:]*leDecl11InitializerE: begin
+Optional [^:]*: begin
 Aggregate [^:]*: begin
 NodeIdInCategory Expr: kind MemberAccessExpr consumed
 NodeIdForKind: VariableInitializer consumed

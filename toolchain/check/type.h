@@ -12,16 +12,16 @@
 namespace Carbon::Check {
 
 // Enforces that an integer type has a valid bit width.
-auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
-    -> bool;
+auto ValidateIntType(Context& context, SemIR::LocId loc_id,
+                     SemIR::IntType result) -> bool;
 
 // Enforces that the bit width is 64 for a float.
-auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
+auto ValidateFloatBitWidth(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId inst_id) -> bool;
 
 // Enforces that a float type has a valid bit width.
-auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
-    -> bool;
+auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
+                       SemIR::FloatType result) -> bool;
 
 // Gets the type to use for an unbound associated entity declared in this
 // interface. For example, this is the type of `I.T` after
@@ -29,12 +29,13 @@ auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
 // diagnostics.
 // TODO: Should we use a different type for each such entity, or the same type
 // for all associated entities?
-auto GetAssociatedEntityType(Context& context, SemIR::TypeId interface_type_id)
+auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
+                             SemIR::SpecificId interface_specific_id)
     -> SemIR::TypeId;
 
 // Gets a singleton type. The returned type will be complete. Requires that
 // `singleton_id` is already validated to be a singleton.
-auto GetSingletonType(Context& context, SemIR::InstId singleton_id)
+auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
     -> SemIR::TypeId;
 
 // Gets a class type.
@@ -48,7 +49,7 @@ auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
 // Gets the type of an associated function with the `Self` parameter bound to
 // a particular value. The returned type will be complete.
 auto GetFunctionTypeWithSelfType(Context& context,
-                                 SemIR::InstId interface_function_type_id,
+                                 SemIR::TypeInstId interface_function_type_id,
                                  SemIR::InstId self_id) -> SemIR::TypeId;
 
 // Gets a generic class type, which is the type of a name of a generic class,
@@ -70,7 +71,7 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 // Returns a pointer type whose pointee type is `pointee_type_id`.
-auto GetPointerType(Context& context, SemIR::TypeId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId;
 
 // Returns a struct type with the given fields.
@@ -78,12 +79,30 @@ auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)
     -> SemIR::TypeId;
 
 // Returns a tuple type with the given element types.
-auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::TypeId> type_ids)
+auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
+    -> SemIR::TypeId;
+
+// Returns a pattern type with the given scrutinee type.
+auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
     -> SemIR::TypeId;
 
 // Returns an unbound element type.
-auto GetUnboundElementType(Context& context, SemIR::TypeId class_type_id,
-                           SemIR::TypeId element_type_id) -> SemIR::TypeId;
+auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
+                           SemIR::TypeInstId element_type_id) -> SemIR::TypeId;
+
+// Convert a facet value or type value instruction to a canonical facet or type
+// value instruction.
+//
+// Type values are already canonical and are returned unchanged, except for
+// `FacetAccessType` which is unwrapped to find the facet value it refers to.
+//
+// For facet values, unwraps `FacetValue` instructions to get to an underlying
+// canonical type instruction.
+auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId;
+auto GetCanonicalizedFacetOrTypeValue(Context& context,
+                                      SemIR::ConstantId const_id)
+    -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check
 

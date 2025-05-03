@@ -32,14 +32,15 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %BitComplement.type: type = facet_type <@BitComplement> [concrete]
 // CHECK:STDOUT:   %Op.type.f25: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.5a3.%Op.decl) [concrete]
+// CHECK:STDOUT:   %BitComplement.impl_witness: <witness> = impl_witness file.%BitComplement.impl_witness_table [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Op.type.544: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.bf2: %Op.type.544 = struct_value () [concrete]
-// CHECK:STDOUT:   %BitComplement.facet: %BitComplement.type = facet_value %C, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %BitComplement.facet: %BitComplement.type = facet_value %C, (%BitComplement.impl_witness) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [concrete]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.f35: type = fn_type_with_self_type %Op.type.f25, %BitComplement.facet [concrete]
+// CHECK:STDOUT:   %.669: type = fn_type_with_self_type %Op.type.f25, %BitComplement.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -64,12 +65,13 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, imports.%Core.BitComplement [concrete = constants.%BitComplement.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.5a3.%Op.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %BitComplement.impl_witness_table = impl_witness_table (@impl.5a3.%Op.decl), @impl.5a3 [concrete]
+// CHECK:STDOUT:   %BitComplement.impl_witness: <witness> = impl_witness %BitComplement.impl_witness_table [concrete = constants.%BitComplement.impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [concrete = constants.%TestOp] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.c48 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
@@ -82,10 +84,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.5a3: %C.ref as %BitComplement.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.544 = fn_decl @Op.2 [concrete = constants.%Op.bf2] {
-// CHECK:STDOUT:     %self.patt: %C = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc18_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
@@ -98,10 +100,11 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%BitComplement.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -109,7 +112,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2[%self.param_patt: %C]() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @Op.2(%self.param: %C) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [concrete = constants.%C.val]
@@ -117,10 +120,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   return %.loc19_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @TestOp(%a.param: %C) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %.f35 = impl_witness_access constants.%impl_witness, element0 [concrete = constants.%Op.bf2]
+// CHECK:STDOUT:   %impl.elem0: %.669 = impl_witness_access constants.%BitComplement.impl_witness, element0 [concrete = constants.%Op.bf2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref) to %.loc23

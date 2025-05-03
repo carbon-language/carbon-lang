@@ -58,8 +58,8 @@ struct ExprRegion {
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
-  using CompleteFacetTypeStore =
-      RelationalValueStore<SemIR::FacetTypeId, SemIR::CompleteFacetTypeId>;
+  using IdentifiedFacetTypeStore =
+      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId>;
 
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
@@ -85,6 +85,7 @@ class File : public Printable<File> {
       -> void;
 
   // Returns array bound value from the bound instruction.
+  // TODO: Move this function elsewhere.
   auto GetArrayBoundValue(InstId bound_id) const -> std::optional<uint64_t> {
     if (auto bound = insts().TryGetAs<IntValue>(
             constant_values().GetConstantInstId(bound_id))) {
@@ -94,18 +95,20 @@ class File : public Printable<File> {
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.
+  // TODO: Move this function elsewhere.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
-    return types().GetAs<PointerType>(pointer_id).pointee_id;
+    return types().GetTypeIdForTypeInstId(
+        types().GetAs<PointerType>(pointer_id).pointee_id);
   }
 
   // Returns true if this file is an `impl`.
   auto is_impl() -> bool {
-    return import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir != nullptr;
+    return import_irs().Get(ImportIRId::ApiForImpl).sem_ir != nullptr;
   }
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
   auto package_id() const -> PackageNameId { return package_id_; }
-  auto library_id() const -> SemIR::LibraryNameId { return library_id_; }
+  auto library_id() const -> LibraryNameId { return library_id_; }
 
   // Directly expose SharedValueStores members.
   auto identifiers() -> SharedValueStores::IdentifierStore& {
@@ -161,14 +164,21 @@ class File : public Printable<File> {
   auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
     return facet_types_;
   }
-  auto complete_facet_types() -> CompleteFacetTypeStore& {
-    return complete_facet_types_;
+  auto identified_facet_types() -> IdentifiedFacetTypeStore& {
+    return identified_facet_types_;
   }
-  auto complete_facet_types() const -> const CompleteFacetTypeStore& {
-    return complete_facet_types_;
+  auto identified_facet_types() const -> const IdentifiedFacetTypeStore& {
+    return identified_facet_types_;
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
+  auto specific_interfaces() -> CanonicalValueStore<SpecificInterfaceId>& {
+    return specific_interfaces_;
+  }
+  auto specific_interfaces() const
+      -> const CanonicalValueStore<SpecificInterfaceId>& {
+    return specific_interfaces_;
+  }
   auto generics() -> GenericStore& { return generics_; }
   auto generics() const -> const GenericStore& { return generics_; }
   auto specifics() -> SpecificStore& { return specifics_; }
@@ -188,6 +198,7 @@ class File : public Printable<File> {
     return import_cpps_;
   }
   auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
+  auto cpp_ast() const -> const clang::ASTUnit* { return cpp_ast_; }
   // TODO: When the AST can be created before creating `File`, initialize the
   // pointer in the constructor and remove this function. This is part of
   // https://github.com/carbon-language/carbon-lang/issues/4666
@@ -205,10 +216,6 @@ class File : public Printable<File> {
   }
   auto types() -> TypeStore& { return types_; }
   auto types() const -> const TypeStore& { return types_; }
-  auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
-  auto type_blocks() const -> const BlockValueStore<TypeBlockId>& {
-    return type_blocks_;
-  }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
   auto constant_values() -> ConstantValueStore& { return constant_values_; }
@@ -223,6 +230,13 @@ class File : public Printable<File> {
   auto expr_regions() -> ValueStore<ExprRegionId>& { return expr_regions_; }
   auto expr_regions() const -> const ValueStore<ExprRegionId>& {
     return expr_regions_;
+  }
+
+  auto clang_source_locs() -> ValueStore<ClangSourceLocId>& {
+    return clang_source_locs_;
+  }
+  auto clang_source_locs() const -> const ValueStore<ClangSourceLocId>& {
+    return clang_source_locs_;
   }
 
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
@@ -285,11 +299,15 @@ class File : public Printable<File> {
   // Storage for facet types.
   CanonicalValueStore<FacetTypeId> facet_types_;
 
-  // Storage for complete facet types.
-  CompleteFacetTypeStore complete_facet_types_;
+  // Storage for identified facet types.
+  IdentifiedFacetTypeStore identified_facet_types_;
 
   // Storage for impls.
   ImplStore impls_;
+
+  // Storage for specific interfaces, which are an individual unit of impl
+  // lookup for a single interface.
+  CanonicalValueStore<SpecificInterfaceId> specific_interfaces_;
 
   // Storage for generics.
   GenericStore generics_;
@@ -311,13 +329,9 @@ class File : public Printable<File> {
   // `Cpp` imports.
   clang::ASTUnit* cpp_ast_ = nullptr;
 
-  // Type blocks within the IR. These reference entries in types_. Storage for
-  // the data is provided by allocator_.
-  BlockValueStore<TypeBlockId> type_blocks_;
-
   // All instructions. The first entries will always be the singleton
   // instructions.
-  InstStore insts_;
+  InstStore insts_ = InstStore(this);
 
   // Storage for name scopes.
   NameScopeStore name_scopes_ = NameScopeStore(this);
@@ -348,37 +362,10 @@ class File : public Printable<File> {
   // Single-entry/single-exit regions that are referenced as units, e.g. because
   // they represent expressions.
   ValueStore<ExprRegionId> expr_regions_;
-};
 
-// The expression category of a sem_ir instruction. See /docs/design/values.md
-// for details.
-enum class ExprCategory : int8_t {
-  // This instruction does not correspond to an expression, and as such has no
-  // category.
-  NotExpr,
-  // The category of this instruction is not known due to an error.
-  Error,
-  // This instruction represents a value expression.
-  Value,
-  // This instruction represents a durable reference expression, that denotes an
-  // object that outlives the current full expression context.
-  DurableRef,
-  // This instruction represents an ephemeral reference expression, that denotes
-  // an object that does not outlive the current full expression context.
-  EphemeralRef,
-  // This instruction represents an initializing expression, that describes how
-  // to initialize an object.
-  Initializing,
-  // This instruction represents a syntactic combination of expressions that are
-  // permitted to have different expression categories. This is used for tuple
-  // and struct literals, where the subexpressions for different elements can
-  // have different categories.
-  Mixed,
-  Last = Mixed
+  // C++ source locations for C++ interop.
+  ValueStore<ClangSourceLocId> clang_source_locs_;
 };
-
-// Returns the expression category for an instruction.
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 }  // namespace Carbon::SemIR
 

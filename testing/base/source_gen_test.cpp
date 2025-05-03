@@ -7,6 +7,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include "common/set.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/driver/driver.h"
@@ -70,7 +72,7 @@ TEST(SourceGenTest, Identifiers) {
   // Check that repeated calls are different in interesting ways, but have the
   // exact same total bytes.
   ssize_t idents_size_sum = SumSizes(idents);
-  for ([[maybe_unused]] int _ : llvm::seq(10)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(10)) {
     auto idents2 = gen.GetShuffledIdentifiers(1000);
     EXPECT_THAT(idents2, SizeIs(1000));
     // Should be (at least) a different shuffle of identifiers.

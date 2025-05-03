@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
+#include <array>
+#include <utility>
 #include <variant>
 
 #include "common/ostream.h"
@@ -134,17 +136,9 @@ struct Worklist {
     AddBlock(sem_ir->inst_blocks().Get(inst_block_id));
   }
 
-  auto Add(TypeBlockId type_block_id) -> void {
-    if (!type_block_id.has_value()) {
-      AddInvalid();
-      return;
-    }
-    AddBlock(sem_ir->type_blocks().Get(type_block_id));
-  }
-
   auto Add(StructTypeField field) -> void {
     Add(field.name_id);
-    Add(field.type_id);
+    Add(field.type_inst_id);
   }
 
   auto Add(StructTypeFieldsId struct_type_fields_id) -> void {
@@ -211,7 +205,11 @@ struct Worklist {
 
   auto Add(FacetTypeId facet_type_id) -> void {
     const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
-    for (auto [interface_id, specific_id] : facet_type.impls_constraints) {
+    for (auto [interface_id, specific_id] : facet_type.extend_constraints) {
+      Add(interface_id);
+      Add(specific_id);
+    }
+    for (auto [interface_id, specific_id] : facet_type.self_impls_constraints) {
       Add(interface_id);
       Add(specific_id);
     }
@@ -238,6 +236,17 @@ struct Worklist {
     const auto& specific = sem_ir->specifics().Get(specific_id);
     Add(specific.generic_id);
     Add(specific.args_id);
+  }
+
+  auto Add(SpecificInterfaceId specific_interface_id) -> void {
+    if (!specific_interface_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    const auto& interface =
+        sem_ir->specific_interfaces().Get(specific_interface_id);
+    Add(interface.interface_id);
+    Add(interface.specific_id);
   }
 
   auto Add(const llvm::APInt& value) -> void {
@@ -284,7 +293,8 @@ struct Worklist {
 
   auto Add(ImportIRInstId ir_inst_id) -> void {
     auto ir_inst = sem_ir->import_ir_insts().Get(ir_inst_id);
-    AddInFile(sem_ir->import_irs().Get(ir_inst.ir_id).sem_ir, ir_inst.inst_id);
+    AddInFile(sem_ir->import_irs().Get(ir_inst.ir_id()).sem_ir,
+              ir_inst.inst_id());
   }
 
   template <typename T>
@@ -304,30 +314,33 @@ struct Worklist {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }
 
-  // Add an instruction argument to the contents of the current instruction.
+  using AddFnT = auto(Worklist& worklist, int32_t arg) -> void;
+
+  // Returns a lookup table to add an argument of the given kind. Requires a
+  // null IdKind as a parameter in order to get the type pack.
   template <typename... Types>
-  auto AddWithKind(uint64_t arg, TypeEnum<Types...> kind) -> void {
-    using AddFunction = void (*)(Worklist& worklist, uint64_t arg);
-    using Kind = decltype(kind);
+  static constexpr auto MakeAddTable(TypeEnum<Types...>* /*id_kind*/)
+      -> std::array<AddFnT*, IdKind::NumValues> {
+    std::array<AddFnT*, IdKind::NumValues> table = {};
+    ((table[IdKind::template For<Types>.ToIndex()] =
+          [](Worklist& worklist, int32_t arg) {
+            worklist.Add(Inst::FromRaw<Types>(arg));
+          }),
+     ...);
+    table[IdKind::Invalid.ToIndex()] = [](Worklist& /*worklist*/,
+                                          int32_t /*arg*/) {
+      CARBON_FATAL("Unexpected invalid argument kind");
+    };
+    table[IdKind::None.ToIndex()] = [](Worklist& /*worklist*/,
+                                       int32_t /*arg*/) {};
+    return table;
+  }
 
-    // Build a lookup table to add an argument of the given kind.
-    static constexpr std::array<AddFunction, Kind::NumTypes + 2> Table = [] {
-      std::array<AddFunction, Kind::NumTypes + 2> table;
-      table[Kind::None.ToIndex()] = [](Worklist& /*worklist*/,
-                                       uint64_t /*arg*/) {};
-      table[Kind::Invalid.ToIndex()] = [](Worklist& /*worklist*/,
-                                          uint64_t /*arg*/) {
-        CARBON_FATAL("Unexpected invalid argument kind");
-      };
-      ((table[Kind::template For<Types>.ToIndex()] =
-            [](Worklist& worklist, uint64_t arg) {
-              return worklist.Add(Inst::FromRaw<Types>(arg));
-            }),
-       ...);
-      return table;
-    }();
+  // Add an instruction argument to the contents of the current instruction.
+  auto AddWithKind(Inst::ArgAndKind arg) -> void {
+    static constexpr auto Table = MakeAddTable(static_cast<IdKind*>(nullptr));
 
-    Table[kind.ToIndex()](*this, arg);
+    Table[arg.kind().ToIndex()](*this, arg.value());
   }
 
   // Ensure all the instructions on the todo list have fingerprints. To avoid a
@@ -388,20 +401,19 @@ struct Worklist {
       // finish that work and process this instruction again, and if not, we'll
       // pop the instruction at the end of the loop.
       auto inst = next_sem_ir->insts().Get(next_inst_id);
-      auto [arg0_kind, arg1_kind] = inst.ArgKinds();
 
       // Add the instruction's fields to the contents.
       Add(inst.kind());
 
       // Don't include the type if it's `type` or `<error>`, because those types
       // are self-referential.
-      if (inst.type_id() != TypeType::SingletonTypeId &&
-          inst.type_id() != ErrorInst::SingletonTypeId) {
+      if (inst.type_id() != TypeType::TypeId &&
+          inst.type_id() != ErrorInst::TypeId) {
         Add(inst.type_id());
       }
 
-      AddWithKind(inst.arg0(), arg0_kind);
-      AddWithKind(inst.arg1(), arg1_kind);
+      AddWithKind(inst.arg0_and_kind());
+      AddWithKind(inst.arg1_and_kind());
 
       // If we didn't add any work, we have a fingerprint for this instruction;
       // pop it from the todo list. Otherwise, we leave it on the todo list so

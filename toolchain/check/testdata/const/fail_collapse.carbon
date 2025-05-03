@@ -13,7 +13,7 @@
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(p: const (const i32)**) -> i32** {
-  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+7]]:3: error: cannot implicitly convert value of type `const i32**` to `i32**` [ConversionFailure]
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const i32**` to `i32**` [ConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_collapse.carbon:[[@LINE+4]]:3: note: type `const i32**` does not implement interface `Core.ImplicitAs(i32**)` [MissingImplInMemberAccessNote]
@@ -27,14 +27,20 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr.36b: type = ptr_type %const [concrete]
 // CHECK:STDOUT:   %ptr.3bc: type = ptr_type %ptr.36b [concrete]
+// CHECK:STDOUT:   %pattern_type.1d4: type = pattern_type %ptr.3bc [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr.5d5: type = ptr_type %ptr.235 [concrete]
+// CHECK:STDOUT:   %pattern_type.d91: type = pattern_type %ptr.5d5 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -44,6 +50,8 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -53,23 +61,23 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %p.patt: %ptr.3bc = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.3bc = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %ptr.5d5 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.5d5 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.1d4 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.1d4 = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d91 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d91 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %ptr.loc15_37: type = ptr_type %ptr.235 [concrete = constants.%ptr.5d5]
+// CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32.loc15_33 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %ptr.loc15_37: type = ptr_type %ptr.loc15_36 [concrete = constants.%ptr.5d5]
 // CHECK:STDOUT:     %p.param: %ptr.3bc = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %ptr.loc15_27 [concrete = constants.%ptr.3bc] {
 // CHECK:STDOUT:       %int_32.loc15_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc15_16: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc15_9: type = const_type %const [concrete = constants.%const]
-// CHECK:STDOUT:       %ptr.loc15_26: type = ptr_type %const [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:       %ptr.loc15_27: type = ptr_type %ptr.36b [concrete = constants.%ptr.3bc]
+// CHECK:STDOUT:       %const.loc15_16: type = const_type %i32.loc15_22 [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc15_9: type = const_type %const.loc15_16 [concrete = constants.%const]
+// CHECK:STDOUT:       %ptr.loc15_26: type = ptr_type %const.loc15_9 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:       %ptr.loc15_27: type = ptr_type %ptr.loc15_26 [concrete = constants.%ptr.3bc]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.3bc = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.5d5 = out_param call_param1
@@ -77,7 +85,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %ptr.3bc) -> %ptr.5d5 {
+// CHECK:STDOUT: fn @G(%p.param: %ptr.3bc) -> %ptr.5d5 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.3bc = name_ref p, %p
 // CHECK:STDOUT:   %.loc23: %ptr.5d5 = converted %p.ref, <error> [concrete = <error>]

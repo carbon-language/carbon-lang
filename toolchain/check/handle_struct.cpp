@@ -14,7 +14,7 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::StructLiteralStartId node_id)
     -> bool {
-  context.scope_stack().Push();
+  context.scope_stack().PushForSameRegion();
   context.node_stack().Push(node_id);
   context.struct_type_fields_stack().PushArray();
   context.param_and_arg_refs_stack().Push();
@@ -23,7 +23,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::StructTypeLiteralStartId node_id)
     -> bool {
-  context.scope_stack().Push();
+  context.scope_stack().PushForSameRegion();
   context.node_stack().Push(node_id);
   context.struct_type_fields_stack().PushArray();
   return true;
@@ -54,9 +54,10 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   // Store the name for the type.
-  auto value_type_id = context.insts().Get(value_inst_id).type_id();
+  auto value_type_inst_id =
+      context.types().GetInstId(context.insts().Get(value_inst_id).type_id());
   context.struct_type_fields_stack().AppendToTop(
-      {.name_id = name_id, .type_id = value_type_id});
+      {.name_id = name_id, .type_inst_id = value_type_inst_id});
 
   // Push the value back on the stack as an argument.
   context.node_stack().Push(node_id, value_inst_id);
@@ -66,12 +67,12 @@ auto HandleParseNode(Context& context, Parse::StructLiteralFieldId node_id)
 auto HandleParseNode(Context& context,
                      Parse::StructTypeLiteralFieldId /*node_id*/) -> bool {
   auto [type_node, type_id] = context.node_stack().PopExprWithNodeId();
-  SemIR::TypeId cast_type_id = ExprAsType(context, type_node, type_id).type_id;
+  auto cast_type_inst_id = ExprAsType(context, type_node, type_id).inst_id;
   // Get the name while leaving it on the stack.
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
   context.struct_type_fields_stack().AppendToTop(
-      {.name_id = name_id, .type_id = cast_type_id});
+      {.name_id = name_id, .type_inst_id = cast_type_inst_id});
   return true;
 }
 
@@ -87,7 +88,7 @@ static auto DiagnoseDuplicateNames(
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
                         "duplicated field name `{1}` in "
                         "{0:struct type literal|struct literal}",
-                        BoolAsSelect, SemIR::NameId);
+                        Diagnostics::BoolAsSelect, SemIR::NameId);
       CARBON_DIAGNOSTIC(StructNamePrevious, Note,
                         "field with the same name here");
       context.emitter()
@@ -141,7 +142,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
 
   if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
                              /*is_struct_type_literal=*/false)) {
-    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
   } else {
     auto type_id = GetStructType(
         context, context.struct_type_fields().AddCanonical(fields));
@@ -167,12 +168,12 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
 
   if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
                              /*is_struct_type_literal=*/true)) {
-    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
   } else {
     auto fields_id = context.struct_type_fields().AddCanonical(fields);
     AddInstAndPush<SemIR::StructType>(
         context, node_id,
-        {.type_id = SemIR::TypeType::SingletonTypeId, .fields_id = fields_id});
+        {.type_id = SemIR::TypeType::TypeId, .fields_id = fields_id});
   }
 
   context.struct_type_fields_stack().PopArray();

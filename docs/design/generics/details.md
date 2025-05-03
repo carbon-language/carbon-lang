@@ -5106,7 +5106,8 @@ The declaration of an interface implementation consists of:
 -   the keyword introducer `impl`,
 -   an optional `forall` followed by a deduced parameter list in square brackets
     `[`...`]`,
--   a type, including an optional [argument list](#parameterized-types),
+-   an optional type, including an optional
+    [argument list](#parameterized-types),
 -   the keyword `as`, and
 -   a [facet type](#facet-types), including an optional
     [argument list](#parameterized-interfaces) and
@@ -5114,8 +5115,14 @@ The declaration of an interface implementation consists of:
     [associated constants](#associated-constants) including
     [associated facets](#associated-facets).
 
+**Note:** The type before the `as` is required except in class scope, where it
+defaults to `Self` as described in the
+[matching and agreeing section](#matching-and-agreeing).
+
 **Note:** The `extend` keyword, when present, is not part of the `impl`
-declaration. It precedes the `impl` declaration in class scope.
+declaration. It precedes the `impl` declaration in class scope. When the
+`extend` keyword is present, the `forall` and type clauses before the `as`
+keyword must be omitted.
 
 An implementation of an interface for a type may be forward declared, subject to
 these rules:

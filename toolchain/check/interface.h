@@ -20,14 +20,14 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 // Gets the self specific of a generic declaration that is an interface member,
 // given a specific for the interface plus a type to use as `Self`.
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
-    Context& context, SemIRLoc loc, SemIR::SpecificId interface_specific_id,
-    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id,
-    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id)
-    -> SemIR::SpecificId;
+    Context& context, SemIR::LocId loc_id,
+    SemIR::SpecificId interface_specific_id, SemIR::GenericId generic_id,
+    SemIR::SpecificId enclosing_specific_id, SemIR::TypeId self_type_id,
+    SemIR::InstId witness_inst_id) -> SemIR::SpecificId;
 
 // Gets the type of the specified associated entity, given the specific for the
 // interface and the type of `Self`.
-auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
+auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
                                         SemIR::SpecificId interface_specific_id,
                                         SemIR::InstId decl_id,
                                         SemIR::TypeId self_type_id,

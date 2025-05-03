@@ -22,9 +22,9 @@ auto HandleRequirementBegin(Context& context) -> void {
                     /*has_error=*/false);
     context.AddNode(NodeKind::DesignatorExpr, period, /*has_error=*/false);
     state.token = context.Consume();
-    context.PushState(state, State::RequirementOperatorFinish);
+    context.PushState(state, StateKind::RequirementOperatorFinish);
   } else {
-    context.PushState(State::RequirementOperator);
+    context.PushState(StateKind::RequirementOperator);
   }
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
@@ -63,7 +63,7 @@ auto HandleRequirementOperator(Context& context) -> void {
     }
   }
   state.token = context.Consume();
-  context.PushState(state, State::RequirementOperatorFinish);
+  context.PushState(state, StateKind::RequirementOperatorFinish);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
 
@@ -97,7 +97,7 @@ auto HandleRequirementOperatorFinish(Context& context) -> void {
   }
   if (auto token = context.ConsumeIf(Lex::TokenKind::And)) {
     context.AddNode(NodeKind::RequirementAnd, *token, /*has_error=*/false);
-    context.PushState(State::RequirementBegin);
+    context.PushState(StateKind::RequirementBegin);
   }
 }
 

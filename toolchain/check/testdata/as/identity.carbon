@@ -34,9 +34,11 @@ fn Initializing() {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %Value.type: type = fn_type @Value [concrete]
 // CHECK:STDOUT:   %Value: %Value.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %Reference.type: type = fn_type @Reference [concrete]
 // CHECK:STDOUT:   %Reference: %Reference.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
@@ -64,27 +66,27 @@ fn Initializing() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %Value.decl: %Value.type = fn_decl @Value [concrete = constants.%Value] {
-// CHECK:STDOUT:     %n.patt: %X = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %X = value_param_pattern %n.patt, call_param0
+// CHECK:STDOUT:     %n.patt: %pattern_type.019 = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.019 = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %X = value_param call_param0
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %n: %X = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [concrete = constants.%Reference] {
-// CHECK:STDOUT:     %p.patt: %ptr.d17 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.d17 = value_param_pattern %p.patt, call_param0
+// CHECK:STDOUT:     %p.patt: %pattern_type.1c6 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.1c6 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.d17 = value_param call_param0
 // CHECK:STDOUT:     %.loc21: type = splice_block %ptr.loc21 [concrete = constants.%ptr.d17] {
 // CHECK:STDOUT:       %X.ref.loc21: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:       %ptr.loc21: type = ptr_type %X [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:       %ptr.loc21: type = ptr_type %X.ref.loc21 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.d17 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
-// CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type.019 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.019 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
@@ -94,6 +96,7 @@ fn Initializing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -101,10 +104,10 @@ fn Initializing() {
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Value(%n.param_patt: %X) {
+// CHECK:STDOUT: fn @Value(%n.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %m.patt: %X = binding_pattern m
+// CHECK:STDOUT:     %m.patt: %pattern_type.019 = binding_pattern m [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
 // CHECK:STDOUT:   %X.ref.loc18_19: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -113,10 +116,10 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Reference(%p.param_patt: %ptr.d17) {
+// CHECK:STDOUT: fn @Reference(%p.param: %ptr.d17) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %q.patt: %ptr.d17 = binding_pattern q
+// CHECK:STDOUT:     %q.patt: %pattern_type.1c6 = binding_pattern q [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: %ptr.d17 = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_17: ref %X = deref %p.ref
@@ -124,19 +127,19 @@ fn Initializing() {
 // CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc22_17
 // CHECK:STDOUT:   %.loc22_11: type = splice_block %ptr.loc22 [concrete = constants.%ptr.d17] {
 // CHECK:STDOUT:     %X.ref.loc22_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc22: type = ptr_type %X [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:     %ptr.loc22: type = ptr_type %X.ref.loc22_10 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q: %ptr.d17 = bind_name q, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %X;
+// CHECK:STDOUT: fn @Make() -> %return.param: %X;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Initializing() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %X = binding_pattern x
-// CHECK:STDOUT:     %.loc28_3.1: %X = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.019 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc28_3.1: %pattern_type.019 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var x
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]

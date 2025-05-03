@@ -5,6 +5,8 @@
 #include "toolchain/language_server/context.h"
 
 #include <memory>
+#include <optional>
+#include <utility>
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
@@ -19,26 +21,27 @@
 
 namespace Carbon::LanguageServer {
 
+namespace {
 // A consumer for turning diagnostics into a `textDocument/publishDiagnostics`
 // notification.
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics
-class PublishDiagnosticConsumer : public DiagnosticConsumer {
+class DiagnosticConsumer : public Diagnostics::Consumer {
  public:
   // Initializes params with the target file information.
-  explicit PublishDiagnosticConsumer(Context* context,
-                                     const clang::clangd::URIForFile& uri,
-                                     std::optional<int64_t> version)
+  explicit DiagnosticConsumer(Context* context,
+                              const clang::clangd::URIForFile& uri,
+                              std::optional<int64_t> version)
       : context_(context), params_{.uri = uri, .version = version} {}
 
   // Turns a diagnostic into an LSP diagnostic.
-  auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
+  auto HandleDiagnostic(Diagnostics::Diagnostic diagnostic) -> void override {
     const auto& message = diagnostic.messages[0];
     if (message.loc.filename != params_.uri.file()) {
       // `pushDiagnostic` requires diagnostics to be associated with a location
       // in the current file. Suppress diagnostics rooted in other files.
       // TODO: Consider if there's a better way to handle this.
       RawStringOstream stream;
-      StreamDiagnosticConsumer consumer(&stream);
+      Diagnostics::StreamConsumer consumer(&stream);
       consumer.HandleDiagnostic(diagnostic);
 
       CARBON_DIAGNOSTIC(LanguageServerDiagnosticInWrongFile, Warning,
@@ -68,7 +71,7 @@ class PublishDiagnosticConsumer : public DiagnosticConsumer {
  private:
   // Returns the LSP range for a diagnostic. Note that Carbon uses 1-based
   // numbers while LSP uses 0-based.
-  auto GetRange(const DiagnosticLoc& loc) -> clang::clangd::Range {
+  auto GetRange(const Diagnostics::Loc& loc) -> clang::clangd::Range {
     return {.start = {.line = loc.line_number - 1,
                       .character = loc.column_number - 1},
             .end = {.line = loc.line_number,
@@ -76,7 +79,7 @@ class PublishDiagnosticConsumer : public DiagnosticConsumer {
   }
 
   // Converts a diagnostic level to an LSP severity.
-  auto GetSeverity(DiagnosticLevel level) -> int {
+  auto GetSeverity(Diagnostics::Level level) -> int {
     // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity
     enum class DiagnosticSeverity {
       Error = 1,
@@ -86,9 +89,9 @@ class PublishDiagnosticConsumer : public DiagnosticConsumer {
     };
 
     switch (level) {
-      case DiagnosticLevel::Error:
+      case Diagnostics::Level::Error:
         return static_cast<int>(DiagnosticSeverity::Error);
-      case DiagnosticLevel::Warning:
+      case Diagnostics::Level::Warning:
         return static_cast<int>(DiagnosticSeverity::Warning);
       default:
         CARBON_FATAL("Unexpected diagnostic level: {0}", level);
@@ -98,6 +101,7 @@ class PublishDiagnosticConsumer : public DiagnosticConsumer {
   Context* context_;
   clang::clangd::PublishDiagnosticsParams params_;
 };
+}  // namespace
 
 auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                             llvm::StringRef text) -> void {
@@ -109,7 +113,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   source_.reset();
 
   // A consumer to gather diagnostics for the file.
-  PublishDiagnosticConsumer consumer(&context, uri_, version);
+  DiagnosticConsumer consumer(&context, uri_, version);
 
   // TODO: Make the processing asynchronous, to better handle rapid text
   // updates.
@@ -139,16 +143,16 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
     return *tree_and_subtrees_;
   };
   // TODO: Support cross-file checking when multiple files have edits.
-  llvm::SmallVector<Check::Unit> units = {{.consumer = &consumer,
-                                           .value_stores = value_stores_.get(),
-                                           .timings = nullptr,
-                                           .tree_and_subtrees_getter = getter,
-                                           .sem_ir = &sem_ir}};
+  llvm::SmallVector<Check::Unit> units = {{{.consumer = &consumer,
+                                            .value_stores = value_stores_.get(),
+                                            .timings = nullptr,
+                                            .sem_ir = &sem_ir}}};
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   // TODO: Include the prelude.
-  Check::CheckParseTrees(units, /*prelude_import=*/false, fs,
-                         context.vlog_stream(), /*fuzzing=*/false);
+  Check::CheckParseTrees(
+      units, llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
+      /*prelude_import=*/false, fs, context.vlog_stream(), /*fuzzing=*/false);
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

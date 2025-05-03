@@ -17,14 +17,14 @@ struct ImplFields {
   // This following members always have values and do not change.
 
   // The type for which the impl is implementing a constraint.
-  InstId self_id;
+  TypeInstId self_id;
   // The constraint that the impl implements.
-  InstId constraint_id;
+  TypeInstId constraint_id;
 
   // The single interface to implement from `constraint_id`.
   // The members are `None` if `constraint_id` isn't complete or doesn't
   // correspond to a single interface.
-  SemIR::SpecificInterface interface;
+  SpecificInterface interface;
 
   // The witness for the impl. This can be `BuiltinErrorInst` or an import
   // reference. Note that the entries in the witness are updated at the end of
@@ -39,6 +39,9 @@ struct ImplFields {
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::None;
 
+  // Whether the impl declaration is marked `final`.
+  bool is_final;
+
   // The following members are set at the `}` of the impl definition.
   bool defined = false;
 };
@@ -49,16 +52,16 @@ struct Impl : public EntityWithParamsBase,
               public ImplFields,
               public Printable<Impl> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{self: " << self_id << ", constraint: " << constraint_id << "}";
+    out << "{self: " << self_id << ", constraint: " << constraint_id
+        << ", witness: " << witness_id << "}";
   }
 
-  // Determines whether this impl has been fully defined. This is false until we
-  // reach the `}` of the impl definition.
-  auto is_defined() const -> bool { return defined; }
+  // This is false until we reach the `}` of the impl definition.
+  auto is_complete() const -> bool { return defined; }
 
   // Determines whether this impl's definition has begun but not yet ended.
   auto is_being_defined() const -> bool {
-    return has_definition_started() && !is_defined();
+    return has_definition_started() && !is_complete();
   }
 };
 

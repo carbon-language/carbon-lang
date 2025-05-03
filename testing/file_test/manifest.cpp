@@ -4,6 +4,8 @@
 
 #include "testing/file_test/manifest.h"
 
+#include <string>
+
 // The test manifest, produced by `manifest_as_cpp`.
 // NOLINTNEXTLINE(readability-identifier-naming): Constant in practice.
 extern const char* CarbonFileTestManifest[];

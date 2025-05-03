@@ -53,7 +53,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "namespace.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_wrong_name_in_namespace.carbon:[[@LINE+4]]:3: error: member name `not_foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_namespace_wrong_name_in_namespace.carbon:[[@LINE+4]]:3: error: member name `not_foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.my_namespace.not_foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -67,7 +67,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "namespace.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_use_different_name.carbon:[[@LINE+4]]:3: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_namespace_use_different_name.carbon:[[@LINE+4]]:3: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.not_my_namespace.foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -85,7 +85,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "namespace_special_name_decl.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_special_name_decl.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_import_namespace_special_name_decl.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.base.foo();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -144,7 +144,7 @@ fn MyF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_namespaces.carbon
 // CHECK:STDOUT:
@@ -215,11 +215,11 @@ fn MyF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo1[]();
+// CHECK:STDOUT: fn @foo1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo2[]();
+// CHECK:STDOUT: fn @foo2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo3[]();
+// CHECK:STDOUT: fn @foo3();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_namespace_wrong_name_in_namespace.carbon
 // CHECK:STDOUT:
@@ -365,5 +365,5 @@ fn MyF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo[]();
+// CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:

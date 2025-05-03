@@ -6,16 +6,18 @@
 
 namespace Carbon::Check {
 
-auto GenericRegionStack::Push() -> void { dependent_insts_stack_.PushArray(); }
-
-auto GenericRegionStack::Pop() -> void { dependent_insts_stack_.PopArray(); }
-
-auto GenericRegionStack::AddDependentInst(DependentInst inst) -> void {
-  dependent_insts_stack_.AppendToTop(inst);
+auto GenericRegionStack::Push(PendingGeneric generic) -> void {
+  pending_generic_ids_.push_back(generic);
+  pending_eval_block_stack_.PushArray();
+  dependent_inst_stack_.PushArray();
+  constants_in_generic_stack_.emplace_back();
 }
 
-auto GenericRegionStack::PeekDependentInsts() -> llvm::ArrayRef<DependentInst> {
-  return dependent_insts_stack_.PeekArray();
+auto GenericRegionStack::Pop() -> void {
+  pending_generic_ids_.pop_back();
+  pending_eval_block_stack_.PopArray();
+  dependent_inst_stack_.PopArray();
+  constants_in_generic_stack_.pop_back();
 }
 
 }  // namespace Carbon::Check

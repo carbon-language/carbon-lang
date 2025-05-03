@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -45,22 +45,13 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "inst",
-    srcs = ["inst.cpp"],
-    hdrs = ["inst.h"],
+cc_test(
+    name = "ids_test",
+    srcs = ["ids_test.cpp"],
     deps = [
-        ":block_value_store",
         ":typed_insts",
-        "//common:check",
-        "//common:hashing",
-        "//common:ostream",
-        "//common:raw_string_ostream",
-        "//common:struct_reflection",
-        "//toolchain/base:index_base",
-        "//toolchain/base:int",
-        "//toolchain/base:value_store",
-        "@llvm-project//llvm:Support",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -75,6 +66,8 @@ cc_library(
         "function.cpp",
         "generic.cpp",
         "impl.cpp",
+        "import_ir.cpp",
+        "inst.cpp",
         "name.cpp",
         "name_scope.cpp",
         "pattern.cpp",
@@ -96,6 +89,7 @@ cc_library(
         "impl.h",
         "import_cpp.h",
         "import_ir.h",
+        "inst.h",
         "interface.h",
         "name.h",
         "name_scope.h",
@@ -109,7 +103,6 @@ cc_library(
     ],
     deps = [
         ":block_value_store",
-        ":inst",
         ":typed_insts",
         "//common:check",
         "//common:enum_base",
@@ -119,6 +112,8 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//common:set",
+        "//common:struct_reflection",
+        "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
@@ -135,14 +130,15 @@ cc_library(
 )
 
 cc_library(
-    name = "stringify_type",
-    srcs = ["stringify_type.cpp"],
-    hdrs = ["stringify_type.h"],
+    name = "stringify",
+    srcs = ["stringify.cpp"],
+    hdrs = ["stringify.h"],
     deps = [
         ":file",
         ":typed_insts",
         "//common:check",
         "//common:raw_string_ostream",
+        "//common:variant_helpers",
         "//toolchain/base:kind_switch",
         "@llvm-project//llvm:Support",
     ],
@@ -177,6 +173,7 @@ cc_library(
     srcs = ["formatter.cpp"],
     hdrs = ["formatter.h"],
     deps = [
+        ":expr_info",
         ":file",
         ":inst_namer",
         ":typed_insts",
@@ -212,13 +209,26 @@ cc_library(
 )
 
 cc_library(
+    name = "expr_info",
+    srcs = ["expr_info.cpp"],
+    hdrs = ["expr_info.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//toolchain/base:kind_switch",
+    ],
+)
+
+cc_library(
     name = "dump",
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],
     deps = [
         ":file",
-        ":stringify_type",
+        ":stringify",
         "//common:ostream",
+        "//common:raw_string_ostream",
     ],
     # Always link dump methods so they are callable from a debugger
     # even though they are never called.
@@ -241,7 +251,7 @@ cc_test(
     size = "small",
     srcs = ["typed_insts_test.cpp"],
     deps = [
-        ":inst",
+        ":file",
         ":typed_insts",
         "//testing/base:gtest_main",
         "@googletest//:gtest",

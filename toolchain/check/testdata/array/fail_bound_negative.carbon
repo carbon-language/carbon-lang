@@ -10,9 +10,9 @@
 
 fn Negate(n: i32) -> i32 = "int.snegate";
 
-// CHECK:STDERR: fail_bound_negative.carbon:[[@LINE+4]]:8: error: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR: fail_bound_negative.carbon:[[@LINE+4]]:19: error: array bound of -1 is negative [ArrayBoundNegative]
 // CHECK:STDERR: var a: array(i32, Negate(1));
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                   ^~~~~~~~~
 // CHECK:STDERR:
 var a: array(i32, Negate(1));
 
@@ -20,29 +20,40 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.1 [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type.15b = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2fd: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
+// CHECK:STDOUT:   %From: Core.IntLiteral = bind_symbolic_name From, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.708: type = fn_type @Convert.3, @impl.971(%From) [symbolic]
+// CHECK:STDOUT:   %Convert.c68: %Convert.type.708 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Convert.type.71e: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [concrete]
-// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%Core.import_ref.a5b), @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.2b8: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%impl_witness.d39) [concrete]
-// CHECK:STDOUT:   %.be7: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.2b8 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.921: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
+// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.921 [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn.b6f: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn.b6f [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_-1.251: %i32 = int_value -1 [concrete]
-// CHECK:STDOUT:   %impl_witness.023: <witness> = impl_witness (imports.%Core.import_ref.85c), @impl.971(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.a11: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1d9, @impl.971(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.4ad: type = fn_type @Convert.3, @impl.971(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.960: %Convert.type.4ad = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.ffe: %ImplicitAs.type.2fd = facet_value %i32, (%impl_witness.023) [concrete]
-// CHECK:STDOUT:   %.4d8: type = fn_type_with_self_type %Convert.type.71e, %ImplicitAs.facet.ffe [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.f49: %ImplicitAs.type.2fd = facet_value %i32, (%ImplicitAs.impl_witness.a11) [concrete]
+// CHECK:STDOUT:   %.0ea: type = fn_type_with_self_type %Convert.type.71e, %ImplicitAs.facet.f49 [concrete]
 // CHECK:STDOUT:   %Convert.bound.75d: <bound method> = bound_method %int_-1.251, %Convert.960 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn.8a8: <specific function> = specific_function %Convert.960, @Convert.3(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.245: <bound method> = bound_method %int_-1.251, %Convert.specific_fn.8a8 [concrete]
@@ -56,6 +67,12 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.85c: @impl.971.%Convert.type (%Convert.type.708) = import_ref Core//prelude/types/int, loc23_44, loaded [symbolic = @impl.971.%Convert (constants.%Convert.c68)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1d9 = impl_witness_table (%Core.import_ref.85c), @impl.971 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -66,10 +83,10 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Negate.decl: %Negate.type.15b = fn_decl @Negate.1 [concrete = constants.%Negate] {
-// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -83,8 +100,8 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc17_1: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc17_1: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %.loc17_28: type = splice_block %array_type [concrete = <error>] {
@@ -92,7 +109,7 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Negate.ref: %Negate.type.15b = name_ref Negate, %Negate.decl [concrete = constants.%Negate]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %impl.elem0.loc17_26: %.be7 = impl_witness_access constants.%impl_witness.d39, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:     %impl.elem0.loc17_26: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc17_26.1: <bound method> = bound_method %int_1, %impl.elem0.loc17_26 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:     %specific_fn.loc17_26: <specific function> = specific_function %impl.elem0.loc17_26, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn.b6f]
 // CHECK:STDOUT:     %bound_method.loc17_26.2: <bound method> = bound_method %int_1, %specific_fn.loc17_26 [concrete = constants.%bound_method.9a1]
@@ -100,7 +117,7 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:     %.loc17_26.1: %i32 = value_of_initializer %int.convert_checked.loc17_26 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc17_26.2: %i32 = converted %int_1, %.loc17_26.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %int.snegate: init %i32 = call %Negate.ref(%.loc17_26.2) [concrete = constants.%int_-1.251]
-// CHECK:STDOUT:     %impl.elem0.loc17_27: %.4d8 = impl_witness_access constants.%impl_witness.023, element0 [concrete = constants.%Convert.960]
+// CHECK:STDOUT:     %impl.elem0.loc17_27: %.0ea = impl_witness_access constants.%ImplicitAs.impl_witness.a11, element0 [concrete = constants.%Convert.960]
 // CHECK:STDOUT:     %bound_method.loc17_27.1: <bound method> = bound_method %int.snegate, %impl.elem0.loc17_27 [concrete = constants.%Convert.bound.75d]
 // CHECK:STDOUT:     %specific_fn.loc17_27: <specific function> = specific_function %impl.elem0.loc17_27, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn.8a8]
 // CHECK:STDOUT:     %bound_method.loc17_27.2: <bound method> = bound_method %int.snegate, %specific_fn.loc17_27 [concrete = constants.%bound_method.245]
@@ -114,5 +131,5 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate.1(%n.param_patt: %i32) -> %i32 = "int.snegate";
+// CHECK:STDOUT: fn @Negate.1(%n.param: %i32) -> %i32 = "int.snegate";
 // CHECK:STDOUT:

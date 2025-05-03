@@ -4,13 +4,20 @@
 
 #include "toolchain/check/subst.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
 namespace Carbon::Check {
+
+auto SubstInstCallbacks::RebuildType(SemIR::TypeInstId type_inst_id) const
+    -> SemIR::TypeId {
+  return context().types().GetTypeIdForTypeInstId(type_inst_id);
+}
 
 namespace {
 
@@ -60,7 +67,7 @@ class Worklist {
 
 // Pushes the specified operand onto the worklist.
 static auto PushOperand(Context& context, Worklist& worklist,
-                        SemIR::IdKind kind, int32_t arg) -> void {
+                        SemIR::Inst::ArgAndKind arg) -> void {
   auto push_block = [&](SemIR::InstBlockId block_id) {
     for (auto inst_id :
          context.inst_blocks().Get(SemIR::InstBlockId(block_id))) {
@@ -74,49 +81,49 @@ static auto PushOperand(Context& context, Worklist& worklist,
     }
   };
 
-  switch (kind) {
-    case SemIR::IdKind::For<SemIR::InstId>:
-    case SemIR::IdKind::For<SemIR::MetaInstId>:
-      if (SemIR::InstId inst_id(arg); inst_id.has_value()) {
+  CARBON_KIND_SWITCH(arg) {
+    case CARBON_KIND(SemIR::InstId inst_id): {
+      if (inst_id.has_value()) {
         worklist.Push(inst_id);
       }
       break;
-    case SemIR::IdKind::For<SemIR::TypeId>:
-      if (SemIR::TypeId type_id(arg); type_id.has_value()) {
-        worklist.Push(context.types().GetInstId(type_id));
-      }
-      break;
-    case SemIR::IdKind::For<SemIR::InstBlockId>:
-      push_block(SemIR::InstBlockId(arg));
-      break;
-    case SemIR::IdKind::For<SemIR::StructTypeFieldsId>: {
-      for (auto field :
-           context.struct_type_fields().Get(SemIR::StructTypeFieldsId(arg))) {
-        worklist.Push(context.types().GetInstId(field.type_id));
+    }
+    case CARBON_KIND(SemIR::TypeInstId inst_id): {
+      if (inst_id.has_value()) {
+        worklist.Push(inst_id);
       }
       break;
     }
-    case SemIR::IdKind::For<SemIR::TypeBlockId>:
-      for (auto type_id : context.type_blocks().Get(SemIR::TypeBlockId(arg))) {
-        worklist.Push(context.types().GetInstId(type_id));
+    case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
+      push_block(inst_block_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::StructTypeFieldsId fields_id): {
+      for (auto field : context.struct_type_fields().Get(fields_id)) {
+        worklist.Push(field.type_inst_id);
       }
       break;
-    case SemIR::IdKind::For<SemIR::SpecificId>:
-      push_specific(SemIR::SpecificId(arg));
+    }
+    case CARBON_KIND(SemIR::SpecificId specific_id): {
+      push_specific(specific_id);
       break;
-    case SemIR::IdKind::For<SemIR::FacetTypeId>: {
-      const auto& facet_type_info =
-          context.facet_types().Get(SemIR::FacetTypeId(arg));
-      for (auto interface : facet_type_info.impls_constraints) {
+    }
+    case CARBON_KIND(SemIR::SpecificInterfaceId interface_id): {
+      auto interface = context.specific_interfaces().Get(interface_id);
+      push_specific(interface.specific_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
+      const auto& facet_type_info = context.facet_types().Get(facet_type_id);
+      for (auto interface : facet_type_info.extend_constraints) {
+        push_specific(interface.specific_id);
+      }
+      for (auto interface : facet_type_info.self_impls_constraints) {
         push_specific(interface.specific_id);
       }
       for (auto rewrite : facet_type_info.rewrite_constraints) {
-        auto lhs_inst_id =
-            context.constant_values().GetInstId(rewrite.lhs_const_id);
-        auto rhs_inst_id =
-            context.constant_values().GetInstId(rewrite.rhs_const_id);
-        worklist.Push(lhs_inst_id);
-        worklist.Push(rhs_inst_id);
+        worklist.Push(rewrite.lhs_id);
+        worklist.Push(rewrite.rhs_id);
       }
       // TODO: Process other requirements as well.
       break;
@@ -131,19 +138,19 @@ static auto PushOperand(Context& context, Worklist& worklist,
 static auto ExpandOperands(Context& context, Worklist& worklist,
                            SemIR::InstId inst_id) -> void {
   auto inst = context.insts().Get(inst_id);
-  auto kinds = inst.ArgKinds();
-  PushOperand(context, worklist, SemIR::IdKind::For<SemIR::TypeId>,
-              inst.type_id().index);
-  PushOperand(context, worklist, kinds.first, inst.arg0());
-  PushOperand(context, worklist, kinds.second, inst.arg1());
+  if (inst.type_id().has_value()) {
+    worklist.Push(context.types().GetInstId(inst.type_id()));
+  }
+  PushOperand(context, worklist, inst.arg0_and_kind());
+  PushOperand(context, worklist, inst.arg1_and_kind());
 }
 
 // Pops the specified operand from the worklist and returns it.
-static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
-                       int32_t arg) -> int32_t {
+static auto PopOperand(Context& context, Worklist& worklist,
+                       SemIR::Inst::ArgAndKind arg) -> int32_t {
   auto pop_block_id = [&](SemIR::InstBlockId old_inst_block_id) {
     auto size = context.inst_blocks().Get(old_inst_block_id).size();
-    SemIR::CopyOnWriteInstBlock new_inst_block(context.sem_ir(),
+    SemIR::CopyOnWriteInstBlock new_inst_block(&context.sem_ir(),
                                                old_inst_block_id);
     for (auto i : llvm::reverse(llvm::seq(size))) {
       new_inst_block.Set(i, worklist.Pop());
@@ -160,75 +167,80 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
     return context.specifics().GetOrAdd(specific.generic_id, args_id);
   };
 
-  switch (kind) {
-    case SemIR::IdKind::For<SemIR::InstId>:
-    case SemIR::IdKind::For<SemIR::MetaInstId>: {
-      SemIR::InstId inst_id(arg);
+  CARBON_KIND_SWITCH(arg) {
+    case CARBON_KIND(SemIR::InstId inst_id): {
       if (!inst_id.has_value()) {
-        return arg;
+        return arg.value();
       }
       return worklist.Pop().index;
     }
-    case SemIR::IdKind::For<SemIR::TypeId>: {
-      SemIR::TypeId type_id(arg);
-      if (!type_id.has_value()) {
-        return arg;
+    case CARBON_KIND(SemIR::TypeInstId inst_id): {
+      if (!inst_id.has_value()) {
+        return arg.value();
       }
-      return context.types().GetTypeIdForTypeInstId(worklist.Pop()).index;
+      return worklist.Pop().index;
     }
-    case SemIR::IdKind::For<SemIR::InstBlockId>: {
-      return pop_block_id(SemIR::InstBlockId(arg)).index;
+    case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
+      return pop_block_id(inst_block_id).index;
     }
-    case SemIR::IdKind::For<SemIR::StructTypeFieldsId>: {
-      SemIR::StructTypeFieldsId old_fields_id(arg);
+    case CARBON_KIND(SemIR::StructTypeFieldsId old_fields_id): {
       auto old_fields = context.struct_type_fields().Get(old_fields_id);
-      SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(context.sem_ir(),
+      SemIR::CopyOnWriteStructTypeFieldsBlock new_fields(&context.sem_ir(),
                                                          old_fields_id);
       for (auto i : llvm::reverse(llvm::seq(old_fields.size()))) {
-        new_fields.Set(i, {.name_id = old_fields[i].name_id,
-                           .type_id = context.types().GetTypeIdForTypeInstId(
-                               worklist.Pop())});
+        new_fields.Set(
+            i,
+            {.name_id = old_fields[i].name_id,
+             .type_inst_id = context.types().GetAsTypeInstId(worklist.Pop())});
       }
       return new_fields.GetCanonical().index;
     }
-    case SemIR::IdKind::For<SemIR::TypeBlockId>: {
-      SemIR::TypeBlockId old_type_block_id(arg);
-      auto size = context.type_blocks().Get(old_type_block_id).size();
-      SemIR::CopyOnWriteTypeBlock new_type_block(context.sem_ir(),
-                                                 old_type_block_id);
-      for (auto i : llvm::reverse(llvm::seq(size))) {
-        new_type_block.Set(
-            i, context.types().GetTypeIdForTypeInstId(worklist.Pop()));
-      }
-      return new_type_block.GetCanonical().index;
+    case CARBON_KIND(SemIR::SpecificId specific_id): {
+      return pop_specific(specific_id).index;
     }
-    case SemIR::IdKind::For<SemIR::SpecificId>: {
-      return pop_specific(SemIR::SpecificId(arg)).index;
+    case CARBON_KIND(SemIR::SpecificInterfaceId interface_id): {
+      auto interface = context.specific_interfaces().Get(interface_id);
+      auto specific_id = pop_specific(interface.specific_id);
+      return context.specific_interfaces()
+          .Add({
+              .interface_id = interface.interface_id,
+              .specific_id = specific_id,
+          })
+          .index;
     }
-    case SemIR::IdKind::For<SemIR::FacetTypeId>: {
+    case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
       const auto& old_facet_type_info =
-          context.facet_types().Get(SemIR::FacetTypeId(arg));
+          context.facet_types().Get(facet_type_id);
       SemIR::FacetTypeInfo new_facet_type_info;
       // Since these were added to a stack, we get them back in reverse order.
       new_facet_type_info.rewrite_constraints.resize(
           old_facet_type_info.rewrite_constraints.size(),
           SemIR::FacetTypeInfo::RewriteConstraint::None);
-      for (auto i : llvm::reverse(
-               llvm::seq(old_facet_type_info.rewrite_constraints.size()))) {
-        auto rhs_id = context.constant_values().Get(worklist.Pop());
-        auto lhs_id = context.constant_values().Get(worklist.Pop());
-        new_facet_type_info.rewrite_constraints[i] = {.lhs_const_id = lhs_id,
-                                                      .rhs_const_id = rhs_id};
+      for (auto& new_constraint :
+           llvm::reverse(new_facet_type_info.rewrite_constraints)) {
+        auto rhs_id = worklist.Pop();
+        auto lhs_id = worklist.Pop();
+        new_constraint = {.lhs_id = lhs_id, .rhs_id = rhs_id};
       }
-      new_facet_type_info.impls_constraints.resize(
-          old_facet_type_info.impls_constraints.size(),
+      new_facet_type_info.self_impls_constraints.resize(
+          old_facet_type_info.self_impls_constraints.size(),
           SemIR::SpecificInterface::None);
-      for (auto i : llvm::reverse(
-               llvm::seq(old_facet_type_info.impls_constraints.size()))) {
-        const auto& old = old_facet_type_info.impls_constraints[i];
-        new_facet_type_info.impls_constraints[i] = {
-            .interface_id = old.interface_id,
-            .specific_id = pop_specific(old.specific_id)};
+      for (auto [old_constraint, new_constraint] : llvm::reverse(
+               llvm::zip(old_facet_type_info.self_impls_constraints,
+                         new_facet_type_info.self_impls_constraints))) {
+        new_constraint = {
+            .interface_id = old_constraint.interface_id,
+            .specific_id = pop_specific(old_constraint.specific_id)};
+      }
+      new_facet_type_info.extend_constraints.resize(
+          old_facet_type_info.extend_constraints.size(),
+          SemIR::SpecificInterface::None);
+      for (auto [old_constraint, new_constraint] :
+           llvm::reverse(llvm::zip(old_facet_type_info.extend_constraints,
+                                   new_facet_type_info.extend_constraints))) {
+        new_constraint = {
+            .interface_id = old_constraint.interface_id,
+            .specific_id = pop_specific(old_constraint.specific_id)};
       }
       new_facet_type_info.other_requirements =
           old_facet_type_info.other_requirements;
@@ -236,7 +248,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       return context.facet_types().Add(new_facet_type_info).index;
     }
     default:
-      return arg;
+      return arg.value();
   }
 }
 
@@ -245,21 +257,20 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
 static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
                     const SubstInstCallbacks& callbacks) -> SemIR::InstId {
   auto inst = context.insts().Get(inst_id);
-  auto kinds = inst.ArgKinds();
 
   // Note that we pop in reverse order because we pushed them in forwards order.
-  int32_t arg1 = PopOperand(context, worklist, kinds.second, inst.arg1());
-  int32_t arg0 = PopOperand(context, worklist, kinds.first, inst.arg0());
-  int32_t type_id =
-      PopOperand(context, worklist, SemIR::IdKind::For<SemIR::TypeId>,
-                 inst.type_id().index);
-  if (type_id == inst.type_id().index && arg0 == inst.arg0() &&
-      arg1 == inst.arg1()) {
-    return inst_id;
+  int32_t arg1 = PopOperand(context, worklist, inst.arg1_and_kind());
+  int32_t arg0 = PopOperand(context, worklist, inst.arg0_and_kind());
+  auto type_id = inst.type_id().has_value()
+                     ? callbacks.RebuildType(
+                           context.types().GetAsTypeInstId(worklist.Pop()))
+                     : SemIR::TypeId::None;
+  if (type_id == inst.type_id() && arg0 == inst.arg0() && arg1 == inst.arg1()) {
+    return callbacks.ReuseUnchanged(inst_id);
   }
 
   // TODO: Do we need to require this type to be complete?
-  inst.SetType(SemIR::TypeId(type_id));
+  inst.SetType(type_id);
   inst.SetArgs(arg0, arg1);
   return callbacks.Rebuild(inst_id, inst);
 }
@@ -322,18 +333,25 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
   return worklist.back().inst_id;
 }
 
+auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
+               const SubstInstCallbacks& callbacks) -> SemIR::TypeInstId {
+  return context.types().GetAsTypeInstId(
+      SubstInst(context, static_cast<SemIR::InstId>(inst_id), callbacks));
+}
+
 namespace {
 // Callbacks for performing substitution of a set of Substitutions into a
 // symbolic constant.
 class SubstConstantCallbacks final : public SubstInstCallbacks {
  public:
-  SubstConstantCallbacks(Context& context, Substitutions substitutions)
-      : context_(context), substitutions_(substitutions) {}
+  // `context` must not be null.
+  SubstConstantCallbacks(Context* context, Substitutions substitutions)
+      : SubstInstCallbacks(context), substitutions_(substitutions) {}
 
   // Applies the given Substitutions to an instruction, in order to replace
   // BindSymbolicName instructions with the value of the binding.
   auto Subst(SemIR::InstId& inst_id) const -> bool override {
-    if (context_.constant_values().Get(inst_id).is_concrete()) {
+    if (context().constant_values().Get(inst_id).is_concrete()) {
       // This instruction is a concrete constant, so can't contain any
       // bindings that need to be substituted.
       return true;
@@ -341,10 +359,10 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
 
     auto entity_name_id = SemIR::EntityNameId::None;
     if (auto bind =
-            context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
+            context().insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
       entity_name_id = bind->entity_name_id;
     } else if (auto bind =
-                   context_.insts().TryGetAs<SemIR::SymbolicBindingPattern>(
+                   context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
                        inst_id)) {
       entity_name_id = bind->entity_name_id;
     } else {
@@ -355,10 +373,10 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
     // TODO: Consider building a hash map for substitutions. We might have a
     // lot of them.
     for (auto [bind_index, replacement_id] : substitutions_) {
-      if (context_.entity_names().Get(entity_name_id).bind_index() ==
+      if (context().entity_names().Get(entity_name_id).bind_index() ==
           bind_index) {
         // This is the binding we're replacing. Perform substitution.
-        inst_id = context_.constant_values().GetInstId(replacement_id);
+        inst_id = context().constant_values().GetInstId(replacement_id);
         return true;
       }
     }
@@ -369,16 +387,19 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   }
 
   // Rebuilds an instruction by building a new constant.
-  auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
+  auto Rebuild(SemIR::InstId old_inst_id, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
-    auto result_id = TryEvalInst(context_, SemIR::InstId::None, new_inst);
-    CARBON_CHECK(result_id.is_constant(),
+    auto const_id = EvalOrAddInst(
+        context(),
+        SemIR::LocIdAndInst::UncheckedLoc(
+            context().insts().GetCanonicalLocId(old_inst_id).ToImplicit(),
+            new_inst));
+    CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");
-    return context_.constant_values().GetInstId(result_id);
+    return context().constant_values().GetInstId(const_id);
   }
 
  private:
-  Context& context_;
   Substitutions substitutions_;
 };
 }  // namespace
@@ -399,7 +420,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
 
   auto subst_inst_id =
       SubstInst(context, context.constant_values().GetInstId(const_id),
-                SubstConstantCallbacks(context, substitutions));
+                SubstConstantCallbacks(&context, substitutions));
   return context.constant_values().Get(subst_inst_id);
 }
 

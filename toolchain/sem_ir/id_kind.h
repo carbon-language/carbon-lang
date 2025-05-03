@@ -17,6 +17,8 @@ namespace Carbon::SemIR {
 template <typename... Types>
 class TypeEnum : public Printable<TypeEnum<Types...>> {
  public:
+  using TypeTuple = std::tuple<Types...>;
+
   static constexpr size_t NumTypes = sizeof...(Types);
   static constexpr size_t NumValues = NumTypes + 2;
 
@@ -133,19 +135,53 @@ class TypeEnum : public Printable<TypeEnum<Types...>> {
 //
 // As instruction operands, the types listed here can appear as fields of typed
 // instructions (`toolchain/sem_ir/typed_insts.h`) and must implement the
-// `FromRaw` and `ToRaw` protocol in `SemIR::Inst`. In most cases this is done
-// by inheriting from `IdBase` or `IndexBase`.
+// `FromRaw` and `ToRaw` protocol in `Inst`. In most cases this is done by
+// inheriting from `IdBase` or `IndexBase`.
+//
+// clang-format off: We want one per line.
 using IdKind = TypeEnum<
     // From base/value_store.h.
-    IntId, RealId, FloatId, StringLiteralValueId,
+    FloatId,
+    IntId,
+    RealId,
+    StringLiteralValueId,
     // From sem_ir/ids.h.
-    InstId, AbsoluteInstId, DestInstId, MetaInstId, AnyRawId, ConstantId,
-    EntityNameId, CompileTimeBindIndex, CallParamIndex, FacetTypeId, FunctionId,
-    ClassId, InterfaceId, AssociatedConstantId, ImplId, GenericId, SpecificId,
-    ImportIRId, ImportIRInstId, LocId, BoolValue, IntKind, NameId, NameScopeId,
-    InstBlockId, AbsoluteInstBlockId, DeclInstBlockId, LabelId, ExprRegionId,
-    StructTypeFieldsId, TypeId, TypeBlockId, ElementIndex, LibraryNameId,
-    FloatKind>;
+    AbsoluteInstBlockId,
+    AbsoluteInstId,
+    AnyRawId,
+    AssociatedConstantId,
+    BoolValue,
+    CallParamIndex,
+    ClassId,
+    CompileTimeBindIndex,
+    ConstantId,
+    DeclInstBlockId,
+    DestInstId,
+    ElementIndex,
+    EntityNameId,
+    ExprRegionId,
+    FacetTypeId,
+    FloatKind,
+    FunctionId,
+    GenericId,
+    ImplId,
+    ImportIRId,
+    ImportIRInstId,
+    InstBlockId,
+    InstId,
+    InterfaceId,
+    IntKind,
+    LabelId,
+    LibraryNameId,
+    LocId,
+    MetaInstId,
+    NameId,
+    NameScopeId,
+    SpecificId,
+    SpecificInterfaceId,
+    StructTypeFieldsId,
+    TypeInstId>;
+// clang-format on
 
 }  // namespace Carbon::SemIR
 

@@ -200,6 +200,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [concrete]
@@ -217,32 +218,32 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc7: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc7: %C = bind_name a, %a.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc8: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc8: %C = bind_name a, %a.param.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc10: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc10: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc10: %C = bind_name a, %a.param.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc11: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, file.%D [concrete = constants.%C]
@@ -251,6 +252,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -258,12 +260,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo(%a.param.loc8: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Bar(%a.param.loc11: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -274,6 +276,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -285,16 +288,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc6: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc6: %C = bind_name a, %a.param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc7: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -303,6 +306,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -310,7 +314,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo[](%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo(%a.param.loc7: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -321,6 +325,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.1: type = fn_type @Foo.1 [concrete]
 // CHECK:STDOUT:   %Foo.ddeb7d.1: %Foo.type.a02530.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.2: type = fn_type @Foo.2 [concrete]
@@ -334,16 +339,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.a02530.1 = fn_decl @Foo.1 [concrete = constants.%Foo.ddeb7d.1] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.a02530.2 = fn_decl @Foo.2 [concrete = constants.%Foo.ddeb7d.2] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -352,6 +357,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -359,9 +365,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.1(%a.param_patt: %C);
+// CHECK:STDOUT: fn @Foo.1(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.2(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo.2(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -389,6 +395,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -396,9 +403,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.1[<error>: <error>]();
+// CHECK:STDOUT: fn @Foo.1();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.2[<error>: <error>]() {
+// CHECK:STDOUT: fn @Foo.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -409,6 +416,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -420,16 +428,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc6: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc6: %C = bind_name a, %a.param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param.loc7: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -438,6 +446,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -445,7 +454,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo(%a.param.loc7: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -456,6 +465,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [concrete]
@@ -473,16 +483,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -491,6 +501,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -498,9 +509,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C);
+// CHECK:STDOUT: fn @Foo(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.param_patt: %C);
+// CHECK:STDOUT: fn @Bar(%a.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- two_file.impl.carbon
 // CHECK:STDOUT:
@@ -508,6 +519,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [concrete]
@@ -518,7 +530,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//two_file, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//two_file, D, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -531,16 +543,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %default.import.loc2_24.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_24.2 = import <none>
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
@@ -555,12 +567,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) [from "two_file.carbon"] {
+// CHECK:STDOUT: fn @Foo(%a.param: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.param_patt: %C) [from "two_file.carbon"] {
+// CHECK:STDOUT: fn @Bar(%a.param: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -571,6 +583,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.1: type = fn_type @Foo.1 [concrete]
 // CHECK:STDOUT:   %Foo.ddeb7d.1: %Foo.type.a02530.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.2: type = fn_type @Foo.2 [concrete]
@@ -587,16 +600,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.a02530.1 = fn_decl @Foo.1 [concrete = constants.%Foo.ddeb7d.1] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.a02530.2 = fn_decl @Foo.2 [concrete = constants.%Foo.ddeb7d.2] {
-// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, call_param0
+// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -605,6 +618,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -612,9 +626,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.1(%a.param_patt: %C);
+// CHECK:STDOUT: fn @Foo.1(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.2(%b.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo.2(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -625,6 +639,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.1: type = fn_type @Foo.1 [concrete]
 // CHECK:STDOUT:   %Foo.ddeb7d.1: %Foo.type.a02530.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.2: type = fn_type @Foo.2 [concrete]
@@ -641,16 +656,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.a02530.1 = fn_decl @Foo.1 [concrete = constants.%Foo.ddeb7d.1] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.a02530.2 = fn_decl @Foo.2 [concrete = constants.%Foo.ddeb7d.2] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -659,6 +674,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -666,9 +682,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.1(%a.param_patt: %C);
+// CHECK:STDOUT: fn @Foo.1(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.2(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo.2(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -680,7 +696,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
-// CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.1: type = fn_type @Foo.1 [concrete]
 // CHECK:STDOUT:   %Foo.ddeb7d.1: %Foo.type.a02530.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.2: type = fn_type @Foo.2 [concrete]
@@ -697,13 +713,13 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.a02530.1 = fn_decl @Foo.1 [concrete = constants.%Foo.ddeb7d.1] {
-// CHECK:STDOUT:     %a.patt.loc7_8.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc7_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.a02530.2 = fn_decl @Foo.2 [concrete = constants.%Foo.ddeb7d.2] {
-// CHECK:STDOUT:     %a.patt.loc15_8.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_8.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc15_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
@@ -711,6 +727,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -720,18 +737,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Foo.1(%a.loc7_8.1: %C) {
 // CHECK:STDOUT:   %a.loc7_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc7_8.2: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_8.2 (constants.%a.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.patt.loc7_8.1: %C]();
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Foo.2(%a.loc15_8.1: %C) {
 // CHECK:STDOUT:   %a.loc15_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc15_8.2: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_8.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%a.patt.loc15_8.1: %C]() {
+// CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -739,12 +754,10 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.1(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_8.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc7_8.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.2(constants.%a) {
 // CHECK:STDOUT:   %a.loc15_8.2 => constants.%a
-// CHECK:STDOUT:   %a.patt.loc15_8.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon
@@ -753,6 +766,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
@@ -768,16 +782,16 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %return.param.loc7: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return.loc7: ref %C = return_slot %return.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     %return.param.loc8: ref %C = out_param call_param0
@@ -786,6 +800,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -793,7 +808,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @Foo() -> %return.param.loc8: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return.loc8 [concrete = constants.%C.val]
@@ -807,6 +822,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -818,8 +834,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -828,6 +844,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -835,7 +852,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C);
+// CHECK:STDOUT: fn @Foo(%a.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon
 // CHECK:STDOUT:
@@ -843,6 +860,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -850,7 +868,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//alias_two_file, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -864,8 +882,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -880,7 +898,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) [from "alias_two_file.carbon"] {
+// CHECK:STDOUT: fn @Foo(%a.param: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -892,6 +910,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %const: type = const_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.1: type = fn_type @Foo.1 [concrete]
 // CHECK:STDOUT:   %Foo.ddeb7d.1: %Foo.type.a02530.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.2: type = fn_type @Foo.2 [concrete]
@@ -905,31 +924,32 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.a02530.1 = fn_decl @Foo.1 [concrete = constants.%Foo.ddeb7d.1] {
-// CHECK:STDOUT:     %a.patt: %const = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %const [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const: type = const_type %C [concrete = constants.%const]
+// CHECK:STDOUT:       %const: type = const_type %C.ref [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %const = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.a02530.2 = fn_decl @Foo.2 [concrete = constants.%Foo.ddeb7d.2] {
-// CHECK:STDOUT:     %a.patt: %const = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt, call_param0
+// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param call_param0
 // CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_11 [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc18_18: type = const_type %C [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc18_11: type = const_type %const [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_18: type = const_type %C.ref [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_11: type = const_type %const.loc18_18 [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %const = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -937,9 +957,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.1(%a.param_patt: %const);
+// CHECK:STDOUT: fn @Foo.1(%a.param: %const);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo.2(%a.param_patt: %const) {
+// CHECK:STDOUT: fn @Foo.2(%a.param: %const) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

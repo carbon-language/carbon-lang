@@ -24,11 +24,12 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Wrap.type: type = generic_class_type @Wrap [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Wrap.generic: %Wrap.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Wrap.af6: type = class_type @Wrap, @Wrap(%T) [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Make.type.652: type = fn_type @Make, @Wrap(%T) [symbolic]
 // CHECK:STDOUT:   %Make.eb2: %Make.type.652 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -37,6 +38,8 @@ fn G() {
 // CHECK:STDOUT:   %Make.specific_fn.bf1: <specific function> = specific_function %Make.eb2, @Make(%T) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_100, %i32 [concrete]
@@ -47,14 +50,17 @@ fn G() {
 // CHECK:STDOUT:   %complete_type.22a: <witness> = complete_type_witness %struct_type.arr.5f2 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Wrap.f84: type = class_type @Wrap, @Wrap(%i32) [concrete]
 // CHECK:STDOUT:   %Make.type.572: type = fn_type @Make, @Wrap(%i32) [concrete]
 // CHECK:STDOUT:   %Make.2c5: %Make.type.572 = struct_value () [concrete]
 // CHECK:STDOUT:   %Make.specific_fn.f29: <specific function> = specific_function %Make.2c5, @Make(%i32) [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Wrap.1aa: type = class_type @Wrap, @Wrap(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Make.type.20e: type = fn_type @Make, @Wrap(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Make.de0: %Make.type.20e = struct_value () [concrete]
 // CHECK:STDOUT:   %Make.specific_fn.e43: <specific function> = specific_function %Make.de0, @Make(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Wrap.2eb: type = class_type @Wrap, @Wrap(%C) [concrete]
 // CHECK:STDOUT:   %Make.type.708: type = fn_type @Make, @Wrap(%C) [concrete]
 // CHECK:STDOUT:   %Make.e4b: %Make.type.708 = struct_value () [concrete]
@@ -68,6 +74,7 @@ fn G() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,7 +86,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [concrete = constants.%Wrap.generic] {
-// CHECK:STDOUT:     %T.patt.loc11_12.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc11_12.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -89,7 +96,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Wrap(%T.loc11_12.1: type) {
 // CHECK:STDOUT:   %T.loc11_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc11_12.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T.loc11_12.2) [symbolic = %Make.type (constants.%Make.type.652)]
@@ -97,13 +103,14 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Make.decl: @Wrap.%Make.type (%Make.type.652) = fn_decl @Make [symbolic = @Wrap.%Make (constants.%Make.eb2)] {
-// CHECK:STDOUT:       %return.patt: @Make.%T (%T) = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: @Make.%T (%T) = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:       %return.patt: @Make.%pattern_type (%pattern_type.7dc) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Make.%pattern_type (%pattern_type.7dc) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc11_12.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %return.param: ref @Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -115,24 +122,26 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc15_18: %C.elem = field_decl arr, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc15_11: %C.elem = var_pattern %.loc15_18
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr.5f2 [concrete = constants.%complete_type.22a]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete = constants.%int_100]
+// CHECK:STDOUT:   %array_type: type = array_type %int_100, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:   %.loc15: %C.elem = field_decl arr, element0 [concrete]
+// CHECK:STDOUT:   %struct_type.arr: type = struct_type {.arr: %array_type} [concrete = constants.%struct_type.arr.5f2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr [concrete = constants.%complete_type.22a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .arr = %.loc15_18
+// CHECK:STDOUT:   .arr = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Make(@Wrap.%T.loc11_12.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Make.%T (%T) [symbolic = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T) [symbolic = %Make.type (constants.%Make.type.652)]
 // CHECK:STDOUT:   %Make: @Make.%Make.type (%Make.type.652) = struct_value () [symbolic = %Make (constants.%Make.eb2)]
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2: <specific function> = specific_function %Make, @Make(%T) [symbolic = %Make.specific_fn.loc12_27.2 (constants.%Make.specific_fn.bf1)]
@@ -152,8 +161,8 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %.loc18_3: %i32 = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc18_3: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %Wrap.ref.loc18: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
@@ -171,8 +180,8 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %empty_tuple.type = binding_pattern b
-// CHECK:STDOUT:     %.loc19_3: %empty_tuple.type = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc19_3: %pattern_type.cb1 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
 // CHECK:STDOUT:   %Wrap.ref.loc19: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
@@ -190,8 +199,8 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %.loc20_3.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc20_3.1: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %Wrap.ref.loc20: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
@@ -210,7 +219,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%T) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.652
@@ -219,6 +227,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
@@ -227,15 +236,8 @@ fn G() {
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.bf1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wrap(%T.loc11_12.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wrap(@Make.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%i32) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.572
@@ -244,6 +246,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%i32) {
 // CHECK:STDOUT:   %T => constants.%i32
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
@@ -254,7 +257,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.20e
@@ -263,6 +265,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%empty_tuple.type) {
 // CHECK:STDOUT:   %T => constants.%empty_tuple.type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.cb1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.782
@@ -273,7 +276,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%C) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%C
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.708
@@ -282,6 +284,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.22a

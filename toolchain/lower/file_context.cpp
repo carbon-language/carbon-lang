@@ -4,6 +4,11 @@
 
 #include "toolchain/lower/file_context.h"
 
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
@@ -66,6 +71,12 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   functions_.resize_for_overwrite(sem_ir_->functions().size());
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
     functions_[id.index] = BuildFunctionDecl(id);
+  }
+
+  for (const auto& class_info : sem_ir_->classes().array_ref()) {
+    if (auto* llvm_vtable = BuildVtable(class_info)) {
+      global_variables_.Insert(class_info.vtable_id, llvm_vtable);
+    }
   }
 
   // Specific functions are lowered when we emit a reference to them.
@@ -132,52 +143,52 @@ auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
 auto FileContext::GetGlobal(SemIR::InstId inst_id,
                             SemIR::SpecificId specific_id) -> llvm::Value* {
   auto const_id = GetConstantValueInSpecific(sem_ir(), specific_id, inst_id);
-  if (const_id.is_concrete()) {
-    auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
+  CARBON_CHECK(const_id.is_concrete(), "Missing value: {0} {1} {2}", inst_id,
+               specific_id, sem_ir().insts().Get(inst_id));
+  auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
 
-    // For value expressions and initializing expressions, the value produced by
-    // a constant instruction is a value representation of the constant. For
-    // initializing expressions, `FinishInit` will perform a copy if needed.
-    // TODO: Handle reference expression constants.
-    auto* const_value = constants_[const_inst_id.index];
+  // For value expressions and initializing expressions, the value produced by
+  // a constant instruction is a value representation of the constant. For
+  // initializing expressions, `FinishInit` will perform a copy if needed.
+  // TODO: Handle reference expression constants.
+  auto* const_value = constants_[const_inst_id.index];
 
-    // If we want a pointer to the constant, materialize a global to hold it.
-    // TODO: We could reuse the same global if the constant is used more than
-    // once.
-    auto value_rep = SemIR::ValueRepr::ForType(
-        sem_ir(), sem_ir().insts().Get(const_inst_id).type_id());
-    if (value_rep.kind == SemIR::ValueRepr::Pointer) {
-      // Include both the name of the constant, if any, and the point of use in
-      // the name of the variable.
-      llvm::StringRef const_name;
-      llvm::StringRef use_name;
-      if (inst_namer_) {
-        const_name = inst_namer_->GetUnscopedNameFor(const_inst_id);
-        use_name = inst_namer_->GetUnscopedNameFor(inst_id);
-      }
-
-      // We always need to give the global a name even if the instruction namer
-      // doesn't have one to use.
-      if (const_name.empty()) {
-        const_name = "const";
-      }
-      if (use_name.empty()) {
-        use_name = "anon";
-      }
-      llvm::StringRef sep = (use_name[0] == '.') ? "" : ".";
-
-      return new llvm::GlobalVariable(
-          llvm_module(), GetType(sem_ir().GetPointeeType(value_rep.type_id)),
-          /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage,
-          const_value, const_name + sep + use_name);
-    }
-
-    // Otherwise, we can use the constant value directly.
+  auto value_rep = SemIR::ValueRepr::ForType(
+      sem_ir(), sem_ir().insts().Get(const_inst_id).type_id());
+  if (value_rep.kind != SemIR::ValueRepr::Pointer) {
     return const_value;
   }
 
-  CARBON_FATAL("Missing value: {0} {1} {2}", inst_id, specific_id,
-               sem_ir().insts().Get(inst_id));
+  if (auto result = global_variables().Lookup(const_inst_id)) {
+    return result.value();
+  }
+
+  // Include both the name of the constant, if any, and the point of use in
+  // the name of the variable.
+  llvm::StringRef const_name;
+  llvm::StringRef use_name;
+  if (inst_namer_) {
+    const_name = inst_namer_->GetUnscopedNameFor(const_inst_id);
+    use_name = inst_namer_->GetUnscopedNameFor(inst_id);
+  }
+
+  // We always need to give the global a name even if the instruction namer
+  // doesn't have one to use.
+  if (const_name.empty()) {
+    const_name = "const";
+  }
+  if (use_name.empty()) {
+    use_name = "anon";
+  }
+  llvm::StringRef sep = (use_name[0] == '.') ? "" : ".";
+
+  auto* global_variable = new llvm::GlobalVariable(
+      llvm_module(), GetType(sem_ir().GetPointeeType(value_rep.type_id)),
+      /*isConstant=*/true, llvm::GlobalVariable::InternalLinkage, const_value,
+      const_name + sep + use_name);
+
+  global_variables_.Insert(const_inst_id, global_variable);
+  return global_variable;
 }
 
 auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
@@ -214,13 +225,11 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
                                         /*isVarArg=*/false)};
   }
 
-  // TODO nit: add is_symbolic() to type_id to forward to
-  // type_id.AsConstantId().is_symbolic(). Update call below too.
   auto get_llvm_type = [&](SemIR::TypeId type_id) -> llvm::Type* {
     if (!type_id.has_value()) {
       return nullptr;
     }
-    return GetType(SemIR::GetTypeInSpecific(sem_ir(), specific_id, type_id));
+    return GetType(type_id);
   };
 
   // TODO: expose the `Call` parameter patterns in `Function`, and use them here
@@ -255,7 +264,7 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
   auto return_param_id = SemIR::InstId::None;
   if (return_info.has_return_slot()) {
     param_types.push_back(
-        llvm::PointerType::get(return_type, /*AddressSpace=*/0));
+        llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
     return_param_id = function.return_slot_pattern_id;
     param_inst_ids.push_back(return_param_id);
   }
@@ -266,8 +275,9 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     if (!param_pattern_info) {
       continue;
     }
-    auto param_type_id = SemIR::GetTypeInSpecific(
-        sem_ir(), specific_id, param_pattern_info->inst.type_id);
+    auto param_type_id = ExtractScrutineeType(
+        sem_ir(), SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id,
+                                                 param_pattern_info->inst_id));
     CARBON_CHECK(
         !param_type_id.AsConstantId().is_symbolic(),
         "Found symbolic type id after resolution when lowering type {0}.",
@@ -411,7 +421,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       ++param_index;
     } else {
       param_value = llvm::PoisonValue::get(GetType(
-          SemIR::GetTypeInSpecific(sem_ir(), specific_id, param_inst.type_id)));
+          SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id, param_id)));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);
@@ -532,7 +542,8 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
     -> llvm::Type* {
   return llvm::ArrayType::get(
-      context.GetType(inst.element_type_id),
+      context.GetType(context.sem_ir().types().GetTypeIdForTypeInstId(
+          inst.element_type_inst_id)),
       *context.sem_ir().GetArrayBoundValue(inst.bound_id));
 }
 
@@ -559,7 +570,14 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
     -> llvm::Type* {
-  return context.GetType(inst.inner_id);
+  return context.GetType(
+      context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+static auto BuildTypeForInst(FileContext& context,
+                             SemIR::ImplWitnessAssociatedConstant inst)
+    -> llvm::Type* {
+  return context.GetType(inst.type_id);
 }
 
 static auto BuildTypeForInst(FileContext& /*context*/,
@@ -594,13 +612,19 @@ static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
   return llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
 }
 
+static auto BuildTypeForInst(FileContext& /*context*/,
+                             SemIR::PatternType /*inst*/) -> llvm::Type* {
+  CARBON_FATAL("Unexpected pattern type in lowering");
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
     -> llvm::Type* {
   auto fields = context.sem_ir().struct_type_fields().Get(inst.fields_id);
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(fields.size());
   for (auto field : fields) {
-    subtypes.push_back(context.GetType(field.type_id));
+    subtypes.push_back(context.GetType(
+        context.sem_ir().types().GetTypeIdForTypeInstId(field.type_inst_id)));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }
@@ -611,11 +635,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   // can be collectively replaced with LLVM's void, particularly around
   // function returns. LLVM doesn't allow declaring variables with a void
   // type, so that may require significant special casing.
-  auto elements = context.sem_ir().type_blocks().Get(inst.elements_id);
+  auto elements = context.sem_ir().inst_blocks().Get(inst.type_elements_id);
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(elements.size());
-  for (auto element_id : elements) {
-    subtypes.push_back(context.GetType(element_id));
+  for (auto type_id : context.sem_ir().types().GetBlockAsTypeIds(elements)) {
+    subtypes.push_back(context.GetType(type_id));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }
@@ -688,14 +712,16 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  SemIR::AbsoluteNodeId resolved = GetAbsoluteNodeId(sem_ir_, inst_id).back();
+  SemIR::AbsoluteNodeId resolved =
+      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
   const auto& tree_and_subtrees =
-      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
+      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id()
                                                        .index]();
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
-  if (resolved.node_id.has_value()) {
-    auto token = tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id).begin;
+  if (resolved.node_id().has_value()) {
+    auto token =
+        tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id()).begin;
     return {.filename = tokens.source().filename(),
             .line_number = tokens.GetLineNumber(token),
             .column_number = tokens.GetColumnNumber(token)};
@@ -704,6 +730,80 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
             .line_number = 0,
             .column_number = 0};
   }
+}
+
+auto FileContext::BuildVtable(const SemIR::Class& class_info)
+    -> llvm::GlobalVariable* {
+  // Bail out if this class is not dynamic (this will account for classes that
+  // are declared-and-not-defined (including extern declarations) as well).
+  if (!class_info.is_dynamic) {
+    return nullptr;
+  }
+
+  // Vtables can't be generated for generics, only for their specifics - and
+  // must be done lazily based on the use of those specifics.
+  if (class_info.generic_id != SemIR::GenericId::None) {
+    return nullptr;
+  }
+
+  Mangler m(*this);
+  std::string mangled_name = m.MangleVTable(class_info);
+
+  auto first_owning_decl_loc =
+      sem_ir().insts().GetCanonicalLocId(class_info.first_owning_decl_id);
+  if (first_owning_decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
+    // Emit a declaration of an imported vtable using a(n opaque) pointer type.
+    // This doesn't have to match the definition that appears elsewhere, it'll
+    // still get merged correctly.
+    auto* gv = new llvm::GlobalVariable(
+        llvm_module(),
+        llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0),
+        /*isConstant=*/true, llvm::GlobalValue::ExternalLinkage, nullptr,
+        mangled_name);
+    gv->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+    return gv;
+  }
+
+  auto canonical_vtable_id =
+      sem_ir().constant_values().GetConstantInstId(class_info.vtable_id);
+
+  auto vtable_inst_block =
+      sem_ir().inst_blocks().Get(sem_ir()
+                                     .insts()
+                                     .GetAs<SemIR::Vtable>(canonical_vtable_id)
+                                     .virtual_functions_id);
+
+  auto* entry_type = llvm::IntegerType::getInt32Ty(llvm_context());
+  auto* table_type = llvm::ArrayType::get(entry_type, vtable_inst_block.size());
+
+  auto* llvm_vtable = new llvm::GlobalVariable(
+      llvm_module(), table_type, /*isConstant=*/true,
+      llvm::GlobalValue::ExternalLinkage, nullptr, mangled_name);
+
+  auto* i32_type = llvm::IntegerType::getInt32Ty(llvm_context());
+  auto* i64_type = llvm::IntegerType::getInt64Ty(llvm_context());
+  auto* vtable_const_int =
+      llvm::ConstantExpr::getPtrToInt(llvm_vtable, i64_type);
+
+  llvm::SmallVector<llvm::Constant*> vfuncs;
+  vfuncs.reserve(vtable_inst_block.size());
+
+  for (auto fn_decl_id : vtable_inst_block) {
+    auto fn_decl = GetCalleeFunction(sem_ir(), fn_decl_id);
+    vfuncs.push_back(llvm::ConstantExpr::getTrunc(
+        llvm::ConstantExpr::getSub(
+            llvm::ConstantExpr::getPtrToInt(
+                GetOrCreateFunction(fn_decl.function_id,
+                                    SemIR::SpecificId::None),
+                i64_type),
+            vtable_const_int),
+        i32_type));
+  }
+
+  llvm_vtable->setInitializer(llvm::ConstantArray::get(table_type, vfuncs));
+  llvm_vtable->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+
+  return llvm_vtable;
 }
 
 }  // namespace Carbon::Lower

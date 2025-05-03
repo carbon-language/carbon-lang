@@ -74,6 +74,7 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -84,6 +85,7 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -95,6 +97,7 @@ class D {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
 // CHECK:STDOUT:   %.loc15: %C.elem = base_decl %B1.ref, element0 [concrete]
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.5ac]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -110,6 +113,7 @@ class D {
 // CHECK:STDOUT:   %B1.ref.loc28: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
 // CHECK:STDOUT:   %.loc28: %D.elem = base_decl %B1.ref.loc28, element0 [concrete]
 // CHECK:STDOUT:   %B1.ref.loc36: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.5ac]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

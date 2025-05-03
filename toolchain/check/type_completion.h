@@ -20,7 +20,8 @@ namespace Carbon::Check {
 // However, it's important that we use it during monomorphization, where we
 // don't want to trigger a request for more monomorphization.
 // TODO: Remove the other call to this function.
-auto TryToCompleteType(Context& context, SemIR::TypeId type_id, SemIRLoc loc,
+auto TryToCompleteType(Context& context, SemIR::TypeId type_id,
+                       SemIR::LocId loc_id,
                        MakeDiagnosticBuilderFn diagnoser = nullptr) -> bool;
 
 // Completes the type `type_id`. CHECK-fails if it can't be completed.
@@ -53,14 +54,6 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id, MakeDiagnosticBuilderFn diagnoser,
                          MakeDiagnosticBuilderFn abstract_diagnoser) -> bool;
 
-// Like `RequireCompleteType`, but only for facet types. If it uses some
-// incomplete interface, diagnoses the problem and returns `None`.
-auto RequireCompleteFacetType(Context& context, SemIR::TypeId type_id,
-                              SemIR::LocId loc_id,
-                              const SemIR::FacetType& facet_type,
-                              MakeDiagnosticBuilderFn diagnoser)
-    -> SemIR::CompleteFacetTypeId;
-
 // Returns the type `type_id` if it is a complete type, or produces an
 // incomplete type error and returns an error type. This is a convenience
 // wrapper around `RequireCompleteType`.
@@ -76,13 +69,23 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
                     MakeDiagnosticBuilderFn abstract_diagnoser)
     -> SemIR::TypeId;
 
+// Requires the named constraints in the facet type to be complete, so that the
+// set of interfaces the facet type requires is known. Since named constraints
+// are not yet supported, this currently never fails. Eventually this function
+// will be passed a diagnoser for facet types that use some incomplete named
+// constraint, and return `None` in that case. If not `None`, the result will be
+// present in context.identified_facet_type()`.
+auto RequireIdentifiedFacetType(Context& context,
+                                const SemIR::FacetType& facet_type)
+    -> SemIR::IdentifiedFacetTypeId;
+
 // Adds a note to a diagnostic explaining that a class is incomplete.
 auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
                          DiagnosticBuilder& builder) -> void;
 
 // Adds a note to a diagnostic explaining that an interface is not defined.
-auto NoteUndefinedInterface(Context& context, SemIR::InterfaceId interface_id,
-                            DiagnosticBuilder& builder) -> void;
+auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
+                             DiagnosticBuilder& builder) -> void;
 
 }  // namespace Carbon::Check
 

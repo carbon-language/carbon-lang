@@ -8,9 +8,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/fail_bound_overflow.carbon
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:8: error: array bound of 39999999999999999993 is too large [ArrayBoundTooLarge]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:19: error: array bound of 39999999999999999993 is too large [ArrayBoundTooLarge]
 // CHECK:STDERR: var a: array(i32, 39999999999999999993);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var a: array(i32, 39999999999999999993);
 
@@ -27,9 +27,13 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_39999999999999999993: Core.IntLiteral = int_value 39999999999999999993 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -39,6 +43,8 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -49,8 +55,8 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc15_1: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc15_1: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %.loc15_39: type = splice_block %array_type.loc15 [concrete = <error>] {
@@ -61,8 +67,8 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
-// CHECK:STDOUT:     %.loc24_1: <error> = var_pattern %b.patt
+// CHECK:STDOUT:     %b.patt: <error> = binding_pattern b [concrete]
+// CHECK:STDOUT:     %.loc24_1: <error> = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %.loc24_37: type = splice_block %array_type.loc24 [concrete = <error>] {

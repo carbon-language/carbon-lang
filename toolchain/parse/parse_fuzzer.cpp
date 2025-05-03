@@ -29,18 +29,18 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
       llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
                                        /*RequiresNullTerminator=*/false)));
   auto source =
-      SourceBuffer::MakeFromFile(fs, TestFileName, NullDiagnosticConsumer());
+      SourceBuffer::MakeFromFile(fs, TestFileName, Diagnostics::NullConsumer());
 
   // Lex the input.
   SharedValueStores value_stores;
-  auto tokens = Lex::Lex(value_stores, *source, NullDiagnosticConsumer());
+  auto tokens = Lex::Lex(value_stores, *source, Diagnostics::NullConsumer());
   if (tokens.has_errors()) {
     return 0;
   }
 
   // Now parse it into a tree. Note that parsing will (when asserts are enabled)
   // walk the entire tree to verify it so we don't have to do that here.
-  Parse::Parse(tokens, NullDiagnosticConsumer(), /*vlog_stream=*/nullptr);
+  Parse::Parse(tokens, Diagnostics::NullConsumer(), /*vlog_stream=*/nullptr);
   return 0;
 }
 

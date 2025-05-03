@@ -4,6 +4,8 @@
 
 #include "toolchain/check/modifiers.h"
 
+#include <optional>
+
 #include "toolchain/check/decl_introducer_state.h"
 
 namespace Carbon::Check {
@@ -11,9 +13,10 @@ namespace Carbon::Check {
 // Builds the diagnostic for DiagnoseNotAllowed.
 template <typename... TokenKinds>
 static auto StartDiagnoseNotAllowed(
-    Context& context, const DiagnosticBase<TokenKinds...>& diagnostic_base,
+    Context& context,
+    const Diagnostics::DiagnosticBase<TokenKinds...>& diagnostic_base,
     Parse::NodeId modifier_node, Lex::TokenKind declaration_kind)
-    -> DiagnosticEmitter<SemIRLoc>::DiagnosticBuilder {
+    -> DiagnosticBuilder {
   if constexpr (sizeof...(TokenKinds) == 0) {
     return context.emitter().Build(modifier_node, diagnostic_base);
   } else if constexpr (sizeof...(TokenKinds) == 1) {
@@ -34,7 +37,8 @@ static auto StartDiagnoseNotAllowed(
 // declaration kind.
 template <typename... TokenKinds>
 static auto DiagnoseNotAllowed(
-    Context& context, const DiagnosticBase<TokenKinds...>& diagnostic_base,
+    Context& context,
+    const Diagnostics::DiagnosticBase<TokenKinds...>& diagnostic_base,
     Parse::NodeId modifier_node, Lex::TokenKind decl_kind,
     SemIR::LocId context_loc_id) -> void {
   auto diag = StartDiagnoseNotAllowed(context, diagnostic_base, modifier_node,
@@ -53,6 +57,8 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
       return KeywordModifierSet::Access;
     case ModifierOrder::Extern:
       return KeywordModifierSet::Extern;
+    case ModifierOrder::Extend:
+      return KeywordModifierSet::Extend;
     case ModifierOrder::Decl:
       return KeywordModifierSet::Decl;
   }
@@ -154,7 +160,7 @@ auto CheckMethodModifiersOnFunction(
             "`virtual` not allowed; requires `abstract` or `base` class scope");
         ForbidModifiersOnDecl(context, ModifierVirtualNotAllowed, introducer,
                               KeywordModifierSet::Virtual,
-                              context.insts().GetLocId(parent_scope_inst_id));
+                              SemIR::LocId(parent_scope_inst_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {
         CARBON_DIAGNOSTIC(
@@ -162,7 +168,7 @@ auto CheckMethodModifiersOnFunction(
             "`abstract` not allowed; requires `abstract` class scope");
         ForbidModifiersOnDecl(context, ModifierAbstractNotAllowed, introducer,
                               KeywordModifierSet::Abstract,
-                              context.insts().GetLocId(parent_scope_inst_id));
+                              SemIR::LocId(parent_scope_inst_id));
       }
       return;
     }

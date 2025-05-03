@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_type_assign.carbon
 
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+7]]:1: error: cannot implicitly convert value of type `type` to `{.a: i32}` [ConversionFailure]
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `type` to `{.a: i32}` [ConversionFailure]
 // CHECK:STDERR: var x: {.a: i32} = {.a: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_type_assign.carbon:[[@LINE+4]]:1: note: type `type` does not implement interface `Core.ImplicitAs({.a: i32})` [MissingImplInMemberAccessNote]
@@ -21,8 +21,13 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -32,6 +37,8 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -41,8 +48,8 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %struct_type.a = binding_pattern x
-// CHECK:STDOUT:     %.loc18_1: %struct_type.a = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.268 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc18_1: %pattern_type.268 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
 // CHECK:STDOUT:   %.loc18_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {

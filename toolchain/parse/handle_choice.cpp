@@ -9,8 +9,8 @@ namespace Carbon::Parse {
 auto HandleChoiceIntroducer(Context& context) -> void {
   auto state = context.PopState();
 
-  context.PushState(state, State::ChoiceDefinitionStart);
-  context.PushState(State::DeclNameAndParams, state.token);
+  context.PushState(state, StateKind::ChoiceDefinitionStart);
+  context.PushState(StateKind::DeclNameAndParams, state.token);
 }
 
 auto HandleChoiceDefinitionStart(Context& context) -> void {
@@ -37,18 +37,18 @@ auto HandleChoiceDefinitionStart(Context& context) -> void {
                   state.has_error);
 
   state.has_error = false;
-  state.state = State::ChoiceDefinitionFinish;
+  state.kind = StateKind::ChoiceDefinitionFinish;
   context.PushState(state);
 
   if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
-    context.PushState(State::ChoiceAlternative);
+    context.PushState(StateKind::ChoiceAlternative);
   }
 }
 
 auto HandleChoiceAlternative(Context& context) -> void {
   auto state = context.PopState();
 
-  context.PushState(State::ChoiceAlternativeFinish);
+  context.PushState(StateKind::ChoiceAlternativeFinish);
 
   auto token = context.ConsumeIf(Lex::TokenKind::Identifier);
   if (!token) {
@@ -68,7 +68,7 @@ auto HandleChoiceAlternative(Context& context) -> void {
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
     context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *token);
-    context.PushState(State::PatternListAsExplicit);
+    context.PushState(StateKind::PatternListAsExplicit);
   } else {
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *token);
   }
@@ -80,7 +80,7 @@ auto HandleChoiceAlternativeFinish(Context& context) -> void {
   if (state.has_error) {
     context.ReturnErrorOnState();
     if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
-      context.PushState(State::ChoiceAlternative);
+      context.PushState(StateKind::ChoiceAlternative);
     }
     return;
   }
@@ -88,7 +88,7 @@ auto HandleChoiceAlternativeFinish(Context& context) -> void {
   if (context.ConsumeListToken(
           NodeKind::ChoiceAlternativeListComma, Lex::TokenKind::CloseCurlyBrace,
           state.has_error) == Context::ListTokenKind::Comma) {
-    context.PushState(State::ChoiceAlternative);
+    context.PushState(StateKind::ChoiceAlternative);
   }
 }
 

@@ -5,22 +5,29 @@
 #include "toolchain/check/check_unit.h"
 
 #include <string>
+#include <utility>
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -31,7 +38,11 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
     count += package_imports.imports.size();
   }
   if (!unit_and_imports->api_for_impl) {
-    // Leave an empty slot for ImportIRId::ApiForImpl.
+    // Leave an empty slot for `ImportIRId::ApiForImpl`.
+    ++count;
+  }
+  if (!unit_and_imports->cpp_import_names.empty()) {
+    // Leave an empty slot for `ImportIRId::Cpp`.
     ++count;
   }
   return count;
@@ -43,15 +54,17 @@ CheckUnit::CheckUnit(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
+      tree_and_subtrees_getter_(
+          tree_and_subtrees_getters
+              [unit_and_imports->unit->sem_ir->check_ir_id().index]),
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(&emitter_, unit_and_imports_->unit->tree_and_subtrees_getter,
-               unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports),
-               tree_and_subtrees_getters.size(), vlog_stream) {}
+      context_(
+          &emitter_, tree_and_subtrees_getter_, unit_and_imports_->unit->sem_ir,
+          GetImportedIRCount(unit_and_imports), total_ir_count_, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -64,10 +77,6 @@ auto CheckUnit::Run() -> void {
 
   // Add a block for the file.
   context_.inst_block_stack().Push();
-
-  // TODO: Remove this and the pop in `FinishRun` once we properly push and pop
-  // in the right places.
-  context_.generic_region_stack().Push();
 
   InitPackageScopeAndImports();
 
@@ -86,7 +95,7 @@ auto CheckUnit::Run() -> void {
 auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      GetSingletonType(context_, SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
@@ -102,20 +111,20 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
                                  .import_id = SemIR::InstId::None});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
-  // If there is an implicit `api` import, set it first so that it uses the
-  // ImportIRId::ApiForImpl when processed for imports.
+  // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and
+  // `ImportIRId::Cpp` first, as required.
   if (unit_and_imports_->api_for_impl) {
     const auto& names = context_.parse_tree().packaging_decl()->names;
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
         context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
-    SetApiImportIR(context_,
-                   {.decl_id = import_decl_id,
-                    .is_export = false,
-                    .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
+    SetSpecialImportIRs(
+        context_, {.decl_id = import_decl_id,
+                   .is_export = false,
+                   .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
   } else {
-    SetApiImportIR(context_,
-                   {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
+    SetSpecialImportIRs(context_,
+                        {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
   }
 
   // Add import instructions for everything directly imported. Implicit imports
@@ -230,7 +239,9 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       unit_and_imports_->package_imports_map.Lookup(PackageNameId::None);
   if (!import_map_lookup) {
     // Push the scope; there are no names to add.
-    context_.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
+    context_.scope_stack().PushForEntity(
+        package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
+        /*lexical_lookup_has_load_error=*/false);
     return;
   }
   PackageImports& self_import =
@@ -245,7 +256,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       CollectTransitiveImports(self_import.import_decl_id, &self_import,
                                /*api_imports=*/nullptr));
 
-  context_.scope_stack().Push(
+  context_.scope_stack().PushForEntity(
       package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
       context_.name_scopes().Get(SemIR::NameScopeId::Package).has_error());
 }
@@ -326,9 +337,9 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
       if (local_imports) {
         CARBON_CHECK(package_id == api_imports_entry.first);
       } else {
-        auto import_ir_inst_id = context_.import_ir_insts().Add(
-            {.ir_id = SemIR::ImportIRId::ApiForImpl,
-             .inst_id = api_imports->import_decl_id});
+        auto import_ir_inst_id =
+            context_.import_ir_insts().Add(SemIR::ImportIRInst(
+                SemIR::ImportIRId::ApiForImpl, api_imports->import_decl_id));
         import_decl_id =
             AddInst(context_, MakeImportedLocIdAndInst<SemIR::ImportDecl>(
                                   context_, import_ir_inst_id,
@@ -351,13 +362,13 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 auto CheckUnit::ProcessNodeIds() -> bool {
-  NodeIdTraversal traversal(context_, vlog_stream_);
+  NodeIdTraversal traversal(&context_, vlog_stream_);
 
   Parse::NodeId node_id = Parse::NodeId::None;
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    const auto& tree = unit_and_imports_->unit->tree_and_subtrees_getter();
+    const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
@@ -404,12 +415,13 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
       auto function_loc_id =
-          context_.insts().GetLocId(function.non_owning_decl_id);
-      CARBON_CHECK(function_loc_id.is_import_ir_inst_id());
+          context_.insts().GetCanonicalLocId(function.non_owning_decl_id);
+      CARBON_CHECK(function_loc_id.kind() ==
+                   SemIR::LocId::Kind::ImportIRInstId);
       auto import_ir_id = context_.sem_ir()
                               .import_ir_insts()
                               .Get(function_loc_id.import_ir_inst_id())
-                              .ir_id;
+                              .ir_id();
       auto& import_ir = context_.import_irs().Get(import_ir_id);
       if (import_ir.sem_ir->package_id().has_value() !=
           context_.sem_ir().package_id().has_value()) {
@@ -440,13 +452,15 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
 auto CheckUnit::CheckRequiredDefinitions() -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
+
   // Note that more required definitions can be added during this loop.
-  for (size_t i = 0; i != context_.definitions_required().size(); ++i) {
-    SemIR::InstId decl_inst_id = context_.definitions_required()[i];
+  // NOLINTNEXTLINE(modernize-loop-convert)
+  for (size_t i = 0; i != context_.definitions_required_by_decl().size(); ++i) {
+    SemIR::InstId decl_inst_id = context_.definitions_required_by_decl()[i];
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        if (!context_.classes().Get(class_decl.class_id).is_defined()) {
+        if (!context_.classes().Get(class_decl.class_id).is_complete()) {
           emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
         }
         break;
@@ -460,7 +474,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       }
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         auto& impl = context_.impls().Get(impl_decl.impl_id);
-        if (!impl.is_defined()) {
+        if (!impl.is_complete()) {
           FillImplWitnessWithErrors(context_, impl);
           CARBON_DIAGNOSTIC(ImplMissingDefinition, Error,
                             "impl declared but not defined");
@@ -474,41 +488,94 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         // https://github.com/carbon-language/carbon-lang/issues/4071.
         CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
-      case CARBON_KIND(SemIR::SpecificFunction specific_function): {
-        // TODO: Track a location for the use. In general we may want to track a
-        // list of enclosing locations if this was used from a generic.
-        SemIRLoc use_loc = decl_inst_id;
-        if (!ResolveSpecificDefinition(context_, use_loc,
-                                       specific_function.specific_id)) {
-          CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
-                            "use of undefined generic function");
-          CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
-                            "generic function declared here");
-          auto generic_decl_id =
-              context_.generics()
-                  .Get(context_.specifics()
-                           .Get(specific_function.specific_id)
-                           .generic_id)
-                  .decl_id;
-          emitter_.Build(decl_inst_id, MissingGenericFunctionDefinition)
-              .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
-              .Emit();
-        }
-        break;
-      }
       default: {
-        CARBON_FATAL("Unexpected inst in definitions_required: {0}", decl_inst);
+        CARBON_FATAL("Unexpected inst in definitions_required_by_decl: {0}",
+                     decl_inst);
       }
+    }
+  }
+
+  // Note that more required definitions can be added during this loop.
+  // NOLINTNEXTLINE(modernize-loop-convert)
+  for (size_t i = 0; i != context_.definitions_required_by_use().size(); ++i) {
+    // This is using the location for the use. We could track the
+    // list of enclosing locations if this was used from a generic.
+    auto [loc, specific_id] = context_.definitions_required_by_use()[i];
+    if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
+      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
+                        "use of undefined generic function");
+      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
+                        "generic function declared here");
+      auto generic_decl_id =
+          context_.generics()
+              .Get(context_.specifics().Get(specific_id).generic_id)
+              .decl_id;
+      emitter_.Build(loc, MissingGenericFunctionDefinition)
+          .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
+          .Emit();
     }
   }
 }
 
-auto CheckUnit::FinishRun() -> void {
-  // TODO: Remove this once we properly push and pop in the right places.
-  context_.generic_region_stack().Pop();
+auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
+  // Impl lookup can generate instructions (via deduce) which we don't use, as
+  // we're only generating diagnostics here, so we catch and discard them.
+  context_.inst_block_stack().Push();
+  auto poisoned_queries =
+      std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
+  for (const auto& poison : poisoned_queries) {
+    auto witness_result =
+        EvalLookupSingleImplWitness(context_, poison.loc_id, poison.query,
+                                    poison.non_canonical_query_self_inst_id,
+                                    /*poison_concrete_results=*/false);
+    CARBON_CHECK(witness_result.has_concrete_value());
+    auto found_witness_id = witness_result.concrete_witness();
+    if (found_witness_id != poison.impl_witness) {
+      auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
+        auto table_id = context_.insts()
+                            .GetAs<SemIR::ImplWitness>(witness_id)
+                            .witness_table_id;
+        return context_.insts()
+            .GetAs<SemIR::ImplWitnessTable>(table_id)
+            .impl_id;
+      };
 
+      // We can get the `Impl` from the resulting witness here, which is the
+      // `Impl` that conflicts with the previous poison query.
+      auto bad_impl_id = witness_to_impl_id(found_witness_id);
+      const auto& bad_impl = context_.impls().Get(bad_impl_id);
+
+      auto prev_impl_id = witness_to_impl_id(poison.impl_witness);
+      const auto& prev_impl = context_.impls().Get(prev_impl_id);
+
+      CARBON_DIAGNOSTIC(
+          PoisonedImplLookupConcreteResult, Error,
+          "found `impl` that would change the result of an earlier "
+          "use of `{0} as {1}`",
+          InstIdAsRawType, SpecificInterfaceIdAsRawType);
+      auto builder =
+          emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
+                         poison.query.query_self_inst_id,
+                         poison.query.query_specific_interface_id);
+      CARBON_DIAGNOSTIC(
+          PoisonedImplLookupConcreteResultNoteBadImpl, Note,
+          "the use would select the `impl` here but it was not found yet");
+      builder.Note(bad_impl.first_decl_id(),
+                   PoisonedImplLookupConcreteResultNoteBadImpl);
+      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
+                        "the use had selected the `impl` here");
+      builder.Note(prev_impl.first_decl_id(),
+                   PoisonedImplLookupConcreteResultNotePreviousImpl);
+      builder.Emit();
+    }
+  }
+  context_.inst_block_stack().PopAndDiscard();
+}
+
+auto CheckUnit::FinishRun() -> void {
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
+  CheckPoisonedConcreteImplLookupQueries();
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

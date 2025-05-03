@@ -80,10 +80,23 @@ enum class InstConstantKind : int8_t {
   // This instruction is itself a unique constant. This is used for declarations
   // whose constant identity is simply themselves. The `ConstantId` for this
   // instruction will always be a concrete constant whose `InstId` refers
-  // directly back to the instruction, rather than to a separate instrinction in
+  // directly back to the instruction, rather than to a separate instruction in
   // the constants block.
   // TODO: Decide if this is the model we want for these cases.
   Unique,
+};
+
+// Whether constant evaluation of an instruction needs the instruction to have
+// been created and allocated an InstId, or only needs the instruction operands.
+enum class InstConstantNeedsInstIdKind : int8_t {
+  // This instruction kind doesn't need an InstId to be evaluated.
+  No,
+  // This instruction needs an InstId during evaluation, but doesn't need the
+  // instruction to persist after evaluation.
+  DuringEvaluation,
+  // This instruction needs a permanent instruction ID, for example because that
+  // instruction ID can appear in the constant result of evaluation.
+  Permanent,
 };
 
 // Whether an instruction is a terminator or part of the terminator sequence.
@@ -110,6 +123,10 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 
+  // Returns the `InstKind` for an instruction, for `CARBON_KIND_SWITCH`.
+  template <typename InstT>
+  static constexpr auto& For = InstT::Kind;
+
   template <typename TypedNodeId>
   class Definition;
 
@@ -119,9 +136,14 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     llvm::StringLiteral ir_name;
     InstIsType is_type = InstIsType::Never;
     InstConstantKind constant_kind = InstConstantKind::Indirect;
+    InstConstantNeedsInstIdKind constant_needs_inst_id =
+        constant_kind == InstConstantKind::Unique
+            ? InstConstantNeedsInstIdKind::Permanent
+            : InstConstantNeedsInstIdKind::No;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
+    bool has_cleanup = false;
   };
 
   // Provides a definition for this instruction kind. Should only be called
@@ -155,6 +177,22 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     return definition_info(*this).constant_kind;
   }
 
+  // Returns whether we need an `InstId` referring to the instruction to
+  // constant evaluate this instruction. If this is set to `true`, then:
+  //
+  //  - `Check::TryEvalInst` will not allow this instruction to be directly
+  //    evaluated without an `InstId`.
+  //  - `Check::EvalConstantInst` will be passed an `InstId` for the original
+  //    instruction being evaluated.
+  //
+  // This is set to true for instructions whose evaluation either might need a
+  // location, for example for diagnostics or for newly-created instructions,
+  // and for instructions whose evaluation needs to inspect the original form of
+  // its operands.
+  auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
+    return definition_info(*this).constant_needs_inst_id;
+  }
+
   // Returns whether this instruction kind is a code block terminator, such as
   // an unconditional branch instruction, or part of the termination sequence,
   // such as a conditional branch instruction. The termination sequence of a
@@ -168,6 +206,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // conclude `A` == `B`.
   auto deduce_through() const -> bool {
     return definition_info(*this).deduce_through;
+  }
+
+  // Returns true if this instruction has scoped cleanup associated, typically a
+  // destructor.
+  constexpr auto has_cleanup() const -> bool {
+    return definition_info(*this).has_cleanup;
   }
 
  private:
@@ -209,6 +253,11 @@ class InstKind::Definition : public InstKind {
     return info_.constant_kind;
   }
 
+  // Returns whether constant evaluation of this instruction needs an InstId.
+  constexpr auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
+    return info_.constant_needs_inst_id;
+  }
+
   // Returns whether this instruction kind is a code block terminator. See
   // InstKind::terminator_kind().
   constexpr auto terminator_kind() const -> TerminatorKind {
@@ -221,6 +270,10 @@ class InstKind::Definition : public InstKind {
   // Returns true if `Instruction(A)` == `Instruction(B)` allows deduction to
   // conclude `A` == `B`.
   constexpr auto deduce_through() const -> bool { return info_.deduce_through; }
+
+  // Returns true if this instruction has scoped cleanup associated, typically a
+  // destructor.
+  constexpr auto has_cleanup() const -> bool { return info_.has_cleanup; }
 
  private:
   friend class InstKind;

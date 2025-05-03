@@ -201,7 +201,7 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn_use";
 
-// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+4]]:13: error: member name `F` not found in `Other` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+4]]:13: error: member name `F` not found in `Other` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn UseF() { Other.F(); }
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
@@ -246,6 +246,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -255,8 +256,8 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
@@ -267,7 +268,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param_patt: %empty_tuple.type) {
+// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -321,7 +322,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_other_ns.carbon
 // CHECK:STDOUT:
@@ -375,9 +376,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F2() [from "other_fn2.carbon"];
+// CHECK:STDOUT: fn @F2 [from "other_fn2.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
 // CHECK:STDOUT:
@@ -415,7 +416,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
 // CHECK:STDOUT:
@@ -469,11 +470,13 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type.700976.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.7e9a3e.1: %F.type.700976.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.700976.2: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.7e9a3e.2: %F.type.700976.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -484,6 +487,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Other.F: %F.type.700976.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.7e9a3e.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -495,7 +499,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %F.decl: %F.type.700976.2 = fn_decl @F.2 [concrete = constants.%F.7e9a3e.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:

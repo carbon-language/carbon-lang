@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/while/fail_bad_condition.carbon
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+7]]:9: error: cannot implicitly convert value of type `String` to `bool` [ConversionFailure]
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+7]]:9: error: cannot implicitly convert expression of type `String` to `bool` [ConversionFailure]
   // CHECK:STDERR:   while ("Hello") {}
   // CHECK:STDERR:         ^~~~~~~~~
   // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+4]]:9: note: type `String` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
@@ -25,6 +25,8 @@ fn While() {
 // CHECK:STDOUT:   %While.type: type = fn_type @While [concrete]
 // CHECK:STDOUT:   %While: %While.type = struct_value () [concrete]
 // CHECK:STDOUT:   %str: String = string_literal "Hello" [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -33,6 +35,7 @@ fn While() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

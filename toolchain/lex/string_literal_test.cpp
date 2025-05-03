@@ -7,6 +7,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <optional>
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/test_helpers.h"
@@ -16,7 +20,7 @@ namespace {
 
 class StringLiteralTest : public ::testing::Test {
  public:
-  StringLiteralTest() : error_tracker_(ConsoleDiagnosticConsumer()) {}
+  StringLiteralTest() : error_tracker_(Diagnostics::ConsoleConsumer()) {}
 
   auto Lex(llvm::StringRef text) -> StringLiteral {
     std::optional<StringLiteral> result = StringLiteral::Lex(text);
@@ -32,7 +36,7 @@ class StringLiteralTest : public ::testing::Test {
   }
 
   llvm::BumpPtrAllocator allocator_;
-  ErrorTrackingDiagnosticConsumer error_tracker_;
+  Diagnostics::ErrorTrackingConsumer error_tracker_;
 };
 
 TEST_F(StringLiteralTest, StringLiteralBounds) {

@@ -24,7 +24,7 @@ namespace Carbon::Parse {
 //
 // TODO: Decide whether we want to avoid lookahead altogether.
 //
-// NOLINTNEXTLINE(performance-enum-size): Deliberately matches index size.
+// The size of the enum deliberately matches the index size.
 enum class Lookahead : int32_t {
   CurrentToken = 0,
   NextToken = 1,
@@ -35,16 +35,17 @@ enum class Lookahead : int32_t {
 class Context {
  public:
   // A token-based emitter for use during parse.
-  class Emitter : public DiagnosticEmitter<Lex::TokenIndex> {
+  class DiagnosticEmitter : public Diagnostics::Emitter<Lex::TokenIndex> {
    public:
-    explicit Emitter(DiagnosticConsumer* consumer, Context* context)
-        : DiagnosticEmitter(consumer), context_(context) {}
+    explicit DiagnosticEmitter(Diagnostics::Consumer* consumer,
+                               Context* context)
+        : Emitter(consumer), context_(context) {}
 
    protected:
     // Applies the `position_` to the `last_byte_offset` returned by
     // `TokenToDiagnosticLoc`.
     auto ConvertLoc(Lex::TokenIndex token, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
+        -> Diagnostics::ConvertedLoc override {
       auto converted = context_->tokens().TokenToDiagnosticLoc(token);
       converted.last_byte_offset =
           std::max(converted.last_byte_offset,
@@ -74,15 +75,15 @@ class Context {
   };
 
   // Used to track state on state_stack_.
-  struct StateStackEntry : public Printable<StateStackEntry> {
+  struct State : public Printable<State> {
     // Prints state information for verbose output.
     auto Print(llvm::raw_ostream& output) const -> void {
-      output << state << " @" << token << " subtree_start=" << subtree_start
+      output << kind << " @" << token << " subtree_start=" << subtree_start
              << " has_error=" << has_error;
     }
 
     // The state.
-    State state;
+    StateKind kind;
     // Set to true to indicate that an error was found, and that contextual
     // error recovery may be needed.
     bool has_error : 1 = false;
@@ -109,7 +110,7 @@ class Context {
     int32_t subtree_start;
   };
 
-  // We expect StateStackEntry to fit into 12 bytes:
+  // We expect State to fit into 12 bytes:
   //   state = 1 byte
   //   has_error and in_var_pattern = 1 byte
   //   ambient_precedence = 1 byte
@@ -118,11 +119,10 @@ class Context {
   //   subtree_start = 4 bytes
   // If it becomes bigger, it'd be worth examining better packing; it should be
   // feasible to pack the 1-byte entries more tightly.
-  static_assert(sizeof(StateStackEntry) == 12,
-                "StateStackEntry has unexpected size!");
+  static_assert(sizeof(State) == 12, "State has unexpected size!");
 
   explicit Context(Tree* tree, Lex::TokenizedBuffer* tokens,
-                   DiagnosticConsumer* consumer,
+                   Diagnostics::Consumer* consumer,
                    llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
@@ -190,9 +190,8 @@ class Context {
   // Creates a parse node of the specified close kind. If `expected_open` is not
   // an opening symbol, the parse node will be associated with `state.token`,
   // no input will be consumed, and no diagnostic will be emitted.
-  auto ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
-                                StateStackEntry state, NodeKind close_kind)
-      -> void;
+  auto ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open, State state,
+                                NodeKind close_kind) -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
@@ -279,7 +278,7 @@ class Context {
   }
 
   // Pops the state and keeps the value for inspection.
-  auto PopState() -> StateStackEntry {
+  auto PopState() -> State {
     auto back = state_stack_.pop_back_val();
     CARBON_VLOG("Pop {0}: {1}\n", state_stack_.size(), back);
     return back;
@@ -293,26 +292,26 @@ class Context {
   }
 
   // Pushes a new state with the current position for context.
-  auto PushState(State state) -> void { PushState(state, *position_); }
+  auto PushState(StateKind kind) -> void { PushState(kind, *position_); }
 
   // Pushes a new state with a specific token for context. Used when forming a
   // new subtree when the current position isn't the start of the subtree.
-  auto PushState(State state, Lex::TokenIndex token) -> void {
-    PushState({.state = state, .token = token, .subtree_start = tree_->size()});
+  auto PushState(StateKind kind, Lex::TokenIndex token) -> void {
+    PushState({.kind = kind, .token = token, .subtree_start = tree_->size()});
   }
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
-    PushState({.state = State::Expr,
+    PushState({.kind = StateKind::Expr,
                .ambient_precedence = ambient_precedence,
                .token = *position_,
                .subtree_start = tree_->size()});
   }
 
   // Pushes a new state with detailed precedence for expression resume states.
-  auto PushStateForExprLoop(State state, PrecedenceGroup ambient_precedence,
+  auto PushStateForExprLoop(StateKind kind, PrecedenceGroup ambient_precedence,
                             PrecedenceGroup lhs_precedence) -> void {
-    PushState({.state = state,
+    PushState({.kind = kind,
                .ambient_precedence = ambient_precedence,
                .lhs_precedence = lhs_precedence,
                .token = *position_,
@@ -321,25 +320,25 @@ class Context {
 
   // Pushes a new state for handling a pattern. `in_var_pattern` indicates
   // whether that pattern is nested inside a `var` pattern.
-  auto PushStateForPattern(State state, bool in_var_pattern) -> void {
-    PushState({.state = state,
+  auto PushStateForPattern(StateKind kind, bool in_var_pattern) -> void {
+    PushState({.kind = kind,
                .in_var_pattern = in_var_pattern,
                .token = *position_,
                .subtree_start = tree_->size()});
   }
 
   // Pushes a constructed state onto the stack.
-  auto PushState(StateStackEntry state) -> void {
+  auto PushState(State state) -> void {
     CARBON_VLOG("Push {0}: {1}\n", state_stack_.size(), state);
     state_stack_.push_back(state);
     CARBON_CHECK(state_stack_.size() < (1 << 20),
                  "Excessive stack size: likely infinite loop");
   }
 
-  // Pushes a constructed state onto the stack, with a different parse state.
-  auto PushState(StateStackEntry state_entry, State parse_state) -> void {
-    state_entry.state = parse_state;
-    PushState(state_entry);
+  // Pushes a constructed state onto the stack, with a different kind.
+  auto PushState(State state, StateKind kind) -> void {
+    state.kind = kind;
+    PushState(state);
   }
 
   // Propagates an error up the state stack, to the parent state.
@@ -348,7 +347,7 @@ class Context {
   // Adds a node for a declaration's semicolon. Includes error recovery when the
   // token is not a semicolon, using `decl_kind` and `is_def_allowed` to inform
   // diagnostics.
-  auto AddNodeExpectingDeclSemi(StateStackEntry state, NodeKind node_kind,
+  auto AddNodeExpectingDeclSemi(State state, NodeKind node_kind,
                                 Lex::TokenKind decl_kind, bool is_def_allowed)
       -> void;
 
@@ -363,7 +362,7 @@ class Context {
   // definition has started (although one could be present). Recover to a
   // semicolon when it makes sense as a possible end, otherwise use the
   // introducer token for the error.
-  auto RecoverFromDeclError(StateStackEntry state, NodeKind node_kind,
+  auto RecoverFromDeclError(State state, NodeKind node_kind,
                             bool skip_past_likely_end) -> void;
 
   // Handles parsing of the library name. Returns the name's ID on success,
@@ -407,16 +406,14 @@ class Context {
 
   auto has_errors() const -> bool { return err_tracker_.seen_error(); }
 
-  auto emitter() -> Emitter& { return emitter_; }
+  auto emitter() -> DiagnosticEmitter& { return emitter_; }
 
   auto position() -> Lex::TokenIterator& { return position_; }
   auto position() const -> Lex::TokenIterator { return position_; }
 
-  auto state_stack() -> llvm::SmallVector<StateStackEntry>& {
-    return state_stack_;
-  }
+  auto state_stack() -> llvm::SmallVector<State>& { return state_stack_; }
 
-  auto state_stack() const -> const llvm::SmallVector<StateStackEntry>& {
+  auto state_stack() const -> const llvm::SmallVector<State>& {
     return state_stack_;
   }
 
@@ -440,8 +437,8 @@ class Context {
   Tree* tree_;
   Lex::TokenizedBuffer* tokens_;
 
-  ErrorTrackingDiagnosticConsumer err_tracker_;
-  Emitter emitter_;
+  Diagnostics::ErrorTrackingConsumer err_tracker_;
+  DiagnosticEmitter emitter_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
@@ -451,7 +448,7 @@ class Context {
   // The FileEnd token.
   Lex::TokenIterator end_;
 
-  llvm::SmallVector<StateStackEntry> state_stack_;
+  llvm::SmallVector<State> state_stack_;
 
   // The deferred definition indexes of functions whose definitions have begun
   // but not yet finished.

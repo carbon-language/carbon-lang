@@ -11,6 +11,7 @@
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/sem_ir/expr_info.h"
 
 namespace Carbon::Check {
 
@@ -217,11 +218,10 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorStarEqualId node_id)
 auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
     -> bool {
   auto value_id = context.node_stack().PopExpr();
-  auto inner_type_id = ExprAsType(context, node_id, value_id).type_id;
+  auto inner_type = ExprAsType(context, node_id, value_id);
   AddInstAndPush<SemIR::PointerType>(
       context, node_id,
-      {.type_id = SemIR::TypeType::SingletonTypeId,
-       .pointee_id = inner_type_id});
+      {.type_id = SemIR::TypeType::TypeId, .pointee_id = inner_type.inst_id});
   return true;
 }
 
@@ -237,19 +237,22 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
     case SemIR::ExprCategory::EphemeralRef:
       CARBON_DIAGNOSTIC(AddrOfEphemeralRef, Error,
                         "cannot take the address of a temporary object");
-      context.emitter().Emit(TokenOnly(node_id), AddrOfEphemeralRef);
-      value_id = SemIR::ErrorInst::SingletonInstId;
+      context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+                             AddrOfEphemeralRef);
+      value_id = SemIR::ErrorInst::InstId;
       break;
     default:
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "cannot take the address of non-reference expression");
-      context.emitter().Emit(TokenOnly(node_id), AddrOfNonRef);
-      value_id = SemIR::ErrorInst::SingletonInstId;
+      context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(), AddrOfNonRef);
+      value_id = SemIR::ErrorInst::InstId;
       break;
   }
+  // TODO: Preserve spelling of type of operand where possible.
+  auto type_inst_id = context.types().GetInstId(type_id);
   AddInstAndPush<SemIR::AddrOf>(
       context, node_id,
-      SemIR::AddrOf{.type_id = GetPointerType(context, type_id),
+      SemIR::AddrOf{.type_id = GetPointerType(context, type_inst_id),
                     .lvalue_id = value_id});
   return true;
 }
@@ -272,10 +275,10 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
                       "additional effect");
     context.emitter().Emit(node_id, RepeatedConst);
   }
-  auto inner_type_id = ExprAsType(context, node_id, value_id).type_id;
+  auto inner_type = ExprAsType(context, node_id, value_id);
   AddInstAndPush<SemIR::ConstType>(
       context, node_id,
-      {.type_id = SemIR::TypeType::SingletonTypeId, .inner_id = inner_type_id});
+      {.type_id = SemIR::TypeType::TypeId, .inner_id = inner_type.inst_id});
   return true;
 }
 
@@ -323,15 +326,16 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
                           "cannot dereference operand of non-pointer type {0}",
                           SemIR::TypeId);
 
-        auto builder = context.emitter().Build(
-            TokenOnly(node_id), DerefOfNonPointer, not_pointer_type_id);
+        auto builder =
+            context.emitter().Build(SemIR::LocId(node_id).ToTokenOnly(),
+                                    DerefOfNonPointer, not_pointer_type_id);
 
         // TODO: Check for any facet here, rather than only a type.
-        if (not_pointer_type_id == SemIR::TypeType::SingletonTypeId) {
+        if (not_pointer_type_id == SemIR::TypeType::TypeId) {
           CARBON_DIAGNOSTIC(
               DerefOfType, Note,
               "to form a pointer type, write the `*` after the pointee type");
-          builder.Note(TokenOnly(node_id), DerefOfType);
+          builder.Note(SemIR::LocId(node_id).ToTokenOnly(), DerefOfType);
         }
 
         builder.Emit();
@@ -396,10 +400,10 @@ auto HandleParseNode(Context& context, Parse::ShortCircuitOperandOrId node_id)
 // occurs during operand handling.
 static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
     -> bool {
-  if (context.return_scope_stack().empty()) {
-    context.TODO(node_id,
-                 "Control flow expressions are currently only supported inside "
-                 "functions.");
+  if (!context.scope_stack().IsInFunctionScope()) {
+    return context.TODO(node_id,
+                        "Control flow expressions are currently only supported "
+                        "inside functions.");
   }
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto short_circuit_result_id = context.node_stack().PopExpr();

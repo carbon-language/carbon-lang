@@ -10,10 +10,10 @@ namespace Carbon::Parse {
 auto HandleCodeBlock(Context& context) -> void {
   context.PopAndDiscardState();
 
-  context.PushState(State::CodeBlockFinish);
+  context.PushState(StateKind::CodeBlockFinish);
   if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::OpenCurlyBrace,
                                       NodeKind::CodeBlockStart)) {
-    context.PushState(State::StatementScopeLoop);
+    context.PushState(StateKind::StatementScopeLoop);
   } else {
     context.AddLeafNode(NodeKind::CodeBlockStart, *context.position(),
                         /*has_error=*/true);
@@ -22,7 +22,7 @@ auto HandleCodeBlock(Context& context) -> void {
     CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "expected braced code block");
     context.emitter().Emit(*context.position(), ExpectedCodeBlock);
 
-    context.PushState(State::Statement);
+    context.PushState(StateKind::Statement);
   }
 }
 

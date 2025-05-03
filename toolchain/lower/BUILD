@@ -2,13 +2,13 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel/cc_rules:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testdata",
-    data = glob(["testdata/**/*.carbon"]),
+    srcs = glob(["testdata/**/*.carbon"]),
 )
 
 cc_library(
@@ -17,7 +17,6 @@ cc_library(
     hdrs = ["lower.h"],
     deps = [
         ":context",
-        "//toolchain/check:sem_ir_loc_diagnostic_emitter",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",
@@ -50,11 +49,11 @@ cc_library(
         "//common:raw_string_ostream",
         "//common:vlog",
         "//toolchain/base:kind_switch",
-        "//toolchain/check:sem_ir_loc_diagnostic_emitter",
+        "//toolchain/parse:tree",
         "//toolchain/sem_ir:absolute_node_id",
         "//toolchain/sem_ir:entry_point",
+        "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:inst_namer",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:ast",

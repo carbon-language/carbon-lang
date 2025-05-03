@@ -36,7 +36,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::Value* index;
   if (context.sem_ir().types().GetInstId(
           context.sem_ir().insts().Get(inst.index_id).type_id()) ==
-      SemIR::IntLiteralType::SingletonInstId) {
+      SemIR::IntLiteralType::TypeInstId) {
     auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
         context.sem_ir().constant_values().GetConstantInstId(inst.index_id));
     index = llvm::ConstantInt::get(context.llvm_context(),
@@ -73,7 +73,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindAlias inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 
@@ -83,7 +83,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 
@@ -191,7 +191,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 
@@ -285,8 +285,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::VarStorage inst) -> void {
-  auto* type = context.GetType(inst.type_id);
+                SemIR::VarStorage /* inst */) -> void {
+  auto* type = context.GetType(SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), context.specific_id(), inst_id));
 
   // Position the first alloca right before the start of the executable code in
   // the function.
@@ -324,12 +325,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::VtablePtr /*inst*/) -> void {
-  // TODO: Initialize the virtual pointer to actually point to a virtual
-  // function table.
-  context.SetLocal(inst_id,
-                   llvm::ConstantPointerNull::get(
-                       llvm::PointerType::get(context.llvm_context(), 0)));
+                SemIR::VtablePtr inst) -> void {
+  context.SetLocal(inst_id, context.GetValue(inst.vtable_id));
 }
 
 }  // namespace Carbon::Lower

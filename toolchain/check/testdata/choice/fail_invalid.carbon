@@ -31,6 +31,7 @@ fn F() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Never [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -53,7 +54,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Never {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -63,7 +64,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %never.patt: %Never = binding_pattern never
+// CHECK:STDOUT:     %never.patt: %pattern_type = binding_pattern never [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_23.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Never.ref: type = name_ref Never, file.%Never.decl [concrete = constants.%Never]

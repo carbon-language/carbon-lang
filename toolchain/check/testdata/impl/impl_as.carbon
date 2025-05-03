@@ -28,15 +28,16 @@ class C {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.e2e: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.df8: %F.type.e2e = struct_value () [concrete]
-// CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type %Simple.type [concrete]
+// CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.%F.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @C.%Simple.impl_witness_table [concrete]
 // CHECK:STDOUT:   %F.type.e4b: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.c94: %F.type.e4b = struct_value () [concrete]
-// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, (%impl_witness) [concrete]
+// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, (%Simple.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,7 +76,7 @@ class C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   witness = @C.%impl_witness
+// CHECK:STDOUT:   witness = @C.%Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -83,7 +84,9 @@ class C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [concrete = constants.%impl_witness]
+// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@impl.%F.decl), @impl [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -100,8 +103,8 @@ class C {
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %.loc19_7.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc19_7.1: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %.loc19_19.1: %empty_struct_type = struct_literal ()

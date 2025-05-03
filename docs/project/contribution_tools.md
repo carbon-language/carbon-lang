@@ -30,6 +30,7 @@ contributions.
     -   [Old LLVM versions](#old-llvm-versions)
     -   [Asking for help](#asking-for-help)
 -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
+    -   [Using LLDB from the command line](#using-lldb-from-the-command-line)
     -   [Debugging with GDB instead of LLDB](#debugging-with-gdb-instead-of-lldb)
     -   [Debugging other build modes](#debugging-other-build-modes)
     -   [Debugging on MacOS](#debugging-on-macos)
@@ -350,6 +351,24 @@ lldb bazel-bin/toolchain/carbon
 
 Any installed version of LLDB at least as recent as the installed Clang used for
 building should work.
+
+### Using LLDB from the command line
+
+We include launch commands for running lldb in VSCode in
+[`.vscode/lldb_launch.json`](/.vscode/lldb_launch.json). But it's also possible
+to run lldb from the command line.
+
+When running the debugger, include the `--local-lldbinit` argument to use our
+preset configuration options. This requires running from the repository root.
+
+To debug a single `file_test`, use the following command, pointing it to an
+actual carbon test file.
+
+```
+bazel build -c dbg //toolchain/testing:file_test && \
+  lldb --local-lldbinit bazel-bin/toolchain/testing/file_test -- \
+    --dump_output --file_tests /path/to/some/test.carbon
+```
 
 ### Debugging with GDB instead of LLDB
 

@@ -60,6 +60,12 @@ using CommentIterator = IndexIterator<CommentIndex>;
 // Random-access iterator over tokens within the buffer.
 using TokenIterator = IndexIterator<TokenIndex>;
 
+// A token range which is inclusive of the begin and end.
+struct InclusiveTokenRange {
+  TokenIndex begin;
+  TokenIndex end;
+};
+
 // A buffer of tokenized Carbon source code.
 //
 // This is constructed by lexing the source code text into a series of tokens.
@@ -177,7 +183,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
       -> void;
 
   // Converts a token to a diagnostic location.
-  auto TokenToDiagnosticLoc(TokenIndex token) const -> ConvertedDiagnosticLoc;
+  auto TokenToDiagnosticLoc(TokenIndex token) const
+      -> Diagnostics::ConvertedLoc;
+
+  // Returns true if the given range overlaps with an entry in
+  // `dump_sem_ir_ranges_`. Must not be called when there are no ranges; query
+  // `has_dump_sem_ir_ranges` first.
+  auto OverlapsWithDumpSemIRRange(Lex::InclusiveTokenRange range) const -> bool;
 
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
@@ -196,6 +208,11 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   auto comments_size() const -> size_t { return comments_.size(); }
 
+  // Returns true if any `DumpSemIRRange`s were provided.
+  auto has_dump_sem_ir_ranges() const -> bool {
+    return !dump_sem_ir_ranges_.empty();
+  }
+
   // This is an upper bound on the number of output parse nodes in the absence
   // of errors.
   auto expected_max_parse_tree_size() const -> int {
@@ -207,15 +224,16 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
  private:
   friend class Lexer;
 
-  class SourcePointerDiagnosticEmitter : public DiagnosticEmitter<const char*> {
+  class SourcePointerDiagnosticEmitter
+      : public Diagnostics::Emitter<const char*> {
    public:
-    explicit SourcePointerDiagnosticEmitter(DiagnosticConsumer* consumer,
+    explicit SourcePointerDiagnosticEmitter(Diagnostics::Consumer* consumer,
                                             const TokenizedBuffer* tokens)
-        : DiagnosticEmitter(consumer), tokens_(tokens) {}
+        : Emitter(consumer), tokens_(tokens) {}
 
    protected:
     auto ConvertLoc(const char* loc, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
+        -> Diagnostics::ConvertedLoc override {
       return tokens_->SourcePointerToDiagnosticLoc(loc);
     }
 
@@ -223,15 +241,15 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     const TokenizedBuffer* tokens_;
   };
 
-  class TokenDiagnosticEmitter : public DiagnosticEmitter<TokenIndex> {
+  class TokenDiagnosticEmitter : public Diagnostics::Emitter<TokenIndex> {
    public:
-    explicit TokenDiagnosticEmitter(DiagnosticConsumer* consumer,
+    explicit TokenDiagnosticEmitter(Diagnostics::Consumer* consumer,
                                     const TokenizedBuffer* tokens)
-        : DiagnosticEmitter(consumer), tokens_(tokens) {}
+        : Emitter(consumer), tokens_(tokens) {}
 
    protected:
     auto ConvertLoc(TokenIndex token, ContextFnT /*context_fn*/) const
-        -> ConvertedDiagnosticLoc override {
+        -> Diagnostics::ConvertedLoc override {
       return tokens_->TokenToDiagnosticLoc(token);
     }
 
@@ -241,7 +259,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Converts a pointer into the source to a diagnostic location.
   auto SourcePointerToDiagnosticLoc(const char* loc) const
-      -> ConvertedDiagnosticLoc;
+      -> Diagnostics::ConvertedLoc;
 
   // Specifies minimum widths to use when printing a token's fields via
   // `printToken`.
@@ -479,6 +497,14 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Comments in the file.
   llvm::SmallVector<CommentData> comments_;
+
+  // A range of tokens marked by `//@dump-semir-[begin|end]`.
+  //
+  // The particular syntax was chosen because it can be lexed efficiently. It
+  // only occurs in invalid comment strings, so shouldn't slow down lexing of
+  // correct code. It's also comment-like because its presence won't affect
+  // parse/check.
+  llvm::SmallVector<InclusiveTokenRange> dump_sem_ir_ranges_;
 
   // An upper bound on the number of parse tree nodes that we expect to be
   // created for the tokens in this buffer.

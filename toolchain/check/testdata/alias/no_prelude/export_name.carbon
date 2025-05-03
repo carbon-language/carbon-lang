@@ -88,6 +88,7 @@ var d: D* = &c;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -107,7 +108,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//base, D, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//base, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -138,7 +139,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//base, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.D = import_ref Main//base, D, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//base, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -163,13 +164,14 @@ var d: D* = &c;
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//export, D, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//export, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//export, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export, inst23 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -179,8 +181,8 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %C = binding_pattern d
-// CHECK:STDOUT:     %.loc6: %C = var_pattern %d.patt
+// CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d [concrete]
+// CHECK:STDOUT:     %.loc6: %pattern_type = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %C = var d
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
@@ -221,8 +223,8 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
@@ -242,15 +244,17 @@ var d: D* = &c;
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//export, D, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//export_orig, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//export_orig, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export_orig, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//export_orig, inst22 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//export_orig, inst23 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -262,20 +266,20 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
-// CHECK:STDOUT:     %.loc7: %C = var_pattern %c.patt
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %.loc7: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %ptr.019 = binding_pattern d
-// CHECK:STDOUT:     %.loc8_1: %ptr.019 = var_pattern %d.patt
+// CHECK:STDOUT:     %d.patt: %pattern_type.44a = binding_pattern d [concrete]
+// CHECK:STDOUT:     %.loc8_1: %pattern_type.44a = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %ptr.019 = var d
 // CHECK:STDOUT:   %.loc8_9: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr.019]
+// CHECK:STDOUT:     %ptr: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %ptr.019 = bind_name d, %d.var
 // CHECK:STDOUT: }

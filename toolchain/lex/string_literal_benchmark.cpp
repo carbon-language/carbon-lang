@@ -4,6 +4,9 @@
 
 #include <benchmark/benchmark.h>
 
+#include <string>
+#include <string_view>
+
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/string_literal.h"
 
@@ -94,8 +97,8 @@ static void BM_SimpleStringValue(benchmark::State& state, int size,
   }
   x.append(terminator);
   for (auto _ : state) {
-    StringLiteral::Lex(x)->ComputeValue(allocator,
-                                        NullDiagnosticEmitter<const char*>());
+    StringLiteral::Lex(x)->ComputeValue(
+        allocator, Diagnostics::NullEmitter<const char*>());
   }
 }
 

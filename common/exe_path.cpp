@@ -4,6 +4,9 @@
 
 #include "common/exe_path.h"
 
+#include <string>
+#include <utility>
+
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Program.h"

@@ -11,8 +11,8 @@
 namespace Carbon::Check {
 
 // Enforces that an integer type has a valid bit width.
-auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
-    -> bool {
+auto ValidateIntType(Context& context, SemIR::LocId loc_id,
+                     SemIR::IntType result) -> bool {
   auto bit_width =
       context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);
   if (!bit_width) {
@@ -26,7 +26,7 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
     CARBON_DIAGNOSTIC(IntWidthNotPositive, Error,
                       "integer type width of {0} is not positive", TypedInt);
     context.emitter().Emit(
-        loc, IntWidthNotPositive,
+        loc_id, IntWidthNotPositive,
         {.type = bit_width->type_id, .value = bit_width_val});
     return false;
   }
@@ -35,7 +35,7 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
                       "integer type width of {0} is greater than the "
                       "maximum supported width of {1}",
                       TypedInt, int);
-    context.emitter().Emit(loc, IntWidthTooLarge,
+    context.emitter().Emit(loc_id, IntWidthTooLarge,
                            {.type = bit_width->type_id, .value = bit_width_val},
                            IntStore::MaxIntWidth);
     return false;
@@ -44,7 +44,7 @@ auto ValidateIntType(Context& context, SemIRLoc loc, SemIR::IntType result)
 }
 
 // Enforces that the bit width is 64 for a float.
-auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
+auto ValidateFloatBitWidth(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId inst_id) -> bool {
   auto inst = context.insts().GetAs<SemIR::IntValue>(inst_id);
   if (context.ints().Get(inst.int_id) == 64) {
@@ -52,30 +52,28 @@ auto ValidateFloatBitWidth(Context& context, SemIRLoc loc,
   }
 
   CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error, "bit width must be 64");
-  context.emitter().Emit(loc, CompileTimeFloatBitWidth);
+  context.emitter().Emit(loc_id, CompileTimeFloatBitWidth);
   return false;
 }
 
 // Enforces that a float type has a valid bit width.
-auto ValidateFloatType(Context& context, SemIRLoc loc, SemIR::FloatType result)
-    -> bool {
+auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
+                       SemIR::FloatType result) -> bool {
   auto bit_width =
       context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);
   if (!bit_width) {
     // Symbolic bit width.
     return true;
   }
-  return ValidateFloatBitWidth(context, loc, result.bit_width_id);
+  return ValidateFloatBitWidth(context, loc_id, result.bit_width_id);
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments.
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
-  // TODO: Remove inst_id parameter from TryEvalInst.
-  InstT inst = {SemIR::TypeType::SingletonTypeId, each_arg...};
-  return context.types().GetTypeIdForTypeConstantId(
-      TryEvalInst(context, SemIR::InstId::None, inst));
+  InstT inst = {SemIR::TypeType::TypeId, each_arg...};
+  return context.types().GetTypeIdForTypeConstantId(TryEvalInst(context, inst));
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments,
@@ -94,18 +92,20 @@ auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)
   return GetTypeImpl<SemIR::StructType>(context, fields_id);
 }
 
-auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::TypeId> type_ids)
+auto GetTupleType(Context& context, llvm::ArrayRef<SemIR::InstId> type_inst_ids)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::TupleType>(
-      context, context.type_blocks().AddCanonical(type_ids));
+      context, context.inst_blocks().AddCanonical(type_inst_ids));
 }
 
-auto GetAssociatedEntityType(Context& context, SemIR::TypeId interface_type_id)
+auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
+                             SemIR::SpecificId interface_specific_id)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::AssociatedEntityType>(context, interface_type_id);
+  return GetTypeImpl<SemIR::AssociatedEntityType>(context, interface_id,
+                                                  interface_specific_id);
 }
 
-auto GetSingletonType(Context& context, SemIR::InstId singleton_id)
+auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
     -> SemIR::TypeId {
   CARBON_CHECK(SemIR::IsSingletonInstId(singleton_id));
   auto type_id = context.types().GetTypeIdForTypeInstId(singleton_id);
@@ -125,7 +125,7 @@ auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
 }
 
 auto GetFunctionTypeWithSelfType(Context& context,
-                                 SemIR::InstId interface_function_type_id,
+                                 SemIR::TypeInstId interface_function_type_id,
                                  SemIR::InstId self_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::FunctionTypeWithSelfType>(
       context, interface_function_type_id, self_id);
@@ -152,15 +152,55 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
       FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
 }
 
-auto GetPointerType(Context& context, SemIR::TypeId pointee_type_id)
+auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
-auto GetUnboundElementType(Context& context, SemIR::TypeId class_type_id,
-                           SemIR::TypeId element_type_id) -> SemIR::TypeId {
+auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
+    -> SemIR::TypeId {
+  CARBON_CHECK(!context.types().Is<SemIR::PatternType>(scrutinee_type_id),
+               "Type is already a pattern type");
+  if (scrutinee_type_id == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::TypeId;
+  }
+  return GetTypeImpl<SemIR::PatternType>(
+      context, context.types().GetInstId(scrutinee_type_id));
+}
+
+auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
+                           SemIR::TypeInstId element_type_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(context, class_type_id,
                                                 element_type_id);
+}
+
+auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  // We can have FacetAccessType of a FacetValue, and a FacetValue of a
+  // FacetAccessType, but they don't nest indefinitely.
+  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
+    inst_id = access->facet_value_inst_id;
+  }
+  if (auto value = context.insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
+    inst_id = value->type_inst_id;
+
+    if (auto access =
+            context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
+      inst_id = access->facet_value_inst_id;
+    }
+  }
+
+  CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessType>(inst_id));
+  CARBON_CHECK(!context.insts().Is<SemIR::FacetValue>(inst_id));
+
+  return context.constant_values().GetConstantInstId(inst_id);
+}
+
+auto GetCanonicalizedFacetOrTypeValue(Context& context,
+                                      SemIR::ConstantId const_id)
+    -> SemIR::ConstantId {
+  return context.constant_values().Get(GetCanonicalizedFacetOrTypeValue(
+      context, context.constant_values().GetInstId(const_id)));
 }
 
 }  // namespace Carbon::Check

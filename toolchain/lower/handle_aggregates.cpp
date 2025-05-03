@@ -8,6 +8,8 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/expr_info.h"
+#include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -141,9 +143,12 @@ static auto EmitAggregateInitializer(FunctionContext& context,
       // non-constant initialization.
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
         if (context.sem_ir().constant_values().Get(ref_id).is_constant()) {
-          auto init =
-              context.sem_ir().insts().GetAs<SemIR::InitializeFrom>(ref_id);
-          HandleInst(context, ref_id, init);
+          auto dest_id =
+              SemIR::FindReturnSlotArgForInitializer(context.sem_ir(), ref_id);
+          auto src_id = ref_id;
+          auto storage_type_id =
+              context.sem_ir().insts().Get(dest_id).type_id();
+          context.FinishInit(storage_type_id, dest_id, src_id);
         }
       }
       // TODO: Add a helper to poison a value slot.

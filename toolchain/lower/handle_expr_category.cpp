@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/lower/function_context.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Lower {

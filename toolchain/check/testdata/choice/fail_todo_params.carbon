@@ -48,21 +48,30 @@ choice C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
+// CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u1: type = class_type @UInt, @UInt(%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %u1} [concrete]
 // CHECK:STDOUT:   %complete_type.df6: <witness> = complete_type_witness %struct_type.discriminant [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.766: type = facet_type <@ImplicitAs, @ImplicitAs(%u1)> [concrete]
 // CHECK:STDOUT:   %Convert.type.5a2: type = fn_type @Convert.1, @ImplicitAs(%u1) [concrete]
-// CHECK:STDOUT:   %impl_witness.514: <witness> = impl_witness (imports.%Core.import_ref.c3d), @impl.86e(%int_1.5b8) [concrete]
+// CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.30e: type = fn_type @Convert.2, @impl.86e(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.d1a: %Convert.type.30e = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.123: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bb8, @impl.86e(%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %Convert.type.f9b: type = fn_type @Convert.2, @impl.86e(%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %Convert.84e: %Convert.type.f9b = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.766 = facet_value Core.IntLiteral, (%impl_witness.514) [concrete]
-// CHECK:STDOUT:   %.df4: type = fn_type_with_self_type %Convert.type.5a2, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.766 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.123) [concrete]
+// CHECK:STDOUT:   %.48b: type = fn_type_with_self_type %Convert.type.5a2, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.db0: <bound method> = bound_method %int_0.5c6, %Convert.84e [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.84e, @Convert.2(%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %bound_method.06f: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
@@ -82,6 +91,11 @@ choice C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/types/uint, UInt, loaded [concrete = constants.%UInt.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.import_ref.c3d: @impl.86e.%Convert.type (%Convert.type.30e) = import_ref Core//prelude/types/uint, loc20_40, loaded [symbolic = @impl.86e.%Convert (constants.%Convert.d1a)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bb8 = impl_witness_table (%Core.import_ref.c3d), @impl.86e [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -108,9 +122,9 @@ choice C {
 // CHECK:STDOUT:   %b: %i64 = bind_name b, %b.param
 // CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %u1: type = class_type @UInt, @UInt(constants.%int_1.5b8) [concrete = constants.%u1]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type.df6]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type.df6]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %impl.elem0.loc4: %.df4 = impl_witness_access constants.%impl_witness.514, element0 [concrete = constants.%Convert.84e]
+// CHECK:STDOUT:   %impl.elem0.loc4: %.48b = impl_witness_access constants.%ImplicitAs.impl_witness.123, element0 [concrete = constants.%Convert.84e]
 // CHECK:STDOUT:   %bound_method.loc4_7.1: <bound method> = bound_method %int_0, %impl.elem0.loc4 [concrete = constants.%Convert.bound.db0]
 // CHECK:STDOUT:   %specific_fn.loc4: <specific function> = specific_function %impl.elem0.loc4, @Convert.2(constants.%int_1.5b8) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc4_7.2: <bound method> = bound_method %int_0, %specific_fn.loc4 [concrete = constants.%bound_method.06f]
@@ -127,7 +141,7 @@ choice C {
 // CHECK:STDOUT:   %.loc4_7.10: %C = bind_value %.loc4_7.9
 // CHECK:STDOUT:   %Alt1: %C = bind_name Alt1, %.loc4_7.10
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc10: %.df4 = impl_witness_access constants.%impl_witness.514, element0 [concrete = constants.%Convert.84e]
+// CHECK:STDOUT:   %impl.elem0.loc10: %.48b = impl_witness_access constants.%ImplicitAs.impl_witness.123, element0 [concrete = constants.%Convert.84e]
 // CHECK:STDOUT:   %bound_method.loc10_7.1: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10 [concrete = constants.%Convert.bound.1f9]
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10, @Convert.2(constants.%int_1.5b8) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_7.2: <bound method> = bound_method %int_1.loc10, %specific_fn.loc10 [concrete = constants.%bound_method.734]
@@ -157,11 +171,12 @@ choice C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete]
 // CHECK:STDOUT: }
@@ -180,7 +195,7 @@ choice C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %T.patt.loc3_10.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_10.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc3_10.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc3_10.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -188,15 +203,15 @@ choice C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc3_10.1: type) {
 // CHECK:STDOUT:   %T.loc3_10.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc3_10.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc3_10.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc3_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc3_10.2 [symbolic = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %a.param: @C.%T.loc3_10.2 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc3_10.1 [symbolic = %T.loc3_10.2 (constants.%T)]
 // CHECK:STDOUT:     %a: @C.%T.loc3_10.2 (%T) = bind_name a, %a.param
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -208,7 +223,6 @@ choice C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc3_10.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc3_10.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_self_param.carbon
@@ -241,10 +255,10 @@ choice C {
 // CHECK:STDOUT:   %a.param: %ptr = value_param call_param0
 // CHECK:STDOUT:   %.loc8: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %ptr = bind_name a, %a.param
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

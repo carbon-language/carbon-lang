@@ -7,9 +7,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <forward_list>
 #include <iterator>
+#include <string>
 
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -1028,13 +1030,13 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // We increase the number of digits until the first one that is to large.
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::TooManyTypeBitWidthDigits,
-                            DiagnosticLevel::Error, 1, 2, _)));
+                            Diagnostics::Kind::TooManyTypeBitWidthDigits,
+                            Diagnostics::Level::Error, 1, 2, _)));
   std::string code = "i";
   // A 128-bit APInt should be plenty large, but if needed in the future it can
   // be widened without issue.
   llvm::APInt bits = llvm::APInt::getZero(128);
-  for ([[maybe_unused]] int _ : llvm::seq(1, 30)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(1, 30)) {
     code.append("9");
     bits = bits * 10 + 9;
     auto [buffer, value_stores] =
@@ -1061,8 +1063,8 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // crashing or hanging, and show the correct number.
   constexpr int Count = 10000;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::TooManyTypeBitWidthDigits,
-                            DiagnosticLevel::Error, 1, 2,
+                            Diagnostics::Kind::TooManyTypeBitWidthDigits,
+                            Diagnostics::Level::Error, 1, 2,
                             HasSubstr(llvm::formatv(" {0} ", Count)))));
   code = "i";
   code.append(Count, '9');
@@ -1083,72 +1085,75 @@ TEST_F(LexerTest, DiagnosticTrailingComment) {
 
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::TrailingComment,
-                            DiagnosticLevel::Error, 3, 19, _)));
+                            Diagnostics::Kind::TrailingComment,
+                            Diagnostics::Level::Error, 3, 19, _)));
   compile_helper_.GetTokenizedBuffer(testcase, &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticWhitespace) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::NoWhitespaceAfterCommentIntroducer,
-                            DiagnosticLevel::Error, 1, 3, _)));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsSingleDiagnostic(
+                  Diagnostics::Kind::NoWhitespaceAfterCommentIntroducer,
+                  Diagnostics::Level::Error, 1, 3, _)));
   compile_helper_.GetTokenizedBuffer("//no space after comment", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::UnknownEscapeSequence,
-                            DiagnosticLevel::Error, 1, 8, HasSubstr("`b`"))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsSingleDiagnostic(
+                  Diagnostics::Kind::UnknownEscapeSequence,
+                  Diagnostics::Level::Error, 1, 8, HasSubstr("`b`"))));
   compile_helper_.GetTokenizedBuffer(R"("hello\bworld")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticBadHex) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::HexadecimalEscapeMissingDigits,
-                            DiagnosticLevel::Error, 1, 9, _)));
+                            Diagnostics::Kind::HexadecimalEscapeMissingDigits,
+                            Diagnostics::Level::Error, 1, 9, _)));
   compile_helper_.GetTokenizedBuffer(R"("hello\xabworld")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticInvalidDigit) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::InvalidDigit,
-                            DiagnosticLevel::Error, 1, 6, HasSubstr("'a'"))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(IsSingleDiagnostic(
+                  Diagnostics::Kind::InvalidDigit, Diagnostics::Level::Error, 1,
+                  6, HasSubstr("'a'"))));
   compile_helper_.GetTokenizedBuffer("0x123abc", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticCR) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::UnsupportedCrLineEnding,
-                            DiagnosticLevel::Error, 1, 1, _)));
+                            Diagnostics::Kind::UnsupportedCrLineEnding,
+                            Diagnostics::Level::Error, 1, 1, _)));
   compile_helper_.GetTokenizedBuffer("\r", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticLfCr) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::UnsupportedLfCrLineEnding,
-                            DiagnosticLevel::Error, 2, 1, _)));
+                            Diagnostics::Kind::UnsupportedLfCrLineEnding,
+                            Diagnostics::Level::Error, 2, 1, _)));
   compile_helper_.GetTokenizedBuffer("\n\r", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::UnterminatedString,
-                            DiagnosticLevel::Error, 1, 1, _)));
+                            Diagnostics::Kind::UnterminatedString,
+                            Diagnostics::Level::Error, 1, 1, _)));
   compile_helper_.GetTokenizedBuffer(R"(#" ")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            DiagnosticKind::UnrecognizedCharacters,
-                            DiagnosticLevel::Error, 1, 1, _)));
+                            Diagnostics::Kind::UnrecognizedCharacters,
+                            Diagnostics::Level::Error, 1, 1, _)));
   compile_helper_.GetTokenizedBuffer("\b", &consumer);
 }
 
@@ -1157,13 +1162,13 @@ TEST_F(LexerTest, DiagnosticFileTooLarge) {
   static constexpr size_t NumLines = 10'000'000;
   std::string input;
   input.reserve(NumLines * 3);
-  for ([[maybe_unused]] int _ : llvm::seq(NumLines)) {
+  for ([[maybe_unused]] auto _ : llvm::seq(NumLines)) {
     input += "{}\n";
   }
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(DiagnosticKind::TooManyTokens,
-                                                  DiagnosticLevel::Error,
-                                                  TokenIndex::Max / 2, 1, _)));
+              HandleDiagnostic(IsSingleDiagnostic(
+                  Diagnostics::Kind::TooManyTokens, Diagnostics::Level::Error,
+                  TokenIndex::Max / 2, 1, _)));
   compile_helper_.GetTokenizedBuffer(input, &consumer);
 }
 

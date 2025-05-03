@@ -72,6 +72,7 @@ var a: Incomplete;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -99,7 +100,7 @@ var a: Incomplete;
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc5_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.fd7 = import_ref Main//a, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.fd7 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -113,8 +114,8 @@ var a: Incomplete;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Empty.decl: type = class_decl @Empty.2 [concrete = constants.%Empty.f48899.2] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
-// CHECK:STDOUT:     %.loc25: <error> = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %.loc25: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, imports.%Main.Incomplete [concrete = constants.%Incomplete]
@@ -129,6 +130,7 @@ var a: Incomplete;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty.2 {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

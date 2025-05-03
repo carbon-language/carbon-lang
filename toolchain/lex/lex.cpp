@@ -6,6 +6,8 @@
 
 #include <array>
 #include <limits>
+#include <optional>
+#include <utility>
 
 #include "common/check.h"
 #include "common/variant_helpers.h"
@@ -81,7 +83,7 @@ class [[clang::internal_linkage]] Lexer {
   };
 
   Lexer(SharedValueStores& value_stores, SourceBuffer& source,
-        DiagnosticConsumer& consumer)
+        Diagnostics::Consumer& consumer)
       : buffer_(value_stores, source),
         consumer_(consumer),
         emitter_(&consumer_, &buffer_),
@@ -142,6 +144,10 @@ class [[clang::internal_linkage]] Lexer {
 
   auto SkipHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
+
+  // Starts a new line, skipping whitespace and setting the indent.
+  auto AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
+                     ssize_t to_line_index) -> void;
 
   auto LexHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
@@ -206,8 +212,18 @@ class [[clang::internal_linkage]] Lexer {
   // should always fully consume the source text.
   auto Lex() && -> TokenizedBuffer;
 
+  // Checks for an ends a `DumpSemIRRange` that's missing an explicit end
+  // marker.
+  auto EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void;
+
  private:
   class ErrorRecoveryBuffer;
+
+  // Handles `//@dump-sem-ir-begin` for a `DumpSemIRRange`.
+  auto BeginDumpSemIRRange(const char* diag_loc) -> void;
+
+  // Handles `//@dump-sem-ir-end` for a `DumpSemIRRange`.
+  auto EndDumpSemIRRange(const char* diag_loc) -> void;
 
   TokenizedBuffer buffer_;
 
@@ -220,7 +236,7 @@ class [[clang::internal_linkage]] Lexer {
   llvm::SmallVector<TokenIndex> open_groups_;
   bool has_mismatched_brackets_ = false;
 
-  ErrorTrackingDiagnosticConsumer consumer_;
+  Diagnostics::ErrorTrackingConsumer consumer_;
 
   TokenizedBuffer::SourcePointerDiagnosticEmitter emitter_;
 
@@ -667,6 +683,11 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
         source_text[position])](lexer, source_text, position);
   }
 
+  // Incomplete ranges will use the next token for their end; we want that to be
+  // `FileEnd` in this case, so check before adding `FileEnd`. The argument is
+  // just the final character for diagnostic locations.
+  lexer.EndDumpSemIRRangeIfIncomplete(source_text.end() - 1);
+
   // When we finish the source text, stop recursing. We also hint this so that
   // the tail-dispatch is optimized as that's essentially the loop back-edge
   // and this is the loop exit.
@@ -802,6 +823,17 @@ auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
   }
 }
 
+auto Lexer::AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
+                          ssize_t to_line_index) -> void {
+  CARBON_DCHECK(to_line_index >= line_index_);
+  line_index_ = to_line_index;
+  auto* line_info = current_line_info();
+  ssize_t line_start = line_info->start;
+  position = line_start;
+  SkipHorizontalWhitespace(source_text, position);
+  line_info->indent = position - line_start;
+}
+
 auto Lexer::LexHorizontalWhitespace(llvm::StringRef source_text,
                                     ssize_t& position) -> void {
   CARBON_DCHECK(source_text[position] == ' ' || source_text[position] == '\t');
@@ -813,12 +845,7 @@ auto Lexer::LexHorizontalWhitespace(llvm::StringRef source_text,
 auto Lexer::LexVerticalWhitespace(llvm::StringRef source_text,
                                   ssize_t& position) -> void {
   NoteWhitespace();
-  ++line_index_;
-  auto* line_info = current_line_info();
-  ssize_t line_start = line_info->start;
-  position = line_start;
-  SkipHorizontalWhitespace(source_text, position);
-  line_info->indent = position - line_start;
+  AdvanceToLine(source_text, position, line_index_ + 1);
 }
 
 auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
@@ -868,6 +895,46 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
   CARBON_CHECK(result, "Failed to form a token!");
 }
 
+auto Lexer::BeginDumpSemIRRange(const char* diag_loc) -> void {
+  EndDumpSemIRRangeIfIncomplete(diag_loc);
+
+  // The begin here will be the next token, which may be FileEnd. The end will
+  // be assigned by either AddDumpSemIREnd or, if invalid,
+  // EndDumpSemIRRangeIfIncomplete.
+  buffer_.dump_sem_ir_ranges_.push_back(
+      {.begin = TokenIndex(buffer_.size()), .end = TokenIndex::None});
+}
+
+auto Lexer::EndDumpSemIRRange(const char* diag_loc) -> void {
+  if (buffer_.dump_sem_ir_ranges_.empty() ||
+      buffer_.dump_sem_ir_ranges_.back().end != TokenIndex::None) {
+    CARBON_DIAGNOSTIC(
+        DumpSemIRRangeMissingBegin, Error,
+        "missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end`");
+    emitter_.Emit(diag_loc, DumpSemIRRangeMissingBegin);
+    return;
+  }
+
+  buffer_.dump_sem_ir_ranges_.back().end = TokenIndex(buffer_.size() - 1);
+}
+
+auto Lexer::EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void {
+  if (buffer_.dump_sem_ir_ranges_.empty() ||
+      buffer_.dump_sem_ir_ranges_.back().end != TokenIndex::None) {
+    return;
+  }
+
+  // The location here won't be closely associated with the start location.
+  // However, this is a developer feature and not worth complexity to diagnose
+  // better.
+  CARBON_DIAGNOSTIC(
+      DumpSemIRRangeMissingEnd, Error,
+      "missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin`");
+  emitter_.Emit(diag_loc, DumpSemIRRangeMissingEnd);
+
+  EndDumpSemIRRange(diag_loc);
+}
+
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   CARBON_DCHECK(source_text.substr(position).starts_with("//"));
   int32_t comment_start = position;
@@ -893,10 +960,21 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   bool is_valid_after_slashes = true;
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
+    llvm::StringRef comment_text = source_text.substr(position);
+    if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
+      BeginDumpSemIRRange(comment_text.begin());
+      AdvanceToLine(source_text, position, line_index_ + 1);
+      return;
+    }
+    if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
+      EndDumpSemIRRange(comment_text.begin());
+      AdvanceToLine(source_text, position, line_index_ + 1);
+      return;
+    }
+
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
-    emitter_.Emit(source_text.begin() + position + 2,
-                  NoWhitespaceAfterCommentIntroducer);
+    emitter_.Emit(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer);
 
     // We use this to tweak the lexing of blocks below.
     is_valid_after_slashes = false;
@@ -990,14 +1068,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   }
 
   buffer_.AddComment(indent, comment_start, position);
-
-  // Now compute the indent of this next line before we finish.
-  ssize_t line_start = position;
-  SkipHorizontalWhitespace(source_text, position);
-
-  // Now that we're done scanning, update to the latest line index and indent.
-  line_index_ = line_index;
-  current_line_info()->indent = position - line_start;
+  AdvanceToLine(source_text, position, line_index);
 }
 
 auto Lexer::CanFormRealLiteral() -> bool {
@@ -1371,10 +1442,8 @@ auto Lexer::LexFileStart(llvm::StringRef source_text, ssize_t& position)
 
   // Also skip any horizontal whitespace and record the indentation of the
   // first line.
-  SkipHorizontalWhitespace(source_text, position);
-  auto* line_info = current_line_info();
-  CARBON_CHECK(line_info->start == 0);
-  line_info->indent = position;
+  CARBON_CHECK(current_line_info()->start == 0);
+  AdvanceToLine(source_text, position, /*to_line_index=*/0);
 }
 
 auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
@@ -1424,7 +1493,8 @@ auto Lexer::Finalize() -> void {
 // recovery. These are buffered so that we can perform them in linear time.
 class Lexer::ErrorRecoveryBuffer {
  public:
-  explicit ErrorRecoveryBuffer(TokenizedBuffer& buffer) : buffer_(buffer) {}
+  // `buffer` must not be null.
+  explicit ErrorRecoveryBuffer(TokenizedBuffer* buffer) : buffer_(buffer) {}
 
   auto empty() const -> bool {
     return new_tokens_.empty() && !any_error_tokens_;
@@ -1437,7 +1507,7 @@ class Lexer::ErrorRecoveryBuffer {
     CARBON_CHECK(insert_before.index > 0,
                  "Cannot insert before the start of file token.");
     CARBON_CHECK(
-        insert_before.index < static_cast<int>(buffer_.token_infos_.size()),
+        insert_before.index < static_cast<int>(buffer_->token_infos_.size()),
         "Cannot insert after the end of file token.");
     CARBON_CHECK(
         new_tokens_.empty() || new_tokens_.back().first <= insert_before,
@@ -1447,14 +1517,14 @@ class Lexer::ErrorRecoveryBuffer {
     // inserted token as also having leading whitespace. This avoids changing
     // whether the prior tokens had leading or trailing whitespace when
     // inserting.
-    bool insert_leading_space = buffer_.HasLeadingWhitespace(insert_before);
+    bool insert_leading_space = buffer_->HasLeadingWhitespace(insert_before);
 
     // Find the end of the token before the target token, and add the new token
     // there.
     TokenIndex insert_after(insert_before.index - 1);
-    const auto& prev_info = buffer_.GetTokenInfo(insert_after);
+    const auto& prev_info = buffer_->GetTokenInfo(insert_after);
     int32_t byte_offset =
-        prev_info.byte_offset() + buffer_.GetTokenText(insert_after).size();
+        prev_info.byte_offset() + buffer_->GetTokenText(insert_after).size();
     new_tokens_.push_back(
         {insert_before, TokenInfo(kind, insert_leading_space, byte_offset)});
   }
@@ -1462,30 +1532,30 @@ class Lexer::ErrorRecoveryBuffer {
   // Replace the given token with an error token. We do this immediately,
   // because we don't benefit from buffering it.
   auto ReplaceWithError(TokenIndex token) -> void {
-    auto& token_info = buffer_.GetTokenInfo(token);
-    int error_length = buffer_.GetTokenText(token).size();
+    auto& token_info = buffer_->GetTokenInfo(token);
+    int error_length = buffer_->GetTokenText(token).size();
     token_info.ResetAsError(error_length);
     any_error_tokens_ = true;
   }
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
-    auto old_tokens = std::move(buffer_.token_infos_);
-    buffer_.token_infos_.clear();
+    auto old_tokens = std::move(buffer_->token_infos_);
+    buffer_->token_infos_.clear();
     int new_size = old_tokens.size() + new_tokens_.size();
-    buffer_.token_infos_.reserve(new_size);
-    buffer_.recovery_tokens_.resize(new_size);
+    buffer_->token_infos_.reserve(new_size);
+    buffer_->recovery_tokens_.resize(new_size);
 
     int old_tokens_offset = 0;
     for (auto [next_offset, info] : new_tokens_) {
-      buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                  old_tokens.begin() + next_offset.index);
-      buffer_.AddToken(info);
-      buffer_.recovery_tokens_.set(next_offset.index);
+      buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
+                                   old_tokens.begin() + next_offset.index);
+      buffer_->AddToken(info);
+      buffer_->recovery_tokens_.set(next_offset.index);
       old_tokens_offset = next_offset.index;
     }
-    buffer_.token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                old_tokens.end());
+    buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
+                                 old_tokens.end());
   }
 
   // Perform bracket matching to fix cross-references between tokens. This must
@@ -1493,8 +1563,8 @@ class Lexer::ErrorRecoveryBuffer {
   // recovery will change token indexes.
   auto FixTokenCrossReferences() -> void {
     llvm::SmallVector<TokenIndex> open_groups;
-    for (auto token : buffer_.tokens()) {
-      auto kind = buffer_.GetKind(token);
+    for (auto token : buffer_->tokens()) {
+      auto kind = buffer_->GetKind(token);
       if (kind.is_opening_symbol()) {
         open_groups.push_back(token);
       } else if (kind.is_closing_symbol()) {
@@ -1502,10 +1572,11 @@ class Lexer::ErrorRecoveryBuffer {
         auto opening_token = open_groups.pop_back_val();
 
         CARBON_CHECK(
-            kind == buffer_.GetTokenInfo(opening_token).kind().closing_symbol(),
+            kind ==
+                buffer_->GetTokenInfo(opening_token).kind().closing_symbol(),
             "Failed to balance brackets");
-        auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
-        auto& closing_token_info = buffer_.GetTokenInfo(token);
+        auto& opening_token_info = buffer_->GetTokenInfo(opening_token);
+        auto& closing_token_info = buffer_->GetTokenInfo(token);
         opening_token_info.set_closing_token_index(token);
         closing_token_info.set_opening_token_index(opening_token);
       }
@@ -1513,7 +1584,7 @@ class Lexer::ErrorRecoveryBuffer {
   }
 
  private:
-  TokenizedBuffer& buffer_;
+  TokenizedBuffer* buffer_;
 
   // A list of tokens to insert into the token stream to fix mismatched
   // brackets. The first element in each pair is the original token index to
@@ -1526,7 +1597,7 @@ class Lexer::ErrorRecoveryBuffer {
 };
 
 // Issue an UnmatchedOpening diagnostic.
-static auto DiagnoseUnmatchedOpening(DiagnosticEmitter<TokenIndex>& emitter,
+static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
                                      TokenIndex opening_token) -> void {
   CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
                     "opening symbol without a corresponding closing symbol");
@@ -1537,7 +1608,7 @@ static auto DiagnoseUnmatchedOpening(DiagnosticEmitter<TokenIndex>& emitter,
 // brackets to fix the nesting, issue suitable diagnostics, and update the
 // token list to describe the fixes.
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
-  ErrorRecoveryBuffer fixes(buffer_);
+  ErrorRecoveryBuffer fixes(&buffer_);
 
   // Look for mismatched brackets and decide where to add tokens to fix them.
   //
@@ -1610,7 +1681,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
 }
 
 auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
-         DiagnosticConsumer& consumer) -> TokenizedBuffer {
+         Diagnostics::Consumer& consumer) -> TokenizedBuffer {
   return Lexer(value_stores, source, consumer).Lex();
 }
 

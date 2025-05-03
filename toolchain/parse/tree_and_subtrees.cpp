@@ -4,6 +4,9 @@
 
 #include "toolchain/parse/tree_and_subtrees.h"
 
+#include <tuple>
+#include <utility>
+
 #include "toolchain/lex/token_index.h"
 
 namespace Carbon::Parse {
@@ -27,7 +30,7 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
           kind, size_stack.size());
       for (auto i : llvm::seq(kind.child_count())) {
         auto child = size_stack.pop_back_val();
-        CARBON_CHECK((size_t)child.index < subtree_sizes_.size());
+        CARBON_CHECK(static_cast<size_t>(child.index) < subtree_sizes_.size());
         size += subtree_sizes_[child.index];
         if (kind.has_bracket() && i == kind.child_count() - 1) {
           CARBON_CHECK(kind.bracket() == tree.node_kind(child),
@@ -165,27 +168,16 @@ auto TreeAndSubtrees::Print(llvm::raw_ostream& output) const -> void {
   output << "- filename: " << tokens_->source().filename() << "\n"
          << "  parse_tree: [\n";
 
-  // Walk the tree just to calculate depths for each node.
-  llvm::SmallVector<int> indents;
-  indents.resize(subtree_sizes_.size(), 0);
-
-  llvm::SmallVector<std::pair<NodeId, int>, 16> node_stack;
-  for (NodeId n : roots()) {
-    node_stack.push_back({n, 0});
-  }
-
-  while (!node_stack.empty()) {
-    NodeId n = NodeId::None;
-    int depth;
-    std::tie(n, depth) = node_stack.pop_back_val();
-    for (NodeId sibling_n : children(n)) {
-      indents[sibling_n.index] = depth + 1;
-      node_stack.push_back({sibling_n, depth + 1});
+  // Walk the tree in reverse, just to calculate depths for each node.
+  llvm::SmallVector<int> depths(tree_->size(), 0);
+  for (auto [n, depth] : llvm::reverse(llvm::zip(tree_->postorder(), depths))) {
+    for (auto child : children(n)) {
+      depths[child.index] = depth + 1;
     }
   }
 
-  for (NodeId n : tree_->postorder()) {
-    PrintNode(output, n, indents[n.index], /*preorder=*/false);
+  for (auto [n, depth] : llvm::zip(tree_->postorder(), depths)) {
+    PrintNode(output, n, depth, /*preorder=*/false);
     output << ",\n";
   }
   output << "  ]\n";
@@ -223,14 +215,13 @@ auto TreeAndSubtrees::PrintPreorder(llvm::raw_ostream& output) const -> void {
 
     int next_depth = node_stack.empty() ? 0 : node_stack.back().second;
     CARBON_CHECK(next_depth <= depth, "Cannot have the next depth increase!");
-    for (int close_children_count : llvm::seq(0, depth - next_depth)) {
-      (void)close_children_count;
+    for ([[maybe_unused]] auto _ : llvm::seq(depth - next_depth)) {
       output << "]}";
     }
 
     // We always end with a comma and a new line as we'll move to the next
     // node at whatever the current level ends up being.
-    output << "  ,\n";
+    output << ",\n";
   }
   output << "  ]\n";
 }
@@ -241,9 +232,10 @@ auto TreeAndSubtrees::CollectMemUsage(MemUsage& mem_usage,
                     subtree_sizes_);
 }
 
-auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const -> TokenRange {
-  TokenRange range = {.begin = tree_->node_token(node_id),
-                      .end = Lex::TokenIndex::None};
+auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const
+    -> Lex::InclusiveTokenRange {
+  Lex::InclusiveTokenRange range = {.begin = tree_->node_token(node_id),
+                                    .end = Lex::TokenIndex::None};
   range.end = range.begin;
   for (NodeId desc : postorder(node_id)) {
     Lex::TokenIndex desc_token = tree_->node_token(desc);
@@ -260,7 +252,7 @@ auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const -> TokenRange {
 }
 
 auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
-    -> ConvertedDiagnosticLoc {
+    -> Diagnostics::ConvertedLoc {
   // Support the invalid token as a way to emit only the filename, when there
   // is no line association.
   if (!node_id.has_value()) {
@@ -273,7 +265,7 @@ auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
 
   // Construct a location that encompasses all tokens that descend from this
   // node (including the root).
-  TokenRange token_range = GetSubtreeTokenRange(node_id);
+  Lex::InclusiveTokenRange token_range = GetSubtreeTokenRange(node_id);
   auto begin_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.begin);
   if (token_range.begin == token_range.end) {
     return begin_loc;

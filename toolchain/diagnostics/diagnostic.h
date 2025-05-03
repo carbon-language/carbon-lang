@@ -15,9 +15,9 @@
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 
-namespace Carbon {
+namespace Carbon::Diagnostics {
 
-enum class DiagnosticLevel : int8_t {
+enum class Level : int8_t {
   // Information about the location of another diagnostic, showing how we
   // reached that location. This is currently only used for the "in import"
   // message.
@@ -39,17 +39,17 @@ enum class DiagnosticLevel : int8_t {
 // Arguments are passed to llvm::formatv; see:
 // https://llvm.org/doxygen/FormatVariadic_8h_source.html
 //
-// See `DiagnosticEmitter::Emit` for comments about argument lifetimes.
-#define CARBON_DIAGNOSTIC(DiagnosticName, Level, Format, ...) \
-  static constexpr auto DiagnosticName =                      \
-      ::Carbon::DiagnosticBase<__VA_ARGS__>(                  \
-          ::Carbon::DiagnosticKind::DiagnosticName,           \
-          ::Carbon::DiagnosticLevel::Level, Format)
+// See `Diagnostics::Emitter::Emit` for comments about argument lifetimes.
+#define CARBON_DIAGNOSTIC(DiagnosticName, LevelValue, Format, ...) \
+  static constexpr auto DiagnosticName =                           \
+      ::Carbon::Diagnostics::DiagnosticBase<__VA_ARGS__>(          \
+          ::Carbon::Diagnostics::Kind::DiagnosticName,             \
+          ::Carbon::Diagnostics::Level::LevelValue, Format)
 
-// A location for a diagnostic in a file. The lifetime of a DiagnosticLoc
+// A location for a diagnostic in a file. The lifetime of a Loc
 // is required to be less than SourceBuffer that it refers to due to the
 // contained filename and line references.
-struct DiagnosticLoc {
+struct Loc {
   // Writes the location to the given stream. It will be formatted as
   // `<filename>:<line_number>:<column_number>: ` with parts dropped when
   // unknown.
@@ -78,18 +78,18 @@ struct DiagnosticLoc {
 
 // A message composing a diagnostic. This may be the main message, but can also
 // be notes providing more information.
-struct DiagnosticMessage {
+struct Message {
   // Helper for calling `format_fn`.
   auto Format() const -> std::string { return format_fn(*this); }
 
   // The diagnostic's kind.
-  DiagnosticKind kind;
+  Kind kind;
 
   // The diagnostic's level.
-  DiagnosticLevel level;
+  Level level;
 
   // The calculated location of the diagnostic.
-  DiagnosticLoc loc;
+  Loc loc;
 
   // The diagnostic's format string. This, along with format_args, will be
   // passed to format_fn.
@@ -104,18 +104,18 @@ struct DiagnosticMessage {
   llvm::SmallVector<llvm::Any> format_args;
 
   // Returns the formatted string. By default, this uses llvm::formatv.
-  std::function<auto(const DiagnosticMessage&)->std::string> format_fn;
+  std::function<auto(const Message&)->std::string> format_fn;
 };
 
 // An instance of a single error or warning.  Information about the diagnostic
 // can be recorded into it for more complex consumers.
 struct Diagnostic {
   // The diagnostic's level.
-  DiagnosticLevel level;
+  Level level;
 
   // The byte offset of the final token which is associated with the diagnostic.
-  // This is used by `SortingDiagnosticConsumer`. This is separate from the
-  // `DiagnosticLoc` because it must refer to a position in the primary file
+  // This is used by `SortingConsumer`. This is separate from the
+  // `Loc` because it must refer to a position in the primary file
   // being processed by a consumer, and has no use cross-file or in notes.
   //
   // This will usually be the start position (not end) of the last lexed token
@@ -127,14 +127,14 @@ struct Diagnostic {
 
   // Messages related to the diagnostic. Only one should be a warning or error;
   // other messages provide context.
-  llvm::SmallVector<DiagnosticMessage> messages;
+  llvm::SmallVector<Message> messages;
 };
 
 // Use the DIAGNOSTIC macro to instantiate this.
 // This stores static information about a diagnostic category.
 template <typename... Args>
 struct DiagnosticBase {
-  explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
+  explicit constexpr DiagnosticBase(Kind kind, Level level,
                                     llvm::StringLiteral format)
       : Kind(kind), Level(level), Format(format) {
     static_assert((... && !(std::is_same_v<Args, llvm::StringRef> ||
@@ -145,13 +145,13 @@ struct DiagnosticBase {
   }
 
   // The diagnostic's kind.
-  DiagnosticKind Kind;
+  Kind Kind;
   // The diagnostic's level.
-  DiagnosticLevel Level;
+  Level Level;
   // The diagnostic's format for llvm::formatv.
   llvm::StringLiteral Format;
 };
 
-}  // namespace Carbon
+}  // namespace Carbon::Diagnostics
 
 #endif  // CARBON_TOOLCHAIN_DIAGNOSTICS_DIAGNOSTIC_H_

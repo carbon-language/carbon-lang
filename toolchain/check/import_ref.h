@@ -11,9 +11,10 @@
 
 namespace Carbon::Check {
 
-// Sets the IR for ImportIRId::ApiForImpl. Should be called before AddImportIR
-// in order to ensure the correct ID is assigned.
-auto SetApiImportIR(Context& context, SemIR::ImportIR import_ir) -> void;
+// Sets the IRs for `ImportIRId::ApiForImpl` from `import_ir`, and
+// `ImportIRId::Cpp` from defaults. Should be called before `AddImportIR` in
+// order to ensure the correct IDs are assigned.
+auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void;
 
 // Adds an ImportIR, returning the ID. May use an existing ID if already added.
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
@@ -25,7 +26,9 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
                   SemIR::EntityNameId entity_name_id) -> SemIR::InstId;
 
 // Returns the canonical IR inst for an entity. Returns an `ImportIRInst` with
-// a `None` ir_id for an entity that was not imported.
+// a `None` ir_id for an entity that was not imported. This may add an
+// `ImportIR` if it finds an indirectly referenced `File` that hasn't previously
+// been found.
 auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)
     -> SemIR::ImportIRInst;
 

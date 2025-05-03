@@ -17,40 +17,41 @@ CARBON_DIAGNOSTIC(RedeclPrevDecl, Note, "previously declared here");
 
 // Diagnoses a redeclaration which is redundant.
 static auto DiagnoseRedundant(Context& context, Lex::TokenKind decl_kind,
-                              SemIR::NameId name_id, SemIRLoc new_loc,
-                              SemIRLoc prev_loc) -> void {
+                              SemIR::NameId name_id, SemIR::LocId new_loc_id,
+                              SemIR::LocId prev_loc_id) -> void {
   CARBON_DIAGNOSTIC(RedeclRedundant, Error,
                     "redeclaration of `{0} {1}` is redundant", Lex::TokenKind,
                     SemIR::NameId);
   context.emitter()
-      .Build(new_loc, RedeclRedundant, decl_kind, name_id)
-      .Note(prev_loc, RedeclPrevDecl)
+      .Build(new_loc_id, RedeclRedundant, decl_kind, name_id)
+      .Note(prev_loc_id, RedeclPrevDecl)
       .Emit();
 }
 
 // Diagnoses a redefinition.
 static auto DiagnoseRedef(Context& context, Lex::TokenKind decl_kind,
-                          SemIR::NameId name_id, SemIRLoc new_loc,
-                          SemIRLoc prev_loc) -> void {
+                          SemIR::NameId name_id, SemIR::LocId new_loc_id,
+                          SemIR::LocId prev_loc_id) -> void {
   CARBON_DIAGNOSTIC(RedeclRedef, Error, "redefinition of `{0} {1}`",
                     Lex::TokenKind, SemIR::NameId);
   CARBON_DIAGNOSTIC(RedeclPrevDef, Note, "previously defined here");
   context.emitter()
-      .Build(new_loc, RedeclRedef, decl_kind, name_id)
-      .Note(prev_loc, RedeclPrevDef)
+      .Build(new_loc_id, RedeclRedef, decl_kind, name_id)
+      .Note(prev_loc_id, RedeclPrevDef)
       .Emit();
 }
 
 // Diagnoses an `extern` versus non-`extern` mismatch.
 static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
-                                   SemIR::NameId name_id, SemIRLoc new_loc,
-                                   SemIRLoc prev_loc) -> void {
+                                   SemIR::NameId name_id,
+                                   SemIR::LocId new_loc_id,
+                                   SemIR::LocId prev_loc_id) -> void {
   CARBON_DIAGNOSTIC(RedeclExternMismatch, Error,
                     "redeclarations of `{0} {1}` must match use of `extern`",
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
-      .Build(new_loc, RedeclExternMismatch, decl_kind, name_id)
-      .Note(prev_loc, RedeclPrevDecl)
+      .Build(new_loc_id, RedeclExternMismatch, decl_kind, name_id)
+      .Note(prev_loc_id, RedeclPrevDecl)
       .Emit();
 }
 
@@ -58,20 +59,21 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
 static auto DiagnoseExternLibraryInImporter(Context& context,
                                             Lex::TokenKind decl_kind,
                                             SemIR::NameId name_id,
-                                            SemIRLoc new_loc, SemIRLoc prev_loc)
-    -> void {
+                                            SemIR::LocId new_loc_id,
+                                            SemIR::LocId prev_loc_id) -> void {
   CARBON_DIAGNOSTIC(ExternLibraryInImporter, Error,
                     "cannot declare imported `{0} {1}` as `extern library`",
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
-      .Build(new_loc, ExternLibraryInImporter, decl_kind, name_id)
-      .Note(prev_loc, RedeclPrevDecl)
+      .Build(new_loc_id, ExternLibraryInImporter, decl_kind, name_id)
+      .Note(prev_loc_id, RedeclPrevDecl)
       .Emit();
 }
 
 // Diagnoses `extern library` pointing to the wrong library.
-static auto DiagnoseExternLibraryIncorrect(Context& context, SemIRLoc new_loc,
-                                           SemIRLoc prev_loc) -> void {
+static auto DiagnoseExternLibraryIncorrect(Context& context,
+                                           SemIR::LocId new_loc_id,
+                                           SemIR::LocId prev_loc_id) -> void {
   CARBON_DIAGNOSTIC(
       ExternLibraryIncorrect, Error,
       "declaration in {0} doesn't match `extern library` declaration",
@@ -79,17 +81,17 @@ static auto DiagnoseExternLibraryIncorrect(Context& context, SemIRLoc new_loc,
   CARBON_DIAGNOSTIC(ExternLibraryExpected, Note,
                     "previously declared with `extern library` here");
   context.emitter()
-      .Build(new_loc, ExternLibraryIncorrect, context.sem_ir().library_id())
-      .Note(prev_loc, ExternLibraryExpected)
+      .Build(new_loc_id, ExternLibraryIncorrect, context.sem_ir().library_id())
+      .Note(prev_loc_id, ExternLibraryExpected)
       .Emit();
 }
 
-auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
+auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIR::LocId loc_id)
     -> void {
   CARBON_DIAGNOSTIC(
       ExternRequiresDeclInApiFile, Error,
       "`extern` entities must have a declaration in the API file");
-  context.emitter().Emit(loc, ExternRequiresDeclInApiFile);
+  context.emitter().Emit(loc_id, ExternRequiresDeclInApiFile);
 }
 
 auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
@@ -99,17 +101,18 @@ auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
   if (!import_ir_id.has_value()) {
     // Check for disallowed redeclarations in the same file.
     if (!new_decl.is_definition) {
-      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
-                        prev_decl.loc);
+      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc_id,
+                        prev_decl.loc_id);
       return;
     }
     if (prev_decl.is_definition) {
-      DiagnoseRedef(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
+      DiagnoseRedef(context, decl_kind, name_id, new_decl.loc_id,
+                    prev_decl.loc_id);
       return;
     }
     if (prev_decl.is_extern != new_decl.is_extern) {
-      DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
-                             prev_decl.loc);
+      DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc_id,
+                             prev_decl.loc_id);
       return;
     }
     return;
@@ -120,16 +123,17 @@ auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
     // forward declaration in the impl is allowed.
     if (prev_decl.is_definition) {
       if (new_decl.is_definition) {
-        DiagnoseRedef(context, decl_kind, name_id, new_decl.loc, prev_decl.loc);
+        DiagnoseRedef(context, decl_kind, name_id, new_decl.loc_id,
+                      prev_decl.loc_id);
       } else {
-        DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
-                          prev_decl.loc);
+        DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc_id,
+                          prev_decl.loc_id);
       }
       return;
     }
     if (prev_decl.is_extern != new_decl.is_extern) {
-      DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
-                             prev_decl.loc);
+      DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc_id,
+                             prev_decl.loc_id);
       return;
     }
     return;
@@ -140,26 +144,26 @@ auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
     // We continue after issuing the "missing API declaration" diagnostic,
     // because it may still be helpful to note other issues with the
     // declarations.
-    DiagnoseExternRequiresDeclInApiFile(context, new_decl.loc);
+    DiagnoseExternRequiresDeclInApiFile(context, new_decl.loc_id);
   }
   if (prev_decl.is_extern != new_decl.is_extern) {
-    DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc,
-                           prev_decl.loc);
+    DiagnoseExternMismatch(context, decl_kind, name_id, new_decl.loc_id,
+                           prev_decl.loc_id);
     return;
   }
   if (!prev_decl.extern_library_id.has_value()) {
     if (new_decl.extern_library_id.has_value()) {
-      DiagnoseExternLibraryInImporter(context, decl_kind, name_id, new_decl.loc,
-                                      prev_decl.loc);
+      DiagnoseExternLibraryInImporter(context, decl_kind, name_id,
+                                      new_decl.loc_id, prev_decl.loc_id);
     } else {
-      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc,
-                        prev_decl.loc);
+      DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc_id,
+                        prev_decl.loc_id);
     }
     return;
   }
   if (prev_decl.extern_library_id != SemIR::LibraryNameId::Error &&
       prev_decl.extern_library_id != context.sem_ir().library_id()) {
-    DiagnoseExternLibraryIncorrect(context, new_decl.loc, prev_decl.loc);
+    DiagnoseExternLibraryIncorrect(context, new_decl.loc_id, prev_decl.loc_id);
     return;
   }
 }
@@ -186,7 +190,7 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
         param_patterns_id != SemIR::InstBlockId::Empty) {
       for (auto param_id : context.inst_blocks().Get(param_patterns_id)) {
         if (context.insts().Get(param_id).type_id() ==
-            SemIR::ErrorInst::SingletonTypeId) {
+            SemIR::ErrorInst::TypeId) {
           return true;
         }
       }
@@ -202,25 +206,29 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::InstId new_param_pattern_id,
                              SemIR::InstId prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
-                             bool check_self) -> bool {
+                             bool check_syntax, bool check_self) -> bool {
+  auto orig_new_param_pattern_id = new_param_pattern_id;
+  auto orig_prev_param_pattern_id = prev_param_pattern_id;
+
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
   CARBON_DIAGNOSTIC(
       RedeclParamPrevious, Note,
       "previous declaration's corresponding {0:implicit |}parameter here",
-      BoolAsSelect);
+      Diagnostics::BoolAsSelect);
   auto emit_diagnostic = [&]() {
     if (!diagnose) {
       return;
     }
     CARBON_DIAGNOSTIC(RedeclParamDiffers, Error,
                       "redeclaration differs at {0:implicit |}parameter {1}",
-                      BoolAsSelect, int32_t);
+                      Diagnostics::BoolAsSelect, int32_t);
     context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
+        .Build(orig_new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
                param_index + 1)
-        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
+              is_implicit_param)
         .Emit();
   };
 
@@ -232,10 +240,11 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   }
 
   if (new_param_pattern.Is<SemIR::AddrPattern>()) {
-    new_param_pattern = context.insts().Get(
-        new_param_pattern.As<SemIR::AddrPattern>().inner_id);
-    prev_param_pattern = context.insts().Get(
-        prev_param_pattern.As<SemIR::AddrPattern>().inner_id);
+    new_param_pattern_id = new_param_pattern.As<SemIR::AddrPattern>().inner_id;
+    new_param_pattern = context.insts().Get(new_param_pattern_id);
+    prev_param_pattern_id =
+        prev_param_pattern.As<SemIR::AddrPattern>().inner_id;
+    prev_param_pattern = context.insts().Get(prev_param_pattern_id);
     if (new_param_pattern.kind() != prev_param_pattern.kind()) {
       emit_diagnostic();
       return false;
@@ -243,10 +252,12 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   }
 
   if (new_param_pattern.Is<SemIR::AnyParamPattern>()) {
-    new_param_pattern = context.insts().Get(
-        new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
-    prev_param_pattern = context.insts().Get(
-        prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id);
+    new_param_pattern_id =
+        new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id;
+    new_param_pattern = context.insts().Get(new_param_pattern_id);
+    prev_param_pattern_id =
+        prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id;
+    prev_param_pattern = context.insts().Get(prev_param_pattern_id);
     if (new_param_pattern.kind() != prev_param_pattern.kind()) {
       emit_diagnostic();
       return false;
@@ -267,8 +278,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     return true;
   }
 
-  auto prev_param_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
+  auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), prev_specific_id, prev_param_pattern_id);
   if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
                                                   prev_param_type_id)) {
     if (!diagnose) {
@@ -277,16 +288,19 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
                       "type {3} of {0:implicit |}parameter {1} in "
                       "redeclaration differs from previous parameter type {2}",
-                      BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
+                      Diagnostics::BoolAsSelect, int32_t, SemIR::TypeId,
+                      SemIR::TypeId);
     context.emitter()
-        .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
-               param_index + 1, prev_param_type_id, new_param_pattern.type_id())
-        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Build(orig_new_param_pattern_id, RedeclParamDiffersType,
+               is_implicit_param, param_index + 1, prev_param_type_id,
+               new_param_pattern.type_id())
+        .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
+              is_implicit_param)
         .Emit();
     return false;
   }
 
-  if (new_name_id != prev_name_id) {
+  if (check_syntax && new_name_id != prev_name_id) {
     emit_diagnostic();
     return false;
   }
@@ -295,13 +309,13 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
 }
 
 // Returns false if the param refs differ for a redeclaration.
-static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
+static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
                               SemIR::InstBlockId new_param_patterns_id,
-                              SemIRLoc prev_decl_loc,
+                              SemIR::LocId prev_decl_loc_id,
                               SemIR::InstBlockId prev_param_patterns_id,
                               bool is_implicit_param,
                               SemIR::SpecificId prev_specific_id, bool diagnose,
-                              bool check_self) -> bool {
+                              bool check_syntax, bool check_self) -> bool {
   // This will often occur for empty params.
   if (new_param_patterns_id == prev_param_patterns_id) {
     return true;
@@ -315,15 +329,15 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     CARBON_DIAGNOSTIC(RedeclParamListDiffers, Error,
                       "redeclaration differs because of "
                       "{1:|missing }{0:implicit |}parameter list",
-                      BoolAsSelect, BoolAsSelect);
+                      Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
     CARBON_DIAGNOSTIC(RedeclParamListPrevious, Note,
                       "previously declared "
                       "{1:with|without} {0:implicit |}parameter list",
-                      BoolAsSelect, BoolAsSelect);
+                      Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
     context.emitter()
-        .Build(new_decl_loc, RedeclParamListDiffers, is_implicit_param,
+        .Build(new_decl_loc_id, RedeclParamListDiffers, is_implicit_param,
                new_param_patterns_id.has_value())
-        .Note(prev_decl_loc, RedeclParamListPrevious, is_implicit_param,
+        .Note(prev_decl_loc_id, RedeclParamListPrevious, is_implicit_param,
               prev_param_patterns_id.has_value())
         .Emit();
     return false;
@@ -342,15 +356,15 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
     CARBON_DIAGNOSTIC(
         RedeclParamCountDiffers, Error,
         "redeclaration differs because of {0:implicit |}parameter count of {1}",
-        BoolAsSelect, int32_t);
+        Diagnostics::BoolAsSelect, int32_t);
     CARBON_DIAGNOSTIC(
         RedeclParamCountPrevious, Note,
         "previously declared with {0:implicit |}parameter count of {1}",
-        BoolAsSelect, int32_t);
+        Diagnostics::BoolAsSelect, int32_t);
     context.emitter()
-        .Build(new_decl_loc, RedeclParamCountDiffers, is_implicit_param,
+        .Build(new_decl_loc_id, RedeclParamCountDiffers, is_implicit_param,
                new_param_pattern_ids.size())
-        .Note(prev_decl_loc, RedeclParamCountPrevious, is_implicit_param,
+        .Note(prev_decl_loc_id, RedeclParamCountPrevious, is_implicit_param,
               prev_param_pattern_ids.size())
         .Emit();
     return false;
@@ -359,7 +373,8 @@ static auto CheckRedeclParams(Context& context, SemIRLoc new_decl_loc,
        llvm::enumerate(new_param_pattern_ids, prev_param_pattern_ids)) {
     if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
-                          prev_specific_id, diagnose, check_self)) {
+                          prev_specific_id, diagnose, check_syntax,
+                          check_self)) {
       return false;
     }
   }
@@ -477,17 +492,19 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
     return false;
   }
   if (!CheckRedeclParams(
-          context, new_entity.loc, new_entity.implicit_param_patterns_id,
-          prev_entity.loc, prev_entity.implicit_param_patterns_id,
-          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_self)) {
+          context, new_entity.loc_id, new_entity.implicit_param_patterns_id,
+          prev_entity.loc_id, prev_entity.implicit_param_patterns_id,
+          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_syntax,
+          check_self)) {
     return false;
   }
   // Don't forward `check_self` here because it's extra cost, and `self` is only
   // allowed in implicit params.
-  if (!CheckRedeclParams(context, new_entity.loc, new_entity.param_patterns_id,
-                         prev_entity.loc, prev_entity.param_patterns_id,
+  if (!CheckRedeclParams(context, new_entity.loc_id,
+                         new_entity.param_patterns_id, prev_entity.loc_id,
+                         prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose, /*check_self=*/true)) {
+                         diagnose, check_syntax, /*check_self=*/true)) {
     return false;
   }
   if (check_syntax &&

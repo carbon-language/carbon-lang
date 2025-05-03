@@ -10,8 +10,10 @@
 #include "common/map.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
@@ -49,13 +51,14 @@ namespace Carbon::Check {
 class Context {
  public:
   // Stores references for work.
-  explicit Context(DiagnosticEmitter<SemIRLoc>* emitter,
+  explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
                    int total_ir_count, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(SemIRLoc loc, std::string label) -> bool;
+  auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
+  auto TODO(SemIR::InstId loc_inst_id, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
@@ -68,7 +71,7 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto emitter() -> DiagnosticEmitter<SemIRLoc>& { return *emitter_; }
+  auto emitter() -> DiagnosticEmitterBase& { return *emitter_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return tree_and_subtrees_getter_();
@@ -116,10 +119,7 @@ class Context {
 
   auto scope_stack() -> ScopeStack& { return scope_stack_; }
 
-  // Conveneicne functions for frequently-used `scope_stack` members.
-  auto return_scope_stack() -> llvm::SmallVector<ScopeStack::ReturnScope>& {
-    return scope_stack().return_scope_stack();
-  }
+  // Convenience functions for frequently-used `scope_stack` members.
   auto break_continue_stack()
       -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
     return scope_stack().break_continue_stack();
@@ -145,8 +145,13 @@ class Context {
     return import_ir_constant_values_;
   }
 
-  auto definitions_required() -> llvm::SmallVector<SemIR::InstId>& {
-    return definitions_required_;
+  auto definitions_required_by_decl() -> llvm::SmallVector<SemIR::InstId>& {
+    return definitions_required_by_decl_;
+  }
+
+  auto definitions_required_by_use()
+      -> llvm::SmallVector<std::pair<SemIR::LocId, SemIR::SpecificId>>& {
+    return definitions_required_by_use_;
   }
 
   auto global_init() -> GlobalInit& { return global_init_; }
@@ -199,6 +204,21 @@ class Context {
     return impl_lookup_stack_;
   }
 
+  // A concrete impl lookup query and its result.
+  struct PoisonedConcreteImplLookupQuery {
+    // The location the LookupImplWitness originated from.
+    SemIR::LocId loc_id;
+    // The query for a witness of an impl for an interface.
+    SemIR::LookupImplWitness query;
+    SemIR::InstId non_canonical_query_self_inst_id;
+    // The resulting ImplWitness.
+    SemIR::InstId impl_witness;
+  };
+  auto poisoned_concrete_impl_lookup_queries()
+      -> llvm::SmallVector<PoisonedConcreteImplLookupQuery>& {
+    return poisoned_concrete_impl_lookup_queries_;
+  }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -228,10 +248,14 @@ class Context {
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
   }
-  auto complete_facet_types() -> SemIR::File::CompleteFacetTypeStore& {
-    return sem_ir().complete_facet_types();
+  auto identified_facet_types() -> SemIR::File::IdentifiedFacetTypeStore& {
+    return sem_ir().identified_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
+  auto specific_interfaces()
+      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+    return sem_ir().specific_interfaces();
+  }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
   auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
@@ -239,6 +263,9 @@ class Context {
   }
   auto import_ir_insts() -> ValueStore<SemIR::ImportIRInstId>& {
     return sem_ir().import_ir_insts();
+  }
+  auto ast_context() -> clang::ASTContext& {
+    return sem_ir().cpp_ast()->getASTContext();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
@@ -248,9 +275,6 @@ class Context {
     return sem_ir().struct_type_fields();
   }
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
-  auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
-    return sem_ir().type_blocks();
-  }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
   // `inst.h`. This is `const` to prevent accidental misuse.
   auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
@@ -268,7 +292,7 @@ class Context {
 
  private:
   // Handles diagnostics.
-  DiagnosticEmitter<SemIRLoc>* emitter_;
+  DiagnosticEmitterBase* emitter_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
@@ -334,7 +358,13 @@ class Context {
 
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.
-  llvm::SmallVector<SemIR::InstId> definitions_required_;
+  llvm::SmallVector<SemIR::InstId> definitions_required_by_decl_;
+
+  // Entities that should have definitions by the end of the current source
+  // file, because of a generic was used a concrete specific. This is currently
+  // only tracking specific functions that should have a definition emitted.
+  llvm::SmallVector<std::pair<SemIR::LocId, SemIR::SpecificId>>
+      definitions_required_by_use_;
 
   // State for global initialization.
   GlobalInit global_init_;
@@ -371,6 +401,12 @@ class Context {
   // Tracks all ongoing impl lookups in order to ensure that lookup terminates
   // via the acyclic rule and the termination rule.
   llvm::SmallVector<ImplLookupStackEntry> impl_lookup_stack_;
+
+  // Tracks impl lookup queries that lead to concrete witness results, along
+  // with those results. Used to verify that the same queries produce the same
+  // results at the end of the file. Any difference is diagnosed.
+  llvm::SmallVector<PoisonedConcreteImplLookupQuery>
+      poisoned_concrete_impl_lookup_queries_;
 };
 
 }  // namespace Carbon::Check

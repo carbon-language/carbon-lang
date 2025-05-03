@@ -5,7 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
-#include "toolchain/check/subpattern.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 
 namespace Carbon::Check {
@@ -74,13 +74,24 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::TuplePatternStart>();
 
-  const auto& inst_block = context.inst_blocks().Get(refs_id);
-  llvm::SmallVector<SemIR::TypeId> type_ids;
-  type_ids.reserve(inst_block.size());
-  for (auto inst : inst_block) {
-    type_ids.push_back(context.insts().Get(inst).type_id());
+  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+    CARBON_DIAGNOSTIC(ExpectedSingleBindingInAssociatedConstant, Error,
+                      "found tuple pattern in associated constant declaration; "
+                      "expected symbolic binding pattern");
+    context.emitter().Emit(node_id, ExpectedSingleBindingInAssociatedConstant);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    EndSubpatternAsNonExpr(context);
+    return true;
   }
-  auto type_id = GetTupleType(context, type_ids);
+  const auto& inst_block = context.inst_blocks().Get(refs_id);
+  llvm::SmallVector<SemIR::InstId> type_inst_ids;
+  type_inst_ids.reserve(inst_block.size());
+  for (auto inst : inst_block) {
+    auto type_id = ExtractScrutineeType(context.sem_ir(),
+                                        context.insts().Get(inst).type_id());
+    type_inst_ids.push_back(context.types().GetInstId(type_id));
+  }
+  auto type_id = GetPatternType(context, GetTupleType(context, type_inst_ids));
   context.node_stack().Push(
       node_id,
       AddPatternInst<SemIR::TuplePattern>(

@@ -47,7 +47,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:11: error: member name `A` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:11: error: member name `A` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: var inst: Test.A = {};
 // CHECK:STDERR:           ^~~~~~
 // CHECK:STDERR:
@@ -72,6 +72,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -85,6 +86,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,7 +94,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %Test.C = import_ref Test//def, C, unloaded
 // CHECK:STDOUT:   %Test.A: type = import_ref Test//def, A, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Test.import_ref.8f2: <witness> = import_ref Test//def, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Test.import_ref.2c4 = import_ref Test//def, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref.2c4 = import_ref Test//def, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -104,8 +106,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: %C = binding_pattern inst
-// CHECK:STDOUT:     %.loc4: %C = var_pattern %inst.patt
+// CHECK:STDOUT:     %inst.patt: %pattern_type = binding_pattern inst [concrete]
+// CHECK:STDOUT:     %.loc4: %pattern_type = var_pattern %inst.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref %C = var inst
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]
@@ -146,8 +148,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt
+// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
@@ -181,8 +183,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt
+// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {

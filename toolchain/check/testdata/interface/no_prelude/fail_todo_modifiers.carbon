@@ -28,7 +28,7 @@ interface Modifiers {
 // CHECK:STDOUT:   %Self: %Modifiers.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Final.type: type = fn_type @Final [concrete]
 // CHECK:STDOUT:   %Final: %Final.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Modifiers.assoc_type: type = assoc_entity_type %Modifiers.type [concrete]
+// CHECK:STDOUT:   %Modifiers.assoc_type: type = assoc_entity_type @Modifiers [concrete]
 // CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, @Modifiers.%Final.decl [concrete]
 // CHECK:STDOUT:   %Default.type: type = fn_type @Default [concrete]
 // CHECK:STDOUT:   %Default: %Default.type = struct_value () [concrete]

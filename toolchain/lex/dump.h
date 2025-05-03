@@ -23,9 +23,7 @@
 
 namespace Carbon::Lex {
 
-auto DumpNoNewline(const TokenizedBuffer& tokens, TokenIndex token) -> void;
-
-auto Dump(const TokenizedBuffer& tokens, TokenIndex token) -> void;
+auto Dump(const TokenizedBuffer& tokens, TokenIndex token) -> std::string;
 
 }  // namespace Carbon::Lex
 

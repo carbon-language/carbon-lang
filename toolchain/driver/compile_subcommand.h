@@ -77,7 +77,7 @@ class CompileSubcommand : public DriverSubcommand {
   // Does custom validation of the compile-subcommand options structure beyond
   // what the command line parsing library supports. Diagnoses and returns false
   // on failure.
-  auto ValidateOptions(NoLocDiagnosticEmitter& emitter) const -> bool;
+  auto ValidateOptions(Diagnostics::NoLocEmitter& emitter) const -> bool;
 
   CompileOptions options_;
 };

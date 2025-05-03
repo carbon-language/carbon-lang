@@ -10,18 +10,30 @@
 
 namespace Carbon::Check {
 
-// Returns the initial witness value for a new impl declaration.
-auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
-    -> SemIR::InstId;
+// Returns the initial witness value for a new `impl` declaration.
+//
+// `has_definition` is whether this declaration is immediately followed by the
+// opening of the definition.
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
+                               bool has_definition) -> SemIR::InstId;
 
 // Update `impl`'s witness at the start of a definition.
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
 
 // Adds the function members to the witness for `impl`.
-auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void;
+auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void;
 
-// Sets all unset members of the witness for `impl` to the error instruction.
+// Sets all unset members of the witness for `impl` to the error instruction and
+// sets the witness id in the `Impl` to an error.
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
+
+// Sets the `ImplId` in the `ImplWitnessTable`.
+auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,
+                           SemIR::InstId witness_id) -> void;
+
+// Returns whether the impl is either `final` explicitly, or implicitly due to
+// being concrete.
+auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool;
 
 }  // namespace Carbon::Check
 

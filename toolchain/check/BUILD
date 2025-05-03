@@ -2,14 +2,14 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel/cc_rules:defs.bzl", "cc_library")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "testdata",
-    data = glob(["testdata/**/*.carbon"]),
+    srcs = glob(["testdata/**/*.carbon"]),
 )
 
 cc_library(
@@ -17,6 +17,7 @@ cc_library(
     srcs = [
         "action.cpp",
         "call.cpp",
+        "class.cpp",
         "context.cpp",
         "control_flow.cpp",
         "convert.cpp",
@@ -28,6 +29,7 @@ cc_library(
         "function.cpp",
         "generic.cpp",
         "global_init.cpp",
+        "impl.cpp",
         "impl_lookup.cpp",
         "import.cpp",
         "import_cpp.cpp",
@@ -42,10 +44,12 @@ cc_library(
         "name_component.cpp",
         "name_lookup.cpp",
         "operator.cpp",
+        "pattern.cpp",
         "pattern_match.cpp",
+        "pointer_dereference.cpp",
         "return.cpp",
-        "subpattern.cpp",
         "subst.cpp",
+        "thunk.cpp",
         "type.cpp",
         "type_completion.cpp",
         "type_structure.cpp",
@@ -53,6 +57,7 @@ cc_library(
     hdrs = [
         "action.h",
         "call.h",
+        "class.h",
         "context.h",
         "control_flow.h",
         "convert.h",
@@ -66,6 +71,7 @@ cc_library(
         "function.h",
         "generic.h",
         "global_init.h",
+        "impl.h",
         "impl_lookup.h",
         "import.h",
         "import_cpp.h",
@@ -82,12 +88,14 @@ cc_library(
         "name_lookup.h",
         "operator.h",
         "param_and_arg_refs_stack.h",
+        "pattern.h",
         "pattern_match.h",
         "pending_block.h",
+        "pointer_dereference.h",
         "region_stack.h",
         "return.h",
-        "subpattern.h",
         "subst.h",
+        "thunk.h",
         "type.h",
         "type_completion.h",
         "type_structure.h",
@@ -96,6 +104,7 @@ cc_library(
         ":node_stack",
         "//common:array_stack",
         "//common:check",
+        "//common:find",
         "//common:map",
         "//common:ostream",
         "//common:raw_string_ostream",
@@ -103,6 +112,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
+        "//toolchain/base:value_store",
         "//toolchain/check:generic_region_stack",
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -111,9 +121,9 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
-        "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:frontend",
         "@llvm-project//clang:sema",
@@ -129,6 +139,7 @@ cc_library(
         ":context",
         "//common:check",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//toolchain/lex:dump",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:dump",
@@ -159,12 +170,11 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":diagnostic_emitter",
         ":dump",
-        ":impl",
-        ":pointer_dereference",
-        ":sem_ir_loc_diagnostic_emitter",
         "//common:check",
         "//common:error",
+        "//common:find",
         "//common:map",
         "//common:ostream",
         "//common:variant_helpers",
@@ -181,8 +191,8 @@ cc_library(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:entry_point",
+        "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
@@ -208,27 +218,12 @@ cc_library(
     deps = [
         "//common:array_stack",
         "//common:check",
+        "//common:map",
         "//common:ostream",
         "//common:vlog",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "impl",
-    srcs = ["impl.cpp"],
-    hdrs = ["impl.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/base:kind_switch",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:typed_insts",
     ],
 )
 
@@ -242,20 +237,6 @@ cc_library(
         "//common:vlog",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:typed_insts",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "pointer_dereference",
-    srcs = ["pointer_dereference.cpp"],
-    hdrs = ["pointer_dereference.h"],
-    deps = [
-        ":context",
-        "//common:check",
-        "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
@@ -286,9 +267,9 @@ cc_library(
 )
 
 cc_library(
-    name = "sem_ir_loc_diagnostic_emitter",
-    srcs = ["sem_ir_loc_diagnostic_emitter.cpp"],
-    hdrs = ["sem_ir_loc_diagnostic_emitter.h"],
+    name = "diagnostic_emitter",
+    srcs = ["diagnostic_emitter.cpp"],
+    hdrs = ["diagnostic_emitter.h"],
     deps = [
         ":context",
         "//common:raw_string_ostream",
@@ -297,7 +278,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:absolute_node_id",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:stringify_type",
+        "//toolchain/sem_ir:stringify",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],

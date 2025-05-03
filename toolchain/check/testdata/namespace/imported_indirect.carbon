@@ -119,6 +119,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -146,8 +147,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: <namespace> = name_ref A, imports.%A [concrete = imports.%A]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Same.C [concrete = constants.%C]
@@ -166,6 +167,10 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %Same.A: <namespace> = import_ref Same//b, A, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %Same.A, [concrete] {
 // CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same.B: <namespace> = import_ref Same//b, B, loaded
+// CHECK:STDOUT:   %B: <namespace> = namespace %Same.B, [concrete] {
+// CHECK:STDOUT:     .C = file.%C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Same.F = import_ref Same//b, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -197,6 +202,14 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %A: <namespace> = namespace %Same.A, [concrete] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same.B: <namespace> = import_ref Same//c, B, loaded
+// CHECK:STDOUT:   %B: <namespace> = namespace %Same.B, [concrete] {
+// CHECK:STDOUT:     .C = %C
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same.C: <namespace> = import_ref Same//c, C, loaded
+// CHECK:STDOUT:   %C: <namespace> = namespace %Same.C, [concrete] {
+// CHECK:STDOUT:     .D = file.%D.decl
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -222,6 +235,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [concrete]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -255,8 +269,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %empty_tuple.type = binding_pattern e
-// CHECK:STDOUT:     %.loc5_1: %empty_tuple.type = var_pattern %e.patt
+// CHECK:STDOUT:     %e.patt: %pattern_type = binding_pattern e [concrete]
+// CHECK:STDOUT:     %.loc5_1: %pattern_type = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_tuple.type] {
@@ -266,7 +280,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D() [from "d.carbon"];
+// CHECK:STDOUT: fn @D [from "d.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -286,7 +300,6 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -294,6 +307,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %A: <namespace> = namespace %Same.A, [concrete] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same.B: <namespace> = import_ref Same//b, B, loaded
+// CHECK:STDOUT:   %B: <namespace> = namespace %Same.B, [concrete] {}
 // CHECK:STDOUT:   %Same.F: %F.type = import_ref Same//b, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
@@ -322,7 +337,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C [from "b.carbon"];
+// CHECK:STDOUT: fn @F [from "b.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_named_indirectly_different_package.carbon
 // CHECK:STDOUT:
@@ -331,7 +346,6 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -367,5 +381,5 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C [from "b.carbon"];
+// CHECK:STDOUT: fn @F [from "b.carbon"];
 // CHECK:STDOUT:

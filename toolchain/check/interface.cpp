@@ -4,6 +4,9 @@
 
 #include "toolchain/check/interface.h"
 
+#include <algorithm>
+#include <cstddef>
+
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
@@ -22,12 +25,13 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
     // This should only happen if the interface is erroneously defined more than
     // once.
     // TODO: Find a way to CHECK this.
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
-  // The interface type is the type of `Self`.
-  auto self_type_id =
-      context.insts().Get(interface_info.self_param_id).type_id();
+  // This associated entity is being declared as a member of the self specific
+  // of the interface.
+  auto interface_specific_id =
+      context.generics().GetSelfSpecific(interface_info.generic_id);
 
   // Register this declaration as declaring an associated entity.
   auto index = SemIR::ElementIndex(
@@ -36,9 +40,10 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
 
   // Name lookup for the declaration's name should name the associated entity,
   // not the declaration itself.
-  auto type_id = GetAssociatedEntityType(context, self_type_id);
+  auto type_id =
+      GetAssociatedEntityType(context, interface_id, interface_specific_id);
   return AddInst<SemIR::AssociatedEntity>(
-      context, context.insts().GetLocId(decl_id),
+      context, SemIR::LocId(decl_id),
       {.type_id = type_id, .index = index, .decl_id = decl_id});
 }
 
@@ -81,20 +86,18 @@ static auto GetSelfFacet(Context& context,
                          SemIR::InstId self_witness_id) -> SemIR::InstId {
   auto self_binding_id =
       GetSelfBinding(context, interface_specific_id, generic_id);
-  auto self_binding = context.insts().Get(self_binding_id);
-  auto self_facet_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), interface_specific_id, self_binding.type_id());
+  auto self_facet_type_id = SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), interface_specific_id, self_binding_id);
   // Create a facet value to be the value of `Self` in the interface.
   // TODO: Pass this in instead of creating it here. The caller sometimes
   // already has a facet value.
   auto type_inst_id = context.types().GetInstId(self_type_id);
   auto witnesses_block_id =
       context.inst_blocks().AddCanonical({self_witness_id});
-  auto self_value_const_id =
-      TryEvalInst(context, SemIR::InstId::None,
-                  SemIR::FacetValue{.type_id = self_facet_type_id,
-                                    .type_inst_id = type_inst_id,
-                                    .witnesses_block_id = witnesses_block_id});
+  auto self_value_const_id = TryEvalInst(
+      context, SemIR::FacetValue{.type_id = self_facet_type_id,
+                                 .type_inst_id = type_inst_id,
+                                 .witnesses_block_id = witnesses_block_id});
   return context.constant_values().GetInstId(self_value_const_id);
 }
 
@@ -125,10 +128,10 @@ static auto GetGenericArgsWithSelfType(Context& context,
 }
 
 auto GetSelfSpecificForInterfaceMemberWithSelfType(
-    Context& context, SemIRLoc loc, SemIR::SpecificId interface_specific_id,
-    SemIR::GenericId generic_id, SemIR::SpecificId enclosing_specific_id,
-    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id)
-    -> SemIR::SpecificId {
+    Context& context, SemIR::LocId loc_id,
+    SemIR::SpecificId interface_specific_id, SemIR::GenericId generic_id,
+    SemIR::SpecificId enclosing_specific_id, SemIR::TypeId self_type_id,
+    SemIR::InstId witness_inst_id) -> SemIR::SpecificId {
   const auto& generic = context.generics().Get(generic_id);
   auto self_specific_args = context.inst_blocks().Get(
       context.specifics().Get(generic.self_specific_id).args_id);
@@ -163,16 +166,16 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
       CARBON_CHECK(entity_name.bind_index_value >= 0);
       bind_name.entity_name_id =
           context.entity_names().AddCanonical(entity_name);
-      new_arg_id = context.constant_values().GetInstId(
-          TryEvalInst(context, arg_id, bind_name));
+      new_arg_id =
+          context.constant_values().GetInstId(TryEvalInst(context, bind_name));
     }
     arg_ids.push_back(new_arg_id);
   }
 
-  return MakeSpecific(context, loc, generic_id, arg_ids);
+  return MakeSpecific(context, loc_id, generic_id, arg_ids);
 }
 
-auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
+auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
                                         SemIR::SpecificId interface_specific_id,
                                         SemIR::InstId decl_id,
                                         SemIR::TypeId self_type_id,
@@ -189,16 +192,15 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIRLoc loc,
     auto arg_ids =
         GetGenericArgsWithSelfType(context, interface_specific_id, generic_id,
                                    self_type_id, self_witness_id);
-    auto const_specific_id = MakeSpecific(context, loc, generic_id, arg_ids);
-    return SemIR::GetTypeInSpecific(context.sem_ir(), const_specific_id,
-                                    context.insts().Get(decl_id).type_id());
+    auto const_specific_id = MakeSpecific(context, loc_id, generic_id, arg_ids);
+    return SemIR::GetTypeOfInstInSpecific(context.sem_ir(), const_specific_id,
+                                          decl_id);
   } else if (auto fn = context.types().TryGetAs<SemIR::FunctionType>(
                  decl.type_id())) {
     // Form the type of the function within the interface, and attach the `Self`
     // type.
-    auto interface_fn_type_id =
-        SemIR::GetTypeInSpecific(context.sem_ir(), interface_specific_id,
-                                 context.insts().Get(decl_id).type_id());
+    auto interface_fn_type_id = SemIR::GetTypeOfInstInSpecific(
+        context.sem_ir(), interface_specific_id, decl_id);
     auto self_facet_id =
         GetSelfFacet(context, interface_specific_id,
                      context.functions().Get(fn->function_id).generic_id,

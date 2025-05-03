@@ -27,6 +27,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -48,7 +49,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %C = binding_pattern b
+// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_10: type = splice_block %a.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, %NS [concrete = %NS]
@@ -63,8 +64,8 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc16_23.6: ref %C = converted @__global_init.%.loc16_23, %.loc16_23.5
 // CHECK:STDOUT:   %b: ref %C = bind_name b, %.loc16_23.6
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, file.%NS [concrete = file.%NS]
 // CHECK:STDOUT:     %a.ref: type = name_ref a, file.%a [concrete = constants.%C]
@@ -74,11 +75,10 @@ fn F() -> NS.a {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc11_19.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc11_16: %C.elem = field_decl v, element0 [concrete]
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc11_11: %C.elem = var_pattern %.loc11_16
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.var: ref %C.elem = var <none>
+// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -87,7 +87,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   .v = %.loc11_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @F() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_17.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_18.1: %struct_type.v = struct_literal (%.loc19_17.1)

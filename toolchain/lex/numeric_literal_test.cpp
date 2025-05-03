@@ -7,6 +7,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <optional>
+#include <string>
+
 #include "common/check.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/test_helpers.h"
@@ -23,7 +26,7 @@ using ::testing::VariantWith;
 
 class NumericLiteralTest : public ::testing::Test {
  public:
-  NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
+  NumericLiteralTest() : error_tracker(Diagnostics::ConsoleConsumer()) {}
 
   auto Lex(llvm::StringRef text, bool can_form_real_literal) -> NumericLiteral {
     std::optional<NumericLiteral> result =
@@ -41,7 +44,7 @@ class NumericLiteralTest : public ::testing::Test {
     return Lex(text, can_form_real_literal).ComputeValue(emitter);
   }
 
-  ErrorTrackingDiagnosticConsumer error_tracker;
+  Diagnostics::ErrorTrackingConsumer error_tracker;
 };
 
 // Matcher for signed llvm::APInt.

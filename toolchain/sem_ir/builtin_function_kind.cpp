@@ -34,6 +34,9 @@ struct ValidateState {
   TypeId type_params[MaxTypeParams] = {TypeId::None, TypeId::None};
 };
 
+template <typename TypeConstraint>
+auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool;
+
 // Constraint that a type is generic type parameter `I` of the builtin,
 // satisfying `TypeConstraint`. See ValidateSignature for details.
 template <int I, typename TypeConstraint>
@@ -55,11 +58,24 @@ struct TypeParam {
 
 // Constraint that a type is a specific builtin. See ValidateSignature for
 // details.
-template <const InstId& BuiltinId>
+template <const TypeInstId& BuiltinId>
 struct BuiltinType {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
                     TypeId type_id) -> bool {
     return sem_ir.types().GetInstId(type_id) == BuiltinId;
+  }
+};
+
+// Constraint that a type is a pointer to another type. See ValidateSignature
+// for details.
+template <typename PointeeT>
+struct PointerTo {
+  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
+      -> bool {
+    if (!sem_ir.types().Is<PointerType>(type_id)) {
+      return false;
+    }
+    return Check<PointeeT>(sem_ir, state, sem_ir.GetPointeeType(type_id));
   }
 };
 
@@ -68,16 +84,16 @@ struct BuiltinType {
 struct NoReturn {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
                     TypeId type_id) -> bool {
-    auto tuple = sem_ir.types().TryGetAs<SemIR::TupleType>(type_id);
+    auto tuple = sem_ir.types().TryGetAs<TupleType>(type_id);
     if (!tuple) {
       return false;
     }
-    return sem_ir.type_blocks().Get(tuple->elements_id).empty();
+    return sem_ir.inst_blocks().Get(tuple->type_elements_id).empty();
   }
 };
 
 // Constraint that a type is `bool`.
-using Bool = BuiltinType<BoolType::SingletonInstId>;
+using Bool = BuiltinType<BoolType::TypeInstId>;
 
 // Constraint that requires the type to be a sized integer type.
 struct AnySizedInt {
@@ -92,8 +108,8 @@ struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
     return AnySizedInt::Check(sem_ir, state, type_id) ||
-           BuiltinType<IntLiteralType::SingletonInstId>::Check(sem_ir, state,
-                                                               type_id);
+           BuiltinType<IntLiteralType::TypeInstId>::Check(sem_ir, state,
+                                                          type_id);
   }
 };
 
@@ -101,8 +117,8 @@ struct AnyInt {
 struct AnyFloat {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<LegacyFloatType::SingletonInstId>::Check(sem_ir, state,
-                                                             type_id)) {
+    if (BuiltinType<LegacyFloatType::TypeInstId>::Check(sem_ir, state,
+                                                        type_id)) {
       return true;
     }
     return sem_ir.types().Is<FloatType>(type_id);
@@ -110,18 +126,17 @@ struct AnyFloat {
 };
 
 // Constraint that requires the type to be the type type.
-using Type = BuiltinType<TypeType::SingletonInstId>;
+using Type = BuiltinType<TypeType::TypeInstId>;
 
 // Constraint that requires the type to be a type value, whose type is type
 // type. Also accepts symbolic constant value types.
 struct AnyType {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<TypeType::SingletonInstId>::Check(sem_ir, state, type_id)) {
+    if (BuiltinType<TypeType::TypeInstId>::Check(sem_ir, state, type_id)) {
       return true;
     }
-    return sem_ir.types().GetAsInst(type_id).type_id() ==
-           TypeType::SingletonTypeId;
+    return sem_ir.types().GetAsInst(type_id).type_id() == TypeType::TypeId;
   }
 };
 
@@ -195,6 +210,15 @@ static auto ValidateSignature(const File& sem_ir,
   return true;
 }
 
+// Validates the signature for NoOp. This ignores all arguments, only validating
+// that the return type is compatible.
+static auto ValidateNoOpSignature(const File& sem_ir,
+                                  llvm::ArrayRef<TypeId> /*arg_types*/,
+                                  TypeId return_type) -> bool {
+  ValidateState state;
+  return Check<NoReturn>(sem_ir, state, return_type);
+}
+
 // Descriptions of builtin functions follow. For each builtin, a corresponding
 // `BuiltinInfo` constant is declared describing properties of that builtin.
 namespace BuiltinFunctionInfo {
@@ -211,12 +235,18 @@ using IntU = TypeParam<1, AnyInt>;
 // generic type parameter that is constrained to be a sized integer type.
 using SizedIntT = TypeParam<0, AnySizedInt>;
 
+// Convenience name used in the builtin type signatures below for a second
+// generic type parameter that is constrained to be a sized integer type.
+using SizedIntU = TypeParam<1, AnySizedInt>;
+
 // Convenience name used in the builtin type signatures below for a first
 // generic type parameter that is constrained to be an float type.
 using FloatT = TypeParam<0, AnyFloat>;
 
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
+
+constexpr BuiltinInfo NoOp = {"no_op", ValidateNoOpSignature};
 
 // Prints a single character.
 constexpr BuiltinInfo PrintChar = {
@@ -327,9 +357,84 @@ constexpr BuiltinInfo IntXor = {"int.xor",
 constexpr BuiltinInfo IntLeftShift = {
     "int.left_shift", ValidateSignature<auto(IntT, IntU)->IntT>};
 
-// "int.left_shift": integer right shift.
+// "int.right_shift": integer right shift.
 constexpr BuiltinInfo IntRightShift = {
     "int.right_shift", ValidateSignature<auto(IntT, IntU)->IntT>};
+
+// "int.sadd_assign": integer in-place addition.
+constexpr BuiltinInfo IntSAddAssign = {
+    "int.sadd_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.ssub_assign": integer in-place subtraction.
+constexpr BuiltinInfo IntSSubAssign = {
+    "int.ssub_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.smul_assign": integer in-place multiplication.
+constexpr BuiltinInfo IntSMulAssign = {
+    "int.smul_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.sdiv_assign": integer in-place division.
+constexpr BuiltinInfo IntSDivAssign = {
+    "int.sdiv_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.smod_assign": integer in-place modulo.
+constexpr BuiltinInfo IntSModAssign = {
+    "int.smod_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.uadd_assign": unsigned integer in-place addition.
+constexpr BuiltinInfo IntUAddAssign = {
+    "int.uadd_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.usub_assign": unsigned integer in-place subtraction.
+constexpr BuiltinInfo IntUSubAssign = {
+    "int.usub_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.umul_assign": unsigned integer in-place multiplication.
+constexpr BuiltinInfo IntUMulAssign = {
+    "int.umul_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.udiv_assign": unsigned integer in-place division.
+constexpr BuiltinInfo IntUDivAssign = {
+    "int.udiv_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.mod_assign": integer in-place modulo.
+constexpr BuiltinInfo IntUModAssign = {
+    "int.umod_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.and_assign": integer in-place bitwise and.
+constexpr BuiltinInfo IntAndAssign = {
+    "int.and_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.or_assign": integer in-place bitwise or.
+constexpr BuiltinInfo IntOrAssign = {
+    "int.or_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.xor_assign": integer in-place bitwise xor.
+constexpr BuiltinInfo IntXorAssign = {
+    "int.xor_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+
+// "int.left_shift_assign": integer in-place left shift.
+constexpr BuiltinInfo IntLeftShiftAssign = {
+    "int.left_shift_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntU)->NoReturn>};
+
+// "int.right_shift_assign": integer in-place right shift.
+constexpr BuiltinInfo IntRightShiftAssign = {
+    "int.right_shift_assign",
+    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntU)->NoReturn>};
 
 // "int.eq": integer equality comparison.
 constexpr BuiltinInfo IntEq = {"int.eq",
@@ -469,11 +574,11 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
 static auto AnyIntLiteralTypes(const File& sem_ir,
                                llvm::ArrayRef<InstId> arg_ids,
                                TypeId return_type_id) -> bool {
-  if (sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id)) {
+  if (sem_ir.types().Is<IntLiteralType>(return_type_id)) {
     return true;
   }
   for (auto arg_id : arg_ids) {
-    if (sem_ir.types().Is<SemIR::IntLiteralType>(
+    if (sem_ir.types().Is<IntLiteralType>(
             sem_ir.insts().Get(arg_id).type_id())) {
       return true;
     }

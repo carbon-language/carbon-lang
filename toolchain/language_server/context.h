@@ -52,7 +52,8 @@ class Context {
   };
 
   // `vlog_stream` is optional; other parameters are required.
-  explicit Context(llvm::raw_ostream* vlog_stream, DiagnosticConsumer* consumer,
+  explicit Context(llvm::raw_ostream* vlog_stream,
+                   Diagnostics::Consumer* consumer,
                    clang::clangd::LSPBinder::RawOutgoing* outgoing)
       : vlog_stream_(vlog_stream),
         file_emitter_(consumer),
@@ -70,16 +71,18 @@ class Context {
   }
 
   auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
-  auto file_emitter() -> FileDiagnosticEmitter& { return file_emitter_; }
-  auto no_loc_emitter() -> NoLocDiagnosticEmitter& { return no_loc_emitter_; }
+  auto file_emitter() -> Diagnostics::FileEmitter& { return file_emitter_; }
+  auto no_loc_emitter() -> Diagnostics::NoLocEmitter& {
+    return no_loc_emitter_;
+  }
 
   auto files() -> Map<std::string, File>& { return files_; }
 
  private:
   // Diagnostic and output streams.
   llvm::raw_ostream* vlog_stream_;
-  FileDiagnosticEmitter file_emitter_;
-  NoLocDiagnosticEmitter no_loc_emitter_;
+  Diagnostics::FileEmitter file_emitter_;
+  Diagnostics::NoLocEmitter no_loc_emitter_;
   clang::clangd::LSPBinder::RawOutgoing* outgoing_;
 
   // Content of files managed by the language client.

@@ -9,15 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_extend_non_interface.carbon
 
 class C {
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+12]]:3: error: impl as non-facet type `i32` [ImplAsNonFacetType]
-  // CHECK:STDERR:   extend impl as i32;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+8]]:3: error: semantics TODO: `extending non-facet-type constraint` [SemanticsTodo]
-  // CHECK:STDERR:   extend impl as i32;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
+  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+4]]:3: error: impl as non-facet type `i32` [ImplAsNonFacetType]
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -29,6 +21,8 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -40,6 +34,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -59,11 +54,13 @@ class C {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   extend @impl.%i32
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
