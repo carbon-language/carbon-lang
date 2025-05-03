@@ -947,6 +947,9 @@ struct LocId : public IdBase<LocId> {
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
+  // Note that the returned `ImportIRInstId` only identifies a location; it is
+  // not correct to interpret it as the instruction from which another
+  // instruction was imported. Use `InstStore::GetImportIRInstId` for that.
   auto import_ir_inst_id() const -> ImportIRInstId {
     if (!has_value()) {
       return ImportIRInstId::None;

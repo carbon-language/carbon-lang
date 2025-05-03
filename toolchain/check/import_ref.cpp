@@ -563,12 +563,12 @@ class ImportRefResolver : public ImportContext {
     auto cursor_inst_id = inst_id;
 
     while (true) {
-      auto loc_id = cursor_ir->insts().GetCanonicalLocId(cursor_inst_id);
-      if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
+      auto import_ir_inst_id =
+          cursor_ir->insts().GetImportIRInstId(cursor_inst_id);
+      if (!import_ir_inst_id.has_value()) {
         return result;
       }
-      auto ir_inst =
-          cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
+      auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
 
       const auto* prev_ir = cursor_ir;
       auto prev_inst_id = cursor_inst_id;

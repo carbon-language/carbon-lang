@@ -412,14 +412,11 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
   for (const auto& function : context_.functions().array_ref()) {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
-      auto function_loc_id =
-          context_.insts().GetCanonicalLocId(function.non_owning_decl_id);
-      CARBON_CHECK(function_loc_id.kind() ==
-                   SemIR::LocId::Kind::ImportIRInstId);
-      auto import_ir_id = context_.sem_ir()
-                              .import_ir_insts()
-                              .Get(function_loc_id.import_ir_inst_id())
-                              .ir_id();
+      auto function_import_id =
+          context_.insts().GetImportIRInstId(function.non_owning_decl_id);
+      CARBON_CHECK(function_import_id.has_value());
+      auto import_ir_id =
+          context_.sem_ir().import_ir_insts().Get(function_import_id).ir_id();
       auto& import_ir = context_.import_irs().Get(import_ir_id);
       if (import_ir.sem_ir->package_id().has_value() !=
           context_.sem_ir().package_id().has_value()) {
