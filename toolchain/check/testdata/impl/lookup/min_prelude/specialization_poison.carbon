@@ -176,14 +176,12 @@ library "[[@TEST_NAME]]";
 interface Z(T:! type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+4]]:1: error: semantics TODO: `impl is fully overlapped by final impl` [SemanticsTodo]
+// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+3]]:1: error: found `impl` that is fully overlapped by a final `impl` [ImplFullyOverlapFinal]
 // CHECK:STDERR: impl () as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl () as Z(()) {}
 
-// TODO: Diagnose overlap with previous impl (query of that matches this).
-// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+4]]:1: error: semantics TODO: `final impl here` [SemanticsTodo]
+// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+4]]:1: note: by final `impl` here [ImplFullyOverlapFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -195,39 +193,49 @@ library "[[@TEST_NAME]]";
 interface Z(T:! type) {}
 interface Y {}
 
-// TODO: Diagnose overlap with next impl (query of that matches this).
 final impl forall [T:! type] T as Z(T) {}
 
-// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+8]]:1: error: semantics TODO: `impl is fully overlapped by final impl` [SemanticsTodo]
+// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+7]]:1: error: found `impl` that is fully overlapped by a final `impl` [ImplFullyOverlapFinal]
 // CHECK:STDERR: impl () as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE-6]]:1: error: semantics TODO: `final impl here` [SemanticsTodo]
+// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE-5]]:1: note: by final `impl` here [ImplFullyOverlapFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as Z(()) {}
 
-// --- todo_final_overlaps_earlier_final_impl.carbon
+// --- fail_final_overlaps_earlier_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
 interface Y {}
 
+// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+3]]:1: error: found `impl` that is fully overlapped by a final `impl` [ImplFullyOverlapFinal]
+// CHECK:STDERR: final impl () as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 final impl () as Z(()) {}
 
-// TODO: Diagnose overlap with previous impl (query of that matches this).
+// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+4]]:1: note: by final `impl` here [ImplFullyOverlapFinalNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 final impl forall [T:! type] T as Z(T) {}
 
-// --- todo_final_overlaps_later_final_impl.carbon
+// --- fail_final_overlaps_later_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
 interface Y {}
 
-// TODO: Diagnose overlap with next impl (query of that matches this).
 final impl forall [T:! type] T as Z(T) {}
 
+// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE+7]]:1: error: found `impl` that is fully overlapped by a final `impl` [ImplFullyOverlapFinal]
+// CHECK:STDERR: final impl () as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE-5]]:1: note: by final `impl` here [ImplFullyOverlapFinalNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 final impl () as Z(()) {}
 
 // --- fail_non_final_overlaps_non_final_impl.carbon
@@ -242,10 +250,10 @@ class C(T:! type) {}
 // No diagnosis here as the type structure is unique.
 impl forall [T:! type] T as Z(C(T)) {}
 
-// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` that is fully overlapped by a non-final `impl` [ImplFullyOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE-9]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE-9]]:1: note: by `impl` here [ImplFullyOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! Y] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -274,14 +282,32 @@ impl forall [T:! type] T as Z(T) {}
 final impl () as Z(()) {}
 
 
-// --- todo_final_partial_overlaps_final_impl.carbon
+// --- todo_final_partial_overlaps_final_impl_in_self_type.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {}
+interface Z {}
 interface Y {}
 
-final impl forall [T:! type] T as Z(T) {}
+class C(T:! type, U:! type);
 
-// Partially overlaps the previous impl, which may or may not be fine, depending
-// how https://github.com/carbon-language/carbon-lang/pull/5337 turns out.
-final impl () as Z(()) {}
+final impl forall [T:! type] C(T, ()) as Z {}
+
+// TODO: Partially overlaps the previous impl, which may or may not be fine outside of
+// a `match_first`, depending how
+// https://github.com/carbon-language/carbon-lang/pull/5337 turns out.
+final impl forall [U:! type] C((), U) as Z {}
+
+// --- todo_final_partial_overlaps_final_impl_in_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type, U:! type) {}
+interface Y {}
+
+class C;
+
+final impl forall [T:! type] C as Z(T, ()) {}
+
+// TODO: Partially overlaps the previous impl, which may or may not be fine outside of
+// a `match_first`, depending how
+// https://github.com/carbon-language/carbon-lang/pull/5337 turns out.
+final impl forall [U:! type] C as Z((), U) {}

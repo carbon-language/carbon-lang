@@ -597,35 +597,46 @@ static auto CheckOverlappingImplsForInterface(
             BuildTypeStructure(context, impl_b->self_id, impl_b->interface);
         if (type_structure == type_structure2) {
           CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinal, Error,
-                            "found non-final `impl` that fully overlaps "
-                            "previous non-final `impl`");
+                            "found non-final `impl` that is fully overlapped "
+                            "by a non-final `impl`");
           auto builder = context.emitter().Build(impl_b->latest_decl_id(),
                                                  ImplFullyOverlapNonFinal);
           CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinalNote, Note,
-                            "fully overlaps `impl` here");
+                            "by `impl` here");
           builder.Note(impl_a->latest_decl_id(), ImplFullyOverlapNonFinalNote);
           builder.Emit();
           break;
         }
-      } else if (!impl_a->is_final || !impl_b->is_final) {
+      } else {
         CARBON_CHECK(impl_a->is_final || impl_b->is_final);
 
-        auto diagnose = [&](const SemIR::Impl& non_final_impl,
+        auto diagnose = [&](const SemIR::Impl& query_impl,
                             SemIR::ImplId final_impl_id,
-                            const SemIR::Impl& final_impl) {
+                            const SemIR::Impl& final_impl) -> bool {
           if (LookupMatchesImpl(
-                  context, SemIR::LocId(non_final_impl.latest_decl_id()),
-                  context.constant_values().Get(non_final_impl.self_id),
-                  non_final_impl.interface, final_impl_id)) {
-            context.TODO(non_final_impl.latest_decl_id(),
-                         "impl is fully overlapped by final impl");
-            context.TODO(final_impl.latest_decl_id(), "final impl here");
+                  context, SemIR::LocId(query_impl.latest_decl_id()),
+                  context.constant_values().Get(query_impl.self_id),
+                  query_impl.interface, final_impl_id)) {
+            CARBON_DIAGNOSTIC(
+                ImplFullyOverlapFinal, Error,
+                "found `impl` that is fully overlapped by a final `impl`");
+            auto builder = context.emitter().Build(query_impl.latest_decl_id(),
+                                                   ImplFullyOverlapFinal);
+            CARBON_DIAGNOSTIC(ImplFullyOverlapFinalNote, Note,
+                              "by final `impl` here");
+            builder.Note(final_impl.latest_decl_id(),
+                         ImplFullyOverlapFinalNote);
+            builder.Emit();
+            return true;
           }
+          return false;
         };
 
+        bool did_diagnose = false;
         if (impl_a->is_final) {
-          diagnose(*impl_b, impl_a_id, *impl_a);
-        } else {
+          did_diagnose = diagnose(*impl_b, impl_a_id, *impl_a);
+        }
+        if (impl_b->is_final && !did_diagnose) {
           diagnose(*impl_a, impl_b_id, *impl_b);
         }
       }
