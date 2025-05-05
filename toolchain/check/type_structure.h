@@ -8,9 +8,9 @@
 #include <algorithm>
 
 #include "common/ostream.h"
+#include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/impl.h"
 
 namespace Carbon::Check {
 
@@ -103,8 +103,18 @@ class TypeStructure : public Printable<TypeStructure> {
 
   // Indicates a concrete element in the type structure which does not add any
   // type information of its own. See `ConcreteType`.
+  //
+  // FIXME: Delete this.
   struct ConcreteNoneType {
     friend auto operator==(ConcreteNoneType /*lhs*/, ConcreteNoneType /*rhs*/)
+        -> bool = default;
+  };
+  struct ConcretePointerType {
+    friend auto operator==(ConcretePointerType /*lhs*/,
+                           ConcretePointerType /*rhs*/) -> bool = default;
+  };
+  struct ConcreteTupleType {
+    friend auto operator==(ConcreteTupleType /*lhs*/, ConcreteTupleType /*rhs*/)
         -> bool = default;
   };
   // The `concrete_types_` tracks the specific concrete type for each
@@ -112,8 +122,9 @@ class TypeStructure : public Printable<TypeStructure> {
   // structure. But there are cases where the `ConcreteOpenParen` opens a scope
   // for other concrete types but doesn't add any type data of its own, and
   // `ConcreteNoneType` can appear there.
-  using ConcreteType = std::variant<ConcreteNoneType, SemIR::TypeId,
-                                    SemIR::ClassId, SemIR::InterfaceId>;
+  using ConcreteType =
+      std::variant<ConcreteNoneType, ConcretePointerType, ConcreteTupleType,
+                   SemIR::TypeId, SemIR::ClassId, SemIR::InterfaceId>;
 
   TypeStructure(llvm::SmallVector<Structural> structure,
                 llvm::SmallVector<int> symbolic_type_indices,

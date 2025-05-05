@@ -234,3 +234,14 @@ impl forall [T:! type] T as Z(C(T)) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! type] T as Z(T) {}
+
+// --- non_final_concrete_overlaps_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+class C;
+class D;
+
+impl C as Z {}
+impl D as Z {}

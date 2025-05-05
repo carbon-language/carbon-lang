@@ -1,0 +1,229 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include "toolchain/sem_ir/type_iterator.h"
+
+#include <utility>
+
+#include "toolchain/base/kind_switch.h"
+#include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
+
+namespace Carbon::SemIR {
+
+auto TypeIterator::Next() -> Step {
+  while (!work_list_.empty()) {
+    auto next = work_list_.back();
+    work_list_.pop_back();
+
+    if (std::holds_alternative<EndType>(next)) {
+      return Step::End();
+    }
+
+    if (const auto* interface = std::get_if<SemIR::SpecificInterface>(&next)) {
+      auto args = GetSpecificArgs(interface->specific_id);
+      if (args.empty()) {
+        return Step::StartOnly(
+            Step::InterfaceStart{.interface_id = interface->interface_id});
+      } else {
+        Push(EndType());
+        PushArgs(args);
+        return Step::StartWithEnd(
+            Step::InterfaceStart{.interface_id = interface->interface_id});
+      }
+    }
+
+    if (const auto* symbolic = std::get_if<SymbolicType>(&next)) {
+      return Step::SymbolicType{.facet_type_id = symbolic->facet_type_id};
+    }
+
+    if (std::holds_alternative<NonTypeValue>(next)) {
+      return Step::Value();
+    }
+
+    SemIR::TypeId type_id = std::get<SemIR::TypeId>(next);
+    auto inst_id = sem_ir_->types().GetInstId(type_id);
+    auto inst = sem_ir_->insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+        // ==== Symbolic types ====
+
+      case SemIR::BindSymbolicName::Kind:
+      case SemIR::SymbolicBindingPattern::Kind: {
+        return Step::SymbolicType{.facet_type_id = type_id};
+      }
+      case SemIR::TypeOfInst::Kind: {
+        return Step::TemplateType();
+      }
+
+      case CARBON_KIND(SemIR::FacetAccessType access): {
+        auto facet_type_id =
+            sem_ir_->insts().Get(access.facet_value_inst_id).type_id();
+        return Step::SymbolicType{.facet_type_id = facet_type_id};
+      }
+
+        // ==== Concrete types ====
+
+      case SemIR::AssociatedEntityType::Kind:
+      case SemIR::BoolType::Kind:
+      case SemIR::FacetType::Kind:
+      case SemIR::FloatType::Kind:
+      case SemIR::GenericClassType::Kind:
+      case SemIR::GenericInterfaceType::Kind:
+      case SemIR::ImplWitnessAccess::Kind:
+      case SemIR::IntLiteralType::Kind:
+      case SemIR::LegacyFloatType::Kind:
+      case SemIR::NamespaceType::Kind:
+      case SemIR::StringType::Kind:
+      case SemIR::TypeType::Kind:
+      case SemIR::WitnessType::Kind: {
+        return Step::ConcreteType{.type_id = type_id};
+      }
+
+      case CARBON_KIND(SemIR::IntType int_type): {
+        Push(EndType());
+        PushArgs({int_type.bit_width_id});
+        return Step::StartWithEnd(Step::IntStart{.type_id = type_id});
+      }
+
+        // ==== Aggregate types ====
+
+      case CARBON_KIND(SemIR::ArrayType array_type): {
+        Push(EndType());
+        PushInstId(array_type.element_type_inst_id);
+        PushInstId(array_type.bound_id);
+        return Step::StartWithEnd(Step::ArrayStart{.type_id = type_id});
+      }
+      case CARBON_KIND(SemIR::ClassType class_type): {
+        auto args = GetSpecificArgs(class_type.specific_id);
+        if (args.empty()) {
+          return Step::StartOnly(Step::ClassStart{
+              .class_id = class_type.class_id, .type_id = type_id});
+        } else {
+          Push(EndType());
+          PushArgs(args);
+          return Step::StartWithEnd(Step::ClassStart{
+              .class_id = class_type.class_id, .type_id = type_id});
+        }
+      }
+      case CARBON_KIND(SemIR::ConstType const_type): {
+        // We don't put the `const` into the type structure since it is a
+        // modifier; just move to the inner type.
+        PushInstId(const_type.inner_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
+        Push(assoc.type_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::PointerType pointer_type): {
+        Push(EndType());
+        PushInstId(pointer_type.pointee_id);
+        return Step::StartWithEnd(Step::PointerStart());
+        break;
+      }
+      case CARBON_KIND(SemIR::TupleType tuple_type): {
+        auto inner_types =
+            sem_ir_->inst_blocks().Get(tuple_type.type_elements_id);
+        if (inner_types.empty()) {
+          return Step::StartOnly(Step::TupleStart{.type_id = type_id});
+        } else {
+          Push(EndType());
+          PushArgs(sem_ir_->inst_blocks().Get(tuple_type.type_elements_id));
+          return Step::StartWithEnd(Step::TupleStart{.type_id = type_id});
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::StructType struct_type): {
+        auto fields = sem_ir_->struct_type_fields().Get(struct_type.fields_id);
+        if (fields.empty()) {
+          return Step::StartOnly(Step::StructStart{.type_id = type_id});
+        } else {
+          Push(EndType());
+          for (const auto& field : llvm::reverse(fields)) {
+            // TODO: Are struct field names part of the type structure? They
+            // are part of a struct's type.
+            PushInstId(field.type_inst_id);
+          }
+          return Step::StartWithEnd(Step::StructStart{.type_id = type_id});
+        }
+        break;
+      }
+      default:
+        CARBON_FATAL("Unhandled type instruction {0}", inst_id);
+    }
+  }
+
+  return Step::Done();
+}
+
+auto TypeIterator::TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
+    -> std::variant<SemIR::TypeId, SymbolicType> {
+  if (auto facet_value =
+          sem_ir_->insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
+    inst_id = facet_value->type_inst_id;
+  }
+
+  auto type_id_of_inst_id = sem_ir_->insts().Get(inst_id).type_id();
+  // All instructions of type FacetType are symbolic except for FacetValue:
+  // - In non-generic code, values of type FacetType are only created through
+  //   conversion to a FacetType (e.g. `Class as Iface`), which produces a
+  //   non-symbolic FacetValue.
+  // - In generic code, binding values of type FacetType are symbolic as they
+  //   refer to an unknown type. Non-binding values would be FacetValues like
+  //   in non-generic code, but would be symbolic as well.
+  // - In specifics of generic code, when deducing a value for a symbolic
+  //   binding of type FacetType, we always produce a FacetValue (which may or
+  //   may not itself be symbolic) through conversion.
+  //
+  // FacetValues are handled earlier by getting the type instruction from
+  // them. That type instruction is never of type FacetType. If it refers to a
+  // FacetType it does so through a FacetAccessType, which is of type TypeType
+  // and thus does not match here.
+  if (auto facet_type =
+          sem_ir_->types().TryGetAs<SemIR::FacetType>(type_id_of_inst_id)) {
+    return SymbolicType{.facet_type_id = type_id_of_inst_id};
+  }
+  // Non-type values are concrete, only types are symbolic.
+  if (type_id_of_inst_id != SemIR::TypeType::TypeId) {
+    return SemIR::TypeId::None;
+  }
+  return sem_ir_->types().GetTypeIdForTypeInstId(inst_id);
+}
+
+auto TypeIterator::GetSpecificArgs(SemIR::SpecificId specific_id)
+    -> llvm::ArrayRef<SemIR::InstId> {
+  if (specific_id == SemIR::SpecificId::None) {
+    return {};
+  }
+  auto specific = sem_ir_->specifics().Get(specific_id);
+  return sem_ir_->inst_blocks().Get(specific.args_id);
+}
+
+// Push all arguments from the array into the work queue.
+auto TypeIterator::PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void {
+  for (auto arg_id : llvm::reverse(args)) {
+    PushInstId(arg_id);
+  }
+}
+
+// Push an instruction's type value into the work queue, or a marker if the
+// instruction has a symbolic value.
+auto TypeIterator::PushInstId(SemIR::InstId inst_id) -> void {
+  auto maybe_type_id = TryGetInstIdAsTypeId(inst_id);
+  if (std::holds_alternative<SymbolicType>(maybe_type_id)) {
+    Push(std::get<SymbolicType>(maybe_type_id));
+  } else if (auto type_id = std::get<SemIR::TypeId>(maybe_type_id);
+             type_id.has_value()) {
+    Push(type_id);
+  } else {
+    Push(NonTypeValue{.type_id = sem_ir_->insts().Get(inst_id).type_id()});
+  }
+}
+
+// Push the next step into the work queue.
+auto TypeIterator::Push(WorkItem item) -> void { work_list_.push_back(item); }
+
+}  // namespace Carbon::SemIR

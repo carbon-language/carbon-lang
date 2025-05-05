@@ -4,16 +4,13 @@
 
 #include "toolchain/check/type_structure.h"
 
+#include <concepts>
 #include <utility>
 #include <variant>
 
-#include "toolchain/base/kind_switch.h"
+#include "common/variant_helpers.h"
 #include "toolchain/check/context.h"
-#include "toolchain/sem_ir/constant.h"
-#include "toolchain/sem_ir/facet_type_info.h"
-#include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/impl.h"
-#include "toolchain/sem_ir/typed_insts.h"
+#include "toolchain/sem_ir/type_iterator.h"
 
 namespace Carbon::Check {
 
@@ -121,19 +118,19 @@ class TypeStructureBuilder {
 
   auto Run(SemIR::InstId self_inst_id,
            SemIR::SpecificInterface interface_constraint) -> TypeStructure {
-    CARBON_CHECK(work_list_.empty());
-
     structure_.clear();
     symbolic_type_indices_.clear();
     concrete_types_.clear();
 
+    SemIR::TypeIterator type_iter(&context_->sem_ir());
+
     // The self type comes first in the type structure, so we push it last, as
     // the queue works from the back.
-    Push(interface_constraint);
+    type_iter.Add(interface_constraint);
     if (self_inst_id.has_value()) {
-      PushInstId(self_inst_id);
+      type_iter.Add(self_inst_id);
     }
-    BuildTypeStructure();
+    BuildTypeStructure(std::move(type_iter));
 
     // TODO: This requires 4 SmallVector moves (two here and two in the
     // constructor). Find a way to reduce that.
@@ -143,261 +140,105 @@ class TypeStructureBuilder {
   }
 
  private:
-  auto BuildTypeStructure() -> void {
-    while (!work_list_.empty()) {
-      auto next = work_list_.back();
-      work_list_.pop_back();
-
-      if (std::holds_alternative<CloseType>(next)) {
-        AppendStructuralConcreteCloseParen();
-        continue;
+  auto BuildTypeStructure(SemIR::TypeIterator type_iter) -> void {
+    while (true) {
+      auto step = type_iter.Next();
+      if (step.Is<SemIR::TypeIterator::Step::Done>()) {
+        break;
       }
 
-      if (const auto* interface =
-              std::get_if<SemIR::SpecificInterface>(&next)) {
-        auto args = GetSpecificArgs(interface->specific_id);
-        if (args.empty()) {
-          AppendStructuralConcrete(interface->interface_id);
-        } else {
-          AppendStructuralConcreteOpenParen(interface->interface_id);
-          Push(CloseType());
-          PushArgs(args);
-        }
-        continue;
-      }
-
-      if (std::holds_alternative<SymbolicType>(next)) {
-        AppendStructuralSymbolic();
-        continue;
-      }
-
-      if (std::holds_alternative<NonTypeValue>(next)) {
-        // TODO: Include the value's type into the structure, with the type
-        // coming first and paired together with the value, like:
-        // `{TypeWithPossibleNestedTypes, Concrete}`.
-        // We might want a different bracket marker than ConcreteOpenParen for
-        // this so that it can look different in the type structure when dumped.
-        AppendStructuralConcrete(SemIR::ErrorInst::TypeId);
-        continue;
-      }
-
-      SemIR::TypeId type_id = std::get<SemIR::TypeId>(next);
-      auto inst_id = context_->types().GetInstId(type_id);
-      auto inst = context_->insts().Get(inst_id);
-      CARBON_KIND_SWITCH(inst) {
-          // ==== Symbolic types ====
-
-        case SemIR::BindSymbolicName::Kind:
-        case SemIR::SymbolicBindingPattern::Kind:
-        case SemIR::FacetAccessType::Kind: {
-          Push(SymbolicType());
-          break;
-        }
-        case SemIR::TypeOfInst::Kind: {
-          // TODO: For a template value with a fixed type, such as `template n:!
-          // i32`, we could look at the type of the value to see if it's
-          // template-dependent (which it's not here) and add that type to the
-          // type structure?
-          // https://github.com/carbon-language/carbon-lang/pull/5124#discussion_r2006617038
-          Push(SymbolicType());
-          break;
-        }
-
-          // ==== Concrete types ====
-
-        case SemIR::AssociatedEntityType::Kind:
-        case SemIR::BoolType::Kind:
-        case SemIR::FloatType::Kind:
-        case SemIR::GenericClassType::Kind:
-        case SemIR::GenericInterfaceType::Kind:
-        case SemIR::ImplWitnessAccess::Kind:
-        case SemIR::IntLiteralType::Kind:
-        case SemIR::LegacyFloatType::Kind:
-        case SemIR::NamespaceType::Kind:
-        case SemIR::StringType::Kind:
-        case SemIR::TypeType::Kind:
-        case SemIR::WitnessType::Kind:
-          AppendStructuralConcrete(type_id);
-          break;
-
-        case SemIR::FacetType::Kind: {
-          // A `FacetType` instruction shows up in the self type of impl lookup
-          // queries like `C(D)` where `C` requires its parameter to satisfy
-          // some `FacetType` `Z`. The `D` argument is converted to a
-          // `FacetValue` satisfying `Z`, and the type of `C` in the self type
-          // has a specific with the type of that `FacetValue`, which is the
-          // `FacetType` satisfying `Z` we see here.
-          //
-          // The `FacetValue` may still be symbolic in generic code but its
-          // type, the `FacetType` here, is concrete.
-          AppendStructuralConcrete(type_id);
-          break;
-        }
-        case CARBON_KIND(SemIR::IntType int_type): {
-          if (type_id.is_concrete()) {
-            AppendStructuralConcrete(type_id);
-          } else {
-            AppendStructuralConcreteOpenParen(type_id);
-            Push(CloseType());
-            PushArgs({int_type.bit_width_id});
-          }
-          break;
-        }
-
-          // ==== Aggregate types ====
-
-        case CARBON_KIND(SemIR::ArrayType array_type): {
-          AppendStructuralConcreteOpenParen(TypeStructure::ConcreteNoneType());
-          Push(CloseType());
-          PushInstId(array_type.element_type_inst_id);
-          PushInstId(array_type.bound_id);
-          break;
-        }
-        case CARBON_KIND(SemIR::ClassType class_type): {
-          auto args = GetSpecificArgs(class_type.specific_id);
-          if (args.empty()) {
-            AppendStructuralConcrete(class_type.class_id);
-          } else {
-            AppendStructuralConcreteOpenParen(type_id);
-            Push(CloseType());
-            PushArgs(args);
-          }
-          break;
-        }
-        case CARBON_KIND(SemIR::ConstType const_type): {
-          // We don't put the `const` into the type structure since it is a
-          // modifier; just move to the inner type.
-          PushInstId(const_type.inner_id);
-          break;
-        }
-        case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
-          Push(assoc.type_id);
-          break;
-        }
-        case CARBON_KIND(SemIR::PointerType pointer_type): {
-          AppendStructuralConcreteOpenParen(TypeStructure::ConcreteNoneType());
-          Push(CloseType());
-          PushInstId(pointer_type.pointee_id);
-          break;
-        }
-        case CARBON_KIND(SemIR::TupleType tuple_type): {
-          auto inner_types =
-              context_->inst_blocks().Get(tuple_type.type_elements_id);
-          if (inner_types.empty()) {
-            AppendStructuralConcrete(type_id);
-          } else {
-            AppendStructuralConcreteOpenParen(
-                TypeStructure::ConcreteNoneType());
-            Push(CloseType());
-            PushArgs(context_->inst_blocks().Get(tuple_type.type_elements_id));
-          }
-          break;
-        }
-        case CARBON_KIND(SemIR::StructType struct_type): {
-          auto fields =
-              context_->struct_type_fields().Get(struct_type.fields_id);
-          if (fields.empty()) {
-            AppendStructuralConcrete(type_id);
-          } else {
-            AppendStructuralConcreteOpenParen(type_id);
-            Push(CloseType());
-            for (const auto& field : llvm::reverse(fields)) {
-              PushInstId(field.type_inst_id);
-            }
-          }
-          break;
-        }
-        default:
-          CARBON_FATAL("Unhandled type instruction {0}", inst_id);
-      }
+      VariantMatch(
+          step.any,
+          [&](SemIR::TypeIterator::Step::Done) {
+            CARBON_FATAL("already handled above");
+          },
+          [&](SemIR::TypeIterator::Step::End) {
+            AppendStructuralConcreteCloseParen();  //
+          },
+          [&](SemIR::TypeIterator::Step::ConcreteType concrete) {
+            AppendStructuralConcrete(concrete.type_id);
+          },
+          [&](SemIR::TypeIterator::Step::SymbolicType) {
+            AppendStructuralSymbolic();  //
+          },
+          [&](SemIR::TypeIterator::Step::TemplateType) {
+            AppendStructuralSymbolic();  //
+          },
+          [&](SemIR::TypeIterator::Step::Value) {
+            // TODO: Include the value's type into the structure, with the type
+            // coming first and paired together with the value, like:
+            // `{TypeWithPossibleNestedTypes, Concrete}`.
+            // We might want a different bracket marker than ConcreteOpenParen
+            // for this so that it can look different in the type structure when
+            // dumped.
+            AppendStructuralConcrete(SemIR::ErrorInst::TypeId);
+          },
+          [&](SemIR::TypeIterator::Step::StartOnly start) {
+            VariantMatch(
+                start.any,  //
+                [&](SemIR::TypeIterator::Step::ClassStart class_start) {
+                  AppendStructuralConcrete(class_start.class_id);
+                },
+                [&](SemIR::TypeIterator::Step::StructStart struct_start) {
+                  AppendStructuralConcrete(struct_start.type_id);
+                },
+                [&](SemIR::TypeIterator::Step::TupleStart tuple_start) {
+                  AppendStructuralConcrete(tuple_start.type_id);
+                },
+                [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
+                  AppendStructuralConcrete(interface_start.interface_id);
+                },
+                [&](SemIR::TypeIterator::Step::IntStart int_start) {
+                  AppendStructuralConcrete(int_start.type_id);
+                });
+          },
+          [&](SemIR::TypeIterator::Step::StartWithEnd start_with_end) {
+            VariantMatch(
+                start_with_end.any,  //
+                [&](SemIR::TypeIterator::Step::ClassStart class_start) {
+                  // TODO: We should be able to use `class_id` here but non-type
+                  // values are not differentiated right now. So `Int(32)` and
+                  // `Int(16)` and `Int(N)` all look the same. We need to make
+                  // this change in order to use the concrete types in type
+                  // structure comparison for impl matching.
+                  AppendStructuralConcreteOpenParen(class_start.type_id);
+                },
+                [&](SemIR::TypeIterator::Step::StructStart struct_start) {
+                  // TODO: Should we use a `TypeStructure::ConcreteStructType`
+                  // here? To do so we need to include the struct field names in
+                  // the concrete elements of the type structure to
+                  // differentiate different struct types.
+                  AppendStructuralConcreteOpenParen(struct_start.type_id);
+                },
+                [&](SemIR::TypeIterator::Step::TupleStart) {
+                  AppendStructuralConcreteOpenParen(
+                      TypeStructure::ConcreteTupleType());
+                },
+                [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
+                  AppendStructuralConcreteOpenParen(
+                      interface_start.interface_id);
+                },
+                [&](SemIR::TypeIterator::Step::ArrayStart start) {
+                  AppendStructuralConcreteOpenParen(
+                      // TODO: We should be able to use
+                      // `TypeStructure::ConcreteArrayType()` here but non-type
+                      // values are not differentiated right now. So
+                      // `array(i32, 1)` and `array(i32, 2)` both look the same.
+                      // We need to make this change in order to use the
+                      // concrete types in type structure comparison for impl
+                      // matching.
+                      start.type_id);
+                },
+                [&](SemIR::TypeIterator::Step::IntStart int_start) {
+                  AppendStructuralConcreteOpenParen(int_start.type_id);
+                },
+                [&](SemIR::TypeIterator::Step::PointerStart) {
+                  AppendStructuralConcreteOpenParen(
+                      TypeStructure::ConcretePointerType());
+                });
+          });
     }
   }
-
-  // A work item to mark the closing paren for an aggregate concrete type.
-  struct CloseType {};
-  // A work item to mark a symbolic type.
-  struct SymbolicType {};
-  // A work item to mark a non-type value.
-  struct NonTypeValue {
-    // The type of the value.
-    SemIR::TypeId type_id;
-  };
-
-  using WorkItem = std::variant<SemIR::TypeId, SymbolicType, NonTypeValue,
-                                SemIR::SpecificInterface, CloseType>;
-
-  // Get the TypeId for an instruction that is not a facet value, otherwise
-  // return SymbolicType to indicate the instruction is a symbolic facet value.
-  //
-  // If the instruction is not a type value, the return is TypeId::None.
-  //
-  // We reuse the `SymbolicType` work item here to give a nice return type.
-  auto TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
-      -> std::variant<SemIR::TypeId, SymbolicType> {
-    if (auto facet_value =
-            context_->insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
-      inst_id = facet_value->type_inst_id;
-    }
-
-    auto type_id_of_inst_id = context_->insts().Get(inst_id).type_id();
-    // All instructions of type FacetType are symbolic except for FacetValue:
-    // - In non-generic code, values of type FacetType are only created through
-    //   conversion to a FacetType (e.g. `Class as Iface`), which produces a
-    //   non-symbolic FacetValue.
-    // - In generic code, binding values of type FacetType are symbolic as they
-    //   refer to an unknown type. Non-binding values would be FacetValues like
-    //   in non-generic code, but would be symbolic as well.
-    // - In specifics of generic code, when deducing a value for a symbolic
-    //   binding of type FacetType, we always produce a FacetValue (which may or
-    //   may not itself be symbolic) through conversion.
-    //
-    // FacetValues are handled earlier by getting the type instruction from
-    // them. That type instruction is never of type FacetType. If it refers to a
-    // FacetType it does so through a FacetAccessType, which is of type TypeType
-    // and thus does not match here.
-    if (context_->types().Is<SemIR::FacetType>(type_id_of_inst_id)) {
-      return SymbolicType();
-    }
-    // Non-type values are concrete, only types are symbolic.
-    if (type_id_of_inst_id != SemIR::TypeType::TypeId) {
-      return SemIR::TypeId::None;
-    }
-    return context_->types().GetTypeIdForTypeInstId(inst_id);
-  }
-
-  // Get the instructions in the specific's instruction block as an ArrayRef.
-  auto GetSpecificArgs(SemIR::SpecificId specific_id)
-      -> llvm::ArrayRef<SemIR::InstId> {
-    if (specific_id == SemIR::SpecificId::None) {
-      return {};
-    }
-    auto specific = context_->specifics().Get(specific_id);
-    return context_->inst_blocks().Get(specific.args_id);
-  }
-
-  // Push all arguments from the array into the work queue.
-  auto PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void {
-    for (auto arg_id : llvm::reverse(args)) {
-      PushInstId(arg_id);
-    }
-  }
-
-  // Push an instruction's type value into the work queue, or a marker if the
-  // instruction has a symbolic value.
-  auto PushInstId(SemIR::InstId inst_id) -> void {
-    auto maybe_type_id = TryGetInstIdAsTypeId(inst_id);
-    if (std::holds_alternative<SymbolicType>(maybe_type_id)) {
-      Push(SymbolicType());
-    } else if (auto type_id = std::get<SemIR::TypeId>(maybe_type_id);
-               type_id.has_value()) {
-      Push(type_id);
-    } else {
-      Push(NonTypeValue{.type_id = context_->insts().Get(inst_id).type_id()});
-    }
-  }
-
-  // Push the next step into the work queue.
-  auto Push(WorkItem item) -> void { work_list_.push_back(item); }
 
   // Append a structural element to the TypeStructure being built.
   auto AppendStructuralConcrete(TypeStructure::ConcreteType type) -> void {
@@ -420,7 +261,6 @@ class TypeStructureBuilder {
   }
 
   Context* context_;
-  llvm::SmallVector<WorkItem> work_list_;
 
   // In-progress state for the equivalent `TypeStructure` fields.
   llvm::SmallVector<TypeStructure::Structural> structure_;

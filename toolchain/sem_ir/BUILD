@@ -73,6 +73,7 @@ cc_library(
         "pattern.cpp",
         "type.cpp",
         "type_info.cpp",
+        "type_iterator.cpp",
     ],
     hdrs = [
         "associated_constant.h",
@@ -97,6 +98,7 @@ cc_library(
         "struct_type_field.h",
         "type.h",
         "type_info.h",
+        "type_iterator.h",
     ],
     textual_hdrs = [
         "builtin_function_kind.def",

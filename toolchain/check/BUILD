@@ -109,6 +109,7 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//common:set",
+        "//common:variant_helpers",
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
