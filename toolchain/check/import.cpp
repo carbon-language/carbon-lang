@@ -104,7 +104,7 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
   }
 
   // If the import was itself imported, use its location.
-  if (auto import_ir_inst_id = context.insts().GetImportIRInstId(import_id);
+  if (auto import_ir_inst_id = context.insts().GetImportSource(import_id);
       import_ir_inst_id.has_value()) {
     return MakeImportedLocIdAndInst(context, import_ir_inst_id, namespace_inst);
   }

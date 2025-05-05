@@ -28,7 +28,7 @@ auto GetCanonicalFileAndInstId(const File* sem_ir, SemIR::InstId inst_id)
   while (true) {
     // Step through an imported instruction to the instruction it was imported
     // from.
-    if (auto import_ir_inst_id = sem_ir->insts().GetImportIRInstId(inst_id);
+    if (auto import_ir_inst_id = sem_ir->insts().GetImportSource(inst_id);
         import_ir_inst_id.has_value()) {
       auto import_ir_inst = sem_ir->import_ir_insts().Get(import_ir_inst_id);
       sem_ir = sem_ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;

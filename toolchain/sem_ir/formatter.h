@@ -384,7 +384,7 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
   // that IR in the output before the `{` or `;`.
   if (first_owning_decl_id.has_value()) {
     auto import_ir_inst_id =
-        sem_ir_->insts().GetImportIRInstId(first_owning_decl_id);
+        sem_ir_->insts().GetImportSource(first_owning_decl_id);
     if (import_ir_inst_id.has_value()) {
       auto import_ir_id =
           sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();

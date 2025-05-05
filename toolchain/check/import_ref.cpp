@@ -564,7 +564,7 @@ class ImportRefResolver : public ImportContext {
 
     while (true) {
       auto import_ir_inst_id =
-          cursor_ir->insts().GetImportIRInstId(cursor_inst_id);
+          cursor_ir->insts().GetImportSource(cursor_inst_id);
       if (!import_ir_inst_id.has_value()) {
         return result;
       }
