@@ -1956,6 +1956,7 @@ static auto MakeFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
         .return_slot_pattern_id = SemIR::InstId::None,
+        .special_function_kind = import_function.special_function_kind,
         .builtin_function_kind = import_function.builtin_function_kind}});
 
   function_decl.type_id = GetFunctionType(

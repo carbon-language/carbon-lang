@@ -189,25 +189,26 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   // Create the `Function` object.
   auto& signature = context.functions().Get(signature_id);
   auto& callee = context.functions().Get(callee_id);
-  function_decl.function_id = context.functions().Add(
-      SemIR::Function{{.name_id = signature.name_id,
-                       .parent_scope_id = callee.parent_scope_id,
-                       .generic_id = generic_id,
-                       .first_param_node_id = signature.first_param_node_id,
-                       .last_param_node_id = signature.last_param_node_id,
-                       .pattern_block_id = pattern_block_id,
-                       .implicit_param_patterns_id = implicit_param_patterns_id,
-                       .param_patterns_id = param_patterns_id,
-                       .is_extern = false,
-                       .extern_library_id = SemIR::LibraryNameId::None,
-                       .non_owning_decl_id = SemIR::InstId::None,
-                       .first_owning_decl_id = decl_id,
-                       .definition_id = decl_id},
-                      {.call_params_id = call_params_id,
-                       .return_slot_pattern_id = return_slot_pattern_id,
-                       .virtual_modifier = callee.virtual_modifier,
-                       .virtual_index = callee.virtual_index,
-                       .self_param_id = self_param_id}});
+  function_decl.function_id = context.functions().Add(SemIR::Function{
+      {.name_id = signature.name_id,
+       .parent_scope_id = callee.parent_scope_id,
+       .generic_id = generic_id,
+       .first_param_node_id = signature.first_param_node_id,
+       .last_param_node_id = signature.last_param_node_id,
+       .pattern_block_id = pattern_block_id,
+       .implicit_param_patterns_id = implicit_param_patterns_id,
+       .param_patterns_id = param_patterns_id,
+       .is_extern = false,
+       .extern_library_id = SemIR::LibraryNameId::None,
+       .non_owning_decl_id = SemIR::InstId::None,
+       .first_owning_decl_id = decl_id,
+       .definition_id = decl_id},
+      {.call_params_id = call_params_id,
+       .return_slot_pattern_id = return_slot_pattern_id,
+       .special_function_kind = SemIR::Function::SpecialFunctionKind::Thunk,
+       .virtual_modifier = callee.virtual_modifier,
+       .virtual_index = callee.virtual_index,
+       .self_param_id = self_param_id}});
   function_decl.type_id =
       GetFunctionType(context, function_decl.function_id,
                       context.scope_stack().PeekSpecificId());
