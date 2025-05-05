@@ -27,9 +27,10 @@ impl {.aa: (), .bb: ()} as Z where .X = D {
   fn ZZ() -> D { return () as D; }
 }
 
-// Are structs with different field orders different types too, for impl lookup?
-// Or should this impl be diagnosed as overlapping with the impl on `{.a, .b}`?
-// Raised in: https://github.com/carbon-language/carbon-lang/issues/5413
+// TODO: Are structs with different field orders different types too, for impl
+// lookup? Or should this impl be diagnosed as overlapping with the impl on
+// `{.a, .b}`? Raised in:
+// https://github.com/carbon-language/carbon-lang/issues/5413
 impl {.b: (), .a: ()} as Z where .X = D {
   fn ZZ() -> D { return () as D; }
 }
