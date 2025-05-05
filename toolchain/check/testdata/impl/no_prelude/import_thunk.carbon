@@ -23,8 +23,8 @@ import library "a";
 
 class C(X:! ()) {}
 
-impl forall [X:! ()] C(X) as I {
-  fn F(x: C(X)) {}
+impl forall [Y:! ()] C(Y) as I {
+  fn F(x: C(Y)) {}
 }
 
 // --- c.carbon
