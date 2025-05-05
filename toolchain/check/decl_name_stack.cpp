@@ -108,7 +108,7 @@ auto DeclNameStack::Suspend() -> SuspendedName {
   return result;
 }
 
-auto DeclNameStack::Restore(SuspendedName sus) -> void {
+auto DeclNameStack::Restore(SuspendedName&& sus) -> void {
   // The parent state must be the same when a name is restored.
   CARBON_CHECK(context_->scope_stack().PeekIndex() ==
                    sus.name_context.initial_scope_index,

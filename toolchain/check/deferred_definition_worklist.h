@@ -94,8 +94,8 @@ class DeferredDefinitionWorklist {
   // deferred definitions should be type-checked immediately.
   auto SuspendFinishedScopeAndPush(Context& context) -> FinishedScopeKind;
 
-  // Pop the next task off the worklist.
-  auto Pop() -> Task;
+  // Pop and handle the next task on the worklist.
+  auto Pop(llvm::function_ref<auto(Task&&)->void> handle_fn) -> void;
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {

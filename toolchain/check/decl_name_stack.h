@@ -236,7 +236,7 @@ class DeclNameStack {
   auto Suspend() -> SuspendedName;
 
   // Restore a previously suspended name.
-  auto Restore(SuspendedName sus) -> void;
+  auto Restore(SuspendedName&& sus) -> void;
 
   // Adds a name to name lookup. Assumes duplicates are already handled.
   auto AddName(NameContext name_context, SemIR::InstId target_id,

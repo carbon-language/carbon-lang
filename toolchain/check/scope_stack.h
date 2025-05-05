@@ -168,7 +168,7 @@ class ScopeStack {
   auto Suspend() -> SuspendedScope;
 
   // Restores a suspended scope stack entry.
-  auto Restore(SuspendedScope scope) -> void;
+  auto Restore(SuspendedScope&& scope) -> void;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;

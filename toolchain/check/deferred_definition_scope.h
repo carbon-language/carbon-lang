@@ -53,7 +53,7 @@ class DeferredDefinitionScopeStack {
   }
 
   // Peek the list of pending thunks in this scope.
-  auto PeekPendingThunks() const -> llvm::ArrayRef<PendingThunk> {
+  auto PeekPendingThunks() -> llvm::MutableArrayRef<PendingThunk> {
     return pending_thunks_.PeekArray();
   }
 

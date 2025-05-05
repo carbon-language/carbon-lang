@@ -8,6 +8,7 @@
 #include <utility>
 #include <variant>
 
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/thunk.h"
 
@@ -30,9 +31,13 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
     // should check, restore its suspended state, and add a corresponding
     // `Chunk` to the top of the chunk list.
     if (chunks_.back().checking_deferred_definitions) {
-      std::visit(
-          [&](auto&& task) { PerformTask(std::forward<decltype(task)>(task)); },
-          worklist_.Pop());
+      worklist_.Pop([&](DeferredDefinitionWorklist::Task&& task) {
+        std::visit(
+            [&](auto&& task) {
+              PerformTask(std::forward<decltype(task)>(task));
+            },
+            std::move(task));
+      });
       continue;
     }
 
@@ -106,9 +111,9 @@ static auto IsEndOfDeferredDefinitionScope(Parse::NodeKind kind) -> bool {
 }
 
 static auto FinishAndPopDeferredDefinitionScope(Context& context) -> void {
-  for (auto thunk :
+  for (auto& thunk :
        context.deferred_definition_scope_stack().PeekPendingThunks()) {
-    BuildThunkDefinition(context, thunk);
+    BuildThunkDefinition(context, std::move(thunk));
   }
 
   context.deferred_definition_scope_stack().Pop();

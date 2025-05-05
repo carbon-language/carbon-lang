@@ -19,7 +19,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
 
 // Builds the definition for a thunk whose definition was deferred until the end
 // of the enclosing scope.
-auto BuildThunkDefinition(Context& context, PendingThunk thunk) -> void;
+auto BuildThunkDefinition(Context& context, PendingThunk&& thunk) -> void;
 
 }  // namespace Carbon::Check
 

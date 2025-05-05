@@ -410,8 +410,8 @@ static auto BuildThunkDefinition(Context& context,
   FinishGenericDefinition(context, function.generic_id);
 }
 
-auto BuildThunkDefinition(Context& context, PendingThunk thunk) -> void {
-  context.scope_stack().Restore(thunk.scope);
+auto BuildThunkDefinition(Context& context, PendingThunk&& thunk) -> void {
+  context.scope_stack().Restore(std::move(thunk.scope));
 
   BuildThunkDefinition(context, thunk.signature_id, thunk.function_id,
                        thunk.decl_id, thunk.callee_id);

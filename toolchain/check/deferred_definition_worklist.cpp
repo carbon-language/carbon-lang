@@ -103,7 +103,8 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
   return FinishedScopeKind::NonNestedWithWork;
 }
 
-auto DeferredDefinitionWorklist::Pop() -> Task {
+auto DeferredDefinitionWorklist::Pop(
+    llvm::function_ref<auto(Task&&)->void> handle_fn) -> void {
   if (vlog_stream_) {
     VariantMatch(
         worklist_.back(),
@@ -123,7 +124,8 @@ auto DeferredDefinitionWorklist::Pop() -> Task {
         });
   }
 
-  return worklist_.pop_back_val();
+  handle_fn(std::move(worklist_.back()));
+  worklist_.pop_back();
 }
 
 }  // namespace Carbon::Check
