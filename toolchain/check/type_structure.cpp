@@ -218,8 +218,7 @@ class TypeStructureBuilder {
           break;
         }
 
-        case CARBON_KIND(SemIR::FacetType facet_type): {
-          (void)facet_type;
+        case SemIR::FacetType::Kind: {
           // A `FacetType` instruction shows up in the self type of impl lookup
           // queries like `C(D)` where `C` requires its parameter to satisfy
           // some `FacetType` `Z`. The `D` argument is converted to a
