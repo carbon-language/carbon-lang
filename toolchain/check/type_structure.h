@@ -88,7 +88,9 @@ class TypeStructure : public Printable<TypeStructure> {
     // the nested and is paired with a ConcreteCloseParen at the end of the
     // nested types.
     ConcreteOpenParen,
+    //
     // Closes a ConcreteOpenParen for a concrete type with nested types.
+    // Does not have its own concrete type.
     ConcreteCloseParen,
     // A symbolic element in the type structure. When matching type structures,
     // it represents a wildcard that matches against either a single `Concrete`
