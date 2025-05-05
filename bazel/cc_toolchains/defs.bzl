@@ -32,10 +32,12 @@ def cc_env():
     # https://github.com/bazelbuild/bazel/issues/12457
     return select({
         "//bazel/cc_toolchains:macos_asan": {
+            "ASAN_SYMBOLIZER_PATH": llvm_symbolizer,
             "LLVM_SYMBOLIZER_PATH": llvm_symbolizer,
             "MallocNanoZone": "0",
         },
         "//conditions:default": {
+            "ASAN_SYMBOLIZER_PATH": llvm_symbolizer,
             "LLVM_SYMBOLIZER_PATH": llvm_symbolizer,
         },
     })

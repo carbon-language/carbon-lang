@@ -138,8 +138,6 @@ impl () as D;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %A.impl_witness.b6792d.1: <witness> = impl_witness file.%A.impl_witness_table.loc8 [concrete]
-// CHECK:STDOUT:   %A.impl_witness.b6792d.2: <witness> = impl_witness file.%A.impl_witness_table.loc14 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -160,15 +158,11 @@ impl () as D;
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.impl_witness_table.loc8 = impl_witness_table (), @impl.064930.2 [concrete]
-// CHECK:STDOUT:   %A.impl_witness.loc8: <witness> = impl_witness %A.impl_witness_table.loc8 [concrete = constants.%A.impl_witness.b6792d.1]
 // CHECK:STDOUT:   impl_decl @impl.064930.3 [concrete] {} {
 // CHECK:STDOUT:     %.loc14_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_7.2: type = converted %.loc14_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.impl_witness_table.loc14 = impl_witness_table (), @impl.064930.3 [concrete]
-// CHECK:STDOUT:   %A.impl_witness.loc14: <witness> = impl_witness %A.impl_witness_table.loc14 [concrete = constants.%A.impl_witness.b6792d.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "fail_decl_in_api_definition_in_impl.carbon"] {
@@ -183,7 +177,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.064930.3: %.loc14_7.2 as %A.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%A.impl_witness.loc14
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
@@ -307,7 +301,6 @@ impl () as D;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = facet_type <@C> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %C.impl_witness: <witness> = impl_witness file.%C.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -328,8 +321,6 @@ impl () as D;
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.impl_witness_table = impl_witness_table (), @impl.590fe9.2 [concrete]
-// CHECK:STDOUT:   %C.impl_witness: <witness> = impl_witness %C.impl_witness_table [concrete = constants.%C.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C [from "fail_decl_in_api_decl_in_impl.carbon"] {

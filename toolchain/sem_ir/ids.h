@@ -272,8 +272,14 @@ struct FunctionId : public IdBase<FunctionId> {
 // check execution.
 struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
+
+  // Used when referring to the imported C++.
+  static const CheckIRId Cpp;
+
   using IdBase::IdBase;
 };
+
+constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a class.
 struct ClassId : public IdBase<ClassId> {
@@ -941,6 +947,9 @@ struct LocId : public IdBase<LocId> {
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
+  // Note that the returned `ImportIRInstId` only identifies a location; it is
+  // not correct to interpret it as the instruction from which another
+  // instruction was imported. Use `InstStore::GetImportSource` for that.
   auto import_ir_inst_id() const -> ImportIRInstId {
     if (!has_value()) {
       return ImportIRInstId::None;

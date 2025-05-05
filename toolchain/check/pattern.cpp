@@ -40,9 +40,7 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
   auto block_id = context.inst_block_stack().Pop();
   CARBON_CHECK(block_id == context.region_stack().PeekRegion().back());
   CARBON_CHECK(context.region_stack().PeekRegion().size() == 1);
-  // TODO: Add `CARBON_CHECK(inst_blocks().Get(block_id).empty())`.
-  // Currently that can fail when ending a tuple pattern in a name binding
-  // decl in a class or interface.
+  CARBON_CHECK(context.inst_blocks().Get(block_id).empty());
   context.region_stack().PopAndDiscardRegion();
 }
 

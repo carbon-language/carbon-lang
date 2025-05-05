@@ -243,19 +243,20 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
 }
 
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
-  if (impl.witness_id.has_value() &&
-      impl.witness_id != SemIR::ErrorInst::InstId) {
-    auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
-    auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
-        witness.witness_table_id);
-    auto witness_block =
-        context.inst_blocks().GetMutable(witness_table.elements_id);
-    for (auto& elem : witness_block) {
-      if (elem == SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
-        elem = SemIR::ErrorInst::InstId;
-      }
+  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+    return;
+  }
+  auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
+  auto witness_table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  auto witness_block =
+      context.inst_blocks().GetMutable(witness_table.elements_id);
+  for (auto& elem : witness_block) {
+    if (elem == SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
+      elem = SemIR::ErrorInst::InstId;
     }
   }
+  impl.witness_id = SemIR::ErrorInst::InstId;
 }
 
 auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,

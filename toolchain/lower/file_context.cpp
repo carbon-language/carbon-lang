@@ -715,12 +715,13 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
   SemIR::AbsoluteNodeId resolved =
       GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
   const auto& tree_and_subtrees =
-      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
+      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id()
                                                        .index]();
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
-  if (resolved.node_id.has_value()) {
-    auto token = tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id).begin;
+  if (resolved.node_id().has_value()) {
+    auto token =
+        tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id()).begin;
     return {.filename = tokens.source().filename(),
             .line_number = tokens.GetLineNumber(token),
             .column_number = tokens.GetColumnNumber(token)};

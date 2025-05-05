@@ -11,7 +11,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/min_prelude/generic_redeclaration.carbon
 
-// --- same_self_and_interface.carbon
+// --- fail_same_self_and_interface.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -30,8 +30,29 @@ impl forall [T:! L] T as Interface;
 // These are different impls, so they are not redefinitions, even though the
 // self type and constraint type are the same.
 impl forall [T:! I] T as Interface {}
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: impl forall [T:! J] T as Interface {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: impl forall [T:! I] T as Interface {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! J] T as Interface {}
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: impl forall [T:! K] T as Interface {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: impl forall [T:! J] T as Interface {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! K] T as Interface {}
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: impl forall [T:! L] T as Interface {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: impl forall [T:! K] T as Interface {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! L] T as Interface {}
 
 // --- fail_same_self_and_interface_redefined.carbon
@@ -51,20 +72,23 @@ impl forall [T:! I] T as J {}
 // CHECK:STDERR:
 impl forall [T:! I] T as J {}
 
-// --- same_type_different_spelling.carbon
+// --- fail_same_type_different_spelling.carbon
 
 library "[[@TEST_NAME]]";
 
 class C;
 interface I {}
 
-// We accept this because these two types are spelled differently, even though
-// they evaluate to the same type constant. Any use of this impl will be
-// ambiguous unless resolved by a `match_first` or similar.
-//
-// TODO: Produce a warning or maybe an error when this happens in a non-generic
-// impl.
+// Since the spelling is different, it's not caught as a redefinition, but it
+// is diagnosed as an overlapping impl without using a `match_first` block.
 impl C as I {}
+// CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: impl (C, C).0 as I {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE-4]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: impl C as I {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 impl (C, C).0 as I {}
 
 // --- fail_redefinition_generic_regions.carbon
@@ -92,7 +116,7 @@ impl forall [T:! type] T as I {
   }
 }
 
-// CHECK:STDOUT: --- same_self_and_interface.carbon
+// CHECK:STDOUT: --- fail_same_self_and_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
@@ -205,32 +229,32 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   impl_decl @impl.793 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.28e = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc19: %J.type = name_ref T, %T.loc19 [symbolic = %T.loc12_14.2 (constants.%T.ccd)]
-// CHECK:STDOUT:     %T.as_type.loc19: type = facet_access_type %T.ref.loc19 [symbolic = %T.as_type.loc12_21.2 (constants.%T.as_type.3df)]
-// CHECK:STDOUT:     %.loc19: type = converted %T.ref.loc19, %T.as_type.loc19 [symbolic = %T.as_type.loc12_21.2 (constants.%T.as_type.3df)]
-// CHECK:STDOUT:     %Interface.ref.loc19: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
-// CHECK:STDOUT:     %J.ref.loc19: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
-// CHECK:STDOUT:     %T.loc19: %J.type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T.ccd)]
+// CHECK:STDOUT:     %T.ref.loc26: %J.type = name_ref T, %T.loc26 [symbolic = %T.loc12_14.2 (constants.%T.ccd)]
+// CHECK:STDOUT:     %T.as_type.loc26: type = facet_access_type %T.ref.loc26 [symbolic = %T.as_type.loc12_21.2 (constants.%T.as_type.3df)]
+// CHECK:STDOUT:     %.loc26: type = converted %T.ref.loc26, %T.as_type.loc26 [symbolic = %T.as_type.loc12_21.2 (constants.%T.as_type.3df)]
+// CHECK:STDOUT:     %Interface.ref.loc26: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
+// CHECK:STDOUT:     %J.ref.loc26: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:     %T.loc26: %J.type = bind_symbolic_name T, 0 [symbolic = %T.loc12_14.2 (constants.%T.ccd)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.c93 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.4a6 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc20: %K.type = name_ref T, %T.loc20 [symbolic = %T.loc13_14.2 (constants.%T.09f)]
-// CHECK:STDOUT:     %T.as_type.loc20: type = facet_access_type %T.ref.loc20 [symbolic = %T.as_type.loc13_21.2 (constants.%T.as_type.037)]
-// CHECK:STDOUT:     %.loc20: type = converted %T.ref.loc20, %T.as_type.loc20 [symbolic = %T.as_type.loc13_21.2 (constants.%T.as_type.037)]
-// CHECK:STDOUT:     %Interface.ref.loc20: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
-// CHECK:STDOUT:     %K.ref.loc20: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
-// CHECK:STDOUT:     %T.loc20: %K.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_14.2 (constants.%T.09f)]
+// CHECK:STDOUT:     %T.ref.loc34: %K.type = name_ref T, %T.loc34 [symbolic = %T.loc13_14.2 (constants.%T.09f)]
+// CHECK:STDOUT:     %T.as_type.loc34: type = facet_access_type %T.ref.loc34 [symbolic = %T.as_type.loc13_21.2 (constants.%T.as_type.037)]
+// CHECK:STDOUT:     %.loc34: type = converted %T.ref.loc34, %T.as_type.loc34 [symbolic = %T.as_type.loc13_21.2 (constants.%T.as_type.037)]
+// CHECK:STDOUT:     %Interface.ref.loc34: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
+// CHECK:STDOUT:     %K.ref.loc34: type = name_ref K, file.%K.decl [concrete = constants.%K.type]
+// CHECK:STDOUT:     %T.loc34: %K.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_14.2 (constants.%T.09f)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.9e6 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.86b = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc21: %L.type = name_ref T, %T.loc21 [symbolic = %T.loc14_14.2 (constants.%T.1d2)]
-// CHECK:STDOUT:     %T.as_type.loc21: type = facet_access_type %T.ref.loc21 [symbolic = %T.as_type.loc14_21.2 (constants.%T.as_type.0ed)]
-// CHECK:STDOUT:     %.loc21: type = converted %T.ref.loc21, %T.as_type.loc21 [symbolic = %T.as_type.loc14_21.2 (constants.%T.as_type.0ed)]
-// CHECK:STDOUT:     %Interface.ref.loc21: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
-// CHECK:STDOUT:     %L.ref.loc21: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
-// CHECK:STDOUT:     %T.loc21: %L.type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T.1d2)]
+// CHECK:STDOUT:     %T.ref.loc42: %L.type = name_ref T, %T.loc42 [symbolic = %T.loc14_14.2 (constants.%T.1d2)]
+// CHECK:STDOUT:     %T.as_type.loc42: type = facet_access_type %T.ref.loc42 [symbolic = %T.as_type.loc14_21.2 (constants.%T.as_type.0ed)]
+// CHECK:STDOUT:     %.loc42: type = converted %T.ref.loc42, %T.as_type.loc42 [symbolic = %T.as_type.loc14_21.2 (constants.%T.as_type.0ed)]
+// CHECK:STDOUT:     %Interface.ref.loc42: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
+// CHECK:STDOUT:     %L.ref.loc42: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
+// CHECK:STDOUT:     %T.loc42: %L.type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T.1d2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -360,8 +384,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %T: %I.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
-// CHECK:STDOUT:   %J.impl_witness.a529f4.1: <witness> = impl_witness file.%J.impl_witness_table.loc7, @impl.bfd509.1(%T) [symbolic]
-// CHECK:STDOUT:   %J.impl_witness.a529f4.2: <witness> = impl_witness file.%J.impl_witness_table.loc15, @impl.bfd509.2(%T) [symbolic]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table, @impl.bfd509.1(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -389,8 +412,8 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc7_14.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl_witness_table.loc7 = impl_witness_table (), @impl.bfd509.1 [concrete]
-// CHECK:STDOUT:   %J.impl_witness.loc7: <witness> = impl_witness %J.impl_witness_table.loc7, @impl.bfd509.1(constants.%T) [symbolic = @impl.bfd509.1.%J.impl_witness (constants.%J.impl_witness.a529f4.1)]
+// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @impl.bfd509.1 [concrete]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table, @impl.bfd509.1(constants.%T) [symbolic = @impl.bfd509.1.%J.impl_witness (constants.%J.impl_witness)]
 // CHECK:STDOUT:   impl_decl @impl.bfd509.2 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -401,8 +424,6 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc15_14.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl_witness_table.loc15 = impl_witness_table (), @impl.bfd509.2 [concrete]
-// CHECK:STDOUT:   %J.impl_witness.loc15: <witness> = impl_witness %J.impl_witness_table.loc15, @impl.bfd509.2(constants.%T) [symbolic = @impl.bfd509.2.%J.impl_witness (constants.%J.impl_witness.a529f4.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -424,52 +445,50 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT: generic impl @impl.bfd509.1(%T.loc7_14.1: %I.type) {
 // CHECK:STDOUT:   %T.loc7_14.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.as_type.loc7_21.2: type = facet_access_type %T.loc7_14.2 [symbolic = %T.as_type.loc7_21.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table.loc7, @impl.bfd509.1(%T.loc7_14.2) [symbolic = %J.impl_witness (constants.%J.impl_witness.a529f4.1)]
+// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table, @impl.bfd509.1(%T.loc7_14.2) [symbolic = %J.impl_witness (constants.%J.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc7 as %J.ref {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = file.%J.impl_witness.loc7
+// CHECK:STDOUT:     witness = file.%J.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.bfd509.2(%T.loc15_14.1: %I.type) {
 // CHECK:STDOUT:   %T.loc15_14.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.as_type.loc15_21.2: type = facet_access_type %T.loc15_14.2 [symbolic = %T.as_type.loc15_21.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table.loc15, @impl.bfd509.2(%T.loc15_14.2) [symbolic = %J.impl_witness (constants.%J.impl_witness.a529f4.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc15 as %J.ref {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = file.%J.impl_witness.loc15
+// CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.bfd509.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_14.2 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc7_21.2 => constants.%T.as_type
-// CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.a529f4.1
+// CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.bfd509.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_14.2 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc15_21.2 => constants.%T.as_type
-// CHECK:STDOUT:   %J.impl_witness => constants.%J.impl_witness.a529f4.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- same_type_different_spelling.carbon
+// CHECK:STDOUT: --- fail_same_type_different_spelling.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.impl_witness.215123.1: <witness> = impl_witness file.%I.impl_witness_table.loc13 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.215123.1: <witness> = impl_witness file.%I.impl_witness_table.loc9 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%C, %C) [concrete]
-// CHECK:STDOUT:   %I.impl_witness.215123.2: <witness> = impl_witness file.%I.impl_witness_table.loc14 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.215123.2: <witness> = impl_witness file.%I.impl_witness_table.loc17 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -491,20 +510,20 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc13 = impl_witness_table (), @impl.7704ae.1 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc13: <witness> = impl_witness %I.impl_witness_table.loc13 [concrete = constants.%I.impl_witness.215123.1]
+// CHECK:STDOUT:   %I.impl_witness_table.loc9 = impl_witness_table (), @impl.7704ae.1 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.loc9: <witness> = impl_witness %I.impl_witness_table.loc9 [concrete = constants.%I.impl_witness.215123.1]
 // CHECK:STDOUT:   impl_decl @impl.7704ae.2 [concrete] {} {
-// CHECK:STDOUT:     %C.ref.loc14_7: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc14_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc14_11.1: %tuple.type = tuple_literal (%C.ref.loc14_7, %C.ref.loc14_10)
+// CHECK:STDOUT:     %C.ref.loc17_7: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc17_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc17_11.1: %tuple.type = tuple_literal (%C.ref.loc17_7, %C.ref.loc17_10)
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:     %tuple: %tuple.type = tuple_value (%C.ref.loc14_7, %C.ref.loc14_10) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc14_11.2: %tuple.type = converted %.loc14_11.1, %tuple [concrete = constants.%tuple]
-// CHECK:STDOUT:     %tuple.elem0: type = tuple_access %.loc14_11.2, element0 [concrete = constants.%C]
+// CHECK:STDOUT:     %tuple: %tuple.type = tuple_value (%C.ref.loc17_7, %C.ref.loc17_10) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc17_11.2: %tuple.type = converted %.loc17_11.1, %tuple [concrete = constants.%tuple]
+// CHECK:STDOUT:     %tuple.elem0: type = tuple_access %.loc17_11.2, element0 [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc14 = impl_witness_table (), @impl.7704ae.2 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc14: <witness> = impl_witness %I.impl_witness_table.loc14 [concrete = constants.%I.impl_witness.215123.2]
+// CHECK:STDOUT:   %I.impl_witness_table.loc17 = impl_witness_table (), @impl.7704ae.2 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.loc17: <witness> = impl_witness %I.impl_witness_table.loc17 [concrete = constants.%I.impl_witness.215123.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -517,12 +536,12 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.7704ae.1: %C.ref as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%I.impl_witness.loc13
+// CHECK:STDOUT:   witness = file.%I.impl_witness.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.7704ae.2: %tuple.elem0 as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%I.impl_witness.loc14
+// CHECK:STDOUT:   witness = file.%I.impl_witness.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -534,11 +553,10 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %I.impl_witness.dad390.1: <witness> = impl_witness file.%I.impl_witness_table.loc4, @impl.2caff2.1(%T) [symbolic]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table, @impl.2caff2.1(%T) [symbolic]
 // CHECK:STDOUT:   %A.type: type = fn_type @A, @impl.2caff2.1(%T) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %I.impl_witness.dad390.2: <witness> = impl_witness file.%I.impl_witness_table.loc15, @impl.2caff2.2(%T) [symbolic]
 // CHECK:STDOUT:   %B.type: type = fn_type @B, @impl.2caff2.2(%T) [symbolic]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
@@ -570,8 +588,8 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc4_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc4 = impl_witness_table (), @impl.2caff2.1 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc4: <witness> = impl_witness %I.impl_witness_table.loc4, @impl.2caff2.1(constants.%T) [symbolic = @impl.2caff2.1.%I.impl_witness (constants.%I.impl_witness.dad390.1)]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @impl.2caff2.1 [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @impl.2caff2.1(constants.%T) [symbolic = @impl.2caff2.1.%I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:   impl_decl @impl.2caff2.2 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -579,8 +597,6 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.loc15_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc15 = impl_witness_table (), @impl.2caff2.2 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc15: <witness> = impl_witness %I.impl_witness_table.loc15, @impl.2caff2.2(constants.%T) [symbolic = @impl.2caff2.2.%I.impl_witness (constants.%I.impl_witness.dad390.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -593,7 +609,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.2caff2.1(%T.loc4_14.1: type) {
 // CHECK:STDOUT:   %T.loc4_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_14.2 (constants.%T)]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table.loc4, @impl.2caff2.1(%T.loc4_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness.dad390.1)]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table, @impl.2caff2.1(%T.loc4_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.type: type = fn_type @A, @impl.2caff2.1(%T.loc4_14.2) [symbolic = %A.type (constants.%A.type)]
@@ -604,13 +620,12 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     witness = file.%I.impl_witness.loc4
+// CHECK:STDOUT:     witness = file.%I.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.2caff2.2(%T.loc15_14.1: type) {
 // CHECK:STDOUT:   %T.loc15_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_14.2 (constants.%T)]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table.loc15, @impl.2caff2.2(%T.loc15_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness.dad390.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %B.type: type = fn_type @B, @impl.2caff2.2(%T.loc15_14.2) [symbolic = %B.type (constants.%B.type)]
@@ -645,7 +660,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
-// CHECK:STDOUT:     witness = file.%I.impl_witness.loc15
+// CHECK:STDOUT:     witness = <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -702,7 +717,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2caff2.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_14.2 => constants.%T
-// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.dad390.1
+// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.type => constants.%A.type
@@ -713,7 +728,6 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2caff2.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_14.2 => constants.%T
-// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.dad390.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %B.type => constants.%B.type

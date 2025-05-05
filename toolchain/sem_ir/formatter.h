@@ -17,14 +17,9 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
-  // A callback that indicates whether a specific entity, identified by its
-  // declaration, should be included in the output.
-  using ShouldFormatEntityFn =
-      llvm::function_ref<auto(InstId decl_inst_id)->bool>;
-
   explicit Formatter(const File* sem_ir,
-                     ShouldFormatEntityFn should_format_entity,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees);
+                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+                     llvm::ArrayRef<bool> include_ir_in_dumps);
 
   // Prints the SemIR into an internal buffer.
   //
@@ -71,6 +66,10 @@ class Formatter {
     size_t index;
   };
 
+  // Fills `node_parents_` with parent information. Called at most once during
+  // construction.
+  auto ComputeNodeParents() -> void;
+
   // Flushes the buffered output to the current chunk.
   auto FlushChunk() -> void;
 
@@ -85,19 +84,20 @@ class Formatter {
   // is.
   auto IncludeChunkInOutput(size_t chunk) -> void;
 
-  // Returns true if the node subtree for the instruction or body overlaps with
-  // a dump range, or if there are no ranges.
-  auto OverlapsWithDumpSemIRRange(InstId inst_id,
-                                  llvm::ArrayRef<InstBlockId> body_block_ids)
-      -> bool;
+  // Returns true if the instruction should be included according to its
+  // originating IR. Typically `ShouldFormatEntity` should be used instead.
+  auto ShouldIncludeInstByIR(InstId inst_id) -> bool;
 
   // Determines whether the specified entity should be included in the formatted
-  // output.
-  auto ShouldFormatEntity(InstId decl_id,
-                          llvm::ArrayRef<InstBlockId> body_block_ids) -> bool;
+  // output. `is_definition_start` should indicate whether, if `decl_id`'s
+  // `LocId` is a `NodeId`, it is expected to be a `DefinitionStart` kind.
+  auto ShouldFormatEntity(InstId decl_id, bool is_definition_start) -> bool;
 
-  auto ShouldFormatEntity(const EntityWithParamsBase& entity,
-                          llvm::ArrayRef<InstBlockId> body_block_ids) -> bool;
+  auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool;
+
+  // Determines whether a single instruction should be included in the
+  // formatted output.
+  auto ShouldFormatInst(InstId inst_id) -> bool;
 
   // Begins a braced block. Writes an open brace, and prepares to insert a
   // newline after it if the braced block is non-empty.
@@ -322,8 +322,10 @@ class Formatter {
 
   const File* sem_ir_;
   InstNamer inst_namer_;
-  ShouldFormatEntityFn should_format_entity_;
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
+
+  // For each CheckIRId, whether entities from it should be formatted.
+  llvm::ArrayRef<bool> include_ir_in_dumps_;
 
   // The output stream buffer.
   std::string buffer_;
@@ -369,6 +371,10 @@ class Formatter {
   // referenced, indexed by the instruction's index. This is resized in advance
   // to the correct size.
   llvm::SmallVector<size_t, 0> tentative_inst_chunks_;
+
+  // Maps nodes to their parents. Only set when dump ranges are in use, because
+  // the parents aren't used otherwise.
+  llvm::SmallVector<Parse::NodeId> node_parents_;
 };
 
 template <typename IdT>
@@ -378,10 +384,11 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
   // If this entity was imported from a different IR, annotate the name of
   // that IR in the output before the `{` or `;`.
   if (first_owning_decl_id.has_value()) {
-    auto loc_id = sem_ir_->insts().GetCanonicalLocId(first_owning_decl_id);
-    if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
+    auto import_ir_inst_id =
+        sem_ir_->insts().GetImportSource(first_owning_decl_id);
+    if (import_ir_inst_id.has_value()) {
       auto import_ir_id =
-          sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
+          sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
       const auto* import_file = sem_ir_->import_irs().Get(import_ir_id).sem_ir;
       pending_imported_from_ = import_file->filename();
     }
