@@ -24,7 +24,7 @@ impl {.a: (), .b: ()} as Z where .X = C {
 }
 
 // A struct with different field names. Structs with different field names are
-// different types and can be matched by an impl lookup with the same field
+// different types and can be matched by an impl lookup with matching field
 // names.
 impl {.aa: (), .bb: ()} as Z where .X = D {
   fn ZZ() -> D { return () as D; }
