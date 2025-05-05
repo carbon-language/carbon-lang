@@ -621,14 +621,14 @@ auto CheckUnit::CheckOverlappingImplsForInterface(
         auto impl_b_type_structure =
             BuildTypeStructure(context_, impl_b.self_id, impl_b.interface);
         if (impl_a_type_structure == impl_b_type_structure) {
-          CARBON_DIAGNOSTIC(
-              ImplOverlapNonFinal, Error,
-              "found non-final `impl` with identical type structure");
+          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinal, Error,
+                            "found non-final `impl` that fully overlaps "
+                            "previous non-final `impl`");
           auto builder =
-              emitter_.Build(impl_b.latest_decl_id(), ImplOverlapNonFinal);
-          CARBON_DIAGNOSTIC(ImplOverlapNonFinalNote, Note,
-                            "identical to `impl` here");
-          builder.Note(impl_a.latest_decl_id(), ImplOverlapNonFinalNote);
+              emitter_.Build(impl_b.latest_decl_id(), ImplFullyOverlapNonFinal);
+          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinalNote, Note,
+                            "fully overlaps `impl` here");
+          builder.Note(impl_a.latest_decl_id(), ImplFullyOverlapNonFinalNote);
           builder.Emit();
           break;
         }

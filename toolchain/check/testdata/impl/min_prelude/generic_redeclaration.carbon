@@ -30,26 +30,26 @@ impl forall [T:! L] T as Interface;
 // These are different impls, so they are not redefinitions, even though the
 // self type and constraint type are the same.
 impl forall [T:! I] T as Interface {}
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! I] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! J] T as Interface {}
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! K] T as Interface {}
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! L] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -82,10 +82,10 @@ interface I {}
 // Since the spelling is different, it's not caught as a redefinition, but it
 // is diagnosed as an overlapping impl without using a `match_first` block.
 impl C as I {}
-// CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
+// CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
 // CHECK:STDERR: impl (C, C).0 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE-4]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE-4]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
 // CHECK:STDERR: impl C as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
