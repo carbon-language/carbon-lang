@@ -281,7 +281,6 @@ impl forall [T:! type] T as Z(T) {}
 // Partially overlaps the previous impl, which is fine.
 final impl () as Z(()) {}
 
-
 // --- todo_final_partial_overlaps_final_impl_in_self_type.carbon
 library "[[@TEST_NAME]]";
 
