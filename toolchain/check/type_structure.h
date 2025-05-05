@@ -77,23 +77,39 @@ class TypeStructure : public Printable<TypeStructure> {
  private:
   friend class TypeStructureBuilder;
 
+  // Elements of the type structure, indicating the present of a concrete or
+  // symbolic element, and for aggregate concrete types (such as generic types),
+  // nesting for the types inside.
   enum class Structural : uint8_t {
+    // A concrete element in the type structure, such as `bool`.
     Concrete,
+    // A concrete element in the type structure that contains nested types
+    // within, such as `C(D)` for some classes C and D. It marks the start of
+    // the nested and is paired with a ConcreteCloseParen at the end of the
+    // nested types.
     ConcreteOpenParen,
+    // Closes a ConcreteOpenParen for a concrete type with nested types.
     ConcreteCloseParen,
+    // A symbolic element in the type structure. When matching type structures,
+    // it represents a wildcard that matches against either a single `Concrete`
+    // or `Symbolic`, or everything from a `ConcreteOpenParen` to its paired
+    // `ConcreteCloseParen`.
     Symbolic,
   };
 
+  // Indicates a concrete element in the type structure which does not add any
+  // type information of its own. See `ConcreteType`.
   struct ConcreteNoneType {
-    friend auto operator==(ConcreteNoneType /*a*/, ConcreteNoneType /*b*/)
-        -> bool {
-      return true;
-    }
+    friend auto operator==(ConcreteNoneType lhs, ConcreteNoneType rhs)
+        -> bool = default;
   };
+  // The `concrete_types_` tracks the specific concrete type for each
+  // `Structural::Concrete` or `Structural::ConcreteOpenParen` in the type
+  // structure. But there are cases where the `ConcreteOpenParen` opens a scope
+  // for other concrete types but doesn't add any type data of its own, and
+  // `ConcreteNoneType` can appear there.
   using ConcreteType = std::variant<ConcreteNoneType, SemIR::TypeId,
                                     SemIR::ClassId, SemIR::InterfaceId>;
-
-  static constexpr int InfiniteDistance = -1;
 
   TypeStructure(llvm::SmallVector<Structural> structure,
                 llvm::SmallVector<int> symbolic_type_indices,
@@ -108,10 +124,8 @@ class TypeStructure : public Printable<TypeStructure> {
   // Indices of the symbolic entries in structure_.
   llvm::SmallVector<int> symbolic_type_indices_;
 
-  // The value of concrete types indidated by `Concrete` and `ConcreteOpenParen`
-  // entries in the `structure_`, in the same order. It may contain a
-  // `ConcreteNoneType` when there was no relevant type information in that
-  // position, especially for `ConcreteOpenParen`.
+  // The related value for each `Concrete` and `ConcreteOpenParen` entries in
+  // the type `structure_`, in the same order. See `ConcreteType`.
   llvm::SmallVector<ConcreteType> concrete_types_;
 };
 

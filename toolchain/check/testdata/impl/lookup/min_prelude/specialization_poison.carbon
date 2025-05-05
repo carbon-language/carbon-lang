@@ -229,7 +229,7 @@ impl forall [T:! type] T as Z(C(T)) {}
 // CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE-9]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE-9]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! Y] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

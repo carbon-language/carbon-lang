@@ -33,7 +33,7 @@ impl forall [T:! I] T as Interface {}
 // CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! I] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -41,7 +41,7 @@ impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! J] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -49,7 +49,7 @@ impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
 // CHECK:STDERR: impl forall [T:! L] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_self_and_interface.carbon:[[@LINE-4]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
 // CHECK:STDERR: impl forall [T:! K] T as Interface {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -85,7 +85,7 @@ impl C as I {}
 // CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE+7]]:1: error: found non-final `impl` with identical type structure [ImplOverlapNonFinal]
 // CHECK:STDERR: impl (C, C).0 as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE-4]]:1: note: it overlaps with the `impl` here [ImplOverlapNonFinalNote]
+// CHECK:STDERR: fail_same_type_different_spelling.carbon:[[@LINE-4]]:1: note: identical to `impl` here [ImplOverlapNonFinalNote]
 // CHECK:STDERR: impl C as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:

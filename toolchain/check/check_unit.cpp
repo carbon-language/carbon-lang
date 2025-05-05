@@ -596,39 +596,39 @@ auto CheckUnit::CheckOverlappingImpls() -> void {
       continue;
     }
 
-    CheckOverappingImplsForInterface(
+    CheckOverlappingImplsForInterface(
         llvm::ArrayRef(segment_begin, segment_end));
   }
 }
 
-auto CheckUnit::CheckOverappingImplsForInterface(
+auto CheckUnit::CheckOverlappingImplsForInterface(
     llvm::ArrayRef<SemIR::Impl> impls) -> void {
-  for (auto [index, impl] : llvm::enumerate(impls)) {
-    if (impl.witness_id == SemIR::ErrorInst::InstId) {
+  for (auto [index_a, impl_a] : llvm::enumerate(impls)) {
+    if (impl_a.witness_id == SemIR::ErrorInst::InstId) {
       continue;
     }
-    auto type_structure =
-        BuildTypeStructure(context_, impl.self_id, impl.interface);
+    auto impl_a_type_structure =
+        BuildTypeStructure(context_, impl_a.self_id, impl_a.interface);
 
-    for (const auto& impl2 : llvm::drop_begin(impls, index + 1)) {
-      if (impl2.witness_id == SemIR::ErrorInst::InstId) {
+    for (const auto& impl_b : impls.drop_front(index_a + 1)) {
+      if (impl_b.witness_id == SemIR::ErrorInst::InstId) {
         continue;
       }
 
       // The type structure each non-final `impl` must differ from all other
       // non-final `impl` for the same interface visible from the file.
-      if (!impl.is_final && !impl2.is_final) {
-        auto type_structure2 =
-            BuildTypeStructure(context_, impl2.self_id, impl2.interface);
-        if (type_structure == type_structure2) {
+      if (!impl_a.is_final && !impl_b.is_final) {
+        auto impl_b_type_structure =
+            BuildTypeStructure(context_, impl_b.self_id, impl_b.interface);
+        if (impl_a_type_structure == impl_b_type_structure) {
           CARBON_DIAGNOSTIC(
               ImplOverlapNonFinal, Error,
               "found non-final `impl` with identical type structure");
           auto builder =
-              emitter_.Build(impl2.latest_decl_id(), ImplOverlapNonFinal);
+              emitter_.Build(impl_b.latest_decl_id(), ImplOverlapNonFinal);
           CARBON_DIAGNOSTIC(ImplOverlapNonFinalNote, Note,
-                            "it overlaps with the `impl` here");
-          builder.Note(impl.latest_decl_id(), ImplOverlapNonFinalNote);
+                            "identical to `impl` here");
+          builder.Note(impl_a.latest_decl_id(), ImplOverlapNonFinalNote);
           builder.Emit();
           break;
         }
