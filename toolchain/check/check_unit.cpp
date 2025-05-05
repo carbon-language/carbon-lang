@@ -578,7 +578,7 @@ auto CheckUnit::CheckOverlappingImpls() -> void {
   // interface. We only need to compare impls within each such segment.
   llvm::SmallVector<SemIR::Impl> impls_by_interface(
       context_.impls().array_ref());
-  llvm::sort(
+  llvm::stable_sort(
       impls_by_interface, [](const SemIR::Impl& a, const SemIR::Impl& b) {
         return a.interface.interface_id.index < b.interface.interface_id.index;
       });
