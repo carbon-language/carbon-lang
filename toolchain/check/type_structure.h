@@ -126,7 +126,7 @@ class TypeStructure : public Printable<TypeStructure> {
   // Indices of the symbolic entries in structure_.
   llvm::SmallVector<int> symbolic_type_indices_;
 
-  // The related value for each `Concrete` and `ConcreteOpenParen` entries in
+  // The related value for each `Concrete` and `ConcreteOpenParen` entry in
   // the type `structure_`, in the same order. See `ConcreteType`.
   llvm::SmallVector<ConcreteType> concrete_types_;
 };
