@@ -77,7 +77,7 @@ class TypeStructure : public Printable<TypeStructure> {
  private:
   friend class TypeStructureBuilder;
 
-  // Elements of the type structure, indicating the present of a concrete or
+  // Elements of the type structure, indicating the presence of a concrete or
   // symbolic element, and for aggregate concrete types (such as generic types),
   // nesting for the types inside.
   enum class Structural : uint8_t {
