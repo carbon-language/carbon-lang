@@ -104,7 +104,7 @@ class TypeStructure : public Printable<TypeStructure> {
   // Indicates a concrete element in the type structure which does not add any
   // type information of its own. See `ConcreteType`.
   struct ConcreteNoneType {
-    friend auto operator==(ConcreteNoneType lhs, ConcreteNoneType rhs)
+    friend auto operator==(ConcreteNoneType /*lhs*/, ConcreteNoneType /*rhs*/)
         -> bool = default;
   };
   // The `concrete_types_` tracks the specific concrete type for each
