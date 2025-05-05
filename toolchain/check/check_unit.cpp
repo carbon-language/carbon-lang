@@ -609,23 +609,24 @@ static auto CheckOverlappingImplsForInterface(
         }
       } else if (!impl_a->is_final || !impl_b->is_final) {
         CARBON_CHECK(impl_a->is_final || impl_b->is_final);
-        auto final_impl_id = impl_a_id;
-        const auto* final_impl = impl_a;
-        auto non_final_impl_id = impl_b_id;
-        const auto* non_final_impl = impl_b;
-        if (impl_b->is_final) {
-          using std::swap;
-          swap(final_impl_id, non_final_impl_id);
-          swap(final_impl, non_final_impl);
-        }
 
-        if (LookupMatchesImpl(
-                context, SemIR::LocId(non_final_impl->latest_decl_id()),
-                context.constant_values().Get(non_final_impl->self_id),
-                non_final_impl->interface, final_impl_id)) {
-          context.TODO(non_final_impl->latest_decl_id(),
-                       "impl is fully overlapped by final impl");
-          context.TODO(final_impl->latest_decl_id(), "final impl here");
+        auto diagnose = [&](const SemIR::Impl& non_final_impl,
+                            SemIR::ImplId final_impl_id,
+                            const SemIR::Impl& final_impl) {
+          if (LookupMatchesImpl(
+                  context, SemIR::LocId(non_final_impl.latest_decl_id()),
+                  context.constant_values().Get(non_final_impl.self_id),
+                  non_final_impl.interface, final_impl_id)) {
+            context.TODO(non_final_impl.latest_decl_id(),
+                         "impl is fully overlapped by final impl");
+            context.TODO(final_impl.latest_decl_id(), "final impl here");
+          }
+        };
+
+        if (impl_a->is_final) {
+          diagnose(*impl_b, impl_a_id, *impl_a);
+        } else {
+          diagnose(*impl_a, impl_b_id, *impl_b);
         }
       }
     }
