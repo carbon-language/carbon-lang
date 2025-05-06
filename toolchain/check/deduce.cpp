@@ -34,7 +34,15 @@ class DeductionWorklist {
     SemIR::InstId param;
     SemIR::InstId arg;
     bool needs_substitution;
+    bool susbituting = false;
   };
+
+  auto AddSubstituting(SemIR::InstId param, SemIR::InstId arg) -> void {
+    deductions_.push_back({.param = param,
+                           .arg = arg,
+                           .needs_substitution = false,
+                           .susbituting = true});
+  }
 
   // Adds a single (param, arg) deduction.
   auto Add(SemIR::InstId param, SemIR::InstId arg, bool needs_substitution)
@@ -184,6 +192,10 @@ class DeductionContext {
     worklist_.Add(param, arg, needs_substitution);
   }
 
+  auto AddSubstituting(SemIR::InstId param, SemIR::InstId arg) -> void {
+    worklist_.AddSubstituting(param, arg);
+  }
+
   // Same as `Add` but for an array or block of operands.
   template <typename ParamT, typename ArgT>
   auto AddAll(ParamT param, ArgT arg, bool needs_substitution) -> void {
@@ -293,18 +305,20 @@ DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
 
 auto DeductionContext::Deduce() -> bool {
   while (!worklist_.Done()) {
-    auto [param_id, arg_id, needs_substitution] = worklist_.PopNext();
+    auto [param_id, arg_id, needs_substitution, substituting] =
+        worklist_.PopNext();
 
     // TODO: Bail out if there's nothing to deduce: if we're not in a pattern
     // and the parameter doesn't have a symbolic constant value.
 
+    auto param_inst = context().insts().Get(param_id);
     auto param_type_id = context().insts().Get(param_id).type_id();
     if (context().types().Is<SemIR::PatternType>(param_type_id)) {
       param_type_id =
           SemIR::ExtractScrutineeType(context().sem_ir(), param_type_id);
     }
     // If the parameter has a symbolic type, deduce against that.
-    if (param_type_id.is_symbolic()) {
+    if (!substituting && param_type_id.is_symbolic()) {
       Add(context().types().GetInstId(param_type_id),
           context().types().GetInstId(context().insts().Get(arg_id).type_id()),
           needs_substitution);
@@ -334,7 +348,6 @@ auto DeductionContext::Deduce() -> bool {
     // Attempt to match `param_inst` against `arg_id`. If the match succeeds,
     // this should `continue` the outer loop. On `break`, we will try to desugar
     // the parameter to continue looking for a match.
-    auto param_inst = context().insts().Get(param_id);
     CARBON_KIND_SWITCH(param_inst) {
       // Deducing a symbolic binding pattern from an argument deduces the
       // binding as having that constant value. For example, deducing
@@ -382,8 +395,14 @@ auto DeductionContext::Deduce() -> bool {
       // constant value deduces the binding as having that value. For example,
       // deducing `[T:! type](x: T)` against `("foo")` deduces `T` as `String`.
       case CARBON_KIND(SemIR::BindSymbolicName bind): {
+        if (substituting) {
+          break;
+        }
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index();
+        CARBON_CHECK(index.index - first_deduced_index_.index <
+                         static_cast<int>(non_deduced_indexes_.size()),
+                     "Deduced value for unexpected index {0}", index);
         if (!index.has_value() || index < first_deduced_index_ ||
             non_deduced_indexes_[index.index - first_deduced_index_.index]) {
           break;
@@ -478,8 +497,9 @@ auto DeductionContext::Deduce() -> bool {
       if (!param_const_id.has_value() || !param_const_id.is_symbolic()) {
         continue;
       }
-      Add(context().constant_values().GetInstId(param_const_id), arg_id,
-          /*needs_substitution=*/false);
+      AddSubstituting(context().constant_values().GetInstId(param_const_id),
+                      arg_id);
+      continue;
     }
   }
 
