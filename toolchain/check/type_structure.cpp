@@ -175,7 +175,7 @@ class TypeStructureBuilder {
           },
           [&](SemIR::TypeIterator::Step::StartOnly start) {
             VariantMatch(
-                start.any,  //
+                start.any,
                 [&](SemIR::TypeIterator::Step::ClassStart class_start) {
                   AppendStructuralConcrete(class_start.class_id);
                 },
@@ -194,7 +194,7 @@ class TypeStructureBuilder {
           },
           [&](SemIR::TypeIterator::Step::StartWithEnd start_with_end) {
             VariantMatch(
-                start_with_end.any,  //
+                start_with_end.any,
                 [&](SemIR::TypeIterator::Step::ClassStart class_start) {
                   // TODO: We should be able to use `class_id` here but non-type
                   // values are not differentiated right now. So `Int(32)` and
