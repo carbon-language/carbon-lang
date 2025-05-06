@@ -101,10 +101,12 @@ class TypeStructure : public Printable<TypeStructure> {
     Symbolic,
   };
 
+  // Marks a pointer type. The pointee type will appear as another entry.
   struct ConcretePointerType {
     friend auto operator==(ConcretePointerType /*lhs*/,
                            ConcretePointerType /*rhs*/) -> bool = default;
   };
+  // Marks a tuple type. The type members (if any) will appear as other entries.
   struct ConcreteTupleType {
     friend auto operator==(ConcreteTupleType /*lhs*/, ConcreteTupleType /*rhs*/)
         -> bool = default;
@@ -113,8 +115,8 @@ class TypeStructure : public Printable<TypeStructure> {
   // `Structural::Concrete` or `Structural::ConcreteOpenParen` in the type
   // structure.
   using ConcreteType =
-      std::variant<ConcretePointerType, ConcreteTupleType,
-                   SemIR::TypeId, SemIR::ClassId, SemIR::InterfaceId>;
+      std::variant<ConcretePointerType, ConcreteTupleType, SemIR::TypeId,
+                   SemIR::ClassId, SemIR::InterfaceId>;
 
   TypeStructure(llvm::SmallVector<Structural> structure,
                 llvm::SmallVector<int> symbolic_type_indices,

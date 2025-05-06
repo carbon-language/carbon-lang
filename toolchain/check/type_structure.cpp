@@ -182,8 +182,8 @@ class TypeStructureBuilder {
                 [&](SemIR::TypeIterator::Step::StructStart struct_start) {
                   AppendStructuralConcrete(struct_start.type_id);
                 },
-                [&](SemIR::TypeIterator::Step::TupleStart tuple_start) {
-                  AppendStructuralConcrete(tuple_start.type_id);
+                [&](SemIR::TypeIterator::Step::TupleStart) {
+                  AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
                 },
                 [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
                   AppendStructuralConcrete(interface_start.interface_id);
