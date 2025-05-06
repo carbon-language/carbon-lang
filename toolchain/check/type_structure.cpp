@@ -125,7 +125,7 @@ class TypeStructureBuilder {
     SemIR::TypeIterator type_iter(&context_->sem_ir());
 
     // The self type comes first in the type structure, so we push it last, as
-    // the queue works from the back.
+    // the iterator starts with the last thing added.
     type_iter.Add(interface_constraint);
     if (self_inst_id.has_value()) {
       type_iter.Add(self_inst_id);
