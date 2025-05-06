@@ -25,17 +25,15 @@ def cc_env():
     """
 
     # Settings which apply cross-platform.
-    #
-    # Sets LLVM_SYMBOLIZER_PATH to ensure it matches the `clang` which was used
-    # for compile. Sanitizers don't use LLVM as fallback, but sometimes ASAN may
-    # be used for UBSAN errors; we still set UBSAN in case it's directly used.
-    #
-    # Defaults to printing traces for UBSAN.
+    # buildifier: disable=unsorted-dict-items
     common_env = {
-        "ASAN_SYMBOLIZER_PATH": llvm_symbolizer,
         "LLVM_SYMBOLIZER_PATH": llvm_symbolizer,
-        "UBSAN_OPTIONS": "print_stacktrace=1",
+        # Sanitizers don't use LLVM as fallback, but sometimes ASAN may be used
+        # for UBSAN errors; we still set UBSAN in case it's directly used.
+        "ASAN_SYMBOLIZER_PATH": llvm_symbolizer,
         "UBSAN_SYMBOLIZER_PATH": llvm_symbolizer,
+        # Default to printing traces for UBSAN.
+        "UBSAN_OPTIONS": "print_stacktrace=1",
     }
 
     # On macOS, there's a nano zone allocation warning when asan is enabled.
