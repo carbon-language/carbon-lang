@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_COMMON_MOVEONLY_H_
-#define CARBON_COMMON_MOVEONLY_H_
+#ifndef CARBON_COMMON_MOVE_ONLY_H_
+#define CARBON_COMMON_MOVE_ONLY_H_
 
 namespace Carbon {
 
@@ -19,4 +19,4 @@ struct MoveOnly {
 
 }  // namespace Carbon
 
-#endif  // CARBON_COMMON_MOVEONLY_H_
+#endif  // CARBON_COMMON_MOVE_ONLY_H_

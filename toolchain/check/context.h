@@ -120,10 +120,6 @@ class Context {
 
   auto scope_stack() -> ScopeStack& { return scope_stack_; }
 
-  auto deferred_definition_scope_stack() -> DeferredDefinitionScopeStack& {
-    return deferred_definition_scope_stack_;
-  }
-
   // Convenience functions for frequently-used `scope_stack` members.
   auto break_continue_stack()
       -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
@@ -131,6 +127,10 @@ class Context {
   }
   auto full_pattern_stack() -> FullPatternStack& {
     return scope_stack_.full_pattern_stack();
+  }
+
+  auto deferred_definition_scope_stack() -> DeferredDefinitionScopeStack& {
+    return deferred_definition_scope_stack_;
   }
 
   auto generic_region_stack() -> GenericRegionStack& {

@@ -110,15 +110,6 @@ static auto IsEndOfDeferredDefinitionScope(Parse::NodeKind kind) -> bool {
   }
 }
 
-static auto FinishAndPopDeferredDefinitionScope(Context& context) -> void {
-  for (auto& thunk :
-       context.deferred_definition_scope_stack().PeekPendingThunks()) {
-    BuildThunkDefinition(context, std::move(thunk));
-  }
-
-  context.deferred_definition_scope_stack().Pop();
-}
-
 // TODO: Investigate factoring out `IsStartOfDeferredDefinitionScope` and
 // `IsEndOfDeferredDefinitionScope` in order to make `NodeIdTraversal`
 // reusable.
@@ -141,7 +132,11 @@ auto NodeIdTraversal::Handle(Parse::NodeKind parse_kind) -> void {
     // At the end of a non-nested scope, define any pending thunks and clean up
     // the stack.
     if (scope_kind != DeferredDefinitionWorklist::FinishedScopeKind::Nested) {
-      FinishAndPopDeferredDefinitionScope(*context_);
+      for (auto& thunk :
+           context_->deferred_definition_scope_stack().PeekPendingThunks()) {
+        BuildThunkDefinition(*context_, std::move(thunk));
+      }
+      context_->deferred_definition_scope_stack().Pop();
     }
 
     // If we have function definitions in this scope, process them next.

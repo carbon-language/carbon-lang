@@ -22,8 +22,8 @@ struct PendingThunk {
   ScopeStack::SuspendedScope scope;
 };
 
-// A stack of the current deferred non-nested deferred definition scopes. For
-// example, in this code:
+// A stack of the current non-nested deferred definition scopes. For example, in
+// this code:
 //
 // class A {
 //   class B {
