@@ -39,37 +39,37 @@ fn M() {
 // CHECK:STDOUT: define void @_CM.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   %m.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   %m.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %m.var), !dbg !7
-// CHECK:STDOUT:   %.loc32 = load i32, ptr %n.var, align 4, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc32), !dbg !9
-// CHECK:STDOUT:   %.loc33 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %.loc33), !dbg !11
-// CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %m.var), !dbg !8
+// CHECK:STDOUT:   %.loc32 = load i32, ptr %n.var, align 4, !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc32), !dbg !10
+// CHECK:STDOUT:   %.loc33 = load i32, ptr %n.var, align 4, !dbg !11
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %.loc33), !dbg !12
+// CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.b88d1103f417c6d4(i32 %x) !dbg !14 {
+// CHECK:STDOUT: define void @_CF.Main.b88d1103f417c6d4(i32 %x) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CG.Main.b88d1103f417c6d4(i32 %x) !dbg !16 {
+// CHECK:STDOUT: define i32 @_CG.Main.b88d1103f417c6d4(i32 %x) !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %H.call = call i32 @_CH.Main.b88d1103f417c6d4(i32 %x), !dbg !17
-// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !18
-// CHECK:STDOUT:   ret i32 %x, !dbg !19
+// CHECK:STDOUT:   %H.call = call i32 @_CH.Main.b88d1103f417c6d4(i32 %x), !dbg !18
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !19
+// CHECK:STDOUT:   ret i32 %x, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CH.Main.b88d1103f417c6d4(i32 %x) !dbg !20 {
+// CHECK:STDOUT: define i32 @_CH.Main.b88d1103f417c6d4(i32 %x) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !21
-// CHECK:STDOUT:   ret i32 %x, !dbg !22
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !22
+// CHECK:STDOUT:   ret i32 %x, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -88,18 +88,19 @@ fn M() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 29, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 32, column: 5, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 32, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 33, column: 9, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 33, column: 7, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 33, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 28, column: 1, scope: !4)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !15 = !DILocation(line: 14, column: 1, scope: !14)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b88d1103f417c6d4", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !17 = !DILocation(line: 23, column: 3, scope: !16)
-// CHECK:STDOUT: !18 = !DILocation(line: 24, column: 3, scope: !16)
-// CHECK:STDOUT: !19 = !DILocation(line: 25, column: 3, scope: !16)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.b88d1103f417c6d4", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 3, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 19, column: 3, scope: !20)
+// CHECK:STDOUT: !8 = !DILocation(line: 30, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 32, column: 5, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 32, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 33, column: 9, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 33, column: 7, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 33, column: 3, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 28, column: 1, scope: !4)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 1, scope: !15)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b88d1103f417c6d4", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !18 = !DILocation(line: 23, column: 3, scope: !17)
+// CHECK:STDOUT: !19 = !DILocation(line: 24, column: 3, scope: !17)
+// CHECK:STDOUT: !20 = !DILocation(line: 25, column: 3, scope: !17)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.b88d1103f417c6d4", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 3, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 19, column: 3, scope: !21)
