@@ -165,6 +165,8 @@ class DeclNameStack {
   // Information about a declaration name that has been temporarily removed from
   // the stack and will later be restored. Names can only be suspended once they
   // are finished.
+  //
+  // This type is large, so moves of this type should be avoided.
   struct SuspendedName {
     // The declaration name information.
     NameContext name_context;

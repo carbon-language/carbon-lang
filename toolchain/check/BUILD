@@ -255,6 +255,7 @@ cc_library(
     deps = [
         "//common:array_stack",
         "//common:check",
+        "//common:move_only",
         "//common:ostream",
         "//common:set",
         "//common:vlog",

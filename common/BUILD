@@ -332,6 +332,11 @@ sh_test(
 )
 
 cc_library(
+    name = "move_only",
+    hdrs = ["move_only.h"],
+)
+
+cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
     deps = [

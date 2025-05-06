@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_THUNK_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/deferred_definition_scope.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {

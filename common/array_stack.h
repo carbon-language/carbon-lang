@@ -66,17 +66,17 @@ class ArrayStack {
   auto PeekAllValues() const -> llvm::ArrayRef<ValueT> { return values_; }
 
   // Appends a value to the top array on the stack.
-  auto AppendToTop(ValueT value) -> void {
+  auto AppendToTop(const ValueT& value) -> void {
     CARBON_CHECK(!array_offsets_.empty(),
                  "Must call PushArray before AppendToTop.");
     values_.push_back(value);
   }
 
-  // Prepends a value to the top array on the stack.
-  auto PrependToTop(ValueT value) -> void {
+  // Appends a value to the top array on the stack.
+  auto AppendToTop(ValueT&& value) -> void {
     CARBON_CHECK(!array_offsets_.empty(),
-                 "Must call PushArray before PrependToTop.");
-    values_.insert(values_.begin() + array_offsets_.back(), value);
+                 "Must call PushArray before AppendToTop.");
+    values_.push_back(std::move(value));
   }
 
   // Adds multiple values to the top array on the stack.

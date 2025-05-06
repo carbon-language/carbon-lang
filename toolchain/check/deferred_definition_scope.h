@@ -12,6 +12,8 @@
 namespace Carbon::Check {
 
 // A thunk that has been declared but not yet defined.
+//
+// This type is large, so moves of this type should be avoided.
 struct PendingThunk {
   SemIR::FunctionId signature_id;
   SemIR::FunctionId function_id;
@@ -48,7 +50,7 @@ class DeferredDefinitionScopeStack {
   auto Pop() -> void { pending_thunks_.PopArray(); }
 
   // Add a pending thunk definition for the current scope.
-  auto AddPendingThunk(PendingThunk thunk) -> void {
+  auto AddPendingThunk(PendingThunk&& thunk) -> void {
     pending_thunks_.AppendToTop(std::move(thunk));
   }
 
