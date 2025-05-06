@@ -32,6 +32,7 @@ class TypeIterator {
   // The result of each iteration step.
   class Step;
 
+  // `sem_ir` must not be null.
   explicit TypeIterator(File* sem_ir) : sem_ir_(sem_ir) {}
 
   // Add a type value or facet value to be iterated over.
