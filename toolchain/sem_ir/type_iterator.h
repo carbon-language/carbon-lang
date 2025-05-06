@@ -59,14 +59,23 @@ class TypeIterator {
   struct SymbolicType {
     SemIR::TypeId facet_type_id;
   };
-  // A work item to mark a non-type value.
-  struct NonTypeValue {
-    // The type of the value.
-    SemIR::TypeId type_id;
+  // A work item to mark a concrete non-type value.
+  struct ConcreteNonTypeValue {
+    SemIR::InstId inst_id;
+  };
+  // A work item to mark a symbolic non-type value.
+  struct SymbolicNonTypeValue {
+    SemIR::InstId inst_id;
+  };
+  // Work item to mark the name of a struct field.
+  struct StructFieldName {
+    SemIR::NameId name_id;
   };
 
-  using WorkItem = std::variant<SemIR::TypeId, SymbolicType, NonTypeValue,
-                                SemIR::SpecificInterface, EndType>;
+  using WorkItem =
+      std::variant<SemIR::TypeId, SymbolicType, ConcreteNonTypeValue,
+                   SymbolicNonTypeValue, StructFieldName,
+                   SemIR::SpecificInterface, EndType>;
 
   // Get the TypeId for an instruction that is not a facet value, otherwise
   // return SymbolicType to indicate the instruction is a symbolic facet value.
@@ -136,9 +145,21 @@ class TypeIterator::Step {
   };
   // A symbolic template type value.
   struct TemplateType {};
-  // A non-type value, which can be found as a generic parameter for a type.
-  struct Value {
-    // TODO: Include the type of the value somewhere.
+  // A concrete non-type value, which can be found as a generic parameter for a
+  // type.
+  struct ConcreteValue {
+    // An instruction that evaluates to the constant value.
+    SemIR::InstId inst_id;
+  };
+  // A symbolic non-type value, which can be found as a generic parameter for a
+  // type.
+  struct SymbolicValue {
+    // An instruction that evaluates to the constant value.
+    SemIR::InstId inst_id;
+  };
+  // A struct field name. The field names contribute to the type of the struct.
+  struct StructFieldName {
+    SemIR::NameId name_id;
   };
 
   // A *Start type, but without anything following it, so we also skip the
@@ -163,7 +184,8 @@ class TypeIterator::Step {
   struct Done {};
 
   // Each step is one of these.
-  using Any = std::variant<ConcreteType, SymbolicType, TemplateType, Value,
+  using Any = std::variant<ConcreteType, SymbolicType, TemplateType,
+                           ConcreteValue, SymbolicValue, StructFieldName,
                            StartOnly, StartWithEnd, End, Done>;
 
   template <class T>

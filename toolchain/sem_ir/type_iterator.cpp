@@ -40,8 +40,16 @@ auto TypeIterator::Next() -> Step {
       return Step::SymbolicType{.facet_type_id = symbolic->facet_type_id};
     }
 
-    if (std::holds_alternative<NonTypeValue>(next)) {
-      return Step::Value();
+    if (const auto* value = std::get_if<ConcreteNonTypeValue>(&next)) {
+      return Step::ConcreteValue{.inst_id = value->inst_id};
+    }
+
+    if (const auto* value = std::get_if<SymbolicNonTypeValue>(&next)) {
+      return Step::SymbolicValue{.inst_id = value->inst_id};
+    }
+
+    if (const auto* value = std::get_if<StructFieldName>(&next)) {
+      return Step::StructFieldName{.name_id = value->name_id};
     }
 
     SemIR::TypeId type_id = std::get<SemIR::TypeId>(next);
@@ -141,8 +149,7 @@ auto TypeIterator::Next() -> Step {
         } else {
           Push(EndType());
           for (const auto& field : llvm::reverse(fields)) {
-            // TODO: Are struct field names part of the type structure? They
-            // are part of a struct's type.
+            Push(StructFieldName{.name_id = field.name_id});
             PushInstId(field.type_inst_id);
           }
           return Step::StartWithEnd(Step::StructStart{.type_id = type_id});
@@ -215,8 +222,10 @@ auto TypeIterator::PushInstId(SemIR::InstId inst_id) -> void {
   } else if (auto type_id = std::get<SemIR::TypeId>(maybe_type_id);
              type_id.has_value()) {
     Push(type_id);
+  } else if (sem_ir_->constant_values().Get(inst_id).is_symbolic()) {
+    Push(SymbolicNonTypeValue{.inst_id = inst_id});
   } else {
-    Push(NonTypeValue{.type_id = sem_ir_->insts().Get(inst_id).type_id()});
+    Push(ConcreteNonTypeValue{.inst_id = inst_id});
   }
 }
 
