@@ -22,6 +22,11 @@ namespace Carbon::SemIR {
 // To use, call `Add()` one or more times to set up the types, facets or
 // interfaces to be iterated over. Then call `Next()` until it returns
 // `Step::Done`.
+//
+// Note that this iterator looks through `FacetValue`s walking the type referred
+// to by it instead, since `FacetValue` is an internal representation that
+// converts to the original type whenever a type is needed so that its full API
+// surface is not lost.
 class TypeIterator {
  public:
   // The result of each iteration step.

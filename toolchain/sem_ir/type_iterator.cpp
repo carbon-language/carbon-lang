@@ -109,8 +109,8 @@ auto TypeIterator::Next() -> Step {
         }
       }
       case CARBON_KIND(SemIR::ConstType const_type): {
-        // We don't put the `const` into the type structure since it is a
-        // modifier; just move to the inner type.
+        // We don't stop at `const` since it is a modifier; just move to the
+        // inner type.
         PushInstId(const_type.inner_id);
         break;
       }
@@ -122,7 +122,6 @@ auto TypeIterator::Next() -> Step {
         Push(EndType());
         PushInstId(pointer_type.pointee_id);
         return Step::StartWithEnd(Step::PointerStart());
-        break;
       }
       case CARBON_KIND(SemIR::TupleType tuple_type): {
         auto inner_types =
@@ -134,7 +133,6 @@ auto TypeIterator::Next() -> Step {
           PushArgs(sem_ir_->inst_blocks().Get(tuple_type.type_elements_id));
           return Step::StartWithEnd(Step::TupleStart{.type_id = type_id});
         }
-        break;
       }
       case CARBON_KIND(SemIR::StructType struct_type): {
         auto fields = sem_ir_->struct_type_fields().Get(struct_type.fields_id);
@@ -149,7 +147,6 @@ auto TypeIterator::Next() -> Step {
           }
           return Step::StartWithEnd(Step::StructStart{.type_id = type_id});
         }
-        break;
       }
       default:
         CARBON_FATAL("Unhandled type instruction {0}", inst_id);
