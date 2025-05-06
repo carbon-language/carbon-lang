@@ -39,29 +39,104 @@
 // requirements should change.
 namespace Carbon::Internal::Kind {
 
+template <typename T>
+static constexpr bool IsStdVariantValue = false;
+
+template <typename... Ts>
+static constexpr bool IsStdVariantValue<std::variant<Ts...>> = true;
+
+template <typename T>
+concept IsStdVariant = IsStdVariantValue<std::decay_t<T>>;
+
+template <typename... Ts>
+struct TypePack {};
+
+template <typename T>
+struct StdVariantTypePackValue;
+
+template <typename... Ts>
+struct StdVariantTypePackValue<std::variant<Ts...>> {
+  using Types = TypePack<Ts...>;
+};
+
+template <typename T>
+using StdVariantTypePack = StdVariantTypePackValue<std::decay_t<T>>::Types;
+
+template <typename T>
+struct StdVariantEnumValue;
+
+template <typename... Ts>
+struct StdVariantEnumValue<std::variant<Ts...>> {
+  enum [[clang::enum_extensibility(open)]] EnumType{
+      VariantTypeNotHandledInSwitch = sizeof...(Ts) - 1};
+  using Type = EnumType;
+};
+
+template <typename T>
+using StdVariantEnum = StdVariantEnumValue<std::decay_t<T>>::Type;
+
 // Given `CARBON_KIND_SWITCH(value)` this returns `value.kind()` to switch on.
 template <typename SwitchT>
-auto SwitchOn(SwitchT&& switch_value) -> auto {
-  return switch_value.kind();
+constexpr auto SwitchOn(SwitchT&& switch_value) -> auto {
+  if constexpr (IsStdVariant<SwitchT>) {
+    return static_cast<StdVariantEnum<SwitchT>>(switch_value.index());
+  } else {
+    return switch_value.kind();
+  }
 }
+
+template <class T>
+concept TypeFoundInVariant = false;
+
+template <class T>
+  requires TypeFoundInVariant<T>
+struct ValidType;
+
+template <size_t I, typename T, typename TypePack>
+struct IndexOfTypeValue {
+  // Error case when `T` is not found in the std::variant<...> types.
+  ValidType<T> Error;
+};
+
+template <size_t I, typename T, typename... Ts>
+struct IndexOfTypeValue<I, T, TypePack<T, Ts...>> {
+  static constexpr size_t Index = I;
+};
+
+template <size_t I, typename T, typename U, typename... Ts>
+struct IndexOfTypeValue<I, T, TypePack<U, Ts...>> {
+  static constexpr size_t Index =
+      IndexOfTypeValue<I + 1, T, TypePack<Ts...>>::Index;
+};
+
+template <size_t I, typename T, typename TypePack>
+static constexpr size_t IndexOfType = IndexOfTypeValue<I, T, TypePack>::Index;
 
 // Given `CARBON_KIND(CaseT name)` this generates `CaseT::Kind`. It explicitly
 // returns `KindT` because that may differ from `CaseT::Kind`, and may not be
 // copyable.
 template <typename SwitchT, typename CaseFnT>
 consteval auto ForCase() -> auto {
-  using KindT = llvm::function_traits<
-      decltype(&std::remove_cvref_t<SwitchT>::kind)>::result_t;
   using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;
-  return static_cast<KindT::RawEnumType>(KindT::template For<CaseT>);
+  if constexpr (IsStdVariant<SwitchT>) {
+    return IndexOfType<0, CaseT, StdVariantTypePack<SwitchT>>;
+  } else {
+    using KindT = llvm::function_traits<
+        decltype(&std::remove_cvref_t<SwitchT>::kind)>::result_t;
+    return static_cast<KindT::RawEnumType>(KindT::template For<CaseT>);
+  }
 }
 
 // Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this
 // generates `value.As<CaseT>()`.
-template <typename FnT, typename ValueT>
-auto Cast(ValueT&& kind_switch_value) -> auto {
-  using CaseT = llvm::function_traits<FnT>::template arg_t<0>;
-  return kind_switch_value.template As<CaseT>();
+template <typename CaseFnT, typename SwitchT>
+auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
+  using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;
+  if constexpr (IsStdVariant<SwitchT>) {
+    return std::get<CaseT>(kind_switch_value);
+  } else {
+    return kind_switch_value.template As<CaseT>();
+  }
 }
 
 #define CARBON_INTERNAL_KIND_MERGE(Prefix, Line) Prefix##Line
@@ -91,5 +166,12 @@ auto Cast(ValueT&& kind_switch_value) -> auto {
                 carbon_internal_kind_switch_value);                     \
             false) {}                                                   \
   else [[maybe_unused]] CARBON_INTERNAL_KIND_LABEL(__LINE__)
+
+// Like `CARBON_KIND` but works with a type without a name, and does not make
+// the switch's value available in the case body as a result.
+#define CARBON_KIND_(type_without_name)            \
+  ::Carbon::Internal::Kind::ForCase<               \
+      decltype(carbon_internal_kind_switch_value), \
+      decltype([]([[maybe_unused]] type_without_name) {})>()
 
 #endif  // CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_

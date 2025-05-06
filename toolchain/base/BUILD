@@ -24,6 +24,18 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "kind_switch_test",
+    size = "small",
+    srcs = ["kind_switch_test.cpp"],
+    deps = [
+        ":kind_switch",
+        "//common:raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
 cc_library(
     name = "pretty_stack_trace_function",
     hdrs = ["pretty_stack_trace_function.h"],

@@ -9,6 +9,7 @@
 #include <variant>
 
 #include "common/variant_helpers.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_iterator.h"
@@ -187,86 +188,79 @@ class TypeStructureBuilder {
 auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
     -> TypeStructure {
   while (true) {
-    auto step = type_iter.Next();
-    if (step.Is<SemIR::TypeIterator::Step::Done>()) {
-      break;
+    using Step = SemIR::TypeIterator::Step;
+    CARBON_KIND_SWITCH(type_iter.Next().any) {
+      case CARBON_KIND_(Step::Done):
+        return;
+      case CARBON_KIND_(Step::End):
+        AppendStructuralConcreteCloseParen();
+        break;
+      case CARBON_KIND(Step::ConcreteType concrete):
+        AppendStructuralConcrete(concrete.type_id);
+        break;
+      case CARBON_KIND_(Step::SymbolicType):
+        AppendStructuralSymbolic();
+        break;
+      case CARBON_KIND_(Step::TemplateType):
+        AppendStructuralSymbolic();
+        break;
+      case CARBON_KIND(Step::ConcreteValue value):
+        AppendStructuralConcrete(
+            context_->constant_values().Get(value.inst_id));
+        break;
+      case CARBON_KIND_(Step::SymbolicValue):
+        AppendStructuralSymbolic();
+        break;
+      case CARBON_KIND(Step::StructFieldName field_name):
+        AppendStructuralConcrete(field_name.name_id);
+        break;
+      case CARBON_KIND(Step::StartOnly start):
+        CARBON_KIND_SWITCH(start.any) {
+          case CARBON_KIND(Step::ClassStart class_start):
+            AppendStructuralConcrete(class_start.class_id);
+            break;
+          case CARBON_KIND_(Step::StructStart):
+            AppendStructuralConcrete(TypeStructure::ConcreteStructType());
+            break;
+          case CARBON_KIND_(Step::TupleStart):
+            AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
+            break;
+          case CARBON_KIND(Step::InterfaceStart interface_start):
+            AppendStructuralConcrete(interface_start.interface_id);
+            break;
+        }
+        break;
+      case CARBON_KIND(Step::StartWithEnd start_with_end): {
+        CARBON_KIND_SWITCH(start_with_end.any) {
+          case CARBON_KIND(Step::ClassStart class_start):
+            AppendStructuralConcreteOpenParen(class_start.class_id);
+            break;
+          case CARBON_KIND_(Step::StructStart):
+            AppendStructuralConcreteOpenParen(
+                TypeStructure::ConcreteStructType());
+            break;
+          case CARBON_KIND_(Step::TupleStart):
+            AppendStructuralConcreteOpenParen(
+                TypeStructure::ConcreteTupleType());
+            break;
+          case CARBON_KIND(Step::InterfaceStart interface_start):
+            AppendStructuralConcreteOpenParen(interface_start.interface_id);
+            break;
+          case CARBON_KIND(Step::IntStart int_start):
+            AppendStructuralConcreteOpenParen(int_start.type_id);
+            break;
+          case CARBON_KIND_(Step::ArrayStart):
+            AppendStructuralConcreteOpenParen(
+                TypeStructure::ConcreteArrayType());
+            break;
+          case CARBON_KIND_(Step::PointerStart):
+            AppendStructuralConcreteOpenParen(
+                TypeStructure::ConcretePointerType());
+            break;
+        }
+        break;
+      }
     }
-
-    VariantMatch(
-        step.any,
-        [&](SemIR::TypeIterator::Step::Done) {
-          CARBON_FATAL("already handled above");
-        },
-        [&](SemIR::TypeIterator::Step::End) {
-          AppendStructuralConcreteCloseParen();
-        },
-        [&](SemIR::TypeIterator::Step::ConcreteType concrete) {
-          AppendStructuralConcrete(concrete.type_id);
-        },
-        [&](SemIR::TypeIterator::Step::SymbolicType) {
-          AppendStructuralSymbolic();
-        },
-        [&](SemIR::TypeIterator::Step::TemplateType) {
-          AppendStructuralSymbolic();
-        },
-        [&](SemIR::TypeIterator::Step::ConcreteValue value) {
-          AppendStructuralConcrete(
-              context_->constant_values().Get(value.inst_id));
-        },
-        [&](SemIR::TypeIterator::Step::SymbolicValue) {
-          AppendStructuralSymbolic();
-        },
-        [&](SemIR::TypeIterator::Step::StructFieldName field_name) {
-          AppendStructuralConcrete(field_name.name_id);
-        },
-        [&](SemIR::TypeIterator::Step::StartOnly start) {
-          VariantMatch(
-              start.any,
-              [&](SemIR::TypeIterator::Step::ClassStart class_start) {
-                AppendStructuralConcrete(class_start.class_id);
-              },
-              [&](SemIR::TypeIterator::Step::StructStart) {
-                AppendStructuralConcrete(TypeStructure::ConcreteStructType());
-              },
-              [&](SemIR::TypeIterator::Step::TupleStart) {
-                AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
-              },
-              [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
-                AppendStructuralConcrete(interface_start.interface_id);
-              },
-              [&](SemIR::TypeIterator::Step::IntStart int_start) {
-                AppendStructuralConcrete(int_start.type_id);
-              });
-        },
-        [&](SemIR::TypeIterator::Step::StartWithEnd start_with_end) {
-          VariantMatch(
-              start_with_end.any,
-              [&](SemIR::TypeIterator::Step::ClassStart class_start) {
-                AppendStructuralConcreteOpenParen(class_start.class_id);
-              },
-              [&](SemIR::TypeIterator::Step::StructStart) {
-                AppendStructuralConcreteOpenParen(
-                    TypeStructure::ConcreteStructType());
-              },
-              [&](SemIR::TypeIterator::Step::TupleStart) {
-                AppendStructuralConcreteOpenParen(
-                    TypeStructure::ConcreteTupleType());
-              },
-              [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
-                AppendStructuralConcreteOpenParen(interface_start.interface_id);
-              },
-              [&](SemIR::TypeIterator::Step::IntStart int_start) {
-                AppendStructuralConcreteOpenParen(int_start.type_id);
-              },
-              [&](SemIR::TypeIterator::Step::ArrayStart) {
-                AppendStructuralConcreteOpenParen(
-                    TypeStructure::ConcreteArrayType());
-              },
-              [&](SemIR::TypeIterator::Step::PointerStart) {
-                AppendStructuralConcreteOpenParen(
-                    TypeStructure::ConcretePointerType());
-              });
-        });
   }
 
   // TODO: This requires 4 SmallVector moves (two here and two in the
