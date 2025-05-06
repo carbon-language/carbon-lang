@@ -153,16 +153,16 @@ class TypeStructureBuilder {
             CARBON_FATAL("already handled above");
           },
           [&](SemIR::TypeIterator::Step::End) {
-            AppendStructuralConcreteCloseParen();  //
+            AppendStructuralConcreteCloseParen();
           },
           [&](SemIR::TypeIterator::Step::ConcreteType concrete) {
             AppendStructuralConcrete(concrete.type_id);
           },
           [&](SemIR::TypeIterator::Step::SymbolicType) {
-            AppendStructuralSymbolic();  //
+            AppendStructuralSymbolic();
           },
           [&](SemIR::TypeIterator::Step::TemplateType) {
-            AppendStructuralSymbolic();  //
+            AppendStructuralSymbolic();
           },
           [&](SemIR::TypeIterator::Step::Value) {
             // TODO: Include the value's type into the structure, with the type
