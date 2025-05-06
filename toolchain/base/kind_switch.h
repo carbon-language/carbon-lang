@@ -90,12 +90,12 @@ concept TypeFoundInVariant = false;
 
 template <class T>
   requires TypeFoundInVariant<T>
-struct ValidType;
+struct ValidCaseType;
 
 template <size_t I, typename T, typename TypePack>
 struct IndexOfTypeValue {
   // Error case when `T` is not found in the std::variant<...> types.
-  ValidType<T> Error;
+  ValidCaseType<T> Error;
 };
 
 template <size_t I, typename T, typename... Ts>
@@ -109,8 +109,8 @@ struct IndexOfTypeValue<I, T, TypePack<U, Ts...>> {
       IndexOfTypeValue<I + 1, T, TypePack<Ts...>>::Index;
 };
 
-template <size_t I, typename T, typename TypePack>
-static constexpr size_t IndexOfType = IndexOfTypeValue<I, T, TypePack>::Index;
+template <typename T, typename TypePack>
+static constexpr size_t IndexOfType = IndexOfTypeValue<0, T, TypePack>::Index;
 
 // Given `CARBON_KIND(CaseT name)` this generates `CaseT::Kind`. It explicitly
 // returns `KindT` because that may differ from `CaseT::Kind`, and may not be
@@ -119,7 +119,7 @@ template <typename SwitchT, typename CaseFnT>
 consteval auto ForCase() -> auto {
   using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;
   if constexpr (IsStdVariant<SwitchT>) {
-    return IndexOfType<0, CaseT, StdVariantTypePack<SwitchT>>;
+    return IndexOfType<CaseT, StdVariantTypePack<SwitchT>>;
   } else {
     using KindT = llvm::function_traits<
         decltype(&std::remove_cvref_t<SwitchT>::kind)>::result_t;
