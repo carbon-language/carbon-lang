@@ -242,8 +242,6 @@ class TypeStructureBuilder {
 
   // Append a structural element to the TypeStructure being built.
   auto AppendStructuralConcrete(TypeStructure::ConcreteType type) -> void {
-    CARBON_CHECK(
-        !std::holds_alternative<TypeStructure::ConcreteNoneType>(type));
     concrete_types_.push_back(type);
     structure_.push_back(TypeStructure::Structural::Concrete);
   }

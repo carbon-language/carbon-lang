@@ -101,14 +101,6 @@ class TypeStructure : public Printable<TypeStructure> {
     Symbolic,
   };
 
-  // Indicates a concrete element in the type structure which does not add any
-  // type information of its own. See `ConcreteType`.
-  //
-  // FIXME: Delete this.
-  struct ConcreteNoneType {
-    friend auto operator==(ConcreteNoneType /*lhs*/, ConcreteNoneType /*rhs*/)
-        -> bool = default;
-  };
   struct ConcretePointerType {
     friend auto operator==(ConcretePointerType /*lhs*/,
                            ConcretePointerType /*rhs*/) -> bool = default;
@@ -119,11 +111,9 @@ class TypeStructure : public Printable<TypeStructure> {
   };
   // The `concrete_types_` tracks the specific concrete type for each
   // `Structural::Concrete` or `Structural::ConcreteOpenParen` in the type
-  // structure. But there are cases where the `ConcreteOpenParen` opens a scope
-  // for other concrete types but doesn't add any type data of its own, and
-  // `ConcreteNoneType` can appear there.
+  // structure.
   using ConcreteType =
-      std::variant<ConcreteNoneType, ConcretePointerType, ConcreteTupleType,
+      std::variant<ConcretePointerType, ConcreteTupleType,
                    SemIR::TypeId, SemIR::ClassId, SemIR::InterfaceId>;
 
   TypeStructure(llvm::SmallVector<Structural> structure,
