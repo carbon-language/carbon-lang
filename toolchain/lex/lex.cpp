@@ -216,6 +216,10 @@ class [[clang::internal_linkage]] Lexer {
   // marker.
   auto EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void;
 
+  auto has_dump_sem_ir_ranges() -> bool {
+    return buffer_.has_dump_sem_ir_ranges();
+  }
+
  private:
   class ErrorRecoveryBuffer;
 
@@ -683,10 +687,12 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
         source_text[position])](lexer, source_text, position);
   }
 
-  // Incomplete ranges will use the next token for their end; we want that to be
-  // `FileEnd` in this case, so check before adding `FileEnd`. The argument is
-  // just the final character for diagnostic locations.
-  lexer.EndDumpSemIRRangeIfIncomplete(source_text.end() - 1);
+  if (lexer.has_dump_sem_ir_ranges()) {
+    // Incomplete ranges will use the next token for their end; we want that to
+    // be `FileEnd` in this case, so check before adding `FileEnd`. The argument
+    // is just the final character for diagnostic locations.
+    lexer.EndDumpSemIRRangeIfIncomplete(source_text.end() - 1);
+  }
 
   // When we finish the source text, stop recursing. We also hint this so that
   // the tail-dispatch is optimized as that's essentially the loop back-edge
@@ -768,6 +774,13 @@ auto Lexer::Lex() && -> TokenizedBuffer {
 }
 
 auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
+  if (source_text.empty()) {
+    // Construct a single line for empty input.
+    buffer_.AddLine(TokenizedBuffer::LineInfo(0));
+    line_index_ = 0;
+    return;
+  }
+
   // We currently use `memchr` here which typically is well optimized to use
   // SIMD or other significantly faster than byte-wise scanning. We also use
   // carefully selected variables and the `ssize_t` type for performance and
