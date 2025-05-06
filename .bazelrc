@@ -93,10 +93,6 @@ common:asan --custom_malloc=@bazel_tools//tools/cpp:malloc
 # Configuration for enabling LibFuzzer (along with ASan).
 common:fuzzer --features=fuzzer
 
-# Always allow tests to symbolize themselves with whatever `llvm-symbolize` is
-# in the users environment.
-common --test_env=ASAN_SYMBOLIZER_PATH
-
 # Force actions to have a UTF-8 language encoding.
 # TODO: Need to investigate what this should be on Windows, but at least for
 # Linux and macOS this seems strictly better than the Bazel default of just
