@@ -14,7 +14,7 @@ namespace Carbon::Check {
 // A thunk that has been declared but not yet defined.
 //
 // This type is large, so moves of this type should be avoided.
-struct PendingThunk {
+struct PendingThunk : public MoveOnly<PendingThunk> {
   SemIR::FunctionId signature_id;
   SemIR::FunctionId function_id;
   SemIR::InstId decl_id;

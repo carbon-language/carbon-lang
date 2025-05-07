@@ -11,6 +11,12 @@ namespace Carbon {
 // achieved by declaring the move constructor and move assignment yourself; this
 // type should be used only when doing that is not feasible, such as when
 // aggregate initialization is still desired.
+//
+// This class uses CRTP to ensure that each MoveOnly base class has a different
+// type. This is important to avoid the compiler adding extra padding to derived
+// classes to give multiple MoveOnly subobjects of the same type different
+// addresses.
+template <typename Derived>
 struct MoveOnly {
   MoveOnly() = default;
   MoveOnly(MoveOnly&&) = default;

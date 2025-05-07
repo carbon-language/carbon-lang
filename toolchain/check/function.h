@@ -18,7 +18,7 @@ namespace Carbon::Check {
 // inline method handling.
 //
 // This type is large, so moves of this type should be avoided.
-struct SuspendedFunction {
+struct SuspendedFunction : public MoveOnly<SuspendedFunction> {
   // The function that was declared.
   SemIR::FunctionId function_id;
   // The instruction ID of the FunctionDecl instruction.

@@ -167,7 +167,7 @@ class DeclNameStack {
   // are finished.
   //
   // This type is large, so moves of this type should be avoided.
-  struct SuspendedName {
+  struct SuspendedName : public MoveOnly<SuspendedName> {
     // The declaration name information.
     NameContext name_context;
 

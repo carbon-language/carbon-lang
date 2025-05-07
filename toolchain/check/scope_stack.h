@@ -191,7 +191,7 @@ class ScopeStack {
 
  private:
   // An entry in scope_stack_.
-  struct ScopeStackEntry : MoveOnly {
+  struct ScopeStackEntry : public MoveOnly<ScopeStackEntry> {
     auto is_lexical_scope() const -> bool { return !scope_id.has_value(); }
 
     // The sequential index of this scope entry within the file.
@@ -317,7 +317,7 @@ class ScopeStack {
   FullPatternStack full_pattern_stack_;
 };
 
-struct ScopeStack::SuspendedScope {
+struct ScopeStack::SuspendedScope : public MoveOnly<SuspendedScope> {
   // An item that was suspended within this scope. This represents either a
   // lexical lookup entry in this scope, or a compile time binding entry in this
   // scope.
