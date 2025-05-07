@@ -19,8 +19,8 @@ namespace Carbon {
 template <typename Derived>
 struct MoveOnly {
   MoveOnly() = default;
-  MoveOnly(MoveOnly&&) = default;
-  auto operator=(MoveOnly&&) -> MoveOnly& = default;
+  MoveOnly(MoveOnly&&) noexcept = default;
+  auto operator=(MoveOnly&&) noexcept -> MoveOnly& = default;
 };
 
 }  // namespace Carbon
