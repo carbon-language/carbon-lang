@@ -90,7 +90,7 @@ fn F() {
 // --- int32_t_param_function_decl.h
 
 namespace std {
-  // Mimicking libc++ definition for int32_t: https://codebrowser.dev/glibc/glibc/posix/bits/types.h.html#__int32_t
+  // Mimicking glibc definition for int32_t: https://codebrowser.dev/glibc/glibc/posix/bits/types.h.html#__int32_t
   typedef signed int int32_t;
 }
 
