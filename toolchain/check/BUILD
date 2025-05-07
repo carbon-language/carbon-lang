@@ -178,7 +178,6 @@ cc_library(
         "//common:find",
         "//common:map",
         "//common:ostream",
-        "//common:variant_helpers",
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/base:pretty_stack_trace_function",

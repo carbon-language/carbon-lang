@@ -190,7 +190,8 @@ template <typename SwitchT, typename CaseFnT>
 consteval auto ForCase() -> auto {
   using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;
   if constexpr (IsStdVariant<SwitchT>) {
-    return CaseValueOfTypeInStdVariant<CaseT, SwitchT>;
+    using NoRefCaseT = std::remove_cvref_t<CaseT>;
+    return CaseValueOfTypeInStdVariant<NoRefCaseT, SwitchT>;
   } else {
     using KindT = llvm::function_traits<
         decltype(&std::remove_cvref_t<SwitchT>::kind)>::result_t;
@@ -204,7 +205,8 @@ template <typename CaseFnT, typename SwitchT>
 auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
   using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;
   if constexpr (IsStdVariant<SwitchT>) {
-    return std::get<CaseT>(kind_switch_value);
+    using NoRefCaseT = std::remove_cvref_t<CaseT>;
+    return std::get<NoRefCaseT>(std::forward<SwitchT>(kind_switch_value));
   } else {
     return kind_switch_value.template As<CaseT>();
   }
@@ -217,9 +219,9 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
 }  // namespace Carbon::Internal::Kind
 
 // Produces a switch statement on value.kind().
-#define CARBON_KIND_SWITCH(value)                            \
-  switch (                                                   \
-      const auto& carbon_internal_kind_switch_value = value; \
+#define CARBON_KIND_SWITCH(value)                       \
+  switch (                                              \
+      auto&& carbon_internal_kind_switch_value = value; \
       ::Carbon::Internal::Kind::SwitchOn(carbon_internal_kind_switch_value))
 
 // Produces a case-compatible block of code that also instantiates a local typed
@@ -228,14 +230,15 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
 // name, making it look more like a typical `case`.
-#define CARBON_KIND(typed_variable_decl)                                \
-  ::Carbon::Internal::Kind::ForCase<                                    \
-      decltype(carbon_internal_kind_switch_value),                      \
-      decltype([]([[maybe_unused]] typed_variable_decl) {})>()          \
-      : if (typed_variable_decl = ::Carbon::Internal::Kind::Cast<       \
-                decltype([]([[maybe_unused]] typed_variable_decl) {})>( \
-                carbon_internal_kind_switch_value);                     \
-            false) {}                                                   \
+#define CARBON_KIND(typed_variable_decl)                                   \
+  ::Carbon::Internal::Kind::ForCase<                                       \
+      decltype(carbon_internal_kind_switch_value),                         \
+      decltype([]([[maybe_unused]] typed_variable_decl) {})>()             \
+      : if (typed_variable_decl = ::Carbon::Internal::Kind::Cast<          \
+                decltype([]([[maybe_unused]] typed_variable_decl) {})>(    \
+                std::forward<decltype(carbon_internal_kind_switch_value)>( \
+                    carbon_internal_kind_switch_value));                   \
+            false) {}                                                      \
   else [[maybe_unused]] CARBON_INTERNAL_KIND_LABEL(__LINE__)
 
 #endif  // CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_

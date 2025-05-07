@@ -10,7 +10,6 @@
 #include <variant>
 
 #include "common/raw_string_ostream.h"
-#include "common/variant_helpers.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -122,25 +121,38 @@ class StepStack {
   // safe.
   auto PushArray(llvm::ArrayRef<PushItem> items) -> void {
     for (auto item : llvm::reverse(items)) {
-      VariantMatch(
-          item, [&](InstId inst_id) { PushInstId(inst_id); },
-          [&](llvm::StringRef string) { PushString(string); },
-          [&](NameId name_id) { PushNameId(name_id); },
-          [&](ElementIndex element_index) { PushElementIndex(element_index); },
-          [&](QualifiedNameItem qualified_name) {
-            PushQualifiedName(qualified_name.first, qualified_name.second);
-          },
-          [&](EntityNameItem entity_name) {
-            PushEntityName(entity_name.first, entity_name.second);
-          },
-          [&](EntityNameId entity_name_id) {
-            PushEntityNameId(entity_name_id);
-          },
-          [&](TypeId type_id) { PushTypeId(type_id); },
-          [&](SpecificInterface specific_interface) {
-            PushSpecificInterface(specific_interface);
-          },
-          [&](llvm::ListSeparator* sep) { PushString(*sep); });
+      CARBON_KIND_SWITCH(item) {
+        case CARBON_KIND(InstId inst_id):
+          PushInstId(inst_id);
+          break;
+        case CARBON_KIND(llvm::StringRef string):
+          PushString(string);
+          break;
+        case CARBON_KIND(NameId name_id):
+          PushNameId(name_id);
+          break;
+        case CARBON_KIND(ElementIndex element_index):
+          PushElementIndex(element_index);
+          break;
+        case CARBON_KIND(QualifiedNameItem qualified_name):
+          PushQualifiedName(qualified_name.first, qualified_name.second);
+          break;
+        case CARBON_KIND(EntityNameItem entity_name):
+          PushEntityName(entity_name.first, entity_name.second);
+          break;
+        case CARBON_KIND(EntityNameId entity_name_id):
+          PushEntityNameId(entity_name_id);
+          break;
+        case CARBON_KIND(TypeId type_id):
+          PushTypeId(type_id);
+          break;
+        case CARBON_KIND(SpecificInterface specific_interface):
+          PushSpecificInterface(specific_interface);
+          break;
+        case CARBON_KIND(llvm::ListSeparator * sep):
+          PushString(*sep);
+          break;
+      }
     }
   }
 
@@ -641,28 +653,33 @@ static auto Stringify(const File& sem_ir, StepStack& step_stack)
   Stringifier stringifier(&sem_ir, &step_stack, &out);
 
   while (!step_stack.empty()) {
-    auto step = step_stack.Pop();
-
-    VariantMatch(
-        step,
-        [&](InstId inst_id) {
-          if (!inst_id.has_value()) {
-            out << "<invalid>";
-            return;
-          }
-          auto untyped_inst = sem_ir.insts().Get(inst_id);
-          CARBON_KIND_SWITCH(untyped_inst) {
+    CARBON_KIND_SWITCH(step_stack.Pop()) {
+      case CARBON_KIND(InstId inst_id): {
+        if (!inst_id.has_value()) {
+          out << "<invalid>";
+          break;
+        }
+        auto untyped_inst = sem_ir.insts().Get(inst_id);
+        CARBON_KIND_SWITCH(untyped_inst) {
 #define CARBON_SEM_IR_INST_KIND(InstT)              \
   case CARBON_KIND(InstT typed_inst): {             \
     stringifier.StringifyInst(inst_id, typed_inst); \
     break;                                          \
   }
 #include "toolchain/sem_ir/inst_kind.def"
-          }
-        },
-        [&](llvm::StringRef string) { out << string; },
-        [&](NameId name_id) { out << sem_ir.names().GetFormatted(name_id); },
-        [&](ElementIndex element_index) { out << element_index.index; });
+        }
+        break;
+      }
+      case CARBON_KIND(llvm::StringRef string):
+        out << string;
+        break;
+      case CARBON_KIND(NameId name_id):
+        out << sem_ir.names().GetFormatted(name_id);
+        break;
+      case CARBON_KIND(ElementIndex element_index):
+        out << element_index.index;
+        break;
+    }
   }
 
   return out.TakeStr();

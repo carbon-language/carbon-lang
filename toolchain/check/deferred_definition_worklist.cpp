@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <optional>
 
-#include "common/variant_helpers.h"
 #include "common/vlog.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/handle.h"
 
 namespace Carbon::Check {
@@ -106,22 +106,23 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
 auto DeferredDefinitionWorklist::Pop(
     llvm::function_ref<auto(Task&&)->void> handle_fn) -> void {
   if (vlog_stream_) {
-    VariantMatch(
-        worklist_.back(),
-        [&](CheckSkippedDefinition& definition) {
-          CARBON_VLOG("{0}Handle CheckSkippedDefinition {1}\n", VlogPrefix,
-                      definition.definition_index.index);
-        },
-        [&](EnterDeferredDefinitionScope& enter) {
-          CARBON_CHECK(enter.in_deferred_definition_scope);
-          CARBON_VLOG("{0}Handle EnterDeferredDefinitionScope (nested)\n",
-                      VlogPrefix);
-        },
-        [&](LeaveDeferredDefinitionScope& leave) {
-          bool nested = leave.in_deferred_definition_scope;
-          CARBON_VLOG("{0}Handle LeaveDeferredDefinitionScope {1}\n",
-                      VlogPrefix, nested ? "(nested)" : "(non-nested)");
-        });
+    CARBON_KIND_SWITCH(worklist_.back()) {
+      case CARBON_KIND(const CheckSkippedDefinition& definition):
+        CARBON_VLOG("{0}Handle CheckSkippedDefinition {1}\n", VlogPrefix,
+                    definition.definition_index.index);
+        break;
+      case CARBON_KIND(const EnterDeferredDefinitionScope& enter):
+        CARBON_CHECK(enter.in_deferred_definition_scope);
+        CARBON_VLOG("{0}Handle EnterDeferredDefinitionScope (nested)\n",
+                    VlogPrefix);
+        break;
+      case CARBON_KIND(const LeaveDeferredDefinitionScope& leave): {
+        bool nested = leave.in_deferred_definition_scope;
+        CARBON_VLOG("{0}Handle LeaveDeferredDefinitionScope {1}\n", VlogPrefix,
+                    nested ? "(nested)" : "(non-nested)");
+        break;
+      }
+    }
   }
 
   handle_fn(std::move(worklist_.back()));

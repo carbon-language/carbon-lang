@@ -553,15 +553,6 @@ cc_test(
     ],
 )
 
-cc_library(
-    name = "variant_helpers",
-    hdrs = ["variant_helpers.h"],
-    deps = [
-        ":error",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 # The base version source file only uses non-stamped parts of the version
 # information so we expand it once here without any stamping.
 expand_version_build_info(
