@@ -42,10 +42,6 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
       if (*lhs_cursor == Structural::Concrete ||
           *lhs_cursor == Structural::ConcreteOpenParen) {
         if (*lhs_concrete_cursor != *rhs_concrete_cursor) {
-          [[maybe_unused]] const auto* l =
-              std::get_if<SemIR::ConstantId>(&*lhs_concrete_cursor);
-          [[maybe_unused]] const auto* r =
-              std::get_if<SemIR::ConstantId>(&*rhs_concrete_cursor);
           return false;
         }
 
