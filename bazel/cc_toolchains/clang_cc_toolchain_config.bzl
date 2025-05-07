@@ -18,6 +18,7 @@ load(
     "with_feature_set",
 )
 load("@rules_cc//cc:defs.bzl", "cc_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",

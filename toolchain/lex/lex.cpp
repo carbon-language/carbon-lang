@@ -533,7 +533,8 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
 // and continuing the dispatch.
 #define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                 \
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+                                  ssize_t position)                          \
+      ->void {                                                               \
     Lexer::LexResult result = lexer.LexMethod(source_text, position);        \
     CARBON_CHECK(result, "Failed to form a token!");                         \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
@@ -546,16 +547,17 @@ CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
 // A set of custom dispatch functions that pre-select the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  static auto Dispatch##LexMethod##SymbolToken(                              \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
-    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
-        source_text,                                                         \
-        OneCharTokenKindTable[static_cast<unsigned char>(                    \
-            source_text[position])],                                         \
-        position);                                                           \
-    CARBON_CHECK(result, "Failed to form a token!");                         \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                        \
+  static auto Dispatch##LexMethod##SymbolToken(                            \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position)         \
+      ->void {                                                             \
+    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                \
+        source_text,                                                       \
+        OneCharTokenKindTable[static_cast<unsigned char>(                  \
+            source_text[position])],                                       \
+        position);                                                         \
+    CARBON_CHECK(result, "Failed to form a token!");                       \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position); \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
@@ -565,7 +567,8 @@ CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 // whitespace and comments.
 #define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                             \
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+                                  ssize_t position)                          \
+      ->void {                                                               \
     lexer.LexMethod(source_text, position);                                  \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
   }

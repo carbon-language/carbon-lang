@@ -457,7 +457,7 @@ class InstStore {
   // instruction and its ID are returned. Otherwise returns {nullopt, None}.
   template <typename InstT, typename InstIdT>
     requires std::derived_from<InstIdT, InstId>
-  auto TryUnwrap(Inst& inst, InstId& inst_id, InstIdT InstT::*member) const
+  auto TryUnwrap(Inst& inst, InstId& inst_id, InstIdT InstT::* member) const
       -> std::pair<std::optional<InstT>, InstId> {
     if (auto wrapped_inst = inst.TryAs<InstT>()) {
       auto wrapped_inst_id = inst_id;

@@ -88,7 +88,7 @@ repos:
         types_or: [c++, def]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==17.0.1']
+        additional_dependencies: ['clang-format==20.1.4']
 
   - repo: local
     hooks:
@@ -128,7 +128,7 @@ repos:
         files: ^.*/BUILD$
         pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
-    rev: bddd87797f8dfc07d2a10c894776018d9bec590b # frozen: 7.1.2
+    rev: 4b5e89b4b108a6c1a000c591d334a99a80d34c7b # frozen: 7.2.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
