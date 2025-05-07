@@ -41,6 +41,7 @@
 namespace Carbon::Internal::Kind {
 
 template <typename T>
+// NOLINTNEXTLINE(clang-diagnostic-unused-const-variable): Used conditionally.
 static constexpr bool IsStdVariantValue = false;
 
 template <typename... Ts>
@@ -142,6 +143,7 @@ struct IndexOfTypeValue<I, T, TypePack<U, Ts...>> {
 };
 
 template <typename T, typename TypePack>
+// NOLINTNEXTLINE(clang-diagnostic-unused-const-variable): Used conditionally.
 static constexpr size_t IndexOfType = IndexOfTypeValue<0, T, TypePack>::Index;
 
 // Given `CARBON_KIND(CaseT name)` this generates `CaseT::Kind`. It explicitly
