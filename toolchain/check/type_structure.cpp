@@ -8,7 +8,6 @@
 #include <utility>
 #include <variant>
 
-#include "common/variant_helpers.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
