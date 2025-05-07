@@ -63,69 +63,70 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
     // From here we know one side is a Symbolic and the other is not. We can
     // match the Symbolic against either a single Concrete or a larger bracketed
     // set of Concrete structural elements.
-
-    // Returns false if the lhs and rhs can not match, true if we should
-    // continue checking for compatibility.
-    auto consume_symbolic = [](const auto*& lhs_cursor,
-                               const auto*& lhs_concrete_cursor,
-                               const auto*& rhs_cursor) -> bool {
-      // Consume the symbolic on the RHS.
-      ++rhs_cursor;
-
-      // The symbolic on the RHS is in the same position as a close paren on the
-      // LHS, which means the structures can not match.
-      //
-      // Example:
-      // - ((c))
-      // - ((c?))
-      if (*lhs_cursor == Structural::ConcreteCloseParen) {
-        return false;
-      }
-
-      // There's either a Concrete element or an open paren on the LHS. If it's
-      // the former, the Symbolic just matches with it. If it's the latter, the
-      // Symbolic matches with everything on the LHS up to the matching closing
-      // paren.
-      CARBON_CHECK(*lhs_cursor == Structural::Concrete ||
-                   *lhs_cursor == Structural::ConcreteOpenParen);
-      int depth = 0;
-      do {
-        switch (*lhs_cursor) {
-          case Structural::ConcreteOpenParen:
-            depth += 1;
-            // Each Concrete and ConcreteOpenParen shape entry has a paired
-            // concrete value. Skip the shape and concrete value together.
-            ++lhs_concrete_cursor;
-            break;
-          case Structural::ConcreteCloseParen:
-            depth -= 1;
-            break;
-          case Structural::Concrete:
-            // Each Concrete and ConcreteOpenParen shape entry has a paired
-            // concrete value. Skip the shape and concrete value together.
-            ++lhs_concrete_cursor;
-            break;
-          case Structural::Symbolic:
-            break;
-        }
-        ++lhs_cursor;
-      } while (depth > 0);
-      return true;
-    };
-
+    //
     // We move the symbolic to the RHS to make only one case to handle in the
     // lambda.
     if (*lhs_cursor == Structural::Symbolic) {
-      if (!consume_symbolic(rhs_cursor, rhs_concrete_cursor, lhs_cursor)) {
+      if (!ConsumeRhsSymbolic(rhs_cursor, rhs_concrete_cursor, lhs_cursor)) {
         return false;
       }
     } else {
-      if (!consume_symbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
+      if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
         return false;
       }
     }
   }
 
+  return true;
+}
+
+// Returns false if the lhs and rhs can not match, true if we should
+// continue checking for compatibility.
+auto TypeStructure::ConsumeRhsSymbolic(
+    llvm::SmallVector<Structural>::const_iterator& lhs_cursor,
+    llvm::SmallVector<ConcreteType>::const_iterator& lhs_concrete_cursor,
+    llvm::SmallVector<Structural>::const_iterator& rhs_cursor) -> bool {
+  // Consume the symbolic on the RHS.
+  ++rhs_cursor;
+
+  // The symbolic on the RHS is in the same position as a close paren on the
+  // LHS, which means the structures can not match.
+  //
+  // Example:
+  // - ((c))
+  // - ((c?))
+  if (*lhs_cursor == TypeStructure::Structural::ConcreteCloseParen) {
+    return false;
+  }
+
+  // There's either a Concrete element or an open paren on the LHS. If it's
+  // the former, the Symbolic just matches with it. If it's the latter, the
+  // Symbolic matches with everything on the LHS up to the matching closing
+  // paren.
+  CARBON_CHECK(*lhs_cursor == Structural::Concrete ||
+               *lhs_cursor == Structural::ConcreteOpenParen);
+  int depth = 0;
+  do {
+    switch (*lhs_cursor) {
+      case Structural::ConcreteOpenParen:
+        depth += 1;
+        // Each Concrete and ConcreteOpenParen shape entry has a paired
+        // concrete value. Skip the shape and concrete value together.
+        ++lhs_concrete_cursor;
+        break;
+      case Structural::ConcreteCloseParen:
+        depth -= 1;
+        break;
+      case Structural::Concrete:
+        // Each Concrete and ConcreteOpenParen shape entry has a paired
+        // concrete value. Skip the shape and concrete value together.
+        ++lhs_concrete_cursor;
+        break;
+      case Structural::Symbolic:
+        break;
+    }
+    ++lhs_cursor;
+  } while (depth > 0);
   return true;
 }
 
