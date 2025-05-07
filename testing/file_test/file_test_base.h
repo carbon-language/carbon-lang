@@ -108,8 +108,6 @@ class FileTestBase {
   virtual auto AllowParallelRun() const -> bool { return true; }
 
   // Returns the name of the test (relative to the repo root).
-  auto test_name() const -> llvm::StringRef { return test_name_; }
-
   // Returns a bazel label that can be used to invoke this test.
   virtual auto GetBazelLabel() -> std::string;
 
@@ -122,6 +120,8 @@ class FileTestBase {
 
   // Returns the requested bazel command string for the given execution mode.
   auto GetBazelCommand(BazelMode mode) -> std::string;
+
+  auto test_name() const -> llvm::StringRef { return test_name_; }
 
  private:
   llvm::StringRef test_name_;
