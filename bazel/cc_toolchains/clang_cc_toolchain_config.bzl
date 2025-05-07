@@ -642,6 +642,19 @@ def _impl(ctx):
         ],
     )
 
+    # A feature that enables poisoning of value stores to detect use after
+    # potential reallocation bugs.
+    poison_value_stores = feature(
+        name = "poison_value_stores",
+        requires = [feature_set(["asan"])],
+        flag_sets = [flag_set(
+            actions = all_compile_actions,
+            flag_groups = [flag_group(flags = [
+                "-DCARBON_POISON_VALUE_STORES=1",
+            ])],
+        )],
+    )
+
     fuzzer = feature(
         name = "fuzzer",
         flag_sets = [flag_set(
@@ -1145,6 +1158,7 @@ def _impl(ctx):
         asan,
         asan_min_size,
         enable_in_fastbuild,
+        poison_value_stores,
         fuzzer,
         layering_check,
         module_maps,
