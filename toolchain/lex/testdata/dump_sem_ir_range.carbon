@@ -76,11 +76,11 @@ e
 // CHECK:STDOUT:   - {begin: 1, end: 0}
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_start_only.carbon:[[@LINE+4]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
+
+// CHECK:STDERR: fail_start_only.carbon:[[@LINE+3]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
 // CHECK:STDERR:
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-
 // --- fail_end_only.carbon
 // CHECK:STDOUT: - filename: fail_end_only.carbon
 // CHECK:STDOUT:   tokens:
@@ -140,7 +140,7 @@ d
 // CHECK:STDOUT:   - {begin: 2, end: 2}
 // CHECK:STDOUT:   - {begin: 4, end: 4}
 
-// CHECK:STDERR: fail_count_mismatch.carbon:[[@LINE+3]]:17: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
-// CHECK:STDERR: // CHECK:STDERR:
-// CHECK:STDERR:                 ^
+// CHECK:STDERR: fail_count_mismatch.carbon:[[@LINE+3]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
 // CHECK:STDERR:

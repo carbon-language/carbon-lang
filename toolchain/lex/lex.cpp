@@ -691,7 +691,7 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
     // Incomplete ranges will use the next token for their end; we want that to
     // be `FileEnd` in this case, so check before adding `FileEnd`. The argument
     // is just the final character for diagnostic locations.
-    lexer.EndDumpSemIRRangeIfIncomplete(source_text.end() - 1);
+    lexer.EndDumpSemIRRangeIfIncomplete(source_text.end());
   }
 
   // When we finish the source text, stop recursing. We also hint this so that
