@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 
-#include <cwchar>
 #include <memory>
 #include <type_traits>
 
