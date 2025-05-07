@@ -19,6 +19,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//testing/base:file_helpers",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:string_view",
         "@llvm-project//llvm:Support",
