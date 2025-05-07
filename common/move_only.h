@@ -9,8 +9,8 @@ namespace Carbon {
 
 // A base class that indicates a type is move-only. Typically this can be
 // achieved by declaring the move constructor and move assignment yourself; this
-// type should be used only when doing that is not feasible, such as when the
-// type is an aggregate.
+// type should be used only when doing that is not feasible, such as when
+// aggregate initialization is still desired.
 struct MoveOnly {
   MoveOnly() = default;
   MoveOnly(MoveOnly&&) = default;
