@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
@@ -68,7 +68,7 @@ jobs:
 
       - uses: ./.github/actions/build-setup-common
         with:
-          matrix_runner: ubuntu-22.04
+          matrix_runner: ubuntu-24.04
           remote_cache_upload: ${{ env.remote_cache_upload }}
 
       - name: Get nightly date
