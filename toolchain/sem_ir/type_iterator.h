@@ -106,6 +106,10 @@ class TypeIterator {
 
 class TypeIterator::Step {
  public:
+  // ===========================================================================
+  // Results that enter scope where the following results are related. These
+  // only appear in `StartOnly` or `StartWithEnd`.
+
   // Followed by generic parameters.
   struct ClassStart {
     SemIR::ClassId class_id;
@@ -133,6 +137,28 @@ class TypeIterator::Step {
   };
   // Followed by the pointee type.
   struct PointerStart {};
+
+  // ===========================================================================
+  // Aggregator results that begin a scope and potentially end it immediately.
+
+  // A *Start type, but without anything following it, so we also skip the
+  // matching `End`.
+  struct StartOnly {
+    using Any =
+        std::variant<ClassStart, StructStart, TupleStart, InterfaceStart>;
+    Any any;
+  };
+  // A *Start type, with nested steps after it, and then a matching `End`.
+  struct StartWithEnd {
+    using Any =
+        std::variant<ClassStart, StructStart, TupleStart, InterfaceStart,
+                     ArrayStart, IntStart, PointerStart>;
+    Any any;
+  };
+
+  // ===========================================================================
+  // Individual result values, which appear on their own or inside some scope
+  // that begin with `StartWithEnd`.
 
   // A type value.
   struct ConcreteType {
@@ -162,24 +188,11 @@ class TypeIterator::Step {
     SemIR::NameId name_id;
   };
 
-  // A *Start type, but without anything following it, so we also skip the
-  // matching `End`.
-  struct StartOnly {
-    using Any =
-        std::variant<ClassStart, StructStart, TupleStart, InterfaceStart>;
-    Any any;
-  };
-  // A *Start type, with nested steps after it, and then a matching `End`.
-  struct StartWithEnd {
-    using Any =
-        std::variant<ClassStart, StructStart, TupleStart, InterfaceStart,
-                     ArrayStart, IntStart, PointerStart>;
-    Any any;
-  };
+  // ===========================================================================
+  // Results that report a state change in iteration.
 
   // Closes the scope of a `StartWithEnd`.
   struct End {};
-
   // Iteration is complete.
   struct Done {};
 

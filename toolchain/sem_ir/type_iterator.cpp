@@ -19,6 +19,10 @@ auto TypeIterator::Next() -> Step {
     auto next = work_list_.back();
     work_list_.pop_back();
 
+    // TODO: Consider using a CARBON_KIND_SWITCH on `next` here after
+    // https://github.com/carbon-language/carbon-lang/pull/5433 arrives, instead
+    // of a bunch of `if` conditions.
+
     if (std::holds_alternative<EndType>(next)) {
       return Step::End();
     }
