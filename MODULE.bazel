@@ -34,6 +34,7 @@ bazel_dep(name = "google_benchmark", version = "1.8.5")
 bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "rules_shell", version = "0.4.1")
 bazel_dep(name = "tree-sitter-bazel", version = "0.24.4")
 
 # The registry only has an old version. We use that here to avoid a miss but

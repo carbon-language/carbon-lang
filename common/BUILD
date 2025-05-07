@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/version:rules.bzl", "expand_version_build_info")
 
