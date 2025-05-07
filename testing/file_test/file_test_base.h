@@ -121,7 +121,7 @@ class FileTestBase {
   };
 
   // Returns the requested bazel command string for the given execution mode.
-  virtual auto GetBazelCommand(BazelMode mode) -> std::string;
+  auto GetBazelCommand(BazelMode mode) -> std::string;
 
  private:
   llvm::StringRef test_name_;
