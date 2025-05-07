@@ -67,7 +67,7 @@ class TypeIterator {
   struct SymbolicNonTypeValue {
     SemIR::InstId inst_id;
   };
-  // Work item to mark the name of a struct field.
+  // A work item to mark the name of a struct field.
   struct StructFieldName {
     SemIR::NameId name_id;
   };
