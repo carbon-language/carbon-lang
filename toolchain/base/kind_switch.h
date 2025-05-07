@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include "llvm/ADT/STLExtras.h"
+#include "toolchain/base/for_each_macro.h"
 
 // This library provides switch-like behaviors for Carbon's kind-based types.
 //
@@ -67,10 +68,41 @@ struct StdVariantEnumValue;
 
 template <typename... Ts>
 struct StdVariantEnumValue<std::variant<Ts...>> {
-  enum [[clang::enum_extensibility(open)]] EnumType{
-      VariantTypeNotHandledInSwitch = sizeof...(Ts) - 1};
-  using Type = EnumType;
+  static_assert(sizeof...(Ts) <= 12,
+                "CARBON_KIND_SWITCH supports std::variant with up to 12 types. "
+                "Add more if needed.");
 };
+
+#define CARBON_INTERNAL_MAKE_ENUM_VALUE(n) VariantType##n##NotHandledInSwitch
+#define CARBON_INTERNAL_MAKE_TYPENAME(name) typename name
+
+#define CARBON_INTERNAL_MAKE_ENUM(...)                                        \
+  template <CARBON_FOR_EACH(CARBON_INTERNAL_MAKE_TYPENAME,                    \
+                            CARBON_FOR_EACH_COMMA, __VA_ARGS__)>              \
+  struct StdVariantEnumValue<std::variant<__VA_ARGS__>> {                     \
+    enum EnumType {                                                           \
+      CARBON_FOR_EACH(CARBON_INTERNAL_MAKE_ENUM_VALUE, CARBON_FOR_EACH_COMMA, \
+                      __VA_ARGS__)                                            \
+    };                                                                        \
+    using Type = EnumType;                                                    \
+  }
+
+CARBON_INTERNAL_MAKE_ENUM(T0);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3, T4);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3, T4, T5);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3, T4, T5, T6);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3, T4, T5, T6, T7);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3, T4, T5, T6, T7, T8);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
+CARBON_INTERNAL_MAKE_ENUM(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11);
+
+#undef CARBON_INTERNAL_MAKE_ENUM_VALUE
+#undef CARBON_INTERNAL_MAKE_TYPENAME
+#undef CARBON_INTERNAL_MAKE_ENUM
 
 template <typename T>
 using StdVariantEnum = StdVariantEnumValue<std::decay_t<T>>::Type;
