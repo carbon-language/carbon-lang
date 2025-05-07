@@ -691,7 +691,9 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
     // Incomplete ranges will use the next token for their end; we want that to
     // be `FileEnd` in this case, so check before adding `FileEnd`. The argument
     // is just the final character for diagnostic locations.
-    lexer.EndDumpSemIRRangeIfIncomplete(source_text.end());
+    // TODO: This offset may not be needed if `file_test` handled diagnostics
+    // pointing at `.end()`.
+    lexer.EndDumpSemIRRangeIfIncomplete(source_text.end() - 1);
   }
 
   // When we finish the source text, stop recursing. We also hint this so that
@@ -911,8 +913,8 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
 auto Lexer::BeginDumpSemIRRange(const char* diag_loc) -> void {
   EndDumpSemIRRangeIfIncomplete(diag_loc);
 
-  // The begin here will be the next token, which may be FileEnd. The end will
-  // be assigned by either AddDumpSemIREnd or, if invalid,
+  // The begin here will be the next token, which may be dump-sem-ir-begin. The
+  // end will be assigned by either AddDumpSemIREnd or, if invalid,
   // EndDumpSemIRRangeIfIncomplete.
   buffer_.dump_sem_ir_ranges_.push_back(
       {.begin = TokenIndex(buffer_.size()), .end = TokenIndex::None});
