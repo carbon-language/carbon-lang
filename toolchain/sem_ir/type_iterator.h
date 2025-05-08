@@ -78,7 +78,7 @@ class TypeIterator {
       -> std::variant<SemIR::TypeId, SymbolicType>;
 
   // Get the instructions in the specific's instruction block as an ArrayRef.
-  auto GetSpecificArgs(SemIR::SpecificId specific_id)
+  auto GetSpecificArgs(SemIR::SpecificId specific_id) const
       -> llvm::ArrayRef<SemIR::InstId>;
 
   // Push all arguments from the array into the work queue.
@@ -173,7 +173,7 @@ class TypeIterator::Step {
 
   // Converts from any individual step.
   //
-  // This is a template to allow implicit convertion directly from step values
+  // This is a template to allow implicit conversion directly from step values
   // that can go inside `Any` to `Step` (without having to make the `Any`
   // explicitly first).
   template <class T>

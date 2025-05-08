@@ -190,7 +190,7 @@ auto TypeIterator::TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
   return sem_ir_->types().GetTypeIdForTypeInstId(inst_id);
 }
 
-auto TypeIterator::GetSpecificArgs(SemIR::SpecificId specific_id)
+auto TypeIterator::GetSpecificArgs(SemIR::SpecificId specific_id) const
     -> llvm::ArrayRef<SemIR::InstId> {
   if (specific_id == SemIR::SpecificId::None) {
     return {};
