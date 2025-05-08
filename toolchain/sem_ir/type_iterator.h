@@ -172,6 +172,10 @@ class TypeIterator::Step {
   }
 
   // Converts from any individual step.
+  //
+  // This is a template to allow implicit convertion directly from step values
+  // that can go inside `Any` to `Step` (without having to make the `Any`
+  // explicitly first).
   template <class T>
     requires std::constructible_from<Any, T>
   // NOLINTNEXTLINE(google-explicit-constructor)
