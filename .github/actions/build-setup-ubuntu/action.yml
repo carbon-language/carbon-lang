@@ -32,35 +32,17 @@ runs:
     # are often missing binaries for ubuntu x64.
     - name: Download LLVM and Clang installation
       env:
-        # We will use this clang version.
-        clang_version: 18
-        # The ubuntu 24.04 image has 16, 17, and 18 installed.
-        # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
-        # We r
-        remove_clang_versions: '16,17'
+        clang_version: 19
       shell: bash
       run: |
-        echo '*** Removing system clang packages'
-        for version in ${remove_clang_versions//,/ }; do
-          sudo apt-get remove clang-${version} \
-            clang-format-${version} \
-            clang-tidy-${version} \
-            clang-tools-${version} \
-            clangd-${version} \
-            lld-${version} \
-            lldb-${version} \
-            llvm-${version}-dev \
-            llvm-${version}-tools \
-            libc++-${version}-dev \
-            libc++abi-${version}-dev \
-            libclang-${version}-dev \
-            libclang-common-${version}-dev \
-            libclang-cpp${version}-dev \
-            libomp-${version}-dev \
-            libunwind-${version}-dev
-          done
-
         echo '*** Installing upstream clang packages'
         wget https://apt.llvm.org/llvm.sh
         chmod +x llvm.sh
         sudo ./llvm.sh ${clang_version} all
+
+        sudo ln -sf /lib/llvm-19/bin/clang /bin/
+        sudo ln -sf /lib/llvm-19/bin/clang++ /bin/
+        sudo ln -sf /lib/llvm-19/bin/clang-format /bin/
+        sudo ln -sf /lib/llvm-19/bin/clang-tidy /bin/
+        sudo ln -sf /lib/llvm-19/bin/lld /bin/
+        sudo ln -sf /lib/llvm-19/bin/llvm-symbolizer /bin/

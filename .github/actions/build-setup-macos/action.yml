@@ -23,7 +23,7 @@ runs:
           xcrun simctl delete all
         sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/*
 
-    # Install and cache LLVM 18 from Homebrew. Some runners may have LLVM 18,
+    # Install and cache LLVM 19 from Homebrew. Some runners may have LLVM 19,
     # but this is reliable (including with libc++), and gives us testing at the
     # minimum supported LLVM version.
     - name: Cache Homebrew
@@ -46,7 +46,7 @@ runs:
           }}
         # Note the key needs to include all the packages we're adding.
         key:
-          Homebrew-Cache-${{ inputs.matrix_runner }}-${{ runner.arch }}-llvm@18
+          Homebrew-Cache-${{ inputs.matrix_runner }}-${{ runner.arch }}-llvm@19
 
     - name: Install LLVM and Clang with Homebrew
       if: steps.cache-homebrew-macos.outputs.cache-hit != 'true'
@@ -60,11 +60,11 @@ runs:
         LEAVES=$(brew leaves | egrep -v '^(bazelisk|gh|git|git-lfs|gnu-tar|go@.*|jq|pipx|node@.*|openssl@.*|wget|yq|zlib)$')
         brew uninstall -f --ignore-dependencies $LEAVES
         echo '*** Installing LLVM deps'
-        brew install --force-bottle --only-dependencies llvm@18
+        brew install --force-bottle --only-dependencies llvm@19
         echo '*** Installing LLVM itself'
-        brew install --force-bottle --force --verbose llvm@18
-        echo '*** brew info llvm@18'
-        brew info llvm@18
+        brew install --force-bottle --force --verbose llvm@19
+        echo '*** brew info llvm@19'
+        brew info llvm@19
         echo '*** brew autoremove'
         brew autoremove
         echo '*** brew info'
@@ -77,7 +77,7 @@ runs:
     - name: Setup LLVM and Clang
       shell: bash
       run: |
-        LLVM_PATH="$(brew --prefix llvm@18)"
+        LLVM_PATH="$(brew --prefix llvm@19)"
         echo "Using ${LLVM_PATH}"
         echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
         echo '*** ls "${LLVM_PATH}"'
