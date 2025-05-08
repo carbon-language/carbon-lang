@@ -178,7 +178,7 @@ class ValueStore
   // Poison the entire contents of the value store. This is used to detect cases
   // where references to elements in a value store are used across calls that
   // might modify the store.
-  [[gnu::always_inline]] auto PoisonAll() const -> void {
+  auto PoisonAll() const -> void {
 #if CARBON_POISON_VALUE_STORES
     if (!all_poisoned_) {
       __asan_poison_memory_region(values_.data(),
@@ -188,7 +188,7 @@ class ValueStore
 #endif
   }
   // Unpoison the entire contents of the value store.
-  [[gnu::always_inline]] auto UnpoisonAll() const -> void {
+  auto UnpoisonAll() const -> void {
 #if CARBON_POISON_VALUE_STORES
     __asan_unpoison_memory_region(values_.data(),
                                   values_.size() * sizeof(values_[0]));
@@ -196,15 +196,13 @@ class ValueStore
 #endif
   }
   // Poison a single element.
-  [[gnu::always_inline]] auto PoisonElement([[maybe_unused]] int element) const
-      -> void {
+  auto PoisonElement([[maybe_unused]] int element) const -> void {
 #if CARBON_POISON_VALUE_STORES
     __asan_unpoison_memory_region(values_.data() + element, sizeof(values_[0]));
 #endif
   }
   // Unpoison a single element.
-  [[gnu::always_inline]] auto UnpoisonElement(
-      [[maybe_unused]] int element) const -> void {
+  auto UnpoisonElement([[maybe_unused]] int element) const -> void {
 #if CARBON_POISON_VALUE_STORES
     __asan_unpoison_memory_region(values_.data() + element, sizeof(values_[0]));
     all_poisoned_ = false;
