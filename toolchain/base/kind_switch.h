@@ -41,11 +41,10 @@
 namespace Carbon::Internal::Kind {
 
 template <typename T>
-[[maybe_unused]] static constexpr bool IsStdVariantValue = false;
+constexpr bool IsStdVariantValue = false;
 
 template <typename... Ts>
-[[maybe_unused]] static constexpr bool IsStdVariantValue<std::variant<Ts...>> =
-    true;
+constexpr bool IsStdVariantValue<std::variant<Ts...>> = true;
 
 template <typename T>
 concept IsStdVariant = IsStdVariantValue<std::decay_t<T>>;
@@ -77,9 +76,13 @@ concept IsStdVariant = IsStdVariantValue<std::decay_t<T>>;
   constexpr EnumType EnumValue<CARBON_INTERNAL_KIND_IDENTIFIER(n)> = \
       EnumType::CARBON_INTERNAL_KIND_ENUM_NAME(n)
 
+// Used to provide a reason in the compiler error from `ValidCaseType`, which
+// will state that "T does not satisfy TypeFoundInVariant".
 template <class T>
 concept TypeFoundInVariant = false;
 
+// Used to cause a compler error, which will state that "ValidCaseType was not
+// satified" for T and std::variant<...>.
 template <class T, class StdVariant>
   requires TypeFoundInVariant<T>
 struct ValidCaseType;
@@ -154,7 +157,7 @@ using StdVariantEnum = StdVariantTypeMap<std::decay_t<StdVariant>>::EnumType;
 // in `StdVariantEnum` for a given type `T` in the type list of a
 // std::variant<...>.
 template <typename T, typename StdVariant>
-[[maybe_unused]] static constexpr auto CaseValueOfTypeInStdVariant =
+constexpr auto CaseValueOfTypeInStdVariant =
     StdVariantTypeMap<std::decay_t<StdVariant>>::template EnumValue<T>;
 
 // Given `CARBON_KIND_SWITCH(value)` this returns the actual value to switch on.
