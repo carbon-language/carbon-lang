@@ -25,7 +25,7 @@ runs:
     - name: Show system LLVM and Clang installation
       shell: bash
       run: |
-        dpkg -l|grep -E 'clang|llvm'
+        dpkg -l '*clang*' '*llvm*'
 
     # Install a recent version of LLVM. We use LLVM's apt.llvm.org in order to
     # have access to all released versions, instead of the GitHub releases which
