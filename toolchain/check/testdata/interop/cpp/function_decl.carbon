@@ -214,7 +214,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "int_min_param_function_decl.h";
 
 fn F() {
-  Cpp.foo(-2147483648);
+  Cpp.foo(-0x8000_0000);
 }
 
 // --- overflow_int_min_param_function_decl.h
@@ -229,11 +229,11 @@ import Cpp library "overflow_int_min_param_function_decl.h";
 
 fn F() {
   // CHECK:STDERR: fail_overflow_int_min_param_function_decl.carbon:[[@LINE+5]]:11: error: integer value -2147483649 too large for type `i32` [IntTooLargeForType]
-  // CHECK:STDERR:   Cpp.foo(-2147483649);
-  // CHECK:STDERR:           ^~~~~~~~~~~
+  // CHECK:STDERR:   Cpp.foo(-0x8000_0001);
+  // CHECK:STDERR:           ^~~~~~~~~~~~
   // CHECK:STDERR: fail_overflow_int_min_param_function_decl.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
-  Cpp.foo(-2147483649);
+  Cpp.foo(-0x8000_0001);
 }
 
 // --- import_int_default_param_sucessful_call_function_decl.carbon
