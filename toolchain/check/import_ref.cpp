@@ -462,7 +462,8 @@ class ImportRefResolver : public ImportContext {
         work_stack_.pop_back();
       }
     }
-    auto constant_id = local_constant_values_for_import_insts().Get(inst_id);
+    auto constant_id =
+        local_constant_values_for_import_insts().GetAttached(inst_id);
     CARBON_CHECK(constant_id.has_value());
     return constant_id;
   }
@@ -515,7 +516,8 @@ class ImportRefResolver : public ImportContext {
   // Returns the ConstantId for an InstId. Adds unresolved constants to
   // work_stack_.
   auto GetLocalConstantValueOrPush(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    auto const_id = local_constant_values_for_import_insts().Get(inst_id);
+    auto const_id =
+        local_constant_values_for_import_insts().GetAttached(inst_id);
     if (!const_id.has_value()) {
       work_stack_.push_back({.inst_id = inst_id});
     }
@@ -551,37 +553,31 @@ class ImportRefResolver : public ImportContext {
     ResolvedConstId result;
 
     if (auto existing_const_id =
-            local_constant_values_for_import_insts().Get(inst_id);
+            local_constant_values_for_import_insts().GetAttached(inst_id);
         existing_const_id.has_value()) {
       result.const_id = existing_const_id;
       return result;
     }
 
     const auto* cursor_ir = &import_ir();
-    auto cursor_ir_id = SemIR::ImportIRId::None;
     auto cursor_inst_id = inst_id;
 
     while (true) {
-      auto loc_id = cursor_ir->insts().GetCanonicalLocId(cursor_inst_id);
-      if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
+      auto import_ir_inst_id =
+          cursor_ir->insts().GetImportSource(cursor_inst_id);
+      if (!import_ir_inst_id.has_value()) {
         return result;
       }
-      auto ir_inst =
-          cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
+      auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
 
       const auto* prev_ir = cursor_ir;
       auto prev_inst_id = cursor_inst_id;
 
       cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id()).sem_ir;
-      cursor_ir_id =
-          local_context().check_ir_map()[cursor_ir->check_ir_id().index];
-      if (!cursor_ir_id.has_value()) {
-        // TODO: Should we figure out a location to assign here?
-        cursor_ir_id =
-            AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
-                                          .is_export = false,
-                                          .sem_ir = cursor_ir});
-      }
+      auto cursor_ir_id =
+          AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
+                                        .is_export = false,
+                                        .sem_ir = cursor_ir});
       cursor_inst_id = ir_inst.inst_id();
 
       CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id,
@@ -589,7 +585,7 @@ class ImportRefResolver : public ImportContext {
 
       if (auto const_id = local_context()
                               .import_ir_constant_values()[cursor_ir_id.index]
-                              .Get(cursor_inst_id);
+                              .GetAttached(cursor_inst_id);
           const_id.has_value()) {
         SetResolvedConstId(inst_id, result.indirect_insts, const_id);
         result.const_id = const_id;
@@ -667,6 +663,9 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
       context.local_context(), AddImportIRInst(context, import_inst_id), inst));
   CARBON_VLOG_TO(context.local_context().vlog_stream(),
                  "AddImportedInst: {0}\n", static_cast<SemIR::Inst>(inst));
+  // Track the instruction in the imports block so that it's included in
+  // formatted SemIR if it's referenced.
+  context.local_context().import_ref_ids().push_back(inst_id);
   return inst_id;
 }
 
@@ -752,7 +751,7 @@ static auto GetLocalConstantIdChecked(ImportContext& context,
                                       SemIR::InstId inst_id)
     -> SemIR::ConstantId {
   auto result_id =
-      context.local_constant_values_for_import_insts().Get(inst_id);
+      context.local_constant_values_for_import_insts().GetAttached(inst_id);
   CARBON_CHECK(result_id.has_value());
   return result_id;
 }
@@ -1052,11 +1051,11 @@ static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
   const auto& param_patterns =
       resolver.import_inst_blocks().Get(param_patterns_id);
   for (auto pattern_id : param_patterns) {
-    auto pattern_inst = resolver.import_insts().Get(pattern_id);
+    auto pattern_inst = resolver.import_insts().GetWithAttachedType(pattern_id);
     GetLocalConstantId(resolver, pattern_inst.type_id());
     if (auto addr = pattern_inst.TryAs<SemIR::AddrPattern>()) {
       pattern_id = addr->inner_id;
-      pattern_inst = resolver.import_insts().Get(pattern_id);
+      pattern_inst = resolver.import_insts().GetWithAttachedType(pattern_id);
       GetLocalConstantId(resolver, pattern_inst.type_id());
     }
     // If the parameter is a symbolic binding, build the
@@ -1095,27 +1094,27 @@ static auto GetLocalParamPatternsId(ImportContext& context,
   const auto& param_patterns =
       context.import_inst_blocks().Get(param_patterns_id);
   llvm::SmallVector<SemIR::InstId> new_patterns;
-  for (auto param_id : param_patterns) {
+  for (auto inst_id : param_patterns) {
     // Figure out the pattern structure. This echoes
     // Function::GetParamPatternInfoFromPatternId.
-    auto addr_pattern_id = param_id;
-    auto addr_inst =
-        context.import_insts().TryGetAs<SemIR::AddrPattern>(addr_pattern_id);
-    auto param_pattern_id = addr_pattern_id;
+    auto inst = context.import_insts().GetWithAttachedType(inst_id);
+
+    auto addr_pattern_id = inst_id;
+    auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
     if (addr_inst) {
-      param_pattern_id = addr_inst->inner_id;
+      inst_id = addr_inst->inner_id;
+      inst = context.import_insts().GetWithAttachedType(inst_id);
     }
 
-    auto param_pattern =
-        context.import_insts().TryGetAs<SemIR::ValueParamPattern>(
-            param_pattern_id);
-    auto binding_id = addr_pattern_id;
+    auto param_pattern_id = inst_id;
+    auto param_pattern = inst.TryAs<SemIR::ValueParamPattern>();
     if (param_pattern) {
-      binding_id = param_pattern->subpattern_id;
+      inst_id = param_pattern->subpattern_id;
+      inst = context.import_insts().GetWithAttachedType(inst_id);
     }
 
-    auto binding =
-        context.import_insts().GetAs<SemIR::AnyBindingPattern>(binding_id);
+    auto binding_id = inst_id;
+    auto binding = inst.As<SemIR::AnyBindingPattern>();
 
     // Rebuild the pattern.
     auto entity_name =
@@ -1176,19 +1175,16 @@ static auto GetLocalParamPatternsId(ImportContext& context,
 // Returns a version of import_return_slot_pattern_id localized to the current
 // IR.
 static auto GetLocalReturnSlotPatternId(
-    ImportContext& context, SemIR::InstId import_return_slot_pattern_id)
-    -> SemIR::InstId {
+    ImportContext& context, SemIR::InstId import_return_slot_pattern_id,
+    SemIR::ConstantId return_type_const_id) -> SemIR::InstId {
   if (!import_return_slot_pattern_id.has_value()) {
     return SemIR::InstId::None;
   }
 
   auto param_pattern = context.import_insts().GetAs<SemIR::OutParamPattern>(
       import_return_slot_pattern_id);
-  auto return_slot_pattern =
-      context.import_insts().GetAs<SemIR::ReturnSlotPattern>(
-          param_pattern.subpattern_id);
   auto type_id = context.local_context().types().GetTypeIdForTypeConstantId(
-      GetLocalConstantIdChecked(context, return_slot_pattern.type_id));
+      return_type_const_id);
 
   auto new_return_slot_pattern_id = AddImportedInst<SemIR::ReturnSlotPattern>(
       context, param_pattern.subpattern_id,
@@ -1419,7 +1415,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto adapted_type_const_id = GetLocalConstantId(
       resolver,
-      resolver.import_constant_values().Get(inst.adapted_type_inst_id));
+      resolver.import_constant_values().GetAttached(inst.adapted_type_inst_id));
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1570,7 +1566,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   auto base_type_const_id = GetLocalConstantId(
-      resolver, resolver.import_constant_values().Get(inst.base_type_inst_id));
+      resolver,
+      resolver.import_constant_values().GetAttached(inst.base_type_inst_id));
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1959,6 +1956,7 @@ static auto MakeFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
         .return_slot_pattern_id = SemIR::InstId::None,
+        .special_function_kind = import_function.special_function_kind,
         .builtin_function_kind = import_function.builtin_function_kind}});
 
   function_decl.type_id = GetFunctionType(
@@ -2007,9 +2005,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto return_type_const_id = SemIR::ConstantId::None;
   if (import_function.return_slot_pattern_id.has_value()) {
     return_type_const_id = GetLocalConstantId(
-        resolver, resolver.import_insts()
-                      .Get(import_function.return_slot_pattern_id)
-                      .type_id());
+        resolver, resolver.import_insts().GetAttachedType(
+                      import_function.return_slot_pattern_id));
   }
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_function.parent_scope_id);
@@ -2033,7 +2030,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   new_function.param_patterns_id =
       GetLocalParamPatternsId(resolver, import_function.param_patterns_id);
   new_function.return_slot_pattern_id = GetLocalReturnSlotPatternId(
-      resolver, import_function.return_slot_pattern_id);
+      resolver, import_function.return_slot_pattern_id, return_type_const_id);
   SetGenericData(resolver, import_function.generic_id, new_function.generic_id,
                  generic_data);
 
@@ -2204,10 +2201,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   LoadLocalPatternConstantIds(resolver, import_impl.implicit_param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_impl.generic_id);
   auto self_const_id = GetLocalConstantId(
-      resolver, resolver.import_constant_values().Get(import_impl.self_id));
+      resolver,
+      resolver.import_constant_values().GetAttached(import_impl.self_id));
   auto constraint_const_id = GetLocalConstantId(
       resolver,
-      resolver.import_constant_values().Get(import_impl.constraint_id));
+      resolver.import_constant_values().GetAttached(import_impl.constraint_id));
   auto& new_impl = resolver.local_impls().Get(impl_id);
 
   if (resolver.HasNewWork()) {
@@ -2557,7 +2555,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ImplWitnessTable inst) -> ResolveResult {
+                                SemIR::ImplWitnessTable inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
   const auto& import_impl = resolver.import_impls().Get(inst.impl_id);
   auto import_decl_inst_id = import_impl.first_decl_id();
   auto local_decl_inst_id =
@@ -2570,8 +2569,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_insts().GetAs<SemIR::ImplDecl>(local_decl_inst_id);
   auto impl_id = impl_decl.impl_id;
   auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
-  return ResolveAs<SemIR::ImplWitnessTable>(
-      resolver, {.elements_id = elements_id, .impl_id = impl_id});
+
+  // Create a corresponding instruction to represent the table.
+  auto inst_id = AddImportedInst<SemIR::ImplWitnessTable>(
+      resolver, import_inst_id,
+      {.elements_id = elements_id, .impl_id = impl_id});
+  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
+                             inst_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2940,7 +2944,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitnessTable inst): {
-      return TryResolveTypedInst(resolver, inst);
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::ImportRefLoaded inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
@@ -3027,7 +3031,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
 // TODO: Error is returned when support is missing, but that should go away.
 static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
                            SemIR::ConstantId const_id) -> ResolveResult {
-  auto inst_const_id = resolver.import_constant_values().Get(inst_id);
+  auto inst_const_id = resolver.import_constant_values().GetAttached(inst_id);
   if (!inst_const_id.has_value() || !inst_const_id.is_symbolic()) {
     return TryResolveInstCanonical(resolver, inst_id, const_id);
   }
@@ -3042,7 +3046,7 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
   if (const_id.has_value()) {
     // For the third phase, extract the constant value that
     // TryResolveInstCanonical produced previously.
-    inner_const_id = resolver.local_constant_values().Get(
+    inner_const_id = resolver.local_constant_values().GetAttached(
         resolver.local_constant_values().GetSymbolicConstant(const_id).inst_id);
   }
 
@@ -3054,8 +3058,8 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
   }
 
   if (!const_id.has_value()) {
-    // Second phase: we have created an abstract constant. Create a
-    // corresponding generic constant.
+    // Second phase: we have created an unattached constant. Create a
+    // corresponding attached constant.
     if (symbolic_const.generic_id.has_value()) {
       result.const_id = resolver.local_constant_values().AddSymbolicConstant(
           {.inst_id =
@@ -3064,8 +3068,8 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
            .index = symbolic_const.index,
            .dependence = symbolic_const.dependence});
       if (result.decl_id.has_value()) {
-        // Overwrite the abstract symbolic constant given initially to the
-        // declaration with its final concrete symbolic value.
+        // Overwrite the unattached symbolic constant given initially to the
+        // declaration with its final attached symbolic value.
         resolver.local_constant_values().Set(result.decl_id, result.const_id);
       }
     }
@@ -3251,7 +3255,8 @@ static auto GetInstForLoad(Context& context,
       context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
 
   while (true) {
-    auto cursor_inst = cursor_ir->insts().Get(import_ir_inst.inst_id());
+    auto cursor_inst =
+        cursor_ir->insts().GetWithAttachedType(import_ir_inst.inst_id());
 
     auto import_ref = cursor_inst.TryAs<SemIR::ImportRefUnloaded>();
     if (!import_ref) {

@@ -165,7 +165,9 @@ class DeclNameStack {
   // Information about a declaration name that has been temporarily removed from
   // the stack and will later be restored. Names can only be suspended once they
   // are finished.
-  struct SuspendedName {
+  //
+  // This type is large, so moves of this type should be avoided.
+  struct SuspendedName : public MoveOnly<SuspendedName> {
     // The declaration name information.
     NameContext name_context;
 
@@ -236,7 +238,7 @@ class DeclNameStack {
   auto Suspend() -> SuspendedName;
 
   // Restore a previously suspended name.
-  auto Restore(SuspendedName sus) -> void;
+  auto Restore(SuspendedName&& sus) -> void;
 
   // Adds a name to name lookup. Assumes duplicates are already handled.
   auto AddName(NameContext name_context, SemIR::InstId target_id,

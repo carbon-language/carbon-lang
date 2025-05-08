@@ -629,7 +629,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id,
                  llvm::formatv("Unsupported: Lookup succeeded but couldn't "
                                "find a single result; LookupResultKind: {0}",
-                               lookup->getResultKind())
+                               static_cast<int>(lookup->getResultKind()))
                      .str());
     return SemIR::ErrorInst::InstId;
   }

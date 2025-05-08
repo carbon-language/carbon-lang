@@ -129,6 +129,9 @@ class FunctionContext {
     return synthetic_block_ == block;
   }
 
+  // Returns the debug location to associate with the specified instruction.
+  auto GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc;
+
   // After emitting an initializer `init_id`, finishes performing the
   // initialization of `dest_id` from that initializer. This is a no-op if the
   // initialization was performed in-place, and otherwise performs a store or a

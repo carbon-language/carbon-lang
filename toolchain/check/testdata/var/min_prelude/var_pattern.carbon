@@ -123,8 +123,8 @@ class C {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
-// CHECK:STDOUT:     %.loc5_7.1: %pattern_type = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc5_7.1: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %.loc5_20.1: %empty_tuple.type = tuple_literal ()
@@ -169,10 +169,10 @@ class C {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x
-// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = binding_pattern y
-// CHECK:STDOUT:     %.loc5_15.1: %pattern_type.cb1 = var_pattern %y.patt
-// CHECK:STDOUT:     %.loc5_24: %pattern_type.5b8 = tuple_pattern (%x.patt, %.loc5_15.1)
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %.loc5_15.1: %pattern_type.cb1 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %.loc5_24: %pattern_type.5b8 = tuple_pattern (%x.patt, %.loc5_15.1) [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var y
 // CHECK:STDOUT:   %.loc5_30.1: %empty_tuple.type = tuple_literal ()
@@ -222,11 +222,11 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y
-// CHECK:STDOUT:     %y.param_patt: %pattern_type = ref_param_pattern %y.patt, call_param1
-// CHECK:STDOUT:     %.loc4_13: %pattern_type = var_pattern %y.param_patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type = ref_param_pattern %y.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %.loc4_13: %pattern_type = var_pattern %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
@@ -249,8 +249,8 @@ class C {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v
-// CHECK:STDOUT:     %.loc7_3.1: %pattern_type = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v [concrete]
+// CHECK:STDOUT:     %.loc7_3.1: %pattern_type = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
 // CHECK:STDOUT:   %.loc7_16.1: %empty_tuple.type = tuple_literal ()
@@ -308,13 +308,13 @@ class C {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x
-// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = binding_pattern y
-// CHECK:STDOUT:     %z.patt: %pattern_type.cb1 = binding_pattern z
-// CHECK:STDOUT:     %.loc9_27.1: %pattern_type.cb1 = var_pattern %z.patt
-// CHECK:STDOUT:     %.loc9_36: %pattern_type.5b8 = tuple_pattern (%y.patt, %.loc9_27.1)
-// CHECK:STDOUT:     %.loc9_15.1: %pattern_type.5b8 = var_pattern %.loc9_36
-// CHECK:STDOUT:     %.loc9_37: %pattern_type.c6c = tuple_pattern (%x.patt, %.loc9_15.1)
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %z.patt: %pattern_type.cb1 = binding_pattern z [concrete]
+// CHECK:STDOUT:     %.loc9_27.1: %pattern_type.cb1 = var_pattern %z.patt [concrete]
+// CHECK:STDOUT:     %.loc9_36: %pattern_type.5b8 = tuple_pattern (%y.patt, %.loc9_27.1) [concrete]
+// CHECK:STDOUT:     %.loc9_15.1: %pattern_type.5b8 = var_pattern %.loc9_36 [concrete]
+// CHECK:STDOUT:     %.loc9_37: %pattern_type.c6c = tuple_pattern (%x.patt, %.loc9_15.1) [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z.var: ref %empty_tuple.type = var z
 // CHECK:STDOUT:   %.var: ref %tuple.type.bcd = var <none>
@@ -403,9 +403,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type = ref_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc5: %pattern_type = var_pattern %self.param_patt
+// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc5: %pattern_type = var_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]

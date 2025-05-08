@@ -214,7 +214,7 @@ final impl forall [T:! type] T as Z(T) {}
 
 final impl forall [T:! Y] T as Z(T) {}
 
-// --- todo_non_final_overlaps_non_final_impl.carbon
+// --- fail_non_final_overlaps_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
@@ -226,5 +226,11 @@ class C(T:! type) {}
 // No diagnosis here as the type structure is unique.
 impl forall [T:! type] T as Z(C(T)) {}
 
-// TODO: Diagnose overlap with first impl (same type structure).
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE-9]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: impl forall [T:! Y] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! type] T as Z(T) {}

@@ -103,11 +103,16 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
     return SemIR::LocIdAndInst::NoLoc(namespace_inst);
   }
 
+  // If the import was itself imported, use its location.
+  if (auto import_ir_inst_id = context.insts().GetImportSource(import_id);
+      import_ir_inst_id.has_value()) {
+    return MakeImportedLocIdAndInst(context, import_ir_inst_id, namespace_inst);
+  }
+
+  // Otherwise we should have a node location for some kind of namespace
+  // declaration in the current file.
   SemIR::LocId import_loc_id = context.insts().GetCanonicalLocId(import_id);
   switch (import_loc_id.kind()) {
-    case SemIR::LocId::Kind::ImportIRInstId:
-      return MakeImportedLocIdAndInst(
-          context, import_loc_id.import_ir_inst_id(), namespace_inst);
     case SemIR::LocId::Kind::NodeId:
       return SemIR::LocIdAndInst(context.parse_tree().As<Parse::AnyNamespaceId>(
                                      import_loc_id.node_id()),
@@ -115,6 +120,7 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
     case SemIR::LocId::Kind::None:
       // TODO: Either document the use-case for this, or require a location.
       return SemIR::LocIdAndInst::NoLoc(namespace_inst);
+    case SemIR::LocId::Kind::ImportIRInstId:
     case SemIR::LocId::Kind::InstId:
       CARBON_FATAL("Unexpected LocId kind");
   }

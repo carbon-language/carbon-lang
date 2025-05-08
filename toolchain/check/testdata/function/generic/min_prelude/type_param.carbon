@@ -43,7 +43,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc14_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -62,8 +62,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %p.patt: @F.%pattern_type.loc15 (%pattern_type.afe) = binding_pattern p
-// CHECK:STDOUT:       %.loc15_3: @F.%pattern_type.loc15 (%pattern_type.afe) = var_pattern %p.patt
+// CHECK:STDOUT:       %p.patt: @F.%pattern_type.loc15 (%pattern_type.afe) = binding_pattern p [concrete]
+// CHECK:STDOUT:       %.loc15_3: @F.%pattern_type.loc15 (%pattern_type.afe) = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.var: ref @F.%ptr.loc15_11.2 (%ptr) = var p
 // CHECK:STDOUT:     %.loc15_11: type = splice_block %ptr.loc15_11.1 [symbolic = %ptr.loc15_11.2 (constants.%ptr)] {
@@ -72,7 +72,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: ref @F.%ptr.loc15_11.2 (%ptr) = bind_name p, %p.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %n.patt: @F.%pattern_type.loc16 (%pattern_type.7dc) = binding_pattern n
+// CHECK:STDOUT:       %n.patt: @F.%pattern_type.loc16 (%pattern_type.7dc) = binding_pattern n [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc15_11.2 (%ptr) = name_ref p, %p
 // CHECK:STDOUT:     %.loc16_15: @F.%ptr.loc15_11.2 (%ptr) = bind_value %p.ref

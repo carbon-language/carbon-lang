@@ -286,7 +286,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   return result;
 }
 
-auto ScopeStack::Restore(SuspendedScope scope) -> void {
+auto ScopeStack::Restore(SuspendedScope&& scope) -> void {
   compile_time_binding_stack_.PushArray();
   for (auto [index, inst_id] : scope.suspended_items) {
     if (index == SuspendedScope::ScopeItem::IndexForCompileTimeBinding) {

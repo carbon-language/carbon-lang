@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/version:rules.bzl", "expand_version_build_info")
 
@@ -329,6 +330,11 @@ sh_test(
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
     ],
+)
+
+cc_library(
+    name = "move_only",
+    hdrs = ["move_only.h"],
 )
 
 cc_library(

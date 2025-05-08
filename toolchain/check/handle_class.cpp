@@ -281,7 +281,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   context.scope_stack().PushForEntity(
       class_decl_id, class_info.scope_id,
       context.generics().GetSelfSpecific(class_info.generic_id));
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, class_info.generic_id);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);

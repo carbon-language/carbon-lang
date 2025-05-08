@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 
 #include "common/array_stack.h"
+#include "common/move_only.h"
 #include "common/set.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/full_pattern_stack.h"
@@ -44,6 +45,7 @@ class ScopeStack {
   };
 
   // Information about a scope that has been temporarily removed from the stack.
+  // This type is large, so moves of this type should be avoided.
   struct SuspendedScope;
 
   // Pushes a scope for a declaration name's parameters.
@@ -168,7 +170,7 @@ class ScopeStack {
   auto Suspend() -> SuspendedScope;
 
   // Restores a suspended scope stack entry.
-  auto Restore(SuspendedScope scope) -> void;
+  auto Restore(SuspendedScope&& scope) -> void;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
@@ -189,7 +191,7 @@ class ScopeStack {
 
  private:
   // An entry in scope_stack_.
-  struct ScopeStackEntry {
+  struct ScopeStackEntry : public MoveOnly<ScopeStackEntry> {
     auto is_lexical_scope() const -> bool { return !scope_id.has_value(); }
 
     // The sequential index of this scope entry within the file.
@@ -315,7 +317,7 @@ class ScopeStack {
   FullPatternStack full_pattern_stack_;
 };
 
-struct ScopeStack::SuspendedScope {
+struct ScopeStack::SuspendedScope : public MoveOnly<SuspendedScope> {
   // An item that was suspended within this scope. This represents either a
   // lexical lookup entry in this scope, or a compile time binding entry in this
   // scope.

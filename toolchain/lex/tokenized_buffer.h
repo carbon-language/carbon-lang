@@ -60,6 +60,12 @@ using CommentIterator = IndexIterator<CommentIndex>;
 // Random-access iterator over tokens within the buffer.
 using TokenIterator = IndexIterator<TokenIndex>;
 
+// A token range which is inclusive of the begin and end.
+struct InclusiveTokenRange {
+  TokenIndex begin;
+  TokenIndex end;
+};
+
 // A buffer of tokenized Carbon source code.
 //
 // This is constructed by lexing the source code text into a series of tokens.
@@ -180,9 +186,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto TokenToDiagnosticLoc(TokenIndex token) const
       -> Diagnostics::ConvertedLoc;
 
-  // Returns true if the given range overlaps with a `DumpSemIRRange`.
-  auto OverlapsWithDumpSemIRRange(TokenIndex begin,
-                                  TokenIndex inclusive_end) const -> bool;
+  // Returns true if the given range overlaps with an entry in
+  // `dump_sem_ir_ranges_`. Must not be called when there are no ranges; query
+  // `has_dump_sem_ir_ranges` first.
+  auto OverlapsWithDumpSemIRRange(Lex::InclusiveTokenRange range) const -> bool;
 
   // Returns true if the buffer has errors that were detected at lexing time.
   auto has_errors() const -> bool { return has_errors_; }
@@ -248,18 +255,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
    private:
     const TokenizedBuffer* tokens_;
-  };
-
-  // A range of tokens marked by `//@dump-semir-[begin|end]`. The end token is
-  // non-inclusive: [begin, end).
-  //
-  // The particular syntax was chosen because it can be lexed efficiently. It
-  // only occurs in invalid comment strings, so shouldn't slow down lexing of
-  // correct code. It's also comment-like because its presence won't affect
-  // parse/check.
-  struct DumpSemIRRange {
-    TokenIndex begin;
-    TokenIndex end;
   };
 
   // Converts a pointer into the source to a diagnostic location.
@@ -503,8 +498,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Comments in the file.
   llvm::SmallVector<CommentData> comments_;
 
-  // Ranges of SemIR to dump.
-  llvm::SmallVector<DumpSemIRRange> dump_sem_ir_ranges_;
+  // A range of tokens marked by `//@dump-semir-[begin|end]`.
+  //
+  // The particular syntax was chosen because it can be lexed efficiently. It
+  // only occurs in invalid comment strings, so shouldn't slow down lexing of
+  // correct code. It's also comment-like because its presence won't affect
+  // parse/check.
+  llvm::SmallVector<InclusiveTokenRange> dump_sem_ir_ranges_;
 
   // An upper bound on the number of parse tree nodes that we expect to be
   // created for the tokens in this buffer.

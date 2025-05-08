@@ -15,6 +15,9 @@ namespace Carbon::SemIR {
 
 // Function-specific fields.
 struct FunctionFields {
+  // Kinds of special functions.
+  enum class SpecialFunctionKind : uint8_t { None, Thunk };
+
   // Kinds of virtual modifiers that can apply to functions.
   enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
 
@@ -39,6 +42,11 @@ struct FunctionFields {
   // needs a return slot, but is always present if the function has a declared
   // return type.
   InstId return_slot_pattern_id;
+
+  // Which kind of special function this is, if any. This is used in cases where
+  // a special function would otherwise be indistinguishable from a normal
+  // function.
+  SpecialFunctionKind special_function_kind = SpecialFunctionKind::None;
 
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.

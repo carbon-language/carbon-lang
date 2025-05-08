@@ -43,33 +43,33 @@ fn Run() {
 // CHECK:STDOUT: define void @main() !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4, !dbg !13
-// CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !13
-// CHECK:STDOUT:   %c.var = alloca i32, align 4, !dbg !13
-// CHECK:STDOUT:   %d.var = alloca i32, align 4, !dbg !13
+// CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !14
+// CHECK:STDOUT:   %c.var = alloca i32, align 4, !dbg !15
+// CHECK:STDOUT:   %d.var = alloca i32, align 4, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %a.var), !dbg !13
-// CHECK:STDOUT:   %.loc15_28.1.temp = alloca { i32, i32 }, align 8, !dbg !14
-// CHECK:STDOUT:   call void @_CA.Main(ptr %.loc15_28.1.temp), !dbg !14
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_28.1.temp, i32 0, i32 0, !dbg !14
-// CHECK:STDOUT:   %.loc15_28.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc15_28.4.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 0, !dbg !14
-// CHECK:STDOUT:   store i32 %.loc15_28.3, ptr %.loc15_28.4.array.index, align 4, !dbg !14
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_28.1.temp, i32 0, i32 1, !dbg !14
-// CHECK:STDOUT:   %.loc15_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc15_28.7.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 1, !dbg !14
-// CHECK:STDOUT:   store i32 %.loc15_28.6, ptr %.loc15_28.7.array.index, align 4, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %b.var), !dbg !13
-// CHECK:STDOUT:   store i32 1, ptr %b.var, align 4, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %c.var), !dbg !13
-// CHECK:STDOUT:   %.loc17_18 = load i32, ptr %b.var, align 4, !dbg !16
-// CHECK:STDOUT:   %.loc17_19.1.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc17_18, !dbg !17
-// CHECK:STDOUT:   %.loc17_19.2 = load i32, ptr %.loc17_19.1.array.index, align 4, !dbg !17
-// CHECK:STDOUT:   store i32 %.loc17_19.2, ptr %c.var, align 4, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %d.var), !dbg !13
-// CHECK:STDOUT:   %.loc18_18.1.temp = alloca [2 x i32], align 4, !dbg !19
-// CHECK:STDOUT:   call void @_CB.Main(ptr %.loc18_18.1.temp), !dbg !19
-// CHECK:STDOUT:   %.loc18_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc18_18.1.temp, i32 0, i32 1, !dbg !19
-// CHECK:STDOUT:   %.loc18_21.2 = load i32, ptr %.loc18_21.1.array.index, align 4, !dbg !19
-// CHECK:STDOUT:   store i32 %.loc18_21.2, ptr %d.var, align 4, !dbg !20
+// CHECK:STDOUT:   %.loc15_28.1.temp = alloca { i32, i32 }, align 8, !dbg !17
+// CHECK:STDOUT:   call void @_CA.Main(ptr %.loc15_28.1.temp), !dbg !17
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_28.1.temp, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc15_28.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !17
+// CHECK:STDOUT:   %.loc15_28.4.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 0, !dbg !17
+// CHECK:STDOUT:   store i32 %.loc15_28.3, ptr %.loc15_28.4.array.index, align 4, !dbg !17
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_28.1.temp, i32 0, i32 1, !dbg !17
+// CHECK:STDOUT:   %.loc15_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !17
+// CHECK:STDOUT:   %.loc15_28.7.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 1, !dbg !17
+// CHECK:STDOUT:   store i32 %.loc15_28.6, ptr %.loc15_28.7.array.index, align 4, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %b.var), !dbg !14
+// CHECK:STDOUT:   store i32 1, ptr %b.var, align 4, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %c.var), !dbg !15
+// CHECK:STDOUT:   %.loc17_18 = load i32, ptr %b.var, align 4, !dbg !18
+// CHECK:STDOUT:   %.loc17_19.1.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc17_18, !dbg !19
+// CHECK:STDOUT:   %.loc17_19.2 = load i32, ptr %.loc17_19.1.array.index, align 4, !dbg !19
+// CHECK:STDOUT:   store i32 %.loc17_19.2, ptr %c.var, align 4, !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %d.var), !dbg !16
+// CHECK:STDOUT:   %.loc18_18.1.temp = alloca [2 x i32], align 4, !dbg !20
+// CHECK:STDOUT:   call void @_CB.Main(ptr %.loc18_18.1.temp), !dbg !20
+// CHECK:STDOUT:   %.loc18_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc18_18.1.temp, i32 0, i32 1, !dbg !20
+// CHECK:STDOUT:   %.loc18_21.2 = load i32, ptr %.loc18_21.1.array.index, align 4, !dbg !20
+// CHECK:STDOUT:   store i32 %.loc18_21.2, ptr %d.var, align 4, !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,11 +104,11 @@ fn Run() {
 // CHECK:STDOUT: !11 = !DILocation(line: 12, column: 27, scope: !9)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 15, column: 3, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 26, scope: !12)
-// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 3, scope: !12)
-// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 18, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 16, scope: !12)
-// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !12)
-// CHECK:STDOUT: !19 = !DILocation(line: 18, column: 16, scope: !12)
-// CHECK:STDOUT: !20 = !DILocation(line: 18, column: 3, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 16, column: 3, scope: !12)
+// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 3, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 15, column: 26, scope: !12)
+// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 18, scope: !12)
+// CHECK:STDOUT: !19 = !DILocation(line: 17, column: 16, scope: !12)
+// CHECK:STDOUT: !20 = !DILocation(line: 18, column: 16, scope: !12)
 // CHECK:STDOUT: !21 = !DILocation(line: 14, column: 1, scope: !12)

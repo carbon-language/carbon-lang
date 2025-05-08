@@ -57,6 +57,14 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
     return values_.Get(id);
   }
 
+  // Returns a new block formed by applying `transform(elem_id)` to each element
+  // in the specified block.
+  template <typename TransformFnT>
+  auto Transform(IdT id, TransformFnT transform) -> IdT {
+    llvm::SmallVector<ElementType> block(llvm::map_range(Get(id), transform));
+    return Add(block);
+  }
+
   // Adds a block or finds an existing canonical block with the given content,
   // and returns an ID to reference it.
   auto AddCanonical(llvm::ArrayRef<ElementType> content) -> IdT {

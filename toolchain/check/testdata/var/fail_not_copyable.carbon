@@ -57,8 +57,8 @@ fn F(x: X) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.019 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.019 = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %x.patt: %pattern_type.019 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.019 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %X = value_param call_param0
 // CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -78,16 +78,16 @@ fn F(x: X) {
 // CHECK:STDOUT: fn @F(%x.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.b05 = binding_pattern s
-// CHECK:STDOUT:     %.loc21: %pattern_type.b05 = var_pattern %s.patt
+// CHECK:STDOUT:     %s.patt: %pattern_type.b05 = binding_pattern s [concrete]
+// CHECK:STDOUT:     %.loc21: %pattern_type.b05 = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref String = var s
 // CHECK:STDOUT:   %str: String = string_literal "hello" [concrete = constants.%str]
 // CHECK:STDOUT:   assign %s.var, <error>
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.019 = binding_pattern y
-// CHECK:STDOUT:     %.loc28: %pattern_type.019 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.019 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %.loc28: %pattern_type.019 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %X = var y
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x

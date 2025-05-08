@@ -23,6 +23,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_structure.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -54,15 +55,17 @@ CheckUnit::CheckUnit(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
+      tree_and_subtrees_getter_(
+          tree_and_subtrees_getters
+              [unit_and_imports->unit->sem_ir->check_ir_id().index]),
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(&emitter_, unit_and_imports_->unit->tree_and_subtrees_getter,
-               unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports),
-               tree_and_subtrees_getters.size(), vlog_stream) {}
+      context_(
+          &emitter_, tree_and_subtrees_getter_, unit_and_imports_->unit->sem_ir,
+          GetImportedIRCount(unit_and_imports), total_ir_count_, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -366,7 +369,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    const auto& tree = unit_and_imports_->unit->tree_and_subtrees_getter();
+    const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
@@ -412,14 +415,11 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
   for (const auto& function : context_.functions().array_ref()) {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
-      auto function_loc_id =
-          context_.insts().GetCanonicalLocId(function.non_owning_decl_id);
-      CARBON_CHECK(function_loc_id.kind() ==
-                   SemIR::LocId::Kind::ImportIRInstId);
-      auto import_ir_id = context_.sem_ir()
-                              .import_ir_insts()
-                              .Get(function_loc_id.import_ir_inst_id())
-                              .ir_id();
+      auto function_import_id =
+          context_.insts().GetImportSource(function.non_owning_decl_id);
+      CARBON_CHECK(function_import_id.has_value());
+      auto import_ir_id =
+          context_.sem_ir().import_ir_insts().Get(function_import_id).ir_id();
       auto& import_ir = context_.import_irs().Get(import_ir_id);
       if (import_ir.sem_ir->package_id().has_value() !=
           context_.sem_ir().package_id().has_value()) {
@@ -570,10 +570,81 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   context_.inst_block_stack().PopAndDiscard();
 }
 
+auto CheckUnit::CheckOverlappingImpls() -> void {
+  // Collect all of the impls sorted into contiguous segments by their
+  // interface. We only need to compare impls within each such segment.
+  llvm::SmallVector<SemIR::Impl> impls_by_interface(
+      context_.impls().array_ref());
+  llvm::stable_sort(
+      impls_by_interface, [](const SemIR::Impl& a, const SemIR::Impl& b) {
+        return a.interface.interface_id.index < b.interface.interface_id.index;
+      });
+
+  const auto* it = impls_by_interface.begin();
+  while (it != impls_by_interface.end()) {
+    const auto* segment_begin = it;
+    do {
+      ++it;
+    } while (it != impls_by_interface.end() &&
+             it->interface.interface_id ==
+                 segment_begin->interface.interface_id);
+    const auto* segment_end = it;
+
+    if (std::distance(segment_begin, segment_end) == 1) {
+      // Only 1 interface in the segment; nothing to overlap with.
+      continue;
+    }
+
+    CheckOverlappingImplsForInterface(
+        llvm::ArrayRef(segment_begin, segment_end));
+  }
+}
+
+auto CheckUnit::CheckOverlappingImplsForInterface(
+    llvm::ArrayRef<SemIR::Impl> impls) -> void {
+  for (auto [index_a, impl_a] : llvm::enumerate(impls)) {
+    if (impl_a.witness_id == SemIR::ErrorInst::InstId) {
+      continue;
+    }
+    auto impl_a_type_structure =
+        BuildTypeStructure(context_, impl_a.self_id, impl_a.interface);
+
+    for (const auto& impl_b : impls.drop_front(index_a + 1)) {
+      if (impl_b.witness_id == SemIR::ErrorInst::InstId) {
+        continue;
+      }
+
+      // The type structure each non-final `impl` must differ from all other
+      // non-final `impl` for the same interface visible from the file.
+      if (!impl_a.is_final && !impl_b.is_final) {
+        auto impl_b_type_structure =
+            BuildTypeStructure(context_, impl_b.self_id, impl_b.interface);
+        if (impl_a_type_structure == impl_b_type_structure) {
+          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinal, Error,
+                            "found non-final `impl` that fully overlaps "
+                            "previous non-final `impl`");
+          auto builder =
+              emitter_.Build(impl_b.latest_decl_id(), ImplFullyOverlapNonFinal);
+          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinalNote, Note,
+                            "fully overlaps `impl` here");
+          builder.Note(impl_a.latest_decl_id(), ImplFullyOverlapNonFinalNote);
+          builder.Emit();
+          break;
+        }
+      }
+    }
+
+    // TODO: The self + constraint of a `impl` must not match against (be
+    // fully subsumed by) any final `impl` visible from the file. Do a
+    // final-only query for all non-final impls?
+  }
+}
+
 auto CheckUnit::FinishRun() -> void {
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
+  CheckOverlappingImpls();
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

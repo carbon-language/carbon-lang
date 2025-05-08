@@ -79,10 +79,10 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {
-// CHECK:STDOUT:     %s.patt: %pattern_type.c19 = binding_pattern s
-// CHECK:STDOUT:     %s.param_patt: %pattern_type.c19 = value_param_pattern %s.patt, call_param0
-// CHECK:STDOUT:     %b.patt: %pattern_type.049 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.049 = value_param_pattern %b.patt, call_param1
+// CHECK:STDOUT:     %s.patt: %pattern_type.c19 = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.param_patt: %pattern_type.c19 = value_param_pattern %s.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.049 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.049 = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %struct_type.a.72c = value_param call_param0
 // CHECK:STDOUT:     %.loc19: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.72c] {
@@ -98,9 +98,9 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %F.decl: %F.type.649 = fn_decl @F.1 [concrete = constants.%F.485] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.5f8 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.5f8 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %.loc12_8: %pattern_type.f6d = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %self.patt: %pattern_type.5f8 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.5f8 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc12_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.6db = value_param call_param0
 // CHECK:STDOUT:     %.loc12_20: type = splice_block %ptr [concrete = constants.%ptr.6db] {
