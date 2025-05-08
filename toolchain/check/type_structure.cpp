@@ -130,115 +130,11 @@ class TypeStructureBuilder {
     if (self_inst_id.has_value()) {
       type_iter.Add(self_inst_id);
     }
-    BuildTypeStructure(std::move(type_iter));
-
-    // TODO: This requires 4 SmallVector moves (two here and two in the
-    // constructor). Find a way to reduce that.
-    return TypeStructure(std::exchange(structure_, {}),
-                         std::exchange(symbolic_type_indices_, {}),
-                         std::exchange(concrete_types_, {}));
+    return Build(std::move(type_iter));
   }
 
  private:
-  auto BuildTypeStructure(SemIR::TypeIterator type_iter) -> void {
-    while (true) {
-      auto step = type_iter.Next();
-      if (step.Is<SemIR::TypeIterator::Step::Done>()) {
-        break;
-      }
-
-      VariantMatch(
-          step.any,
-          [&](SemIR::TypeIterator::Step::Done) {
-            CARBON_FATAL("already handled above");
-          },
-          [&](SemIR::TypeIterator::Step::End) {
-            AppendStructuralConcreteCloseParen();
-          },
-          [&](SemIR::TypeIterator::Step::ConcreteType concrete) {
-            AppendStructuralConcrete(concrete.type_id);
-          },
-          [&](SemIR::TypeIterator::Step::SymbolicType) {
-            AppendStructuralSymbolic();
-          },
-          [&](SemIR::TypeIterator::Step::TemplateType) {
-            AppendStructuralSymbolic();
-          },
-          [&](SemIR::TypeIterator::Step::Value) {
-            // TODO: Include the value's type into the structure, with the type
-            // coming first and paired together with the value, like:
-            // `{TypeWithPossibleNestedTypes, Concrete}`.
-            // We might want a different bracket marker than ConcreteOpenParen
-            // for this so that it can look different in the type structure when
-            // dumped.
-            AppendStructuralConcrete(SemIR::ErrorInst::TypeId);
-          },
-          [&](SemIR::TypeIterator::Step::StartOnly start) {
-            VariantMatch(
-                start.any,
-                [&](SemIR::TypeIterator::Step::ClassStart class_start) {
-                  AppendStructuralConcrete(class_start.class_id);
-                },
-                [&](SemIR::TypeIterator::Step::StructStart struct_start) {
-                  AppendStructuralConcrete(struct_start.type_id);
-                },
-                [&](SemIR::TypeIterator::Step::TupleStart) {
-                  AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
-                },
-                [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
-                  AppendStructuralConcrete(interface_start.interface_id);
-                },
-                [&](SemIR::TypeIterator::Step::IntStart int_start) {
-                  AppendStructuralConcrete(int_start.type_id);
-                });
-          },
-          [&](SemIR::TypeIterator::Step::StartWithEnd start_with_end) {
-            VariantMatch(
-                start_with_end.any,
-                [&](SemIR::TypeIterator::Step::ClassStart class_start) {
-                  // TODO: We should be able to use `class_id` here but non-type
-                  // values are not differentiated right now. So `Int(32)` and
-                  // `Int(16)` and `Int(N)` all look the same. We need to make
-                  // this change in order to use the concrete types in type
-                  // structure comparison for impl matching.
-                  AppendStructuralConcreteOpenParen(class_start.type_id);
-                },
-                [&](SemIR::TypeIterator::Step::StructStart struct_start) {
-                  // TODO: Should we use a `TypeStructure::ConcreteStructType`
-                  // here? To do so we need to include the struct field names in
-                  // the concrete elements of the type structure to
-                  // differentiate different struct types.
-                  AppendStructuralConcreteOpenParen(struct_start.type_id);
-                },
-                [&](SemIR::TypeIterator::Step::TupleStart) {
-                  AppendStructuralConcreteOpenParen(
-                      TypeStructure::ConcreteTupleType());
-                },
-                [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
-                  AppendStructuralConcreteOpenParen(
-                      interface_start.interface_id);
-                },
-                [&](SemIR::TypeIterator::Step::ArrayStart start) {
-                  AppendStructuralConcreteOpenParen(
-                      // TODO: We should be able to use
-                      // `TypeStructure::ConcreteArrayType()` here but non-type
-                      // values are not differentiated right now. So
-                      // `array(i32, 1)` and `array(i32, 2)` both look the same.
-                      // We need to make this change in order to use the
-                      // concrete types in type structure comparison for impl
-                      // matching.
-                      start.type_id);
-                },
-                [&](SemIR::TypeIterator::Step::IntStart int_start) {
-                  AppendStructuralConcreteOpenParen(int_start.type_id);
-                },
-                [&](SemIR::TypeIterator::Step::PointerStart) {
-                  AppendStructuralConcreteOpenParen(
-                      TypeStructure::ConcretePointerType());
-                });
-          });
-    }
-  }
+  auto Build(SemIR::TypeIterator type_iter) -> TypeStructure;
 
   // Append a structural element to the TypeStructure being built.
   auto AppendStructuralConcrete(TypeStructure::ConcreteType type) -> void {
@@ -265,6 +161,113 @@ class TypeStructureBuilder {
   llvm::SmallVector<int> symbolic_type_indices_;
   llvm::SmallVector<TypeStructure::ConcreteType> concrete_types_;
 };
+
+// Builds the type structure and returns it.
+auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
+    -> TypeStructure {
+  while (true) {
+    auto step = type_iter.Next();
+    if (step.Is<SemIR::TypeIterator::Step::Done>()) {
+      break;
+    }
+
+    VariantMatch(
+        step.any,
+        [&](SemIR::TypeIterator::Step::Done) {
+          CARBON_FATAL("already handled above");
+        },
+        [&](SemIR::TypeIterator::Step::End) {
+          AppendStructuralConcreteCloseParen();
+        },
+        [&](SemIR::TypeIterator::Step::ConcreteType concrete) {
+          AppendStructuralConcrete(concrete.type_id);
+        },
+        [&](SemIR::TypeIterator::Step::SymbolicType) {
+          AppendStructuralSymbolic();
+        },
+        [&](SemIR::TypeIterator::Step::TemplateType) {
+          AppendStructuralSymbolic();
+        },
+        [&](SemIR::TypeIterator::Step::Value) {
+          // TODO: Include the value's type into the structure, with the type
+          // coming first and paired together with the value, like:
+          // `{TypeWithPossibleNestedTypes, Concrete}`.
+          // We might want a different bracket marker than ConcreteOpenParen
+          // for this so that it can look different in the type structure when
+          // dumped.
+          AppendStructuralConcrete(SemIR::ErrorInst::TypeId);
+        },
+        [&](SemIR::TypeIterator::Step::StartOnly start) {
+          VariantMatch(
+              start.any,
+              [&](SemIR::TypeIterator::Step::ClassStart class_start) {
+                AppendStructuralConcrete(class_start.class_id);
+              },
+              [&](SemIR::TypeIterator::Step::StructStart struct_start) {
+                AppendStructuralConcrete(struct_start.type_id);
+              },
+              [&](SemIR::TypeIterator::Step::TupleStart) {
+                AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
+              },
+              [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
+                AppendStructuralConcrete(interface_start.interface_id);
+              },
+              [&](SemIR::TypeIterator::Step::IntStart int_start) {
+                AppendStructuralConcrete(int_start.type_id);
+              });
+        },
+        [&](SemIR::TypeIterator::Step::StartWithEnd start_with_end) {
+          VariantMatch(
+              start_with_end.any,
+              [&](SemIR::TypeIterator::Step::ClassStart class_start) {
+                // TODO: We should be able to use `class_id` here but non-type
+                // values are not differentiated right now. So `Int(32)` and
+                // `Int(16)` and `Int(N)` all look the same. We need to make
+                // this change in order to use the concrete types in type
+                // structure comparison for impl matching.
+                AppendStructuralConcreteOpenParen(class_start.type_id);
+              },
+              [&](SemIR::TypeIterator::Step::StructStart struct_start) {
+                // TODO: Should we use a `TypeStructure::ConcreteStructType`
+                // here? To do so we need to include the struct field names in
+                // the concrete elements of the type structure to
+                // differentiate different struct types.
+                AppendStructuralConcreteOpenParen(struct_start.type_id);
+              },
+              [&](SemIR::TypeIterator::Step::TupleStart) {
+                AppendStructuralConcreteOpenParen(
+                    TypeStructure::ConcreteTupleType());
+              },
+              [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
+                AppendStructuralConcreteOpenParen(interface_start.interface_id);
+              },
+              [&](SemIR::TypeIterator::Step::ArrayStart start) {
+                AppendStructuralConcreteOpenParen(
+                    // TODO: We should be able to use
+                    // `TypeStructure::ConcreteArrayType()` here but non-type
+                    // values are not differentiated right now. So
+                    // `array(i32, 1)` and `array(i32, 2)` both look the same.
+                    // We need to make this change in order to use the
+                    // concrete types in type structure comparison for impl
+                    // matching.
+                    start.type_id);
+              },
+              [&](SemIR::TypeIterator::Step::IntStart int_start) {
+                AppendStructuralConcreteOpenParen(int_start.type_id);
+              },
+              [&](SemIR::TypeIterator::Step::PointerStart) {
+                AppendStructuralConcreteOpenParen(
+                    TypeStructure::ConcretePointerType());
+              });
+        });
+  }
+
+  // TODO: This requires 4 SmallVector moves (two here and two in the
+  // constructor). Find a way to reduce that.
+  return TypeStructure(std::exchange(structure_, {}),
+                       std::exchange(symbolic_type_indices_, {}),
+                       std::exchange(concrete_types_, {}));
+}
 
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,
                         SemIR::SpecificInterface interface) -> TypeStructure {
