@@ -69,7 +69,7 @@ concept IsStdVariant = IsStdVariantValue<std::decay_t<T>>;
   CARBON_FOR_EACH(CARBON_INTERNAL_KIND_ENUM_NAME, CARBON_FOR_EACH_COMMA, \
                   __VA_ARGS__)
 
-// Turns a list of numbers into a set to template specializations of the
+// Turns a list of numbers into a set of template specializations of the
 // variable `EnumType EnumValue`, with each specialization having the Nth value
 // in the EnumType (as defined by CARBON_INTERNAL_KIND_TYPES_TO_ENUM_NAMES).
 #define CARBON_INTERNAL_KIND_TYPE_TO_ENUM_NAME(n)                    \
