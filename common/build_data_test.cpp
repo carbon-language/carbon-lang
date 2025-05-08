@@ -14,7 +14,7 @@ namespace {
 using ::testing::EndsWith;
 using ::testing::HasSubstr;
 
-TEST(ErrorTest, Error) {
+TEST(BuildDataTest, Values) {
   EXPECT_FALSE(BuildData::Platform.empty());
   // Can't really test BuildCoverageEnabled.
   EXPECT_THAT(BuildData::TargetName, EndsWith("/common:build_data_test"));
