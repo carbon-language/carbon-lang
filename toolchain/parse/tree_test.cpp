@@ -40,6 +40,11 @@ TEST_F(TreeTest, IsValid) {
   EXPECT_TRUE((*tree.postorder().begin()).has_value());
 }
 
+TEST_F(TreeTest, NullStringRef) {
+  Tree& tree = compile_helper_.GetTree(llvm::StringRef());
+  EXPECT_TRUE((*tree.postorder().begin()).has_value());
+}
+
 TEST_F(TreeTest, AsAndTryAs) {
   auto [tokens, tree_and_subtrees] =
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");

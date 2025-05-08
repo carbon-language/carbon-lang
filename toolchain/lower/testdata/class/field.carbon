@@ -122,14 +122,14 @@ fn Run() {
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %o.var = alloca {}, align 8, !dbg !7
-// CHECK:STDOUT:   %u.var = alloca { ptr, {} }, align 8, !dbg !7
+// CHECK:STDOUT:   %u.var = alloca { ptr, {} }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %o.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %u.var), !dbg !7
-// CHECK:STDOUT:   %.loc15_33.2.a = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   store ptr %o.var, ptr %.loc15_33.2.a, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc15_33.4.b = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc15_33.4.b, ptr align 1 @Other.val.loc15_33.5, i64 0, i1 false), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %u.var), !dbg !8
+// CHECK:STDOUT:   %.loc15_33.2.a = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   store ptr %o.var, ptr %.loc15_33.2.a, align 8, !dbg !9
+// CHECK:STDOUT:   %.loc15_33.4.b = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc15_33.4.b, ptr align 1 @Other.val.loc15_33.5, i64 0, i1 false), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -155,8 +155,9 @@ fn Run() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 16, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 11, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 15, column: 16, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 1, scope: !4)
 // CHECK:STDOUT: ; ModuleID = 'implicit_init_with_nonempty_nonconst.carbon'
 // CHECK:STDOUT: source_filename = "implicit_init_with_nonempty_nonconst.carbon"
 // CHECK:STDOUT:
@@ -165,15 +166,15 @@ fn Run() {
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %o.var = alloca { i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   %u.var = alloca { ptr, { i32 } }, align 8, !dbg !7
+// CHECK:STDOUT:   %u.var = alloca { ptr, { i32 } }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %o.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %u.var), !dbg !7
-// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw { ptr, { i32 } }, ptr %u.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   store ptr %o.var, ptr %.loc17_40.2.a, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw { ptr, { i32 } }, ptr %u.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   %.loc17_39.3.v = getelementptr inbounds nuw { i32 }, ptr %.loc17_40.4.b, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc17_40.4.b, ptr align 4 @Other.val.loc17_40.5, i64 4, i1 false), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %u.var), !dbg !8
+// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw { ptr, { i32 } }, ptr %u.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   store ptr %o.var, ptr %.loc17_40.2.a, align 8, !dbg !9
+// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw { ptr, { i32 } }, ptr %u.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc17_39.3.v = getelementptr inbounds nuw { i32 }, ptr %.loc17_40.4.b, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc17_40.4.b, ptr align 4 @Other.val.loc17_40.5, i64 4, i1 false), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -199,6 +200,7 @@ fn Run() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 16, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 31, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 16, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 31, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 1, scope: !4)

@@ -137,10 +137,6 @@ try-import %workspace%/user.bazelrc
 # common --incompatible_no_rule_outputs_param
 # common --incompatible_stop_exporting_language_modules
 
-# Incompatible with `rules_flex`.
-# TODO: Enable the flag once compatibility issues are fixed.
-# common --incompatible_disable_starlark_host_transitions
-
 # Incompatible with `rules_pkg`.
 # TODO: Enable the flag once compatibility issues are fixed.
 # common --incompatible_disable_target_default_provider_fields
@@ -162,9 +158,11 @@ common --incompatible_config_setting_private_default_visibility
 common --incompatible_default_to_explicit_init_py
 common --incompatible_depset_for_java_output_source_jars
 common --incompatible_depset_for_libraries_to_link_getter
+common --incompatible_disable_autoloads_in_main_repo
 common --incompatible_disable_native_android_rules
 common --incompatible_disable_native_repo_rules
 common --incompatible_disable_objc_library_transition
+common --incompatible_disable_starlark_host_transitions
 common --incompatible_disable_target_provider_fields
 common --incompatible_disallow_ctx_resolve_tools
 common --incompatible_disallow_empty_glob
@@ -178,6 +176,7 @@ common --incompatible_enable_apple_toolchain_resolution
 common --incompatible_enable_deprecated_label_apis
 common --incompatible_enable_proto_toolchain_resolution
 common --incompatible_enforce_config_setting_visibility
+common --incompatible_enforce_starlark_utf8
 common --incompatible_exclusive_test_sandboxed
 common --incompatible_fail_on_unknown_attributes
 common --incompatible_fix_package_group_reporoot_syntax

@@ -16,7 +16,9 @@ namespace Carbon::Check {
 // State saved for a function definition that has been suspended after
 // processing its declaration and before processing its body. This is used for
 // inline method handling.
-struct SuspendedFunction {
+//
+// This type is large, so moves of this type should be avoided.
+struct SuspendedFunction : public MoveOnly<SuspendedFunction> {
   // The function that was declared.
   SemIR::FunctionId function_id;
   // The instruction ID of the FunctionDecl instruction.

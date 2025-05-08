@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
+#include "toolchain/check/deferred_definition_scope.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
@@ -216,6 +217,71 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   return {function_decl.function_id, decl_id};
 }
 
+static auto HasDeclaredReturnType(Context& context,
+                                  SemIR::FunctionId function_id) -> bool {
+  return context.functions()
+      .Get(function_id)
+      .return_slot_pattern_id.has_value();
+}
+
+auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
+                SemIR::SpecificId signature_specific_id,
+                SemIR::InstId callee_id) -> SemIR::InstId {
+  auto callee = SemIR::GetCalleeFunction(context.sem_ir(), callee_id);
+
+  // Check whether we can use the given function without a thunk.
+  // TODO: For virtual functions, we want different rules for checking `self`.
+  // TODO: This is too strict; for example, we should not compare parameter
+  // names here.
+  if (CheckFunctionTypeMatches(
+          context, context.functions().Get(callee.function_id),
+          context.functions().Get(signature_id), signature_specific_id,
+          /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
+    return callee_id;
+  }
+
+  // From P3763:
+  //   If the function in the interface does not have a return type, the
+  //   program is invalid if the function in the impl specifies a return type.
+  //
+  // Call into the redeclaration checking logic to produce a suitable error.
+  //
+  // TODO: Consider a different rule: always use an explicit return type for the
+  // thunk, and always convert the result of the wrapped call to the return type
+  // of the thunk.
+  if (!HasDeclaredReturnType(context, signature_id) &&
+      HasDeclaredReturnType(context, callee.function_id)) {
+    bool success = CheckFunctionReturnTypeMatches(
+        context, context.functions().Get(callee.function_id),
+        context.functions().Get(signature_id), signature_specific_id);
+    CARBON_CHECK(!success, "Return type unexpectedly matches");
+    return SemIR::ErrorInst::InstId;
+  }
+
+  // Create a scope for the function's parameters and generic parameters.
+  context.scope_stack().PushForDeclName();
+
+  // We can't use the function directly. Build a thunk.
+  // TODO: Check for and diagnose obvious reasons why this will fail, such as
+  // arity mismatch, before trying to build the thunk.
+  auto [function_id, thunk_id] =
+      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
+                        signature_specific_id, callee.function_id);
+
+  // Register the thunk to be defined when we reach the end of the enclosing
+  // deferred definition scope, for example an `impl` or `class` definition, as
+  // if the thunk's body were written inline in this location.
+  context.deferred_definition_scope_stack().AddPendingThunk({
+      .signature_id = signature_id,
+      .function_id = function_id,
+      .decl_id = thunk_id,
+      .callee_id = callee_id,
+      .scope = context.scope_stack().Suspend(),
+  });
+
+  return thunk_id;
+}
+
 // Build an expression that names the value matched by a pattern.
 static auto BuildPatternRef(Context& context, SemIR::FunctionId function_id,
                             SemIR::InstId pattern_id) -> SemIR::InstId {
@@ -285,13 +351,6 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
   return PerformCall(context, loc_id, callee_id, args);
 }
 
-static auto HasDeclaredReturnType(Context& context,
-                                  SemIR::FunctionId function_id) -> bool {
-  return context.functions()
-      .Get(function_id)
-      .return_slot_pattern_id.has_value();
-}
-
 // Given a declaration of a thunk and the function that it should call, build
 // the thunk body.
 static auto BuildThunkDefinition(Context& context,
@@ -352,60 +411,13 @@ static auto BuildThunkDefinition(Context& context,
   FinishGenericDefinition(context, function.generic_id);
 }
 
-auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
-                SemIR::SpecificId signature_specific_id,
-                SemIR::InstId callee_id) -> SemIR::InstId {
-  auto callee = SemIR::GetCalleeFunction(context.sem_ir(), callee_id);
+auto BuildThunkDefinition(Context& context, PendingThunk&& thunk) -> void {
+  context.scope_stack().Restore(std::move(thunk.scope));
 
-  // Check whether we can use the given function without a thunk.
-  // TODO: For virtual functions, we want different rules for checking `self`.
-  // TODO: This is too strict; for example, we should not compare parameter
-  // names here.
-  if (CheckFunctionTypeMatches(
-          context, context.functions().Get(callee.function_id),
-          context.functions().Get(signature_id), signature_specific_id,
-          /*check_syntax=*/false, /*check_self=*/true, /*diagnose=*/false)) {
-    return callee_id;
-  }
-
-  // From P3763:
-  //   If the function in the interface does not have a return type, the
-  //   program is invalid if the function in the impl specifies a return type.
-  //
-  // Call into the redeclaration checking logic to produce a suitable error.
-  //
-  // TODO: Consider a different rule: always use an explicit return type for the
-  // thunk, and always convert the result of the wrapped call to the return type
-  // of the thunk.
-  if (!HasDeclaredReturnType(context, signature_id) &&
-      HasDeclaredReturnType(context, callee.function_id)) {
-    bool success = CheckFunctionReturnTypeMatches(
-        context, context.functions().Get(callee.function_id),
-        context.functions().Get(signature_id), signature_specific_id);
-    CARBON_CHECK(!success, "Return type unexpectedly matches");
-    return SemIR::ErrorInst::InstId;
-  }
-
-  // Create a scope for the function's parameters and generic parameters.
-  context.scope_stack().PushForDeclName();
-
-  // We can't use the function directly. Build a thunk.
-  // TODO: Check for and diagnose obvious reasons why this will fail, such as
-  // arity mismatch, before trying to build the thunk.
-  auto [function_id, thunk_id] =
-      CloneFunctionDecl(context, SemIR::LocId(callee_id), signature_id,
-                        signature_specific_id, callee.function_id);
-
-  // Define the thunk.
-  // TODO: We should delay doing this until we get to the end of the enclosing
-  // deferred definition scope, if there is one. For example, an `impl` inside a
-  // `class` definition should have its thunks defined at the end of the class,
-  // like they would be if they were defined inline.
-  BuildThunkDefinition(context, signature_id, function_id, thunk_id, callee_id);
+  BuildThunkDefinition(context, thunk.signature_id, thunk.function_id,
+                       thunk.decl_id, thunk.callee_id);
 
   context.scope_stack().Pop();
-
-  return thunk_id;
 }
 
 }  // namespace Carbon::Check
