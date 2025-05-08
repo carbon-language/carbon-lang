@@ -251,8 +251,8 @@ fn F() {
 // --- int16_t_param_function_decl.h
 
 namespace std {
-  // Mimicking libc++ definition for int16_t: https://github.com/llvm/llvm-project/blob/fd800487382e2ee3944493d58a961b6f48290243/clang/lib/Headers/stdint.h#L245
-  typedef short int16_t;
+  // Mimicking glibc definition for int16_t: https://codebrowser.dev/glibc/glibc/posix/bits/types.h.html#__int16_t
+  typedef signed short int int16_t;
 } // namespace std
 
 auto foo(std::int16_t a) -> void;
