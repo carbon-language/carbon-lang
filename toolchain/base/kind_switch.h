@@ -82,7 +82,7 @@ template <class T>
 concept TypeFoundInVariant = false;
 
 // Used to cause a compler error, which will state that "ValidCaseType was not
-// satified" for T and std::variant<...>.
+// satisfied" for T and std::variant<...>.
 template <class T, class StdVariant>
   requires TypeFoundInVariant<T>
 struct ValidCaseType;
