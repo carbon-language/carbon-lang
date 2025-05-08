@@ -42,8 +42,8 @@ TEST(KindSwitch, VariantUnusedValue) {
       case CARBON_KIND(int n):
         str << "int = " << n;
         return str.TakeStr();
-        // The float value is not used.
-      case CARBON_KIND_(float):
+      case CARBON_KIND(float _):
+        // The float value is not used, we see that using `_` works.
         str << "float";
         return str.TakeStr();
     }
