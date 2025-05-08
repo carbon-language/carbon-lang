@@ -15,6 +15,7 @@
       CARBON_INTERNAL_FOR_EACH(macro, sep, __VA_ARGS__)))
 
 #define CARBON_FOR_EACH_COMMA() ,
+#define CARBON_FOR_EACH_SEMI() ;
 #define CARBON_FOR_EACH_CONCAT()
 
 // Internal helpers
