@@ -644,6 +644,9 @@ def _impl(ctx):
 
     # A feature that enables poisoning of value stores to detect use after
     # potential reallocation bugs.
+    #
+    # TODO: Remove this and leave poisoning always on once these bugs are
+    # fixed.
     poison_value_stores = feature(
         name = "poison_value_stores",
         requires = [feature_set(["asan"])],

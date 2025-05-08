@@ -29,6 +29,9 @@ namespace Internal {
 class ValueStoreNotPrintable {};
 }  // namespace Internal
 
+// Setup our compile time condition controlling poisoning of value stores. This is set to one by the Bazel flag `--features=poison_value_stores`.
+//
+// TODO: Eventually, this will always enabled when ASan is enabled, but we can't do that until we clean up all of the latent bugs.
 #ifndef CARBON_POISON_VALUE_STORES
 #define CARBON_POISON_VALUE_STORES 0
 #elif !LLVM_ADDRESS_SANITIZER_BUILD
@@ -215,6 +218,8 @@ class ValueStore
 
 #if CARBON_POISON_VALUE_STORES
   // Whether the vector is currently fully poisoned.
+  //
+  // We use this to avoid repeated re-poisoning of the entire store. Doing so is linear in the size of the store, and we trigger re-poisoning frequently, for example on each import. Tracking that here allows us to coalesce these into a single linear operation.
   mutable bool all_poisoned_ = true;
 #endif
 };
