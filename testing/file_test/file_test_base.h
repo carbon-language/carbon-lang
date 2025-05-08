@@ -107,10 +107,6 @@ class FileTestBase {
   // run.
   virtual auto AllowParallelRun() const -> bool { return true; }
 
-  // Returns the name of the test (relative to the repo root).
-  // Returns a bazel label that can be used to invoke this test.
-  virtual auto GetBazelLabel() -> std::string;
-
   // Modes for GetBazelCommand.
   enum class BazelMode : uint8_t {
     Autoupdate,

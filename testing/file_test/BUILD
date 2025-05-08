@@ -41,6 +41,7 @@ cc_library(
     deps = [
         ":autoupdate",
         ":manifest",
+        "//common:build_data",
         "//common:check",
         "//common:error",
         "//common:exe_path",

@@ -37,6 +37,29 @@ cc_library(
 )
 
 cc_library(
+    name = "build_data",
+    srcs = [
+        "build_data.cpp",
+        "build_data_linkstamp.h",
+    ],
+    hdrs = ["build_data.h"],
+    linkstamp = "build_data_linkstamp.cpp",
+    deps = ["@llvm-project//llvm:Support"],
+)
+
+cc_test(
+    name = "build_data_test",
+    size = "small",
+    srcs = ["build_data_test.cpp"],
+    deps = [
+        ":build_data",
+        ":ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "command_line",
     srcs = ["command_line.cpp"],
     hdrs = ["command_line.h"],
