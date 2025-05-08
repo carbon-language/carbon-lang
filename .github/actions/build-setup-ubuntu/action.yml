@@ -42,8 +42,22 @@ runs:
       run: |
         echo '*** Removing system clang packages'
         for version in ${remove_clang_versions//,/ }; do
-          sudo apt-get remove \
-            '^(clang(d)?|libc\+\+(abi)?|lib(clang|omp|unwind)|lld|lldb|llvm)-'
+          sudo apt-get remove clang-${version} \
+            clang-format-${version} \
+            clang-tidy-${version} \
+            clang-tools-${version} \
+            clangd-${version} \
+            lld-${version} \
+            lldb-${version} \
+            llvm-${version}-dev \
+            llvm-${version}-tools \
+            libc++-${version}-dev \
+            libc++abi-${version}-dev \
+            libclang-${version}-dev \
+            libclang-common-${version}-dev \
+            libclang-cpp${version}-dev \
+            libomp-${version}-dev \
+            libunwind-${version}-dev
           done
 
         echo '*** Installing upstream clang packages'
