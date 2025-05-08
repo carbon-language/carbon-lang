@@ -50,29 +50,32 @@ template <typename... Ts>
 template <typename T>
 concept IsStdVariant = IsStdVariantValue<std::decay_t<T>>;
 
-#define CARBON_INTERNAL_IDENTIFIER(name) T##name
+#define CARBON_INTERNAL_KIND_IDENTIFIER(name) T##name
 // Turns a list of numbers into a list `T0, T1, ...`.
-#define CARBON_INTERNAL_IDENTIFIERS(...)                             \
-  CARBON_FOR_EACH(CARBON_INTERNAL_IDENTIFIER, CARBON_FOR_EACH_COMMA, \
+#define CARBON_INTERNAL_KIND_IDENTIFIERS(...)                             \
+  CARBON_FOR_EACH(CARBON_INTERNAL_KIND_IDENTIFIER, CARBON_FOR_EACH_COMMA, \
                   __VA_ARGS__)
 
-#define CARBON_INTERNAL_TYPENAME(name) typename CARBON_INTERNAL_IDENTIFIER(name)
+#define CARBON_INTERNAL_KIND_TYPENAME(name) \
+  typename CARBON_INTERNAL_KIND_IDENTIFIER(name)
 // Turns a list of numbers into a list `typename T0, typename T1, ...`.
-#define CARBON_INTERNAL_TYPENAMES(...) \
-  CARBON_FOR_EACH(CARBON_INTERNAL_TYPENAME, CARBON_FOR_EACH_COMMA, __VA_ARGS__)
+#define CARBON_INTERNAL_KIND_TYPENAMES(...)                             \
+  CARBON_FOR_EACH(CARBON_INTERNAL_KIND_TYPENAME, CARBON_FOR_EACH_COMMA, \
+                  __VA_ARGS__)
 
-#define CARBON_INTERNAL_ENUM_NAME(n) VariantType##n##NotHandledInSwitch
+#define CARBON_INTERNAL_KIND_ENUM_NAME(n) VariantType##n##NotHandledInSwitch
 // Turns a list of numbers into a list `VariantType0NotHandledInSwitch, ...`.
-#define CARBON_INTERNAL_TYPES_TO_ENUM_NAMES(...) \
-  CARBON_FOR_EACH(CARBON_INTERNAL_ENUM_NAME, CARBON_FOR_EACH_COMMA, __VA_ARGS__)
+#define CARBON_INTERNAL_KIND_TYPES_TO_ENUM_NAMES(...)                    \
+  CARBON_FOR_EACH(CARBON_INTERNAL_KIND_ENUM_NAME, CARBON_FOR_EACH_COMMA, \
+                  __VA_ARGS__)
 
 // Turns a list of numbers into a set to template specializations of the
 // variable `EnumType EnumValue`, with each specialization having the Nth value
-// in the EnumType (as defined by CARBON_INTERNAL_TYPES_TO_ENUM_NAMES).
-#define CARBON_INTERNAL_TYPE_TO_ENUM_NAME(n)                    \
-  template <>                                                   \
-  constexpr EnumType EnumValue<CARBON_INTERNAL_IDENTIFIER(n)> = \
-      EnumType::CARBON_INTERNAL_ENUM_NAME(n)
+// in the EnumType (as defined by CARBON_INTERNAL_KIND_TYPES_TO_ENUM_NAMES).
+#define CARBON_INTERNAL_KIND_TYPE_TO_ENUM_NAME(n)                    \
+  template <>                                                        \
+  constexpr EnumType EnumValue<CARBON_INTERNAL_KIND_IDENTIFIER(n)> = \
+      EnumType::CARBON_INTERNAL_KIND_ENUM_NAME(n)
 
 template <class T>
 concept TypeFoundInVariant = false;
@@ -84,33 +87,35 @@ struct ValidCaseType;
 template <typename T>
 struct StdVariantTypeMap;
 
-#define CARBON_INTERNAL_TYPE_MAP(...)                                          \
-  template <CARBON_INTERNAL_TYPENAMES(__VA_ARGS__)>                            \
+#define CARBON_INTERNAL_KIND_TYPE_MAP(...)                                     \
+  template <CARBON_INTERNAL_KIND_TYPENAMES(__VA_ARGS__)>                       \
   struct StdVariantTypeMap<                                                    \
-      std::variant<CARBON_INTERNAL_IDENTIFIERS(__VA_ARGS__)>> {                \
+      std::variant<CARBON_INTERNAL_KIND_IDENTIFIERS(__VA_ARGS__)>> {           \
     /* An enum with a value for each type in the std::variant. The switch will \
      * be on this enum so that we get a warning if one of the enum values is   \
      * not handled. They are named in a way to help explain the warning, that  \
      * it means a type in the std::variant<...> type list does not have a      \
      * matching case statement.                                                \
      */                                                                        \
-    enum class EnumType { CARBON_INTERNAL_TYPES_TO_ENUM_NAMES(__VA_ARGS__) };  \
+    enum class EnumType {                                                      \
+      CARBON_INTERNAL_KIND_TYPES_TO_ENUM_NAMES(__VA_ARGS__)                    \
+    };                                                                         \
     /* A mapping from a single type in the std::variant<...> type list to a    \
      * value in the EnumType. This value is only used in the case a type is    \
      * queried which is not part of the type list, and ValidCaseType is used   \
      * to produce a diagnostic explaining the situation.  */                   \
     template <typename Tn>                                                     \
     static constexpr EnumType EnumValue = ValidCaseType<                       \
-        Tn, std::variant<CARBON_INTERNAL_IDENTIFIERS(__VA_ARGS__)>>();         \
+        Tn, std::variant<CARBON_INTERNAL_KIND_IDENTIFIERS(__VA_ARGS__)>>();    \
     /**/                                                                       \
-    CARBON_FOR_EACH(CARBON_INTERNAL_TYPE_TO_ENUM_NAME, CARBON_FOR_EACH_SEMI,   \
-                    __VA_ARGS__);                                              \
+    CARBON_FOR_EACH(CARBON_INTERNAL_KIND_TYPE_TO_ENUM_NAME,                    \
+                    CARBON_FOR_EACH_SEMI, __VA_ARGS__);                        \
   }
 
 template <typename... Ts>
 struct StdVariantTypeMap<std::variant<Ts...>> {
   // The number here should match the number of arguments in the largest
-  // `CARBON_INTERNAL_TYPE_MAP` invocation below.
+  // `CARBON_INTERNAL_KIND_TYPE_MAP` invocation below.
   static_assert(sizeof...(Ts) <= 12,
                 "CARBON_KIND_SWITCH supports std::variant with up to 12 types. "
                 "Add more if needed.");
@@ -118,35 +123,35 @@ struct StdVariantTypeMap<std::variant<Ts...>> {
 
 // Generate StdVariantTypeMap specializations for each number of types in the
 // std::variant<...> type list.
-CARBON_INTERNAL_TYPE_MAP(0);
-CARBON_INTERNAL_TYPE_MAP(0, 1);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3, 4);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3, 4, 5);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3, 4, 5, 6);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-CARBON_INTERNAL_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+CARBON_INTERNAL_KIND_TYPE_MAP(0);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
 
-#undef CARBON_INTERNAL_IDENTIFIER
-#undef CARBON_INTERNAL_IDENTIFIERS
-#undef CARBON_INTERNAL_TYPENAME
-#undef CARBON_INTERNAL_TYPENAMES
-#undef CARBON_INTERNAL_ENUM_NAME
-#undef CARBON_INTERNAL_TYPES_TO_ENUM_NAMES
-#undef CARBON_INTERNAL_TYPE_TO_ENUM_NAME
-#undef CARBON_INTERNAL_TYPE_MAP
+#undef CARBON_INTERNAL_KIND_IDENTIFIER
+#undef CARBON_INTERNAL_KIND_IDENTIFIERS
+#undef CARBON_INTERNAL_KIND_TYPENAME
+#undef CARBON_INTERNAL_KIND_TYPENAMES
+#undef CARBON_INTERNAL_KIND_ENUM_NAME
+#undef CARBON_INTERNAL_KIND_TYPES_TO_ENUM_NAMES
+#undef CARBON_INTERNAL_KIND_TYPE_TO_ENUM_NAME
+#undef CARBON_INTERNAL_KIND_TYPE_MAP
 
-// Uses the above `CARBON_INTERNAL_TYPE_MAP` expansions to make an enum with a
-// value for each type in a std::variant<...> type list.
+// Uses the above `CARBON_INTERNAL_KIND_TYPE_MAP` expansions to make an enum
+// with a value for each type in a std::variant<...> type list.
 template <typename StdVariant>
 using StdVariantEnum = StdVariantTypeMap<std::decay_t<StdVariant>>::EnumType;
 
-// Uses the `CARBON_INTERNAL_TYPE_MAP` expanstions to find the enum value in
-// `StdVariantEnum` for a given type `T` in the type list of a
+// Uses the `CARBON_INTERNAL_KIND_TYPE_MAP` expanstions to find the enum value
+// in `StdVariantEnum` for a given type `T` in the type list of a
 // std::variant<...>.
 template <typename T, typename StdVariant>
 [[maybe_unused]] static constexpr auto CaseValueOfTypeInStdVariant =
