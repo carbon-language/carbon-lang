@@ -189,25 +189,29 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
   while (true) {
     using Step = SemIR::TypeIterator::Step;
     CARBON_KIND_SWITCH(type_iter.Next().any) {
-      case CARBON_KIND_(Step::Done):
-        return;
-      case CARBON_KIND_(Step::End):
+      case CARBON_KIND(Step::Done _):
+        // TODO: This requires 4 SmallVector moves (two here and two in the
+        // constructor). Find a way to reduce that.
+        return TypeStructure(std::exchange(structure_, {}),
+                             std::exchange(symbolic_type_indices_, {}),
+                             std::exchange(concrete_types_, {}));
+      case CARBON_KIND(Step::End _):
         AppendStructuralConcreteCloseParen();
         break;
       case CARBON_KIND(Step::ConcreteType concrete):
         AppendStructuralConcrete(concrete.type_id);
         break;
-      case CARBON_KIND_(Step::SymbolicType):
+      case CARBON_KIND(Step::SymbolicType _):
         AppendStructuralSymbolic();
         break;
-      case CARBON_KIND_(Step::TemplateType):
+      case CARBON_KIND(Step::TemplateType _):
         AppendStructuralSymbolic();
         break;
       case CARBON_KIND(Step::ConcreteValue value):
         AppendStructuralConcrete(
             context_->constant_values().Get(value.inst_id));
         break;
-      case CARBON_KIND_(Step::SymbolicValue):
+      case CARBON_KIND(Step::SymbolicValue _):
         AppendStructuralSymbolic();
         break;
       case CARBON_KIND(Step::StructFieldName field_name):
@@ -218,10 +222,10 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
           case CARBON_KIND(Step::ClassStart class_start):
             AppendStructuralConcrete(class_start.class_id);
             break;
-          case CARBON_KIND_(Step::StructStart):
+          case CARBON_KIND(Step::StructStart _):
             AppendStructuralConcrete(TypeStructure::ConcreteStructType());
             break;
-          case CARBON_KIND_(Step::TupleStart):
+          case CARBON_KIND(Step::TupleStart _):
             AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
             break;
           case CARBON_KIND(Step::InterfaceStart interface_start):
@@ -234,11 +238,11 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
           case CARBON_KIND(Step::ClassStart class_start):
             AppendStructuralConcreteOpenParen(class_start.class_id);
             break;
-          case CARBON_KIND_(Step::StructStart):
+          case CARBON_KIND(Step::StructStart _):
             AppendStructuralConcreteOpenParen(
                 TypeStructure::ConcreteStructType());
             break;
-          case CARBON_KIND_(Step::TupleStart):
+          case CARBON_KIND(Step::TupleStart _):
             AppendStructuralConcreteOpenParen(
                 TypeStructure::ConcreteTupleType());
             break;
@@ -248,11 +252,11 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
           case CARBON_KIND(Step::IntStart int_start):
             AppendStructuralConcreteOpenParen(int_start.type_id);
             break;
-          case CARBON_KIND_(Step::ArrayStart):
+          case CARBON_KIND(Step::ArrayStart _):
             AppendStructuralConcreteOpenParen(
                 TypeStructure::ConcreteArrayType());
             break;
-          case CARBON_KIND_(Step::PointerStart):
+          case CARBON_KIND(Step::PointerStart _):
             AppendStructuralConcreteOpenParen(
                 TypeStructure::ConcretePointerType());
             break;
@@ -261,12 +265,6 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
       }
     }
   }
-
-  // TODO: This requires 4 SmallVector moves (two here and two in the
-  // constructor). Find a way to reduce that.
-  return TypeStructure(std::exchange(structure_, {}),
-                       std::exchange(symbolic_type_indices_, {}),
-                       std::exchange(concrete_types_, {}));
 }
 
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,

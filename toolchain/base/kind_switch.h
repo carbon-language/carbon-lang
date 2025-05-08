@@ -230,11 +230,4 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
             false) {}                                                   \
   else [[maybe_unused]] CARBON_INTERNAL_KIND_LABEL(__LINE__)
 
-// Like `CARBON_KIND` but works with a type without a name, and does not make
-// the switch's value available in the case body as a result.
-#define CARBON_KIND_(type_without_name)            \
-  ::Carbon::Internal::Kind::ForCase<               \
-      decltype(carbon_internal_kind_switch_value), \
-      decltype([]([[maybe_unused]] type_without_name) {})>()
-
 #endif  // CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_
