@@ -4,11 +4,11 @@
 
 #include "common/build_data_linkstamp.h"
 
-namespace Carbon {
+namespace Carbon::BuildData::Internal {
 
-const char BuildDataLinkstamp::Platform[] = GPLATFORM;
-const bool BuildDataLinkstamp::BuildCoverageEnabled = BUILD_COVERAGE_ENABLED;
-const char BuildDataLinkstamp::TargetName[] = G3_TARGET_NAME;
-const char BuildDataLinkstamp::BuildTarget[] = G3_BUILD_TARGET;
+const char platform[] = GPLATFORM;
+const bool build_coverage_enabled = BUILD_COVERAGE_ENABLED;
+const char target_name[] = G3_TARGET_NAME;
+const char build_target[] = G3_BUILD_TARGET;
 
-}  // namespace Carbon
+}  // namespace Carbon::BuildData::Internal

@@ -5,18 +5,21 @@
 #ifndef CARBON_COMMON_BUILD_DATA_LINKSTAMP_H_
 #define CARBON_COMMON_BUILD_DATA_LINKSTAMP_H_
 
-namespace Carbon {
+namespace Carbon::BuildData::Internal {
 
-// See build_data.h; the list of names here should match. When
-// build_data_linkstamp.cpp is compiled, this doesn't receive deps, so we can't
-// use things like `llvm::StringLiteral`.
-struct BuildDataLinkstamp {
-  static const char Platform[];
-  static const bool BuildCoverageEnabled;
-  static const char TargetName[];
-  static const char BuildTarget[];
-};
+// See build_data.h; the list of names here should match.
+//
+// These are exposed as non-constexpr so that `build_data_linkstamp.cpp` can be
+// compiled at the end, even though dependencies are added earlier.
+//
+// Also, when build_data_linkstamp.cpp is compiled, this doesn't receive deps,
+// so we can't use things like `llvm::StringRef` here. As a result, we use
+// `build_data.h` as an intermediary to do a `StringRef` wrap.
+extern const char platform[];
+extern const bool build_coverage_enabled;
+extern const char target_name[];
+extern const char build_target[];
 
-}  // namespace Carbon
+}  // namespace Carbon::BuildData::Internal
 
 #endif  // CARBON_COMMON_BUILD_DATA_LINKSTAMP_H_
