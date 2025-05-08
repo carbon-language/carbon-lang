@@ -50,8 +50,8 @@ These commands should help set up a development environment on your machine.
 # Update apt.
 sudo apt update
 
-# Check that the `clang` version is at least 16, our minimum version. That needs
-# the number of the `:` in the output to be over 16. For example, `1:16.0-57`.
+# Check that the `clang` version is at least 18, our minimum version. That needs
+# the number of the `:` in the output to be over 18. For example, `1:18.0-1`.
 apt-cache show clang | grep 'Version:'
 
 # Install tools.
@@ -88,25 +88,28 @@ it to your `$PATH`, and aliasing `bazel` to it.
 
 #### Old `clang` versions
 
-If the version of `clang` is earlier than 16, you may still have version 16
+If the version of `clang` is earlier than 18, you may still have version 18
 available. You can use the following install instead:
 
 ```shell
 # Install explicitly versioned Clang tools.
 sudo apt install \
-  clang-16 \
-  libc++-16-dev \
-  libc++abi-16-dev \
-  lld-16 \
-  lldb-16
+  clang-18 \
+  libc++-18-dev \
+  libc++abi-18-dev \
+  lld-18 \
+  lldb-18
 
 # In your Carbon checkout, tell Bazel where to find `clang`. You can also
 # export this path as the `CC` environment variable, or add it directly to
 # your `PATH`.
-echo "build --repo_env=CC=$(readlink -f $(which clang-16))" >> user.bazelrc
+echo "build --repo_env=CC=$(readlink -f $(which clang-18))" >> user.bazelrc
 ```
 
-> NOTE: Most LLVM 16+ installs should build Carbon. If you're having issues, see
+Alternatively, you can install Clang tools on Debian-based distros from
+[https://apt.llvm.org](https://apt.llvm.org).
+
+> NOTE: Most LLVM 18+ installs should build Carbon. If you're having issues, see
 > [troubleshooting build issues](#troubleshooting-build-issues).
 
 ### macOS
@@ -245,7 +248,7 @@ considering if they fit your workflow.
 
 The required setup for LLDB is:
 
-1.  Install a minimum of LLVM 19 instead of LLVM 16.
+1.  Install a minimum of LLVM 19 instead of LLVM 18.
     -   The `lldb-dap` tool was added as part of LLVM 19.
 2.  In the `.vscode` subdirectory, symlink `lldb_launch.json` to `launch.json`.
     For example: `ln -s lldb_launch.json .vscode/launch.json`
@@ -305,8 +308,8 @@ includes things such as changing LLVM versions, or installing libc++. Running
 
 Many build issues result from the particular options `clang` and `llvm` have
 been built with, particularly when it comes to system-installed versions. If you
-run `clang --version`, you should see at least version 16. If you see an older
-version, please update, or use the special `clang-16` instructions above.
+run `clang --version`, you should see at least version 18. If you see an older
+version, please update, or use the special `clang-18` instructions above.
 
 System installs of macOS typically won't work, for example being an old LLVM
 version or missing llvm-ar; [setup commands](#setup-commands) includes LLVM from
@@ -323,7 +326,7 @@ providing the output of the following diagnostic commands:
 ```shell
 echo $CC
 which clang
-which clang-16
+which clang-18
 clang --version
 grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/+clang_toolchain_extension+bazel_cc_toolchain/clang_detected_variables.bzl
 
