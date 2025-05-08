@@ -27,10 +27,8 @@ runs:
     # but this is reliable (including with libc++), and gives us testing at the
     # minimum supported LLVM version.
     - name: Cache Homebrew
-      id: cache-homebrew-macos-llvm-18
+      id: cache-homebrew-macos
       uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
-      env:
-        cache-name: cache-homebrew
       with:
         # Cover all the critical parts of Homebrew here. Homebrew on Arm macOS
         # uses its own prefix making this easy to cover, but we need a few
@@ -47,10 +45,11 @@ runs:
             '
           }}
         # Note the key needs to include all the packages we're adding.
-        key: Homebrew-Cache-${{ inputs.matrix_runner }}-${{ runner.arch }}
+        key:
+          Homebrew-Cache-${{ inputs.matrix_runner }}-${{ runner.arch }}-llvm@18
 
     - name: Install LLVM and Clang with Homebrew
-      if: steps.cache-homebrew-macos-llvm-18.outputs.cache-hit != 'true'
+      if: steps.cache-homebrew-macos.outputs.cache-hit != 'true'
       shell: bash
       run: |
         echo '*** Prune brew leaves'
