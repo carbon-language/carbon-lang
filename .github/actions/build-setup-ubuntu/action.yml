@@ -34,32 +34,16 @@ runs:
       env:
         # We will use this clang version.
         clang_version: 18
-        # The ubuntu 24.04 image has these versions installed:
+        # The ubuntu 24.04 image has 16, 17, and 18 installed.
         # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
-        installed_clang_version: '16,17,18'
-      if: env.clang_version != env.installed_clang_version
+        # We r
+        remove_clang_versions: '16,17'
       shell: bash
       run: |
         echo '*** Removing system clang packages'
-        for version in ${installed_clang_version//,/ }; do
-          sudo apt-get remove clang-${version} \
-            lldb-${version} \
-            lld-${version} \
-            clangd-${version} \
-            clang-tidy-${version} \
-            clang-format-${version} \
-            clang-tools-${version} \
-            llvm-${version}-dev \
-            lld-${version} \
-            lldb-${version} \
-            llvm-${version}-tools \
-            libomp-${version}-dev \
-            libc++-${version}-dev \
-            libc++abi-${version}-dev \
-            libclang-common-${version}-dev \
-            libclang-${version}-dev \
-            libclang-cpp${version}-dev \
-            libunwind-${version}-dev
+        for version in ${remove_clang_versions//,/ }; do
+          sudo apt-get remove \
+            '^(clang(d)?|libc\+\+(abi)?|lib(clang|omp|unwind)|lld|lldb|llvm)-'
           done
 
         echo '*** Installing upstream clang packages'
