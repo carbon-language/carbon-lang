@@ -5,6 +5,8 @@
 #ifndef CARBON_COMMON_BUILD_DATA_LINKSTAMP_H_
 #define CARBON_COMMON_BUILD_DATA_LINKSTAMP_H_
 
+#include <string_view>
+
 namespace Carbon::BuildData::Internal {
 
 // See build_data.h; the list of names here should match.
@@ -15,10 +17,10 @@ namespace Carbon::BuildData::Internal {
 // Also, when build_data_linkstamp.cpp is compiled, this doesn't receive deps,
 // so we can't use things like `llvm::StringRef` here. As a result, we use
 // `build_data.h` as an intermediary to do a `StringRef` wrap.
-extern const char platform[];
+extern const std::string_view platform;
 extern const bool build_coverage_enabled;
-extern const char target_name[];
-extern const char build_target[];
+extern const std::string_view target_name;
+extern const std::string_view build_target;
 
 }  // namespace Carbon::BuildData::Internal
 
