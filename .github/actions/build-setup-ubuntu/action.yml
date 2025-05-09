@@ -40,9 +40,4 @@ runs:
         chmod +x llvm.sh
         sudo ./llvm.sh ${clang_version} all
 
-        sudo ln -sf /lib/llvm-19/bin/clang /bin/
-        sudo ln -sf /lib/llvm-19/bin/clang++ /bin/
-        sudo ln -sf /lib/llvm-19/bin/clang-format /bin/
-        sudo ln -sf /lib/llvm-19/bin/clang-tidy /bin/
-        sudo ln -sf /lib/llvm-19/bin/lld /bin/
-        sudo ln -sf /lib/llvm-19/bin/llvm-symbolizer /bin/
+        echo "/lib/llvm-19/bin" >> "$GITHUB_PATH"
