@@ -176,12 +176,12 @@ library "[[@TEST_NAME]]";
 interface Z(T:! type) {}
 interface Y {}
 
-// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+3]]:1: error: found `impl` that is fully overlapped by a final `impl` [ImplFullyOverlapFinal]
+// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+3]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
 // CHECK:STDERR: impl () as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 impl () as Z(()) {}
 
-// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+4]]:1: note: by final `impl` here [ImplFullyOverlapFinalNote]
+// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+4]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -195,10 +195,10 @@ interface Y {}
 
 final impl forall [T:! type] T as Z(T) {}
 
-// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+7]]:1: error: found `impl` that is fully overlapped by a final `impl` [ImplFullyOverlapFinal]
+// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+7]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
 // CHECK:STDERR: impl () as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE-5]]:1: note: by final `impl` here [ImplFullyOverlapFinalNote]
+// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE-5]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -212,12 +212,12 @@ interface Y {}
 
 class C;
 
-// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+3]]:1: error: found `impl` that is fully overlapped by a final `impl` [ImplFullyOverlapFinal]
+// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+3]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
 // CHECK:STDERR: final impl C as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 final impl C as Z(C) {}
 
-// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+4]]:1: note: by final `impl` here [ImplFullyOverlapFinalNote]
+// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+4]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -233,10 +233,10 @@ class C;
 
 final impl forall [T:! type] T as Z(T) {}
 
-// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE+7]]:1: error: found `impl` that is fully overlapped by a final `impl` [ImplFullyOverlapFinal]
+// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE+7]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
 // CHECK:STDERR: final impl C as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE-5]]:1: note: by final `impl` here [ImplFullyOverlapFinalNote]
+// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE-5]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -255,10 +255,10 @@ class C(T:! type);
 // No diagnosis here as the type structure is unique.
 impl forall [T:! type] T as Z(C(T)) {}
 
-// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` that is fully overlapped by a non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
 // CHECK:STDERR: impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE-10]]:1: note: by `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE-10]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
 // CHECK:STDERR: impl forall [T:! Y] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

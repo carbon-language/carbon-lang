@@ -576,6 +576,9 @@ static auto CheckOverlappingImplsForInterface(
     Context& context,
     llvm::ArrayRef<std::pair<SemIR::ImplId, const SemIR::Impl*>> impls)
     -> void {
+  // TODO: We should revisit this and look for a way to do these checks in less
+  // than quadratic time. From @zygoloid: Possibly by converting the set of
+  // impls into a decision tree.
   for (auto [index_a, impl_a_pair] : llvm::enumerate(impls)) {
     auto [impl_a_id, impl_a] = impl_a_pair;
     if (impl_a->witness_id == SemIR::ErrorInst::InstId) {
@@ -596,14 +599,15 @@ static auto CheckOverlappingImplsForInterface(
         auto type_structure2 =
             BuildTypeStructure(context, impl_b->self_id, impl_b->interface);
         if (type_structure == type_structure2) {
-          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinal, Error,
-                            "found non-final `impl` that is fully overlapped "
-                            "by a non-final `impl`");
+          CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructure, Error,
+                            "found non-final `impl` with the same type "
+                            "structure as another non-final `impl`");
           auto builder = context.emitter().Build(impl_b->latest_decl_id(),
-                                                 ImplFullyOverlapNonFinal);
-          CARBON_DIAGNOSTIC(ImplFullyOverlapNonFinalNote, Note,
-                            "by `impl` here");
-          builder.Note(impl_a->latest_decl_id(), ImplFullyOverlapNonFinalNote);
+                                                 ImplNonFinalSameTypeStructure);
+          CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructureNote, Note,
+                            "other `impl` here");
+          builder.Note(impl_a->latest_decl_id(),
+                       ImplNonFinalSameTypeStructureNote);
           builder.Emit();
           break;
         }
@@ -617,15 +621,15 @@ static auto CheckOverlappingImplsForInterface(
                   context, SemIR::LocId(query_impl.latest_decl_id()),
                   context.constant_values().Get(query_impl.self_id),
                   query_impl.interface, final_impl_id)) {
-            CARBON_DIAGNOSTIC(
-                ImplFullyOverlapFinal, Error,
-                "found `impl` that is fully overlapped by a final `impl`");
+            CARBON_DIAGNOSTIC(ImplFinalOverlapsNonFinal, Error,
+                              "`impl` will never be used");
             auto builder = context.emitter().Build(query_impl.latest_decl_id(),
-                                                   ImplFullyOverlapFinal);
-            CARBON_DIAGNOSTIC(ImplFullyOverlapFinalNote, Note,
-                              "by final `impl` here");
+                                                   ImplFinalOverlapsNonFinal);
+            CARBON_DIAGNOSTIC(
+                ImplFinalOverlapsNonFinalNote, Note,
+                "`final impl` declared here would always be used instead");
             builder.Note(final_impl.latest_decl_id(),
-                         ImplFullyOverlapFinalNote);
+                         ImplFinalOverlapsNonFinalNote);
             builder.Emit();
             return true;
           }
