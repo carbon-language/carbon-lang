@@ -286,6 +286,12 @@ auto Formatter::IndentLabel() -> void {
 
 auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
                                   llvm::ArrayRef<InstId> block) -> void {
+  if (use_dump_sem_ir_ranges_) {
+    // Don't format the scope if no instructions are in a dump range.
+    block = block.drop_while(
+        [&](InstId inst_id) { return !ShouldFormatInst(inst_id); });
+  }
+
   if (block.empty()) {
     return;
   }

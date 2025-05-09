@@ -26,9 +26,6 @@ fn F();
 
 // CHECK:STDOUT: --- with-range.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }

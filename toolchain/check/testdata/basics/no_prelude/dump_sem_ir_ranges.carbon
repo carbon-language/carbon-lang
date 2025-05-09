@@ -88,9 +88,6 @@ fn F();
 
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [concrete = constants.%C] {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
@@ -135,9 +132,6 @@ fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
@@ -167,9 +161,6 @@ fn F();
 // CHECK:STDOUT: fn @I();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_params.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
