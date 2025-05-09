@@ -346,6 +346,56 @@ static auto CheckConstraintIsInterface(Context& context,
   return identified.impl_as_target_interface();
 }
 
+static auto DiagnoseUnusedGenericBinding(Context& context,
+                                         Parse::NodeId node_id,
+                                         const NameComponent& name,
+                                         SemIR::ImplId impl_id) -> void {
+  auto deduced_specific_id = SemIR::SpecificId::None;
+
+  {
+    auto& stored_impl_info = context.impls().Get(impl_id);
+    if (!stored_impl_info.generic_id.has_value() ||
+        stored_impl_info.witness_id == SemIR::ErrorInst::InstId) {
+      return;
+    }
+
+    // TODO: Deduce has side effects in the semir by generating `Converted`
+    // instructions which we will not use here. We should stop generating
+    // those when deducing for impl lookup, but for now we discard them by
+    // pushing an InstBlock on the stack and dropping it right after.
+    context.inst_block_stack().Push();
+    // Deduction can invalidate references to ValueStores; we can't use
+    // `stored_impl_info` after.
+    deduced_specific_id = DeduceImplArguments(
+        context, node_id,
+        DeduceImpl{.self_id = stored_impl_info.self_id,
+                   .generic_id = stored_impl_info.generic_id,
+                   .specific_id = stored_impl_info.interface.specific_id},
+        context.constant_values().Get(stored_impl_info.self_id),
+        stored_impl_info.interface.specific_id);
+    context.inst_block_stack().PopAndDiscard();
+  }
+
+  if (deduced_specific_id.has_value()) {
+    // Deduction succeeded, all bindings were used.
+    return;
+  }
+
+  CARBON_DIAGNOSTIC(ImplUnusedBinding, Error,
+                    "`impl` with unused generic binding");
+  // TODO: This location may be incorrect, the binding may be inherited
+  // from an outer declaration. It would be nice to get the particular
+  // binding that was undeducible back from DeduceImplArguments here and
+  // use that.
+  auto loc = name.implicit_params_loc_id.has_value()
+                 ? name.implicit_params_loc_id
+                 : node_id;
+  context.emitter().Emit(loc, ImplUnusedBinding);
+  // Don't try to match the impl at all, save us work and possible future
+  // diagnostics.
+  FillImplWitnessWithErrors(context, context.impls().Get(impl_id));
+}
+
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
@@ -448,39 +498,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       }
     }
 
-    auto& stored_impl_info = context.impls().Get(impl_decl.impl_id);
-
-    if (stored_impl_info.generic_id.has_value() &&
-        !has_error_in_implicit_pattern &&
-        stored_impl_info.witness_id != SemIR::ErrorInst::InstId) {
-      context.inst_block_stack().Push();
-      auto deduced_specific_id = DeduceImplArguments(
-          context, node_id,
-          DeduceImpl{.self_id = stored_impl_info.self_id,
-                     .generic_id = stored_impl_info.generic_id,
-                     .specific_id = stored_impl_info.interface.specific_id},
-          context.constant_values().Get(stored_impl_info.self_id),
-          stored_impl_info.interface.specific_id);
-      // TODO: Deduce has side effects in the semir by generating `Converted`
-      // instructions which we will not use here. We should stop generating
-      // those when deducing for impl lookup, but for now we discard them by
-      // pushing an InstBlock on the stack and dropping it here.
-      context.inst_block_stack().PopAndDiscard();
-      if (!deduced_specific_id.has_value()) {
-        CARBON_DIAGNOSTIC(ImplUnusedBinding, Error,
-                          "`impl` with unused generic binding");
-        // TODO: This location may be incorrect, the binding may be inherited
-        // from an outer declaration. It would be nice to get the particular
-        // binding that was undeducible back from DeduceImplArguments here and
-        // use that.
-        auto loc = name.implicit_params_loc_id.has_value()
-                       ? name.implicit_params_loc_id
-                       : node_id;
-        context.emitter().Emit(loc, ImplUnusedBinding);
-        // Don't try to match the impl at all, save us work and possible future
-        // diagnostics.
-        FillImplWitnessWithErrors(context, stored_impl_info);
-      }
+    if (!has_error_in_implicit_pattern) {
+      DiagnoseUnusedGenericBinding(context, node_id, name, impl_decl.impl_id);
     }
   } else {
     auto& stored_impl_info = context.impls().Get(impl_decl.impl_id);
