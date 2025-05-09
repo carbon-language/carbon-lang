@@ -15,7 +15,8 @@ namespace Carbon::BuildData::Internal {
 // `build_data_linkstamp.h`) throughout the build process, but
 // `build_data_linkstamp.cpp` is compiled and linked per-binary -- essentially a
 // separate library. In essence, `build_data_linkstamp.h` is exposing values
-// that are assigned later, for example preventing `constexpr` use.
+// that are assigned later (this has consequences like preventing `constexpr`
+// use).
 //
 // Also, when build_data_linkstamp.cpp is compiled, this doesn't receive deps,
 // so we can't use things like `llvm::StringRef` here. As a result, we use
