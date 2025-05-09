@@ -9,8 +9,8 @@ namespace Carbon::BuildData::Internal {
 
 // See build_data.h; the list of names here should match.
 //
-// These are exposed as non-constexpr so that `build_data_linkstamp.cpp` can be
-// compiled at the end, even though dependencies are added earlier.
+// These are exposed as non-constexpr as they need to be initialized 
+// in `build_data_linkstamp.cpp` that is separately compiled.
 //
 // Also, when build_data_linkstamp.cpp is compiled, this doesn't receive deps,
 // so we can't use things like `llvm::StringRef` here. As a result, we use
