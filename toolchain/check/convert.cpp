@@ -1504,6 +1504,16 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
           .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
 }
 
+auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void {
+  // If we discard an initializing expression, convert it to a value or
+  // reference so that it has something to initialize.
+  auto expr = context.insts().Get(expr_id);
+  Convert(context, SemIR::LocId(expr_id), expr_id,
+          {.kind = ConversionTarget::Discarded, .type_id = expr.type_id()});
+
+  // TODO: This will eventually need to do some "do not discard" analysis.
+}
+
 }  // namespace Carbon::Check
 
 // NOLINTEND(misc-no-recursion)
