@@ -62,6 +62,12 @@ class ToolchainFileTest : public FileTestBase {
     return component_ != "language_server";
   }
 
+  // Force a fixed bazel label to avoid spurious test failures due to differing
+  // run commands when running file_test binary outside of bazel.
+  auto GetBazelLabel() -> std::string override {
+    return "//toolchain/testing:file_test";
+  }
+
  private:
   // Controls whether `Run()` includes the prelude.
   auto is_no_prelude() const -> bool {

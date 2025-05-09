@@ -19,7 +19,6 @@ interface Y {}
 interface Z {}
 
 impl forall [T:! Y] T as X {}
-impl forall [T:! Z] T as X {}
 
 class C(T:! X) {}
 

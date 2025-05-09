@@ -216,6 +216,10 @@ class [[clang::internal_linkage]] Lexer {
   // marker.
   auto EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void;
 
+  auto has_dump_sem_ir_ranges() -> bool {
+    return buffer_.has_dump_sem_ir_ranges();
+  }
+
  private:
   class ErrorRecoveryBuffer;
 
@@ -529,7 +533,8 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
 // and continuing the dispatch.
 #define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                 \
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+                                  ssize_t position)                          \
+      ->void {                                                               \
     Lexer::LexResult result = lexer.LexMethod(source_text, position);        \
     CARBON_CHECK(result, "Failed to form a token!");                         \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
@@ -542,16 +547,17 @@ CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
 // A set of custom dispatch functions that pre-select the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  static auto Dispatch##LexMethod##SymbolToken(                              \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
-    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
-        source_text,                                                         \
-        OneCharTokenKindTable[static_cast<unsigned char>(                    \
-            source_text[position])],                                         \
-        position);                                                           \
-    CARBON_CHECK(result, "Failed to form a token!");                         \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                        \
+  static auto Dispatch##LexMethod##SymbolToken(                            \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position)         \
+      ->void {                                                             \
+    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                \
+        source_text,                                                       \
+        OneCharTokenKindTable[static_cast<unsigned char>(                  \
+            source_text[position])],                                       \
+        position);                                                         \
+    CARBON_CHECK(result, "Failed to form a token!");                       \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position); \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
@@ -561,7 +567,8 @@ CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 // whitespace and comments.
 #define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                             \
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+                                  ssize_t position)                          \
+      ->void {                                                               \
     lexer.LexMethod(source_text, position);                                  \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
   }
@@ -683,10 +690,14 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
         source_text[position])](lexer, source_text, position);
   }
 
-  // Incomplete ranges will use the next token for their end; we want that to be
-  // `FileEnd` in this case, so check before adding `FileEnd`. The argument is
-  // just the final character for diagnostic locations.
-  lexer.EndDumpSemIRRangeIfIncomplete(source_text.end() - 1);
+  if (lexer.has_dump_sem_ir_ranges()) {
+    // Incomplete ranges will use the next token for their end; we want that to
+    // be `FileEnd` in this case, so check before adding `FileEnd`. The argument
+    // is just the final character for diagnostic locations.
+    // TODO: This offset may not be needed if `file_test` handled diagnostics
+    // pointing at `.end()`.
+    lexer.EndDumpSemIRRangeIfIncomplete(source_text.end() - 1);
+  }
 
   // When we finish the source text, stop recursing. We also hint this so that
   // the tail-dispatch is optimized as that's essentially the loop back-edge
@@ -768,6 +779,13 @@ auto Lexer::Lex() && -> TokenizedBuffer {
 }
 
 auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
+  if (source_text.empty()) {
+    // Construct a single line for empty input.
+    buffer_.AddLine(TokenizedBuffer::LineInfo(0));
+    line_index_ = 0;
+    return;
+  }
+
   // We currently use `memchr` here which typically is well optimized to use
   // SIMD or other significantly faster than byte-wise scanning. We also use
   // carefully selected variables and the `ssize_t` type for performance and
@@ -898,8 +916,8 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
 auto Lexer::BeginDumpSemIRRange(const char* diag_loc) -> void {
   EndDumpSemIRRangeIfIncomplete(diag_loc);
 
-  // The begin here will be the next token, which may be FileEnd. The end will
-  // be assigned by either AddDumpSemIREnd or, if invalid,
+  // The begin here will be the next token, which may be dump-sem-ir-begin. The
+  // end will be assigned by either AddDumpSemIREnd or, if invalid,
   // EndDumpSemIRRangeIfIncomplete.
   buffer_.dump_sem_ir_ranges_.push_back(
       {.begin = TokenIndex(buffer_.size()), .end = TokenIndex::None});
@@ -915,7 +933,7 @@ auto Lexer::EndDumpSemIRRange(const char* diag_loc) -> void {
     return;
   }
 
-  buffer_.dump_sem_ir_ranges_.back().end = TokenIndex(buffer_.size());
+  buffer_.dump_sem_ir_ranges_.back().end = TokenIndex(buffer_.size() - 1);
 }
 
 auto Lexer::EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void {

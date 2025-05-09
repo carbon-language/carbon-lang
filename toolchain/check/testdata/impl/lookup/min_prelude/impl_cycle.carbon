@@ -247,7 +247,7 @@ fn F() {
   ({} as Wraps(C)) as (Wraps(C) as ComparableTo(Wraps(D)));
 }
 
-// --- impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
+// --- fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon
 library "[[@TEST_NAME]]";
 
 // Implement this for a type in one direction.
@@ -263,11 +263,28 @@ class D {}
 // - D is ComparableWith(C).
 impl C as ComparableTo(D) {}
 
+// TODO: These three `impl`s need to be placed in a match_first as they
+// overlap.
+
 // T is always ComparableWith(T).
 impl forall [T:! type] T as ComparableWith(T) {}
 // If U is ComparableTo(T), U is ComparableWith(T).
+// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: impl forall [T:! type, U:! ComparableTo(T)] U as ComparableWith(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-5]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: impl forall [T:! type] T as ComparableWith(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! type, U:! ComparableTo(T)] U as ComparableWith(T) {}
 // If U is ComparableTo(T), T is ComparableWith(U).
+// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE+7]]:1: error: found non-final `impl` that fully overlaps previous non-final `impl` [ImplFullyOverlapNonFinal]
+// CHECK:STDERR: impl forall [T:! type, U:! ComparableTo(T)] T as ComparableWith(U) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_impl_recurse_with_simpler_type_in_generic_param_bidirectional_no_cycle.carbon:[[@LINE-5]]:1: note: fully overlaps `impl` here [ImplFullyOverlapNonFinalNote]
+// CHECK:STDERR: impl forall [T:! type, U:! ComparableTo(T)] U as ComparableWith(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! type, U:! ComparableTo(T)] T as ComparableWith(U) {}
 
 fn Compare[T:! type, U:! ComparableWith(T)](t: T, u: U) {}

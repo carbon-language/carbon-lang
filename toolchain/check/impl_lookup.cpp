@@ -279,14 +279,20 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     return EvalImplLookupResult::MakeNone();
   }
 
-  LoadImportRef(context, impl.witness_id);
+  bool is_effectively_final = query_is_concrete || impl.is_final;
+  auto witness_id = impl.witness_id;
+
+  // Note that this invalidates our `impl` reference. Don't use it again after
+  // this point.
+  LoadImportRef(context, witness_id);
+
   if (specific_id.has_value()) {
     // We need a definition of the specific `impl` so we can access its
     // witness.
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
-  if (query_is_concrete || impl.is_final) {
+  if (is_effectively_final) {
     // TODO: These final results should be cached somehow. Positive (non-None)
     // results could be cached globally, as they can not change. But
     // negative results can change after a final impl is written, so
@@ -294,7 +300,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     // be invalidated by writing a final impl that would match.
     return EvalImplLookupResult::MakeFinal(
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), specific_id, impl.witness_id)));
+            context.sem_ir(), specific_id, witness_id)));
   } else {
     return EvalImplLookupResult::MakeNonFinal();
   }

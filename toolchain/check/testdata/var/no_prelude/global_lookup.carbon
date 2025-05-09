@@ -27,8 +27,8 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
-// CHECK:STDOUT:     %.loc11_1: %pattern_type = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc11_1: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var x
 // CHECK:STDOUT:   %.loc11_15: type = splice_block %struct_type.v.loc11 [concrete = constants.%struct_type.v] {
@@ -38,8 +38,8 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.v = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y
-// CHECK:STDOUT:     %.loc12_1: %pattern_type = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y [concrete]
+// CHECK:STDOUT:     %.loc12_1: %pattern_type = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.v = var y
 // CHECK:STDOUT:   %.loc12_15: type = splice_block %struct_type.v.loc12 [concrete = constants.%struct_type.v] {

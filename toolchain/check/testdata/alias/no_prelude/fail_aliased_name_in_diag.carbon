@@ -45,14 +45,14 @@ let c_var: c = d;
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.510 = binding_pattern d
-// CHECK:STDOUT:     %.loc15: %pattern_type.510 = var_pattern %d.patt
+// CHECK:STDOUT:     %d.patt: %pattern_type.510 = binding_pattern d [concrete]
+// CHECK:STDOUT:     %.loc15: %pattern_type.510 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %D = var d
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c_var.patt: %pattern_type.c48 = binding_pattern c_var
+// CHECK:STDOUT:     %c_var.patt: %pattern_type.c48 = binding_pattern c_var [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc21: %C = converted @__global_init.%d.ref, <error> [concrete = <error>]

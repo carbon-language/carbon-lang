@@ -28,8 +28,8 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x
-// CHECK:STDOUT:     %.loc15_1: %pattern_type = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc15_1: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var x
 // CHECK:STDOUT:   %.loc15_15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.225] {

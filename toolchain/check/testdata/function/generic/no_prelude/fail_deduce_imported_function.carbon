@@ -63,9 +63,9 @@ fn B() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.5af = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.64f) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @A.%pattern_type (%pattern_type.64f) = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %T.patt: %pattern_type.5af = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.64f) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @A.%pattern_type (%pattern_type.64f) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     %T.loc4_6.1: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
@@ -150,9 +150,9 @@ fn B() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Lib.import = import Lib
 // CHECK:STDOUT:   %A.decl: %A.type.00d = fn_decl @A.1 [concrete = constants.%A.1db] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.3dd = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %x.patt: @A.1.%pattern_type (%pattern_type.ea1) = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: @A.1.%pattern_type (%pattern_type.ea1) = value_param_pattern %x.patt, call_param0
+// CHECK:STDOUT:     %T.patt: %pattern_type.3dd = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @A.1.%pattern_type (%pattern_type.ea1) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @A.1.%pattern_type (%pattern_type.ea1) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_13: type = splice_block %Z.ref [concrete = constants.%Z.type] {
 // CHECK:STDOUT:       %Lib.ref: <namespace> = name_ref Lib, imports.%Lib [concrete = imports.%Lib]

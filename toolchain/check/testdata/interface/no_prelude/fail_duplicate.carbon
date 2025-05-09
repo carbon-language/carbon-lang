@@ -150,8 +150,8 @@ interface Class { }
 // CHECK:STDOUT: interface @Interface.2 {
 // CHECK:STDOUT:   %Self: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.719cbb.2]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: @F.%pattern_type (%pattern_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:     %self.patt: @F.%pattern_type (%pattern_type) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc14_14.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc14_14.1: type = splice_block %.loc14_14.2 [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)] {

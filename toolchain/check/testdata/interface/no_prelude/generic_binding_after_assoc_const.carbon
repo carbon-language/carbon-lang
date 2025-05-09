@@ -43,7 +43,7 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 1
+// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc12_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -52,7 +52,7 @@ interface I {
 // CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.%U [concrete = constants.%assoc1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 1
+// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc16_8.1 (constants.%T)]
 // CHECK:STDOUT:   }

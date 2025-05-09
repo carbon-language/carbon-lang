@@ -14,6 +14,11 @@
 
 namespace Carbon::Check {
 
+auto SubstInstCallbacks::RebuildType(SemIR::TypeInstId type_inst_id) const
+    -> SemIR::TypeId {
+  return context().types().GetTypeIdForTypeInstId(type_inst_id);
+}
+
 namespace {
 
 // Information about an instruction that we are substituting into.
@@ -257,7 +262,8 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
   int32_t arg1 = PopOperand(context, worklist, inst.arg1_and_kind());
   int32_t arg0 = PopOperand(context, worklist, inst.arg0_and_kind());
   auto type_id = inst.type_id().has_value()
-                     ? context.types().GetTypeIdForTypeInstId(worklist.Pop())
+                     ? callbacks.RebuildType(
+                           context.types().GetAsTypeInstId(worklist.Pop()))
                      : SemIR::TypeId::None;
   if (type_id == inst.type_id() && arg0 == inst.arg0() && arg1 == inst.arg1()) {
     return callbacks.ReuseUnchanged(inst_id);
@@ -340,12 +346,12 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
  public:
   // `context` must not be null.
   SubstConstantCallbacks(Context* context, Substitutions substitutions)
-      : context_(context), substitutions_(substitutions) {}
+      : SubstInstCallbacks(context), substitutions_(substitutions) {}
 
   // Applies the given Substitutions to an instruction, in order to replace
   // BindSymbolicName instructions with the value of the binding.
   auto Subst(SemIR::InstId& inst_id) const -> bool override {
-    if (context_->constant_values().Get(inst_id).is_concrete()) {
+    if (context().constant_values().Get(inst_id).is_concrete()) {
       // This instruction is a concrete constant, so can't contain any
       // bindings that need to be substituted.
       return true;
@@ -353,10 +359,10 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
 
     auto entity_name_id = SemIR::EntityNameId::None;
     if (auto bind =
-            context_->insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
+            context().insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
       entity_name_id = bind->entity_name_id;
     } else if (auto bind =
-                   context_->insts().TryGetAs<SemIR::SymbolicBindingPattern>(
+                   context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
                        inst_id)) {
       entity_name_id = bind->entity_name_id;
     } else {
@@ -367,10 +373,10 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
     // TODO: Consider building a hash map for substitutions. We might have a
     // lot of them.
     for (auto [bind_index, replacement_id] : substitutions_) {
-      if (context_->entity_names().Get(entity_name_id).bind_index() ==
+      if (context().entity_names().Get(entity_name_id).bind_index() ==
           bind_index) {
         // This is the binding we're replacing. Perform substitution.
-        inst_id = context_->constant_values().GetInstId(replacement_id);
+        inst_id = context().constant_values().GetInstId(replacement_id);
         return true;
       }
     }
@@ -384,17 +390,16 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   auto Rebuild(SemIR::InstId old_inst_id, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
     auto const_id = EvalOrAddInst(
-        *context_,
+        context(),
         SemIR::LocIdAndInst::UncheckedLoc(
-            context_->insts().GetCanonicalLocId(old_inst_id).ToImplicit(),
+            context().insts().GetCanonicalLocId(old_inst_id).ToImplicit(),
             new_inst));
     CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");
-    return context_->constant_values().GetInstId(const_id);
+    return context().constant_values().GetInstId(const_id);
   }
 
  private:
-  Context* context_;
   Substitutions substitutions_;
 };
 }  // namespace

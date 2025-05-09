@@ -26,12 +26,11 @@ auto ImportIRInst::Print(llvm::raw_ostream& out) const -> void {
 auto GetCanonicalFileAndInstId(const File* sem_ir, SemIR::InstId inst_id)
     -> std::pair<const File*, InstId> {
   while (true) {
-    // Step through an instruction with an imported location to the imported
-    // instruction.
-    if (auto loc_id = sem_ir->insts().GetCanonicalLocId(inst_id);
-        loc_id.kind() == SemIR::LocId::Kind::ImportIRInstId) {
-      auto import_ir_inst =
-          sem_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
+    // Step through an imported instruction to the instruction it was imported
+    // from.
+    if (auto import_ir_inst_id = sem_ir->insts().GetImportSource(inst_id);
+        import_ir_inst_id.has_value()) {
+      auto import_ir_inst = sem_ir->import_ir_insts().Get(import_ir_inst_id);
       sem_ir = sem_ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
       inst_id = import_ir_inst.inst_id();
       continue;

@@ -32,11 +32,11 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
-// CHECK:STDOUT:     %p.patt: @F.%pattern_type.loc11_16 (%pattern_type.12d) = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: @F.%pattern_type.loc11_16 (%pattern_type.12d) = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc11_24 (%pattern_type.afe) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc11_24 (%pattern_type.afe) = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %p.patt: @F.%pattern_type.loc11_16 (%pattern_type.12d) = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: @F.%pattern_type.loc11_16 (%pattern_type.12d) = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc11_24 (%pattern_type.afe) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc11_24 (%pattern_type.afe) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc11_27: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc11_28: type = ptr_type %T.ref.loc11_27 [symbolic = %ptr.loc11_20.2 (constants.%ptr.79f)]

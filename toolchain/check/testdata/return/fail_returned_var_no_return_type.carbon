@@ -73,8 +73,8 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v
-// CHECK:STDOUT:     %.loc12_12.1: %pattern_type = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v [concrete]
+// CHECK:STDOUT:     %.loc12_12.1: %pattern_type = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
 // CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal ()
@@ -118,8 +118,8 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @ForgotReturnType() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v
-// CHECK:STDOUT:     %.loc12_12.1: %pattern_type = var_pattern %v.patt
+// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v [concrete]
+// CHECK:STDOUT:     %.loc12_12.1: %pattern_type = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
 // CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal ()

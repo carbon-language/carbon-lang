@@ -106,8 +106,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: %pattern_type = binding_pattern inst
-// CHECK:STDOUT:     %.loc4: %pattern_type = var_pattern %inst.patt
+// CHECK:STDOUT:     %inst.patt: %pattern_type = binding_pattern inst [concrete]
+// CHECK:STDOUT:     %.loc4: %pattern_type = var_pattern %inst.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref %C = var inst
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]
@@ -148,8 +148,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt
+// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
@@ -183,8 +183,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt
+// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst [concrete]
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {

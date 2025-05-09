@@ -78,7 +78,7 @@ struct FileTestInfo {
   std::string test_name;
 
   // A factory function for creating the test object.
-  std::function<auto()->FileTestBase*> factory_fn;
+  std::function<auto()->std::unique_ptr<FileTestBase>> factory_fn;
 
   // gtest's information about the test.
   ::testing::TestInfo* registered_test;
@@ -134,21 +134,11 @@ static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
   }
 }
 
-// Modes for GetBazelCommand.
-enum class BazelMode : uint8_t {
-  Autoupdate,
-  Dump,
-  Test,
-};
-
 // Returns the requested bazel command string for the given execution mode.
-static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
-    -> std::string {
+auto FileTestBase::GetBazelCommand(BazelMode mode) -> std::string {
   RawStringOstream args;
-
-  const char* target = getenv("TEST_TARGET");
   args << "bazel " << ((mode == BazelMode::Test) ? "test" : "run") << " "
-       << (target ? target : "<target>") << " ";
+       << GetBazelLabel() << " ";
 
   switch (mode) {
     case BazelMode::Autoupdate:
@@ -165,8 +155,13 @@ static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
   }
 
   args << "--file_tests=";
-  args << test_name;
+  args << test_name();
   return args.TakeStr();
+}
+
+auto FileTestBase::GetBazelLabel() -> std::string {
+  const char* target = getenv("TEST_TARGET");
+  return target ? target : "<target>";
 }
 
 // Runs the FileTestAutoupdater, returning the result.
@@ -193,8 +188,8 @@ static auto RunAutoupdater(FileTestBase* test_base, const TestFile& test_file,
 
   return FileTestAutoupdater(
              std::filesystem::absolute(test_base->test_name().str()),
-             GetBazelCommand(BazelMode::Test, test_base->test_name()),
-             GetBazelCommand(BazelMode::Dump, test_base->test_name()),
+             test_base->GetBazelCommand(FileTestBase::BazelMode::Test),
+             test_base->GetBazelCommand(FileTestBase::BazelMode::Dump),
              test_file.input_content, filenames,
              *test_file.autoupdate_line_number, test_file.autoupdate_split,
              test_file.non_check_lines, test_file.actual_stdout,
@@ -268,7 +263,8 @@ auto FileTestCase::TestBody() -> void {
 
   if (HasFailure()) {
     llvm::errs() << "\nTo test this file alone, run:\n  "
-                 << GetBazelCommand(BazelMode::Test, test_info_->test_name)
+                 << test_info_->factory_fn()->GetBazelCommand(
+                        FileTestBase::BazelMode::Test)
                  << "\n\n";
     if (!test_file.autoupdate_line_number) {
       llvm::errs() << "\nThis test is NOAUTOUPDATE.\n\n";
@@ -276,8 +272,8 @@ auto FileTestCase::TestBody() -> void {
   }
   if (test_info_->autoupdate_differs) {
     ADD_FAILURE() << "Autoupdate would make changes to the file content. Run:\n"
-                  << GetBazelCommand(BazelMode::Autoupdate,
-                                     test_info_->test_name);
+                  << test_info_->factory_fn()->GetBazelCommand(
+                         FileTestBase::BazelMode::Autoupdate);
   }
 }
 
@@ -372,7 +368,8 @@ static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
     -> void {
   Timer timer;
   // Add a crash trace entry with the single-file test command.
-  std::string test_command = GetBazelCommand(BazelMode::Test, test.test_name);
+  std::string test_command =
+      test_instance.GetBazelCommand(FileTestBase::BazelMode::Test);
   llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
 
   if (auto err = RunTestFile(test_instance, absl::GetFlag(FLAGS_dump_output),

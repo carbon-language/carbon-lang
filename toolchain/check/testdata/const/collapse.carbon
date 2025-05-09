@@ -21,6 +21,8 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
 // CHECK:STDOUT:   %ptr.36b: type = ptr_type %const [concrete]
@@ -36,6 +38,7 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,10 +48,10 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.1d4 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.1d4 = value_param_pattern %p.patt, call_param0
-// CHECK:STDOUT:     %return.patt: %pattern_type.1d4 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.1d4 = out_param_pattern %return.patt, call_param1
+// CHECK:STDOUT:     %p.patt: %pattern_type.1d4 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.1d4 = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.1d4 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.1d4 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc16_38: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16_38: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

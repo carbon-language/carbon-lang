@@ -57,6 +57,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -78,6 +80,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -91,8 +94,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc18_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc18_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -108,7 +111,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
+// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %int_32.loc27_13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -118,7 +121,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.7ce = binding_pattern w
+// CHECK:STDOUT:     %w.patt: %pattern_type.7ce = binding_pattern w [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc36: type = splice_block %i32.loc36 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc36: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -126,8 +129,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: %i32 = bind_name w, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.268 = binding_pattern x
-// CHECK:STDOUT:     %.loc45_1: %pattern_type.268 = var_pattern %x.patt
+// CHECK:STDOUT:     %x.patt: %pattern_type.268 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %.loc45_1: %pattern_type.268 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.ba9 = var x
 // CHECK:STDOUT:   %.loc45_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.ba9] {
@@ -137,8 +140,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.ba9 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.366 = binding_pattern y
-// CHECK:STDOUT:     %.loc54_1: %pattern_type.366 = var_pattern %y.patt
+// CHECK:STDOUT:     %y.patt: %pattern_type.366 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %.loc54_1: %pattern_type.366 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.c = var y
 // CHECK:STDOUT:   %.loc54_25: type = splice_block %struct_type.b.c [concrete = constants.%struct_type.b.c] {
