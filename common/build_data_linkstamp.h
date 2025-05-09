@@ -11,8 +11,11 @@ namespace Carbon::BuildData::Internal {
 
 // See build_data.h; the list of names here should match.
 //
-// These are exposed as non-constexpr as they need to be initialized 
-// in `build_data_linkstamp.cpp` that is separately compiled.
+// Bazel will build dependencies on the `:build_data` library (which exposes
+// `build_data_linkstamp.h`) throughout the build process, but
+// `build_data_linkstamp.cpp` is compiled and linked per-binary -- essentially a
+// separate library. In essence, `build_data_linkstamp.h` is exposing values
+// that are assigned later, for example preventing `constexpr` use.
 //
 // Also, when build_data_linkstamp.cpp is compiled, this doesn't receive deps,
 // so we can't use things like `llvm::StringRef` here. As a result, we use
