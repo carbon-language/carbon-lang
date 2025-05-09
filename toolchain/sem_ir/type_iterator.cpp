@@ -236,7 +236,4 @@ auto TypeIterator::PushInstId(SemIR::InstId inst_id) -> void {
 // Push the next step into the work queue.
 auto TypeIterator::Push(WorkItem item) -> void { work_list_.push_back(item); }
 
-static_assert(Carbon::Internal::Kind::IsStdVariant<std::variant<int, bool>>);
-static_assert(!Carbon::Internal::Kind::IsStdVariant<int>);
-
 }  // namespace Carbon::SemIR
