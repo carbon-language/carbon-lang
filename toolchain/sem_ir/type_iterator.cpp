@@ -30,13 +30,12 @@ auto TypeIterator::Next() -> Step {
     if (const auto* interface = std::get_if<SemIR::SpecificInterface>(&next)) {
       auto args = GetSpecificArgs(interface->specific_id);
       if (args.empty()) {
-        return Step::StartOnly(
-            Step::InterfaceStart{.interface_id = interface->interface_id});
+        return Step::InterfaceStartOnly{
+            {.interface_id = interface->interface_id}};
       } else {
         Push(EndType());
         PushArgs(args);
-        return Step::StartWithEnd(
-            Step::InterfaceStart{.interface_id = interface->interface_id});
+        return Step::InterfaceStart{.interface_id = interface->interface_id};
       }
     }
 
@@ -97,7 +96,7 @@ auto TypeIterator::Next() -> Step {
       case CARBON_KIND(SemIR::IntType int_type): {
         Push(EndType());
         PushArgs({int_type.bit_width_id});
-        return Step::StartWithEnd(Step::IntStart{.type_id = type_id});
+        return Step::IntStart{.type_id = type_id};
       }
 
         // ==== Aggregate types ====
@@ -106,18 +105,18 @@ auto TypeIterator::Next() -> Step {
         Push(EndType());
         PushInstId(array_type.element_type_inst_id);
         PushInstId(array_type.bound_id);
-        return Step::StartWithEnd(Step::ArrayStart{.type_id = type_id});
+        return Step::ArrayStart{.type_id = type_id};
       }
       case CARBON_KIND(SemIR::ClassType class_type): {
         auto args = GetSpecificArgs(class_type.specific_id);
         if (args.empty()) {
-          return Step::StartOnly(Step::ClassStart{
-              .class_id = class_type.class_id, .type_id = type_id});
+          return Step::ClassStartOnly{
+              {.class_id = class_type.class_id, .type_id = type_id}};
         } else {
           Push(EndType());
           PushArgs(args);
-          return Step::StartWithEnd(Step::ClassStart{
-              .class_id = class_type.class_id, .type_id = type_id});
+          return Step::ClassStart{.class_id = class_type.class_id,
+                                  .type_id = type_id};
         }
       }
       case CARBON_KIND(SemIR::ConstType const_type): {
@@ -133,30 +132,30 @@ auto TypeIterator::Next() -> Step {
       case CARBON_KIND(SemIR::PointerType pointer_type): {
         Push(EndType());
         PushInstId(pointer_type.pointee_id);
-        return Step::StartWithEnd(Step::PointerStart());
+        return Step::PointerStart();
       }
       case CARBON_KIND(SemIR::TupleType tuple_type): {
         auto inner_types =
             sem_ir_->inst_blocks().Get(tuple_type.type_elements_id);
         if (inner_types.empty()) {
-          return Step::StartOnly(Step::TupleStart{.type_id = type_id});
+          return Step::TupleStartOnly{{.type_id = type_id}};
         } else {
           Push(EndType());
           PushArgs(sem_ir_->inst_blocks().Get(tuple_type.type_elements_id));
-          return Step::StartWithEnd(Step::TupleStart{.type_id = type_id});
+          return Step::TupleStart{.type_id = type_id};
         }
       }
       case CARBON_KIND(SemIR::StructType struct_type): {
         auto fields = sem_ir_->struct_type_fields().Get(struct_type.fields_id);
         if (fields.empty()) {
-          return Step::StartOnly(Step::StructStart{.type_id = type_id});
+          return Step::StructStartOnly{{.type_id = type_id}};
         } else {
           Push(EndType());
           for (const auto& field : llvm::reverse(fields)) {
             Push(StructFieldName{.name_id = field.name_id});
             PushInstId(field.type_inst_id);
           }
-          return Step::StartWithEnd(Step::StructStart{.type_id = type_id});
+          return Step::StructStart{.type_id = type_id};
         }
       }
       default:

@@ -107,8 +107,8 @@ class TypeIterator {
 class TypeIterator::Step {
  public:
   // ===========================================================================
-  // Results that enter scope where the following results are related. These
-  // only appear in `StartOnly` or `StartWithEnd`.
+  // Results that enter a scope where the following results are related, until
+  // the iterator returns `End`.
 
   // Followed by generic parameters.
   struct ClassStart {
@@ -139,22 +139,14 @@ class TypeIterator::Step {
   struct PointerStart {};
 
   // ===========================================================================
-  // Aggregator results that begin a scope and potentially end it immediately.
+  // Results that would enter a scope, but there are known to be no related
+  // results in that scope, so this means there won't be an `End` paired with
+  // them.
 
-  // A *Start type, but without anything following it, so we also skip the
-  // matching `End`.
-  struct StartOnly {
-    using Any =
-        std::variant<ClassStart, StructStart, TupleStart, InterfaceStart>;
-    Any any;
-  };
-  // A *Start type, with nested steps after it, and then a matching `End`.
-  struct StartWithEnd {
-    using Any =
-        std::variant<ClassStart, StructStart, TupleStart, InterfaceStart,
-                     ArrayStart, IntStart, PointerStart>;
-    Any any;
-  };
+  struct ClassStartOnly : public ClassStart {};
+  struct StructStartOnly : public StructStart {};
+  struct TupleStartOnly : public TupleStart {};
+  struct InterfaceStartOnly : public InterfaceStart {};
 
   // ===========================================================================
   // Individual result values, which appear on their own or inside some scope
@@ -191,15 +183,18 @@ class TypeIterator::Step {
   // ===========================================================================
   // Results that report a state change in iteration.
 
-  // Closes the scope of a `StartWithEnd`.
+  // Closes the scope of a `*Start` step.
   struct End {};
   // Iteration is complete.
   struct Done {};
 
   // Each step is one of these.
-  using Any = std::variant<ConcreteType, SymbolicType, TemplateType,
-                           ConcreteValue, SymbolicValue, StructFieldName,
-                           StartOnly, StartWithEnd, End, Done>;
+  using Any =
+      std::variant<ConcreteType, SymbolicType, TemplateType, ConcreteValue,
+                   SymbolicValue, StructFieldName, ClassStartOnly,
+                   StructStartOnly, TupleStartOnly, InterfaceStartOnly,
+                   ClassStart, StructStart, TupleStart, InterfaceStart,
+                   IntStart, ArrayStart, PointerStart, End, Done>;
 
   template <class T>
   auto Is() const -> bool {

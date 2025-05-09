@@ -217,52 +217,39 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
       case CARBON_KIND(Step::StructFieldName field_name):
         AppendStructuralConcrete(field_name.name_id);
         break;
-      case CARBON_KIND(Step::StartOnly start):
-        CARBON_KIND_SWITCH(start.any) {
-          case CARBON_KIND(Step::ClassStart class_start):
-            AppendStructuralConcrete(class_start.class_id);
-            break;
-          case CARBON_KIND(Step::StructStart _):
-            AppendStructuralConcrete(TypeStructure::ConcreteStructType());
-            break;
-          case CARBON_KIND(Step::TupleStart _):
-            AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
-            break;
-          case CARBON_KIND(Step::InterfaceStart interface_start):
-            AppendStructuralConcrete(interface_start.interface_id);
-            break;
-        }
+      case CARBON_KIND(Step::ClassStartOnly class_start):
+        AppendStructuralConcrete(class_start.class_id);
         break;
-      case CARBON_KIND(Step::StartWithEnd start_with_end): {
-        CARBON_KIND_SWITCH(start_with_end.any) {
-          case CARBON_KIND(Step::ClassStart class_start):
-            AppendStructuralConcreteOpenParen(class_start.class_id);
-            break;
-          case CARBON_KIND(Step::StructStart _):
-            AppendStructuralConcreteOpenParen(
-                TypeStructure::ConcreteStructType());
-            break;
-          case CARBON_KIND(Step::TupleStart _):
-            AppendStructuralConcreteOpenParen(
-                TypeStructure::ConcreteTupleType());
-            break;
-          case CARBON_KIND(Step::InterfaceStart interface_start):
-            AppendStructuralConcreteOpenParen(interface_start.interface_id);
-            break;
-          case CARBON_KIND(Step::IntStart int_start):
-            AppendStructuralConcreteOpenParen(int_start.type_id);
-            break;
-          case CARBON_KIND(Step::ArrayStart _):
-            AppendStructuralConcreteOpenParen(
-                TypeStructure::ConcreteArrayType());
-            break;
-          case CARBON_KIND(Step::PointerStart _):
-            AppendStructuralConcreteOpenParen(
-                TypeStructure::ConcretePointerType());
-            break;
-        }
+      case CARBON_KIND(Step::ClassStart class_start):
+        AppendStructuralConcreteOpenParen(class_start.class_id);
         break;
-      }
+      case CARBON_KIND(Step::StructStartOnly _):
+        AppendStructuralConcrete(TypeStructure::ConcreteStructType());
+        break;
+      case CARBON_KIND(Step::StructStart _):
+        AppendStructuralConcreteOpenParen(TypeStructure::ConcreteStructType());
+        break;
+      case CARBON_KIND(Step::TupleStartOnly _):
+        AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
+        break;
+      case CARBON_KIND(Step::TupleStart _):
+        AppendStructuralConcreteOpenParen(TypeStructure::ConcreteTupleType());
+        break;
+      case CARBON_KIND(Step::InterfaceStartOnly interface_start):
+        AppendStructuralConcrete(interface_start.interface_id);
+        break;
+      case CARBON_KIND(Step::InterfaceStart interface_start):
+        AppendStructuralConcreteOpenParen(interface_start.interface_id);
+        break;
+      case CARBON_KIND(Step::IntStart int_start):
+        AppendStructuralConcreteOpenParen(int_start.type_id);
+        break;
+      case CARBON_KIND(Step::ArrayStart _):
+        AppendStructuralConcreteOpenParen(TypeStructure::ConcreteArrayType());
+        break;
+      case CARBON_KIND(Step::PointerStart _):
+        AppendStructuralConcreteOpenParen(TypeStructure::ConcretePointerType());
+        break;
     }
   }
 }
