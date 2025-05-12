@@ -38,7 +38,10 @@ cc_library(
 
 cc_library(
     name = "build_data",
-    srcs = ["build_data_linkstamp.h"],
+    srcs = [
+        "build_data.cpp",
+        "build_data_linkstamp.h",
+    ],
     hdrs = ["build_data.h"],
     linkstamp = "build_data_linkstamp.cpp",
     deps = ["@llvm-project//llvm:Support"],

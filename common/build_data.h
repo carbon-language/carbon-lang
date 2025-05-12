@@ -17,17 +17,17 @@ namespace Carbon::BuildData {
 // names for the public variables, but cannot use constexpr.
 
 // The platform, per https://bazel.build/extending/platforms.
-inline const llvm::StringRef Platform = Internal::platform;
+extern const llvm::StringRef Platform;
 
 // Whether coverage is enabled.
-inline const bool BuildCoverageEnabled = Internal::build_coverage_enabled;
+extern const bool BuildCoverageEnabled;
 
 // The binary target, such as `//common:build_data_test`.
-inline const llvm::StringRef TargetName = Internal::target_name;
+extern const llvm::StringRef TargetName;
 
 // The path to the build target, such as
 // `bazel-out/k8-fastbuild/bin/common/build_data_test`.
-inline const llvm::StringRef BuildTarget = Internal::build_target;
+extern const llvm::StringRef BuildTarget;
 
 // NOLINTEND(readability-identifier-naming)
 
