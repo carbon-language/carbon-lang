@@ -669,23 +669,14 @@ def _impl(ctx):
         )],
     )
 
-    if clang_version and clang_version <= 16:
-        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
-        libcpp_release_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=0"]
-    elif clang_version and clang_version <= 17:
-        # Clang 17 deprecates LIBCPP_ENABLE_ASSERTIONS in favor of
-        # HARDENED_MODE and DEBUG_MODE.
-        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
-        libcpp_release_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
-    else:
-        # Clang 18 changes HARDENED_MODE to use 4 values:
-        # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
-        libcpp_debug_flags = [
-            "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
-        ]
-        libcpp_release_flags = [
-            "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_FAST",
-        ]
+    # Clang HARDENED_MODE to has 4 possible values:
+    # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
+    libcpp_debug_flags = [
+        "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
+    ]
+    libcpp_release_flags = [
+        "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_FAST",
+    ]
 
     linux_flags_feature = feature(
         name = "linux_flags",
