@@ -125,7 +125,9 @@ struct StdVariantTypeMap<std::variant<Ts...>> {
 };
 
 // Generate StdVariantTypeMap specializations for each number of types in the
-// std::variant<...> type list.
+// std::variant<...> type list. The numbers here represent which number is
+// printed in diagnostics stating a type in the variant has no matching case
+// statement. Duplicate numbers would create an error.
 CARBON_INTERNAL_KIND_TYPE_MAP(0);
 CARBON_INTERNAL_KIND_TYPE_MAP(0, 1);
 CARBON_INTERNAL_KIND_TYPE_MAP(0, 1, 2);
