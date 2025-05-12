@@ -3277,6 +3277,20 @@ static auto GetInstForLoad(Context& context,
 
 // NOLINTNEXTLINE(misc-no-recursion)
 auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
+#if LLVM_ADDRESS_SANITIZER_BUILD
+  // Under ASan, invalidate all of our value stores on any import in order to
+  // flush out bugs where pointers and references to entities are held across
+  // imports.
+  context.classes().Invalidate();
+  context.entity_names().Invalidate();
+  context.facet_types().Invalidate();
+  context.functions().Invalidate();
+  context.generics().Invalidate();
+  context.impls().Invalidate();
+  context.interfaces().Invalidate();
+  context.specifics().Invalidate();
+#endif
+
   auto inst = context.insts().TryGetAs<SemIR::ImportRefUnloaded>(inst_id);
   if (!inst) {
     return;

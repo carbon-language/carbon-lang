@@ -176,10 +176,6 @@ class CheckUnit {
   // - The type structure each non-final `impl` must differ from every other
   //   non-final `impl` for the same interface visible from the file.
   auto CheckOverlappingImpls() -> void;
-  // Check for invalid overlap between impls, given the set of all impls for a
-  // single interface.
-  auto CheckOverlappingImplsForInterface(llvm::ArrayRef<SemIR::Impl> impls)
-      -> void;
 
   // Does work after processing the parse tree, such as finishing the IR and
   // checking for missing contents.

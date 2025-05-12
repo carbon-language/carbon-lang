@@ -19,7 +19,8 @@ class Formatter {
  public:
   explicit Formatter(const File* sem_ir,
                      Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-                     llvm::ArrayRef<bool> include_ir_in_dumps);
+                     llvm::ArrayRef<bool> include_ir_in_dumps,
+                     bool use_dump_sem_ir_ranges);
 
   // Prints the SemIR into an internal buffer.
   //
@@ -326,6 +327,9 @@ class Formatter {
 
   // For each CheckIRId, whether entities from it should be formatted.
   llvm::ArrayRef<bool> include_ir_in_dumps_;
+
+  // Whether to use ranges when dumping, or to dump the full SemIR.
+  bool use_dump_sem_ir_ranges_;
 
   // The output stream buffer.
   std::string buffer_;

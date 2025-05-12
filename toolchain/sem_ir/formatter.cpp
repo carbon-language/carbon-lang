@@ -34,17 +34,19 @@ namespace Carbon::SemIR {
 
 Formatter::Formatter(const File* sem_ir,
                      Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-                     llvm::ArrayRef<bool> include_ir_in_dumps)
+                     llvm::ArrayRef<bool> include_ir_in_dumps,
+                     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
       inst_namer_(sem_ir_),
       get_tree_and_subtrees_(get_tree_and_subtrees),
-      include_ir_in_dumps_(include_ir_in_dumps) {
+      include_ir_in_dumps_(include_ir_in_dumps),
+      use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges) {
   // Create a placeholder visible chunk and assign it to all instructions that
   // don't have a chunk of their own.
   auto first_chunk = AddChunkNoFlush(true);
   tentative_inst_chunks_.resize(sem_ir_->insts().size(), first_chunk);
 
-  if (sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+  if (use_dump_sem_ir_ranges_) {
     ComputeNodeParents();
   }
 
@@ -184,7 +186,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
     return false;
   }
 
-  if (!sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+  if (!use_dump_sem_ir_ranges_) {
     return true;
   }
 
@@ -224,7 +226,7 @@ auto Formatter::ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
 }
 
 auto Formatter::ShouldFormatInst(InstId inst_id) -> bool {
-  if (!sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+  if (!use_dump_sem_ir_ranges_) {
     return true;
   }
 
