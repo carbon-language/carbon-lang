@@ -7,15 +7,8 @@
 namespace Carbon::BuildData {
 
 const llvm::StringRef Platform = Internal::platform;
-
-// Whether coverage is enabled.
 const bool BuildCoverageEnabled = Internal::build_coverage_enabled;
-
-// The binary target, such as `//common:build_data_test`.
 const llvm::StringRef TargetName = Internal::target_name;
-
-// The path to the build target, such as
-// `bazel-out/k8-fastbuild/bin/common/build_data_test`.
 const llvm::StringRef BuildTarget = Internal::build_target;
 
 }  // namespace Carbon::BuildData
