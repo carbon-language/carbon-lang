@@ -39,6 +39,14 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_facet_type_const_id)
     -> SemIR::InstBlockIdOrError;
 
+// Returns whether the query matches against the given impl. This is like a
+// `LookupImplWitness` operation but for a single interface, and against only
+// the single impl.
+auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
+                       SemIR::ConstantId query_self_const_id,
+                       SemIR::SpecificInterface query_specific_interface,
+                       SemIR::ImplId target_impl) -> bool;
+
 // The result of EvalLookupSingleImplWitness(). It can be one of:
 // - No value. Lookup failed to find an impl declaration.
 // - A concrete value. Lookup found a concrete impl declaration that can be

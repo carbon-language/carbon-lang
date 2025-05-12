@@ -8,8 +8,9 @@
 #include <utility>
 #include <variant>
 
-#include "common/variant_helpers.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_iterator.h"
 
 namespace Carbon::Check {
@@ -21,6 +22,9 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
   const auto* lhs_cursor = lhs.begin();
   const auto* rhs_cursor = rhs.begin();
 
+  const auto* lhs_concrete_cursor = concrete_types_.begin();
+  const auto* rhs_concrete_cursor = other.concrete_types_.begin();
+
   while (true) {
     // If both structures end at the same time, they match.
     if (lhs_cursor == lhs.end() && rhs_cursor == rhs.end()) {
@@ -30,12 +34,21 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
     if (lhs_cursor == lhs.end() || rhs_cursor == rhs.end()) {
       return false;
     }
-    // Same structural element on both sides, they match and both are consumed.
-    //
-    // TODO: If we kept the constant value of the concrete element in the type
-    // structure, then we could compare them and use that to eliminate matching
-    // impls that are not actually compatible.
+    // Same structural element on both sides. Compare concrete values if
+    // possible to ensure they match. Both will be consumed.
     if (*lhs_cursor == *rhs_cursor) {
+      // Each Concrete and ConcreteOpenParen shape entry has a paired concrete
+      // value.
+      if (*lhs_cursor == Structural::Concrete ||
+          *lhs_cursor == Structural::ConcreteOpenParen) {
+        if (*lhs_concrete_cursor != *rhs_concrete_cursor) {
+          return false;
+        }
+
+        // Move past the shape and concrete value together.
+        ++lhs_concrete_cursor;
+        ++rhs_concrete_cursor;
+      }
       ++lhs_cursor;
       ++rhs_cursor;
       continue;
@@ -50,62 +63,70 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
     // From here we know one side is a Symbolic and the other is not. We can
     // match the Symbolic against either a single Concrete or a larger bracketed
     // set of Concrete structural elements.
-
-    // Returns false if the lhs and rhs can not match, true if we should
-    // continue checking for compatibility.
-    auto consume_symbolic = [](const auto*& lhs_cursor,
-                               const auto*& rhs_cursor) -> bool {
-      // Consume the symbolic on the RHS.
-      ++rhs_cursor;
-
-      // The symbolic on the RHS is in the same position as a close paren on the
-      // LHS, which means the structures can not match.
-      //
-      // Example:
-      // - ((c))
-      // - ((c?))
-      if (*lhs_cursor == Structural::ConcreteCloseParen) {
-        return false;
-      }
-
-      // There's either a Concrete element or an open paren on the LHS. If it's
-      // the former, the Symbolic just matches with it. If it's the latter, the
-      // Symbolic matches with everything on the LHS up to the matching closing
-      // paren.
-      CARBON_CHECK(*lhs_cursor == Structural::Concrete ||
-                   *lhs_cursor == Structural::ConcreteOpenParen);
-      int depth = 0;
-      do {
-        switch (*lhs_cursor) {
-          case Structural::ConcreteOpenParen:
-            depth += 1;
-            break;
-          case Structural::ConcreteCloseParen:
-            depth -= 1;
-            break;
-          case Structural::Concrete:
-            break;
-          case Structural::Symbolic:
-            break;
-        }
-        ++lhs_cursor;
-      } while (depth > 0);
-      return true;
-    };
-
+    //
     // We move the symbolic to the RHS to make only one case to handle in the
     // lambda.
     if (*lhs_cursor == Structural::Symbolic) {
-      if (!consume_symbolic(rhs_cursor, lhs_cursor)) {
+      if (!ConsumeRhsSymbolic(rhs_cursor, rhs_concrete_cursor, lhs_cursor)) {
         return false;
       }
     } else {
-      if (!consume_symbolic(lhs_cursor, rhs_cursor)) {
+      if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
         return false;
       }
     }
   }
 
+  return true;
+}
+
+// Returns false if the lhs and rhs can not match, true if we should
+// continue checking for compatibility.
+auto TypeStructure::ConsumeRhsSymbolic(
+    llvm::SmallVector<Structural>::const_iterator& lhs_cursor,
+    llvm::SmallVector<ConcreteType>::const_iterator& lhs_concrete_cursor,
+    llvm::SmallVector<Structural>::const_iterator& rhs_cursor) -> bool {
+  // Consume the symbolic on the RHS.
+  ++rhs_cursor;
+
+  // The symbolic on the RHS is in the same position as a close paren on the
+  // LHS, which means the structures can not match.
+  //
+  // Example:
+  // - ((c))
+  // - ((c?))
+  if (*lhs_cursor == TypeStructure::Structural::ConcreteCloseParen) {
+    return false;
+  }
+
+  // There's either a Concrete element or an open paren on the LHS. If it's
+  // the former, the Symbolic just matches with it. If it's the latter, the
+  // Symbolic matches with everything on the LHS up to the matching closing
+  // paren.
+  CARBON_CHECK(*lhs_cursor == Structural::Concrete ||
+               *lhs_cursor == Structural::ConcreteOpenParen);
+  int depth = 0;
+  do {
+    switch (*lhs_cursor) {
+      case Structural::ConcreteOpenParen:
+        depth += 1;
+        // Each Concrete and ConcreteOpenParen shape entry has a paired
+        // concrete value. Skip the shape and concrete value together.
+        ++lhs_concrete_cursor;
+        break;
+      case Structural::ConcreteCloseParen:
+        depth -= 1;
+        break;
+      case Structural::Concrete:
+        // Each Concrete and ConcreteOpenParen shape entry has a paired
+        // concrete value. Skip the shape and concrete value together.
+        ++lhs_concrete_cursor;
+        break;
+      case Structural::Symbolic:
+        break;
+    }
+    ++lhs_cursor;
+  } while (depth > 0);
   return true;
 }
 
@@ -166,107 +187,84 @@ class TypeStructureBuilder {
 auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
     -> TypeStructure {
   while (true) {
-    auto step = type_iter.Next();
-    if (step.Is<SemIR::TypeIterator::Step::Done>()) {
-      break;
+    using Step = SemIR::TypeIterator::Step;
+    CARBON_KIND_SWITCH(type_iter.Next().any) {
+      case CARBON_KIND(Step::Done _):
+        // TODO: This requires 4 SmallVector moves (two here and two in the
+        // constructor). Find a way to reduce that.
+        return TypeStructure(std::exchange(structure_, {}),
+                             std::exchange(symbolic_type_indices_, {}),
+                             std::exchange(concrete_types_, {}));
+      case CARBON_KIND(Step::End _):
+        AppendStructuralConcreteCloseParen();
+        break;
+      case CARBON_KIND(Step::ConcreteType concrete):
+        AppendStructuralConcrete(concrete.type_id);
+        break;
+      case CARBON_KIND(Step::SymbolicType _):
+        AppendStructuralSymbolic();
+        break;
+      case CARBON_KIND(Step::TemplateType _):
+        AppendStructuralSymbolic();
+        break;
+      case CARBON_KIND(Step::ConcreteValue value):
+        AppendStructuralConcrete(
+            context_->constant_values().Get(value.inst_id));
+        break;
+      case CARBON_KIND(Step::SymbolicValue _):
+        AppendStructuralSymbolic();
+        break;
+      case CARBON_KIND(Step::StructFieldName field_name):
+        AppendStructuralConcrete(field_name.name_id);
+        break;
+      case CARBON_KIND(Step::StartOnly start):
+        CARBON_KIND_SWITCH(start.any) {
+          case CARBON_KIND(Step::ClassStart class_start):
+            AppendStructuralConcrete(class_start.class_id);
+            break;
+          case CARBON_KIND(Step::StructStart _):
+            AppendStructuralConcrete(TypeStructure::ConcreteStructType());
+            break;
+          case CARBON_KIND(Step::TupleStart _):
+            AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
+            break;
+          case CARBON_KIND(Step::InterfaceStart interface_start):
+            AppendStructuralConcrete(interface_start.interface_id);
+            break;
+        }
+        break;
+      case CARBON_KIND(Step::StartWithEnd start_with_end): {
+        CARBON_KIND_SWITCH(start_with_end.any) {
+          case CARBON_KIND(Step::ClassStart class_start):
+            AppendStructuralConcreteOpenParen(class_start.class_id);
+            break;
+          case CARBON_KIND(Step::StructStart _):
+            AppendStructuralConcreteOpenParen(
+                TypeStructure::ConcreteStructType());
+            break;
+          case CARBON_KIND(Step::TupleStart _):
+            AppendStructuralConcreteOpenParen(
+                TypeStructure::ConcreteTupleType());
+            break;
+          case CARBON_KIND(Step::InterfaceStart interface_start):
+            AppendStructuralConcreteOpenParen(interface_start.interface_id);
+            break;
+          case CARBON_KIND(Step::IntStart int_start):
+            AppendStructuralConcreteOpenParen(int_start.type_id);
+            break;
+          case CARBON_KIND(Step::ArrayStart _):
+            AppendStructuralConcreteOpenParen(
+                TypeStructure::ConcreteArrayType());
+            break;
+          case CARBON_KIND(Step::PointerStart _):
+            AppendStructuralConcreteOpenParen(
+                TypeStructure::ConcretePointerType());
+            break;
+        }
+        break;
+      }
     }
-
-    VariantMatch(
-        step.any,
-        [&](SemIR::TypeIterator::Step::Done) {
-          CARBON_FATAL("already handled above");
-        },
-        [&](SemIR::TypeIterator::Step::End) {
-          AppendStructuralConcreteCloseParen();
-        },
-        [&](SemIR::TypeIterator::Step::ConcreteType concrete) {
-          AppendStructuralConcrete(concrete.type_id);
-        },
-        [&](SemIR::TypeIterator::Step::SymbolicType) {
-          AppendStructuralSymbolic();
-        },
-        [&](SemIR::TypeIterator::Step::TemplateType) {
-          AppendStructuralSymbolic();
-        },
-        [&](SemIR::TypeIterator::Step::Value) {
-          // TODO: Include the value's type into the structure, with the type
-          // coming first and paired together with the value, like:
-          // `{TypeWithPossibleNestedTypes, Concrete}`.
-          // We might want a different bracket marker than ConcreteOpenParen
-          // for this so that it can look different in the type structure when
-          // dumped.
-          AppendStructuralConcrete(SemIR::ErrorInst::TypeId);
-        },
-        [&](SemIR::TypeIterator::Step::StartOnly start) {
-          VariantMatch(
-              start.any,
-              [&](SemIR::TypeIterator::Step::ClassStart class_start) {
-                AppendStructuralConcrete(class_start.class_id);
-              },
-              [&](SemIR::TypeIterator::Step::StructStart struct_start) {
-                AppendStructuralConcrete(struct_start.type_id);
-              },
-              [&](SemIR::TypeIterator::Step::TupleStart) {
-                AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
-              },
-              [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
-                AppendStructuralConcrete(interface_start.interface_id);
-              },
-              [&](SemIR::TypeIterator::Step::IntStart int_start) {
-                AppendStructuralConcrete(int_start.type_id);
-              });
-        },
-        [&](SemIR::TypeIterator::Step::StartWithEnd start_with_end) {
-          VariantMatch(
-              start_with_end.any,
-              [&](SemIR::TypeIterator::Step::ClassStart class_start) {
-                // TODO: We should be able to use `class_id` here but non-type
-                // values are not differentiated right now. So `Int(32)` and
-                // `Int(16)` and `Int(N)` all look the same. We need to make
-                // this change in order to use the concrete types in type
-                // structure comparison for impl matching.
-                AppendStructuralConcreteOpenParen(class_start.type_id);
-              },
-              [&](SemIR::TypeIterator::Step::StructStart struct_start) {
-                // TODO: Should we use a `TypeStructure::ConcreteStructType`
-                // here? To do so we need to include the struct field names in
-                // the concrete elements of the type structure to
-                // differentiate different struct types.
-                AppendStructuralConcreteOpenParen(struct_start.type_id);
-              },
-              [&](SemIR::TypeIterator::Step::TupleStart) {
-                AppendStructuralConcreteOpenParen(
-                    TypeStructure::ConcreteTupleType());
-              },
-              [&](SemIR::TypeIterator::Step::InterfaceStart interface_start) {
-                AppendStructuralConcreteOpenParen(interface_start.interface_id);
-              },
-              [&](SemIR::TypeIterator::Step::ArrayStart start) {
-                AppendStructuralConcreteOpenParen(
-                    // TODO: We should be able to use
-                    // `TypeStructure::ConcreteArrayType()` here but non-type
-                    // values are not differentiated right now. So
-                    // `array(i32, 1)` and `array(i32, 2)` both look the same.
-                    // We need to make this change in order to use the
-                    // concrete types in type structure comparison for impl
-                    // matching.
-                    start.type_id);
-              },
-              [&](SemIR::TypeIterator::Step::IntStart int_start) {
-                AppendStructuralConcreteOpenParen(int_start.type_id);
-              },
-              [&](SemIR::TypeIterator::Step::PointerStart) {
-                AppendStructuralConcreteOpenParen(
-                    TypeStructure::ConcretePointerType());
-              });
-        });
   }
-
-  // TODO: This requires 4 SmallVector moves (two here and two in the
-  // constructor). Find a way to reduce that.
-  return TypeStructure(std::exchange(structure_, {}),
-                       std::exchange(symbolic_type_indices_, {}),
-                       std::exchange(concrete_types_, {}));
 }
 
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,

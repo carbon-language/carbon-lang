@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/deferred_definition_scope.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/function.h"
@@ -400,6 +401,7 @@ static auto BuildThunkDefinition(Context& context,
   if (HasDeclaredReturnType(context, function_id)) {
     BuildReturnWithExpr(context, SemIR::LocId(callee_id), call_id);
   } else {
+    DiscardExpr(context, call_id);
     BuildReturnWithNoExpr(context, SemIR::LocId(callee_id));
   }
 
