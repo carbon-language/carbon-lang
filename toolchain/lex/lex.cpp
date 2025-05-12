@@ -1127,7 +1127,7 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
       return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
                                  byte_offset);
     }
-    case CARBON_KIND_(NumericLiteral::UnrecoverableError):
+    case CARBON_KIND(NumericLiteral::UnrecoverableError _):
       return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
   }
 }
