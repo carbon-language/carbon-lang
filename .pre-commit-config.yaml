@@ -55,7 +55,7 @@ repos:
         language: node
         additional_dependencies: ['prettier@3.3.3']
         types_or: [html, javascript, json, markdown, yaml]
-        entry: npx prettier --write --log-level=warn
+        entry: npx prettier@3.3.3 --write --log-level=warn
   - repo: local
     hooks:
       - id: buildifier
