@@ -2126,7 +2126,8 @@ static auto MakeImplDeclaration(ImportContext& context,
        {.self_id = SemIR::TypeInstId::None,
         .constraint_id = SemIR::TypeInstId::None,
         .interface = SemIR::SpecificInterface::None,
-        .witness_id = witness_id}});
+        .witness_id = witness_id,
+        .is_final = import_impl.is_final}});
 
   // Write the impl ID into the ImplDecl.
   auto impl_const_id =
