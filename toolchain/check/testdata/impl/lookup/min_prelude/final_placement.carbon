@@ -67,4 +67,4 @@ import library "type_d";
 import library "interface_z";
 
 // TODO: Can not write a final impl on `D` outside the file where `D` is defined.
-final impl D as Z(()) where .X = () {}
+final impl D as Z({}) where .X = () {}
