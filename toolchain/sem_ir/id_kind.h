@@ -40,8 +40,6 @@ class TypeEnum : public Printable<TypeEnum<Types...>> {
     None,
   };
 
-#undef CARBON_OPEN_ENUM
-
   // Accesses the type given an enum value.
   template <RawEnumType K>
     requires(K != RawEnumType::Invalid)
