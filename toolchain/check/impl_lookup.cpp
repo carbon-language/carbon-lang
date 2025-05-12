@@ -418,11 +418,11 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   for (auto import_ir : import_irs) {
     // TODO: Instead of importing all impls, only import ones that are in some
     // way connected to this query.
-    for (auto impl_index : llvm::seq(
-             context.import_irs().Get(import_ir).sem_ir->impls().size())) {
+    for (auto [import_impl_id, _] :
+         context.import_irs().Get(import_ir).sem_ir->impls().enumerate()) {
       // TODO: Track the relevant impls and only consider those ones and any
       // local impls, rather than looping over all impls below.
-      ImportImpl(context, import_ir, SemIR::ImplId(impl_index));
+      ImportImpl(context, import_ir, import_impl_id);
     }
   }
 
