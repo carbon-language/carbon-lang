@@ -654,7 +654,7 @@ auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
     } else if (!elided) {
       // When formatting a block, leave a hint that instructions were elided.
       Indent();
-      out_ << "<elided>\n";
+      out_ << "<outside range>\n";
       elided = true;
     }
   }
