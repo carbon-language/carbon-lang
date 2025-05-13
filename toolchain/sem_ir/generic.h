@@ -79,7 +79,9 @@ struct Specific : Printable<Specific> {
   // containing values and instructions produced by evaluating the corresponding
   // eval block of the generic within the context of this specific. These are
   // the constant values and types and the instantiated template-dependent
-  // instructions that are used in this region of the specific.
+  // instructions that are used in this region of the specific. Each inst in
+  // the value block corresponds to the inst in the corresponding eval block
+  // with the same index.
   auto GetValueBlock(GenericInstIndex::Region region) const -> InstBlockId {
     return region == GenericInstIndex::Region::Declaration
                ? decl_block_id
