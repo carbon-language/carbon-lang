@@ -63,9 +63,23 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
-  // Controls whether `Run()` includes the prelude.
-  auto is_no_prelude() const -> bool {
-    return test_name().find("/no_prelude/") != llvm::StringRef::npos;
+  // The prelude mode. For lex and parse, it's always `None`; we exclude it in
+  // order to focus errors. For check and lowering, it's set through
+  // `min_prelude` and `no_prelude` subdirectories.
+  enum Prelude {
+    Default,
+    Min,
+    None,
+  };
+  auto prelude() const -> Prelude {
+    if (component_ == "lex" || component_ == "parse" ||
+        test_name().find("/no_prelude/") != llvm::StringRef::npos) {
+      return Prelude::None;
+    }
+    if (test_name().find("/min_prelude/") != llvm::StringRef::npos) {
+      return Prelude::Min;
+    }
+    return Prelude::Default;
   }
 
   // The toolchain component subdirectory, such as `lex` or `language_server`.
@@ -120,9 +134,10 @@ auto ToolchainFileTest::Run(
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) const -> ErrorOr<RunResult> {
-  CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
-  if (!is_no_prelude()) {
-    for (const auto& file : prelude) {
+  CARBON_ASSIGN_OR_RETURN(auto prelude_files,
+                          installation_.ReadPreludeManifest());
+  if (prelude() == Prelude::Default) {
+    for (const auto& file : prelude_files) {
       CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
     }
   }
@@ -147,7 +162,7 @@ auto ToolchainFileTest::Run(
                  [&](std::pair<llvm::StringRef, bool> entry) {
                    return entry.first == "." || entry.first == "-" ||
                           entry.first.starts_with("not_file") ||
-                          llvm::is_contained(prelude, entry.first);
+                          llvm::is_contained(prelude_files, entry.first);
                  });
 
   if (component_ == "language_server") {
@@ -184,16 +199,26 @@ auto ToolchainFileTest::GetDefaultArgs() const
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
   }
 
-  // For `lex` and `parse`, we don't need to import the prelude; exclude it to
-  // focus errors. In other phases we only do this for explicit "no_prelude"
-  // tests.
-  if (component_ == "lex" || component_ == "parse" || is_no_prelude()) {
-    args.push_back("--no-prelude-import");
+  switch (prelude()) {
+    case Prelude::Default:
+      // Use the install path to exclude prelude files.
+      args.push_back("--exclude-dump-file-prefix=" +
+                     installation_.core_package());
+      break;
+
+    case Prelude::Min:
+      // Included files all show up under the `include_files/` prefix, so
+      // exclude min_prelude files that way.
+      args.insert(args.end(), {"--custom-core",
+                               "--exclude-dump-file-prefix=include_files/"});
+      break;
+
+    case Prelude::None:
+      args.push_back("--no-prelude-import");
+      break;
   }
 
-  args.insert(
-      args.end(),
-      {"--exclude-dump-file-prefix=" + installation_.core_package(), "%s"});
+  args.push_back("%s");
   return args;
 }
 

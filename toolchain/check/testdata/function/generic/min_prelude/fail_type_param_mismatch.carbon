@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -52,55 +51,49 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc14_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_6.2 (constants.%T)]
-// CHECK:STDOUT:     %U.loc14_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_16.2 (constants.%U)]
+// CHECK:STDOUT:     %T.loc13_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:     %U.loc13_16.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc14_6.1: type, %U.loc14_16.1: type) {
-// CHECK:STDOUT:   %T.loc14_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_6.2 (constants.%T)]
-// CHECK:STDOUT:   %U.loc14_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_16.2 (constants.%U)]
+// CHECK:STDOUT: generic fn @F(%T.loc13_6.1: type, %U.loc13_16.1: type) {
+// CHECK:STDOUT:   %T.loc13_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:   %U.loc13_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ptr.loc15_11.2: type = ptr_type %T.loc14_6.2 [symbolic = %ptr.loc15_11.2 (constants.%ptr)]
-// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %ptr.loc15_11.2 [symbolic = %require_complete.loc15 (constants.%require_complete.6e5)]
-// CHECK:STDOUT:   %pattern_type.loc15: type = pattern_type %ptr.loc15_11.2 [symbolic = %pattern_type.loc15 (constants.%pattern_type.afe)]
-// CHECK:STDOUT:   %require_complete.loc20: <witness> = require_complete_type %U.loc14_16.2 [symbolic = %require_complete.loc20 (constants.%require_complete.b54)]
-// CHECK:STDOUT:   %pattern_type.loc20: type = pattern_type %U.loc14_16.2 [symbolic = %pattern_type.loc20 (constants.%pattern_type.a32)]
+// CHECK:STDOUT:   %ptr.loc14_11.2: type = ptr_type %T.loc13_6.2 [symbolic = %ptr.loc14_11.2 (constants.%ptr)]
+// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %ptr.loc14_11.2 [symbolic = %require_complete.loc14 (constants.%require_complete.6e5)]
+// CHECK:STDOUT:   %pattern_type.loc14: type = pattern_type %ptr.loc14_11.2 [symbolic = %pattern_type.loc14 (constants.%pattern_type.afe)]
+// CHECK:STDOUT:   %require_complete.loc19: <witness> = require_complete_type %U.loc13_16.2 [symbolic = %require_complete.loc19 (constants.%require_complete.b54)]
+// CHECK:STDOUT:   %pattern_type.loc19: type = pattern_type %U.loc13_16.2 [symbolic = %pattern_type.loc19 (constants.%pattern_type.a32)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %p.patt: @F.%pattern_type.loc15 (%pattern_type.afe) = binding_pattern p [concrete]
-// CHECK:STDOUT:       %.loc15_3: @F.%pattern_type.loc15 (%pattern_type.afe) = var_pattern %p.patt [concrete]
+// CHECK:STDOUT:       %p.patt: @F.%pattern_type.loc14 (%pattern_type.afe) = binding_pattern p [concrete]
+// CHECK:STDOUT:       %.loc14_3: @F.%pattern_type.loc14 (%pattern_type.afe) = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p.var: ref @F.%ptr.loc15_11.2 (%ptr) = var p
-// CHECK:STDOUT:     %.loc15_11: type = splice_block %ptr.loc15_11.1 [symbolic = %ptr.loc15_11.2 (constants.%ptr)] {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc14_6.1 [symbolic = %T.loc14_6.2 (constants.%T)]
-// CHECK:STDOUT:       %ptr.loc15_11.1: type = ptr_type %T.ref [symbolic = %ptr.loc15_11.2 (constants.%ptr)]
+// CHECK:STDOUT:     %p.var: ref @F.%ptr.loc14_11.2 (%ptr) = var p
+// CHECK:STDOUT:     %.loc14_11: type = splice_block %ptr.loc14_11.1 [symbolic = %ptr.loc14_11.2 (constants.%ptr)] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:       %ptr.loc14_11.1: type = ptr_type %T.ref [symbolic = %ptr.loc14_11.2 (constants.%ptr)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: ref @F.%ptr.loc15_11.2 (%ptr) = bind_name p, %p.var
+// CHECK:STDOUT:     %p: ref @F.%ptr.loc14_11.2 (%ptr) = bind_name p, %p.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %n.patt: @F.%pattern_type.loc20 (%pattern_type.a32) = binding_pattern n [concrete]
+// CHECK:STDOUT:       %n.patt: @F.%pattern_type.loc19 (%pattern_type.a32) = binding_pattern n [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc15_11.2 (%ptr) = name_ref p, %p
-// CHECK:STDOUT:     %.loc20_15: @F.%ptr.loc15_11.2 (%ptr) = bind_value %p.ref
-// CHECK:STDOUT:     %.loc20_14.1: ref @F.%T.loc14_6.2 (%T) = deref %.loc20_15
-// CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc14_16.1 [symbolic = %U.loc14_16.2 (constants.%U)]
-// CHECK:STDOUT:     %.loc20_14.2: @F.%U.loc14_16.2 (%U) = converted %.loc20_14.1, <error> [concrete = <error>]
-// CHECK:STDOUT:     %n: @F.%U.loc14_16.2 (%U) = bind_name n, <error>
+// CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc14_11.2 (%ptr) = name_ref p, %p
+// CHECK:STDOUT:     %.loc19_15: @F.%ptr.loc14_11.2 (%ptr) = bind_value %p.ref
+// CHECK:STDOUT:     %.loc19_14.1: ref @F.%T.loc13_6.2 (%T) = deref %.loc19_15
+// CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_16.1 [symbolic = %U.loc13_16.2 (constants.%U)]
+// CHECK:STDOUT:     %.loc19_14.2: @F.%U.loc13_16.2 (%U) = converted %.loc19_14.1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %n: @F.%U.loc13_16.2 (%U) = bind_name n, <error>
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
-// CHECK:STDOUT:   %T.loc14_6.2 => constants.%T
-// CHECK:STDOUT:   %U.loc14_16.2 => constants.%U
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %T.loc13_6.2 => constants.%T
+// CHECK:STDOUT:   %U.loc13_16.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
