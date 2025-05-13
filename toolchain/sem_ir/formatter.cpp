@@ -295,9 +295,9 @@ auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
   out_ << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
   indent_ += 2;
   for (const InstId inst_id : block) {
-    // Print instructions when needed, but do nothing for elided entries; unlike
-    // normal code blocks, scopes are non-sequential so skipped instructions are
-    // assumed to be uninteresting.
+    // Format instructions when needed, but do nothing for elided entries;
+    // unlike normal code blocks, scopes are non-sequential so skipped
+    // instructions are assumed to be uninteresting.
     if (ShouldFormatInst(inst_id)) {
       if (use_tentative_output_scopes) {
         TentativeOutputScope scope(*this,
