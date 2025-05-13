@@ -64,26 +64,18 @@ Formatter::Formatter(const File* sem_ir,
 }
 
 auto Formatter::Format() -> void {
-  out_ << "--- " << sem_ir_->filename() << "\n\n";
+  out_ << "--- " << sem_ir_->filename() << "\n";
 
-  FormatScopeIfUsed(InstNamer::ScopeId::Constants,
-                    sem_ir_->constants().array_ref());
-  FormatScopeIfUsed(InstNamer::ScopeId::ImportRefs,
-                    sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs));
-
-  out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::File) << " ";
-  OpenBrace();
-
-  // TODO: Handle the case where there are multiple top-level instruction
-  // blocks. For example, there may be branching in the initializer of a
-  // global or a type expression.
-  if (auto block_id = sem_ir_->top_inst_block_id(); block_id.has_value()) {
-    llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::File);
-    FormatCodeBlock(block_id);
-  }
-
-  CloseBrace();
-  out_ << '\n';
+  FormatTopLevelScopeIfUsed(InstNamer::ScopeId::Constants,
+                            sem_ir_->constants().array_ref(),
+                            /*is_tentative=*/true);
+  FormatTopLevelScopeIfUsed(InstNamer::ScopeId::ImportRefs,
+                            sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs),
+                            /*is_tentative=*/true);
+  FormatTopLevelScopeIfUsed(
+      InstNamer::ScopeId::File,
+      sem_ir_->inst_blocks().GetOrEmpty(sem_ir_->top_inst_block_id()),
+      /*is_tentative=*/false);
 
   for (auto [id, _] : sem_ir_->interfaces().enumerate()) {
     FormatInterface(id);
@@ -109,7 +101,6 @@ auto Formatter::Format() -> void {
     FormatSpecific(id);
   }
 
-  // End-of-file newline.
   out_ << "\n";
 }
 
@@ -284,8 +275,9 @@ auto Formatter::IndentLabel() -> void {
   Indent(-2);
 }
 
-auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
-                                  llvm::ArrayRef<InstId> block) -> void {
+auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
+                                          llvm::ArrayRef<InstId> block,
+                                          bool is_tentative) -> void {
   if (use_dump_sem_ir_ranges_) {
     // Don't format the scope if no instructions are in a dump range.
     block = block.drop_while(
@@ -299,13 +291,22 @@ auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
   llvm::SaveAndRestore scope(scope_, scope_id);
   // Note, we don't use OpenBrace() / CloseBrace() here because we always want
   // a newline to avoid misformatting if the first instruction is omitted.
-  out_ << inst_namer_.GetScopeName(scope_id) << " {\n";
+  out_ << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
   indent_ += 2;
   for (const InstId inst_id : block) {
-    TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
-    FormatInst(inst_id);
+    // Unlike code blocks, we don't note when a scope elide entries, because
+    // they're less likely to be related to the elided code.
+    if (ShouldFormatInst(inst_id)) {
+      if (is_tentative) {
+        TentativeOutputScope scope(*this,
+                                   tentative_inst_chunks_[inst_id.index]);
+        FormatInst(inst_id);
+      } else {
+        FormatInst(inst_id);
+      }
+    }
   }
-  out_ << "}\n\n";
+  out_ << "}\n";
   indent_ -= 2;
 }
 
@@ -645,8 +646,17 @@ auto Formatter::FormatParamList(InstBlockId params_id, bool has_return_slot)
 }
 
 auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
+  bool elided = false;
   for (const InstId inst_id : sem_ir_->inst_blocks().GetOrEmpty(block_id)) {
-    FormatInst(inst_id);
+    if (ShouldFormatInst(inst_id)) {
+      FormatInst(inst_id);
+      elided = false;
+    } else if (!elided) {
+      // When formatting a block, leave a hint that instructions were elided.
+      Indent();
+      out_ << "<elided>\n";
+      elided = true;
+    }
   }
 }
 
@@ -753,10 +763,6 @@ auto Formatter::FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
 }
 
 auto Formatter::FormatInst(InstId inst_id) -> void {
-  if (!ShouldFormatInst(inst_id)) {
-    return;
-  }
-
   if (!inst_id.has_value()) {
     Indent();
     out_ << "none\n";
