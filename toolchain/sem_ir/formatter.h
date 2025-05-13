@@ -119,11 +119,10 @@ class Formatter {
   auto IndentLabel() -> void;
 
   // Formats a top-level scope, and any of the instructions in that scope that
-  // are used. Instructions may optionally use `TentativeOutputScope` (see type
-  // for details).
+  // are used.
   auto FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
                                  llvm::ArrayRef<InstId> block,
-                                 bool is_tentative) -> void;
+                                 bool use_tentative_output_scopes) -> void;
 
   // Formats a full class.
   auto FormatClass(ClassId id) -> void;

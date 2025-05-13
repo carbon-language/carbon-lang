@@ -68,14 +68,14 @@ auto Formatter::Format() -> void {
 
   FormatTopLevelScopeIfUsed(InstNamer::ScopeId::Constants,
                             sem_ir_->constants().array_ref(),
-                            /*is_tentative=*/true);
+                            /*use_tentative_output_scopes=*/true);
   FormatTopLevelScopeIfUsed(InstNamer::ScopeId::ImportRefs,
                             sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs),
-                            /*is_tentative=*/true);
+                            /*use_tentative_output_scopes=*/true);
   FormatTopLevelScopeIfUsed(
       InstNamer::ScopeId::File,
       sem_ir_->inst_blocks().GetOrEmpty(sem_ir_->top_inst_block_id()),
-      /*is_tentative=*/false);
+      /*use_tentative_output_scopes=*/false);
 
   for (auto [id, _] : sem_ir_->interfaces().enumerate()) {
     FormatInterface(id);
@@ -277,7 +277,8 @@ auto Formatter::IndentLabel() -> void {
 
 auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
                                           llvm::ArrayRef<InstId> block,
-                                          bool is_tentative) -> void {
+                                          bool use_tentative_output_scopes)
+    -> void {
   if (use_dump_sem_ir_ranges_) {
     // Don't format the scope if no instructions are in a dump range.
     block = block.drop_while(
@@ -294,10 +295,11 @@ auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
   out_ << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
   indent_ += 2;
   for (const InstId inst_id : block) {
-    // Unlike code blocks, we don't note when a scope elide entries, because
-    // they're less likely to be related to the elided code.
+    // Print instructions when needed, but do nothing for elided entries; unlike
+    // normal code blocks, scopes are non-sequential so skipped instructions are
+    // assumed to be uninteresting.
     if (ShouldFormatInst(inst_id)) {
-      if (is_tentative) {
+      if (use_tentative_output_scopes) {
         TentativeOutputScope scope(*this,
                                    tentative_inst_chunks_[inst_id.index]);
         FormatInst(inst_id);
@@ -654,7 +656,7 @@ auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
     } else if (!elided) {
       // When formatting a block, leave a hint that instructions were elided.
       Indent();
-      out_ << "<outside range>\n";
+      out_ << "<elided>\n";
       elided = true;
     }
   }
