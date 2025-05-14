@@ -16,7 +16,7 @@
 
 struct Bar;
 
-// --- fail_import_declaration.carbon
+// --- fail_todo_import_declaration.carbon
 
 library "[[@TEST_NAME]]";
 
