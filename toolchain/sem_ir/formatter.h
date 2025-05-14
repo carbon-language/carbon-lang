@@ -139,9 +139,8 @@ class Formatter {
 
   // Formats a top-level scope, and any of the instructions in that scope that
   // are used.
-  auto FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
-                                 llvm::ArrayRef<InstId> block,
-                                 bool use_tentative_output_scopes) -> void;
+  auto FormatScopeIfUsed(InstNamer::ScopeId scope_id,
+                         llvm::ArrayRef<InstId> block) -> void;
 
   // Formats a full class.
   auto FormatClass(ClassId id) -> void;
