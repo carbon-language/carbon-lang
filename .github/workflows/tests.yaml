@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         # Test a recent version of each supported OS.
-        runner: ['ubuntu-24.04', 'macos-14']
+        runner: ['ubuntu-22.04', 'macos-14']
         build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.runner }}
 
