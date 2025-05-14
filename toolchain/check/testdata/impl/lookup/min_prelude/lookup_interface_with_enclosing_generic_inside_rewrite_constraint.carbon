@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
