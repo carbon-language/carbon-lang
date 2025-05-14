@@ -396,6 +396,8 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
             new_inst));
     CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");
+    CARBON_CHECK(const_id.is_constant(),
+                 "Substitution into constant produced runtime value");
     return context().constant_values().GetInstId(const_id);
   }
 

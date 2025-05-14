@@ -10,6 +10,7 @@
 #include <variant>
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -345,8 +346,56 @@ static auto LookupImplWitnessInSelfFacetValue(
       llvm::enumerate(context.identified_facet_types()
                           .Get(identified_id)
                           .required_interfaces());
-  auto it = llvm::find_if(facet_type_required_interfaces, [=](auto e) {
-    return e.value() == query_specific_interface;
+  auto it = llvm::find_if(facet_type_required_interfaces, [&](auto e) {
+    auto facet_specific_interface = e.value();
+    if (facet_specific_interface.interface_id !=
+        query_specific_interface.interface_id) {
+      return false;
+    }
+    if (facet_specific_interface.specific_id ==
+        query_specific_interface.specific_id) {
+      // Shortcut when the ids are identical.
+      return true;
+    }
+
+    const auto& facet_specific =
+        context.specifics().Get(facet_specific_interface.specific_id);
+    const auto& query_specific =
+        context.specifics().Get(query_specific_interface.specific_id);
+#if 0
+    auto deduced_specific_id = DeduceImplArguments(
+        context, SemIR::LocId::None,
+        {
+            .self_id = query_self_inst_id,
+            .generic_id = facet_specific.generic_id,
+            .specific_id = facet_specific_interface.specific_id,
+        },
+        context.constant_values().Get(query_self_inst_id),
+        query_specific_interface.specific_id);
+    return deduced_specific_id.has_value();
+#elif 0
+    for (auto [facet_specific_arg, query_specific_arg] :
+         llvm::zip(context.inst_blocks().Get(facet_specific.args_id),
+                   context.inst_blocks().Get(query_specific.args_id))) {
+      if (context.insts().Get(facet_specific_arg).type_id() !=
+          context.insts().Get(query_specific_arg).type_id()) {
+        return false;
+      }
+    }
+    return true;
+#else
+    for (auto [facet_specific_arg, query_specific_arg] :
+         llvm::zip(context.inst_blocks().Get(facet_specific.args_id),
+                   context.inst_blocks().Get(query_specific.args_id))) {
+      auto converted_inst_id = TryConvertToValueOfType(
+          context, SemIR::LocId::None, query_specific_arg,
+          context.insts().Get(facet_specific_arg).type_id());
+      if (converted_inst_id == SemIR::ErrorInst::InstId) {
+        return false;
+      }
+    }
+    return true;
+#endif
   });
   if (it == facet_type_required_interfaces.end()) {
     return EvalImplLookupResult::MakeNone();
