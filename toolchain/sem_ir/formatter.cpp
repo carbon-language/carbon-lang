@@ -298,14 +298,14 @@ auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
     // Format instructions when needed, but do nothing for elided entries;
     // unlike normal code blocks, scopes are non-sequential so skipped
     // instructions are assumed to be uninteresting.
-    if (ShouldFormatInst(inst_id)) {
-      if (use_tentative_output_scopes) {
-        TentativeOutputScope scope(*this,
-                                   tentative_inst_chunks_[inst_id.index]);
-        FormatInst(inst_id);
-      } else {
-        FormatInst(inst_id);
-      }
+    if (use_tentative_output_scopes) {
+      // This is for constants and imports. These use tentative logic to
+      // determine whether an instruction is printed.
+      TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
+      FormatInst(inst_id);
+    } else if (ShouldFormatInst(inst_id)) {
+      // This is for the file scope. It uses only the range-based filtering.
+      FormatInst(inst_id);
     }
   }
   out_ << "}\n";
