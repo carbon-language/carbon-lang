@@ -22,10 +22,10 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "declaration.h";
 
-// CHECK:STDERR: fail_import_declaration.carbon:[[@LINE+7]]:13: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_import_declaration.carbon:[[@LINE+7]]:13: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_import_declaration.carbon:[[@LINE+4]]:13: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
+// CHECK:STDERR: fail_todo_import_declaration.carbon:[[@LINE+4]]:13: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
@@ -346,7 +346,7 @@ import Cpp library "template.h";
 // CHECK:STDERR:
 fn MyF(bar: Cpp.Bar*);
 
-// CHECK:STDOUT: --- fail_import_declaration.carbon
+// CHECK:STDOUT: --- fail_todo_import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
