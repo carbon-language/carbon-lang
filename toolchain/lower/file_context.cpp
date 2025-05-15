@@ -139,10 +139,9 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
 
 auto FileContext::CoalesceEquivalentSpecifics() -> void {
   for (auto& specifics : lowered_specifics_) {
-    if (specifics.empty()) {
-      continue;
-    }
-    for (unsigned i = 0; i < specifics.size() - 1; ++i) {
+    // i cannot be unsigned due to the comparison with a negative number when
+    // the specifics vector is empty.
+    for (int i = 0; i < static_cast<int>(specifics.size()) - 1; ++i) {
       if (is_replaced_specific_[specifics[i].index]) {
         specifics[i] = specifics[specifics.size() - 1];
         specifics.pop_back();
