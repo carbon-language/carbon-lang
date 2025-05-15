@@ -135,10 +135,9 @@ import library "type_d";
 
 interface Z {}
 
-final impl D(()) as Z {}
-
 // Two final impls for D as Z, but they are not overlapping so they are allowed
 // outside of match_first.
+final impl D(()) as Z {}
 final impl D({}) as Z {}
 
 // --- multiple_finals_with_nonoverlapping_with_self_type.carbon
@@ -148,10 +147,9 @@ import library "interface_z";
 
 class C;
 
-final impl C as Z(()) {}
-
 // Two final impls for C as Z, but they are not overlapping so they are allowed
 // outside of match_first.
+final impl C as Z(()) {}
 final impl C as Z({}) {}
 
 // --- final_impl_with_root_self_type.carbon
