@@ -139,6 +139,7 @@ cc_library(
         ":file",
         ":typed_insts",
         "//common:check",
+        "//common:concepts",
         "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
         "@llvm-project//llvm:Support",
@@ -158,6 +159,7 @@ cc_library(
     deps = [
         ":file",
         ":typed_insts",
+        "//common:concepts",
         "//common:ostream",
         "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
