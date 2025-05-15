@@ -279,7 +279,7 @@ auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
                                           llvm::ArrayRef<InstId> block,
                                           bool use_tentative_output_scopes)
     -> void {
-  if (use_dump_sem_ir_ranges_) {
+  if (!use_tentative_output_scopes && use_dump_sem_ir_ranges_) {
     // Don't format the scope if no instructions are in a dump range.
     block = block.drop_while(
         [&](InstId inst_id) { return !ShouldFormatInst(inst_id); });
