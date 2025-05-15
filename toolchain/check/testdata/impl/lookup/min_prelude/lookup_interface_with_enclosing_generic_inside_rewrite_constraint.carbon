@@ -53,11 +53,11 @@ library "[[@TEST_NAME]]";
 //
 // What we need to happen instead:
 //
-// 7. The lookup in the `FacetType` of `H` needs to succeed. Having a more
-//    specific value in the query interface's specific arguments is fine.
-//    Instead of comparing for equality, look to see that the specific of the
-//    query interface is *compatible* with the specific of the facet type's
-//    `SpecificInterface`.
+// 7. The lookup in the `FacetType` of `H` needs to succeed. The facet type,
+//    which is the self type in the `LookupImplWitness`, must also have the same
+//    substitution happen to it as happened to the interface in the query. Then
+//    the specific ids in the query interface and the facet type will continue
+//    to match after substitution.
 
 class Outer(OuterParam:! type) {
   interface Y {
