@@ -244,9 +244,8 @@ static auto DiagnoseFinalImplsOverlapOutsideMatchFirst(Context& context,
 static auto ValidateImplsForInterface(
     Context& context, llvm::ArrayRef<ImplAndInterface> impls_and_interface)
     -> void {
-  // Range over `SemIR::ImplId` only. It'd be nice to make this the function
-  // parameter but we don't have a concept to express that outside the (banned)
-  // std::ranges.
+  // Range over `SemIR::ImplId` only. Caller has ensured all of these are
+  // for the same interface.
   auto impl_ids = llvm::map_range(impls_and_interface,
                                   [=](ImplAndInterface impl_and_interface) {
                                     return impl_and_interface.impl_id;
