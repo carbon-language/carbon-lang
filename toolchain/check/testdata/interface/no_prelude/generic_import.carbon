@@ -96,11 +96,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.b35 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.bc7: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
-// CHECK:STDOUT:   %Self.deb: %AddWith.type.bc7 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.deb: @AddWith.%AddWith.type (%AddWith.type.bc7) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.fbc: type = fn_type @F.1, @AddWith(%T) [symbolic]
-// CHECK:STDOUT:   %F.be3: %F.type.fbc = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.be37d8.1: %F.type.fbc = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.be37d8.2: @AddWith.%F.type (%F.type.fbc) = struct_value () [symbolic]
 // CHECK:STDOUT:   %AddWith.assoc_type.36e: type = assoc_entity_type @AddWith, @AddWith(%T) [symbolic]
-// CHECK:STDOUT:   %assoc0.6a8: %AddWith.assoc_type.36e = assoc_entity element0, imports.%Main.import_ref.0c5 [symbolic]
+// CHECK:STDOUT:   %assoc0.6a8: @AddWith.%AddWith.assoc_type (%AddWith.assoc_type.36e) = assoc_entity element0, imports.%Main.import_ref.0c5 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.e8e: type = facet_type <@AddWith, @AddWith(%C)> [concrete]
 // CHECK:STDOUT:   %Self.fbb: %AddWith.type.e8e = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.cd2: type = fn_type @F.1, @AddWith(%C) [concrete]
@@ -118,7 +119,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst25 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c77 = import_ref Main//a, loc5_9, unloaded
-// CHECK:STDOUT:   %Main.F: @AddWith.%F.type (%F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.be3)]
+// CHECK:STDOUT:   %Main.F: @AddWith.%F.type (%F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.be37d8.1)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7) = import_ref Main//a, inst25 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.deb)]
 // CHECK:STDOUT:   %Main.import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
@@ -148,7 +149,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T)> [symbolic = %AddWith.type (constants.%AddWith.type.bc7)]
 // CHECK:STDOUT:   %Self: @AddWith.%AddWith.type (%AddWith.type.bc7) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.deb)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.fbc)]
-// CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.fbc) = struct_value () [symbolic = %F (constants.%F.be3)]
+// CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.fbc) = struct_value () [symbolic = %F (constants.%F.be37d8.2)]
 // CHECK:STDOUT:   %AddWith.assoc_type: type = assoc_entity_type @AddWith, @AddWith(%T) [symbolic = %AddWith.assoc_type (constants.%AddWith.assoc_type.36e)]
 // CHECK:STDOUT:   %assoc0: @AddWith.%AddWith.assoc_type (%AddWith.assoc_type.36e) = assoc_entity element0, imports.%Main.import_ref.0c5 [symbolic = %assoc0 (constants.%assoc0.6a8)]
 // CHECK:STDOUT:

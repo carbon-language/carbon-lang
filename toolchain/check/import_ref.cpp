@@ -898,7 +898,8 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
     return SemIR::ConstantId::None;
   }
   auto import_decl_inst_id = resolver.import_generics().Get(generic_id).decl_id;
-  auto import_decl_inst = resolver.import_insts().Get(import_decl_inst_id);
+  auto import_decl_inst =
+      resolver.import_insts().GetWithAttachedType(import_decl_inst_id);
   if (import_decl_inst.Is<SemIR::ImplDecl>()) {
     // For an impl declaration, the imported entity can be found via the
     // declaration.
@@ -1377,7 +1378,7 @@ static auto AddAssociatedEntities(ImportContext& context,
           context.import_entity_names().Get(import_ref->entity_name_id).name_id;
     } else {
       CARBON_FATAL("Unhandled associated entity kind: {0}",
-                   context.import_insts().Get(inst_id).kind());
+                   context.import_insts().GetWithAttachedType(inst_id).kind());
     }
     auto name_id = GetLocalNameId(context, import_name_id);
     auto entity_name_id = context.local_entity_names().Add(
@@ -2858,7 +2859,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     return ResolveResult::Done(resolver.local_constant_values().Get(inst_id));
   }
 
-  auto untyped_inst = resolver.import_insts().Get(inst_id);
+  auto untyped_inst = resolver.import_insts().GetWithAttachedType(inst_id);
   CARBON_KIND_SWITCH(untyped_inst) {
     case CARBON_KIND(SemIR::AdaptDecl inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
