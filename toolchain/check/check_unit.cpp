@@ -5,24 +5,31 @@
 #include "toolchain/check/check_unit.h"
 
 #include <string>
+#include <tuple>
+#include <utility>
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_structure.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -33,7 +40,11 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
     count += package_imports.imports.size();
   }
   if (!unit_and_imports->api_for_impl) {
-    // Leave an empty slot for ImportIRId::ApiForImpl.
+    // Leave an empty slot for `ImportIRId::ApiForImpl`.
+    ++count;
+  }
+  if (!unit_and_imports->cpp_import_names.empty()) {
+    // Leave an empty slot for `ImportIRId::Cpp`.
     ++count;
   }
   return count;
@@ -45,15 +56,17 @@ CheckUnit::CheckUnit(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
+      tree_and_subtrees_getter_(
+          tree_and_subtrees_getters
+              [unit_and_imports->unit->sem_ir->check_ir_id().index]),
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(&emitter_, unit_and_imports_->unit->tree_and_subtrees_getter,
-               unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports),
-               tree_and_subtrees_getters.size(), vlog_stream) {}
+      context_(
+          &emitter_, tree_and_subtrees_getter_, unit_and_imports_->unit->sem_ir,
+          GetImportedIRCount(unit_and_imports), total_ir_count_, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -66,10 +79,6 @@ auto CheckUnit::Run() -> void {
 
   // Add a block for the file.
   context_.inst_block_stack().Push();
-
-  // TODO: Remove this and the pop in `FinishRun` once we properly push and pop
-  // in the right places.
-  context_.generic_region_stack().Push();
 
   InitPackageScopeAndImports();
 
@@ -88,7 +97,7 @@ auto CheckUnit::Run() -> void {
 auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      GetSingletonType(context_, SemIR::NamespaceType::SingletonInstId);
+      GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
@@ -104,20 +113,20 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
                                  .import_id = SemIR::InstId::None});
   CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
-  // If there is an implicit `api` import, set it first so that it uses the
-  // ImportIRId::ApiForImpl when processed for imports.
+  // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and
+  // `ImportIRId::Cpp` first, as required.
   if (unit_and_imports_->api_for_impl) {
     const auto& names = context_.parse_tree().packaging_decl()->names;
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
         context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
-    SetApiImportIR(context_,
-                   {.decl_id = import_decl_id,
-                    .is_export = false,
-                    .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
+    SetSpecialImportIRs(
+        context_, {.decl_id = import_decl_id,
+                   .is_export = false,
+                   .sem_ir = unit_and_imports_->api_for_impl->unit->sem_ir});
   } else {
-    SetApiImportIR(context_,
-                   {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
+    SetSpecialImportIRs(context_,
+                        {.decl_id = SemIR::InstId::None, .sem_ir = nullptr});
   }
 
   // Add import instructions for everything directly imported. Implicit imports
@@ -232,7 +241,9 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       unit_and_imports_->package_imports_map.Lookup(PackageNameId::None);
   if (!import_map_lookup) {
     // Push the scope; there are no names to add.
-    context_.scope_stack().Push(package_inst_id, SemIR::NameScopeId::Package);
+    context_.scope_stack().PushForEntity(
+        package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
+        /*lexical_lookup_has_load_error=*/false);
     return;
   }
   PackageImports& self_import =
@@ -247,7 +258,7 @@ auto CheckUnit::ImportCurrentPackage(SemIR::InstId package_inst_id,
       CollectTransitiveImports(self_import.import_decl_id, &self_import,
                                /*api_imports=*/nullptr));
 
-  context_.scope_stack().Push(
+  context_.scope_stack().PushForEntity(
       package_inst_id, SemIR::NameScopeId::Package, SemIR::SpecificId::None,
       context_.name_scopes().Get(SemIR::NameScopeId::Package).has_error());
 }
@@ -328,9 +339,9 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
       if (local_imports) {
         CARBON_CHECK(package_id == api_imports_entry.first);
       } else {
-        auto import_ir_inst_id = context_.import_ir_insts().Add(
-            {.ir_id = SemIR::ImportIRId::ApiForImpl,
-             .inst_id = api_imports->import_decl_id});
+        auto import_ir_inst_id =
+            context_.import_ir_insts().Add(SemIR::ImportIRInst(
+                SemIR::ImportIRId::ApiForImpl, api_imports->import_decl_id));
         import_decl_id =
             AddInst(context_, MakeImportedLocIdAndInst<SemIR::ImportDecl>(
                                   context_, import_ir_inst_id,
@@ -359,7 +370,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    const auto& tree = unit_and_imports_->unit->tree_and_subtrees_getter();
+    const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
@@ -405,14 +416,11 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
   for (const auto& function : context_.functions().array_ref()) {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
-      auto function_loc_id =
-          context_.insts().GetLocId(function.non_owning_decl_id);
-      CARBON_CHECK(function_loc_id.kind() ==
-                   SemIR::LocId::Kind::ImportIRInstId);
-      auto import_ir_id = context_.sem_ir()
-                              .import_ir_insts()
-                              .Get(function_loc_id.import_ir_inst_id())
-                              .ir_id;
+      auto function_import_id =
+          context_.insts().GetImportSource(function.non_owning_decl_id);
+      CARBON_CHECK(function_import_id.has_value());
+      auto import_ir_id =
+          context_.sem_ir().import_ir_insts().Get(function_import_id).ir_id();
       auto& import_ir = context_.import_irs().Get(import_ir_id);
       if (import_ir.sem_ir->package_id().has_value() !=
           context_.sem_ir().package_id().has_value()) {
@@ -480,7 +488,8 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
       default: {
-        CARBON_FATAL("Unexpected inst in definitions_required: {0}", decl_inst);
+        CARBON_FATAL("Unexpected inst in definitions_required_by_decl: {0}",
+                     decl_inst);
       }
     }
   }
@@ -507,12 +516,215 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
   }
 }
 
-auto CheckUnit::FinishRun() -> void {
-  // TODO: Remove this once we properly push and pop in the right places.
-  context_.generic_region_stack().Pop();
+auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
+  // Impl lookup can generate instructions (via deduce) which we don't use, as
+  // we're only generating diagnostics here, so we catch and discard them.
+  context_.inst_block_stack().Push();
+  auto poisoned_queries =
+      std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
+  for (const auto& poison : poisoned_queries) {
+    auto witness_result =
+        EvalLookupSingleImplWitness(context_, poison.loc_id, poison.query,
+                                    poison.non_canonical_query_self_inst_id,
+                                    /*poison_concrete_results=*/false);
+    CARBON_CHECK(witness_result.has_concrete_value());
+    auto found_witness_id = witness_result.concrete_witness();
+    if (found_witness_id != poison.impl_witness) {
+      auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
+        auto table_id = context_.insts()
+                            .GetAs<SemIR::ImplWitness>(witness_id)
+                            .witness_table_id;
+        return context_.insts()
+            .GetAs<SemIR::ImplWitnessTable>(table_id)
+            .impl_id;
+      };
 
+      // We can get the `Impl` from the resulting witness here, which is the
+      // `Impl` that conflicts with the previous poison query.
+      auto bad_impl_id = witness_to_impl_id(found_witness_id);
+      const auto& bad_impl = context_.impls().Get(bad_impl_id);
+
+      auto prev_impl_id = witness_to_impl_id(poison.impl_witness);
+      const auto& prev_impl = context_.impls().Get(prev_impl_id);
+
+      CARBON_DIAGNOSTIC(
+          PoisonedImplLookupConcreteResult, Error,
+          "found `impl` that would change the result of an earlier "
+          "use of `{0} as {1}`",
+          InstIdAsRawType, SpecificInterfaceIdAsRawType);
+      auto builder =
+          emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
+                         poison.query.query_self_inst_id,
+                         poison.query.query_specific_interface_id);
+      CARBON_DIAGNOSTIC(
+          PoisonedImplLookupConcreteResultNoteBadImpl, Note,
+          "the use would select the `impl` here but it was not found yet");
+      builder.Note(bad_impl.first_decl_id(),
+                   PoisonedImplLookupConcreteResultNoteBadImpl);
+      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
+                        "the use had selected the `impl` here");
+      builder.Note(prev_impl.first_decl_id(),
+                   PoisonedImplLookupConcreteResultNotePreviousImpl);
+      builder.Emit();
+    }
+  }
+  context_.inst_block_stack().PopAndDiscard();
+}
+
+// Check for invalid overlap between impls, given the set of all impls for a
+// single interface.
+static auto CheckOverlappingImplsForInterface(
+    Context& context,
+    llvm::ArrayRef<std::pair<SemIR::ImplId, SemIR::SpecificInterface>>
+        impls_and_interface) -> void {
+  // Range over `SemIR::ImplId` only. It'd be nice to make this the function
+  // parameter but we don't have a concept to express that outside the (banned)
+  // std::ranges.
+  auto impl_ids = llvm::map_range(
+      impls_and_interface,
+      [=](std::pair<SemIR::ImplId, SemIR::SpecificInterface> pair) {
+        auto [impl_id, _] = pair;
+        return impl_id;
+      });
+
+  // Avoid holding a reference into the ImplStore, as the diagnostic checks
+  // below can invalidate the reference. We copy out the part of the `Impl` we
+  // need.
+  struct ImplInfo {
+    bool is_final;
+    SemIR::InstId witness_id;
+    SemIR::TypeInstId self_id;
+    SemIR::InstId latest_decl_id;
+    SemIR::SpecificInterface interface;
+  };
+  auto get_impl_info = [&](SemIR::ImplId impl_id) -> ImplInfo {
+    const auto& impl = context.impls().Get(impl_id);
+    return {.is_final = impl.is_final,
+            .witness_id = impl.witness_id,
+            .self_id = impl.self_id,
+            .latest_decl_id = impl.latest_decl_id(),
+            .interface = impl.interface};
+  };
+
+  // TODO: We should revisit this and look for a way to do these checks in less
+  // than quadratic time. From @zygoloid: Possibly by converting the set of
+  // impls into a decision tree.
+  for (auto [index_a, impl_a_id] : llvm::enumerate(impl_ids)) {
+    auto impl_a = get_impl_info(impl_a_id);
+    if (impl_a.witness_id == SemIR::ErrorInst::InstId) {
+      continue;
+    }
+    auto type_structure =
+        BuildTypeStructure(context, impl_a.self_id, impl_a.interface);
+
+    for (auto impl_b_id : llvm::drop_begin(impl_ids, index_a + 1)) {
+      auto impl_b = get_impl_info(impl_b_id);
+      if (impl_b.witness_id == SemIR::ErrorInst::InstId) {
+        continue;
+      }
+
+      // The type structure each non-final `impl` must differ from all other
+      // non-final `impl` for the same interface visible from the file.
+      if (!impl_a.is_final && !impl_b.is_final) {
+        auto type_structure2 =
+            BuildTypeStructure(context, impl_b.self_id, impl_b.interface);
+        if (type_structure == type_structure2) {
+          CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructure, Error,
+                            "found non-final `impl` with the same type "
+                            "structure as another non-final `impl`");
+          auto builder = context.emitter().Build(impl_b.latest_decl_id,
+                                                 ImplNonFinalSameTypeStructure);
+          CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructureNote, Note,
+                            "other `impl` here");
+          builder.Note(impl_a.latest_decl_id,
+                       ImplNonFinalSameTypeStructureNote);
+          builder.Emit();
+          break;
+        }
+      } else {
+        CARBON_CHECK(impl_a.is_final || impl_b.is_final);
+
+        auto diagnose = [&](ImplInfo& query_impl, SemIR::ImplId final_impl_id,
+                            const ImplInfo& final_impl) -> bool {
+          if (LookupMatchesImpl(
+                  context, SemIR::LocId(query_impl.latest_decl_id),
+                  context.constant_values().Get(query_impl.self_id),
+                  query_impl.interface, final_impl_id)) {
+            CARBON_DIAGNOSTIC(ImplFinalOverlapsNonFinal, Error,
+                              "`impl` will never be used");
+            auto builder = context.emitter().Build(query_impl.latest_decl_id,
+                                                   ImplFinalOverlapsNonFinal);
+            CARBON_DIAGNOSTIC(
+                ImplFinalOverlapsNonFinalNote, Note,
+                "`final impl` declared here would always be used instead");
+            builder.Note(final_impl.latest_decl_id,
+                         ImplFinalOverlapsNonFinalNote);
+            builder.Emit();
+            return true;
+          }
+          return false;
+        };
+
+        bool did_diagnose = false;
+        if (impl_a.is_final) {
+          did_diagnose = diagnose(impl_b, impl_a_id, impl_a);
+        }
+        if (impl_b.is_final && !did_diagnose) {
+          diagnose(impl_a, impl_b_id, impl_b);
+        }
+      }
+    }
+
+    // TODO: The self + constraint of a `impl` must not match against (be
+    // fully subsumed by) any final `impl` visible from the file. Do a
+    // final-only query for all non-final impls?
+  }
+}
+
+auto CheckUnit::CheckOverlappingImpls() -> void {
+  // Collect all of the impls sorted into contiguous segments by their
+  // interface. We only need to compare impls within each such segment.
+  //
+  // Don't hold Impl pointers here because the process of looking for
+  // diagnostics may cause imports and may invalidate pointers into the
+  // ImplStore.
+  llvm::SmallVector<std::pair<SemIR::ImplId, SemIR::SpecificInterface>>
+      impl_ids_by_interface(llvm::map_range(
+          context_.impls().enumerate(),
+          [](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
+            return std::make_pair(pair.first, pair.second.interface);
+          }));
+  llvm::stable_sort(
+      impl_ids_by_interface,
+      [](std::pair<SemIR::ImplId, SemIR::SpecificInterface> a,
+         std::pair<SemIR::ImplId, const SemIR::SpecificInterface> b) {
+        return a.second.interface_id.index < b.second.interface_id.index;
+      });
+
+  const auto* it = impl_ids_by_interface.begin();
+  while (it != impl_ids_by_interface.end()) {
+    const auto* segment_begin = it;
+    do {
+      ++it;
+    } while (it != impl_ids_by_interface.end() &&
+             it->second.interface_id == segment_begin->second.interface_id);
+    const auto* segment_end = it;
+
+    if (std::distance(segment_begin, segment_end) == 1) {
+      // Only 1 interface in the segment; nothing to overlap with.
+      continue;
+    }
+
+    CheckOverlappingImplsForInterface(
+        context_, llvm::ArrayRef(segment_begin, segment_end));
+  }
+}
+
+auto CheckUnit::FinishRun() -> void {
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
+  CheckPoisonedConcreteImplLookupQueries();
+  CheckOverlappingImpls();
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

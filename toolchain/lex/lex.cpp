@@ -6,12 +6,14 @@
 
 #include <array>
 #include <limits>
+#include <optional>
+#include <utility>
 
 #include "common/check.h"
-#include "common/variant_helpers.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
@@ -143,6 +145,10 @@ class [[clang::internal_linkage]] Lexer {
   auto SkipHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
 
+  // Starts a new line, skipping whitespace and setting the indent.
+  auto AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
+                     ssize_t to_line_index) -> void;
+
   auto LexHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
 
@@ -206,8 +212,22 @@ class [[clang::internal_linkage]] Lexer {
   // should always fully consume the source text.
   auto Lex() && -> TokenizedBuffer;
 
+  // Checks for an ends a `DumpSemIRRange` that's missing an explicit end
+  // marker.
+  auto EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void;
+
+  auto has_dump_sem_ir_ranges() -> bool {
+    return buffer_.has_dump_sem_ir_ranges();
+  }
+
  private:
   class ErrorRecoveryBuffer;
+
+  // Handles `//@dump-sem-ir-begin` for a `DumpSemIRRange`.
+  auto BeginDumpSemIRRange(const char* diag_loc) -> void;
+
+  // Handles `//@dump-sem-ir-end` for a `DumpSemIRRange`.
+  auto EndDumpSemIRRange(const char* diag_loc) -> void;
 
   TokenizedBuffer buffer_;
 
@@ -513,7 +533,8 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
 // and continuing the dispatch.
 #define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                 \
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+                                  ssize_t position)                          \
+      ->void {                                                               \
     Lexer::LexResult result = lexer.LexMethod(source_text, position);        \
     CARBON_CHECK(result, "Failed to form a token!");                         \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
@@ -526,16 +547,17 @@ CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
 // A set of custom dispatch functions that pre-select the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  static auto Dispatch##LexMethod##SymbolToken(                              \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
-    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
-        source_text,                                                         \
-        OneCharTokenKindTable[static_cast<unsigned char>(                    \
-            source_text[position])],                                         \
-        position);                                                           \
-    CARBON_CHECK(result, "Failed to form a token!");                         \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                        \
+  static auto Dispatch##LexMethod##SymbolToken(                            \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position)         \
+      ->void {                                                             \
+    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                \
+        source_text,                                                       \
+        OneCharTokenKindTable[static_cast<unsigned char>(                  \
+            source_text[position])],                                       \
+        position);                                                         \
+    CARBON_CHECK(result, "Failed to form a token!");                       \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position); \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
@@ -545,7 +567,8 @@ CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 // whitespace and comments.
 #define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                             \
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+                                  ssize_t position)                          \
+      ->void {                                                               \
     lexer.LexMethod(source_text, position);                                  \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
   }
@@ -667,6 +690,15 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
         source_text[position])](lexer, source_text, position);
   }
 
+  if (lexer.has_dump_sem_ir_ranges()) {
+    // Incomplete ranges will use the next token for their end; we want that to
+    // be `FileEnd` in this case, so check before adding `FileEnd`. The argument
+    // is just the final character for diagnostic locations.
+    // TODO: This offset may not be needed if `file_test` handled diagnostics
+    // pointing at `.end()`.
+    lexer.EndDumpSemIRRangeIfIncomplete(source_text.end() - 1);
+  }
+
   // When we finish the source text, stop recursing. We also hint this so that
   // the tail-dispatch is optimized as that's essentially the loop back-edge
   // and this is the loop exit.
@@ -747,6 +779,13 @@ auto Lexer::Lex() && -> TokenizedBuffer {
 }
 
 auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
+  if (source_text.empty()) {
+    // Construct a single line for empty input.
+    buffer_.AddLine(TokenizedBuffer::LineInfo(0));
+    line_index_ = 0;
+    return;
+  }
+
   // We currently use `memchr` here which typically is well optimized to use
   // SIMD or other significantly faster than byte-wise scanning. We also use
   // carefully selected variables and the `ssize_t` type for performance and
@@ -802,6 +841,17 @@ auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
   }
 }
 
+auto Lexer::AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
+                          ssize_t to_line_index) -> void {
+  CARBON_DCHECK(to_line_index >= line_index_);
+  line_index_ = to_line_index;
+  auto* line_info = current_line_info();
+  ssize_t line_start = line_info->start;
+  position = line_start;
+  SkipHorizontalWhitespace(source_text, position);
+  line_info->indent = position - line_start;
+}
+
 auto Lexer::LexHorizontalWhitespace(llvm::StringRef source_text,
                                     ssize_t& position) -> void {
   CARBON_DCHECK(source_text[position] == ' ' || source_text[position] == '\t');
@@ -813,12 +863,7 @@ auto Lexer::LexHorizontalWhitespace(llvm::StringRef source_text,
 auto Lexer::LexVerticalWhitespace(llvm::StringRef source_text,
                                   ssize_t& position) -> void {
   NoteWhitespace();
-  ++line_index_;
-  auto* line_info = current_line_info();
-  ssize_t line_start = line_info->start;
-  position = line_start;
-  SkipHorizontalWhitespace(source_text, position);
-  line_info->indent = position - line_start;
+  AdvanceToLine(source_text, position, line_index_ + 1);
 }
 
 auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
@@ -868,6 +913,46 @@ auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
   CARBON_CHECK(result, "Failed to form a token!");
 }
 
+auto Lexer::BeginDumpSemIRRange(const char* diag_loc) -> void {
+  EndDumpSemIRRangeIfIncomplete(diag_loc);
+
+  // The begin here will be the next token, which may be dump-sem-ir-begin. The
+  // end will be assigned by either AddDumpSemIREnd or, if invalid,
+  // EndDumpSemIRRangeIfIncomplete.
+  buffer_.dump_sem_ir_ranges_.push_back(
+      {.begin = TokenIndex(buffer_.size()), .end = TokenIndex::None});
+}
+
+auto Lexer::EndDumpSemIRRange(const char* diag_loc) -> void {
+  if (buffer_.dump_sem_ir_ranges_.empty() ||
+      buffer_.dump_sem_ir_ranges_.back().end != TokenIndex::None) {
+    CARBON_DIAGNOSTIC(
+        DumpSemIRRangeMissingBegin, Error,
+        "missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end`");
+    emitter_.Emit(diag_loc, DumpSemIRRangeMissingBegin);
+    return;
+  }
+
+  buffer_.dump_sem_ir_ranges_.back().end = TokenIndex(buffer_.size() - 1);
+}
+
+auto Lexer::EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void {
+  if (buffer_.dump_sem_ir_ranges_.empty() ||
+      buffer_.dump_sem_ir_ranges_.back().end != TokenIndex::None) {
+    return;
+  }
+
+  // The location here won't be closely associated with the start location.
+  // However, this is a developer feature and not worth complexity to diagnose
+  // better.
+  CARBON_DIAGNOSTIC(
+      DumpSemIRRangeMissingEnd, Error,
+      "missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin`");
+  emitter_.Emit(diag_loc, DumpSemIRRangeMissingEnd);
+
+  EndDumpSemIRRange(diag_loc);
+}
+
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   CARBON_DCHECK(source_text.substr(position).starts_with("//"));
   int32_t comment_start = position;
@@ -893,10 +978,21 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   bool is_valid_after_slashes = true;
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
+    llvm::StringRef comment_text = source_text.substr(position);
+    if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
+      BeginDumpSemIRRange(comment_text.begin());
+      AdvanceToLine(source_text, position, line_index_ + 1);
+      return;
+    }
+    if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
+      EndDumpSemIRRange(comment_text.begin());
+      AdvanceToLine(source_text, position, line_index_ + 1);
+      return;
+    }
+
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
-    emitter_.Emit(source_text.begin() + position + 2,
-                  NoWhitespaceAfterCommentIntroducer);
+    emitter_.Emit(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer);
 
     // We use this to tweak the lexing of blocks below.
     is_valid_after_slashes = false;
@@ -990,14 +1086,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   }
 
   buffer_.AddComment(indent, comment_start, position);
-
-  // Now compute the indent of this next line before we finish.
-  ssize_t line_start = position;
-  SkipHorizontalWhitespace(source_text, position);
-
-  // Now that we're done scanning, update to the latest line index and indent.
-  line_index_ = line_index;
-  current_line_info()->indent = position - line_start;
+  AdvanceToLine(source_text, position, line_index);
 }
 
 auto Lexer::CanFormRealLiteral() -> bool {
@@ -1023,26 +1112,24 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   int token_size = literal->text().size();
   position += token_size;
 
-  return VariantMatch(
-      literal->ComputeValue(emitter_),
-      [&](NumericLiteral::IntValue&& value) {
-        return LexTokenWithPayload(TokenKind::IntLiteral,
-                                   buffer_.value_stores_->ints()
-                                       .AddUnsigned(std::move(value.value))
-                                       .AsTokenPayload(),
-                                   byte_offset);
-      },
-      [&](NumericLiteral::RealValue&& value) {
-        auto real_id = buffer_.value_stores_->reals().Add(Real{
-            .mantissa = value.mantissa,
-            .exponent = value.exponent,
-            .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
-        return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
-                                   byte_offset);
-      },
-      [&](NumericLiteral::UnrecoverableError) {
-        return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
-      });
+  CARBON_KIND_SWITCH(literal->ComputeValue(emitter_)) {
+    case CARBON_KIND(NumericLiteral::IntValue && value):
+      return LexTokenWithPayload(TokenKind::IntLiteral,
+                                 buffer_.value_stores_->ints()
+                                     .AddUnsigned(std::move(value.value))
+                                     .AsTokenPayload(),
+                                 byte_offset);
+    case CARBON_KIND(NumericLiteral::RealValue && value): {
+      auto real_id = buffer_.value_stores_->reals().Add(
+          Real{.mantissa = value.mantissa,
+               .exponent = value.exponent,
+               .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
+      return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
+                                 byte_offset);
+    }
+    case CARBON_KIND(NumericLiteral::UnrecoverableError _):
+      return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
+  }
 }
 
 auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
@@ -1371,10 +1458,8 @@ auto Lexer::LexFileStart(llvm::StringRef source_text, ssize_t& position)
 
   // Also skip any horizontal whitespace and record the indentation of the
   // first line.
-  SkipHorizontalWhitespace(source_text, position);
-  auto* line_info = current_line_info();
-  CARBON_CHECK(line_info->start == 0);
-  line_info->indent = position;
+  CARBON_CHECK(current_line_info()->start == 0);
+  AdvanceToLine(source_text, position, /*to_line_index=*/0);
 }
 
 auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {

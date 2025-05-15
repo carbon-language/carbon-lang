@@ -17,18 +17,19 @@
 //
 // - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
 //   member. These are described below.
-// - Optionally, a `SingletonInstId` if it is a singleton instruction.
-//   Similarly, there may be `SingletonConstantId` and `SingletonTypeId`.
+// - Optionally, a `InstId` if it is a singleton instruction. Similarly, there
+//   may be `ConstantId` and `TypeId`.
+//   - These are named based on the `Id` types they represent.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
 // - Up to two members describing the contents of the struct. These are types
-//   listed in the `SemIR::IdKind` type-enum, typically derived from `IdBase`.
+//   listed in the `IdKind` type-enum, typically derived from `IdBase`.
 //
 // The field names here matter -- the fields must have the names specified
-// above, when present. When converting to a `SemIR::Inst`, the `kind` and
-// `type_id` fields will become the kind and type associated with the
-// type-erased instruction.
+// above, when present. When converting to a `Inst`, the `kind` and `type_id`
+// fields will become the kind and type associated with the type-erased
+// instruction.
 //
 // Each type that describes a single kind of instructions provides a constant
 // `Kind` that associates the type with a particular member of the `InstKind`
@@ -114,11 +115,13 @@ struct AddrOf {
 struct AddrPattern {
   static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
       {.ir_name = "addr_pattern",
-       .constant_kind = InstConstantKind::Never,
+       .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
+  // Always a PatternType whose scrutinee type represents the pointee type
+  // corresponding to the pointer type of `inner_id`.
   TypeId type_id;
-  // The `self` binding.
+  // The `self` binding pattern.
   InstId inner_id;
 };
 
@@ -272,11 +275,11 @@ struct AutoType {
       {.ir_name = "auto",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-  static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
-  TypeId type_id;
+  SemIR::TypeId type_id;
 };
 
 // A base in a class, of the form `base: base_type;`. A base class is an
@@ -368,6 +371,9 @@ struct AnyBindingPattern {
                                        InstKind::SymbolicBindingPattern};
 
   InstKind kind;
+
+  // Always a PatternType whose scrutinee type is the declared type of the
+  // binding.
   TypeId type_id;
 
   // The name declared by the binding pattern. `None` indicates that the
@@ -380,7 +386,7 @@ struct AnyBindingPattern {
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
       {.ir_name = "binding_pattern",
-       .constant_kind = InstConstantKind::Never,
+       .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
   TypeId type_id;
@@ -392,7 +398,7 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
-          .constant_kind = InstConstantKind::Always,
+          .constant_kind = InstConstantKind::Unique,
           .is_lowered = false,
       });
 
@@ -427,7 +433,7 @@ struct BoolType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -458,7 +464,7 @@ struct BoundMethodType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -520,8 +526,10 @@ struct Call {
   // For a syntactic call, the parse node will be a CallExprStartId. However,
   // calls can arise from other syntaxes, such as operators and implicit
   // conversions.
-  static constexpr auto Kind =
-      InstKind::Call.Define<Parse::NodeId>({.ir_name = "call"});
+  static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
+      {.ir_name = "call",
+       .constant_needs_inst_id =
+           InstConstantNeedsInstIdKind::DuringEvaluation});
 
   TypeId type_id;
   InstId callee_id;
@@ -660,15 +668,12 @@ struct ErrorInst {
       {.ir_name = "<error>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr InstId SingletonInstId = MakeSingletonInstId<Kind>();
-  static constexpr auto SingletonConstantId =
-      ConstantId::ForConcreteConstant(SingletonInstId);
-  static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(SingletonConstantId);
-  static constexpr auto SingletonTypeInstId =
-      TypeInstId::UnsafeMake(SingletonInstId);
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr SemIR::InstId InstId = TypeInstId;
+  static constexpr auto ConstantId = ConstantId::ForConcreteConstant(InstId);
+  static constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
 
-  TypeId type_id;
+  SemIR::TypeId type_id;
 };
 
 // An `export bind_name` declaration.
@@ -694,24 +699,6 @@ struct FacetAccessType {
   TypeId type_id;
   // An instruction that evaluates to a `FacetValue`.
   InstId facet_value_inst_id;
-};
-
-// Represents accessing the `witness` field in a facet value, which is
-// notionally a pair of a type and a witness.
-struct FacetAccessWitness {
-  static constexpr auto Kind =
-      InstKind::FacetAccessWitness.Define<Parse::NodeId>(
-          {.ir_name = "facet_access_witness",
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  // Always the builtin witness type.
-  TypeId type_id;
-  // An instruction that evaluates to a `FacetValue`.
-  InstId facet_value_inst_id;
-  // An index to a single `ImplWitness` in the witness block of the `FacetValue`
-  // from `facet_value_inst_id`.
-  ElementIndex index;
 };
 
 // A facet type value.
@@ -750,7 +737,7 @@ struct FacetValue {
 // `FieldDecl` instruction is an `UnboundElementType`.
 struct FieldDecl {
   static constexpr auto Kind =
-      InstKind::FieldDecl.Define<Parse::VarBindingPatternId>(
+      InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
           {.ir_name = "field_decl", .constant_kind = InstConstantKind::Unique});
 
   TypeId type_id;
@@ -795,7 +782,7 @@ struct LegacyFloatType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1001,7 +988,7 @@ struct ImplWitnessTablePlaceholder {
           {.ir_name = "impl_witness_table_placeholder",
            .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1080,11 +1067,11 @@ struct InstType {
       {.ir_name = "<instruction>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-  static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
-  TypeId type_id;
+  SemIR::TypeId type_id;
 };
 
 // A value of type `InstType` that refers to an instruction. This is used to
@@ -1135,7 +1122,7 @@ struct IntLiteralType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1235,7 +1222,7 @@ struct NamespaceType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1297,6 +1284,9 @@ struct AnyParamPattern {
                                        InstKind::ValueParamPattern};
 
   InstKind kind;
+
+  // Always a PatternType that represents the same type as the type of
+  // `subpattern_id`.
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
@@ -1307,7 +1297,7 @@ struct OutParamPattern {
   static constexpr auto Kind =
       InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "out_param_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1320,7 +1310,7 @@ struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
       {.ir_name = "ref_param_pattern",
-       .constant_kind = InstConstantKind::Never,
+       .constant_kind = InstConstantKind::Unique,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1333,11 +1323,26 @@ struct ValueParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
-          {.ir_name = "value_param_pattern", .is_lowered = false});
+          {.ir_name = "value_param_pattern",
+           .constant_kind = InstConstantKind::Unique,
+           .is_lowered = false});
 
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
+};
+
+// The type of a pattern that matches scrutinees of type
+// `scrutinee_type_inst_id`.
+struct PatternType {
+  static constexpr auto Kind = InstKind::PatternType.Define<Parse::NoneNodeId>(
+      {.ir_name = "pattern_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  TypeInstId scrutinee_type_inst_id;
 };
 
 // Modifies a pointee type to be a pointer. This is tracking the `*` in
@@ -1388,23 +1393,20 @@ struct RequireCompleteType {
 };
 
 struct Return {
-  static constexpr auto Kind =
-      InstKind::Return.Define<Parse::NodeIdOneOf<Parse::FunctionDefinitionId,
-                                                 Parse::ReturnStatementId>>(
-          {.ir_name = "return",
-           .constant_kind = InstConstantKind::Never,
-           .terminator_kind = TerminatorKind::Terminator});
+  static constexpr auto Kind = InstKind::Return.Define<Parse::NodeId>(
+      {.ir_name = "return",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
 };
 
 // A `return expr;` statement.
 struct ReturnExpr {
-  static constexpr auto Kind =
-      InstKind::ReturnExpr.Define<Parse::ReturnStatementId>(
-          {.ir_name = "return",
-           .constant_kind = InstConstantKind::Never,
-           .terminator_kind = TerminatorKind::Terminator});
+  static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
+      {.ir_name = "return",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
   InstId expr_id;
@@ -1439,11 +1441,11 @@ struct ReturnSlotPattern {
   static constexpr auto Kind =
       InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "return_slot_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
-  // The type of the value that will be stored in this slot (i.e. the return
-  // type of the function).
+  // Always a PatternType whose scrutinee type is the return type of the
+  // function.
   TypeId type_id;
 
   // The function return type as originally written by the user. For diagnostics
@@ -1540,7 +1542,7 @@ struct SpecificFunctionType {
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1615,7 +1617,7 @@ struct StringType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1737,9 +1739,11 @@ struct TuplePattern {
   static constexpr auto Kind =
       InstKind::TuplePattern.Define<Parse::TuplePatternId>(
           {.ir_name = "tuple_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
+  // Always a PatternType whose scrutinee type is a tuple of the scrutinee
+  // types of the elements.
   TypeId type_id;
   InstBlockId elements_id;
 };
@@ -1792,11 +1796,11 @@ struct TypeType {
       {.ir_name = "type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
-  static constexpr auto SingletonTypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(SingletonInstId));
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
-  TypeId type_id;
+  SemIR::TypeId type_id;
 };
 
 // The `not` operator, such as `not operand`.
@@ -1856,9 +1860,11 @@ struct VarPattern {
   static constexpr auto Kind =
       InstKind::VarPattern.Define<Parse::VariablePatternId>(
           {.ir_name = "var_pattern",
-           .constant_kind = InstConstantKind::Never,
+           .constant_kind = InstConstantKind::Unique,
            .is_lowered = false});
 
+  // Always a PatternType that represents the same type as the type of
+  // `subpattern_id`.
   TypeId type_id;
   InstId subpattern_id;
 };
@@ -1887,7 +1893,7 @@ struct VtableType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1936,7 +1942,7 @@ struct WitnessType {
        .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more
   // standard type and be removed.
-  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
 };

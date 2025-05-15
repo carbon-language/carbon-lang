@@ -13,10 +13,8 @@ load("@rules_python//python:defs.bzl", "py_test")
 filegroup(
     name = "non_test_cc_rules",
     data = [
-        "//toolchain/install:carbon-busybox",
-        # The tree sitter rules can't be queried; evaluation fails on
-        # @platforms.
-        # "//utils/tree_sitter",
+        "//toolchain/install:carbon_toolchain_tar_gz_rule",
+        "//toolchain/install:carbon_toolchain_tar_rule",
     ],
     tags = ["manual"],
 )

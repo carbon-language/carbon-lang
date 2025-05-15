@@ -7,6 +7,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include "common/raw_string_ostream.h"
 
 namespace Carbon::Testing {

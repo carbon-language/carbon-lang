@@ -4,6 +4,8 @@
 
 #include <benchmark/benchmark.h>
 
+#include <type_traits>
+
 #include "absl/container/flat_hash_set.h"
 #include "common/raw_hashtable_benchmark_helpers.h"
 #include "common/set.h"

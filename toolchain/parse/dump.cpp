@@ -6,6 +6,8 @@
 
 #include "toolchain/parse/dump.h"
 
+#include <string>
+
 #include "common/raw_string_ostream.h"
 #include "toolchain/lex/dump.h"
 

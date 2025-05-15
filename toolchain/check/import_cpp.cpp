@@ -7,6 +7,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <utility>
 
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Sema/Lookup.h"
@@ -50,6 +52,17 @@ static auto GenerateCppIncludesHeaderCode(
 
 namespace {
 
+// Adds the given source location and an `ImportIRInst` referring to it in
+// `ImportIRId::Cpp`.
+static auto AddImportIRInst(Context& context,
+                            clang::SourceLocation clang_source_loc)
+    -> SemIR::ImportIRInstId {
+  SemIR::ClangSourceLocId clang_source_loc_id =
+      context.sem_ir().clang_source_locs().Add(clang_source_loc);
+  return context.import_ir_insts().Add(
+      SemIR::ImportIRInst(clang_source_loc_id));
+}
+
 // Used to convert Clang diagnostics to Carbon diagnostics.
 class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
@@ -63,6 +76,9 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
                         const clang::Diagnostic& info) -> void override {
     DiagnosticConsumer::HandleDiagnostic(diag_level, info);
+
+    SemIR::ImportIRInstId clang_import_ir_inst_id =
+        AddImportIRInst(*context_, info.getLocation());
 
     llvm::SmallString<256> message;
     info.FormatDiagnostic(message);
@@ -82,40 +98,48 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
     std::string diagnostics_str = diagnostics_stream.TakeStr();
 
-    switch (diag_level) {
-      case clang::DiagnosticsEngine::Ignored:
-      case clang::DiagnosticsEngine::Note:
-      case clang::DiagnosticsEngine::Remark: {
-        context_->TODO(
-            loc_id_,
-            llvm::formatv(
-                "Unsupported: C++ diagnostic level for diagnostic\n{0}",
-                diagnostics_str));
-        return;
-      }
-      case clang::DiagnosticsEngine::Warning:
-      case clang::DiagnosticsEngine::Error:
-      case clang::DiagnosticsEngine::Fatal: {
-        // TODO: Adjust diagnostics to drop the Carbon file here, and then
-        // remove the "C++:\n" prefix.
-        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "C++:\n{0}",
-                          std::string);
-        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "C++:\n{0}",
-                          std::string);
-        // TODO: This should be part of the location, instead of added as a note
-        // here.
-        CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
+    diagnostic_infos_.push_back({.level = diag_level,
+                                 .import_ir_inst_id = clang_import_ir_inst_id,
+                                 .message = diagnostics_str});
+  }
 
-        // TODO: Use a more specific location.
-        context_->emitter()
-            .Build(SemIR::LocId::None,
-                   diag_level == clang::DiagnosticsEngine::Warning
-                       ? CppInteropParseWarning
-                       : CppInteropParseError,
-                   diagnostics_str)
-            .Note(loc_id_, InCppImport)
-            .Emit();
-        return;
+  // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
+  // be called after the AST is set in the context.
+  auto EmitDiagnostics() -> void {
+    for (const ClangDiagnosticInfo& info : diagnostic_infos_) {
+      switch (info.level) {
+        case clang::DiagnosticsEngine::Ignored:
+        case clang::DiagnosticsEngine::Note:
+        case clang::DiagnosticsEngine::Remark: {
+          context_->TODO(
+              SemIR::LocId(info.import_ir_inst_id),
+              llvm::formatv(
+                  "Unsupported: C++ diagnostic level for diagnostic\n{0}",
+                  info.message));
+          break;
+        }
+        case clang::DiagnosticsEngine::Warning:
+        case clang::DiagnosticsEngine::Error:
+        case clang::DiagnosticsEngine::Fatal: {
+          // TODO: Adjust diagnostics to drop the Carbon file here, and then
+          // remove the "C++:\n" prefix.
+          CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "C++:\n{0}",
+                            std::string);
+          CARBON_DIAGNOSTIC(CppInteropParseError, Error, "C++:\n{0}",
+                            std::string);
+          // TODO: This should be part of the location, instead of added as a
+          // note here.
+          CARBON_DIAGNOSTIC(InCppImport, Note, "in `Cpp` import");
+          context_->emitter()
+              .Build(SemIR::LocId(info.import_ir_inst_id),
+                     info.level == clang::DiagnosticsEngine::Warning
+                         ? CppInteropParseWarning
+                         : CppInteropParseError,
+                     info.message)
+              .Note(loc_id_, InCppImport)
+              .Emit();
+          break;
+        }
       }
     }
   }
@@ -126,13 +150,32 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
   // The location that triggered calling Clang.
   SemIR::LocId loc_id_;
+
+  // Information on a Clang diagnostic that can be converted to a Carbon
+  // diagnostic.
+  struct ClangDiagnosticInfo {
+    // The Clang diagnostic level.
+    clang::DiagnosticsEngine::Level level;
+
+    // The ID of the ImportIR instruction referring to the Clang source
+    // location.
+    SemIR::ImportIRInstId import_ir_inst_id;
+
+    // The Clang diagnostic textual message.
+    std::string message;
+  };
+
+  // Collects the information for all Clang diagnostics to be converted to
+  // Carbon diagnostics after the context has been initialized with the Clang
+  // AST.
+  llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
 };
 
 }  // namespace
 
 // Returns an AST for the C++ imports and a bool that represents whether
 // compilation errors where encountered or the generated AST is null due to an
-// error.
+// error. Sets the AST in the context's `sem_ir`.
 // TODO: Consider to always have a (non-null) AST.
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
@@ -155,6 +198,10 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   // Remove link to the diagnostics consumer before its deletion.
   ast->getDiagnostics().setClient(nullptr);
 
+  // In order to emit diagnostics, we need the AST.
+  context.sem_ir().set_cpp_ast(ast.get());
+  diagnostics_consumer.EmitDiagnostics();
+
   return {std::move(ast), !ast || diagnostics_consumer.getNumErrors() > 0};
 }
 
@@ -172,7 +219,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
   return AddImportNamespaceToScope(
              context,
-             GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
+             GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
              SemIR::NameId::ForPackageName(cpp_package_id),
              SemIR::NameScopeId::Package,
              /*diagnose_duplicate_namespace=*/false,
@@ -209,8 +256,6 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   name_scope.set_is_closed_import(true);
   name_scope.set_cpp_decl_context(
       generated_ast->getASTContext().getTranslationUnitDecl());
-
-  context.sem_ir().set_cpp_ast(generated_ast.get());
 
   if (ast_has_error) {
     name_scope.set_has_error();
@@ -265,16 +310,31 @@ static auto MakeIntType(Context& context, IntId size_id) -> TypeExpr {
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
-// Maps a C++ type to a Carbon type. Currently only 32-bit `int` is supported.
+// Maps a C++ type to a Carbon type.
 // TODO: Support more types.
 static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
   const auto* builtin_type = dyn_cast<clang::BuiltinType>(type);
-  if (builtin_type && builtin_type->getKind() == clang::BuiltinType::Int &&
-      context.ast_context().getTypeSize(type) == 32) {
-    return MakeIntType(context, context.ints().Add(32));
+  if (!builtin_type) {
+    return {.inst_id = SemIR::ErrorInst::TypeInstId,
+            .type_id = SemIR::ErrorInst::TypeId};
   }
-  return {.inst_id = SemIR::ErrorInst::SingletonTypeInstId,
-          .type_id = SemIR::ErrorInst::SingletonTypeId};
+  // TODO: Refactor to avoid duplication.
+  switch (builtin_type->getKind()) {
+    case clang::BuiltinType::Short:
+      if (context.ast_context().getTypeSize(type) == 16) {
+        return MakeIntType(context, context.ints().Add(16));
+      }
+      break;
+    case clang::BuiltinType::Int:
+      if (context.ast_context().getTypeSize(type) == 32) {
+        return MakeIntType(context, context.ints().Add(32));
+      }
+      break;
+    default:
+      break;
+  }
+  return {.inst_id = SemIR::ErrorInst::TypeInstId,
+          .type_id = SemIR::ErrorInst::TypeId};
 }
 
 // Returns a block id for the explicit parameters of the given function
@@ -292,8 +352,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   params.reserve(clang_decl.parameters().size());
   for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
     clang::QualType param_type = param->getType().getCanonicalType();
-    SemIR::TypeId type_id = MapType(context, param_type).type_id;
-    if (type_id == SemIR::ErrorInst::SingletonTypeId) {
+    SemIR::TypeId type_id =
+        GetPatternType(context, MapType(context, param_type).type_id);
+    if (type_id == SemIR::ErrorInst::TypeId) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
                                          param_type.getAsString()));
       return SemIR::InstBlockId::None;
@@ -336,19 +397,21 @@ static auto GetReturnType(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
   auto [type_inst_id, type_id] = MapType(context, ret_type);
-  if (type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (type_id == SemIR::ErrorInst::TypeId) {
     context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                        ret_type.getAsString()));
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
+  auto pattern_type_id = GetPatternType(context, type_id);
   SemIR::InstId return_slot_pattern_id = AddInstInNoBlock(
       // TODO: Fill in a location for the return type once available.
-      context, SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
-                   {.type_id = type_id, .type_inst_id = type_inst_id})));
+      context,
+      SemIR::LocIdAndInst::NoLoc(SemIR::ReturnSlotPattern(
+          {.type_id = pattern_type_id, .type_inst_id = type_inst_id})));
   SemIR::InstId param_pattern_id = AddInstInNoBlock(
       // TODO: Fill in a location for the return type once available.
       context, SemIR::LocIdAndInst::NoLoc(SemIR::OutParamPattern(
-                   {.type_id = type_id,
+                   {.type_id = pattern_type_id,
                     .subpattern_id = return_slot_pattern_id,
                     .index = SemIR::CallParamIndex::None})));
   return param_pattern_id;
@@ -363,24 +426,24 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
   if (!clang_decl->isGlobal()) {
     context.TODO(loc_id, "Unsupported: Non-global function");
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
   if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
   auto param_patterns_id =
       MakeParamPatternsBlockId(context, loc_id, *clang_decl);
   if (!param_patterns_id.has_value()) {
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
   auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
-  if (SemIR::ErrorInst::SingletonInstId == return_slot_pattern_id) {
-    return SemIR::ErrorInst::SingletonInstId;
+  if (SemIR::ErrorInst::InstId == return_slot_pattern_id) {
+    return SemIR::ErrorInst::InstId;
   }
 
   auto function_decl = SemIR::FunctionDecl{
@@ -426,7 +489,7 @@ static auto ImportNamespaceDecl(Context& context,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
   auto result = AddImportNamespace(
-      context, GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
+      context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
       name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
   context.name_scopes()
       .Get(result.name_scope_id)
@@ -440,10 +503,9 @@ static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
                            SemIR::NameId name_id)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   // Add the class declaration.
-  auto class_decl =
-      SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = SemIR::ClassId::None,
-                       .decl_block_id = SemIR::InstBlockId::None};
+  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
+                                     .class_id = SemIR::ClassId::None,
+                                     .decl_block_id = SemIR::InstBlockId::None};
   // TODO: Consider setting a proper location.
   auto class_decl_id =
       AddPlaceholderInst(context, SemIR::LocIdAndInst::NoLoc(class_decl));
@@ -511,12 +573,12 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
   if (!clang_def) {
     context.TODO(loc_id,
                  "Unsupported: Record declarations without a definition");
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   if (clang_def->isDynamicClass()) {
     context.TODO(loc_id, "Unsupported: Dynamic Class");
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   auto [class_id, class_def_id] =
@@ -582,9 +644,9 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id,
                  llvm::formatv("Unsupported: Lookup succeeded but couldn't "
                                "find a single result; LookupResultKind: {0}",
-                               lookup->getResultKind())
+                               static_cast<int>(lookup->getResultKind()))
                      .str());
-    return SemIR::ErrorInst::SingletonInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   return ImportNameDecl(context, loc_id, scope_id, name_id,

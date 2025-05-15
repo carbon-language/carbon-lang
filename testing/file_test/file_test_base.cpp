@@ -21,14 +21,23 @@
 
 #include "testing/file_test/file_test_base.h"
 
+#include <atomic>
+#include <chrono>
+#include <cstdlib>
 #include <filesystem>
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <utility>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/strings/str_join.h"
+#include "common/build_data.h"
 #include "common/check.h"
 #include "common/error.h"
 #include "common/exe_path.h"
@@ -58,6 +67,9 @@ ABSL_FLAG(unsigned int, threads, 0,
 ABSL_FLAG(bool, dump_output, false,
           "Instead of verifying files match test output, directly dump output "
           "to stderr.");
+ABSL_FLAG(int, print_slowest_tests, 5,
+          "The number of tests to print when showing slowest tests. Set to 0 "
+          "to disabling printing. Set to -1 to print all tests.");
 
 namespace Carbon::Testing {
 
@@ -67,7 +79,7 @@ struct FileTestInfo {
   std::string test_name;
 
   // A factory function for creating the test object.
-  std::function<auto()->FileTestBase*> factory_fn;
+  std::function<auto()->std::unique_ptr<FileTestBase>> factory_fn;
 
   // gtest's information about the test.
   ::testing::TestInfo* registered_test;
@@ -79,6 +91,9 @@ struct FileTestInfo {
   // changed) the test file. This may be true even if output passes test
   // expectations.
   bool autoupdate_differs = false;
+
+  // Time spent in the test total, including processing and autoupdate.
+  std::chrono::milliseconds elapsed_ms = std::chrono::milliseconds(0);
 };
 
 // Adapts a `FileTestBase` instance to gtest for outputting results.
@@ -120,21 +135,11 @@ static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
   }
 }
 
-// Modes for GetBazelCommand.
-enum class BazelMode : uint8_t {
-  Autoupdate,
-  Dump,
-  Test,
-};
-
 // Returns the requested bazel command string for the given execution mode.
-static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
-    -> std::string {
+auto FileTestBase::GetBazelCommand(BazelMode mode) -> std::string {
   RawStringOstream args;
-
-  const char* target = getenv("TEST_TARGET");
   args << "bazel " << ((mode == BazelMode::Test) ? "test" : "run") << " "
-       << (target ? target : "<target>") << " ";
+       << BuildData::TargetName << " ";
 
   switch (mode) {
     case BazelMode::Autoupdate:
@@ -151,7 +156,7 @@ static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
   }
 
   args << "--file_tests=";
-  args << test_name;
+  args << test_name();
   return args.TakeStr();
 }
 
@@ -179,8 +184,8 @@ static auto RunAutoupdater(FileTestBase* test_base, const TestFile& test_file,
 
   return FileTestAutoupdater(
              std::filesystem::absolute(test_base->test_name().str()),
-             GetBazelCommand(BazelMode::Test, test_base->test_name()),
-             GetBazelCommand(BazelMode::Dump, test_base->test_name()),
+             test_base->GetBazelCommand(FileTestBase::BazelMode::Test),
+             test_base->GetBazelCommand(FileTestBase::BazelMode::Dump),
              test_file.input_content, filenames,
              *test_file.autoupdate_line_number, test_file.autoupdate_split,
              test_file.non_check_lines, test_file.actual_stdout,
@@ -254,7 +259,8 @@ auto FileTestCase::TestBody() -> void {
 
   if (HasFailure()) {
     llvm::errs() << "\nTo test this file alone, run:\n  "
-                 << GetBazelCommand(BazelMode::Test, test_info_->test_name)
+                 << test_info_->factory_fn()->GetBazelCommand(
+                        FileTestBase::BazelMode::Test)
                  << "\n\n";
     if (!test_file.autoupdate_line_number) {
       llvm::errs() << "\nThis test is NOAUTOUPDATE.\n\n";
@@ -262,8 +268,8 @@ auto FileTestCase::TestBody() -> void {
   }
   if (test_info_->autoupdate_differs) {
     ADD_FAILURE() << "Autoupdate would make changes to the file content. Run:\n"
-                  << GetBazelCommand(BazelMode::Autoupdate,
-                                     test_info_->test_name);
+                  << test_info_->factory_fn()->GetBazelCommand(
+                         FileTestBase::BazelMode::Autoupdate);
   }
 }
 
@@ -349,15 +355,17 @@ static auto SingleThreaded(llvm::ArrayRef<FileTestInfo> tests) -> bool {
     found_test_to_run = true;
   }
   // 0 or 1 test will be run, so single-threaded.
-  return false;
+  return true;
 }
 
 // Runs the test in the section that would be inside a lock, possibly inside a
 // CrashRecoveryContext.
 static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
     -> void {
+  Timer timer;
   // Add a crash trace entry with the single-file test command.
-  std::string test_command = GetBazelCommand(BazelMode::Test, test.test_name);
+  std::string test_command =
+      test_instance.GetBazelCommand(FileTestBase::BazelMode::Test);
   llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
 
   if (auto err = RunTestFile(test_instance, absl::GetFlag(FLAGS_dump_output),
@@ -365,10 +373,12 @@ static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
       !err.ok()) {
     test.test_result = std::move(err).error();
   }
+  test.elapsed_ms += timer.elapsed_ms();
 }
 
 // Runs a single test. Uses a CrashRecoveryContext, and returns false on a
-// crash.
+// crash. For test_elapsed_ms, try to exclude time spent waiting on
+// output_mutex.
 static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
                           std::mutex& output_mutex) -> bool {
   std::unique_ptr<FileTestBase> test_instance(test.factory_fn());
@@ -379,8 +389,11 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
   }
 
   // Load expected output.
+  Timer process_timer;
   test.test_result = ProcessTestFile(test_instance->test_name(),
                                      absl::GetFlag(FLAGS_autoupdate));
+  test.elapsed_ms = process_timer.elapsed_ms();
+
   if (test.test_result->ok()) {
     // Execution must be serialized for either serial tests or console
     // output.
@@ -411,9 +424,11 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
     return true;
   }
 
+  Timer autoupdate_timer;
   test.autoupdate_differs =
       RunAutoupdater(test_instance.get(), **test.test_result,
                      /*dry_run=*/!absl::GetFlag(FLAGS_autoupdate));
+  test.elapsed_ms += autoupdate_timer.elapsed_ms();
 
   std::unique_lock<std::mutex> lock(output_mutex);
   if (absl::GetFlag(FLAGS_dump_output)) {
@@ -440,8 +455,11 @@ auto FileTestEventListener::OnTestProgramStart(
   } else {
     // Enable the CRC for use in `RunSingleTest`.
     llvm::CrashRecoveryContext::Enable();
-    pool = std::make_unique<llvm::DefaultThreadPool>(llvm::ThreadPoolStrategy{
-        .ThreadsRequested = absl::GetFlag(FLAGS_threads)});
+    llvm::ThreadPoolStrategy thread_strategy = {
+        .ThreadsRequested = absl::GetFlag(FLAGS_threads),
+        // Disable hyper threads to reduce contention.
+        .UseHyperThreads = false};
+    pool = std::make_unique<llvm::DefaultThreadPool>(thread_strategy);
   }
   if (!absl::GetFlag(FLAGS_dump_output)) {
     llvm::errs() << "Running tests with " << pool->getMaxConcurrency()
@@ -450,12 +468,15 @@ auto FileTestEventListener::OnTestProgramStart(
 
   // Guard access to output (stdout and stderr).
   std::mutex output_mutex;
-  std::atomic<bool> crashed = false;
 
+  std::atomic<bool> crashed = false;
+  Timer all_timer;
+  int run_count = 0;
   for (auto& test : tests_) {
     if (!test.registered_test->should_run()) {
       continue;
     }
+    ++run_count;
 
     pool->async([&] {
       // If any thread crashed, don't try running more.
@@ -475,11 +496,52 @@ auto FileTestEventListener::OnTestProgramStart(
     // We expect to have leaked memory if one or more of our tests crashed.
     std::abort();
   }
-  llvm::errs() << "\nDone!\n";
+
+  // Calculate the total test time.
+  auto all_elapsed_ms = all_timer.elapsed_ms();
+  auto total_elapsed_ms = std::chrono::milliseconds(0);
+  for (auto& test : tests_) {
+    total_elapsed_ms += test.elapsed_ms;
+  }
+
+  llvm::errs() << "\nRan " << run_count << " tests in "
+               << all_elapsed_ms.count() << " ms wall time, "
+               << total_elapsed_ms.count() << " ms across threads\n";
+
+  // When there are multiple tests, give additional timing details, particularly
+  // slowest tests.
+  auto print_slowest_tests = absl::GetFlag(FLAGS_print_slowest_tests);
+  if (run_count > 1 && print_slowest_tests != 0) {
+    // Sort in a copy so that `FileTestCase` pointers to the original tests
+    // remain stable.
+    llvm::SmallVector<const FileTestInfo*> sorted_tests(
+        llvm::make_pointer_range(tests_));
+    llvm::sort(sorted_tests,
+               [](const FileTestInfo* lhs, const FileTestInfo* rhs) {
+                 return lhs->elapsed_ms > rhs->elapsed_ms;
+               });
+
+    llvm::errs() << "  Slowest tests:\n";
+    int count = print_slowest_tests > 0 ? print_slowest_tests : run_count;
+    for (const auto* test : llvm::ArrayRef(sorted_tests).take_front(count)) {
+      std::chrono::milliseconds run_ms(0);
+      if (test->test_result && test->test_result->ok()) {
+        run_ms = test->test_result.value()->run_elapsed_ms;
+      }
+      llvm::errs() << "  - " << test->test_name << ": "
+                   << test->elapsed_ms.count() << " ms, " << run_ms.count()
+                   << " ms in Run\n";
+    }
+  }
 }
 
 // Implements main() within the Carbon::Testing namespace for convenience.
 static auto Main(int argc, char** argv) -> ErrorOr<int> {
+  // Default to brief because we expect lots of tests, and `FileTestBase`
+  // provides some summaries. Note `--test_arg=--gtest_brief=0` works to restore
+  // output.
+  absl::SetFlag(&FLAGS_gtest_brief, 1);
+
   Carbon::InitLLVM init_llvm(argc, argv);
   testing::InitGoogleTest(&argc, argv);
   auto args = absl::ParseCommandLine(argc, argv);

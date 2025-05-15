@@ -14,10 +14,19 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 
+// NOLINTNEXTLINE(readability-identifier-naming)
+namespace clang {
+
+// Forward declare indexed types, for integration with ValueStore.
+class SourceLocation;
+
+}  // namespace clang
+
 namespace Carbon::SemIR {
 
 // Forward declare indexed types, for integration with ValueStore.
 class File;
+class ImportIRInst;
 class Inst;
 class NameScope;
 struct AssociatedConstant;
@@ -32,7 +41,6 @@ struct Specific;
 struct SpecificInterface;
 struct ImportCpp;
 struct ImportIR;
-struct ImportIRInst;
 struct Impl;
 struct Interface;
 struct StructTypeField;
@@ -264,8 +272,14 @@ struct FunctionId : public IdBase<FunctionId> {
 // check execution.
 struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
+
+  // Used when referring to the imported C++.
+  static const CheckIRId Cpp;
+
   using IdBase::IdBase;
 };
+
+constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a class.
 struct ClassId : public IdBase<ClassId> {
@@ -309,6 +323,8 @@ struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
 
 // The ID of an impl.
 struct ImplId : public IdBase<ImplId> {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   static constexpr llvm::StringLiteral Label = "impl";
   using ValueType = Impl;
 
@@ -336,6 +352,8 @@ struct SpecificId : public IdBase<SpecificId> {
 
 // The ID of a SpecificInterface, which is an interface and a specific pair.
 struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   static constexpr llvm::StringLiteral Label = "specific_interface";
   using ValueType = SpecificInterface;
 
@@ -409,10 +427,15 @@ struct ImportIRId : public IdBase<ImportIRId> {
   // instructions.
   static const ImportIRId ApiForImpl;
 
+  // The `Cpp` import. A null entry is added if there is none, in which case
+  // this ID should not show up in instructions.
+  static const ImportIRId Cpp;
+
   using IdBase::IdBase;
 };
 
 constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
+constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
@@ -622,11 +645,11 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 class InstBlockIdOrError {
  public:
   // NOLINTNEXTLINE(google-explicit-constructor)
-  InstBlockIdOrError(SemIR::InstBlockId inst_block_id)
+  InstBlockIdOrError(InstBlockId inst_block_id)
       : InstBlockIdOrError(inst_block_id, false) {}
 
   static auto MakeError() -> InstBlockIdOrError {
-    return {SemIR::InstBlockId::None, true};
+    return {InstBlockId::None, true};
   }
 
   // Returns whether this class contains either an InstBlockId (other than
@@ -646,16 +669,16 @@ class InstBlockIdOrError {
   // false.
   //
   // Only valid to call if `has_error_value()` is false.
-  auto inst_block_id() const -> SemIR::InstBlockId {
+  auto inst_block_id() const -> InstBlockId {
     CARBON_CHECK(!has_error_value());
     return inst_block_id_;
   }
 
  private:
-  InstBlockIdOrError(SemIR::InstBlockId inst_block_id, bool error)
+  InstBlockIdOrError(InstBlockId inst_block_id, bool error)
       : inst_block_id_(inst_block_id), error_(error) {}
 
-  SemIR::InstBlockId inst_block_id_;
+  InstBlockId inst_block_id_;
   bool error_;
 };
 
@@ -757,6 +780,14 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
+// The ID of a Clang Source Location.
+struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
+  static constexpr llvm::StringLiteral Label = "clang_source_loc";
+  using ValueType = clang::SourceLocation;
+
+  using IdBase::IdBase;
+};
+
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase<ElementIndex> {
   static constexpr llvm::StringLiteral Label = "element";
@@ -824,6 +855,12 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //
 // In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
 // Note that these can only be used with negative, non-`InstId` values.
+//
+// Use `InstStore::GetCanonicalLocId()` to get a canonical `LocId` which will
+// not be backed by an `InstId`. Note that the canonical `LocId` may be `None`
+// even when the original `LocId` was not, so this operation needs to be done
+// before checking `has_value()`. Only canonical locations can be converted with
+// `ToImplicit()` or `ToTokenOnly()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -843,8 +880,7 @@ struct LocId : public IdBase<LocId> {
                    ? FirstImportIRInstId - import_ir_inst_id.index
                    : NoneIndex) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
+  explicit constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
 
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr LocId(Parse::NoneNodeId /*none*/) : IdBase(NoneIndex) {}
@@ -853,12 +889,13 @@ struct LocId : public IdBase<LocId> {
   constexpr LocId(Parse::NodeId node_id)
       : IdBase(FirstNodeId - node_id.index) {}
 
-  // Forms an equivalent LocId for a desugared location.  Requires a
-  // non-`InstId` location.
+  // Forms an equivalent LocId for a desugared location. Requires a
+  // canonical location. See `InstStore::GetCanonicalLocId()`.
+  //
   // TODO: Rename to something like `ToDesugared`.
   auto ToImplicit() const -> LocId {
-    // This should only be called for NodeId or ImportIRInstId, but we only set
-    // the flag for NodeId.
+    // This should only be called for NodeId or ImportIRInstId (i.e. canonical
+    // locations), but we only set the flag for NodeId.
     CARBON_CHECK(kind() != Kind::InstId);
     if (kind() == Kind::NodeId) {
       return LocId(index & ~ImplicitBit);
@@ -866,8 +903,12 @@ struct LocId : public IdBase<LocId> {
     return *this;
   }
 
-  // Forms an equivalent `LocId` for a token-only diagnostic location.  Requires
-  // a non-`InstId` location.
+  // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
+  // a canonical location. See `InstStore::GetCanonicalLocId()`.
+  //
+  // TODO: Consider making this a part of check/ diagnostics instead, as a free
+  // function operation on `LocIdForDiagnostics`?
+  // https://github.com/carbon-language/carbon-lang/pull/5355#discussion_r2064113186
   auto ToTokenOnly() const -> LocId {
     CARBON_CHECK(kind() != Kind::InstId);
     if (has_value()) {
@@ -893,18 +934,22 @@ struct LocId : public IdBase<LocId> {
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
   auto is_implicit() const -> bool {
-    CARBON_CHECK(kind() != Kind::InstId);
     return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
   }
 
-  // Returns true if the location is token-only for diagnostics. Requires a
-  // non-`InstId` location.
+  // Returns true if the location is token-only for diagnostics.
+  //
+  // This means the displayed location will include only the location's specific
+  // parse node, instead of also including its descendants. As such, this can
+  // only be true for locations backed by a `NodeId`.
   auto is_token_only() const -> bool {
-    CARBON_CHECK(kind() != Kind::InstId);
-    return (index & TokenOnlyBit) == 0;
+    return kind() != Kind::InstId && (index & TokenOnlyBit) == 0;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
+  // Note that the returned `ImportIRInstId` only identifies a location; it is
+  // not correct to interpret it as the instruction from which another
+  // instruction was imported. Use `InstStore::GetImportSource` for that.
   auto import_ir_inst_id() const -> ImportIRInstId {
     if (!has_value()) {
       return ImportIRInstId::None;
@@ -935,8 +980,8 @@ struct LocId : public IdBase<LocId> {
   // for `NodeId`.
   static constexpr int32_t ImplicitBit = 1 << 30;
 
-  // See `token_only` for the use. This only applies for `NodeId` and
-  // `ImportIRInstId`.
+  // See `is_token_only` for the use. This only applies for canonical locations
+  // (i.e. those containing `NodeId` or `ImportIRInstId`).
   static constexpr int32_t TokenOnlyBit = 1 << 29;
 
   // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
@@ -974,6 +1019,8 @@ struct AnyRawId : public AnyIdBase {
 
 // A pair of an interface and a specific for that interface.
 struct SpecificInterface {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
   InterfaceId interface_id;
   SpecificId specific_id;
 

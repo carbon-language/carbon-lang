@@ -18,8 +18,8 @@ namespace Carbon::SemIR {
 // as `NameId`s with the same non-negative index as the `IdentifierId` of the
 // identifier. Special names are represented as `NameId`s with a negative index.
 //
-// `SemIR::NameId` values should be obtained by using `NameId::ForIdentifier`
-// or the named constants such as `NameId::SelfValue`.
+// `NameId` values should be obtained by using `NameId::ForIdentifier` or the
+// named constants such as `NameId::SelfValue`.
 //
 // As we do not require any additional explicit storage for names, this is
 // currently a wrapper around an identifier store that has no state of its own.

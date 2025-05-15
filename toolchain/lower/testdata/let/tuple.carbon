@@ -24,16 +24,16 @@ fn F() -> i32 {
 // CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca { i32, i32, i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %a.var), !dbg !7
-// CHECK:STDOUT:   %tuple.elem0.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %tuple.elem1.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   %tuple.elem2.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !8
+// CHECK:STDOUT:   %tuple.elem0.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   %tuple.elem1.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %tuple.elem2.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !9
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @tuple.ee6.loc12_3.2, i64 12, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %b.var), !dbg !7
-// CHECK:STDOUT:   %tuple.elem0.loc13.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   %tuple.elem1.loc13.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.0a0.loc13_3.2, i64 8, i1 false), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %b.var), !dbg !8
+// CHECK:STDOUT:   %tuple.elem0.loc13.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %tuple.elem1.loc13.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.0a0.loc13_3.2, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   %tuple.elem0.loc14_43.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc14_43.1 = load i32, ptr %tuple.elem0.loc14_43.tuple.elem, align 4, !dbg !11
 // CHECK:STDOUT:   %tuple.elem1.loc14_43.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !11
@@ -93,9 +93,9 @@ fn F() -> i32 {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 28, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 23, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 28, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 23, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 14, column: 43, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 14, column: 46, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 14, column: 42, scope: !4)

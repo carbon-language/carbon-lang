@@ -19,23 +19,16 @@ auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(
       SemIR::FacetTypeInfo{.extend_constraints = {{interface_id, specific_id}},
                            .other_requirements = false});
-  return {.type_id = SemIR::TypeType::SingletonTypeId,
-          .facet_type_id = facet_type_id};
+  return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
 }
 
-// Returns `true` if the `FacetAccessWitness` of `witness_id` matches
-// `interface`.
-static auto WitnessAccessMatchesInterface(
+// Returns whether the `LookupImplWitness` of `witness_id` matches `interface`.
+static auto WitnessQueryMatchesInterface(
     Context& context, SemIR::InstId witness_id,
     const SemIR::SpecificInterface& interface) -> bool {
-  auto access = context.insts().GetAs<SemIR::FacetAccessWitness>(witness_id);
-  auto type_id = context.insts().Get(access.facet_value_inst_id).type_id();
-  auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
-  // The order of witnesses is from the identified facet type.
-  auto identified_id = RequireIdentifiedFacetType(context, facet_type);
-  const auto& identified = context.identified_facet_types().Get(identified_id);
-  const auto& impls = identified.required_interfaces()[access.index.index];
-  return impls == interface;
+  auto lookup = context.insts().GetAs<SemIR::LookupImplWitness>(witness_id);
+  return interface ==
+         context.specific_interfaces().Get(lookup.query_specific_interface_id);
 }
 
 static auto IncompleteFacetTypeDiagnosticBuilder(
@@ -69,7 +62,7 @@ auto InitialFacetTypeImplWitness(
 
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
-  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
+  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::TypeId);
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
   // TODO: This is currently a copy because I'm not sure whether anything could
   // cause the facet type store to resize before we are done with it.
@@ -82,19 +75,17 @@ auto InitialFacetTypeImplWitness(
          .impl_id = SemIR::ImplId::None});
     return AddInst<SemIR::ImplWitness>(
         context, witness_loc_id,
-        {.type_id =
-             GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
          .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
   }
 
-  if (!RequireCompleteType(context, facet_type_id,
-                           context.insts().GetLocId(facet_type_inst_id), [&] {
-                             return IncompleteFacetTypeDiagnosticBuilder(
-                                 context, witness_loc_id, facet_type_inst_id,
-                                 is_definition);
-                           })) {
-    return SemIR::ErrorInst::SingletonInstId;
+  if (!RequireCompleteType(
+          context, facet_type_id, SemIR::LocId(facet_type_inst_id), [&] {
+            return IncompleteFacetTypeDiagnosticBuilder(
+                context, witness_loc_id, facet_type_inst_id, is_definition);
+          })) {
+    return SemIR::ErrorInst::InstId;
   }
 
   const auto& interface =
@@ -115,7 +106,7 @@ auto InitialFacetTypeImplWitness(
         context.inst_blocks().AddUninitialized(assoc_entities.size());
     table = context.inst_blocks().GetMutable(elements_id);
     for (auto& uninit : table) {
-      uninit = SemIR::ImplWitnessTablePlaceholder::SingletonInstId;
+      uninit = SemIR::ImplWitnessTablePlaceholder::TypeInstId;
     }
 
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
@@ -124,8 +115,7 @@ auto InitialFacetTypeImplWitness(
 
     witness_inst_id = AddInst<SemIR::ImplWitness>(
         context, witness_loc_id,
-        {.type_id =
-             GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
          .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
   }
@@ -133,28 +123,28 @@ auto InitialFacetTypeImplWitness(
   for (auto rewrite : facet_type_info.rewrite_constraints) {
     auto access =
         context.insts().GetAs<SemIR::ImplWitnessAccess>(rewrite.lhs_id);
-    if (!WitnessAccessMatchesInterface(context, access.witness_id,
-                                       interface_to_witness)) {
+    if (!WitnessQueryMatchesInterface(context, access.witness_id,
+                                      interface_to_witness)) {
       continue;
     }
     auto& table_entry = table[access.index.index];
-    if (table_entry == SemIR::ErrorInst::SingletonInstId) {
+    if (table_entry == SemIR::ErrorInst::InstId) {
       // Don't overwrite an error value. This prioritizes not generating
       // multiple errors for one associated constant over picking a value
       // for it to use to attempt recovery.
       continue;
     }
     auto rewrite_inst_id = rewrite.rhs_id;
-    if (rewrite_inst_id == SemIR::ErrorInst::SingletonInstId) {
-      table_entry = SemIR::ErrorInst::SingletonInstId;
+    if (rewrite_inst_id == SemIR::ErrorInst::InstId) {
+      table_entry = SemIR::ErrorInst::InstId;
       continue;
     }
 
     auto decl_id = context.constant_values().GetConstantInstId(
         assoc_entities[access.index.index]);
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-    if (decl_id == SemIR::ErrorInst::SingletonInstId) {
-      table_entry = SemIR::ErrorInst::SingletonInstId;
+    if (decl_id == SemIR::ErrorInst::InstId) {
+      table_entry = SemIR::ErrorInst::InstId;
       continue;
     }
 
@@ -170,11 +160,11 @@ auto InitialFacetTypeImplWitness(
                         SemIR::NameId);
       context.emitter().Emit(facet_type_inst_id, RewriteForAssociatedFunction,
                              fn.name_id);
-      table_entry = SemIR::ErrorInst::SingletonInstId;
+      table_entry = SemIR::ErrorInst::InstId;
       continue;
     }
 
-    if (table_entry != SemIR::ImplWitnessTablePlaceholder::SingletonInstId) {
+    if (table_entry != SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
       if (table_entry != rewrite_inst_id) {
         // TODO: Figure out how to print the two different values
         // `const_id` & `rewrite_inst_id` in the diagnostic
@@ -189,7 +179,7 @@ auto InitialFacetTypeImplWitness(
             facet_type_inst_id, AssociatedConstantWithDifferentValues,
             assoc_const.name_id, table_entry, rewrite_inst_id);
       }
-      table_entry = SemIR::ErrorInst::SingletonInstId;
+      table_entry = SemIR::ErrorInst::InstId;
       continue;
     }
 
@@ -200,15 +190,16 @@ auto InitialFacetTypeImplWitness(
       // Get the type of the associated constant in this interface with this
       // value for `Self`.
       assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
-          context, facet_type_inst_id, interface_to_witness.specific_id,
-          decl_id, context.types().GetTypeIdForTypeInstId(self_type_inst_id),
+          context, SemIR::LocId(facet_type_inst_id),
+          interface_to_witness.specific_id, decl_id,
+          context.types().GetTypeIdForTypeInstId(self_type_inst_id),
           witness_inst_id);
       // Perform the conversion of the value to the type. We skipped this when
       // forming the facet type because the type of the associated constant
       // was symbolic.
-      auto converted_inst_id = ConvertToValueOfType(
-          context, context.insts().GetLocId(facet_type_inst_id),
-          rewrite_inst_id, assoc_const_type_id);
+      auto converted_inst_id =
+          ConvertToValueOfType(context, SemIR::LocId(facet_type_inst_id),
+                               rewrite_inst_id, assoc_const_type_id);
       // Canonicalize the converted constant value.
       converted_inst_id =
           context.constant_values().GetConstantInstId(converted_inst_id);
@@ -227,7 +218,7 @@ auto InitialFacetTypeImplWitness(
         context.emitter().Emit(
             facet_type_inst_id, AssociatedConstantNotConstantAfterConversion,
             assoc_const.name_id, rewrite_inst_id, assoc_const_type_id);
-        rewrite_inst_id = SemIR::ErrorInst::SingletonInstId;
+        rewrite_inst_id = SemIR::ErrorInst::InstId;
       }
     }
 
@@ -248,12 +239,12 @@ auto RequireCompleteFacetTypeForImplDefinition(
     -> bool {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
-  return RequireCompleteType(context, facet_type_id,
-                             context.insts().GetLocId(facet_type_inst_id), [&] {
-                               return IncompleteFacetTypeDiagnosticBuilder(
-                                   context, loc_id, facet_type_inst_id,
-                                   /*is_definition=*/true);
-                             });
+  return RequireCompleteType(
+      context, facet_type_id, SemIR::LocId(facet_type_inst_id), [&] {
+        return IncompleteFacetTypeDiagnosticBuilder(context, loc_id,
+                                                    facet_type_inst_id,
+                                                    /*is_definition=*/true);
+      });
 }
 
 auto AllocateFacetTypeImplWitness(Context& context,
@@ -268,8 +259,7 @@ auto AllocateFacetTypeImplWitness(Context& context,
   }
 
   llvm::SmallVector<SemIR::InstId> empty_table(
-      assoc_entities.size(),
-      SemIR::ImplWitnessTablePlaceholder::SingletonInstId);
+      assoc_entities.size(), SemIR::ImplWitnessTablePlaceholder::TypeInstId);
   context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
 }
 

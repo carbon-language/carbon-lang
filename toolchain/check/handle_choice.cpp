@@ -23,18 +23,18 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ChoiceIntroducerId node_id)
     -> bool {
+  // This choice is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // choice signature, such as generic parameters.
   context.inst_block_stack().Push();
+  // There's no modifiers on a choice, but this informs how to typecheck any
+  // generic binding pattern.
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
   // Push the bracketing node.
   context.node_stack().Push(node_id);
   // The choice's name follows.
   context.decl_name_stack().PushScopeAndStartName();
-  // There's no modifiers on a choice, but this informs how to typecheck any
-  // generic binding pattern.
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
-  // This choice is potentially generic.
-  StartGenericDefinition(context);
   return true;
 }
 
@@ -50,10 +50,9 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
 
   // Choices create a ClassId, since they ultimately turn into a class with
   // methods and some builtin impls.
-  auto class_decl =
-      SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = SemIR::ClassId::None,
-                       .decl_block_id = decl_block_id};
+  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
+                                     .class_id = SemIR::ClassId::None,
+                                     .decl_block_id = decl_block_id};
   auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   context.decl_name_stack().AddNameOrDiagnose(name_context, class_decl_id,
@@ -109,8 +108,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   mut_class.self_type_id = self_type_id;
 
   // Enter the choice scope.
-  context.scope_stack().Push(class_decl_id, class_info.scope_id,
-                             self_specific_id);
+  context.scope_stack().PushForEntity(class_decl_id, class_info.scope_id,
+                                      self_specific_id);
   // Checking the binding pattern for an alternative requires a non-empty stack.
   // We reuse the Choice token even though we're now checking an alternative
   // inside the Choice, since there's no better token to use.
@@ -119,7 +118,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   //  that here. Either remove the need for a token or find a token (a new
   //  introducer?) for the alternative to name.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, class_info.generic_id);
 
   context.name_scopes().AddRequiredName(
       class_info.scope_id, SemIR::NameId::SelfType,
@@ -281,8 +280,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   auto choice_witness_id = AddInst(
       context, node_id,
       SemIR::CompleteTypeWitness{
-          .type_id =
-              GetSingletonType(context, SemIR::WitnessType::SingletonInstId),
+          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
           .object_repr_type_inst_id =
               context.types().GetInstId(GetStructType(context, fields_id))});
   // Note: avoid storing a reference to the returned Class, since it may be

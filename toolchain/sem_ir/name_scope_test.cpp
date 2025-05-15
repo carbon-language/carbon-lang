@@ -39,12 +39,12 @@ TEST(ScopeLookupResult, MakeWrappedLookupResultUsingNoneInstId) {
 }
 
 TEST(ScopeLookupResult, MakeWrappedLookupResultUsingErrorInst) {
-  auto result = ScopeLookupResult::MakeWrappedLookupResult(
-      ErrorInst::SingletonInstId, AccessKind::Private);
+  auto result = ScopeLookupResult::MakeWrappedLookupResult(ErrorInst::InstId,
+                                                           AccessKind::Private);
 
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_TRUE(result.is_found());
-  EXPECT_EQ(result.target_inst_id(), ErrorInst::SingletonInstId);
+  EXPECT_EQ(result.target_inst_id(), ErrorInst::InstId);
   EXPECT_DEATH(result.poisoning_loc_id(), "is_poisoned");
   EXPECT_EQ(result.access_kind(), AccessKind::Private);
   EXPECT_TRUE(result == result);
@@ -96,7 +96,7 @@ TEST(ScopeLookupResult, MakeError) {
 
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_TRUE(result.is_found());
-  EXPECT_EQ(result.target_inst_id(), ErrorInst::SingletonInstId);
+  EXPECT_EQ(result.target_inst_id(), ErrorInst::InstId);
   EXPECT_DEATH(result.poisoning_loc_id(), "is_poisoned");
   EXPECT_EQ(result.access_kind(), AccessKind::Public);
   EXPECT_TRUE(result == result);

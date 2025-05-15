@@ -72,7 +72,7 @@ auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
 template <typename InstT, typename... EachArgT>
 static auto GetTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
-  InstT inst = {SemIR::TypeType::SingletonTypeId, each_arg...};
+  InstT inst = {SemIR::TypeType::TypeId, each_arg...};
   return context.types().GetTypeIdForTypeConstantId(TryEvalInst(context, inst));
 }
 
@@ -157,10 +157,50 @@ auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
   return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
+auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
+    -> SemIR::TypeId {
+  CARBON_CHECK(!context.types().Is<SemIR::PatternType>(scrutinee_type_id),
+               "Type is already a pattern type");
+  if (scrutinee_type_id == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::TypeId;
+  }
+  return GetTypeImpl<SemIR::PatternType>(
+      context, context.types().GetInstId(scrutinee_type_id));
+}
+
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                            SemIR::TypeInstId element_type_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(context, class_type_id,
                                                 element_type_id);
+}
+
+auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  // We can have FacetAccessType of a FacetValue, and a FacetValue of a
+  // FacetAccessType, but they don't nest indefinitely.
+  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
+    inst_id = access->facet_value_inst_id;
+  }
+  if (auto value = context.insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
+    inst_id = value->type_inst_id;
+
+    if (auto access =
+            context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
+      inst_id = access->facet_value_inst_id;
+    }
+  }
+
+  CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessType>(inst_id));
+  CARBON_CHECK(!context.insts().Is<SemIR::FacetValue>(inst_id));
+
+  return context.constant_values().GetConstantInstId(inst_id);
+}
+
+auto GetCanonicalizedFacetOrTypeValue(Context& context,
+                                      SemIR::ConstantId const_id)
+    -> SemIR::ConstantId {
+  return context.constant_values().Get(GetCanonicalizedFacetOrTypeValue(
+      context, context.constant_values().GetInstId(const_id)));
 }
 
 }  // namespace Carbon::Check

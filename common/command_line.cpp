@@ -4,7 +4,11 @@
 
 #include "common/command_line.h"
 
+#include <array>
 #include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/DenseMap.h"

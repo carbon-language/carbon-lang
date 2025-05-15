@@ -5,20 +5,33 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_HELPERS_H_
 #define CARBON_TOOLCHAIN_CHECK_DIAGNOSTIC_HELPERS_H_
 
+#include <concepts>
+
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
-// TODO: Consider instead changing calls to `SemIR::LocId::TokenOnly(...)`.
-inline auto TokenOnly(SemIR::LocId loc_id) -> SemIR::LocId {
-  return loc_id.ToTokenOnly();
-}
+// The `DiagnosticEmitterBase` is templated on this type so that
+// diagnostics can be passed an `InstId` as a location, without having to
+// explicitly construct a `LocId` from it first.
+class LocIdForDiagnostics {
+ public:
+  template <class LocT>
+    requires std::constructible_from<SemIR::LocId, LocT>
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  LocIdForDiagnostics(LocT loc_id) : loc_id_(SemIR::LocId(loc_id)) {}
+
+  explicit operator SemIR::LocId() const { return loc_id_; }
+
+ private:
+  SemIR::LocId loc_id_;
+};
 
 // We define the emitter separately for dependencies, so only provide a base
 // here.
-using DiagnosticEmitterBase = Diagnostics::Emitter<SemIR::LocId>;
+using DiagnosticEmitterBase = Diagnostics::Emitter<LocIdForDiagnostics>;
 
 using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 
@@ -112,6 +125,16 @@ struct TypedInt {
 
   SemIR::TypeId type;
   llvm::APInt value;
+};
+
+struct SpecificInterfaceIdAsRawType {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  SpecificInterfaceIdAsRawType(SemIR::SpecificInterfaceId specific_interface_id)
+      : specific_interface_id(specific_interface_id) {}
+
+  SemIR::SpecificInterfaceId specific_interface_id;
 };
 
 }  // namespace Carbon::Check

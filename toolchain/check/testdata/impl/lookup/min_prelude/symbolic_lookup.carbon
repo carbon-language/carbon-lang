@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
-// EXTRA-ARGS: --no-dump-sem-ir --custom-core
+// EXTRA-ARGS: --no-dump-sem-ir
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -19,7 +19,6 @@ interface Y {}
 interface Z {}
 
 impl forall [T:! Y] T as X {}
-impl forall [T:! Z] T as X {}
 
 class C(T:! X) {}
 
@@ -53,3 +52,21 @@ class C(T:! X) {}
 class D(T:! Y) { adapt C(T); }
 
 fn Test(T:! Y & Z, d: D(T)) {}
+
+// --- final_symbolic_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+// This impl has a rewrite to a symbolic value, and the `.Self` type has a
+// dependency on a generic parameter.
+final impl forall [T:! type, S:! type] T as Z(S) where .X = T {}
+
+class C {}
+
+fn F(T:! Z(C), t: T) {
+  // This should typecheck, the `final impl` should give the same `T`.
+  let a: T.X = t;
+}

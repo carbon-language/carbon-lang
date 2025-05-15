@@ -2,7 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --no-prelude-import %s
+// INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
+// ARGS: --include-diagnostic-kind compile --custom-core %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

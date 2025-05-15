@@ -116,6 +116,7 @@ cc_test(
 
 cc_library(
     name = "null_diagnostics",
+    testonly = 1,
     hdrs = ["null_diagnostics.h"],
     deps = [
         ":diagnostic_emitter",

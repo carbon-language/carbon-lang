@@ -11,8 +11,7 @@ namespace Carbon::SemIR {
 
 // Returns whether the specified function is the entry point function for the
 // program, `Main.Run`.
-auto IsEntryPoint(const SemIR::File& file, SemIR::FunctionId function_id)
-    -> bool;
+auto IsEntryPoint(const File& file, FunctionId function_id) -> bool;
 
 }  // namespace Carbon::SemIR
 

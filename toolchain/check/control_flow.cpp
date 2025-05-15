@@ -4,6 +4,8 @@
 
 #include "toolchain/check/control_flow.h"
 
+#include <initializer_list>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/inst.h"
@@ -106,9 +108,9 @@ auto SetBlockArgResultBeforeConstantUse(Context& context,
     const_id = context.constant_values().Get(
         literal.value().value.ToBool() ? if_true : if_false);
   } else {
-    CARBON_CHECK(cond_const_id == SemIR::ErrorInst::SingletonConstantId,
+    CARBON_CHECK(cond_const_id == SemIR::ErrorInst::ConstantId,
                  "Unexpected constant branch condition.");
-    const_id = SemIR::ErrorInst::SingletonConstantId;
+    const_id = SemIR::ErrorInst::ConstantId;
   }
 
   if (const_id.is_constant()) {
@@ -137,8 +139,8 @@ auto IsCurrentPositionReachable(Context& context) -> bool {
 
 auto MaybeAddCleanupForInst(Context& context, SemIR::TypeId type_id,
                             SemIR::InstId inst_id) -> void {
-  if (!context.scope_stack().PeekIsLexicalScope()) {
-    // Cleanup can only occur in lexical scopes.
+  if (!context.scope_stack().IsInFunctionScope()) {
+    // Cleanup can only occur in function scopes.
     return;
   }
 

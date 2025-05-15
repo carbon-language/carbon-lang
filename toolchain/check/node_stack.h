@@ -410,6 +410,7 @@ class NodeStack {
       -> std::optional<Id::Kind> {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::FieldNameAndType:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::ShortCircuitOperandAnd:
@@ -446,6 +447,8 @@ class NodeStack {
       case Parse::NodeKind::ClassIntroducer:
       case Parse::NodeKind::CodeBlockStart:
       case Parse::NodeKind::ExplicitParamListStart:
+      case Parse::NodeKind::FieldInitializer:
+      case Parse::NodeKind::FieldIntroducer:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:

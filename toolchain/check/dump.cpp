@@ -15,6 +15,8 @@
 
 #include "toolchain/lex/dump.h"
 
+#include <string>
+
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/context.h"
@@ -79,8 +81,7 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::ImplId impl_id)
     return out.TakeStr();
   }
   const auto& impl = context.sem_ir().impls().Get(impl_id);
-  auto loc_id = context.sem_ir().insts().GetLocId(impl.witness_id);
-  out << "\nwitness loc: " << Dump(context, loc_id);
+  out << "\nwitness loc: " << Dump(context, SemIR::LocId(impl.witness_id));
   return out.TakeStr();
 }
 
@@ -93,9 +94,8 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::InstId inst_id)
     -> std::string {
   RawStringOstream out;
-  auto loc_id = context.sem_ir().insts().GetLocId(inst_id);
   out << SemIR::Dump(context.sem_ir(), inst_id) << '\n'
-      << "  - " << Dump(context, loc_id);
+      << "  - " << Dump(context, SemIR::LocId(inst_id));
   return out.TakeStr();
 }
 
@@ -108,6 +108,10 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     -> std::string {
   RawStringOstream out;
+  // TODO: If the canonical location is None but the original is an InstId,
+  // should we dump the InstId anyway even though it has no location? Is that
+  // ever useful?
+  loc_id = context.sem_ir().insts().GetCanonicalLocId(loc_id);
   switch (loc_id.kind()) {
     case SemIR::LocId::Kind::None: {
       out << "LocId(<none>)";
@@ -118,16 +122,11 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
       auto import_ir_id = context.sem_ir()
                               .import_ir_insts()
                               .Get(loc_id.import_ir_inst_id())
-                              .ir_id;
+                              .ir_id();
       const auto* import_file =
           context.sem_ir().import_irs().Get(import_ir_id).sem_ir;
       out << "LocId(import from \"" << FormatEscaped(import_file->filename())
           << "\")";
-      break;
-    }
-
-    case SemIR::LocId::Kind::InstId: {
-      out << "LocId(" << SemIR::Dump(context.sem_ir(), loc_id.inst_id()) << ")";
       break;
     }
 
@@ -140,6 +139,9 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
           << line << ":" << col << implicit << ")";
       break;
     }
+
+    case SemIR::LocId::Kind::InstId:
+      CARBON_FATAL("unexpected LocId kind");
   }
   return out.TakeStr();
 }

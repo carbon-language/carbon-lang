@@ -7,9 +7,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <forward_list>
 #include <iterator>
+#include <string>
 
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -42,6 +44,14 @@ class LexerTest : public ::testing::Test {
 
 TEST_F(LexerTest, HandlesEmptyBuffer) {
   auto& buffer = compile_helper_.GetTokenizedBuffer("");
+  EXPECT_FALSE(buffer.has_errors());
+  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                          {.kind = TokenKind::FileStart},
+                          {.kind = TokenKind::FileEnd}}));
+}
+
+TEST_F(LexerTest, NullStringRef) {
+  auto& buffer = compile_helper_.GetTokenizedBuffer(llvm::StringRef());
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {.kind = TokenKind::FileStart},

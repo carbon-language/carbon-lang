@@ -4,6 +4,8 @@
 
 #include "toolchain/lower/mangler.h"
 
+#include <string>
+
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -52,17 +54,18 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
             constant_values().GetConstantInstId(impl.constraint_id));
         const auto& facet_type_info =
             sem_ir().facet_types().Get(facet_type.facet_type_id);
-        auto interface_type = facet_type_info.TryAsSingleInterface();
-        CARBON_CHECK(interface_type,
+        CARBON_CHECK(facet_type_info.extend_constraints.size() == 1,
                      "Mangling of an impl of something other than a single "
                      "interface is not yet supported.");
+        auto interface_type = facet_type_info.extend_constraints.front();
         const auto& interface =
-            sem_ir().interfaces().Get(interface_type->interface_id);
+            sem_ir().interfaces().Get(interface_type.interface_id);
         names_to_render.push_back(
             {.name_scope_id = interface.scope_id, .prefix = ':'});
 
-        auto self_inst =
-            insts().Get(constant_values().GetConstantInstId(impl.self_id));
+        auto self_const_inst_id =
+            constant_values().GetConstantInstId(impl.self_id);
+        auto self_inst = insts().Get(self_const_inst_id);
         CARBON_KIND_SWITCH(self_inst) {
           case CARBON_KIND(SemIR::ClassType class_type): {
             auto next_name_scope_id =
@@ -94,9 +97,13 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                           .int_id);
             break;
           }
-          default:
-            CARBON_FATAL("Attempting to mangle unsupported SemIR.");
+          default: {
+            // Fall back to including a fingerprint.
+            llvm::write_hex(
+                os, fingerprinter_.GetOrCompute(&sem_ir(), self_const_inst_id),
+                llvm::HexPrintStyle::Lower, 16);
             break;
+          }
         }
         // Skip the tail of the loop that adds the parent name scope to the
         // stack - the scope in which the impl was defined is not part of the
@@ -143,6 +150,15 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   os << "_C";
 
   os << names().GetAsStringIfIdentifier(function.name_id);
+
+  // For a special function, add a marker to disambiguate.
+  switch (function.special_function_kind) {
+    case SemIR::Function::SpecialFunctionKind::None:
+      break;
+    case SemIR::Function::SpecialFunctionKind::Thunk:
+      os << ":thunk";
+      break;
+  }
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 

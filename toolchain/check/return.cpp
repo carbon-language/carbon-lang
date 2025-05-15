@@ -12,12 +12,11 @@ namespace Carbon::Check {
 
 // Gets the function that lexically encloses the current location.
 auto GetCurrentFunctionForReturn(Context& context) -> SemIR::Function& {
-  CARBON_CHECK(!context.return_scope_stack().empty(),
+  CARBON_CHECK(context.scope_stack().IsInFunctionScope(),
                "Handling return but not in a function");
-  auto function_id = context.insts()
-                         .GetAs<SemIR::FunctionDecl>(
-                             context.return_scope_stack().back().decl_id)
-                         .function_id;
+  auto decl_id = context.scope_stack().GetReturnScopeDeclId();
+  auto function_id =
+      context.insts().GetAs<SemIR::FunctionDecl>(decl_id).function_id;
   return context.functions().Get(function_id);
 }
 
@@ -33,9 +32,9 @@ auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId {
 // Gets the currently in scope `returned var`, if any, that would be returned
 // by a `return var;`.
 static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
-  CARBON_CHECK(!context.return_scope_stack().empty(),
+  CARBON_CHECK(context.scope_stack().IsInFunctionScope(),
                "Handling return but not in a function");
-  return context.return_scope_stack().back().returned_var;
+  return context.scope_stack().GetReturnedVar();
 }
 
 // Produces a note that the given function has no explicit return type.
@@ -114,23 +113,22 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
   }
 }
 
-auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
-    -> void {
+auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void {
   const auto& function = GetCurrentFunctionForReturn(context);
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
   if (return_type_id.has_value()) {
     CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error,
                       "missing return value");
-    auto diag = context.emitter().Build(node_id, ReturnStatementMissingExpr);
+    auto diag = context.emitter().Build(loc_id, ReturnStatementMissingExpr);
     NoteReturnType(context, diag, function);
     diag.Emit();
   }
 
-  AddInst<SemIR::Return>(context, node_id, {});
+  AddInst<SemIR::Return>(context, loc_id, {});
 }
 
-auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
+auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
                          SemIR::InstId expr_id) -> void {
   const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
@@ -142,33 +140,33 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     CARBON_DIAGNOSTIC(
         ReturnStatementDisallowExpr, Error,
         "no return expression should be provided in this context");
-    auto diag = context.emitter().Build(node_id, ReturnStatementDisallowExpr);
+    auto diag = context.emitter().Build(loc_id, ReturnStatementDisallowExpr);
     NoteNoReturnTypeProvided(diag, function);
     diag.Emit();
-    expr_id = SemIR::ErrorInst::SingletonInstId;
+    expr_id = SemIR::ErrorInst::InstId;
   } else if (returned_var_id.has_value()) {
     CARBON_DIAGNOSTIC(
         ReturnExprWithReturnedVar, Error,
         "can only `return var;` in the scope of a `returned var`");
-    auto diag = context.emitter().Build(node_id, ReturnExprWithReturnedVar);
+    auto diag = context.emitter().Build(loc_id, ReturnExprWithReturnedVar);
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
-    expr_id = SemIR::ErrorInst::SingletonInstId;
+    expr_id = SemIR::ErrorInst::InstId;
   } else if (!return_info.is_valid()) {
     // We already diagnosed that the return type is invalid. Don't try to
     // convert to it.
-    expr_id = SemIR::ErrorInst::SingletonInstId;
+    expr_id = SemIR::ErrorInst::InstId;
   } else if (return_info.has_return_slot()) {
     return_slot_id = GetCurrentReturnSlot(context);
     CARBON_CHECK(return_slot_id.has_value());
     // Note that this can import a function and invalidate `function`.
-    expr_id = Initialize(context, node_id, return_slot_id, expr_id);
+    expr_id = Initialize(context, loc_id, return_slot_id, expr_id);
   } else {
     expr_id =
-        ConvertToValueOfType(context, node_id, expr_id, return_info.type_id);
+        ConvertToValueOfType(context, loc_id, expr_id, return_info.type_id);
   }
 
-  AddInst<SemIR::ReturnExpr>(context, node_id,
+  AddInst<SemIR::ReturnExpr>(context, loc_id,
                              {.expr_id = expr_id, .dest_id = return_slot_id});
 }
 
@@ -181,7 +179,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     CARBON_DIAGNOSTIC(ReturnVarWithNoReturnedVar, Error,
                       "`return var;` with no `returned var` in scope");
     context.emitter().Emit(node_id, ReturnVarWithNoReturnedVar);
-    returned_var_id = SemIR::ErrorInst::SingletonInstId;
+    returned_var_id = SemIR::ErrorInst::InstId;
   }
 
   auto return_slot_id = GetCurrentReturnSlot(context);

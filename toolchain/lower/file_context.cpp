@@ -4,7 +4,10 @@
 
 #include "toolchain/lower/file_context.h"
 
+#include <memory>
+#include <optional>
 #include <ranges>
+#include <string>
 #include <utility>
 
 #include "common/check.h"
@@ -491,7 +494,7 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
   auto return_param_id = SemIR::InstId::None;
   if (return_info.has_return_slot()) {
     param_types.push_back(
-        llvm::PointerType::get(return_type, /*AddressSpace=*/0));
+        llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
     return_param_id = function.return_slot_pattern_id;
     param_inst_ids.push_back(return_param_id);
   }
@@ -502,8 +505,9 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     if (!param_pattern_info) {
       continue;
     }
-    auto param_type_id = SemIR::GetTypeOfInstInSpecific(
-        sem_ir(), specific_id, param_pattern_info->inst_id);
+    auto param_type_id = ExtractScrutineeType(
+        sem_ir(), SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id,
+                                                 param_pattern_info->inst_id));
     CARBON_CHECK(
         !param_type_id.AsConstantId().is_symbolic(),
         "Found symbolic type id after resolution when lowering type {0}.",
@@ -866,6 +870,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
   return llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
 }
 
+static auto BuildTypeForInst(FileContext& /*context*/,
+                             SemIR::PatternType /*inst*/) -> llvm::Type* {
+  CARBON_FATAL("Unexpected pattern type in lowering");
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
     -> llvm::Type* {
   auto fields = context.sem_ir().struct_type_fields().Get(inst.fields_id);
@@ -961,14 +970,16 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  SemIR::AbsoluteNodeId resolved = GetAbsoluteNodeId(sem_ir_, inst_id).back();
+  SemIR::AbsoluteNodeId resolved =
+      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
   const auto& tree_and_subtrees =
-      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id
+      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id()
                                                        .index]();
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
-  if (resolved.node_id.has_value()) {
-    auto token = tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id).begin;
+  if (resolved.node_id().has_value()) {
+    auto token =
+        tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id()).begin;
     return {.filename = tokens.source().filename(),
             .line_number = tokens.GetLineNumber(token),
             .column_number = tokens.GetColumnNumber(token)};
@@ -987,11 +998,17 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info)
     return nullptr;
   }
 
+  // Vtables can't be generated for generics, only for their specifics - and
+  // must be done lazily based on the use of those specifics.
+  if (class_info.generic_id != SemIR::GenericId::None) {
+    return nullptr;
+  }
+
   Mangler m(*this);
   std::string mangled_name = m.MangleVTable(class_info);
 
   auto first_owning_decl_loc =
-      sem_ir().insts().GetLocId(class_info.first_owning_decl_id);
+      sem_ir().insts().GetCanonicalLocId(class_info.first_owning_decl_id);
   if (first_owning_decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
     // Emit a declaration of an imported vtable using a(n opaque) pointer type.
     // This doesn't have to match the definition that appears elsewhere, it'll

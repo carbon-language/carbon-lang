@@ -87,7 +87,7 @@ class ConstantEvalResult {
 };
 
 constexpr ConstantEvalResult ConstantEvalResult::Error =
-    Existing(SemIR::ErrorInst::SingletonConstantId);
+    Existing(SemIR::ErrorInst::ConstantId);
 
 constexpr ConstantEvalResult ConstantEvalResult::NotConstant =
     ConstantEvalResult(SemIR::ConstantId::NotConstant);

@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/function.h"
 
+#include <optional>
+
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -53,7 +55,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
 
   auto fn_type = fn_type_inst.TryAs<FunctionType>();
   if (!fn_type) {
-    result.is_error = fn_type_inst.Is<SemIR::ErrorInst>();
+    result.is_error = fn_type_inst.Is<ErrorInst>();
     return result;
   }
 
@@ -68,23 +70,16 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   auto inst_id = pattern_id;
   auto inst = sem_ir.insts().Get(inst_id);
 
-  if (auto addr_pattern = inst.TryAs<SemIR::AddrPattern>()) {
-    inst_id = addr_pattern->inner_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  auto param_pattern_inst = inst.TryAs<SemIR::AnyParamPattern>();
-  if (!param_pattern_inst) {
+  sem_ir.insts().TryUnwrap(inst, inst_id, &AddrPattern::inner_id);
+  auto [param_pattern, param_pattern_id] =
+      sem_ir.insts().TryUnwrap(inst, inst_id, &AnyParamPattern::subpattern_id);
+  if (!param_pattern) {
     return std::nullopt;
   }
-  auto param_pattern_id = inst_id;
-
-  inst_id = param_pattern_inst->subpattern_id;
-  inst = sem_ir.insts().Get(inst_id);
 
   auto binding_pattern = inst.As<AnyBindingPattern>();
   return {{.inst_id = param_pattern_id,
-           .inst = *param_pattern_inst,
+           .inst = *param_pattern,
            .entity_name_id = binding_pattern.entity_name_id}};
 }
 
@@ -93,7 +88,8 @@ auto Function::GetDeclaredReturnType(const File& file,
   if (!return_slot_pattern_id.has_value()) {
     return TypeId::None;
   }
-  return GetTypeOfInstInSpecific(file, specific_id, return_slot_pattern_id);
+  return ExtractScrutineeType(
+      file, GetTypeOfInstInSpecific(file, specific_id, return_slot_pattern_id));
 }
 
 }  // namespace Carbon::SemIR

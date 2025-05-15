@@ -26,10 +26,13 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.8a4: type = tuple_type (%i32, %Incomplete) [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [concrete]
+// CHECK:STDOUT:   %pattern_type.275: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -39,6 +42,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,8 +55,8 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: <error> = binding_pattern t
-// CHECK:STDOUT:     %.loc20_1: <error> = var_pattern %t.patt
+// CHECK:STDOUT:     %t.patt: <error> = binding_pattern t [concrete]
+// CHECK:STDOUT:     %.loc20_1: <error> = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref <error> = var t
 // CHECK:STDOUT:   %.loc20_24.1: type = splice_block %.loc20_24.3 [concrete = constants.%tuple.type.8a4] {
@@ -64,8 +68,8 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: <error> = bind_name t, <error>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
-// CHECK:STDOUT:     %.loc22_1: %ptr = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: %pattern_type.275 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %.loc22_1: %pattern_type.275 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
 // CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [concrete = constants.%ptr] {

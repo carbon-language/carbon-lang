@@ -22,9 +22,6 @@ struct Unit {
   // The `timings` may be null if nothing is to be recorded.
   Timings* timings;
 
-  // Returns a lazily constructed TreeAndSubtrees.
-  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter;
-
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
 
@@ -34,9 +31,11 @@ struct Unit {
 
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
-auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream, bool fuzzing) -> void;
+auto CheckParseTrees(
+    llvm::MutableArrayRef<Unit> units,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    bool prelude_import, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::raw_ostream* vlog_stream, bool fuzzing) -> void;
 
 }  // namespace Carbon::Check
 

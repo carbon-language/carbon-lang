@@ -4,6 +4,8 @@
 
 #include "toolchain/driver/clang_subcommand.h"
 
+#include <string>
+
 #include "llvm/TargetParser/Host.h"
 #include "toolchain/driver/clang_runner.h"
 

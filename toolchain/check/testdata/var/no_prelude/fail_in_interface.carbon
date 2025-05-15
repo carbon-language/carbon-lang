@@ -9,6 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_in_interface.carbon
 
 interface I {
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+8]]:7: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR:   var v: ();
+  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: `var` declaration in interface [VarInInterfaceDecl]
   // CHECK:STDERR:   var v: ();
   // CHECK:STDERR:   ^~~~~~~~~~
@@ -35,7 +39,6 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .v = <unexpected>.inst22.loc16_7
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

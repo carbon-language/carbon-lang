@@ -8,6 +8,8 @@
 #include <gtest/gtest.h>
 
 #include <forward_list>
+#include <optional>
+#include <string>
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/shared_value_stores.h"
@@ -35,6 +37,11 @@ class TreeTest : public ::testing::Test {
 
 TEST_F(TreeTest, IsValid) {
   Tree& tree = compile_helper_.GetTree("");
+  EXPECT_TRUE((*tree.postorder().begin()).has_value());
+}
+
+TEST_F(TreeTest, NullStringRef) {
+  Tree& tree = compile_helper_.GetTree(llvm::StringRef());
   EXPECT_TRUE((*tree.postorder().begin()).has_value());
 }
 

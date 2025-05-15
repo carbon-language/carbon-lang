@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <tuple>
+
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
@@ -19,6 +21,8 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::InterfaceIntroducerId node_id)
     -> bool {
+  // This interface is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // interface signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -27,8 +31,6 @@ auto HandleParseNode(Context& context, Parse::InterfaceIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Interface>();
   context.decl_name_stack().PushScopeAndStartName();
-  // This interface is potentially generic.
-  StartGenericDecl(context);
   return true;
 }
 
@@ -52,9 +54,8 @@ static auto BuildInterfaceDecl(Context& context,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the interface declaration.
-  auto interface_decl =
-      SemIR::InterfaceDecl{SemIR::TypeType::SingletonTypeId,
-                           SemIR::InterfaceId::None, decl_block_id};
+  auto interface_decl = SemIR::InterfaceDecl{
+      SemIR::TypeType::TypeId, SemIR::InterfaceId::None, decl_block_id};
   auto interface_decl_id = AddPlaceholderInst(context, node_id, interface_decl);
 
   SemIR::Interface interface_info = {name_context.MakeEntityWithParamsBase(
@@ -80,8 +81,8 @@ static auto BuildInterfaceDecl(Context& context,
           context.interfaces().Get(existing_interface_decl->interface_id);
       if (CheckRedeclParamsMatch(
               context,
-              DeclParams(interface_decl_id, name.first_param_node_id,
-                         name.last_param_node_id,
+              DeclParams(SemIR::LocId(interface_decl_id),
+                         name.first_param_node_id, name.last_param_node_id,
                          name.implicit_param_patterns_id,
                          name.param_patterns_id),
               DeclParams(existing_interface))) {
@@ -91,7 +92,8 @@ static auto BuildInterfaceDecl(Context& context,
         DiagnoseIfInvalidRedecl(
             context, Lex::TokenKind::Interface, existing_interface.name_id,
             RedeclInfo(interface_info, node_id, is_definition),
-            RedeclInfo(existing_interface, existing_interface.latest_decl_id(),
+            RedeclInfo(existing_interface,
+                       SemIR::LocId(existing_interface.latest_decl_id()),
                        existing_interface.has_definition_started()),
             /*prev_import_ir_id=*/SemIR::ImportIRId::None);
 
@@ -108,7 +110,7 @@ static auto BuildInterfaceDecl(Context& context,
     } else {
       // This is a redeclaration of something other than a interface.
       DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                            existing_id);
+                            SemIR::LocId(existing_id));
     }
   }
 
@@ -162,7 +164,7 @@ auto HandleParseNode(Context& context,
   auto self_specific_id =
       context.generics().GetSelfSpecific(interface_info.generic_id);
 
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, interface_info.generic_id);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, interface_id);
@@ -192,8 +194,8 @@ auto HandleParseNode(Context& context,
                                         interface_info.self_param_id);
 
   // Enter the interface scope.
-  context.scope_stack().Push(interface_decl_id, interface_info.scope_id,
-                             self_specific_id);
+  context.scope_stack().PushForEntity(
+      interface_decl_id, interface_info.scope_id, self_specific_id);
 
   // TODO: Handle the case where there's control flow in the interface body. For
   // example:

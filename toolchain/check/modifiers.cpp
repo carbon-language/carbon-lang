@@ -4,6 +4,8 @@
 
 #include "toolchain/check/modifiers.h"
 
+#include <optional>
+
 #include "toolchain/check/decl_introducer_state.h"
 
 namespace Carbon::Check {
@@ -55,6 +57,8 @@ static auto ModifierOrderAsSet(ModifierOrder order) -> KeywordModifierSet {
       return KeywordModifierSet::Access;
     case ModifierOrder::Extern:
       return KeywordModifierSet::Extern;
+    case ModifierOrder::Extend:
+      return KeywordModifierSet::Extend;
     case ModifierOrder::Decl:
       return KeywordModifierSet::Decl;
   }
@@ -156,7 +160,7 @@ auto CheckMethodModifiersOnFunction(
             "`virtual` not allowed; requires `abstract` or `base` class scope");
         ForbidModifiersOnDecl(context, ModifierVirtualNotAllowed, introducer,
                               KeywordModifierSet::Virtual,
-                              context.insts().GetLocId(parent_scope_inst_id));
+                              SemIR::LocId(parent_scope_inst_id));
       }
       if (inheritance_kind != SemIR::Class::Abstract) {
         CARBON_DIAGNOSTIC(
@@ -164,7 +168,7 @@ auto CheckMethodModifiersOnFunction(
             "`abstract` not allowed; requires `abstract` class scope");
         ForbidModifiersOnDecl(context, ModifierAbstractNotAllowed, introducer,
                               KeywordModifierSet::Abstract,
-                              context.insts().GetLocId(parent_scope_inst_id));
+                              SemIR::LocId(parent_scope_inst_id));
       }
       return;
     }

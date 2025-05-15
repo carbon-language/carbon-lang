@@ -36,7 +36,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::Value* index;
   if (context.sem_ir().types().GetInstId(
           context.sem_ir().insts().Get(inst.index_id).type_id()) ==
-      SemIR::IntLiteralType::SingletonInstId) {
+      SemIR::IntLiteralType::TypeInstId) {
     auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
         context.sem_ir().constant_values().GetConstantInstId(inst.index_id));
     index = llvm::ConstantInt::get(context.llvm_context(),
@@ -73,7 +73,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindAlias inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 
@@ -83,7 +83,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 
@@ -191,7 +191,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
+  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
     return;
   }
 
@@ -292,16 +292,24 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   // Position the first alloca right before the start of the executable code in
   // the function.
-  auto saved_ip = context.builder().saveIP();
-  if (auto* after_allocas = context.GetInstructionAfterAllocas()) {
-    context.builder().SetInsertPoint(after_allocas);
-  } else {
-    context.builder().SetInsertPointPastAllocas(&context.llvm_function());
-  }
+  llvm::AllocaInst* alloca;
+  {
+    llvm::IRBuilderBase::InsertPointGuard guard(context.builder());
 
-  // Create an alloca for this variable in the entry block.
-  auto* alloca = context.builder().CreateAlloca(type);
-  context.builder().restoreIP(saved_ip);
+    auto debug_loc = context.builder().getCurrentDebugLocation();
+    if (auto* after_allocas = context.GetInstructionAfterAllocas()) {
+      context.builder().SetInsertPoint(after_allocas);
+    } else {
+      context.builder().SetInsertPointPastAllocas(&context.llvm_function());
+    }
+
+    // IRBuilder tramples over our debug location when setting the insert point,
+    // so undo that.
+    context.builder().SetCurrentDebugLocation(debug_loc);
+
+    // Create an alloca for this variable in the entry block.
+    alloca = context.builder().CreateAlloca(type);
+  }
 
   // Create a lifetime start intrinsic here to indicate where its scope really
   // begins.

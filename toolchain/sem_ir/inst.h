@@ -136,14 +136,14 @@ class Inst : public Printable<Inst> {
     // Converts to `IdT`, validating the `kind` matches.
     template <typename IdT>
     auto As() const -> IdT {
-      CARBON_DCHECK(kind_ == SemIR::IdKind::For<IdT>);
+      CARBON_DCHECK(kind_ == IdKind::For<IdT>);
       return IdT(value_);
     }
 
     // Converts to `IdT`, returning nullopt if the kind is incorrect.
     template <typename IdT>
     auto TryAs() const -> std::optional<IdT> {
-      if (kind_ != SemIR::IdKind::For<IdT>) {
+      if (kind_ != IdKind::For<IdT>) {
         return std::nullopt;
       }
       return IdT(value_);
@@ -164,8 +164,8 @@ class Inst : public Printable<Inst> {
     // Error uses a self-referential type so that it's not accidentally treated
     // as a normal type. Every other builtin is a type, including the
     // self-referential TypeType.
-    auto type_id = kind == InstKind::ErrorInst ? ErrorInst::SingletonTypeId
-                                               : TypeType::SingletonTypeId;
+    auto type_id =
+        kind == InstKind::ErrorInst ? ErrorInst::TypeId : TypeType::TypeId;
     return Inst(kind, type_id, InstId::NoneIndex, InstId::NoneIndex);
   }
 
@@ -369,7 +369,7 @@ struct LocIdAndInst {
   // node.
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
-  LocIdAndInst(SemIR::LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
+  LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;
@@ -383,6 +383,8 @@ struct LocIdAndInst {
 // Provides a ValueStore wrapper for an API specific to instructions.
 class InstStore {
  public:
+  explicit InstStore(File* file) : file_(file) {}
+
   // Adds an instruction to the instruction list, returning an ID to reference
   // the instruction. Note that this doesn't add the instruction to any
   // instruction block. Check::Context::AddInst or InstBlockStack::AddInst
@@ -393,12 +395,30 @@ class InstStore {
     return values_.Add(loc_id_and_inst.inst);
   }
 
-  // Returns the requested instruction.
-  auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
+  // Returns the requested instruction. The returned instruction always has an
+  // unattached type, even if an attached type is stored for it.
+  auto Get(InstId inst_id) const -> Inst {
+    Inst result = values_.Get(inst_id);
+    auto type_id = result.type_id();
+    if (type_id.has_value() && type_id.is_symbolic()) {
+      result.SetType(GetUnattachedType(type_id));
+    }
+    return result;
+  }
+
+  // Returns the requested instruction, preserving its attached type.
+  auto GetWithAttachedType(InstId inst_id) const -> Inst {
+    return values_.Get(inst_id);
+  }
+
+  // Returns the type of the instruction as an attached type.
+  auto GetAttachedType(InstId inst_id) const -> TypeId {
+    return GetWithAttachedType(inst_id).type_id();
+  }
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
-    return LocIdAndInst::UncheckedLoc(GetLocId(inst_id), Get(inst_id));
+    return LocIdAndInst::UncheckedLoc(LocId(inst_id), Get(inst_id));
   }
 
   // Returns whether the requested instruction is the specified type.
@@ -431,11 +451,50 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  auto GetLocId(InstId inst_id) const -> LocId {
-    CARBON_CHECK(inst_id.index >= 0, "{0}", inst_id.index);
-    CARBON_CHECK(inst_id.index < (int)loc_ids_.size(), "{0} {1}", inst_id.index,
-                 loc_ids_.size());
-    return loc_ids_[inst_id.index];
+  // Attempts to convert the given instruction to the type that contains
+  // `member`. If it can be converted, the instruction ID and instruction are
+  // replaced by the unwrapped value of that member, and the converted wrapper
+  // instruction and its ID are returned. Otherwise returns {nullopt, None}.
+  template <typename InstT, typename InstIdT>
+    requires std::derived_from<InstIdT, InstId>
+  auto TryUnwrap(Inst& inst, InstId& inst_id, InstIdT InstT::* member) const
+      -> std::pair<std::optional<InstT>, InstId> {
+    if (auto wrapped_inst = inst.TryAs<InstT>()) {
+      auto wrapped_inst_id = inst_id;
+      inst_id = (*wrapped_inst).*member;
+      inst = Get(inst_id);
+      return {wrapped_inst, wrapped_inst_id};
+    }
+    return {std::nullopt, InstId::None};
+  }
+
+  // Returns a resolved LocId, which will point to a parse node, an import, or
+  // be None.
+  //
+  // Unresolved LocIds can be backed by an InstId which may or may not have a
+  // value after being resolved, so this operation needs to be done before using
+  // most operations on LocId.
+  auto GetCanonicalLocId(LocId loc_id) const -> LocId {
+    while (loc_id.kind() == LocId::Kind::InstId) {
+      loc_id = GetNonCanonicalLocId(loc_id.inst_id());
+    }
+    return loc_id;
+  }
+
+  // Gets the resolved LocId for an instruction. InstId can directly construct
+  // an unresolved LocId. This skips that step when a resolved LocId is needed.
+  auto GetCanonicalLocId(InstId inst_id) const -> LocId {
+    return GetCanonicalLocId(GetNonCanonicalLocId(inst_id));
+  }
+
+  // Returns the instruction that this instruction was imported from, or
+  // ImportIRInstId::None if this instruction was not generated by importing
+  // another instruction.
+  auto GetImportSource(InstId inst_id) const -> ImportIRInstId {
+    auto loc_id = GetNonCanonicalLocId(inst_id);
+    return loc_id.kind() == LocId::Kind::ImportIRInstId
+               ? loc_id.import_ir_inst_id()
+               : ImportIRInstId::None;
   }
 
   // Overwrites a given instruction with a new value.
@@ -470,6 +529,18 @@ class InstStore {
   auto enumerate() const -> auto { return values_.enumerate(); }
 
  private:
+  // Given a symbolic type, get the corresponding unattached type.
+  auto GetUnattachedType(TypeId type_id) const -> TypeId;
+
+  // Gets the specified location for an instruction, without performing any
+  // canonicalization.
+  auto GetNonCanonicalLocId(InstId inst_id) const -> LocId {
+    CARBON_CHECK(static_cast<size_t>(inst_id.index) < loc_ids_.size(),
+                 "{0} {1}", inst_id.index, loc_ids_.size());
+    return loc_ids_[inst_id.index];
+  }
+
+  File* file_;
   llvm::SmallVector<LocId> loc_ids_;
   ValueStore<InstId> values_;
 };
@@ -504,7 +575,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   // Sets the contents of a placeholder block to the given content.
   auto ReplacePlaceholder(InstBlockId block_id, llvm::ArrayRef<InstId> content)
       -> void {
-    CARBON_CHECK(block_id != SemIR::InstBlockId::Empty);
+    CARBON_CHECK(block_id != InstBlockId::Empty);
     CARBON_CHECK(Get(block_id).empty(),
                  "inst block content set more than once");
     values().Get(block_id) = AllocateCopy(content);

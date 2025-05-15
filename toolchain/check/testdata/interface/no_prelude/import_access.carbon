@@ -203,6 +203,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def.type: type = facet_type <@Def> [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Def.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -220,8 +221,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: %Def.type = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: %Def.type = value_param_pattern %i.patt, call_param0
+// CHECK:STDOUT:     %i.patt: %pattern_type = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %Def.type = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def.type]
@@ -235,7 +236,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: %Def.type) {
+// CHECK:STDOUT: fn @F(%i.param: %Def.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -254,8 +255,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
@@ -263,7 +264,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -289,8 +290,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -301,7 +302,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -310,6 +311,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef.type: type = facet_type <@ForwardWithDef> [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ForwardWithDef.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -327,8 +329,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: %ForwardWithDef.type = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: %ForwardWithDef.type = value_param_pattern %i.patt, call_param0
+// CHECK:STDOUT:     %i.patt: %pattern_type = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %ForwardWithDef.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef.type]
@@ -342,7 +344,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: %ForwardWithDef.type) {
+// CHECK:STDOUT: fn @F(%i.param: %ForwardWithDef.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -361,8 +363,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
@@ -370,7 +372,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -396,8 +398,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -408,7 +410,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -430,8 +432,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %ptr [concrete = <error>] {
@@ -451,7 +453,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -470,8 +472,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
@@ -482,7 +484,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -508,8 +510,8 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i
-// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete = <error>]
+// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
@@ -520,7 +522,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%i.param_patt: <error>) {
+// CHECK:STDOUT: fn @F(%i.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

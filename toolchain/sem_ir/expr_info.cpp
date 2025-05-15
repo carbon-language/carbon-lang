@@ -41,7 +41,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Return::Kind:
       case ReturnSlotPattern::Kind:
       case ReturnExpr::Kind:
+      case SymbolicBindingPattern::Kind:
       case TuplePattern::Kind:
+      case ValueParamPattern::Kind:
       case VarPattern::Kind:
       case Vtable::Kind:
         return ExprCategory::NotExpr;
@@ -49,9 +51,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
         auto import_ir_inst = ir->import_ir_insts().Get(
-            untyped_inst.As<SemIR::AnyImportRef>().import_ir_inst_id);
-        ir = ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-        inst_id = import_ir_inst.inst_id;
+            untyped_inst.As<AnyImportRef>().import_ir_inst_id);
+        ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        inst_id = import_ir_inst.inst_id();
         continue;
       }
 
@@ -109,7 +111,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ConstType::Kind:
       case ConvertToValueAction::Kind:
       case FacetAccessType::Kind:
-      case FacetAccessWitness::Kind:
       case FacetType::Kind:
       case FacetValue::Kind:
       case FloatLiteral::Kind:
@@ -133,6 +134,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case InterfaceDecl::Kind:
       case LegacyFloatType::Kind:
       case NamespaceType::Kind:
+      case PatternType::Kind:
       case PointerType::Kind:
       case RefineTypeAction::Kind:
       case RequireCompleteType::Kind:
@@ -143,7 +145,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case StringType::Kind:
       case StructType::Kind:
       case StructValue::Kind:
-      case SymbolicBindingPattern::Kind:
       case TupleType::Kind:
       case TupleValue::Kind:
       case TypeOfInst::Kind:
@@ -152,7 +153,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
       case ValueParam::Kind:
-      case ValueParamPattern::Kind:
       case VtableType::Kind:
       case WhereExpr::Kind:
       case WitnessType::Kind:

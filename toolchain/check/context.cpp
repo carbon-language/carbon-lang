@@ -4,6 +4,9 @@
 
 #include "toolchain/check/context.h"
 
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 
 namespace Carbon::Check {
@@ -38,6 +41,10 @@ auto Context::TODO(SemIR::LocId loc_id, std::string label) -> bool {
   CARBON_DIAGNOSTIC(SemanticsTodo, Error, "semantics TODO: `{0}`", std::string);
   emitter_->Emit(loc_id, SemanticsTodo, std::move(label));
   return false;
+}
+
+auto Context::TODO(SemIR::InstId loc_inst_id, std::string label) -> bool {
+  return TODO(SemIR::LocId(loc_inst_id), label);
 }
 
 auto Context::VerifyOnFinish() const -> void {

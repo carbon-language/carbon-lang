@@ -6,11 +6,15 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <utility>
+
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "testing/base/file_helpers.h"
 #include "testing/file_test/file_test_base.h"
 #include "testing/file_test/test_file.h"
 
@@ -59,8 +63,7 @@ static auto DoArgReplacements(llvm::SmallVector<std::string>& test_args,
         break;
       }
       case 't': {
-        char* tmpdir = getenv("TEST_TMPDIR");
-        CARBON_CHECK(tmpdir != nullptr);
+        std::filesystem::path tmpdir = GetTempDirectory();
         it->replace(percent, 2, llvm::formatv("{0}/temp_file", tmpdir));
         break;
       }
@@ -161,11 +164,13 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
   llvm::raw_svector_ostream output_stream(test_file.actual_stdout);
   llvm::raw_svector_ostream error_stream(test_file.actual_stderr);
 
+  Timer timer;
   ErrorOr<FileTestBase::RunResult> run_result =
       dump_output ? test_base.Run(test_args_ref, fs, input_stream, llvm::outs(),
                                   llvm::errs())
                   : test_base.Run(test_args_ref, fs, input_stream,
                                   output_stream, error_stream);
+  test_file.run_elapsed_ms = timer.elapsed_ms();
 
   // Ensure stdout/stderr are always fetched, even when discarded on error.
   if (test_file.capture_console_output) {

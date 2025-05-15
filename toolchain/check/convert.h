@@ -119,9 +119,9 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
 // A type that has been converted for use as a type expression.
 struct TypeExpr {
-  // The converted expression of type `type`, or `ErrorInst::SingletonInstId`.
+  // The converted expression of type `type`, or `ErrorInst::InstId`.
   SemIR::TypeInstId inst_id;
-  // The corresponding type, or `ErrorInst::SingletonTypeId`.
+  // The corresponding type, or `ErrorInst::TypeId`.
   SemIR::TypeId type_id;
 };
 
@@ -135,6 +135,9 @@ struct TypeExpr {
 // operand of some downstream instruction.
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose = true) -> TypeExpr;
+
+// Handles an expression whose result value is unused.
+auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void;
 
 }  // namespace Carbon::Check
 

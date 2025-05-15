@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/decl_introducer_state.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
@@ -19,6 +20,9 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
     -> bool {
+  // Namespaces can't be generic, but we might have parsed a generic parameter
+  // in their name, so enter a generic scope just in case.
+  StartGenericDecl(context);
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Namespace>();
   context.decl_name_stack().PushScopeAndStartName();
@@ -35,12 +39,14 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto name_context = context.decl_name_stack().FinishName(
       PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
 
+  DiscardGenericDecl(context);
+
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Namespace>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::None);
 
   auto namespace_inst = SemIR::Namespace{
-      GetSingletonType(context, SemIR::NamespaceType::SingletonInstId),
+      GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
       SemIR::NameScopeId::None, SemIR::InstId::None};
   auto namespace_id = AddPlaceholderInst(context, node_id, namespace_inst);
 
@@ -65,7 +71,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
               .is_closed_import()) {
         // The existing name is a package name, so this is a name conflict.
         DiagnoseDuplicateName(context, name_context.name_id,
-                              name_context.loc_id, existing_inst_id);
+                              name_context.loc_id,
+                              SemIR::LocId(existing_inst_id));
 
         // Treat this as a local namespace name from now on to avoid further
         // diagnostics.
@@ -73,14 +80,16 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
             .Get(existing->name_scope_id)
             .set_is_closed_import(false);
       } else if (existing->import_id.has_value() &&
-                 !context.insts().GetLocId(existing_inst_id).has_value()) {
+                 !context.insts()
+                      .GetCanonicalLocId(existing_inst_id)
+                      .has_value()) {
         // When the name conflict is an imported namespace, fill the location ID
         // so that future diagnostics point at this declaration.
         SetNamespaceNodeId(context, existing_inst_id, node_id);
       }
     } else {
       DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                            existing_inst_id);
+                            SemIR::LocId(existing_inst_id));
     }
   }
 

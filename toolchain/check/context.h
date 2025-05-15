@@ -13,6 +13,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/deferred_definition_scope.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
@@ -58,6 +59,7 @@ class Context {
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
+  auto TODO(SemIR::InstId loc_inst_id, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
@@ -118,16 +120,17 @@ class Context {
 
   auto scope_stack() -> ScopeStack& { return scope_stack_; }
 
-  // Conveneicne functions for frequently-used `scope_stack` members.
-  auto return_scope_stack() -> llvm::SmallVector<ScopeStack::ReturnScope>& {
-    return scope_stack().return_scope_stack();
-  }
+  // Convenience functions for frequently-used `scope_stack` members.
   auto break_continue_stack()
       -> llvm::SmallVector<ScopeStack::BreakContinueScope>& {
     return scope_stack().break_continue_stack();
   }
   auto full_pattern_stack() -> FullPatternStack& {
     return scope_stack_.full_pattern_stack();
+  }
+
+  auto deferred_definition_scope_stack() -> DeferredDefinitionScopeStack& {
+    return deferred_definition_scope_stack_;
   }
 
   auto generic_region_stack() -> GenericRegionStack& {
@@ -204,6 +207,21 @@ class Context {
   };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
+  }
+
+  // A concrete impl lookup query and its result.
+  struct PoisonedConcreteImplLookupQuery {
+    // The location the LookupImplWitness originated from.
+    SemIR::LocId loc_id;
+    // The query for a witness of an impl for an interface.
+    SemIR::LookupImplWitness query;
+    SemIR::InstId non_canonical_query_self_inst_id;
+    // The resulting ImplWitness.
+    SemIR::InstId impl_witness;
+  };
+  auto poisoned_concrete_impl_lookup_queries()
+      -> llvm::SmallVector<PoisonedConcreteImplLookupQuery>& {
+    return poisoned_concrete_impl_lookup_queries_;
   }
 
   // --------------------------------------------------------------------------
@@ -324,6 +342,9 @@ class Context {
   // The stack of scopes we are currently within.
   ScopeStack scope_stack_;
 
+  // The stack of non-nested deferred definition scopes we are currently within.
+  DeferredDefinitionScopeStack deferred_definition_scope_stack_;
+
   // The stack of generic regions we are currently within.
   GenericRegionStack generic_region_stack_;
 
@@ -388,6 +409,12 @@ class Context {
   // Tracks all ongoing impl lookups in order to ensure that lookup terminates
   // via the acyclic rule and the termination rule.
   llvm::SmallVector<ImplLookupStackEntry> impl_lookup_stack_;
+
+  // Tracks impl lookup queries that lead to concrete witness results, along
+  // with those results. Used to verify that the same queries produce the same
+  // results at the end of the file. Any difference is diagnosed.
+  llvm::SmallVector<PoisonedConcreteImplLookupQuery>
+      poisoned_concrete_impl_lookup_queries_;
 };
 
 }  // namespace Carbon::Check

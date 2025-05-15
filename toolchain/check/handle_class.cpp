@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <optional>
+#include <tuple>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
@@ -30,6 +33,8 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
     -> bool {
+  // This class is potentially generic.
+  StartGenericDecl(context);
   // Create an instruction block to hold the instructions created as part of the
   // class signature, such as generic parameters.
   context.inst_block_stack().Push();
@@ -38,8 +43,6 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Class>();
   context.decl_name_stack().PushScopeAndStartName();
-  // This class is potentially generic.
-  StartGenericDecl(context);
   return true;
 }
 
@@ -54,7 +57,7 @@ static auto MergeClassRedecl(Context& context, Parse::AnyClassDeclId node_id,
                              SemIR::ClassId prev_class_id,
                              SemIR::ImportIRId prev_import_ir_id) -> bool {
   auto& prev_class = context.classes().Get(prev_class_id);
-  SemIR::LocId prev_loc_id = prev_class.latest_decl_id();
+  SemIR::LocId prev_loc_id(prev_class.latest_decl_id());
 
   // Check the generic parameters match, if they were specified.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_class),
@@ -129,8 +132,8 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
 
       // Verify the decl so that things like aliases are name conflicts.
       const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id).sem_ir;
-      if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id)) {
+          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+      if (!import_ir->insts().Is<SemIR::ClassDecl>(import_ir_inst.inst_id())) {
         break;
       }
 
@@ -139,12 +142,12 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
           context.constant_values().GetConstantInstId(prev_id));
       if (auto class_type = decl_value.TryAs<SemIR::ClassType>()) {
         prev_class_id = class_type->class_id;
-        prev_import_ir_id = import_ir_inst.ir_id;
+        prev_import_ir_id = import_ir_inst.ir_id();
       } else if (auto generic_class_type =
                      context.types().TryGetAs<SemIR::GenericClassType>(
                          decl_value.type_id())) {
         prev_class_id = generic_class_type->class_id;
-        prev_import_ir_id = import_ir_inst.ir_id;
+        prev_import_ir_id = import_ir_inst.ir_id();
       }
       break;
     }
@@ -155,7 +158,7 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
   if (!prev_class_id.has_value()) {
     // This is a redeclaration of something other than a class.
     DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          prev_id);
+                          SemIR::LocId(prev_id));
     return;
   }
 
@@ -208,10 +211,9 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl =
-      SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
-                       .class_id = SemIR::ClassId::None,
-                       .decl_block_id = decl_block_id};
+  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
+                                     .class_id = SemIR::ClassId::None,
+                                     .decl_block_id = decl_block_id};
   auto class_decl_id = AddPlaceholderInst(context, node_id, class_decl);
 
   // TODO: Store state regarding is_extern.
@@ -276,10 +278,10 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   StartClassDefinition(context, class_info, class_decl_id);
 
   // Enter the class scope.
-  context.scope_stack().Push(
+  context.scope_stack().PushForEntity(
       class_decl_id, class_info.scope_id,
       context.generics().GetSelfSpecific(class_info.generic_id));
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, class_info.generic_id);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);
@@ -364,9 +366,9 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto& class_info = context.classes().Get(parent_class_decl->class_id);
-  if (class_info.adapt_id.has_value()) {
-    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.adapt_id,
+  auto adapt_id = context.classes().Get(parent_class_decl->class_id).adapt_id;
+  if (adapt_id.has_value()) {
+    DiagnoseClassSpecificDeclRepeated(context, node_id, SemIR::LocId(adapt_id),
                                       Lex::TokenKind::Adapt);
     return true;
   }
@@ -388,13 +390,15 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
                                        adapted_type_inst_id);
       });
-  if (adapted_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    adapted_type_inst_id = SemIR::ErrorInst::SingletonTypeInstId;
+  if (adapted_type_id == SemIR::ErrorInst::TypeId) {
+    adapted_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
   // Build a SemIR representation for the declaration.
-  class_info.adapt_id = AddInst<SemIR::AdaptDecl>(
+  adapt_id = AddInst<SemIR::AdaptDecl>(
       context, node_id, {.adapted_type_inst_id = adapted_type_inst_id});
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
+  class_info.adapt_id = adapt_id;
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
@@ -425,10 +429,9 @@ struct BaseInfo {
   SemIR::NameScopeId scope_id;
   SemIR::TypeInstId inst_id;
 };
-constexpr BaseInfo BaseInfo::Error = {
-    .type_id = SemIR::ErrorInst::SingletonTypeId,
-    .scope_id = SemIR::NameScopeId::None,
-    .inst_id = SemIR::ErrorInst::SingletonTypeInstId};
+constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::ErrorInst::TypeId,
+                                      .scope_id = SemIR::NameScopeId::None,
+                                      .inst_id = SemIR::ErrorInst::TypeInstId};
 }  // namespace
 
 // Diagnoses an attempt to derive from a final type.
@@ -453,7 +456,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                                    base_type_inst_id);
   });
 
-  if (base_type_id == SemIR::ErrorInst::SingletonTypeId) {
+  if (base_type_id == SemIR::ErrorInst::TypeId) {
     return BaseInfo::Error;
   }
 
@@ -499,9 +502,9 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
     return true;
   }
 
-  auto& class_info = context.classes().Get(parent_class_decl->class_id);
-  if (class_info.base_id.has_value()) {
-    DiagnoseClassSpecificDeclRepeated(context, node_id, class_info.base_id,
+  auto base_id = context.classes().Get(parent_class_decl->class_id).base_id;
+  if (base_id.has_value()) {
+    DiagnoseClassSpecificDeclRepeated(context, node_id, SemIR::LocId(base_id),
                                       Lex::TokenKind::Base);
     return true;
   }
@@ -522,15 +525,18 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
   auto field_type_id = GetUnboundElementType(
-      context, context.types().GetInstId(class_info.self_type_id),
+      context,
+      context.types().GetInstId(
+          context.classes().Get(parent_class_decl->class_id).self_type_id),
       base_info.inst_id);
-  class_info.base_id =
-      AddInst<SemIR::BaseDecl>(context, node_id,
-                               {.type_id = field_type_id,
-                                .base_type_inst_id = base_info.inst_id,
-                                .index = SemIR::ElementIndex::None});
+  base_id = AddInst<SemIR::BaseDecl>(context, node_id,
+                                     {.type_id = field_type_id,
+                                      .base_type_inst_id = base_info.inst_id,
+                                      .index = SemIR::ElementIndex::None});
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
+  class_info.base_id = base_id;
 
-  if (base_info.type_id != SemIR::ErrorInst::SingletonTypeId) {
+  if (base_info.type_id != SemIR::ErrorInst::TypeId) {
     auto base_class_info = context.classes().Get(
         context.types().GetAs<SemIR::ClassType>(base_info.type_id).class_id);
     class_info.is_dynamic |= base_class_info.is_dynamic;

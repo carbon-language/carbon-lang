@@ -106,9 +106,16 @@ instruction, as described in
 
 Instructions are stored as type-erased `SemIR::Inst` objects, which store the
 instruction kind and the (up to) four fields described above. This balances the
-size of `SemIR::Inst` against the overhead of indirection. All instructions have
-with them a `LocId` that tracks their source location, and is stored separately
-on the `InstStore` and retrieved by `GetLocId()`.
+size of `SemIR::Inst` against the overhead of indirection.
+
+All instructions have with them a `SemIR::LocId` that tracks their source
+location, and is stored separately on the `InstStore`. A `LocId` that refers
+indirectly to the location of an instruction can be created by calling the
+`LocId` constructor: `SemIR::LocId(inst_id)`. You can use
+`insts().GetCanonicalLocId(loc_id)` to flatten the location to one that refers
+directly to either a parse node or an imported location, but this is typically
+necessary only when decomposing the location or when marking it with the
+implicit or token-only flags.
 
 A `SemIR::InstBlockId`, used to index into `SemIR::InstBlockStore`, can
 represent a code block. However, it can also be created when a series of

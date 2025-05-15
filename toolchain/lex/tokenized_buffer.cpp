@@ -6,6 +6,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
+#include <optional>
+#include <utility>
 
 #include "common/check.h"
 #include "common/string_helpers.h"
@@ -233,6 +236,14 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
     PrintToken(output_stream, token, widths);
     output_stream << "\n";
   }
+
+  if (!dump_sem_ir_ranges_.empty()) {
+    output_stream << "  dump_sem_ir_ranges:\n";
+    for (auto range : dump_sem_ir_ranges_) {
+      output_stream << "  - {begin: " << range.begin.index
+                    << ", end: " << range.end.index << "}\n";
+    }
+  }
 }
 
 auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
@@ -427,6 +438,20 @@ auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
   auto converted = SourcePointerToDiagnosticLoc(token_start);
   converted.loc.length = GetTokenText(token).size();
   return converted;
+}
+
+auto TokenizedBuffer::OverlapsWithDumpSemIRRange(
+    Lex::InclusiveTokenRange range) const -> bool {
+  CARBON_CHECK(!dump_sem_ir_ranges_.empty());
+
+  // Ranges are ordered, so we can decide overlap as soon as we find a range
+  // that ends after `begin`.
+  for (auto dump_range : dump_sem_ir_ranges_) {
+    if (dump_range.end >= range.begin) {
+      return dump_range.begin <= range.end;
+    }
+  }
+  return false;
 }
 
 }  // namespace Carbon::Lex
