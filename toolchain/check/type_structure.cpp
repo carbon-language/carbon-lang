@@ -15,7 +15,8 @@
 
 namespace Carbon::Check {
 
-auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
+auto TypeStructure::IsEqualToOrMoreSpecificThan(
+    const TypeStructure& other) const -> bool {
   const auto& lhs = structure_;
   const auto& rhs = other.structure_;
 
@@ -60,20 +61,19 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
       return false;
     }
 
-    // From here we know one side is a Symbolic and the other is not. We can
-    // match the Symbolic against either a single Concrete or a larger bracketed
-    // set of Concrete structural elements.
+    // From here we know one side is a Symbolic and the other is not.
     //
-    // We move the symbolic to the RHS to make only one case to handle in the
-    // lambda.
+    // If the symbolic is on the LHS, then the RHS structure is more specific
+    // and we return false.
+    //
+    // If the symbolic is on the RHS, we can match the Symbolic against either a
+    // single Concrete or a larger bracketed set of Concrete structural elements
+    // from the (more-specific) LHS.
     if (*lhs_cursor == Structural::Symbolic) {
-      if (!ConsumeRhsSymbolic(rhs_cursor, rhs_concrete_cursor, lhs_cursor)) {
-        return false;
-      }
-    } else {
-      if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
-        return false;
-      }
+      return false;
+    }
+    if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
+      return false;
     }
   }
 

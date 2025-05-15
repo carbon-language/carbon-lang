@@ -23,10 +23,13 @@ namespace Carbon::Check {
 // better, more specified, match.
 class TypeStructure : public Printable<TypeStructure> {
  public:
-  // Returns whether the type structure is compatible with `other`. If false,
-  // they can not possibly match with one being an `impl` for the other as a
-  // lookup query.
-  auto IsCompatibleWith(const TypeStructure& other) const -> bool;
+  // Returns whether `this` has the same structure as `other`, or `this` is
+  // strictly more specific (has more concrete values) than `other` while
+  // maintaining a compatible structure.
+  //
+  // If false, they can not possibly match with `this` being a lookup query and
+  // `other` being an `impl`.
+  auto IsEqualToOrMoreSpecificThan(const TypeStructure& other) const -> bool;
 
   // Ordering of type structures. A lower value is a better match.
   // TODO: switch to operator<=> once we can depend on
@@ -143,7 +146,7 @@ class TypeStructure : public Printable<TypeStructure> {
         symbolic_type_indices_(std::move(symbolic_type_indices)),
         concrete_types_(std::move(concrete_types)) {}
 
-  // A helper for IsCompatibleWith.
+  // A helper for IsEqualToOrMoreSpecificThan.
   static auto ConsumeRhsSymbolic(
       llvm::SmallVector<Structural>::const_iterator& lhs_cursor,
       llvm::SmallVector<ConcreteType>::const_iterator& lhs_concrete_cursor,

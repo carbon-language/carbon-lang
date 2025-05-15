@@ -98,6 +98,13 @@ class C;
 // The final impl here overlaps with the first final impl above, but is not in
 // a match_first.
 //
+// CHECK:STDERR: fail_multiple_finals_overlap_with_interface.carbon:[[@LINE+7]]:1: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
+// CHECK:STDERR: final impl C as Z({}) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_multiple_finals_overlap_with_interface.carbon:[[@LINE-22]]:1: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 final impl C as Z({}) {}
 
 // --- fail_multiple_finals_overlap_with_self_type.carbon

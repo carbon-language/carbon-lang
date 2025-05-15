@@ -555,7 +555,7 @@ static auto CollectCandidateImplsForQuery(
     // TODO: We can skip the comparison here if the `impl_interface_const_id` is
     // not symbolic, since when the interface and specific ids match, and they
     // aren't symbolic, the structure will be identical.
-    if (!query_type_structure.IsCompatibleWith(type_structure)) {
+    if (!query_type_structure.IsEqualToOrMoreSpecificThan(type_structure)) {
       continue;
     }
 

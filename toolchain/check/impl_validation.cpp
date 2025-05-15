@@ -171,10 +171,10 @@ static auto DiagnoseUnmatchableNonFinalImplWithFinalImpl(
 
   CARBON_CHECK(impl_a.is_final || impl_b.is_final);
 
-  if (impl_a.is_final) {
-    return diagnose_unmatchable_impl(impl_b, impl_a_id, impl_a);
-  } else {
+  if (impl_b.is_final) {
     return diagnose_unmatchable_impl(impl_a, impl_b_id, impl_b);
+  } else {
+    return diagnose_unmatchable_impl(impl_b, impl_a_id, impl_a);
   }
 }
 
@@ -255,30 +255,40 @@ static auto ValidateImplsForInterface(
           .first_owning_decl_id;
   auto interface_ir_id = GetIRId(context, interface_decl_id);
 
-  // TODO: We should revisit this and look for a way to do these checks in less
-  // than quadratic time. From @zygoloid: Possibly by converting the set of
-  // impls into a decision tree.
-  for (auto [index_a, impl_a_id] : llvm::enumerate(impl_ids)) {
-    auto impl_a = GetImplInfo(context, impl_a_id);
-
-    if (impl_a.is_final && impl_a.is_local) {
+  for (auto impl_id : impl_ids) {
+    auto impl = GetImplInfo(context, impl_id);
+    if (impl.is_final && impl.is_local) {
       // =======================================================================
       /// Rules for an individual final impl.
       // =======================================================================
-      DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(context, impl_a,
+      DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(context, impl,
                                                               interface_ir_id);
     }
+  }
 
-    // Prevent diagnosing the same error multiple times for the same `impl_a`.
-    // But still ensure we do give one of each diagnostic when they are
-    // different errors.
+  // TODO: We should revisit this and look for a way to do these checks in less
+  // than quadratic time. From @zygoloid: Possibly by converting the set of
+  // impls into a decision tree.
+  //
+  // For each impl, we compare it pair-wise which each impl found before it, so
+  // that diagnostics are attached to the later impl, as the earlier impl on its
+  // own does not generate a diagnostic.
+  size_t num_impl_ids = impls_and_interface.size();
+  for (auto [split_point, impl_b_id] :
+       llvm::drop_begin(llvm::enumerate(impl_ids))) {
+    auto impl_b = GetImplInfo(context, impl_b_id);
+
+    // Prevent diagnosing the same error multiple times for the same `impl_b`
+    // against different impls before it. But still ensure we do give one of
+    // each diagnostic when they are different errors.
     bool did_diagnose_non_final_impls_with_same_type_structure = false;
     bool did_diagnose_unmatchable_non_final_impl_with_final_impl = false;
     bool did_diagnose_final_impls_overlap_in_different_files = false;
     bool did_diagnose_final_impls_overlap_outside_match_first = false;
 
-    for (auto impl_b_id : llvm::drop_begin(impl_ids, index_a + 1)) {
-      auto impl_b = GetImplInfo(context, impl_b_id);
+    auto impls_before = llvm::drop_end(impl_ids, num_impl_ids - split_point);
+    for (auto impl_a_id : impls_before) {
+      auto impl_a = GetImplInfo(context, impl_a_id);
 
       // Only enforce rules when at least one of the impls was written in this
       // file.
@@ -293,6 +303,8 @@ static auto ValidateImplsForInterface(
         if (!did_diagnose_non_final_impls_with_same_type_structure) {
           if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
                                                          impl_b)) {
+            // The same final `impl_a` may overlap with multiple `impl_b`s, and
+            // we want to diagnose each `impl_b`.
             did_diagnose_non_final_impls_with_same_type_structure = true;
           }
         }
@@ -306,13 +318,14 @@ static auto ValidateImplsForInterface(
             did_diagnose_unmatchable_non_final_impl_with_final_impl = true;
           }
         }
-      } else if (impl_a.type_structure.IsCompatibleWith(
-                     impl_b.type_structure)) {
+      } else if (impl_a.type_structure.IsEqualToOrMoreSpecificThan(
+                     impl_b.type_structure) ||
+                 impl_b.type_structure.IsEqualToOrMoreSpecificThan(
+                     impl_a.type_structure)) {
         // =====================================================================
         // Rules between two overlapping final impls.
         // =====================================================================
         CARBON_CHECK(impl_a.is_final && impl_b.is_final);
-
         if (!did_diagnose_final_impls_overlap_in_different_files) {
           if (DiagnoseFinalImplsOverlapInDifferentFiles(context, impl_a,
                                                         impl_b)) {
