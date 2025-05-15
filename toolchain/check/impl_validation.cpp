@@ -424,11 +424,11 @@ auto ValidateImplsInFile(Context& context) -> void {
   const auto* it = impl_ids_by_interface.begin();
   while (it != impl_ids_by_interface.end()) {
     const auto* segment_begin = it;
+    auto begin_interface_id = segment_begin->interface.interface_id;
     do {
       ++it;
     } while (it != impl_ids_by_interface.end() &&
-             it->interface.interface_id ==
-                 segment_begin->interface.interface_id);
+             it->interface.interface_id == begin_interface_id);
     const auto* segment_end = it;
 
     ValidateImplsForInterface(context, {segment_begin, segment_end});
