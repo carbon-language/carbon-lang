@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   clang-tidy:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Harden Runner
@@ -51,7 +51,7 @@ jobs:
       - id: test-setup
         uses: ./.github/actions/test-setup
         with:
-          matrix_runner: 'ubuntu-24.04'
+          matrix_runner: 'ubuntu-22.04'
           base_sha:
             ${{ github.event_name == 'pull_request' &&
             github.event.pull_request.base.sha ||
