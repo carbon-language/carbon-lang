@@ -151,7 +151,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:   %Op.type.27a: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.f99: type = fn_type @Op.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %Op.05a0d7.1: %Op.type.f99 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Op.05a: %Op.type.f99 = struct_value () [symbolic]
 // CHECK:STDOUT:   %BitAnd.impl_witness.0e5: <witness> = impl_witness imports.%BitAnd.impl_witness_table, @impl(type) [concrete]
 // CHECK:STDOUT:   %Op.type.eb8: type = fn_type @Op.2, @impl(type) [concrete]
 // CHECK:STDOUT:   %Op.444: %Op.type.eb8 = struct_value () [concrete]
@@ -176,7 +176,7 @@ fn F(T: Z(C)) -> T.(Z(C).X) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.BitAnd: type = import_ref Core//prelude, BitAnd, loaded [concrete = constants.%BitAnd.type]
-// CHECK:STDOUT:   %Core.import_ref.1e6: @impl.%Op.type (%Op.type.f99) = import_ref Core//prelude, loc22_42, loaded [symbolic = @impl.%Op (constants.%Op.05a0d7.1)]
+// CHECK:STDOUT:   %Core.import_ref.1e6: @impl.%Op.type (%Op.type.f99) = import_ref Core//prelude, loc22_42, loaded [symbolic = @impl.%Op (constants.%Op.05a)]
 // CHECK:STDOUT:   %BitAnd.impl_witness_table = impl_witness_table (%Core.import_ref.1e6), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

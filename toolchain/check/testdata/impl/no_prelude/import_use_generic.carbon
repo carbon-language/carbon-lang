@@ -195,8 +195,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.impl_witness.443: <witness> = impl_witness imports.%I.impl_witness_table, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.type.40c: type = fn_type @F.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %F.071647.1: %F.type.40c = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.071647.2: @impl.%F.type (%F.type.40c) = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.071: %F.type.40c = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.6bb: <witness> = impl_witness imports.%I.impl_witness_table, @impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %F.type.4a4: type = fn_type @F.2, @impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %F.9e6: %F.type.4a4 = struct_value () [concrete]
@@ -222,7 +221,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.499: type = import_ref Main//import_generic, loc10_27, loaded [symbolic = @impl.%C (constants.%C.f2e)]
 // CHECK:STDOUT:   %Main.import_ref.301: type = import_ref Main//import_generic, loc10_32, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.e2c: @impl.%F.type (%F.type.40c) = import_ref Main//import_generic, loc11_10, loaded [symbolic = @impl.%F (constants.%F.071647.1)]
+// CHECK:STDOUT:   %Main.import_ref.e2c: @impl.%F.type (%F.type.40c) = import_ref Main//import_generic, loc11_10, loaded [symbolic = @impl.%F (constants.%F.071)]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.e2c), @impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @impl.%T (constants.%T)]
 // CHECK:STDOUT: }
@@ -296,7 +295,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T) [symbolic = %F.type (constants.%F.type.40c)]
-// CHECK:STDOUT:   %F: @impl.%F.type (%F.type.40c) = struct_value () [symbolic = %F (constants.%F.071647.2)]
+// CHECK:STDOUT:   %F: @impl.%F.type (%F.type.40c) = struct_value () [symbolic = %F (constants.%F.071)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.499 as imports.%Main.import_ref.301 {
 // CHECK:STDOUT:   !members:
@@ -363,7 +362,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.40c
-// CHECK:STDOUT:   %F => constants.%F.071647.1
+// CHECK:STDOUT:   %F => constants.%F.071
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}

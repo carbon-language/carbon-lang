@@ -85,13 +85,13 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.42ebb8.1: %Convert.type.275 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ca0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.d88: type = facet_type <@ImplicitAs, @ImplicitAs(%V)> [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.5fe: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V) [symbolic]
 // CHECK:STDOUT:   %assoc0.a0b: %ImplicitAs.assoc_type.5fe = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
 // CHECK:STDOUT:   %require_complete.6c8: <witness> = require_complete_type %ImplicitAs.type.d88 [symbolic]
-// CHECK:STDOUT:   %assoc0.dc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %assoc0.dc0: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -101,7 +101,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42ebb8.1)]
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude, loc14_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -255,7 +255,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.42ebb8.1: %Convert.type.275 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ca0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.aba: type = facet_type <@ImplicitAs, @ImplicitAs(%.Self)> [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [concrete]
@@ -275,7 +275,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.83a: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%V.as_type) [symbolic]
 // CHECK:STDOUT:   %assoc0.5dc: %ImplicitAs.assoc_type.83a = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
 // CHECK:STDOUT:   %require_complete.9fe: <witness> = require_complete_type %ImplicitAs.type.113 [symbolic]
-// CHECK:STDOUT:   %assoc0.dc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %assoc0.dc0: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -285,7 +285,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42ebb8.1)]
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude, loc14_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

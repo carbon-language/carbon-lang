@@ -219,7 +219,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
-// CHECK:STDOUT:   %N: @Int.%T (%T) = bind_symbolic_name N, 1 [symbolic]
+// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [concrete]
 // CHECK:STDOUT: }

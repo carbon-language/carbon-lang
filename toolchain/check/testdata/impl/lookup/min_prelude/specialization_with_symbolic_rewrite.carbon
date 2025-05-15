@@ -467,13 +467,13 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
 // CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.42ebb8.1: %Convert.type.275 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.ca0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.199: type = facet_type <@ImplicitAs, @ImplicitAs(%impl.elem0.284)> [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.bd9: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%impl.elem0.284) [symbolic]
 // CHECK:STDOUT:   %assoc0.428: %ImplicitAs.assoc_type.bd9 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
 // CHECK:STDOUT:   %require_complete.3ca: <witness> = require_complete_type %ImplicitAs.type.199 [symbolic]
-// CHECK:STDOUT:   %assoc0.dc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %assoc0.dc0: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -483,7 +483,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42ebb8.1)]
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude, loc14_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
 // CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude, loc14_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

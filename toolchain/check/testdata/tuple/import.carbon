@@ -72,7 +72,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
 // CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To.c80) [symbolic]
-// CHECK:STDOUT:   %Convert.f06170.1: %Convert.type.0f9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
@@ -131,7 +131,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06170.1)]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,7 +324,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %ImplicitAs.type.595: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.595 = struct_value () [concrete]
 // CHECK:STDOUT:   %Convert.type.9a6: type = fn_type @Convert.2, @impl.a8d(%To.c80) [symbolic]
-// CHECK:STDOUT:   %Convert.458068.1: %Convert.type.9a6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Convert.458: %Convert.type.9a6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
@@ -377,12 +377,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst125 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458068.1)]
+// CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst121 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @impl.a8d [concrete]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1501 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1460 [no loc], unloaded
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.595 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -572,7 +572,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1501 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1460 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -643,7 +643,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %ImplicitAs.type.595: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.595 = struct_value () [concrete]
 // CHECK:STDOUT:   %Convert.type.9a6: type = fn_type @Convert.2, @impl.a8d(%To.c80) [symbolic]
-// CHECK:STDOUT:   %Convert.458068.1: %Convert.type.9a6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Convert.458: %Convert.type.9a6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
@@ -690,11 +690,11 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst125 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458068.1)]
+// CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst121 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @impl.a8d [concrete]
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1501 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1460 [no loc], unloaded
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.595 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -1371,8 +1371,10 @@ static auto AddAssociatedEntities(ImportContext& context,
       import_name_id =
           context.import_entity_names().Get(import_ref->entity_name_id).name_id;
     } else {
+      // We don't need `GetWithAttachedType` here because we don't access the
+      // type.
       CARBON_FATAL("Unhandled associated entity kind: {0}",
-                   context.import_insts().GetWithAttachedType(inst_id).kind());
+                   context.import_insts().Get(inst_id).kind());
     }
     auto name_id = GetLocalNameId(context, import_name_id);
     auto entity_name_id = context.local_entity_names().Add(
@@ -1400,6 +1402,10 @@ static auto RetryOrDone(ImportRefResolver& resolver, SemIR::ConstantId const_id)
 // that there is no new work.
 static auto ResolveAsUntyped(ImportContext& context, SemIR::Inst inst)
     -> ResolveResult {
+  // AddImportedConstant produces an unattached constant, so its type must
+  // be unattached as well.
+  inst.SetType(
+      context.local_context().types().GetUnattachedType(inst.type_id()));
   auto result = AddImportedConstant(context.local_context(), inst);
   CARBON_CHECK(result.is_constant(), "{0} is not constant", inst);
   return ResolveResult::Done(result);

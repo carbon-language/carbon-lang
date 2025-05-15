@@ -320,14 +320,11 @@ fn G() {
 // CHECK:STDOUT:   %F.type.0daaa1.1: type = fn_type @F.2, @impl(%Y) [symbolic]
 // CHECK:STDOUT:   %F.49c1ac.1: %F.type.0daaa1.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.ccc: type = pattern_type %C.13320f.2 [symbolic]
-// CHECK:STDOUT:   %F.49c1ac.2: @impl.%F.type.1 (%F.type.0daaa1.1) = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.type.0daaa1.2: type = fn_type @F.3, @impl(%Y) [symbolic]
-// CHECK:STDOUT:   %F.49c1ac.3: %F.type.0daaa1.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.49c1ac.4: @impl.%F.type.2 (%F.type.0daaa1.2) = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.49c1ac.2: %F.type.0daaa1.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.13320f.2 [symbolic]
-// CHECK:STDOUT:   %F.49c1ac.5: @F.3.%F.type (%F.type.0daaa1.1) = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.specific_fn.8d9: <specific function> = specific_function %F.49c1ac.5, @F.2(%Y) [symbolic]
-// CHECK:STDOUT:   %C.val.56a: @F.3.%C (%C.13320f.2) = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.specific_fn.8d9: <specific function> = specific_function %F.49c1ac.1, @F.2(%Y) [symbolic]
+// CHECK:STDOUT:   %C.val.56a: %C.13320f.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.02b: <witness> = impl_witness imports.%I.impl_witness_table, @impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %F.type.af4856.1: type = fn_type @F.2, @impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %F.5fa954.1: %F.type.af4856.1 = struct_value () [concrete]
@@ -357,7 +354,7 @@ fn G() {
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.2: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @impl.%Y (constants.%Y)]
 // CHECK:STDOUT:   %Main.import_ref.dbf: type = import_ref Main//b, loc7_25, loaded [symbolic = @impl.%C (constants.%C.13320f.2)]
 // CHECK:STDOUT:   %Main.import_ref.f50: type = import_ref Main//b, loc7_30, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.047: @impl.%F.type.2 (%F.type.0daaa1.2) = import_ref Main//b, loc8_17, loaded [symbolic = @impl.%F.2 (constants.%F.49c1ac.3)]
+// CHECK:STDOUT:   %Main.import_ref.047: @impl.%F.type.2 (%F.type.0daaa1.2) = import_ref Main//b, loc8_17, loaded [symbolic = @impl.%F.2 (constants.%F.49c1ac.2)]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.047), @impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.3: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @impl.%Y (constants.%Y)]
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.4: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @impl.%Y (constants.%Y)]
@@ -387,9 +384,9 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.2, @impl(%Y) [symbolic = %F.type.1 (constants.%F.type.0daaa1.1)]
-// CHECK:STDOUT:   %F.1: @impl.%F.type.1 (%F.type.0daaa1.1) = struct_value () [symbolic = %F.1 (constants.%F.49c1ac.2)]
+// CHECK:STDOUT:   %F.1: @impl.%F.type.1 (%F.type.0daaa1.1) = struct_value () [symbolic = %F.1 (constants.%F.49c1ac.1)]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.3, @impl(%Y) [symbolic = %F.type.2 (constants.%F.type.0daaa1.2)]
-// CHECK:STDOUT:   %F.2: @impl.%F.type.2 (%F.type.0daaa1.2) = struct_value () [symbolic = %F.2 (constants.%F.49c1ac.4)]
+// CHECK:STDOUT:   %F.2: @impl.%F.type.2 (%F.type.0daaa1.2) = struct_value () [symbolic = %F.2 (constants.%F.49c1ac.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.dbf as imports.%Main.import_ref.f50 {
 // CHECK:STDOUT:   !members:
@@ -451,7 +448,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Y: %empty_tuple.type = bind_symbolic_name Y, 0 [symbolic = %Y (constants.%Y)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%Y) [symbolic = %F.type (constants.%F.type.0daaa1.1)]
-// CHECK:STDOUT:   %F: @F.3.%F.type (%F.type.0daaa1.1) = struct_value () [symbolic = %F (constants.%F.49c1ac.5)]
+// CHECK:STDOUT:   %F: @F.3.%F.type (%F.type.0daaa1.1) = struct_value () [symbolic = %F (constants.%F.49c1ac.1)]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F.2(%Y) [symbolic = %F.specific_fn (constants.%F.specific_fn.8d9)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Y) [symbolic = %C (constants.%C.13320f.2)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C [symbolic = %require_complete (constants.%require_complete)]
@@ -487,7 +484,7 @@ fn G() {
 // CHECK:STDOUT:   %F.type.1 => constants.%F.type.0daaa1.1
 // CHECK:STDOUT:   %F.1 => constants.%F.49c1ac.1
 // CHECK:STDOUT:   %F.type.2 => constants.%F.type.0daaa1.2
-// CHECK:STDOUT:   %F.2 => constants.%F.49c1ac.3
+// CHECK:STDOUT:   %F.2 => constants.%F.49c1ac.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Y) {
