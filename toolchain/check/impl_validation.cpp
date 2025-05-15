@@ -169,18 +169,13 @@ static auto DiagnoseUnmatchableNonFinalImplWithFinalImpl(
     return false;
   };
 
-  bool did_diagnose = false;
-  if (impl_a.is_final) {
-    did_diagnose = diagnose_unmatchable_impl(impl_b, impl_a_id, impl_a);
-  }
-  if (impl_b.is_final && !did_diagnose) {
-    did_diagnose = diagnose_unmatchable_impl(impl_a, impl_b_id, impl_b);
-  }
-  if (did_diagnose) {
-    return true;
-  }
+  CARBON_CHECK(impl_a.is_final || impl_b.is_final);
 
-  return false;
+  if (impl_a.is_final) {
+    return diagnose_unmatchable_impl(impl_b, impl_a_id, impl_a);
+  } else {
+    return diagnose_unmatchable_impl(impl_a, impl_b_id, impl_b);
+  }
 }
 
 // Final impls that overlap in their type structure must be in the
