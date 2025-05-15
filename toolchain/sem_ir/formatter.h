@@ -63,11 +63,14 @@ class Formatter {
     bool include_in_output;
     // The textual contents of this chunk.
     std::string chunk = std::string();
-    // Chunks that should be included in the output if this one is.
+    // Indices in `ouput_chunks_` that should be included in the output if this
+    // one is.
     llvm::SmallVector<size_t> dependencies = {};
   };
 
-  // Redirects formatted output to a new `OutputChunk` for tentative output.
+  // All formatted output within the scope of this object is redirected to a
+  // new tentative `OutputChunk`. The new chunk will depend on
+  // `parent_chunk_index`.
   struct TentativeOutputScope {
     explicit TentativeOutputScope(Formatter& f, size_t parent_chunk_index)
         : formatter(f) {
