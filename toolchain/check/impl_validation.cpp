@@ -263,7 +263,7 @@ static auto ValidateImplsForInterface(
 
     if (impl_a.is_final && impl_a.is_local) {
       // =======================================================================
-      /// Rules for an individual final impl and its internal values.
+      /// Rules for an individual final impl.
       // =======================================================================
       if (DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(
               context, impl_a, interface_ir_id)) {
