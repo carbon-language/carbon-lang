@@ -298,9 +298,9 @@ static auto ValidateImplsForInterface(
         }
       } else if (impl_a.type_structure.IsCompatibleWith(
                      impl_b.type_structure)) {
-        // =======================================================================
+        // =====================================================================
         // Rules between two overlapping final impls.
-        // =======================================================================
+        // =====================================================================
         CARBON_CHECK(impl_a.is_final && impl_b.is_final);
 
         if (DiagnoseFinalImplsOverlapInDifferentFiles(context, impl_a,
