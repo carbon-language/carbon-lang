@@ -210,8 +210,7 @@ import library "interface_z_with_impl";
 
 class C;
 
-// This non-final impl is overlapped by a final impl in the interface file, and
-// you can't write a final impl in two different files.
+// This non-final impl is subsumed by a final impl in the interface file.
 //
 // CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE+8]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
 // CHECK:STDERR: impl C as Z(C) {}
