@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/union.carbon
 
 // ============================================================================
-// declaration
+// Declaration
 // ============================================================================
 
 // --- declaration.h
@@ -32,7 +32,7 @@ import Cpp library "declaration.h";
 fn MyF(bar: Cpp.Bar*);
 
 // ============================================================================
-// definition
+// Definition
 // ============================================================================
 
 // --- definition.h
@@ -48,7 +48,7 @@ import Cpp library "definition.h";
 fn MyF(bar: Cpp.Bar*);
 
 // ============================================================================
-// declaration_and_definition
+// Declaration and definition
 // ============================================================================
 
 // --- declaration_and_definition.h
@@ -65,7 +65,7 @@ import Cpp library "declaration_and_definition.h";
 fn MyF(bar: Cpp.Bar*);
 
 // ============================================================================
-// public_static_member_function
+// Public static member function
 // ============================================================================
 
 // --- public_static_member_function.h
@@ -86,7 +86,7 @@ fn MyF() {
 }
 
 // ============================================================================
-// private_static_member_function
+// Private static member function
 // ============================================================================
 
 // --- private_static_member_function.h
@@ -107,7 +107,7 @@ fn MyF() {
 }
 
 // ============================================================================
-// public_member_function
+// Public member function
 // ============================================================================
 
 // --- public_member_function.h
@@ -135,7 +135,7 @@ fn MyF(bar : Cpp.Bar*) {
 }
 
 // ============================================================================
-// public_static_data_member
+// Public static data member
 // ============================================================================
 
 // --- public_static_data_member.h
@@ -167,7 +167,7 @@ fn MyF() {
 }
 
 // ============================================================================
-// public_data_member
+// Public data member
 // ============================================================================
 
 // --- public_data_member.h
@@ -199,7 +199,7 @@ fn MyF(bar : Cpp.Bar*) {
 }
 
 // ============================================================================
-// to_inherit_public
+// To inherit public
 // ============================================================================
 
 // --- to_inherit_public.h
@@ -224,7 +224,7 @@ fn MyF() {
 }
 
 // ============================================================================
-// template
+// Template
 // ============================================================================
 
 // --- template.h
