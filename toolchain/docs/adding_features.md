@@ -498,12 +498,11 @@ can be avoided by using a minimal prelude.
 To replace the production `Core` package with a minimal one, add the path to a
 minimal `Core` package and `prelude` library to the file test with the
 `INCLUDE-FILE` directive, and tell the toolchain to avoid loading the production
-`Core` package by adding `--custom-core` to the `EXTRA-ARGS` directive, for
-example:
+`Core` package by putting it in a `min_prelude` subdirectory. For example,
+`check/testdata/facet_types/min_prelude/my_test.carbon` might contain:
 
 ```
 // INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
-// EXTRA-ARGS: --custom-core
 ```
 
 We have a set of minimal `Core` preludes for testing different compiler feature

@@ -132,12 +132,11 @@ auto AddPatternInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
 // Convenience for AddPatternInst with typed nodes.
 //
 // As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
-template <typename InstT>
-  requires(SemIR::Internal::HasNodeId<InstT> && !InstT::Kind.has_cleanup())
-auto AddPatternInst(Context& context,
-                    typename decltype(InstT::Kind)::TypedNodeId node_id,
-                    InstT inst) -> SemIR::InstId {
-  return AddPatternInst(context, SemIR::LocIdAndInst(node_id, inst));
+template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup() &&
+           std::convertible_to<LocT, SemIR::LocId>)
+auto AddPatternInst(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
+  return AddPatternInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
 // Adds an instruction to the current block, returning the produced ID. The

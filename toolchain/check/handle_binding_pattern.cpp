@@ -8,8 +8,8 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/return.h"
-#include "toolchain/check/subpattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -51,62 +51,24 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.decl_introducer_state_stack().innermost();
 
   auto make_binding_pattern = [&]() -> SemIR::InstId {
-    // bind_id and entity_name_id are not populated if name_id is Underscore.
-    auto bind_id = SemIR::InstId::None;
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto entity_name_id = SemIR::EntityNameId::None;
-    entity_name_id = context.entity_names().AddSymbolicBindingName(
-        name_id, context.scope_stack().PeekNameScopeId(),
-        is_generic ? context.scope_stack().AddCompileTimeBinding()
-                   : SemIR::CompileTimeBindIndex::None,
-        is_template);
-    if (is_generic) {
-      bind_id = AddInstInNoBlock(
-          context, name_node,
-          SemIR::BindSymbolicName{.type_id = cast_type_id,
-                                  .entity_name_id = entity_name_id,
-                                  .value_id = SemIR::InstId::None});
-    } else {
-      bind_id =
-          AddInstInNoBlock(context, name_node,
-                           SemIR::BindName{.type_id = cast_type_id,
-                                           .entity_name_id = entity_name_id,
-                                           .value_id = SemIR::InstId::None});
-    }
+    auto binding =
+        AddBindingPattern(context, name_node, name_id, cast_type_id,
+                          type_expr_region_id, is_generic, is_template);
 
-    auto pattern_type_id = GetPatternType(context, cast_type_id);
-    auto binding_pattern_id = SemIR::InstId::None;
-    if (is_generic) {
-      binding_pattern_id = AddPatternInst<SemIR::SymbolicBindingPattern>(
-          context, name_node,
-          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
-    } else {
-      binding_pattern_id = AddPatternInst<SemIR::BindingPattern>(
-          context, name_node,
-          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
-    }
-
-    if (is_generic) {
-      context.scope_stack().PushCompileTimeBinding(bind_id);
-    }
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
       // enclosing pattern.
       auto name_context =
           context.decl_name_stack().MakeUnqualifiedName(name_node, name_id);
       context.decl_name_stack().AddNameOrDiagnose(
-          name_context, bind_id, introducer.modifier_set.GetAccessKind());
+          name_context, binding.bind_id,
+          introducer.modifier_set.GetAccessKind());
       context.full_pattern_stack().AddBindName(name_id);
     }
 
-    bool inserted = context.bind_name_map()
-                        .Insert(binding_pattern_id,
-                                {.bind_name_id = bind_id,
-                                 .type_expr_region_id = type_expr_region_id})
-                        .is_inserted();
-    CARBON_CHECK(inserted);
-    return binding_pattern_id;
+    return binding.pattern_id;
   };
 
   // A `self` binding can only appear in an implicit parameter list.

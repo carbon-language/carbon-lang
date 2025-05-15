@@ -16,6 +16,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "testing/base/file_helpers.h"
 
 namespace Carbon::Testing {
 
@@ -149,10 +150,9 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
     file_to_number_map.insert({name, number});
   }
 
-  // %t substitution means we may see TEST_TMPDIR in output.
-  char* tmpdir_env = getenv("TEST_TMPDIR");
-  CARBON_CHECK(tmpdir_env != nullptr);
-  llvm::StringRef tmpdir = tmpdir_env;
+  // %t substitution means we may see the temporary directory's path in output.
+  std::filesystem::path tmpdir_path = GetTempDirectory();
+  llvm::StringRef tmpdir = tmpdir_path.native();
 
   llvm::SmallVector<llvm::StringRef> lines(llvm::split(output, '\n'));
   // It's typical that output ends with a newline, but we don't want to add a
@@ -190,7 +190,7 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
       check_line.append("{{}}");
     }
 
-    // Ignore TEST_TMPDIR in output.
+    // Ignore mentions of the temporary directory in output.
     if (auto pos = check_line.find(tmpdir); pos != std::string::npos) {
       check_line.replace(pos, tmpdir.size(), "{{.+}}");
     }

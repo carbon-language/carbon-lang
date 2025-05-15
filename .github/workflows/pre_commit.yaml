@@ -15,12 +15,11 @@ permissions:
 
 jobs:
   pre-commit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
-          disable-sudo: true
           egress-policy: block
           # When adding endpoints, see README.md.
           # prettier-ignore
@@ -46,7 +45,7 @@ jobs:
       # Ensure LLVM is set up consistently.
       - uses: ./.github/actions/build-setup-common
         with:
-          matrix_runner: ubuntu-latest
+          matrix_runner: ubuntu-24.04
           remote_cache_upload: '--remote_upload_local_results=false'
 
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1

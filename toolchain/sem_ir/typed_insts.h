@@ -1393,23 +1393,20 @@ struct RequireCompleteType {
 };
 
 struct Return {
-  static constexpr auto Kind =
-      InstKind::Return.Define<Parse::NodeIdOneOf<Parse::FunctionDefinitionId,
-                                                 Parse::ReturnStatementId>>(
-          {.ir_name = "return",
-           .constant_kind = InstConstantKind::Never,
-           .terminator_kind = TerminatorKind::Terminator});
+  static constexpr auto Kind = InstKind::Return.Define<Parse::NodeId>(
+      {.ir_name = "return",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
 };
 
 // A `return expr;` statement.
 struct ReturnExpr {
-  static constexpr auto Kind =
-      InstKind::ReturnExpr.Define<Parse::ReturnStatementId>(
-          {.ir_name = "return",
-           .constant_kind = InstConstantKind::Never,
-           .terminator_kind = TerminatorKind::Terminator});
+  static constexpr auto Kind = InstKind::ReturnExpr.Define<Parse::NodeId>(
+      {.ir_name = "return",
+       .constant_kind = InstConstantKind::Never,
+       .terminator_kind = TerminatorKind::Terminator});
 
   // This is a statement, so has no type.
   InstId expr_id;

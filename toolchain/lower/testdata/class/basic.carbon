@@ -28,11 +28,11 @@ fn Run() {
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !7
-// CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8, !dbg !7
+// CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %c.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %d.var), !dbg !7
-// CHECK:STDOUT:   call void @_CF.Main(ptr %d.var, ptr %c.var), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %d.var), !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr %d.var, ptr %c.var), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -54,5 +54,6 @@ fn Run() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 14, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 14, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 18, column: 1, scope: !4)

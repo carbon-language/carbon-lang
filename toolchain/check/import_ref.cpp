@@ -560,30 +560,24 @@ class ImportRefResolver : public ImportContext {
     }
 
     const auto* cursor_ir = &import_ir();
-    auto cursor_ir_id = SemIR::ImportIRId::None;
     auto cursor_inst_id = inst_id;
 
     while (true) {
-      auto loc_id = cursor_ir->insts().GetCanonicalLocId(cursor_inst_id);
-      if (loc_id.kind() != SemIR::LocId::Kind::ImportIRInstId) {
+      auto import_ir_inst_id =
+          cursor_ir->insts().GetImportSource(cursor_inst_id);
+      if (!import_ir_inst_id.has_value()) {
         return result;
       }
-      auto ir_inst =
-          cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
+      auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
 
       const auto* prev_ir = cursor_ir;
       auto prev_inst_id = cursor_inst_id;
 
       cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id()).sem_ir;
-      cursor_ir_id =
-          local_context().check_ir_map()[cursor_ir->check_ir_id().index];
-      if (!cursor_ir_id.has_value()) {
-        // TODO: Should we figure out a location to assign here?
-        cursor_ir_id =
-            AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
-                                          .is_export = false,
-                                          .sem_ir = cursor_ir});
-      }
+      auto cursor_ir_id =
+          AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
+                                        .is_export = false,
+                                        .sem_ir = cursor_ir});
       cursor_inst_id = ir_inst.inst_id();
 
       CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id,
@@ -1963,6 +1957,7 @@ static auto MakeFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
         .return_slot_pattern_id = SemIR::InstId::None,
+        .special_function_kind = import_function.special_function_kind,
         .builtin_function_kind = import_function.builtin_function_kind}});
 
   function_decl.type_id = GetFunctionType(
@@ -2132,7 +2127,8 @@ static auto MakeImplDeclaration(ImportContext& context,
        {.self_id = SemIR::TypeInstId::None,
         .constraint_id = SemIR::TypeInstId::None,
         .interface = SemIR::SpecificInterface::None,
-        .witness_id = witness_id}});
+        .witness_id = witness_id,
+        .is_final = import_impl.is_final}});
 
   // Write the impl ID into the ImplDecl.
   auto impl_const_id =
@@ -3283,6 +3279,20 @@ static auto GetInstForLoad(Context& context,
 
 // NOLINTNEXTLINE(misc-no-recursion)
 auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
+#if LLVM_ADDRESS_SANITIZER_BUILD
+  // Under ASan, invalidate all of our value stores on any import in order to
+  // flush out bugs where pointers and references to entities are held across
+  // imports.
+  context.classes().Invalidate();
+  context.entity_names().Invalidate();
+  context.facet_types().Invalidate();
+  context.functions().Invalidate();
+  context.generics().Invalidate();
+  context.impls().Invalidate();
+  context.interfaces().Invalidate();
+  context.specifics().Invalidate();
+#endif
+
   auto inst = context.insts().TryGetAs<SemIR::ImportRefUnloaded>(inst_id);
   if (!inst) {
     return;

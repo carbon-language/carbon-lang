@@ -50,8 +50,10 @@ auto CompileHelper::GetTokenizedBufferWithTreeAndSubtrees(llvm::StringRef text)
 
 auto CompileHelper::GetSourceBuffer(llvm::StringRef text) -> SourceBuffer& {
   std::string filename = llvm::formatv("test{0}.carbon", ++file_index_);
-  CARBON_CHECK(fs_.addFile(filename, /*ModificationTime=*/0,
-                           llvm::MemoryBuffer::getMemBuffer(text)));
+  CARBON_CHECK(
+      fs_.addFile(filename, /*ModificationTime=*/0,
+                  llvm::MemoryBuffer::getMemBuffer(
+                      text, filename, /*RequiresNullTerminator=*/false)));
   source_storage_.push_front(
       std::move(*SourceBuffer::MakeFromFile(fs_, filename, consumer_)));
   return source_storage_.front();

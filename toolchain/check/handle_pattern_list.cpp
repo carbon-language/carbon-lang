@@ -5,7 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
-#include "toolchain/check/subpattern.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 
 namespace Carbon::Check {

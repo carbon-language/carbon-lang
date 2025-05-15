@@ -67,24 +67,35 @@ class DeferredDefinitionWorklist {
 
   explicit DeferredDefinitionWorklist(llvm::raw_ostream* vlog_stream);
 
-  // Suspend the current function definition and push a task onto the worklist
+  // Suspends the current function definition and push a task onto the worklist
   // to finish it later.
   auto SuspendFunctionAndPush(Context& context,
                               Parse::DeferredDefinitionIndex index,
                               Parse::FunctionDefinitionStartId node_id) -> void;
 
-  // Push a task to re-enter a function scope, so that functions defined within
-  // it are type-checked in the right context.
-  auto PushEnterDeferredDefinitionScope(Context& context) -> void;
+  // Pushes a task to re-enter a function scope, so that functions defined
+  // within it are type-checked in the right context. Returns whether a
+  // non-nested scope was entered.
+  auto PushEnterDeferredDefinitionScope(Context& context) -> bool;
 
-  // Suspend the current deferred definition scope, which is finished but still
-  // on the decl_name_stack, and push a task to leave the scope when we're
+  // The kind of scope that we just finished.
+  enum class FinishedScopeKind {
+    // We finished a nested scope. No further action is taken at this point.
+    Nested,
+    // We finished a non-nested scope that has no further actions to perform.
+    NonNestedEmpty,
+    // We finished a non-nested scope that has further actions to perform.
+    NonNestedWithWork,
+  };
+
+  // Suspends the current deferred definition scope, which is finished but still
+  // on the decl_name_stack, and pushes a task to leave the scope when we're
   // type-checking deferred definitions. Returns `true` if the current list of
   // deferred definitions should be type-checked immediately.
-  auto SuspendFinishedScopeAndPush(Context& context) -> bool;
+  auto SuspendFinishedScopeAndPush(Context& context) -> FinishedScopeKind;
 
-  // Pop the next task off the worklist.
-  auto Pop() -> Task;
+  // Pop and handle the next task on the worklist.
+  auto Pop(llvm::function_ref<auto(Task&&)->void> handle_fn) -> void;
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {

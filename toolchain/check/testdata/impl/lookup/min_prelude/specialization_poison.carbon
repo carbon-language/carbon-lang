@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
-// EXTRA-ARGS: --no-dump-sem-ir --custom-core
+// EXTRA-ARGS: --no-dump-sem-ir
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -170,7 +170,79 @@ final impl forall [V:! type] V* as I where .T = V {
   fn F[self: Self]() -> V { return *self; }
 }
 
-// --- todo_final_overlaps_earlier_non_final_impl.carbon
+// --- fail_final_overlaps_earlier_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+3]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR: impl () as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+impl () as Z(()) {}
+
+// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+4]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+final impl forall [T:! type] T as Z(T) {}
+
+// --- fail_final_overlaps_later_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+final impl forall [T:! type] T as Z(T) {}
+
+// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+7]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR: impl () as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE-5]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Z(()) {}
+
+// --- fail_final_overlaps_earlier_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+class C;
+
+// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+3]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR: final impl C as Z(C) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+final impl C as Z(C) {}
+
+// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+4]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+final impl forall [T:! type] T as Z(T) {}
+
+// --- fail_final_overlaps_later_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+class C;
+
+final impl forall [T:! type] T as Z(T) {}
+
+// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE+7]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR: final impl C as Z(C) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE-5]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+final impl C as Z(C) {}
+
+// --- fail_non_final_overlaps_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {}
@@ -178,53 +250,70 @@ interface Y {}
 
 impl forall [T:! Y] T as Z(T) {}
 
-// TODO: Diagnose overlap with previous impl (query of this matches that).
-final impl forall [T:! type] T as Z(T) {}
+class C(T:! type);
 
-// --- todo_final_overlaps_later_non_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-// TODO: Diagnose overlap with next impl (query of this matches that).
-final impl forall [T:! type] T as Z(T) {}
-
-impl forall [T:! Y] T as Z(T) {}
-
-// --- todo_final_overlaps_earlier_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-final impl forall [T:! Y] T as Z(T) {}
-
-// TODO: Diagnose overlap with previous impl (query of this matches that).
-final impl forall [T:! type] T as Z(T) {}
-
-// --- todo_final_overlaps_later_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-// TODO: Diagnose overlap with next impl (query of this matches that)
-final impl forall [T:! type] T as Z(T) {}
-
-final impl forall [T:! Y] T as Z(T) {}
-
-// --- todo_non_final_overlaps_non_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-impl forall [T:! Y] T as Z(T) {}
-
-class C(T:! type) {}
 // No diagnosis here as the type structure is unique.
 impl forall [T:! type] T as Z(C(T)) {}
 
-// TODO: Diagnose overlap with first impl (same type structure).
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_non_final_overlaps_non_final_impl.carbon:[[@LINE-10]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR: impl forall [T:! Y] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! type] T as Z(T) {}
+
+// --- non_final_concrete_overlaps_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+class C;
+class D;
+
+impl C as Z {}
+impl D as Z {}
+
+// --- final_partial_overlaps_non_final_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+interface Y {}
+
+class C;
+
+impl forall [T:! type] T as Z(T) {}
+
+// Partially overlaps the previous impl, which is fine.
+final impl C as Z(C) {}
+
+// --- todo_final_partial_overlaps_final_impl_in_self_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+interface Y {}
+
+class C(T:! type, U:! type);
+
+final impl forall [T:! type] C(T, ()) as Z {}
+
+// TODO: Partially overlaps the previous impl, which may or may not be fine outside of
+// a `match_first`, depending how
+// https://github.com/carbon-language/carbon-lang/pull/5337 turns out.
+final impl forall [U:! type] C((), U) as Z {}
+
+// --- todo_final_partial_overlaps_final_impl_in_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type, U:! type) {}
+interface Y {}
+
+class C;
+
+final impl forall [T:! type] C as Z(T, ()) {}
+
+// TODO: Partially overlaps the previous impl, which may or may not be fine outside of
+// a `match_first`, depending how
+// https://github.com/carbon-language/carbon-lang/pull/5337 turns out.
+final impl forall [U:! type] C as Z((), U) {}

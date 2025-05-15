@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -72,13 +71,13 @@ class C {
 // CHECK:STDOUT:     %self.patt: @F.1.%pattern_type (%pattern_type.b2f) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @F.1.%pattern_type (%pattern_type.b2f) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc17_16.1: type = splice_block %.loc17_16.2 [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc16_16.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc16_16.1: type = splice_block %.loc16_16.2 [symbolic = %Self.as_type.loc16_16.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc17_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc17_16.2: type = converted %Self.ref, %Self.as_type.loc17_16.2 [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc16_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc16_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc16_16.2: type = converted %Self.ref, %Self.as_type.loc16_16.2 [symbolic = %Self.as_type.loc16_16.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc16_16.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -125,23 +124,23 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc17_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc17_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc17_16.1 [symbolic = %pattern_type (constants.%pattern_type.b2f)]
+// CHECK:STDOUT:   %Self.as_type.loc16_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc16_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc16_16.1 [symbolic = %pattern_type (constants.%pattern_type.b2f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc17_16.1 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc16_16.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc17_16.1 (%Self.as_type)) {
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc16_16.1 (%Self.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
-// CHECK:STDOUT:       %.loc19_7.1: %pattern_type.c48 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:       %.loc18_7.1: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref %C = var c
-// CHECK:STDOUT:     %.loc19_19.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc19_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:     %.loc19_7.2: init %C = converted %.loc19_19.1, %.loc19_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:     assign %c.var, %.loc19_7.2
+// CHECK:STDOUT:     %.loc18_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc18_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:     %.loc18_7.2: init %C = converted %.loc18_19.1, %.loc18_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:     assign %c.var, %.loc18_7.2
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
@@ -149,8 +148,8 @@ class C {
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0: %.e5b = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%F.eb2]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
-// CHECK:STDOUT:     %.loc20: %C = bind_value %c.ref
-// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %bound_method(%.loc20)
+// CHECK:STDOUT:     %.loc19: %C = bind_value %c.ref
+// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %bound_method(%.loc19)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -162,19 +161,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc17_16.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc16_16.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b2f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %Self.as_type.loc17_16.1 => constants.%C
+// CHECK:STDOUT:   %Self.as_type.loc16_16.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c48
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

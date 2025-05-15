@@ -649,7 +649,7 @@ static auto GetConstantValue(EvalContext& eval_context,
 // has runtime phase.
 template <typename InstT, typename FieldIdT>
 static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
-                                          InstT* inst, FieldIdT InstT::*field,
+                                          InstT* inst, FieldIdT InstT::* field,
                                           Phase* phase) -> bool {
   auto unwrapped = GetConstantValue(eval_context, inst->*field, phase);
   if (!unwrapped.has_value() && (inst->*field).has_value()) {

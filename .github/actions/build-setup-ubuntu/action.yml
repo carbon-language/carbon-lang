@@ -22,48 +22,22 @@ runs:
         # to save time.
         large-packages: false
 
-    # Cache and install a recent version of LLVM. This uses the GitHub action
-    # cache to avoid directly downloading on each iteration and improve
-    # reliability.
-    - name: Cache LLVM and Clang installation
-      id: cache-llvm-ubuntu
-      uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
-      env:
-        cache-name: cache-llvm
-      with:
-        path: ~/llvm
-        key: LLVM-16-Cache-ubuntu-${{ runner.arch }}
+    - name: Show system LLVM and Clang installation
+      shell: bash
+      run: |
+        dpkg -l '*clang*' '*llvm*'
 
+    # Install a recent version of LLVM. We use LLVM's apt.llvm.org in order to
+    # have access to all released versions, instead of the GitHub releases which
+    # are often missing binaries for ubuntu x64.
     - name: Download LLVM and Clang installation
-      if: steps.cache-llvm-ubuntu.outputs.cache-hit != 'true'
+      env:
+        clang_version: 19
       shell: bash
       run: |
-        cd ~
-        LLVM_RELEASE=clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04
-        echo "*** Downloading $LLVM_RELEASE"
-        wget --show-progress=off "https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/$LLVM_RELEASE.tar.xz"
-        echo "*** Extracting $LLVM_RELEASE"
-        tar -xJf "$LLVM_RELEASE.tar.xz"
-        echo "*** Moving to 'llvm'"
-        mv "$LLVM_RELEASE" llvm
-        echo "*** Testing `clang++ --version`"
-        ~/llvm/bin/clang++ --version
+        echo '*** Installing upstream clang packages'
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${clang_version} all
 
-        # The installation contains *huge* parts of LLVM we don't need for the
-        # toolchain. Prune them here to keep our cache small.
-        echo "*** Cleaning the 'llvm' directory"
-        rm llvm/lib/{*.a,*.so,*.so.*,*.bc}
-        rm llvm/bin/{flang-*,mlir-*,clang-{scan-deps,check,repl},*-test,llvm-{lto*,reduce,bolt*,exegesis,jitlink},bugpoint,opt,llc}
-        echo "*** Size of the 'llvm' directory"
-        du -hs llvm
-
-    - name: Setup LLVM and Clang paths
-      shell: bash
-      run: |
-        LLVM_PATH=~/llvm
-        echo "Using ${LLVM_PATH}"
-        echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
-        echo '*** ls "${LLVM_PATH}"'
-        ls "${LLVM_PATH}"
-        echo '*** ls "${LLVM_PATH}/bin"'
-        ls "${LLVM_PATH}/bin"
+        echo "/lib/llvm-19/bin" >> "$GITHUB_PATH"

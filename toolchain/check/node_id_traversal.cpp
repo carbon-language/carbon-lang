@@ -8,7 +8,9 @@
 #include <utility>
 #include <variant>
 
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/thunk.h"
 
 namespace Carbon::Check {
 
@@ -29,9 +31,13 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
     // should check, restore its suspended state, and add a corresponding
     // `Chunk` to the top of the chunk list.
     if (chunks_.back().checking_deferred_definitions) {
-      std::visit(
-          [&](auto&& task) { PerformTask(std::forward<decltype(task)>(task)); },
-          worklist_.Pop());
+      worklist_.Pop([&](DeferredDefinitionWorklist::Task&& task) {
+        std::visit(
+            [&](auto&& task) {
+              PerformTask(std::forward<decltype(task)>(task));
+            },
+            std::move(task));
+      });
       continue;
     }
 
@@ -111,15 +117,33 @@ auto NodeIdTraversal::Handle(Parse::NodeKind parse_kind) -> void {
   // When we reach the start of a deferred definition scope, add a task to the
   // worklist to check future skipped definitions in the new context.
   if (IsStartOfDeferredDefinitionScope(parse_kind)) {
-    worklist_.PushEnterDeferredDefinitionScope(*context_);
+    if (worklist_.PushEnterDeferredDefinitionScope(*context_)) {
+      // Track that we're within a new non-nested deferred definition scope.
+      context_->deferred_definition_scope_stack().Push();
+    }
   }
 
   // When we reach the end of a deferred definition scope, add a task to the
   // worklist to leave the scope. If this is not a nested scope, start
   // checking the deferred definitions now.
   if (IsEndOfDeferredDefinitionScope(parse_kind)) {
-    chunks_.back().checking_deferred_definitions =
-        worklist_.SuspendFinishedScopeAndPush(*context_);
+    auto scope_kind = worklist_.SuspendFinishedScopeAndPush(*context_);
+
+    // At the end of a non-nested scope, define any pending thunks and clean up
+    // the stack.
+    if (scope_kind != DeferredDefinitionWorklist::FinishedScopeKind::Nested) {
+      for (auto& thunk :
+           context_->deferred_definition_scope_stack().PeekPendingThunks()) {
+        BuildThunkDefinition(*context_, std::move(thunk));
+      }
+      context_->deferred_definition_scope_stack().Pop();
+    }
+
+    // If we have function definitions in this scope, process them next.
+    if (scope_kind ==
+        DeferredDefinitionWorklist::FinishedScopeKind::NonNestedWithWork) {
+      chunks_.back().checking_deferred_definitions = true;
+    }
   }
 }
 

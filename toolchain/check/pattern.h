@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_SUBPATTERN_H_
-#define CARBON_TOOLCHAIN_CHECK_SUBPATTERN_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_PATTERN_H_
+#define CARBON_TOOLCHAIN_CHECK_PATTERN_H_
 
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
@@ -27,8 +27,21 @@ auto EndSubpatternAsExpr(Context& context, SemIR::InstId result_id)
 // it had no expression content.
 auto EndSubpatternAsNonExpr(Context& context) -> void;
 
+// Information about a created binding pattern.
+struct BindingPatternInfo {
+  SemIR::InstId pattern_id;
+  SemIR::InstId bind_id;
+};
+
 // TODO: Add EndSubpatternAsPattern, when needed.
+
+// Creates a binding pattern. Returns the binding pattern and the bind name
+// instruction.
+auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
+                       SemIR::NameId name_id, SemIR::TypeId type_id,
+                       SemIR::ExprRegionId type_region_id, bool is_generic,
+                       bool is_template) -> BindingPatternInfo;
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_SUBPATTERN_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_PATTERN_H_
