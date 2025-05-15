@@ -62,8 +62,13 @@ class [[nodiscard]] EvalImplLookupResult {
   static auto MakeFinal(SemIR::InstId inst_id) -> EvalImplLookupResult {
     return EvalImplLookupResult(inst_id);
   }
-  static auto MakeNonFinal() -> EvalImplLookupResult {
+  static auto MakeNonFinalImpl() -> EvalImplLookupResult {
     return EvalImplLookupResult(FoundNonFinalImpl());
+  }
+  static auto MakeNonFinalFacetValue(SemIR::FacetTypeId facet_type_id)
+      -> EvalImplLookupResult {
+    CARBON_CHECK(facet_type_id.has_value());
+    return EvalImplLookupResult(facet_type_id);
   }
 
   // True if a concrete impl witness was found or a non-final impl. In the
@@ -71,6 +76,7 @@ class [[nodiscard]] EvalImplLookupResult {
   // that it exists.
   auto has_value() const -> bool {
     return std::holds_alternative<FoundNonFinalImpl>(result_) ||
+           std::holds_alternative<SemIR::FacetTypeId>(result_) ||
            std::get<SemIR::InstId>(result_).has_value();
   }
 
@@ -88,13 +94,27 @@ class [[nodiscard]] EvalImplLookupResult {
     return std::get<SemIR::InstId>(result_);
   }
 
+  // True if there is a non-concrete witness in the result which was derived
+  // from a facet value. A non-final impl was found and a further more specific
+  // query will need to be done, but the `FacetType` can be observed to
+  // determine constraints written on it.
+  auto has_facet_type_value() const -> bool {
+    return std::holds_alternative<SemIR::FacetTypeId>(result_);
+  }
+
+  auto facet_value_type() const -> SemIR::FacetTypeId {
+    return std::get<SemIR::FacetTypeId>(result_);
+  }
+
  private:
   struct FoundNonFinalImpl {};
 
   explicit EvalImplLookupResult(SemIR::InstId inst_id) : result_(inst_id) {}
+  explicit EvalImplLookupResult(SemIR::FacetTypeId facet_type_id)
+      : result_(facet_type_id) {}
   explicit EvalImplLookupResult(FoundNonFinalImpl f) : result_(f) {}
 
-  std::variant<SemIR::InstId, FoundNonFinalImpl> result_;
+  std::variant<SemIR::InstId, FoundNonFinalImpl, SemIR::FacetTypeId> result_;
 };
 
 // Looks for a witness instruction of an impl declaration for a query consisting

@@ -62,7 +62,7 @@ fn Reversed(N:! J where .L = bool and .K = ()) {
   Alphabetical(N);
 }
 
-// --- todo_fail_rewrites_mismatch_right.carbon
+// --- fail_rewrites_mismatch_right.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -73,11 +73,17 @@ interface O {
 fn WithInteger(Q:! O where .P = i32) {}
 
 fn WithBool(R:! O where .P = bool) {
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: error: cannot convert type `R` that implements `O where .(O.P) = bool` into type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   WithInteger(R);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-6]]:16: note: initializing generic parameter `Q` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn WithInteger(Q:! O where .P = i32) {}
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
   WithInteger(R);
 }
 
-// --- todo_fail_rewrites_mismatch_left.carbon
+// --- fail_rewrites_mismatch_left.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -89,7 +95,13 @@ interface S {
 fn WithT(V:! S where .T = ()) {}
 
 fn WithU(W:! S where .U = ()) {
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: error: cannot convert type `W` that implements `S where .(S.U) = ()` into type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   WithT(W);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-6]]:10: note: initializing generic parameter `V` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn WithT(V:! S where .T = ()) {}
+  // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   WithT(W);
 }
 
@@ -794,7 +806,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_rewrites_mismatch_right.carbon
+// CHECK:STDOUT: --- fail_rewrites_mismatch_right.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %O.type: type = facet_type <@O> [concrete]
@@ -808,7 +820,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %O.lookup_impl_witness.c7a, element0 [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %O_where.type.e27: type = facet_type <@O where %impl.elem0 = %i32> [concrete]
@@ -824,9 +835,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %WithBool.type: type = fn_type @WithBool [concrete]
 // CHECK:STDOUT:   %WithBool: %WithBool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %O.lookup_impl_witness.c41: <witness> = lookup_impl_witness %R, @O [symbolic]
-// CHECK:STDOUT:   %R.as_type: type = facet_access_type %R [symbolic]
-// CHECK:STDOUT:   %facet_value: %O_where.type.e27 = facet_value %R.as_type, (%O.lookup_impl_witness.c41) [symbolic]
-// CHECK:STDOUT:   %WithInteger.specific_fn: <specific function> = specific_function %WithInteger, @WithInteger(%facet_value) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -922,19 +930,11 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %O.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc10_13.2, @O [symbolic = %O.lookup_impl_witness (constants.%O.lookup_impl_witness.c41)]
-// CHECK:STDOUT:   %R.as_type.loc12_16.2: type = facet_access_type %R.loc10_13.2 [symbolic = %R.as_type.loc12_16.2 (constants.%R.as_type)]
-// CHECK:STDOUT:   %facet_value.loc12_16.2: %O_where.type.e27 = facet_value %R.as_type.loc12_16.2, (%O.lookup_impl_witness) [symbolic = %facet_value.loc12_16.2 (constants.%facet_value)]
-// CHECK:STDOUT:   %WithInteger.specific_fn.loc12_3.2: <specific function> = specific_function constants.%WithInteger, @WithInteger(%facet_value.loc12_16.2) [symbolic = %WithInteger.specific_fn.loc12_3.2 (constants.%WithInteger.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithInteger.ref: %WithInteger.type = name_ref WithInteger, file.%WithInteger.decl [concrete = constants.%WithInteger]
 // CHECK:STDOUT:     %R.ref: %O_where.type.e45 = name_ref R, %R.loc10_13.1 [symbolic = %R.loc10_13.2 (constants.%R)]
-// CHECK:STDOUT:     %R.as_type.loc12_16.1: type = facet_access_type constants.%R [symbolic = %R.as_type.loc12_16.2 (constants.%R.as_type)]
-// CHECK:STDOUT:     %facet_value.loc12_16.1: %O_where.type.e27 = facet_value %R.as_type.loc12_16.1, (constants.%O.lookup_impl_witness.c41) [symbolic = %facet_value.loc12_16.2 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc12: %O_where.type.e27 = converted %R.ref, %facet_value.loc12_16.1 [symbolic = %facet_value.loc12_16.2 (constants.%facet_value)]
-// CHECK:STDOUT:     %WithInteger.specific_fn.loc12_3.1: <specific function> = specific_function %WithInteger.ref, @WithInteger(constants.%facet_value) [symbolic = %WithInteger.specific_fn.loc12_3.2 (constants.%WithInteger.specific_fn)]
-// CHECK:STDOUT:     %WithInteger.call: init %empty_tuple.type = call %WithInteger.specific_fn.loc12_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -951,13 +951,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %R.loc10_13.2 => constants.%R
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithInteger(constants.%facet_value) {
-// CHECK:STDOUT:   %Q.loc8_16.2 => constants.%facet_value
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_rewrites_mismatch_left.carbon
+// CHECK:STDOUT: --- fail_rewrites_mismatch_left.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S.type: type = facet_type <@S> [concrete]
@@ -983,9 +977,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %WithU.type: type = fn_type @WithU [concrete]
 // CHECK:STDOUT:   %WithU: %WithU.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.lookup_impl_witness.6f2: <witness> = lookup_impl_witness %W, @S [symbolic]
-// CHECK:STDOUT:   %W.as_type: type = facet_access_type %W [symbolic]
-// CHECK:STDOUT:   %facet_value: %S_where.type.4c2 = facet_value %W.as_type, (%S.lookup_impl_witness.6f2) [symbolic]
-// CHECK:STDOUT:   %WithT.specific_fn: <specific function> = specific_function %WithT, @WithT(%facet_value) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1084,19 +1075,11 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %S.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_10.2, @S [symbolic = %S.lookup_impl_witness (constants.%S.lookup_impl_witness.6f2)]
-// CHECK:STDOUT:   %W.as_type.loc13_10.2: type = facet_access_type %W.loc11_10.2 [symbolic = %W.as_type.loc13_10.2 (constants.%W.as_type)]
-// CHECK:STDOUT:   %facet_value.loc13_10.2: %S_where.type.4c2 = facet_value %W.as_type.loc13_10.2, (%S.lookup_impl_witness) [symbolic = %facet_value.loc13_10.2 (constants.%facet_value)]
-// CHECK:STDOUT:   %WithT.specific_fn.loc13_3.2: <specific function> = specific_function constants.%WithT, @WithT(%facet_value.loc13_10.2) [symbolic = %WithT.specific_fn.loc13_3.2 (constants.%WithT.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithT.ref: %WithT.type = name_ref WithT, file.%WithT.decl [concrete = constants.%WithT]
 // CHECK:STDOUT:     %W.ref: %S_where.type.592 = name_ref W, %W.loc11_10.1 [symbolic = %W.loc11_10.2 (constants.%W)]
-// CHECK:STDOUT:     %W.as_type.loc13_10.1: type = facet_access_type constants.%W [symbolic = %W.as_type.loc13_10.2 (constants.%W.as_type)]
-// CHECK:STDOUT:     %facet_value.loc13_10.1: %S_where.type.4c2 = facet_value %W.as_type.loc13_10.1, (constants.%S.lookup_impl_witness.6f2) [symbolic = %facet_value.loc13_10.2 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc13: %S_where.type.4c2 = converted %W.ref, %facet_value.loc13_10.1 [symbolic = %facet_value.loc13_10.2 (constants.%facet_value)]
-// CHECK:STDOUT:     %WithT.specific_fn.loc13_3.1: <specific function> = specific_function %WithT.ref, @WithT(constants.%facet_value) [symbolic = %WithT.specific_fn.loc13_3.2 (constants.%WithT.specific_fn)]
-// CHECK:STDOUT:     %WithT.call: init %empty_tuple.type = call %WithT.specific_fn.loc13_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1115,12 +1098,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithU(constants.%W) {
 // CHECK:STDOUT:   %W.loc11_10.2 => constants.%W
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithT(constants.%facet_value) {
-// CHECK:STDOUT:   %V.loc9_10.2 => constants.%facet_value
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_rewrites.carbon

@@ -58,6 +58,20 @@ auto AllocateFacetTypeImplWitness(Context& context,
                                   SemIR::InterfaceId interface_id,
                                   SemIR::InstBlockId witness_id) -> void;
 
+// Rewrite constraints that assign values to associated constants can come from
+// a concrete `ImplWitness` or from a `FacetType`.
+//
+// If the RewriteSource is holding an `InstId`, it must always be for an
+// `ImplWitness`. Neither value may contain `None`.
+using RewriteSource = std::variant<SemIR::InstId, SemIR::FacetTypeId>;
+
+// Verify that the rewrite constraints provided by `rewrite_sources` satisfy all
+// of the requirements, and do not contradict with any requirements, from the
+// facet type referred to by `requirements_facet_type_id`.
+auto CheckRewriteConstraintsMatchRequirements(
+    Context& context, SemIR::FacetTypeId requirements_facet_type_id,
+    llvm::ArrayRef<RewriteSource> rewrite_sources) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
