@@ -117,8 +117,6 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
 #include "toolchain/sem_ir/inst_kind.def"
   }
 
-  IncrementInstIdForFingerprint();
-  builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
   if (debug_loc) {
     builder_.SetCurrentDebugLocation(llvm::DebugLoc());
   }

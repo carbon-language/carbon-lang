@@ -29,12 +29,6 @@ class FunctionContext {
   // The final fingerprint is stores in the FileContext as a
   // SpecificFunctionFingerprint.
   struct LoweringFunctionFingerprint {
-    // Index tracks instruction index in the whole function. Add the index
-    // to the fingerprint when specific-dependent information is found during
-    // lowering the instruction at this index.
-    int inst_id_index = 0;
-    bool relevant = false;
-
     // Create a two function fingerprints. Both fingerprints include the data
     // that's evaluated (and hence lowered) differently based on the
     // specific_id. The first fingerprint includes global values, types
@@ -157,8 +151,6 @@ class FunctionContext {
     if (!function_fingerprint_) {
       return;
     }
-    current_fingerprint_.relevant = true;
-
     RawStringOstream os;
     // TODO: Replace index with info that is translation unit independent.
     // Using a string that includes the function_id string and the index to
@@ -177,7 +169,6 @@ class FunctionContext {
     if (!function_fingerprint_) {
       return;
     }
-    current_fingerprint_.relevant = true;
     if (type) {
       RawStringOstream os;
       type->print(os);
@@ -249,23 +240,8 @@ class FunctionContext {
   auto CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
 
-  auto IncrementInstIdForFingerprint() {
-    if (!function_fingerprint_) {
-      return;
-    }
-    if (current_fingerprint_.relevant) {
-      current_fingerprint_.relevant = false;
-      // Is tracking the index necessary?
-      current_fingerprint_.function_common_fingerprint.update(
-          current_fingerprint_.inst_id_index);
-    }
-    ++current_fingerprint_.inst_id_index;
-  }
-
   auto AddGlobalToCurrentFingerprint(llvm::Value* global) {
     if (function_fingerprint_ && global) {
-      current_fingerprint_.relevant = true;
-
       RawStringOstream os;
       global->print(os);
       current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
