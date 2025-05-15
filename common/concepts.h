@@ -9,6 +9,7 @@
 
 namespace Carbon {
 
+// True if `T` is the same as one of `OtherT`.
 template <typename T, typename... OtherT>
 concept SameAsOneOf = (std::same_as<T, OtherT> || ...);
 
