@@ -265,11 +265,17 @@ static auto ValidateImplsForInterface(
       // =======================================================================
       /// Rules for an individual final impl.
       // =======================================================================
-      if (DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(
-              context, impl_a, interface_ir_id)) {
-        continue;
-      }
+      DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(context, impl_a,
+                                                              interface_ir_id);
     }
+
+    // Prevent diagnosing the same error multiple times for the same `impl_a`.
+    // But still ensure we do give one of each diagnostic when they are
+    // different errors.
+    bool did_diagnose_non_final_impls_with_same_type_structure = false;
+    bool did_diagnose_unmatchable_non_final_impl_with_final_impl = false;
+    bool did_diagnose_final_impls_overlap_in_different_files = false;
+    bool did_diagnose_final_impls_overlap_outside_match_first = false;
 
     for (auto impl_b_id : llvm::drop_begin(impl_ids, index_a + 1)) {
       auto impl_b = GetImplInfo(context, impl_b_id);
@@ -284,17 +290,21 @@ static auto ValidateImplsForInterface(
         // =====================================================================
         // Rules between two non-final impls.
         // =====================================================================
-        if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
-                                                       impl_b)) {
-          continue;
+        if (!did_diagnose_non_final_impls_with_same_type_structure) {
+          if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
+                                                         impl_b)) {
+            did_diagnose_non_final_impls_with_same_type_structure = true;
+          }
         }
       } else if (!impl_a.is_final || !impl_b.is_final) {
         // =====================================================================
         // Rules between final impl and non-final impl.
         // =====================================================================
-        if (DiagnoseUnmatchableNonFinalImplWithFinalImpl(
-                context, impl_a_id, impl_a, impl_b_id, impl_b)) {
-          continue;
+        if (!did_diagnose_unmatchable_non_final_impl_with_final_impl) {
+          if (DiagnoseUnmatchableNonFinalImplWithFinalImpl(
+                  context, impl_a_id, impl_a, impl_b_id, impl_b)) {
+            did_diagnose_unmatchable_non_final_impl_with_final_impl = true;
+          }
         }
       } else if (impl_a.type_structure.IsCompatibleWith(
                      impl_b.type_structure)) {
@@ -303,13 +313,17 @@ static auto ValidateImplsForInterface(
         // =====================================================================
         CARBON_CHECK(impl_a.is_final && impl_b.is_final);
 
-        if (DiagnoseFinalImplsOverlapInDifferentFiles(context, impl_a,
-                                                      impl_b)) {
-          continue;
+        if (!did_diagnose_final_impls_overlap_in_different_files) {
+          if (DiagnoseFinalImplsOverlapInDifferentFiles(context, impl_a,
+                                                        impl_b)) {
+            did_diagnose_final_impls_overlap_in_different_files = true;
+          }
         }
-        if (DiagnoseFinalImplsOverlapOutsideMatchFirst(context, impl_a,
-                                                       impl_b)) {
-          continue;
+        if (!did_diagnose_final_impls_overlap_outside_match_first) {
+          if (DiagnoseFinalImplsOverlapOutsideMatchFirst(context, impl_a,
+                                                         impl_b)) {
+            did_diagnose_final_impls_overlap_outside_match_first = true;
+          }
         }
       }
     }

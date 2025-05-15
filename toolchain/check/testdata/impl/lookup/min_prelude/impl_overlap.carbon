@@ -98,13 +98,6 @@ class C;
 // The final impl here overlaps with the first final impl above, but is not in
 // a match_first.
 //
-// CHECK:STDERR: fail_multiple_finals_overlap_with_interface.carbon:[[@LINE+7]]:1: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
-// CHECK:STDERR: final impl C as Z({}) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_multiple_finals_overlap_with_interface.carbon:[[@LINE-22]]:1: note: other `final impl` here [FinalImplOverlapsSameFileNote]
-// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 final impl C as Z({}) {}
 
 // --- fail_multiple_finals_overlap_with_self_type.carbon
@@ -215,7 +208,7 @@ class C;
 // CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE+8]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
 // CHECK:STDERR: impl C as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE-10]]:1: in import [InImport]
+// CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE-9]]:1: in import [InImport]
 // CHECK:STDERR: interface_z_with_impl.carbon:5:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
