@@ -10,7 +10,6 @@
 #include <variant>
 
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/check/convert.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -321,59 +320,6 @@ static auto UnwrapFacetAccessType(Context& context, SemIR::InstId inst_id)
   return inst_id;
 }
 
-// Returns whether the SpecificInterface in an impl lookup query is compatible
-// with the SpecificInterface from a facet value. If compatible, the facet value
-// can provide a (symbolic) witness for the query.
-static auto QuerySpecificInterfaceIsCompatibleWithFacetTypeSpecificInterface(
-    Context& context, SemIR::SpecificInterface facet_specific_interface,
-    SemIR::SpecificInterface query_specific_interface) -> bool {
-  if (facet_specific_interface.interface_id !=
-      query_specific_interface.interface_id) {
-    // The interface must be identical.
-    return false;
-  }
-
-  if (facet_specific_interface.specific_id ==
-      query_specific_interface.specific_id) {
-    // Shortcut when the specifics are identical.
-    return true;
-  }
-
-  // The specifics are allowed to differ by the query specific being _more_
-  // specific than the facet's. In particular, a `BindSymbolicName` or
-  // `SymbolicBindingPattern` in the facet's specific may have been substituted
-  // during eval for a more specific value. The type of the values must still
-  // match.
-  const auto& facet_specific_args = context.inst_blocks().Get(
-      context.specifics().Get(facet_specific_interface.specific_id).args_id);
-  const auto& query_specific_args = context.inst_blocks().Get(
-      context.specifics().Get(query_specific_interface.specific_id).args_id);
-  if (facet_specific_args.size() != query_specific_args.size()) {
-    return false;
-  }
-
-  for (auto [facet_specific_arg, query_specific_arg] :
-       llvm::zip_equal(facet_specific_args, query_specific_args)) {
-    if (facet_specific_arg == query_specific_arg) {
-      // If the instructions are the same, they are compatible.
-      continue;
-    }
-    // Accept substitutions that replaced a symbolic binding with the same type.
-    if (context.insts().Is<SemIR::BindSymbolicName>(facet_specific_arg) ||
-        context.insts().Is<SemIR::SymbolicBindingPattern>(facet_specific_arg)) {
-      if (context.insts().Get(facet_specific_arg).type_id() ==
-          context.insts().Get(query_specific_arg).type_id()) {
-        continue;
-      }
-    }
-    // Otherwise, the value in the query's specific does not match the value in
-    // the facet's specific.
-    return false;
-  }
-
-  return true;
-}
-
 // Finds a lookup result from `query_self_inst_id` if it is a facet value that
 // names the query interface in its facet type. Note that `query_self_inst_id`
 // is allowed to be a non-canonical facet value in order to find a concrete
@@ -399,10 +345,8 @@ static auto LookupImplWitnessInSelfFacetValue(
       llvm::enumerate(context.identified_facet_types()
                           .Get(identified_id)
                           .required_interfaces());
-  auto it = llvm::find_if(facet_type_required_interfaces, [&](auto e) {
-    auto facet_specific_interface = e.value();
-    return QuerySpecificInterfaceIsCompatibleWithFacetTypeSpecificInterface(
-        context, facet_specific_interface, query_specific_interface);
+  auto it = llvm::find_if(facet_type_required_interfaces, [=](auto e) {
+    return e.value() == query_specific_interface;
   });
   if (it == facet_type_required_interfaces.end()) {
     return EvalImplLookupResult::MakeNone();
