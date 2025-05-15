@@ -75,7 +75,6 @@ fn F() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT:
