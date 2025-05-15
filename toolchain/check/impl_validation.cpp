@@ -274,27 +274,21 @@ static auto ValidateImplsForInterface(
     for (auto impl_b_id : llvm::drop_begin(impl_ids, index_a + 1)) {
       auto impl_b = GetImplInfo(context, impl_b_id);
 
+      // Only enforce rules when at least one of the impls was written in this
+      // file.
+      if (!impl_a.is_local && !impl_b.is_local) {
+        continue;
+      }
+
       if (!impl_a.is_final && !impl_b.is_final) {
         // =====================================================================
         // Rules between two non-final impls.
-        //
-        // It's possible to write invalid non-final impls in two files that do
-        // not know about each other, and they are only invalid when they are
-        // both imported and visible together. So we need to compare non-local
-        // impls with each other here.
         // =====================================================================
         if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
                                                        impl_b)) {
           continue;
         }
       } else if (!impl_a.is_final || !impl_b.is_final) {
-        // No rules that involve a final impl need to be enforced on two
-        // imported impls, so we only diagnose if at least one of the two impls
-        // being compared is local.
-        if (!impl_a.is_local && !impl_b.is_local) {
-          continue;
-        }
-
         // =====================================================================
         // Rules between final impl and non-final impl.
         // =====================================================================
@@ -304,17 +298,11 @@ static auto ValidateImplsForInterface(
         }
       } else if (impl_a.type_structure.IsCompatibleWith(
                      impl_b.type_structure)) {
-        CARBON_CHECK(impl_a.is_final && impl_b.is_final);
-
-        // No rules that involve a final impl need to be enforced on two
-        // imported impls, so we only diagnose if at least one of the two impls
-        // being compared is local.
-        if (!impl_a.is_local && !impl_b.is_local) {
-          continue;
-        }
         // =======================================================================
         // Rules between two overlapping final impls.
         // =======================================================================
+        CARBON_CHECK(impl_a.is_final && impl_b.is_final);
+
         if (DiagnoseFinalImplsOverlapInDifferentFiles(context, impl_a,
                                                       impl_b)) {
           continue;
