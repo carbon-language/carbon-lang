@@ -228,14 +228,16 @@ library "[[@TEST_NAME]]";
 import library "interface_z";
 import library "type_d";
 
+class C;
+
 // Can't make a final impl that is not in the same file as the self type nor
 // the interface.
 //
 // CHECK:STDERR: fail_final_different_file_from_self_and_interface.carbon:[[@LINE+4]]:1: error: `final impl` found in file that does not contain the root self type nor the interface definition [FinalImplInvalidFile]
-// CHECK:STDERR: final impl D(()) as Z(()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: final impl D(C) as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl D(()) as Z(()) {}
+final impl D(C) as Z(()) {}
 
 // --- fail_final_different_file_from_self_and_interface_with_generic_self.carbon
 library "[[@TEST_NAME]]";
