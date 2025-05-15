@@ -252,7 +252,7 @@ static auto ValidateImplsForInterface(
                                   });
 
   // All `impl`s we look at here have the same `InterfaceId` (though different
-  // `SpecificInterface`s in their specifics. So we can grab the ImportIRId for
+  // `specific_id`s in their `SpecificInterface`s). So we can grab the ImportIRId for
   // the interface a single time up front.
   auto interface_decl_id =
       context.interfaces()
