@@ -899,7 +899,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
 auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
   static constexpr auto Table =
       MakeFormatArgFnTable(static_cast<SemIR::IdKind*>(nullptr));
-  return Table[arg_and_kind.kind().ToIndex()](*this, arg_and_kind.value());
+  Table[arg_and_kind.kind().ToIndex()](*this, arg_and_kind.value());
 }
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {
