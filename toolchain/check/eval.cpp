@@ -679,8 +679,7 @@ using ArgHandlerFnT = auto(EvalContext& context, int32_t arg, Phase* phase)
 // Returns a lookup table to get constants by Id::Kind. Requires a null IdKind
 // as a parameter in order to get the type pack.
 template <typename... Types>
-static constexpr auto MakeArgHandlerTable(
-    SemIR::TypeEnum<Types...>* /*id_kind*/)
+static constexpr auto MakeArgHandlerTable(TypeEnum<Types...>* /*id_kind*/)
     -> std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> {
   std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> table = {};
   ((table[SemIR::IdKind::template For<Types>.ToIndex()] =

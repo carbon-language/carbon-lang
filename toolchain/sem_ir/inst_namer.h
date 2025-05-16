@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INST_NAMER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INST_NAMER_H_
 
+#include "common/type_enum.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
