@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -49,8 +48,8 @@ fn Main() {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc14_12.2: type = converted %.loc14_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_12.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -61,33 +60,27 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_24: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc13_24: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc14_25: %empty_tuple.type = converted %.loc14_24, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc14_25
+// CHECK:STDOUT:   %.loc13_25: %empty_tuple.type = converted %.loc13_24, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc13_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc19_3: %pattern_type = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %.loc18_3: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
 // CHECK:STDOUT:   %B.ref: %A.type = name_ref B, file.%B [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %B.ref()
 // CHECK:STDOUT:   assign %b.var, %A.call
-// CHECK:STDOUT:   %.loc19_11.1: type = splice_block %.loc19_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc19_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_11.3: type = converted %.loc19_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc18_11.1: type = splice_block %.loc18_11.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc18_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc18_11.3: type = converted %.loc18_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

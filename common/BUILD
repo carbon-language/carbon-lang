@@ -112,6 +112,11 @@ cc_test(
 )
 
 cc_library(
+    name = "concepts",
+    hdrs = ["concepts.h"],
+)
+
+cc_library(
     name = "enum_base",
     hdrs = ["enum_base.h"],
     deps = [
@@ -307,6 +312,7 @@ cc_library(
     hdrs = ["map.h"],
     deps = [
         ":check",
+        ":concepts",
         ":hashtable_key_context",
         ":raw_hashtable",
         "@llvm-project//llvm:Support",
@@ -374,6 +380,7 @@ cc_library(
     hdrs = ["raw_hashtable.h"],
     deps = [
         ":check",
+        ":concepts",
         ":hashing",
         ":hashtable_key_context",
         ":raw_hashtable_metadata_group",

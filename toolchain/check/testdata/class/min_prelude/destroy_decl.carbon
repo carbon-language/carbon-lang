@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core --no-dump-sem-ir
+// EXTRA-ARGS: --no-dump-sem-ir
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

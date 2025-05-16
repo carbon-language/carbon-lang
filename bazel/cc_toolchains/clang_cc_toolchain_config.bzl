@@ -661,15 +661,23 @@ def _impl(ctx):
 
     fuzzer = feature(
         name = "fuzzer",
-        flag_sets = [flag_set(
-            actions = all_compile_actions + all_link_actions,
-            flag_groups = [flag_group(flags = [
-                "-fsanitize=fuzzer-no-link",
-            ])],
-        )],
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions + all_link_actions,
+                flag_groups = [flag_group(flags = [
+                    "-fsanitize=fuzzer-no-link",
+                ])],
+            ),
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION",
+                ])],
+            ),
+        ],
     )
 
-    # Clang HARDENED_MODE to has 4 possible values:
+    # Clang HARDENED_MODE has 4 possible values:
     # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
     libcpp_debug_flags = [
         "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",

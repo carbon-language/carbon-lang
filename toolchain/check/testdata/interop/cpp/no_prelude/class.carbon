@@ -8,165 +8,201 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/class.carbon
 
-// --- class_declaration.h
+// ============================================================================
+// Declaration
+// ============================================================================
+
+// --- declaration.h
 
 class Bar;
 
-// --- fail_import_class_declaration.carbon
+// --- fail_todo_import_declaration.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_declaration.h";
+import Cpp library "declaration.h";
 
-// CHECK:STDERR: fail_import_class_declaration.carbon:[[@LINE+7]]:13: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_import_declaration.carbon:[[@LINE+7]]:13: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_import_class_declaration.carbon:[[@LINE+4]]:13: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
+// CHECK:STDERR: fail_todo_import_declaration.carbon:[[@LINE+4]]:13: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
 fn MyF(bar: Cpp.Bar*);
 
-// --- class_definition.h
+// ============================================================================
+// Definition
+// ============================================================================
+
+// --- definition.h
 
 class Bar {};
 
-// --- import_class_definition.carbon
+// --- import_definition.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_definition.h";
+import Cpp library "definition.h";
 
 fn MyF(bar: Cpp.Bar*);
 
-// --- class_declaration_and_definition.h
+// ============================================================================
+// Declaration and definition
+// ============================================================================
+
+// --- declaration_and_definition.h
 
 class Bar;
 class Bar {};
 
-// --- import_class_declaration_and_definition.carbon
+// --- import_declaration_and_definition.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_declaration_and_definition.h";
+import Cpp library "declaration_and_definition.h";
 
 fn MyF(bar: Cpp.Bar*);
 
-// --- class_public_static_member_function.h
+// ============================================================================
+// Public static member function
+// ============================================================================
+
+// --- public_static_member_function.h
 
 class Bar {
  public:
   static auto foo() -> void;
 };
 
-// --- import_class_public_static_member_function.carbon
+// --- import_public_static_member_function.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_public_static_member_function.h";
+import Cpp library "public_static_member_function.h";
 
 fn MyF() {
   Cpp.Bar.foo();
 }
 
-// --- class_private_static_member_function.h
+// ============================================================================
+// Private static member function
+// ============================================================================
+
+// --- private_static_member_function.h
 
 class Bar {
  private:
   static auto foo() -> void;
 };
 
-// --- todo_fail_import_class_private_static_member_function.carbon
+// --- todo_fail_import_private_static_member_function.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_private_static_member_function.h";
+import Cpp library "private_static_member_function.h";
 
 fn MyF() {
   Cpp.Bar.foo();
 }
 
-// --- class_public_member_function.h
+// ============================================================================
+// Public member function
+// ============================================================================
+
+// --- public_member_function.h
 
 class Bar {
  public:
   auto foo() -> void;
 };
 
-// --- fail_import_class_public_member_function.carbon
+// --- fail_todo_import_public_member_function.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_public_member_function.h";
+import Cpp library "public_member_function.h";
 
 fn MyF(bar : Cpp.Bar*) {
-  // CHECK:STDERR: fail_import_class_public_member_function.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-global function` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_public_member_function.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-global function` [SemanticsTodo]
   // CHECK:STDERR:   bar->foo();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_import_class_public_member_function.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_public_member_function.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   bar->foo();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   bar->foo();
 }
 
-// --- class_public_static_data_member.h
+// ============================================================================
+// Public static data member
+// ============================================================================
+
+// --- public_static_data_member.h
 
 class Bar {
  public:
   static Bar* foo;
 };
 
-// --- fail_import_class_public_static_data_member.carbon
+// --- fail_todo_import_public_static_data_member.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_public_static_data_member.h";
+import Cpp library "public_static_data_member.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_class_public_static_data_member.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_class_public_static_data_member.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_class_public_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
   // CHECK:STDERR:
   let bar: Cpp.Bar* = Cpp.Bar.foo();
 }
 
-// --- class_public_data_member.h
+// ============================================================================
+// Public data member
+// ============================================================================
+
+// --- public_data_member.h
 
 class Bar {
  public:
   Bar* foo;
 };
 
-// --- fail_import_class_public_data_member.carbon
+// --- fail_todo_import_public_data_member.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_public_static_data_member.h";
+import Cpp library "public_static_data_member.h";
 
 fn MyF(bar : Cpp.Bar*) {
-  // CHECK:STDERR: fail_import_class_public_data_member.carbon:[[@LINE+11]]:27: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+11]]:27: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
   // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
   // CHECK:STDERR:                           ^~~~~~~~
-  // CHECK:STDERR: fail_import_class_public_data_member.carbon:[[@LINE+8]]:27: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+8]]:27: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
   // CHECK:STDERR:                           ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_class_public_data_member.carbon:[[@LINE+4]]:27: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+4]]:27: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
   // CHECK:STDERR:                           ^~~~~~~~
   // CHECK:STDERR:
   let foo_bar: Cpp.Bar* = bar->foo;
 }
 
-// --- class_inheritance_static.h
+// ============================================================================
+// Inheritance static
+// ============================================================================
+
+// --- inheritance_static.h
 
 class Bar1 {
  public:
@@ -178,11 +214,11 @@ class Bar2 : public Bar1 {
   static auto foo2() -> void;
 };
 
-// --- import_class_inheritance_static.carbon
+// --- import_inheritance_static.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_inheritance_static.h";
+import Cpp library "inheritance_static.h";
 
 fn MyF() {
   Cpp.Bar1.foo1();
@@ -190,62 +226,74 @@ fn MyF() {
   Cpp.Bar2.foo2();
 }
 
-// --- class_inheritance_pointers.h
+// ============================================================================
+// Inheritance pointers
+// ============================================================================
+
+// --- inheritance_pointers.h
 
 class Bar1 {};
 class Bar2 : public Bar1 {};
 
-// --- fail_import_class_inheritance_pointers.carbon
+// --- fail_todo_import_inheritance_pointers.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_inheritance_pointers.h";
+import Cpp library "inheritance_pointers.h";
 
 fn MyF1(bar : Cpp.Bar1*);
 // TODO: Support C++ inheritance.
-// CHECK:STDERR: fail_import_class_inheritance_pointers.carbon:[[@LINE+7]]:33: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+7]]:33: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
 // CHECK:STDERR:                                 ^~~
-// CHECK:STDERR: fail_import_class_inheritance_pointers.carbon:[[@LINE-5]]:9: note: initializing function parameter [InCallToFunctionParam]
+// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE-5]]:9: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR: fn MyF1(bar : Cpp.Bar1*);
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
 
-// --- class_dynamic.h
+// ============================================================================
+// Dynamic
+// ============================================================================
+
+// --- dynamic.h
 
 class Bar {
  public:
   virtual ~Bar();
 };
 
-// --- fail_import_class_dynamic.carbon
+// --- fail_todo_import_dynamic.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_dynamic.h";
+import Cpp library "dynamic.h";
 
-// CHECK:STDERR: fail_import_class_dynamic.carbon:[[@LINE+7]]:14: error: semantics TODO: `Unsupported: Dynamic Class` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_import_dynamic.carbon:[[@LINE+7]]:14: error: semantics TODO: `Unsupported: Dynamic Class` [SemanticsTodo]
 // CHECK:STDERR: fn MyF(bar : Cpp.Bar*);
 // CHECK:STDERR:              ^~~~~~~
-// CHECK:STDERR: fail_import_class_dynamic.carbon:[[@LINE+4]]:14: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
+// CHECK:STDERR: fail_todo_import_dynamic.carbon:[[@LINE+4]]:14: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
 // CHECK:STDERR: fn MyF(bar : Cpp.Bar*);
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
 fn MyF(bar : Cpp.Bar*);
 
-// --- class_to_inherit_public.h
+// ============================================================================
+// To inherit public
+// ============================================================================
+
+// --- to_inherit_public.h
 
 class Bar {
  public:
   static auto foo() -> void;
 };
 
-// --- import_class_to_inherit_public.carbon
+// --- import_to_inherit_public.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_to_inherit_public.h";
+import Cpp library "to_inherit_public.h";
 
 class Derived {
   extend base: Cpp.Bar;
@@ -255,18 +303,22 @@ fn MyF() {
   Derived.foo();
 }
 
-// --- class_to_inherit_private.h
+// ============================================================================
+// To inherit private
+// ============================================================================
+
+// --- to_inherit_private.h
 
 class Bar {
  private:
   static auto foo() -> void;
 };
 
-// --- todo_fail_class_to_inherit_private.carbon
+// --- todo_fail_to_inherit_private.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_to_inherit_private.h";
+import Cpp library "to_inherit_private.h";
 
 class Derived {
   extend base: Cpp.Bar;
@@ -276,31 +328,35 @@ fn MyF() {
   Derived.foo();
 }
 
-// --- class_template.h
+// ============================================================================
+// Template
+// ============================================================================
+
+// --- template.h
 
 template<typename T>
 class Bar {};
 
-// --- fail_import_class_template.carbon
+// --- fail_todo_import_template.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "class_template.h";
+import Cpp library "template.h";
 
-// CHECK:STDERR: fail_import_class_template.carbon:[[@LINE+11]]:13: error: semantics TODO: `Unsupported: Declaration type ClassTemplate` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+11]]:13: error: semantics TODO: `Unsupported: Declaration type ClassTemplate` [SemanticsTodo]
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_import_class_template.carbon:[[@LINE+8]]:13: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
+// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+8]]:13: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_class_template.carbon:[[@LINE+4]]:13: error: member name `Bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+4]]:13: error: member name `Bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
 fn MyF(bar: Cpp.Bar*);
 
-// CHECK:STDOUT: --- fail_import_class_declaration.carbon
+// CHECK:STDOUT: --- fail_todo_import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -320,7 +376,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_declaration.h"
+// CHECK:STDOUT:     import Cpp "declaration.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar [concrete]
@@ -338,7 +394,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: <error>);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_class_definition.carbon
+// CHECK:STDOUT: --- import_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -363,7 +419,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_definition.h"
+// CHECK:STDOUT:     import Cpp "definition.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
@@ -392,7 +448,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_class_declaration_and_definition.carbon
+// CHECK:STDOUT: --- import_declaration_and_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -417,7 +473,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_declaration_and_definition.h"
+// CHECK:STDOUT:     import Cpp "declaration_and_definition.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
@@ -446,7 +502,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_class_public_static_member_function.carbon
+// CHECK:STDOUT: --- import_public_static_member_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -472,7 +528,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_public_static_member_function.h"
+// CHECK:STDOUT:     import Cpp "public_static_member_function.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -501,7 +557,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_import_class_private_static_member_function.carbon
+// CHECK:STDOUT: --- todo_fail_import_private_static_member_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -527,7 +583,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_private_static_member_function.h"
+// CHECK:STDOUT:     import Cpp "private_static_member_function.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -556,7 +612,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_class_public_member_function.carbon
+// CHECK:STDOUT: --- fail_todo_import_public_member_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -581,7 +637,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_public_member_function.h"
+// CHECK:STDOUT:     import Cpp "public_member_function.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
@@ -617,7 +673,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_class_public_static_data_member.carbon
+// CHECK:STDOUT: --- fail_todo_import_public_static_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -642,7 +698,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_public_static_data_member.h"
+// CHECK:STDOUT:     import Cpp "public_static_data_member.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -676,7 +732,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_class_public_data_member.carbon
+// CHECK:STDOUT: --- fail_todo_import_public_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -701,7 +757,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_public_static_data_member.h"
+// CHECK:STDOUT:     import Cpp "public_static_data_member.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
@@ -746,7 +802,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_class_inheritance_static.carbon
+// CHECK:STDOUT: --- import_inheritance_static.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -778,7 +834,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_inheritance_static.h"
+// CHECK:STDOUT:     import Cpp "inheritance_static.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -834,7 +890,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo2();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_class_inheritance_pointers.carbon
+// CHECK:STDOUT: --- fail_todo_import_inheritance_pointers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar1: type = class_type @Bar1 [concrete]
@@ -867,7 +923,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF2 = %MyF2.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_inheritance_pointers.h"
+// CHECK:STDOUT:     import Cpp "inheritance_pointers.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF1.decl: %MyF1.type = fn_decl @MyF1 [concrete = constants.%MyF1] {
 // CHECK:STDOUT:     %bar.patt: %pattern_type.3cc = binding_pattern bar [concrete]
@@ -928,7 +984,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_class_dynamic.carbon
+// CHECK:STDOUT: --- fail_todo_import_dynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -948,7 +1004,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_dynamic.h"
+// CHECK:STDOUT:     import Cpp "dynamic.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar [concrete]
@@ -966,7 +1022,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: <error>);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_class_to_inherit_public.carbon
+// CHECK:STDOUT: --- import_to_inherit_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -997,7 +1053,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_to_inherit_public.h"
+// CHECK:STDOUT:     import Cpp "to_inherit_public.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
@@ -1042,7 +1098,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_class_to_inherit_private.carbon
+// CHECK:STDOUT: --- todo_fail_to_inherit_private.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -1073,7 +1129,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_to_inherit_private.h"
+// CHECK:STDOUT:     import Cpp "to_inherit_private.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
@@ -1118,7 +1174,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_class_template.carbon
+// CHECK:STDOUT: --- fail_todo_import_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -1138,7 +1194,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "class_template.h"
+// CHECK:STDOUT:     import Cpp "template.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
 // CHECK:STDOUT:     %bar.patt: <error> = binding_pattern bar [concrete]

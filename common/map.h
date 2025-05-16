@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/concepts.h"
 #include "common/hashtable_key_context.h"
 #include "common/raw_hashtable.h"
 #include "llvm/Support/Compiler.h"
@@ -90,10 +91,8 @@ class MapView
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
   MapView(MapView<OtherKeyT, OtherValueT, KeyContextT> other_view)
-    requires(std::same_as<KeyT, OtherKeyT> ||
-             std::same_as<KeyT, const OtherKeyT>) &&
-            (std::same_as<ValueT, OtherValueT> ||
-             std::same_as<ValueT, const OtherValueT>)
+    requires(SameAsOneOf<KeyT, OtherKeyT, const OtherKeyT> &&
+             SameAsOneOf<ValueT, OtherValueT, const OtherValueT>)
       : ImplT(other_view) {}
 
   // Tests whether a key is present in the map.
@@ -193,10 +192,8 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
   operator MapView<OtherKeyT, OtherValueT, KeyContextT>() const
-    requires(std::same_as<KeyT, OtherKeyT> ||
-             std::same_as<const KeyT, OtherKeyT>) &&
-            (std::same_as<ValueT, OtherValueT> ||
-             std::same_as<const ValueT, OtherValueT>)
+    requires(SameAsOneOf<OtherKeyT, KeyT, const KeyT> &&
+             SameAsOneOf<OtherValueT, ValueT, const ValueT>)
   {
     return ViewT(*this);
   }
