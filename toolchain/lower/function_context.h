@@ -155,12 +155,14 @@ class FunctionContext {
     // TODO: Replace index with info that is translation unit independent.
     // Using a string that includes the function_id string and the index to
     // avoid possible collisions. This needs revisiting.
-    os << "function_id" << function_id.index;
+    os << "function_id" << function_id.index << "\n";
     current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
     // TODO: Replace index with info that is translation unit independent.
     if (specific_id.has_value()) {
       current_fingerprint_.function_specific_fingerprint.update(
           specific_id.index);
+      // Use -1 as delimiter. This needs revisiting.
+      current_fingerprint_.function_specific_fingerprint.update(-1);
       function_fingerprint_->calls.push_back(specific_id);
     }
   }
@@ -172,6 +174,7 @@ class FunctionContext {
     if (type) {
       RawStringOstream os;
       type->print(os);
+      os << "\n";
       current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
     }
   }
@@ -244,6 +247,7 @@ class FunctionContext {
     if (function_fingerprint_ && global) {
       RawStringOstream os;
       global->print(os);
+      os << "\n";
       current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
     }
   }

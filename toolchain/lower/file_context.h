@@ -31,10 +31,10 @@ class FileContext {
     int32_t column_number;
   };
 
-  // Describes a specific function's body fingerprint
+  // Describes a specific function's body fingerprint.
   struct SpecificFunctionFingerprint {
-    llvm::BLAKE3Result<32UL> function_common_fingerprint;
-    llvm::BLAKE3Result<32UL> function_specific_fingerprint;
+    llvm::BLAKE3Result<32> function_common_fingerprint;
+    llvm::BLAKE3Result<32> function_specific_fingerprint;
     llvm::SmallVector<SemIR::SpecificId> calls;
   };
 
@@ -194,6 +194,7 @@ class FileContext {
                                     SemIR::SpecificId specific_id) {
     lowered_specifics_[generic_id.index].push_back(specific_id);
   }
+
   // Initialize a return a SpecificFunctionFingerprint* instance for specific.
   // The internal of the fingerprint are populated during and after lowering
   // the function body of that specific.
@@ -207,10 +208,12 @@ class FileContext {
 
   // Entry point for coalescing equivalent specifics.
   auto CoalesceEquivalentSpecifics() -> void;
+
   // While coalescing specifics, compare the function types for two specifics.
   // This uses a fingerprint generated for each function type.
   auto AreFunctionTypesEquivalent(SemIR::SpecificId specific1,
                                   SemIR::SpecificId specific2) -> bool;
+
   // While coalescing specifics, compare the function bodies for two specifics.
   // This uses fingerprints generated during lowering of the function body.
   auto AreFunctionBodiesEquivalent(
@@ -219,6 +222,7 @@ class FileContext {
           visited_equivalent_specifics,
       Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
           visited_equivalent_specifics_flipped) -> bool;
+
   // When an equivalence is found, update the canonical specific to use for
   // each of the two Specifics found to be equivalent, replace all uses of one
   // specific with the canonical one; mark one specific for deletion using
@@ -226,8 +230,10 @@ class FileContext {
   auto ProcessSpecificEquivalence(
       std::pair<SemIR::SpecificId, SemIR::SpecificId>& pair,
       Set<SemIR::SpecificId>& specifics_to_delete) -> void;
+
   // Return if two specifics have been found to be equivalent.
   auto IsKnownEquivalence(SemIR::SpecificId, SemIR::SpecificId) -> bool;
+
   // Delete the function body for the given specific. All its uses have already
   // been replaced.
   auto DeleteFunctionSpecific(SemIR::SpecificId to_replace) -> void;
@@ -305,7 +311,7 @@ class FileContext {
   // type information: return and parameter types. We resize this to the
   // correct size. Indexed by specific_id.index.
   // TODO: Hashing all members of FunctionTypeInfo may not be necessary.
-  llvm::SmallVector<llvm::BLAKE3Result<32UL>, 0>
+  llvm::SmallVector<llvm::BLAKE3Result<32>, 0>
       lowered_specifics_type_fingerprint_;
 
   // This is initialized and populated while lowering a specific.
@@ -316,9 +322,11 @@ class FileContext {
   // Equivalent specifics found: for each specific point to the
   // canonical equivalent specific
   llvm::SmallVector<SemIR::SpecificId> equivalent_specifics_;
+
   // Non-equivalent specifics found.
   Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>
       non_equivalent_specifics_;
+
   // Track whether a specific was replaced by another. We resize it to the
   // correct size and initialize with all false. Indexed by specific_id.index.
   llvm::SmallVector<bool, 0> is_replaced_specific_;

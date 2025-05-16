@@ -6,7 +6,6 @@
 
 #include <memory>
 #include <optional>
-#include <ranges>
 #include <string>
 #include <utility>
 
@@ -85,9 +84,9 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // Specific functions are lowered when we emit a reference to them.
   specific_functions_.resize(sem_ir_->specifics().size());
   // Additional data stored for specifics, for when attempting to coalesce.
-  // Indexed on generic_id
+  // Indexed by `GenericId`.
   lowered_specifics_.resize(sem_ir_->generics().size());
-  // Indexed on specific_id
+  // Indexed by `SpecificId`.
   lowered_specifics_type_fingerprint_.resize(sem_ir_->specifics().size());
   lowered_specific_fingerprint_.resize(sem_ir_->specifics().size());
   equivalent_specifics_.resize(sem_ir_->specifics().size(),
@@ -148,7 +147,9 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
         --i;
         continue;
       }
-      for (unsigned j = i + 1; j < specifics.size(); ++j) {
+      // TODO: improve quadratic behavior by using a single hash based on
+      // lowered_specifics_type_fingerprint_ and function_common_fingerprint.
+      for (int j = i + 1; j < static_cast<int>(specifics.size()); ++j) {
         if (is_replaced_specific_[specifics[j].index]) {
           specifics[j] = specifics[specifics.size() - 1];
           specifics.pop_back();
@@ -184,6 +185,10 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
         if (AreFunctionBodiesEquivalent(specifics[i], specifics[j],
                                         visited_equivalent_specifics,
                                         visited_equivalent_specifics_flipped)) {
+          // This is a Set, because it's possible, when processing equivalences
+          // found, that the same function is found to need replacement multiple
+          // times, when a new ("better") canonical is found after an initial
+          // replacement.
           Set<SemIR::SpecificId> specifics_to_delete;
           visited_equivalent_specifics.ForEach(
               [&](std::pair<SemIR::SpecificId, SemIR::SpecificId>
@@ -220,29 +225,39 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
 auto FileContext::ProcessSpecificEquivalence(
     std::pair<SemIR::SpecificId, SemIR::SpecificId>& pair,
     Set<SemIR::SpecificId>& specifics_to_delete) -> void {
-  auto [specific1, specific2] = pair;
-  CARBON_CHECK(specific1.has_value() && specific2.has_value(),
+  auto [specific_id1, specific_id2] = pair;
+  CARBON_CHECK(specific_id1.has_value() && specific_id2.has_value(),
                "Expected values in equivalence check");
 
-  SemIR::SpecificId first_id =
-      equivalent_specifics_[specific1.index].has_value()
-          ? equivalent_specifics_[specific1.index]
-          : specific1;
-  SemIR::SpecificId second_id =
-      equivalent_specifics_[specific2.index].has_value()
-          ? equivalent_specifics_[specific2.index]
-          : specific2;
-  auto replace_with = (first_id.index < second_id.index) ? first_id : second_id;
-  auto to_replace = (first_id.index >= second_id.index) ? first_id : second_id;
-  equivalent_specifics_[specific1.index] = replace_with;
-  equivalent_specifics_[specific2.index] = replace_with;
+  SemIR::SpecificId canon_id1 =
+      equivalent_specifics_[specific_id1.index].has_value()
+          ? equivalent_specifics_[specific_id1.index]
+          : specific_id1;
+  SemIR::SpecificId canon_id2 =
+      equivalent_specifics_[specific_id2.index].has_value()
+          ? equivalent_specifics_[specific_id2.index]
+          : specific_id2;
 
-  if (replace_with != to_replace) {
-    is_replaced_specific_[to_replace.index] = true;
-    specific_functions_[to_replace.index]->replaceAllUsesWith(
-        specific_functions_[replace_with.index]);
-    specifics_to_delete.Insert(to_replace);
+  if (canon_id1 == canon_id2) {
+    // Already equivalent, there was a previous replacement.
+    return;
   }
+
+  if (canon_id1.index >= canon_id2.index) {
+    // Prefer the earlier index for canonical values.
+    std::swap(canon_id1, canon_id2);
+  }
+
+  // Update equivalent_specifics_ for both, otherwise, for following
+  // equivalences, we may need to walk the chain/path that will get formed of
+  // equivalent_specifics_, in order to get to the canonical one.
+  // This update ensures the canonical is always "one hop away".
+  equivalent_specifics_[specific_id1.index] = canon_id1;
+  equivalent_specifics_[specific_id2.index] = canon_id1;
+  is_replaced_specific_[canon_id2.index] = true;
+  specific_functions_[canon_id2.index]->replaceAllUsesWith(
+      specific_functions_[canon_id1.index]);
+  specifics_to_delete.Insert(canon_id2);
 }
 
 auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific1,
@@ -261,7 +276,7 @@ auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific1,
       stack.push_back(specific_to_update);
       specific_to_update = equivalent_specifics_[specific_to_update.index];
     }
-    for (auto specific : std::ranges::reverse_view(stack)) {
+    for (auto specific : llvm::reverse(stack)) {
       equivalent_specifics_[specific.index] =
           equivalent_specifics_[equivalent_specifics_[specific.index].index];
     }
@@ -298,10 +313,8 @@ auto FileContext::AreFunctionBodiesEquivalent(
   worklist.push_back({specific1, specific2});
 
   while (!worklist.empty()) {
-    auto [specific_id1, specific_id2] = worklist.back();
-    worklist.pop_back();
-    std::pair<SemIR::SpecificId, SemIR::SpecificId> outer_pair = {specific_id1,
-                                                                  specific_id2};
+    auto outer_pair = worklist.pop_back_val();
+    auto [specific_id1, specific_id2] = outer_pair;
 
     auto state1 = lowered_specific_fingerprint_[specific_id1.index];
     auto state2 = lowered_specific_fingerprint_[specific_id2.index];
@@ -317,6 +330,7 @@ auto FileContext::AreFunctionBodiesEquivalent(
     }
     if (state1.function_specific_fingerprint ==
         state2.function_specific_fingerprint) {
+      // THIS IS WRONG, needs to be "continue;"
       return true;
     }
 
@@ -324,14 +338,16 @@ auto FileContext::AreFunctionBodiesEquivalent(
     CARBON_CHECK(state1.calls.size() == state2.calls.size(),
                  "Number of specific calls expected to be the same.");
 
-    for (unsigned i = 0; i < state1.calls.size(); ++i) {
-      if (state1.calls[i] != state2.calls[i]) {
+    // for (unsigned i = 0; i < state1.calls.size(); ++i) {
+    for (auto [state1_call, state2_call] :
+         llvm::zip(state1.calls, state2.calls)) {
+      if (state1_call != state2_call) {
         std::pair<SemIR::SpecificId, SemIR::SpecificId> inner_pair = {
-            state1.calls[i], state2.calls[i]};
+            state1_call, state2_call};
         if (non_equivalent_specifics_.Contains(inner_pair)) {
           return false;
         }
-        if (IsKnownEquivalence(state1.calls[i], state2.calls[i])) {
+        if (IsKnownEquivalence(state1_call, state2_call)) {
           continue;
         }
         if (visited_equivalent_specifics_flipped.Lookup(inner_pair)) {
@@ -341,9 +357,9 @@ auto FileContext::AreFunctionBodiesEquivalent(
           continue;
         }
         visited_equivalent_specifics_flipped.Insert(
-            std::make_pair(state2.calls[i], state1.calls[i]));
+            std::make_pair(state2_call, state1_call));
         // leave the added equivalence in place and continue
-        worklist.push_back({state1.calls[i], state2.calls[i]});
+        worklist.push_back({state1_call, state2_call});
       }
     }
   }
@@ -561,8 +577,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
 
-  // Create unique fingerprint for the function type
-  // For now compute function type fingerprint only for specifics, though
+  // Create a unique fingerprint for the function type
+  // For now, compute the function type fingerprint only for specifics, though
   // we might need it for all functions in order to create a canonical
   // fingerprint across translation units.
   if (specific_id.has_value()) {
