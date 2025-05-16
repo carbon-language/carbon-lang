@@ -318,8 +318,8 @@ class Formatter {
   // equivalent name formatting from InstNamer, although there are a few special
   // formats below.
   template <typename IdT>
-  // Force `InstId` children to use the `InstId` overload.
-    requires(!std::derived_from<IdT, InstId>)
+    requires(InstNamer::ScopeIdTypeEnum::Contains<IdT> ||
+             std::same_as<IdT, GenericId>)
   auto FormatName(IdT id) -> void {
     out_ << inst_namer_.GetNameFor(id);
   }
