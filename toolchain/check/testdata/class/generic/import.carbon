@@ -974,7 +974,7 @@ fn F(x: X(i32)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.e8e = import_ref Main//bar, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.904: @X.%X.elem (%X.elem.79b) = import_ref Main//bar, loc5_8, loaded [concrete = %.e1c]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %.e1c: %X.elem.79b = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %.e1c: @X.%X.elem (%X.elem.79b) = field_decl x, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
