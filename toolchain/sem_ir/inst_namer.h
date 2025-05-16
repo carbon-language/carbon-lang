@@ -143,7 +143,7 @@ class InstNamer {
 
   // For the given `IdT`, returns its start offset in the `ScopeId` space. Each
   // of `ScopeIdTypeEnum` is stored sequentially. When called with
-  // `ScopeIdTypeEnum::None`, returns the summed offset.
+  // `ScopeIdTypeEnum::None`, returns the full count of scopes.
   auto GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int;
 
   auto AddBlockLabel(
