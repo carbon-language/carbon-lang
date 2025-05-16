@@ -142,7 +142,6 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_Cd.Main, { 0, 2, 1 }
-// CHECK:STDOUT: uselistorder i32 0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:

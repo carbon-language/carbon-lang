@@ -18,6 +18,7 @@ load(
     "with_feature_set",
 )
 load("@rules_cc//cc:defs.bzl", "cc_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load(
     ":clang_detected_variables.bzl",
     "clang_bindir",
@@ -642,33 +643,48 @@ def _impl(ctx):
         ],
     )
 
-    fuzzer = feature(
-        name = "fuzzer",
+    # A feature that enables poisoning of value stores to detect use after
+    # potential reallocation bugs.
+    #
+    # TODO: Remove this and leave poisoning always on once these bugs are
+    # fixed.
+    poison_value_stores = feature(
+        name = "poison_value_stores",
+        requires = [feature_set(["asan"])],
         flag_sets = [flag_set(
-            actions = all_compile_actions + all_link_actions,
+            actions = all_compile_actions,
             flag_groups = [flag_group(flags = [
-                "-fsanitize=fuzzer-no-link",
+                "-DCARBON_POISON_VALUE_STORES=1",
             ])],
         )],
     )
 
-    if clang_version and clang_version <= 16:
-        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
-        libcpp_release_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=0"]
-    elif clang_version and clang_version <= 17:
-        # Clang 17 deprecates LIBCPP_ENABLE_ASSERTIONS in favor of
-        # HARDENED_MODE and DEBUG_MODE.
-        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
-        libcpp_release_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
-    else:
-        # Clang 18 changes HARDENED_MODE to use 4 values:
-        # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
-        libcpp_debug_flags = [
-            "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
-        ]
-        libcpp_release_flags = [
-            "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_FAST",
-        ]
+    fuzzer = feature(
+        name = "fuzzer",
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions + all_link_actions,
+                flag_groups = [flag_group(flags = [
+                    "-fsanitize=fuzzer-no-link",
+                ])],
+            ),
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION",
+                ])],
+            ),
+        ],
+    )
+
+    # Clang HARDENED_MODE has 4 possible values:
+    # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
+    libcpp_debug_flags = [
+        "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
+    ]
+    libcpp_release_flags = [
+        "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_FAST",
+    ]
 
     linux_flags_feature = feature(
         name = "linux_flags",
@@ -1145,6 +1161,7 @@ def _impl(ctx):
         asan,
         asan_min_size,
         enable_in_fastbuild,
+        poison_value_stores,
         fuzzer,
         layering_check,
         module_maps,

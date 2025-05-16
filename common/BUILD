@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/version:rules.bzl", "expand_version_build_info")
 
@@ -32,6 +33,29 @@ cc_library(
     hdrs = ["bazel_working_dir.h"],
     deps = [
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "build_data",
+    srcs = [
+        "build_data.cpp",
+        "build_data_linkstamp.h",
+    ],
+    hdrs = ["build_data.h"],
+    linkstamp = "build_data_linkstamp.cpp",
+    deps = ["@llvm-project//llvm:Support"],
+)
+
+cc_test(
+    name = "build_data_test",
+    size = "small",
+    srcs = ["build_data_test.cpp"],
+    deps = [
+        ":build_data",
+        ":ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -85,6 +109,11 @@ cc_test(
         "//testing/base:gtest_main",
         "@googletest//:gtest",
     ],
+)
+
+cc_library(
+    name = "concepts",
+    hdrs = ["concepts.h"],
 )
 
 cc_library(
@@ -283,6 +312,7 @@ cc_library(
     hdrs = ["map.h"],
     deps = [
         ":check",
+        ":concepts",
         ":hashtable_key_context",
         ":raw_hashtable",
         "@llvm-project//llvm:Support",
@@ -350,6 +380,7 @@ cc_library(
     hdrs = ["raw_hashtable.h"],
     deps = [
         ":check",
+        ":concepts",
         ":hashing",
         ":hashtable_key_context",
         ":raw_hashtable_metadata_group",
@@ -549,15 +580,6 @@ cc_test(
         ":template_string",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
-    ],
-)
-
-cc_library(
-    name = "variant_helpers",
-    hdrs = ["variant_helpers.h"],
-    deps = [
-        ":error",
-        "@llvm-project//llvm:Support",
     ],
 )
 

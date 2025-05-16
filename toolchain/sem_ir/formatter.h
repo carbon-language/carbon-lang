@@ -19,35 +19,58 @@ class Formatter {
  public:
   explicit Formatter(const File* sem_ir,
                      Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-                     llvm::ArrayRef<bool> include_ir_in_dumps);
+                     llvm::ArrayRef<bool> include_ir_in_dumps,
+                     bool use_dump_sem_ir_ranges);
 
-  // Prints the SemIR into an internal buffer.
+  // Prints the SemIR into an internal buffer. Must only be called once.
   //
-  // Constants are printed first and may be referenced by later sections,
-  // including file-scoped instructions. The file scope may contain entity
-  // declarations which are defined later, such as classes.
+  // We first print top-level scopes (constants, imports, and file) then
+  // entities (types and functions). The ordering is based on references:
+  //
+  // - constants can have internal references.
+  // - imports can refer to constants.
+  // - file can refer to constants and imports, and also entities.
+  // - Entities are difficult to order (forward declarations may lead to
+  //   circular references), and so are simply grouped by type.
+  //
+  // When formatting constants and imports, we use `OutputChunks` to only print
+  // entities which are referenced. For example, imports speculatively create
+  // constants which may never be referenced, or for which the referencing
+  // instruction may be hidden and we normally hide those. See `OutputChunk` for
+  // additional information.
+  //
+  // Beyond `OutputChunk`, `ShouldFormatEntity` and `ShouldFormatInst` can also
+  // hide instructions. These interact because an hidden instruction means its
+  // references are unused for `OutputChunk` visibility.
   auto Format() -> void;
 
-  // Write buffered output to the given stream.
+  // Write buffered output to the given stream. `Format` must be called first.
   auto Write(llvm::raw_ostream& out) -> void;
 
  private:
   enum class AddSpace : bool { Before, After };
 
-  // A chunk of the buffered output. Chunks of the output, such as constant
-  // values, are buffered until we reach the end of formatting so that we can
-  // decide whether to include them based on whether they are referenced.
+  // A chunk of the buffered output. Constants and imports are buffered as
+  // `OutputChunk`s until we reach the end of formatting so that we can decide
+  // whether to include them based on whether they are referenced.
+  //
+  // When `FormatName` is called for an instruction, it's considered referenced;
+  // if that instruction is in an `OutputChunk`, it and all of its dependencies
+  // will be marked for printing by `Write`. If that doesn't occur by the end,
+  // it will be omitted.
   struct OutputChunk {
     // Whether this chunk is known to be included in the output.
     bool include_in_output;
     // The textual contents of this chunk.
     std::string chunk = std::string();
-    // Chunks that should be included in the output if this one is.
+    // Indices in `ouput_chunks_` that should be included in the output if this
+    // one is.
     llvm::SmallVector<size_t> dependencies = {};
   };
 
-  // A scope in which output should be buffered because we don't yet know
-  // whether to include it in the final formatted SemIR.
+  // All formatted output within the scope of this object is redirected to a
+  // new tentative `OutputChunk`. The new chunk will depend on
+  // `parent_chunk_index`.
   struct TentativeOutputScope {
     explicit TentativeOutputScope(Formatter& f, size_t parent_chunk_index)
         : formatter(f) {
@@ -183,7 +206,14 @@ class Formatter {
   // Don't print a constant for ImportRefUnloaded.
   auto FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void;
 
-  // Prints a single instruction.
+  // Prints a single instruction. This typically dispatches to one of the
+  // `FormatInst` overloads, based on a specific instruction type.
+  //
+  // While there is default formatting behavior, we do have overloads when
+  // special behavior is required, although typically of functions called by
+  // `FormatInst` rather than `FormatInst` itself. For example, `FormatInstRhs`
+  // is frequently overloaded because the default argument formatting often
+  // isn't what we want for instructions.
   auto FormatInst(InstId inst_id) -> void;
 
   template <typename InstT>
@@ -326,6 +356,9 @@ class Formatter {
 
   // For each CheckIRId, whether entities from it should be formatted.
   llvm::ArrayRef<bool> include_ir_in_dumps_;
+
+  // Whether to use ranges when dumping, or to dump the full SemIR.
+  bool use_dump_sem_ir_ranges_;
 
   // The output stream buffer.
   std::string buffer_;

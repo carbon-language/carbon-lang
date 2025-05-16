@@ -180,10 +180,32 @@ Dump the raw JSON structure of SemIR to stdout when built.
       {
           .name = "dump-sem-ir",
           .help = R"""(
-Dump the SemIR to stdout when built.
+Dump the full SemIR to stdout when built.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_sem_ir); });
+
+  b.AddOneOfOption(
+      {
+          .name = "dump-sem-ir-ranges",
+          .help = R"""(
+Selects handling of `//@dump-sem-ir-[begin|end]` markers when dumping SemIR.
+By default, `if-present` prints ranges for files that have them, and full SemIR
+for files that don't. `only` skips files with no ranges, and `ignore` always
+prints full SemIR.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("if-present", DumpSemIRRanges::IfPresent)
+                    .Default(true),
+                arg_b.OneOfValue("only", DumpSemIRRanges::Only),
+                arg_b.OneOfValue("ignore", DumpSemIRRanges::Ignore),
+            },
+            &dump_sem_ir_ranges);
+      });
+
   b.AddFlag(
       {
           .name = "builtin-sem-ir",
@@ -398,6 +420,9 @@ class CompilationUnit {
   // The TreeAndSubtrees is mainly used for debugging and diagnostics, and has
   // significant overhead. Avoid constructing it when unused.
   auto GetParseTreeAndSubtrees() -> const Parse::TreeAndSubtrees&;
+
+  // Handles printing of formatted SemIR.
+  auto MaybePrintFormattedSemIR() -> void;
 
   // Wraps a call with log statements to indicate start and end. Typically logs
   // with the actual function name, but marks timings with the appropriate
@@ -624,6 +649,33 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
           .cpp_ast = &cpp_ast_};
 }
 
+auto CompilationUnit::MaybePrintFormattedSemIR() -> void {
+  bool print = options_->dump_sem_ir && IncludeInDumps();
+  if (!vlog_stream_ && !print) {
+    return;
+  }
+
+  if (options_->dump_sem_ir_ranges == CompileOptions::DumpSemIRRanges::Only &&
+      !tokens_->has_dump_sem_ir_ranges()) {
+    return;
+  }
+
+  bool use_dump_sem_ir_ranges =
+      options_->dump_sem_ir_ranges != CompileOptions::DumpSemIRRanges::Ignore &&
+      tokens_->has_dump_sem_ir_ranges();
+  SemIR::Formatter formatter(&*sem_ir_, *tree_and_subtrees_getter_,
+                             cache_->include_in_dumps(),
+                             use_dump_sem_ir_ranges);
+  formatter.Format();
+  if (vlog_stream_) {
+    CARBON_VLOG("*** SemIR::File ***\n");
+    formatter.Write(*vlog_stream_);
+  }
+  if (print) {
+    formatter.Write(*driver_env_->output_stream);
+  }
+}
+
 auto CompilationUnit::PostCheck() -> void {
   CARBON_CHECK(sem_ir_, "Must call GetCheckUnit first");
 
@@ -644,19 +696,7 @@ auto CompilationUnit::PostCheck() -> void {
     }
   }
 
-  bool print = options_->dump_sem_ir && IncludeInDumps();
-  if (vlog_stream_ || print) {
-    SemIR::Formatter formatter(&*sem_ir_, *tree_and_subtrees_getter_,
-                               cache_->include_in_dumps());
-    formatter.Format();
-    if (vlog_stream_) {
-      CARBON_VLOG("*** SemIR::File ***\n");
-      formatter.Write(*vlog_stream_);
-    }
-    if (print) {
-      formatter.Write(*driver_env_->output_stream);
-    }
-  }
+  MaybePrintFormattedSemIR();
   if (sem_ir_->has_errors()) {
     success_ = false;
   }

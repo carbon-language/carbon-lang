@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -1080,11 +1079,5 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Self.as_type.loc6_38.1 => constants.%tuple.type.a46
 // CHECK:STDOUT:   %tuple.type.loc6_38.2 => constants.%tuple.type.415
 // CHECK:STDOUT:   %pattern_type.loc6_24 => constants.%pattern_type.0b2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -318,7 +318,8 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
 
         // Witness that `T` implements the `assoc_interface`.
         auto lookup_result = LookupImplWitness(
-            context, loc_id, context.constant_values().Get(base_id),
+            context, loc_id,
+            context.constant_values().Get(base_as_type.inst_id),
             EvalOrAddInst(
                 context, loc_id,
                 FacetTypeFromInterface(context, assoc_interface.interface_id,

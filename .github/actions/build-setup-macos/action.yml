@@ -23,14 +23,12 @@ runs:
           xcrun simctl delete all
         sudo rm -rf ~/Library/Developer/CoreSimulator/Caches/*
 
-    # Install and cache LLVM 16 from Homebrew. Some runners may have LLVM 16,
+    # Install and cache LLVM 19 from Homebrew. Some runners may have LLVM 19,
     # but this is reliable (including with libc++), and gives us testing at the
     # minimum supported LLVM version.
     - name: Cache Homebrew
       id: cache-homebrew-macos
       uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
-      env:
-        cache-name: cache-homebrew
       with:
         # Cover all the critical parts of Homebrew here. Homebrew on Arm macOS
         # uses its own prefix making this easy to cover, but we need a few
@@ -47,7 +45,8 @@ runs:
             '
           }}
         # Note the key needs to include all the packages we're adding.
-        key: Homebrew-Cache-${{ inputs.matrix_runner }}-${{ runner.arch }}
+        key:
+          Homebrew-Cache-${{ inputs.matrix_runner }}-${{ runner.arch }}-llvm@19
 
     - name: Install LLVM and Clang with Homebrew
       if: steps.cache-homebrew-macos.outputs.cache-hit != 'true'
@@ -61,11 +60,11 @@ runs:
         LEAVES=$(brew leaves | egrep -v '^(bazelisk|gh|git|git-lfs|gnu-tar|go@.*|jq|pipx|node@.*|openssl@.*|wget|yq|zlib)$')
         brew uninstall -f --ignore-dependencies $LEAVES
         echo '*** Installing LLVM deps'
-        brew install --force-bottle --only-dependencies llvm@16
+        brew install --force-bottle --only-dependencies llvm@19
         echo '*** Installing LLVM itself'
-        brew install --force-bottle --force --verbose llvm@16
-        echo '*** brew info llvm@16'
-        brew info llvm@16
+        brew install --force-bottle --force --verbose llvm@19
+        echo '*** brew info llvm@19'
+        brew info llvm@19
         echo '*** brew autoremove'
         brew autoremove
         echo '*** brew info'
@@ -78,7 +77,7 @@ runs:
     - name: Setup LLVM and Clang
       shell: bash
       run: |
-        LLVM_PATH="$(brew --prefix llvm@16)"
+        LLVM_PATH="$(brew --prefix llvm@19)"
         echo "Using ${LLVM_PATH}"
         echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
         echo '*** ls "${LLVM_PATH}"'

@@ -136,6 +136,9 @@ struct TypeExpr {
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose = true) -> TypeExpr;
 
+// Handles an expression whose result value is unused.
+auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CONVERT_H_

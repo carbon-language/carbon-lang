@@ -10,10 +10,10 @@
 #include <utility>
 
 #include "common/check.h"
-#include "common/variant_helpers.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
@@ -533,7 +533,8 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
 // and continuing the dispatch.
 #define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                 \
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+                                  ssize_t position)                          \
+      ->void {                                                               \
     Lexer::LexResult result = lexer.LexMethod(source_text, position);        \
     CARBON_CHECK(result, "Failed to form a token!");                         \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
@@ -546,16 +547,17 @@ CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
 // A set of custom dispatch functions that pre-select the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  static auto Dispatch##LexMethod##SymbolToken(                              \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
-    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
-        source_text,                                                         \
-        OneCharTokenKindTable[static_cast<unsigned char>(                    \
-            source_text[position])],                                         \
-        position);                                                           \
-    CARBON_CHECK(result, "Failed to form a token!");                         \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                        \
+  static auto Dispatch##LexMethod##SymbolToken(                            \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position)         \
+      ->void {                                                             \
+    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                \
+        source_text,                                                       \
+        OneCharTokenKindTable[static_cast<unsigned char>(                  \
+            source_text[position])],                                       \
+        position);                                                         \
+    CARBON_CHECK(result, "Failed to form a token!");                       \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position); \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
@@ -565,7 +567,8 @@ CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 // whitespace and comments.
 #define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                             \
   static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+                                  ssize_t position)                          \
+      ->void {                                                               \
     lexer.LexMethod(source_text, position);                                  \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
   }
@@ -1109,26 +1112,24 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   int token_size = literal->text().size();
   position += token_size;
 
-  return VariantMatch(
-      literal->ComputeValue(emitter_),
-      [&](NumericLiteral::IntValue&& value) {
-        return LexTokenWithPayload(TokenKind::IntLiteral,
-                                   buffer_.value_stores_->ints()
-                                       .AddUnsigned(std::move(value.value))
-                                       .AsTokenPayload(),
-                                   byte_offset);
-      },
-      [&](NumericLiteral::RealValue&& value) {
-        auto real_id = buffer_.value_stores_->reals().Add(Real{
-            .mantissa = value.mantissa,
-            .exponent = value.exponent,
-            .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
-        return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
-                                   byte_offset);
-      },
-      [&](NumericLiteral::UnrecoverableError) {
-        return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
-      });
+  CARBON_KIND_SWITCH(literal->ComputeValue(emitter_)) {
+    case CARBON_KIND(NumericLiteral::IntValue && value):
+      return LexTokenWithPayload(TokenKind::IntLiteral,
+                                 buffer_.value_stores_->ints()
+                                     .AddUnsigned(std::move(value.value))
+                                     .AsTokenPayload(),
+                                 byte_offset);
+    case CARBON_KIND(NumericLiteral::RealValue && value): {
+      auto real_id = buffer_.value_stores_->reals().Add(
+          Real{.mantissa = value.mantissa,
+               .exponent = value.exponent,
+               .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
+      return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
+                                 byte_offset);
+    }
+    case CARBON_KIND(NumericLiteral::UnrecoverableError _):
+      return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
+  }
 }
 
 auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)

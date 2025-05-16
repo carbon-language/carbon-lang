@@ -65,13 +65,8 @@ for dep in deps:
     if repo == "" and not rule.startswith("third_party"):
         continue
 
-    # An empty stub library added by rules_cc:
-    # https://github.com/bazelbuild/rules_cc/blob/main/BUILD
-    if repo == "@@rules_cc+" and rule == ":link_extra_lib":
-        continue
-
-    # An utility library provided by Bazel that is under a compatible license.
-    if repo == "@@bazel_tools" and rule == "tools/cpp/runfiles:runfiles":
+    # Utility libraries provided by Bazel that are under a compatible license.
+    if repo in ("@@rules_cc+", "@@bazel_tools"):
         continue
 
     # These are stubs wrapping system libraries for LLVM. They aren't
