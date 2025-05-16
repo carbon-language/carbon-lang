@@ -929,7 +929,10 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     }
 
     case CARBON_KIND(AssociatedConstantDecl decl): {
-      FormatDeclRhs(decl.assoc_const_id, InstBlockId::None, decl.decl_block_id);
+      FormatArgs(decl.assoc_const_id);
+      llvm::SaveAndRestore scope(scope_,
+                                 inst_namer_.GetScopeFor(decl.assoc_const_id));
+      FormatTrailingBlock(decl.decl_block_id);
       return;
     }
 
@@ -973,6 +976,11 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       FormatDeclRhs(decl.function_id,
                     sem_ir_->functions().Get(decl.function_id).pattern_block_id,
                     decl.decl_block_id);
+      return;
+    }
+
+    case InstKind::ImportCppDecl: {
+      FormatImportCppDeclRhs();
       return;
     }
 
@@ -1140,7 +1148,7 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
   }
 }
 
-auto Formatter::FormatImportCppDeclRhs(ImportCppDecl /*inst*/) -> void {
+auto Formatter::FormatImportCppDeclRhs() -> void {
   out_ << " ";
   OpenBrace();
   for (ImportCpp import_cpp : sem_ir_->import_cpps().array_ref()) {

@@ -254,21 +254,18 @@ class Formatter {
   // Formats arguments as " <callee>(<args>) -> <return>".
   auto FormatCallRhs(Call inst) -> void;
 
-  // Standard formatting for a declaration instruction's arguments. The pattern
-  // is optional for AssociatedConstantDecl.
+  // Standard formatting for a declaration instruction's arguments.
   template <typename IdT>
   auto FormatDeclRhs(IdT decl_id, InstBlockId pattern_block_id,
                      InstBlockId decl_block_id) {
     FormatArgs(decl_id);
     llvm::SaveAndRestore scope(scope_, inst_namer_.GetScopeFor(decl_id));
-    if (pattern_block_id.has_value()) {
-      FormatTrailingBlock(pattern_block_id);
-    }
+    FormatTrailingBlock(pattern_block_id);
     FormatTrailingBlock(decl_block_id);
   }
 
   // Format the metadata in File for `import Cpp`.
-  auto FormatImportCppDeclRhs(ImportCppDecl inst) -> void;
+  auto FormatImportCppDeclRhs() -> void;
 
   // Formats an import ref. In an ideal case, this looks like " <ir>, <entity
   // name>, <loaded|unloaded>". However, if the entity name isn't present, this
