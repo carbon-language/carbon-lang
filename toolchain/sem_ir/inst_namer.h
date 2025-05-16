@@ -25,11 +25,12 @@ class InstNamer {
     File = 0,
     ImportRefs = 1,
     Constants = 2,
-    // The first non-top-level scope.
-    FirstDynamicScope = 3,
+    // The first entity scope; see entities in `ScopeIdTypeEnum`.
+    FirstEntityScope = 3,
   };
   static_assert(sizeof(ScopeId) == sizeof(AnyIdBase));
 
+  // Entities whose scopes get entries from `ScopeId`.
   using ScopeIdTypeEnum = TypeEnum<AssociatedConstantId, ClassId, FunctionId,
                                    ImplId, InterfaceId, SpecificInterfaceId>;
 
