@@ -821,52 +821,43 @@ auto Formatter::FormatPendingConstantValue(AddSpace space_where) -> void {
 }
 
 auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
-  switch (inst.kind().value_kind()) {
-    case InstValueKind::Typed:
+  switch (inst.kind()) {
+    case InstKind::ImplWitnessTable:
+    case InstKind::ImportCppDecl:
+    case InstKind::ImportDecl:
+    case InstKind::ImportRefUnloaded:
+      // Although these don't have a typed value, we still want to print the
+      // name.
       FormatName(inst_id);
-      out_ << ": ";
-      switch (GetExprCategory(*sem_ir_, inst_id)) {
-        case ExprCategory::NotExpr:
-        case ExprCategory::Error:
-        case ExprCategory::Value:
-        case ExprCategory::Mixed:
+      out_ << " = ";
+      return;
+
+    default:
+      switch (inst.kind().value_kind()) {
+        case InstValueKind::Typed:
+          FormatName(inst_id);
+          out_ << ": ";
+          switch (GetExprCategory(*sem_ir_, inst_id)) {
+            case ExprCategory::NotExpr:
+            case ExprCategory::Error:
+            case ExprCategory::Value:
+            case ExprCategory::Mixed:
+              break;
+            case ExprCategory::DurableRef:
+            case ExprCategory::EphemeralRef:
+              out_ << "ref ";
+              break;
+            case ExprCategory::Initializing:
+              out_ << "init ";
+              break;
+          }
+          FormatTypeOfInst(inst_id);
+          out_ << " = ";
           break;
-        case ExprCategory::DurableRef:
-        case ExprCategory::EphemeralRef:
-          out_ << "ref ";
-          break;
-        case ExprCategory::Initializing:
-          out_ << "init ";
+        case InstValueKind::None:
           break;
       }
-      FormatTypeOfInst(inst_id);
-      out_ << " = ";
-      break;
-    case InstValueKind::None:
-      break;
   }
-}
-
-auto Formatter::FormatInstLhs(InstId inst_id, ImportCppDecl /*inst*/) -> void {
-  FormatName(inst_id);
-  out_ << " = ";
-}
-
-auto Formatter::FormatInstLhs(InstId inst_id, ImportDecl /*inst*/) -> void {
-  FormatName(inst_id);
-  out_ << " = ";
-}
-
-auto Formatter::FormatInstLhs(InstId inst_id, ImportRefUnloaded /*inst*/)
-    -> void {
-  FormatName(inst_id);
-  out_ << " = ";
-}
-
-auto Formatter::FormatInstLhs(InstId inst_id, ImplWitnessTable /*inst*/)
-    -> void {
-  FormatName(inst_id);
-  out_ << " = ";
 }
 
 auto Formatter::FormatInstRhs(BindSymbolicName inst) -> void {
