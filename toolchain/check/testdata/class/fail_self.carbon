@@ -178,9 +178,9 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %self.patt: %pattern_type.761 = binding_pattern self [concrete]
-// CHECK:STDOUT:     %.loc33: %pattern_type.761 = var_pattern %self.patt [concrete]
+// CHECK:STDOUT:     %self.var_patt: %pattern_type.761 = var_pattern %self.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %self.var: ref %Class = var self
+// CHECK:STDOUT:   %self.var: ref %Class = var %self.var_patt
 // CHECK:STDOUT:   %Self.ref.loc33: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   %self: ref %Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref %Class = name_ref self, %self

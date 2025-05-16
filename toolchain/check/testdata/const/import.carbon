@@ -70,10 +70,10 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ref.patt: %pattern_type.a65 = binding_pattern a_ref [concrete]
-// CHECK:STDOUT:     %.loc6_1: %pattern_type.a65 = var_pattern %a_ref.patt [concrete]
+// CHECK:STDOUT:     %a_ref.var_patt: %pattern_type.a65 = var_pattern %a_ref.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ref.var: ref %const = var a_ref
-// CHECK:STDOUT:   %.loc6_12: type = splice_block %const.loc6 [concrete = constants.%const] {
+// CHECK:STDOUT:   %a_ref.var: ref %const = var %a_ref.var_patt [concrete]
+// CHECK:STDOUT:   %.loc6: type = splice_block %const.loc6 [concrete = constants.%const] {
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %const.loc6: type = const_type %i32.loc6 [concrete = constants.%const]
@@ -81,10 +81,10 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %a_ref: ref %const = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ptr_ref.patt: %pattern_type.bff = binding_pattern a_ptr_ref [concrete]
-// CHECK:STDOUT:     %.loc7_1: %pattern_type.bff = var_pattern %a_ptr_ref.patt [concrete]
+// CHECK:STDOUT:     %a_ptr_ref.var_patt: %pattern_type.bff = var_pattern %a_ptr_ref.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ptr_ref.var: ref %ptr = var a_ptr_ref
-// CHECK:STDOUT:   %.loc7_25: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %a_ptr_ref.var: ref %ptr = var %a_ptr_ref.var_patt [concrete]
+// CHECK:STDOUT:   %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %const.loc7: type = const_type %i32.loc7 [concrete = constants.%const]
@@ -144,10 +144,10 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.bff = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc6_1: %pattern_type.bff = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.bff = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %ptr = var a
-// CHECK:STDOUT:   %.loc6_17: type = splice_block %ptr.loc6 [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %a.var: ref %ptr = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %.loc6: type = splice_block %ptr.loc6 [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %const.loc6: type = const_type %i32.loc6 [concrete = constants.%const]
@@ -156,10 +156,10 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ptr.patt: %pattern_type.bff = binding_pattern a_ptr [concrete]
-// CHECK:STDOUT:     %.loc7_1: %pattern_type.bff = var_pattern %a_ptr.patt [concrete]
+// CHECK:STDOUT:     %a_ptr.var_patt: %pattern_type.bff = var_pattern %a_ptr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ptr.var: ref %ptr = var a_ptr
-// CHECK:STDOUT:   %.loc7_21: type = splice_block %ptr.loc7 [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %a_ptr.var: ref %ptr = var %a_ptr.var_patt [concrete]
+// CHECK:STDOUT:   %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %const.loc7: type = const_type %i32.loc7 [concrete = constants.%const]

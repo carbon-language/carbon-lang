@@ -121,19 +121,19 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Self.patt: %pattern_type.796 = binding_pattern r#Self [concrete]
-// CHECK:STDOUT:     %.loc13_5: %pattern_type.796 = var_pattern %Self.patt [concrete]
+// CHECK:STDOUT:     %Self.var_patt: %pattern_type.796 = var_pattern %Self.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.var: ref %ptr.e71 = var r#Self
-// CHECK:STDOUT:   %.loc13_21: type = splice_block %ptr.loc13 [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:   %Self.var: ref %ptr.e71 = var %Self.var_patt
+// CHECK:STDOUT:   %.loc13: type = splice_block %ptr.loc13 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %ptr.loc13: type = ptr_type %Self.ref.loc13 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self: ref %ptr.e71 = bind_name r#Self, %Self.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.796 = binding_pattern p [concrete]
-// CHECK:STDOUT:     %.loc14_5: %pattern_type.796 = var_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type.796 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr.e71 = var p
+// CHECK:STDOUT:   %p.var: ref %ptr.e71 = var %p.var_patt
 // CHECK:STDOUT:   %Self.ref.loc14_20: ref %ptr.e71 = name_ref r#Self, %Self
 // CHECK:STDOUT:   %.loc14_20: %ptr.e71 = bind_value %Self.ref.loc14_20
 // CHECK:STDOUT:   assign %p.var, %.loc14_20

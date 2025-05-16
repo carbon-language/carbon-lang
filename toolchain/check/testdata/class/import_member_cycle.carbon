@@ -112,10 +112,10 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc7_3: %pattern_type = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %ptr = var a
-// CHECK:STDOUT:   %.loc7_15: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %a.var: ref %ptr = var %a.var_patt
+// CHECK:STDOUT:   %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, imports.%Main.Cycle [concrete = constants.%Cycle]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }

@@ -148,9 +148,9 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.5d8 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.5d8 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.5d8 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type = var a
+// CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt
 // CHECK:STDOUT:   %int_1.loc14_27: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc14_30: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %int_3.loc14_33: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -183,8 +183,8 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   %.loc14_34.9: ref %i32 = array_index %a.var, %int_2.loc14_34
 // CHECK:STDOUT:   %.loc14_34.10: init %i32 = initialize_from %.loc14_34.8 to %.loc14_34.9 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc14_34.11: init %array_type = array_init (%.loc14_34.4, %.loc14_34.7, %.loc14_34.10) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc14_3.2: init %array_type = converted %.loc14_34.1, %.loc14_34.11 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %array_type = converted %.loc14_34.1, %.loc14_34.11 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_22: type = splice_block %array_type.loc14 [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -194,9 +194,9 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %pa.patt: %pattern_type.fe8 = binding_pattern pa [concrete]
-// CHECK:STDOUT:     %.loc17_3: %pattern_type.fe8 = var_pattern %pa.patt [concrete]
+// CHECK:STDOUT:     %pa.var_patt: %pattern_type.fe8 = var_pattern %pa.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pa.var: ref %ptr.235 = var pa
+// CHECK:STDOUT:   %pa.var: ref %ptr.235 = var %pa.var_patt
 // CHECK:STDOUT:   %a.ref.loc17: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   %int_0.loc17: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc17_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -244,9 +244,9 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.5d8 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.5d8 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.5d8 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type = var a
+// CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt
 // CHECK:STDOUT:   %int_1.loc22_27: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc22_30: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %int_3.loc22_33: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -279,8 +279,8 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   %.loc22_34.9: ref %i32 = array_index %a.var, %int_2.loc22_34
 // CHECK:STDOUT:   %.loc22_34.10: init %i32 = initialize_from %.loc22_34.8 to %.loc22_34.9 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc22_34.11: init %array_type = array_init (%.loc22_34.4, %.loc22_34.7, %.loc22_34.10) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc22_3.2: init %array_type = converted %.loc22_34.1, %.loc22_34.11 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc22_3.2
+// CHECK:STDOUT:   %.loc22_3: init %array_type = converted %.loc22_34.1, %.loc22_34.11 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc22_3
 // CHECK:STDOUT:   %.loc22_22: type = splice_block %array_type.loc22 [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

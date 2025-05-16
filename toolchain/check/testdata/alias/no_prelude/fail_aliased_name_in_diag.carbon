@@ -46,9 +46,9 @@ let c_var: c = d;
 // CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.510 = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc15: %pattern_type.510 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.510 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %D = var d
+// CHECK:STDOUT:   %d.var: ref %D = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {

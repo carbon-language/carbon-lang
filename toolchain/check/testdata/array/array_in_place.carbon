@@ -76,9 +76,9 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.b65 = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.b65 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.b65 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %array_type = var v
+// CHECK:STDOUT:   %v.var: ref %array_type = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc14_39: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc14_47.1: ref %tuple.type.189 = splice_block %.loc14_47.2 {
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
@@ -93,8 +93,8 @@ fn G() {
 // CHECK:STDOUT:   %F.call.loc14_46: init %tuple.type.189 = call %F.ref.loc14_44() to %.loc14_47.3
 // CHECK:STDOUT:   %.loc14_47.5: %tuple.type.99b = tuple_literal (%F.call.loc14_41, %F.call.loc14_46)
 // CHECK:STDOUT:   %.loc14_47.6: init %array_type = array_init (%F.call.loc14_41, %F.call.loc14_46) to %v.var
-// CHECK:STDOUT:   %.loc14_3.2: init %array_type = converted %.loc14_47.5, %.loc14_47.6
-// CHECK:STDOUT:   assign %v.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %array_type = converted %.loc14_47.5, %.loc14_47.6
+// CHECK:STDOUT:   assign %v.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_34: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc14_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

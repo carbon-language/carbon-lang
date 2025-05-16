@@ -80,13 +80,13 @@ fn H() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: @G.%pattern_type (%pattern_type.d48) = binding_pattern arr [concrete]
-// CHECK:STDOUT:       %.loc13_3.1: @G.%pattern_type (%pattern_type.d48) = var_pattern %arr.patt [concrete]
+// CHECK:STDOUT:       %arr.var_patt: @G.%pattern_type (%pattern_type.d48) = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc13_22.2 (%array_type.281) = var arr
+// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc13_22.2 (%array_type.281) = var %arr.var_patt
 // CHECK:STDOUT:     %.loc13_27.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_27.2: init @G.%array_type.loc13_22.2 (%array_type.281) = array_init () to %arr.var [symbolic = %array (constants.%array.2ed)]
-// CHECK:STDOUT:     %.loc13_3.2: init @G.%array_type.loc13_22.2 (%array_type.281) = converted %.loc13_27.1, %.loc13_27.2 [symbolic = %array (constants.%array.2ed)]
-// CHECK:STDOUT:     assign %arr.var, %.loc13_3.2
+// CHECK:STDOUT:     %.loc13_3: init @G.%array_type.loc13_22.2 (%array_type.281) = converted %.loc13_27.1, %.loc13_27.2 [symbolic = %array (constants.%array.2ed)]
+// CHECK:STDOUT:     assign %arr.var, %.loc13_3
 // CHECK:STDOUT:     %.loc13_22: type = splice_block %array_type.loc13_22.1 [symbolic = %array_type.loc13_22.2 (constants.%array_type.281)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]

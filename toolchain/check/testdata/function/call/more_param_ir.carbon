@@ -109,9 +109,9 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.b74 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.b74 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.b74 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %tuple.type.a1c = var x
+// CHECK:STDOUT:   %x.var: ref %tuple.type.a1c = var %x.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc14_22.1: %tuple.type.985 = tuple_literal (%int_1)
 // CHECK:STDOUT:   %impl.elem0.loc14: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -121,8 +121,8 @@ fn Main() {
 // CHECK:STDOUT:   %int.convert_checked.loc14: init %i32 = call %bound_method.loc14_22.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc14_22.2: init %i32 = converted %int_1, %int.convert_checked.loc14 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc14_22.3: init %tuple.type.a1c = tuple_init (%.loc14_22.2) to %x.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_3.2: init %tuple.type.a1c = converted %.loc14_22.1, %.loc14_22.3 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %x.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %tuple.type.a1c = converted %.loc14_22.1, %.loc14_22.3 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %x.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_15.1: type = splice_block %.loc14_15.3 [concrete = constants.%tuple.type.a1c] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

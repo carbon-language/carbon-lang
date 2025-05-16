@@ -216,6 +216,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.197, @Convert.5(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
+// CHECK:STDOUT:   %.96d: ref %i32 = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %Core.val: %Core = struct_value (%int_0.6a9) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,9 +243,9 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %Core.decl: type = class_decl @Core [concrete = constants.%Core] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c8a = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc6: %pattern_type.c8a = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.c8a = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %Core = var c
+// CHECK:STDOUT:   %c.var: ref %Core = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %Core.ref: type = name_ref r#Core, %Core.decl [concrete = constants.%Core]
 // CHECK:STDOUT:   %c: ref %Core = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -279,7 +280,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %.loc6_25.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_25.2: %i32 = converted %int_0, %.loc6_25.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.1: %struct_type.n = struct_literal (%.loc6_25.2)
-// CHECK:STDOUT:   %.loc6_40.2: ref %i32 = class_element_access file.%c.var, element0
+// CHECK:STDOUT:   %.loc6_40.2: ref %i32 = class_element_access file.%c.var, element0 [concrete = constants.%.96d]
 // CHECK:STDOUT:   %.loc6_40.3: init %i32 = initialize_from %.loc6_25.2 to %.loc6_40.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.4: init %Core = class_init (%.loc6_40.3), file.%c.var [concrete = constants.%Core.val]
 // CHECK:STDOUT:   %.loc6_1: init %Core = converted %.loc6_40.1, %.loc6_40.4 [concrete = constants.%Core.val]

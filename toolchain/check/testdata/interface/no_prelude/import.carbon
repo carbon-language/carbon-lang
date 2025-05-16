@@ -83,10 +83,10 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ForwardDeclared.decl: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f_ref.patt: %pattern_type = binding_pattern f_ref [concrete]
-// CHECK:STDOUT:     %.loc20_1: %pattern_type = var_pattern %f_ref.patt [concrete]
+// CHECK:STDOUT:     %f_ref.var_patt: %pattern_type = var_pattern %f_ref.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var f_ref
-// CHECK:STDOUT:   %.loc20_32: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
+// CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var %f_ref.var_patt [concrete]
+// CHECK:STDOUT:   %.loc20: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   }
@@ -257,10 +257,10 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %UseForwardDeclaredF: %ForwardDeclared.assoc_type = bind_alias UseForwardDeclaredF, imports.%Main.import_ref.339 [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.97e = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc16_1: %pattern_type.97e = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type.97e = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %ptr = var f
-// CHECK:STDOUT:   %.loc16_23: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %f.var: ref %ptr = var %f.var_patt [concrete]
+// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }

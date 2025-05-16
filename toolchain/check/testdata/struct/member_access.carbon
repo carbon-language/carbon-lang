@@ -27,6 +27,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.fbb: type = struct_type {.a: f64, .b: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %.984: ref f64 = struct_access file.%x.var, element0 [concrete]
+// CHECK:STDOUT:   %.865: ref %i32 = struct_access file.%x.var, element1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -72,9 +74,9 @@ var z: i32 = y;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.7fd = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.7fd = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.7fd = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.b.ddf = var x
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.b.ddf = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc11_25: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.ddf] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
@@ -87,20 +89,20 @@ var z: i32 = y;
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.ddf = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y [concrete]
-// CHECK:STDOUT:     %.loc12_1: %pattern_type.7ce = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.7ce = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %i32 = var y
-// CHECK:STDOUT:   %.loc12_8: type = splice_block %i32.loc12 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %.loc12: type = splice_block %i32.loc12 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %z.patt: %pattern_type.7ce = binding_pattern z [concrete]
-// CHECK:STDOUT:     %.loc13_1: %pattern_type.7ce = var_pattern %z.patt [concrete]
+// CHECK:STDOUT:     %z.var_patt: %pattern_type.7ce = var_pattern %z.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %z.var: ref %i32 = var z
-// CHECK:STDOUT:   %.loc13_8: type = splice_block %i32.loc13 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %z.var: ref %i32 = var %z.var_patt [concrete]
+// CHECK:STDOUT:   %.loc13: type = splice_block %i32.loc13 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -112,7 +114,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc11_46.1: %struct_type.a.b.fbb = struct_literal (%float, %int_1)
-// CHECK:STDOUT:   %.loc11_46.2: ref f64 = struct_access file.%x.var, element0
+// CHECK:STDOUT:   %.loc11_46.2: ref f64 = struct_access file.%x.var, element0 [concrete = constants.%.984]
 // CHECK:STDOUT:   %.loc11_46.3: init f64 = initialize_from %float to %.loc11_46.2 [concrete = constants.%float]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_46.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
@@ -120,7 +122,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %bound_method.loc11_46.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc11_46.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_46.4: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11_46.5: ref %i32 = struct_access file.%x.var, element1
+// CHECK:STDOUT:   %.loc11_46.5: ref %i32 = struct_access file.%x.var, element1 [concrete = constants.%.865]
 // CHECK:STDOUT:   %.loc11_46.6: init %i32 = initialize_from %.loc11_46.4 to %.loc11_46.5 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_46.7: init %struct_type.a.b.ddf = struct_init (%.loc11_46.3, %.loc11_46.6) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc11_1: init %struct_type.a.b.ddf = converted %.loc11_46.1, %.loc11_46.7 [concrete = constants.%struct]

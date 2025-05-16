@@ -73,9 +73,9 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %x.patt: @F.%pattern_type (%pattern_type.dad) = binding_pattern x [concrete]
-// CHECK:STDOUT:       %.loc17_3: @F.%pattern_type (%pattern_type.dad) = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:       %x.var_patt: @F.%pattern_type (%pattern_type.dad) = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc17_10.2 (%T.as_type) = var x
+// CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc17_10.2 (%T.as_type) = var %x.var_patt
 // CHECK:STDOUT:     %.loc17_10.1: type = splice_block %.loc17_10.2 [symbolic = %T.as_type.loc17_10.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc16_6.1 [symbolic = %T.loc16_6.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc17_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc17_10.2 (constants.%T.as_type)]

@@ -270,9 +270,9 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type = binding_pattern e [concrete]
-// CHECK:STDOUT:     %.loc5_1: %pattern_type = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

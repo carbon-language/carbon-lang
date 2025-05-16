@@ -58,19 +58,19 @@ fn F() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32 [symbolic = constants.%T]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.afe = binding_pattern p [concrete]
-// CHECK:STDOUT:     %.loc13_3: %pattern_type.afe = var_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type.afe = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr = var p
-// CHECK:STDOUT:   %.loc13_11: type = splice_block %ptr [symbolic = constants.%ptr] {
+// CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt
+// CHECK:STDOUT:   %.loc13: type = splice_block %ptr [symbolic = constants.%ptr] {
 // CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc13 [symbolic = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7dc = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc14_3: %pattern_type.7dc = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7dc = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %T = var a
+// CHECK:STDOUT:   %a.var: ref %T = var %a.var_patt
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p
 // CHECK:STDOUT:   %.loc14_15: %ptr = bind_value %p.ref
 // CHECK:STDOUT:   %.loc14_14.1: ref %T = deref %.loc14_15

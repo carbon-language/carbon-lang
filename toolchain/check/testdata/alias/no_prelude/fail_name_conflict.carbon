@@ -51,16 +51,16 @@ alias b = C;
 // CHECK:STDOUT:   %a.loc13: type = bind_alias a, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc21: %pattern_type = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C = var a
+// CHECK:STDOUT:   %a.var: ref %C = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a.loc21: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc23: %pattern_type = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %C = var b
+// CHECK:STDOUT:   %b.var: ref %C = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc23: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %b: ref %C = bind_name b, %b.var
 // CHECK:STDOUT:   %C.ref.loc31: type = name_ref C, %C.decl [concrete = constants.%C]

@@ -841,8 +841,8 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   auto aggregate =
       eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id);
   if (!aggregate) {
-    CARBON_CHECK(phase != Phase::Concrete,
-                 "Unexpected representation for template constant aggregate");
+    // TODO: Consider forming a symbolic constant or reference constant array
+    // index in this case.
     return MakeNonConstantResult(phase);
   }
 
@@ -1743,9 +1743,9 @@ static auto ConvertEvalResultToConstantId(Context& context,
 // instruction:
 //
 //  -  InstConstantKind::Never: returns ConstantId::NotConstant.
-//  -  InstConstantKind::Indirect, SymbolicOnly, Conditional: evaluates all the
-//     operands of the instruction, and calls `EvalConstantInst` to evaluate the
-//     resulting constant instruction.
+//  -  InstConstantKind::Indirect, SymbolicOnly, SymbolicOrReference,
+//     Conditional: evaluates all the operands of the instruction, and calls
+//     `EvalConstantInst` to evaluate the resulting constant instruction.
 //  -  InstConstantKind::WheneverPossible, Always: evaluates all the operands of
 //     the instruction, and produces the resulting constant instruction as the
 //     result.

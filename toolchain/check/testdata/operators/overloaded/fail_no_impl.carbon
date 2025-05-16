@@ -154,13 +154,13 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc32_3.1: %pattern_type.c48 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.c48 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C = var a
+// CHECK:STDOUT:   %a.var: ref %C = var %a.var_patt
 // CHECK:STDOUT:   %.loc32_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc32_15.2: init %C = class_init (), %a.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc32_3.2: init %C = converted %.loc32_15.1, %.loc32_15.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %a.var, %.loc32_3.2
+// CHECK:STDOUT:   %.loc32_3: init %C = converted %.loc32_15.1, %.loc32_15.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %a.var, %.loc32_3
 // CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref.loc37: ref %C = name_ref a, %a

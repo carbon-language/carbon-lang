@@ -105,9 +105,9 @@ fn Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cv.patt: %pattern_type.761 = binding_pattern cv [concrete]
-// CHECK:STDOUT:     %.loc17: %pattern_type.761 = var_pattern %cv.patt [concrete]
+// CHECK:STDOUT:     %cv.var_patt: %pattern_type.761 = var_pattern %cv.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cv.var: ref %Class = var cv
+// CHECK:STDOUT:   %cv.var: ref %Class = var %cv.var_patt
 // CHECK:STDOUT:   %Class.ref.loc17: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %cv: ref %Class = bind_name cv, %cv.var
 // CHECK:STDOUT:   %cv.ref.loc18: ref %Class = name_ref cv, %cv
@@ -140,9 +140,9 @@ fn Test() {
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %cv.ref.loc20
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cj.patt: %pattern_type.7ce = binding_pattern cj [concrete]
-// CHECK:STDOUT:     %.loc21_3: %pattern_type.7ce = var_pattern %cj.patt [concrete]
+// CHECK:STDOUT:     %cj.var_patt: %pattern_type.7ce = var_pattern %cj.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cj.var: ref %i32 = var cj
+// CHECK:STDOUT:   %cj.var: ref %i32 = var %cj.var_patt
 // CHECK:STDOUT:   %c.ref.loc21: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc21: %Class.elem = name_ref j, @Class.%.loc12 [concrete = @Class.%.loc12]
 // CHECK:STDOUT:   %.loc21_18.1: ref %i32 = class_element_access %c.ref.loc21, element0
@@ -155,9 +155,9 @@ fn Test() {
 // CHECK:STDOUT:   %cj: ref %i32 = bind_name cj, %cj.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ck.patt: %pattern_type.7ce = binding_pattern ck [concrete]
-// CHECK:STDOUT:     %.loc22_3: %pattern_type.7ce = var_pattern %ck.patt [concrete]
+// CHECK:STDOUT:     %ck.var_patt: %pattern_type.7ce = var_pattern %ck.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ck.var: ref %i32 = var ck
+// CHECK:STDOUT:   %ck.var: ref %i32 = var %ck.var_patt
 // CHECK:STDOUT:   %c.ref.loc22: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %k.ref.loc22: %Class.elem = name_ref k, @Class.%.loc13 [concrete = @Class.%.loc13]
 // CHECK:STDOUT:   %.loc22_18.1: ref %i32 = class_element_access %c.ref.loc22, element1

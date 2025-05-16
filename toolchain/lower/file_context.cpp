@@ -83,12 +83,18 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   specific_functions_.resize(sem_ir_->specifics().size());
 
   // Lower global variable declarations.
+  // TODO: Storing both a `constants_` array and a separate `global_variables_`
+  // map is redundant.
   for (auto inst_id :
        sem_ir().inst_blocks().Get(sem_ir().top_inst_block_id())) {
     // Only `VarStorage` indicates a global variable declaration in the
     // top instruction block.
     if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-      global_variables_.Insert(inst_id, BuildGlobalVariableDecl(*var));
+      auto* var_decl = BuildGlobalVariableDecl(*var);
+      global_variables_.Insert(inst_id, var_decl);
+      // Also store the global variable with the ID of the pattern so
+      // constant lowering can find it.
+      global_variables_.Insert(var->pattern_id, var_decl);
     }
   }
 
@@ -530,9 +536,7 @@ static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
 }
 
 template <typename InstT>
-  requires(InstT::Kind.constant_kind() ==
-               SemIR::InstConstantKind::SymbolicOnly &&
-           InstT::Kind.is_type() != SemIR::InstIsType::Never)
+  requires(InstT::Kind.is_symbolic_when_type())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Treat non-monomorphized symbolic types as opaque.
@@ -701,14 +705,29 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  // TODO: Mangle name.
-  auto mangled_name =
-      *sem_ir().names().GetAsStringIfIdentifier(var_storage.pretty_name_id);
+  Mangler m(*this);
+  auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
+  auto linkage = llvm::GlobalVariable::ExternalLinkage;
+
+  // If the variable doesn't have an externally-visible name, demote it to
+  // internal linkage and invent a plausible name that shouldn't collide with
+  // any of our real manglings.
+  if (mangled_name.empty()) {
+    linkage = llvm::GlobalVariable::InternalLinkage;
+    if (inst_namer_) {
+      mangled_name =
+          ("var." + inst_namer_->GetUnscopedNameFor(var_storage.pattern_id))
+              .str();
+    }
+  }
+
   auto* type = GetType(var_storage.type_id);
-  return new llvm::GlobalVariable(
-      llvm_module(), type,
-      /*isConstant=*/false, llvm::GlobalVariable::InternalLinkage,
-      llvm::Constant::getNullValue(type), mangled_name);
+  // TODO: Create a declaration instead of a definition if this variable was
+  // imported.
+  return new llvm::GlobalVariable(llvm_module(), type,
+                                  /*isConstant=*/false, linkage,
+                                  llvm::Constant::getNullValue(type),
+                                  mangled_name);
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {

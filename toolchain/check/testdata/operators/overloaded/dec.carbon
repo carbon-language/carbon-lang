@@ -108,13 +108,13 @@ fn TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.c48 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
 // CHECK:STDOUT:   %.loc22_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc22_15.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc22_3.2: init %C = converted %.loc22_15.1, %.loc22_15.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc22_3.2
+// CHECK:STDOUT:   %.loc22_3: init %C = converted %.loc22_15.1, %.loc22_15.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc22_3
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c

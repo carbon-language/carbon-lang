@@ -145,7 +145,7 @@ class A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.971 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc15_18.1: %pattern_type.971 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.971 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc15_39.1: %struct_type.n.44a = struct_literal (%int_1)
@@ -158,8 +158,8 @@ class A {
 // CHECK:STDOUT:   %.loc15_39.3: ref %i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc15_39.4: init %i32 = initialize_from %.loc15_39.2 to %.loc15_39.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc15_39.5: init %B = class_init (%.loc15_39.4), %return [concrete = constants.%B.val]
-// CHECK:STDOUT:   %.loc15_18.2: init %B = converted %.loc15_39.1, %.loc15_39.5 [concrete = constants.%B.val]
-// CHECK:STDOUT:   assign %return, %.loc15_18.2
+// CHECK:STDOUT:   %.loc15_18: init %B = converted %.loc15_39.1, %.loc15_39.5 [concrete = constants.%B.val]
+// CHECK:STDOUT:   assign %return, %.loc15_18
 // CHECK:STDOUT:   %Self.ref.loc15: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = bind_name b, %return
 // CHECK:STDOUT:   return %b to %return

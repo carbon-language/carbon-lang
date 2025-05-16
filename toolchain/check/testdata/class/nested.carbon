@@ -163,16 +163,16 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %o.patt: %pattern_type.e74 = binding_pattern o [concrete]
-// CHECK:STDOUT:     %.loc14: %pattern_type.e74 = var_pattern %o.patt [concrete]
+// CHECK:STDOUT:     %o.var_patt: %pattern_type.e74 = var_pattern %o.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o.var: ref %Outer = var o
+// CHECK:STDOUT:   %o.var: ref %Outer = var %o.var_patt
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %pattern_type.906 = binding_pattern i [concrete]
-// CHECK:STDOUT:     %.loc15: %pattern_type.906 = var_pattern %i.patt [concrete]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.906 = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %Inner = var i
+// CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
@@ -182,16 +182,16 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %o.patt: %pattern_type.e74 = binding_pattern o [concrete]
-// CHECK:STDOUT:     %.loc25: %pattern_type.e74 = var_pattern %o.patt [concrete]
+// CHECK:STDOUT:     %o.var_patt: %pattern_type.e74 = var_pattern %o.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o.var: ref %Outer = var o
+// CHECK:STDOUT:   %o.var: ref %Outer = var %o.var_patt
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %pattern_type.906 = binding_pattern i [concrete]
-// CHECK:STDOUT:     %.loc26: %pattern_type.906 = var_pattern %i.patt [concrete]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.906 = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %Inner = var i
+// CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
@@ -201,16 +201,16 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %o.patt: %pattern_type.e74 = binding_pattern o [concrete]
-// CHECK:STDOUT:     %.loc32: %pattern_type.e74 = var_pattern %o.patt [concrete]
+// CHECK:STDOUT:     %o.var_patt: %pattern_type.e74 = var_pattern %o.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o.var: ref %Outer = var o
+// CHECK:STDOUT:   %o.var: ref %Outer = var %o.var_patt
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %pattern_type.906 = binding_pattern i [concrete]
-// CHECK:STDOUT:     %.loc33: %pattern_type.906 = var_pattern %i.patt [concrete]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.906 = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %Inner = var i
+// CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return

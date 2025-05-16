@@ -161,14 +161,14 @@ class Class(T:! type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %c.patt: @F.%pattern_type (%pattern_type.3c1) = binding_pattern c [concrete]
-// CHECK:STDOUT:       %.loc17_5.1: @F.%pattern_type (%pattern_type.3c1) = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:       %c.var_patt: @F.%pattern_type (%pattern_type.3c1) = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c.var: ref @F.%Class.loc17_19.2 (%Class) = var c
+// CHECK:STDOUT:     %c.var: ref @F.%Class.loc17_19.2 (%Class) = var %c.var_patt
 // CHECK:STDOUT:     %.loc17_23: @F.%MakeSelf.type (%MakeSelf.type) = specific_constant @Class.%MakeSelf.decl, @Class(constants.%T) [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:     %MakeSelf.ref: @F.%MakeSelf.type (%MakeSelf.type) = name_ref MakeSelf, %.loc17_23 [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:     %MakeSelf.specific_fn.loc17_23.1: <specific function> = specific_function %MakeSelf.ref, @MakeSelf(constants.%T) [symbolic = %MakeSelf.specific_fn.loc17_23.2 (constants.%MakeSelf.specific_fn)]
-// CHECK:STDOUT:     %.loc17_5.2: ref @F.%Class.loc17_19.2 (%Class) = splice_block %c.var {}
-// CHECK:STDOUT:     %MakeSelf.call: init @F.%Class.loc17_19.2 (%Class) = call %MakeSelf.specific_fn.loc17_23.1() to %.loc17_5.2
+// CHECK:STDOUT:     %.loc17_5: ref @F.%Class.loc17_19.2 (%Class) = splice_block %c.var {}
+// CHECK:STDOUT:     %MakeSelf.call: init @F.%Class.loc17_19.2 (%Class) = call %MakeSelf.specific_fn.loc17_23.1() to %.loc17_5
 // CHECK:STDOUT:     assign %c.var, %MakeSelf.call
 // CHECK:STDOUT:     %.loc17_19: type = splice_block %Class.loc17_19.1 [symbolic = %Class.loc17_19.2 (constants.%Class)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
@@ -178,14 +178,14 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %c: ref @F.%Class.loc17_19.2 (%Class) = bind_name c, %c.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %s.patt: @F.%pattern_type (%pattern_type.3c1) = binding_pattern s [concrete]
-// CHECK:STDOUT:       %.loc18_5.1: @F.%pattern_type (%pattern_type.3c1) = var_pattern %s.patt [concrete]
+// CHECK:STDOUT:       %s.var_patt: @F.%pattern_type (%pattern_type.3c1) = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s.var: ref @F.%Class.loc17_19.2 (%Class) = var s
+// CHECK:STDOUT:     %s.var: ref @F.%Class.loc17_19.2 (%Class) = var %s.var_patt
 // CHECK:STDOUT:     %.loc18_19: @F.%MakeClass.type (%MakeClass.type) = specific_constant @Class.%MakeClass.decl, @Class(constants.%T) [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:     %MakeClass.ref: @F.%MakeClass.type (%MakeClass.type) = name_ref MakeClass, %.loc18_19 [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:     %MakeClass.specific_fn.loc18_19.1: <specific function> = specific_function %MakeClass.ref, @MakeClass(constants.%T) [symbolic = %MakeClass.specific_fn.loc18_19.2 (constants.%MakeClass.specific_fn)]
-// CHECK:STDOUT:     %.loc18_5.2: ref @F.%Class.loc17_19.2 (%Class) = splice_block %s.var {}
-// CHECK:STDOUT:     %MakeClass.call: init @F.%Class.loc17_19.2 (%Class) = call %MakeClass.specific_fn.loc18_19.1() to %.loc18_5.2
+// CHECK:STDOUT:     %.loc18_5: ref @F.%Class.loc17_19.2 (%Class) = splice_block %s.var {}
+// CHECK:STDOUT:     %MakeClass.call: init @F.%Class.loc17_19.2 (%Class) = call %MakeClass.specific_fn.loc18_19.1() to %.loc18_5
 // CHECK:STDOUT:     assign %s.var, %MakeClass.call
 // CHECK:STDOUT:     %.loc18_12.1: type = splice_block %Self.ref [symbolic = %Class.loc17_19.2 (constants.%Class)] {
 // CHECK:STDOUT:       %.loc18_12.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc17_19.2 (constants.%Class)]

@@ -948,8 +948,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         }
         continue;
       }
+      case VarPattern::Kind: {
+        add_inst_name_id(GetPrettyNameFromPatternId(*sem_ir_, inst_id),
+                         ".var_patt");
+        continue;
+      }
       case CARBON_KIND(VarStorage inst): {
-        add_inst_name_id(inst.pretty_name_id, ".var");
+        if (inst.pattern_id.has_value()) {
+          add_inst_name_id(
+              GetPrettyNameFromPatternId(*sem_ir_, inst.pattern_id), ".var");
+        } else {
+          add_inst_name("var");
+        }
         continue;
       }
       default: {
