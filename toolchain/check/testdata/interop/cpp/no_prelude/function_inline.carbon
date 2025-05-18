@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/function_inline.carbon
 
 // ============================================================================
-// with_definition
+// With definition
 // ============================================================================
 
 // --- with_definition.h
@@ -27,7 +27,7 @@ fn MyF() {
 }
 
 // ============================================================================
-// without_definition
+// Without definition
 // ============================================================================
 
 // --- without_definition.h
