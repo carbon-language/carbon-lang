@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/function.carbon
 
 // ============================================================================
-// global
+// Global
 // ============================================================================
 
 // --- global.h
@@ -41,7 +41,7 @@ fn MyF() {
 }
 
 // ============================================================================
-// special_name
+// Carbon keyword name
 // ============================================================================
 
 // --- special_name.h
@@ -73,7 +73,7 @@ fn MyF() {
 }
 
 // ============================================================================
-// overloaded
+// Overloaded
 // ============================================================================
 
 // --- overloaded.h
@@ -99,7 +99,7 @@ fn F() {
 }
 
 // ============================================================================
-// variadic
+// Variadic
 // ============================================================================
 
 // --- variadic.h
@@ -124,7 +124,7 @@ fn F() {
 }
 
 // ============================================================================
-// static
+// Static
 // ============================================================================
 
 // --- static.h
@@ -152,26 +152,26 @@ fn F() {
 //       This is not tested because template functions are not considered a single result when doing lookup.
 
 // ============================================================================
-// param_type_unsupported
+// Struct param type
 // ============================================================================
 
-// --- param_type_unsupported.h
+// --- struct_param_type.h
 
 struct S {};
 
 auto foo(S) -> void;
 
-// --- fail_import_param_type_unsupported.carbon
+// --- fail_todo_import_struct_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "param_type_unsupported.h";
+import Cpp library "struct_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_param_type_unsupported.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_struct_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_param_type_unsupported.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_struct_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -179,26 +179,26 @@ fn F() {
 }
 
 // ============================================================================
-// return_type_unsupported
+// Struct return type
 // ============================================================================
 
-// --- return_type_unsupported.h
+// --- struct_return_type.h
 
 struct F;
 
 F foo();
 
-// --- fail_todo_import_return_type_unsupported.carbon
+// --- fail_todo_import_struct_return_type.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "return_type_unsupported.h";
+import Cpp library "struct_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_return_type_unsupported.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: return type: struct F` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_struct_return_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: return type: struct F` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_return_type_unsupported.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_struct_return_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -442,7 +442,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_param_type_unsupported.carbon
+// CHECK:STDOUT: --- fail_todo_import_struct_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -463,7 +463,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "param_type_unsupported.h"
+// CHECK:STDOUT:     import Cpp "struct_param_type.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -476,7 +476,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_return_type_unsupported.carbon
+// CHECK:STDOUT: --- fail_todo_import_struct_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -496,7 +496,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "return_type_unsupported.h"
+// CHECK:STDOUT:     import Cpp "struct_return_type.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
