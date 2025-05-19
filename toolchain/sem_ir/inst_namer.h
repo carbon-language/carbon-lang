@@ -98,6 +98,11 @@ class InstNamer {
   // Returns the IR name to use for a label, when referenced from a given scope.
   auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) const -> std::string;
 
+  // Returns true if the instruction has a specific name assigned.
+  auto has_name(InstId inst_id) const -> bool {
+    return static_cast<bool>(insts_[inst_id.index].second);
+  }
+
  private:
   // A space in which unique names can be allocated.
   struct Namespace {
