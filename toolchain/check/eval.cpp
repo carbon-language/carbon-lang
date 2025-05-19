@@ -772,7 +772,7 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
 auto AddImportedConstant(Context& context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   EvalContext eval_context(&context, SemIR::LocId::None);
-  CARBON_CHECK(inst.kind().is_typed_value(),
+  CARBON_CHECK(inst.kind().has_type(),
                "Instructions without a `type_id` shouldn't be evaluated: {0}",
                inst.kind());
   Phase phase = GetPhase(context.constant_values(),

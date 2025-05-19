@@ -159,7 +159,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   auto is_type() const -> InstIsType { return definition_info(*this).is_type; }
 
   // Returns whether this instruction kind is expected to produce a typed value.
-  auto is_typed_value() const -> bool;
+  auto has_type() const -> bool;
 
   // Returns this instruction kind's category of allowed constants.
   auto constant_kind() const -> InstConstantKind {

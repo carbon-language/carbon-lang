@@ -370,7 +370,7 @@ How does this work? As of
         with the same enumerant value, plus values for the other fields.
 
 -   Note that additional information is needed to define the `ir_name()`,
-    `is_typed_value()`, and `terminator_kind()` methods of `InstKind`. This
+    `has_type()`, and `terminator_kind()` methods of `InstKind`. This
     information comes from the typed instruction definitions in
     [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h).
 
@@ -399,8 +399,8 @@ How does this work? As of
         kinds from [sem_ir/inst_kind.def](/toolchain/sem_ir/inst_kind.def)
         (using [the .def file idiom](idioms.md#def-files))
 
-    -   `InstKind::is_typed_value()` is defined. It has a static table of
-        indexed by the enum value, populated by applying `HasTypeIdMember` from
+    -   `InstKind::has_type()` is defined. It has a static table of indexed by
+        the enum value, populated by applying `HasTypeIdMember` from
         [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) to every
         instruction kind by using the list from
         [sem_ir/inst_kind.def](/toolchain/sem_ir/inst_kind.def).

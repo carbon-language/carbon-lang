@@ -958,7 +958,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     }
 
     // Sequentially number all remaining values.
-    if (untyped_inst.kind().is_typed_value()) {
+    if (untyped_inst.kind().has_type()) {
       add_inst_name("");
     }
   }

@@ -841,7 +841,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       return;
 
     default:
-      if (inst.kind().is_typed_value()) {
+      if (inst.kind().has_type()) {
         FormatName(inst_id);
         out_ << ": ";
         switch (GetExprCategory(*sem_ir_, inst_id)) {
