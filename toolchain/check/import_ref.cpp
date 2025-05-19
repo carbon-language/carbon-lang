@@ -892,7 +892,8 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
     return SemIR::ConstantId::None;
   }
   auto import_decl_inst_id = resolver.import_generics().Get(generic_id).decl_id;
-  auto import_decl_inst = resolver.import_insts().Get(import_decl_inst_id);
+  auto import_decl_inst =
+      resolver.import_insts().GetWithAttachedType(import_decl_inst_id);
   if (import_decl_inst.Is<SemIR::ImplDecl>()) {
     // For an impl declaration, the imported entity can be found via the
     // declaration.
@@ -1370,6 +1371,8 @@ static auto AddAssociatedEntities(ImportContext& context,
       import_name_id =
           context.import_entity_names().Get(import_ref->entity_name_id).name_id;
     } else {
+      // We don't need `GetWithAttachedType` here because we don't access the
+      // type.
       CARBON_FATAL("Unhandled associated entity kind: {0}",
                    context.import_insts().Get(inst_id).kind());
     }
@@ -1399,6 +1402,10 @@ static auto RetryOrDone(ImportRefResolver& resolver, SemIR::ConstantId const_id)
 // that there is no new work.
 static auto ResolveAsUntyped(ImportContext& context, SemIR::Inst inst)
     -> ResolveResult {
+  // AddImportedConstant produces an unattached constant, so its type must
+  // be unattached as well.
+  inst.SetType(
+      context.local_context().types().GetUnattachedType(inst.type_id()));
   auto result = AddImportedConstant(context.local_context(), inst);
   CARBON_CHECK(result.is_constant(), "{0} is not constant", inst);
   return ResolveResult::Done(result);
@@ -2854,7 +2861,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     return ResolveResult::Done(resolver.local_constant_values().Get(inst_id));
   }
 
-  auto untyped_inst = resolver.import_insts().Get(inst_id);
+  auto untyped_inst = resolver.import_insts().GetWithAttachedType(inst_id);
   CARBON_KIND_SWITCH(untyped_inst) {
     case CARBON_KIND(SemIR::AdaptDecl inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);

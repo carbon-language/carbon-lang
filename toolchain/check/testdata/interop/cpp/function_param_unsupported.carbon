@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function_param_unsupported.carbon
 
 // ============================================================================
-// unsupported_primitive_type
+// Unsupported primitive type
 // ============================================================================
 
 // --- unsupported_primitive_type.h
@@ -34,7 +34,7 @@ fn F() {
 }
 
 // ============================================================================
-// unsupported_primitive_type_among_params
+// Unsupported primitive type among params
 // ============================================================================
 
 // --- unsupported_primitive_type_among_params.h

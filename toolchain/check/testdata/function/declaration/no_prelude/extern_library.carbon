@@ -299,8 +299,6 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_mismatch_owner.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_self_library.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

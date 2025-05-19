@@ -142,8 +142,9 @@ class Formatter {
 
   // Formats a top-level scope, and any of the instructions in that scope that
   // are used.
-  auto FormatScopeIfUsed(InstNamer::ScopeId scope_id,
-                         llvm::ArrayRef<InstId> block) -> void;
+  auto FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
+                                 llvm::ArrayRef<InstId> block,
+                                 bool use_tentative_output_scopes) -> void;
 
   // Formats a full class.
   auto FormatClass(ClassId id) -> void;
@@ -230,19 +231,6 @@ class Formatter {
   auto FormatPendingConstantValue(AddSpace space_where) -> void;
 
   auto FormatInstLhs(InstId inst_id, Inst inst) -> void;
-
-  // Format ImportCppDecl name.
-  auto FormatInstLhs(InstId inst_id, ImportCppDecl inst) -> void;
-
-  // Format ImportDecl with its name.
-  auto FormatInstLhs(InstId inst_id, ImportDecl inst) -> void;
-
-  // Print ImportRefUnloaded with type-like semantics even though it lacks a
-  // type_id.
-  auto FormatInstLhs(InstId inst_id, ImportRefUnloaded inst) -> void;
-
-  // Format ImplWitnessTable with its name even though it lacks a type_id.
-  auto FormatInstLhs(InstId inst_id, ImplWitnessTable inst) -> void;
 
   template <typename InstT>
   auto FormatInstRhs(InstT inst) -> void;
