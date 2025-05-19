@@ -166,6 +166,12 @@ class InstNamer {
 
   auto CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id) -> void;
 
+  // Collects names from the provided block.
+  //
+  // This is essential for finding instructions that we need to name. If
+  // `<unexpected>` occurs in output of valid SemIR, it often means the
+  // instruction needs to be handled here. Note that `<unexpected>` can occur in
+  // invalid SemIR just because we're unable to correctly walk the SemIR.
   auto CollectNamesInBlock(ScopeId scope_id, llvm::ArrayRef<InstId> block)
       -> void;
 

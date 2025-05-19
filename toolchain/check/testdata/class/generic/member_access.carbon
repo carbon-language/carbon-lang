@@ -30,7 +30,7 @@ fn AddrMethodCall(p: Class(i32)*) -> i32 {
   return *p->GetAddr();
 }
 
-// --- fail_todo_static_member_fn_call.carbon
+// --- static_member_fn_call.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -39,13 +39,6 @@ class Class(T:! type) {
 }
 
 fn StaticMemberFunctionCall(T:! type) -> Class(T) {
-  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Class(T)` to `Class(T)` [ConversionFailure]
-  // CHECK:STDERR:   return Class(T).Make();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_static_member_fn_call.carbon:[[@LINE+4]]:3: note: type `Class(T)` does not implement interface `Core.ImplicitAs(Class(T))` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   return Class(T).Make();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   return Class(T).Make();
 }
 
@@ -364,8 +357,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type.loc5_24 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Get.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetAddr(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class.fe1
@@ -374,10 +365,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %ptr.loc7_38.1 => constants.%ptr.79f
 // CHECK:STDOUT:   %pattern_type.loc7_34 => constants.%pattern_type.afe
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetAddr.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc2_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%i32) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%i32
@@ -421,7 +408,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2d8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_static_member_fn_call.carbon
+// CHECK:STDOUT: --- static_member_fn_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -434,34 +421,18 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %require_complete.4f8: <witness> = require_complete_type %Class [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.val: %Class = struct_value () [symbolic]
 // CHECK:STDOUT:   %StaticMemberFunctionCall.type: type = fn_type @StaticMemberFunctionCall [concrete]
 // CHECK:STDOUT:   %StaticMemberFunctionCall: %StaticMemberFunctionCall.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make, @Make(%T) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.275: type = fn_type @Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %Convert.42e: %Convert.type.275 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.ca0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.53b: type = facet_type <@ImplicitAs, @ImplicitAs(%Class)> [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.6aa: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Class) [symbolic]
-// CHECK:STDOUT:   %assoc0.f00: %ImplicitAs.assoc_type.6aa = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
-// CHECK:STDOUT:   %require_complete.d81: <witness> = require_complete_type %ImplicitAs.type.53b [symbolic]
-// CHECK:STDOUT:   %assoc0.dc0: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//prelude/operators/as, loc13_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%Convert.type (%Convert.type.275) = import_ref Core//prelude/operators/as, loc13_35, loaded [symbolic = @ImplicitAs.%Convert (constants.%Convert.42e)]
-// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude/operators/as, loc13_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -526,7 +497,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc5_23.1 [symbolic = %pattern_type (constants.%pattern_type.3c1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc5_23.1 [symbolic = %require_complete (constants.%require_complete.4f8)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc5_23.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Class.val: @Make.%Class.loc5_23.1 (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @Make.%Class.loc5_23.1 (%Class) {
@@ -544,30 +515,22 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc8_49.2 [symbolic = %pattern_type (constants.%pattern_type.3c1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc16_18: <witness> = require_complete_type %Class.loc8_49.2 [symbolic = %require_complete.loc16_18 (constants.%require_complete.4f8)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc8_49.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc8_29.2) [symbolic = %Make.type (constants.%Make.type)]
 // CHECK:STDOUT:   %Make: @StaticMemberFunctionCall.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:   %Make.specific_fn.loc16_18.2: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %Make.specific_fn.loc16_18.2 (constants.%Make.specific_fn)]
-// CHECK:STDOUT:   %ImplicitAs.type.loc16_25.2: type = facet_type <@ImplicitAs, @ImplicitAs(%Class.loc8_49.2)> [symbolic = %ImplicitAs.type.loc16_25.2 (constants.%ImplicitAs.type.53b)]
-// CHECK:STDOUT:   %require_complete.loc16_25: <witness> = require_complete_type %ImplicitAs.type.loc16_25.2 [symbolic = %require_complete.loc16_25 (constants.%require_complete.d81)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Class.loc8_49.2) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.6aa)]
-// CHECK:STDOUT:   %assoc0: @StaticMemberFunctionCall.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.6aa) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.f00)]
+// CHECK:STDOUT:   %Make.specific_fn.loc9_18.2: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %Make.specific_fn.loc9_18.2 (constants.%Make.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %Class.ref.loc16: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
-// CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T.loc8_29.1 [symbolic = %T.loc8_29.2 (constants.%T)]
-// CHECK:STDOUT:     %Class.loc16: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc8_49.2 (constants.%Class)]
-// CHECK:STDOUT:     %.loc16_18: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc16_18 [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %Make.specific_fn.loc16_18.1: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %Make.specific_fn.loc16_18.2 (constants.%Make.specific_fn)]
-// CHECK:STDOUT:     %.loc16_24: ref @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = temporary_storage
-// CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = call %Make.specific_fn.loc16_18.1() to %.loc16_24
-// CHECK:STDOUT:     %ImplicitAs.type.loc16_25.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%Class)> [symbolic = %ImplicitAs.type.loc16_25.2 (constants.%ImplicitAs.type.53b)]
-// CHECK:STDOUT:     %.loc16_25.1: @StaticMemberFunctionCall.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.6aa) = specific_constant imports.%Core.import_ref.492, @ImplicitAs(constants.%Class) [symbolic = %assoc0 (constants.%assoc0.f00)]
-// CHECK:STDOUT:     %Convert.ref: @StaticMemberFunctionCall.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.6aa) = name_ref Convert, %.loc16_25.1 [symbolic = %assoc0 (constants.%assoc0.f00)]
-// CHECK:STDOUT:     %.loc16_25.2: @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = converted %Make.call, <error> [concrete = <error>]
-// CHECK:STDOUT:     return <error> to %return
+// CHECK:STDOUT:     %Class.ref.loc9: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
+// CHECK:STDOUT:     %T.ref.loc9: type = name_ref T, %T.loc8_29.1 [symbolic = %T.loc8_29.2 (constants.%T)]
+// CHECK:STDOUT:     %Class.loc9: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc8_49.2 (constants.%Class)]
+// CHECK:STDOUT:     %.loc9: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc9 [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %Make.specific_fn.loc9_18.1: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %Make.specific_fn.loc9_18.2 (constants.%Make.specific_fn)]
+// CHECK:STDOUT:     %.loc8: ref @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = splice_block %return {}
+// CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) = call %Make.specific_fn.loc9_18.1() to %.loc8
+// CHECK:STDOUT:     return %Make.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -585,21 +548,13 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3c1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.4f8
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Make.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @StaticMemberFunctionCall(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_29.2 => constants.%T
 // CHECK:STDOUT:   %Class.loc8_49.2 => constants.%Class
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3c1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@StaticMemberFunctionCall.%T.loc8_29.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(@StaticMemberFunctionCall.%T.loc8_29.2) {}
 // CHECK:STDOUT:

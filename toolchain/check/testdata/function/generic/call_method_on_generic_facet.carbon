@@ -286,8 +286,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Scalar, constants.%Self.dee8d8.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%Scalar.loc11_19.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%GenericParam) {
 // CHECK:STDOUT:   %Scalar.loc11_19.2 => constants.%GenericParam
 // CHECK:STDOUT:
@@ -325,11 +323,7 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.80f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(@CallGenericMethod.%T.loc29_22.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Generic.facet.680) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@CallGenericMethod.%T.loc29_22.2, @CallGenericMethod.%Generic.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet.8ff) {
 // CHECK:STDOUT:   %T.loc29_22.2 => constants.%GenericParam

@@ -101,14 +101,10 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   auto inst = sem_ir().insts().Get(inst_id);
   CARBON_VLOG("Lowering {0}: {1}\n", inst_id, inst);
   builder_.getInserter().SetCurrentInstId(inst_id);
-  if (di_subprogram_) {
-    auto loc = file_context_->GetLocForDI(inst_id);
-    CARBON_CHECK(loc.filename == di_subprogram_->getFile()->getFilename(),
-                 "Instructions located in a different file from their "
-                 "enclosing function aren't handled yet");
-    builder_.SetCurrentDebugLocation(
-        llvm::DILocation::get(builder_.getContext(), loc.line_number,
-                              loc.column_number, di_subprogram_));
+
+  auto debug_loc = GetDebugLoc(inst_id);
+  if (debug_loc) {
+    builder_.SetCurrentDebugLocation(debug_loc);
   }
 
   CARBON_KIND_SWITCH(inst) {
@@ -120,10 +116,11 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
 #include "toolchain/sem_ir/inst_kind.def"
   }
 
-  builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
-  if (di_subprogram_) {
+  if (debug_loc) {
     builder_.SetCurrentDebugLocation(llvm::DebugLoc());
   }
+
+  builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
 }
 
 auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
@@ -149,6 +146,25 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
 auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {
   synthetic_block_ = llvm::BasicBlock::Create(llvm_context(), "", function_);
   return synthetic_block_;
+}
+
+auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
+  if (!di_subprogram_) {
+    return llvm::DebugLoc();
+  }
+  auto loc = file_context_->GetLocForDI(inst_id);
+  if (loc.filename != di_subprogram_->getFile()->getFilename()) {
+    // Location is from a different file. We can't represent that directly
+    // within the scope of this function's subprogram, and we don't want to
+    // generate a new subprogram, so just discard the location information. This
+    // happens for thunks when emitting the portion of the thunk that is
+    // duplicated from the original signature.
+    //
+    // TODO: Handle this case better.
+    return llvm::DebugLoc();
+  }
+  return llvm::DILocation::get(builder_.getContext(), loc.line_number,
+                               loc.column_number, di_subprogram_);
 }
 
 auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,

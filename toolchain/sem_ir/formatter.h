@@ -17,42 +17,60 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
-  // A callback that indicates whether a specific entity, identified by its
-  // declaration, should be included in the output.
-  using ShouldFormatEntityFn =
-      llvm::function_ref<auto(InstId decl_inst_id)->bool>;
-
   explicit Formatter(const File* sem_ir,
-                     ShouldFormatEntityFn should_format_entity,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees);
+                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+                     llvm::ArrayRef<bool> include_ir_in_dumps,
+                     bool use_dump_sem_ir_ranges);
 
-  // Prints the SemIR into an internal buffer.
+  // Prints the SemIR into an internal buffer. Must only be called once.
   //
-  // Constants are printed first and may be referenced by later sections,
-  // including file-scoped instructions. The file scope may contain entity
-  // declarations which are defined later, such as classes.
+  // We first print top-level scopes (constants, imports, and file) then
+  // entities (types and functions). The ordering is based on references:
+  //
+  // - constants can have internal references.
+  // - imports can refer to constants.
+  // - file can refer to constants and imports, and also entities.
+  // - Entities are difficult to order (forward declarations may lead to
+  //   circular references), and so are simply grouped by type.
+  //
+  // When formatting constants and imports, we use `OutputChunks` to only print
+  // entities which are referenced. For example, imports speculatively create
+  // constants which may never be referenced, or for which the referencing
+  // instruction may be hidden and we normally hide those. See `OutputChunk` for
+  // additional information.
+  //
+  // Beyond `OutputChunk`, `ShouldFormatEntity` and `ShouldFormatInst` can also
+  // hide instructions. These interact because an hidden instruction means its
+  // references are unused for `OutputChunk` visibility.
   auto Format() -> void;
 
-  // Write buffered output to the given stream.
+  // Write buffered output to the given stream. `Format` must be called first.
   auto Write(llvm::raw_ostream& out) -> void;
 
  private:
   enum class AddSpace : bool { Before, After };
 
-  // A chunk of the buffered output. Chunks of the output, such as constant
-  // values, are buffered until we reach the end of formatting so that we can
-  // decide whether to include them based on whether they are referenced.
+  // A chunk of the buffered output. Constants and imports are buffered as
+  // `OutputChunk`s until we reach the end of formatting so that we can decide
+  // whether to include them based on whether they are referenced.
+  //
+  // When `FormatName` is called for an instruction, it's considered referenced;
+  // if that instruction is in an `OutputChunk`, it and all of its dependencies
+  // will be marked for printing by `Write`. If that doesn't occur by the end,
+  // it will be omitted.
   struct OutputChunk {
     // Whether this chunk is known to be included in the output.
     bool include_in_output;
     // The textual contents of this chunk.
     std::string chunk = std::string();
-    // Chunks that should be included in the output if this one is.
+    // Indices in `ouput_chunks_` that should be included in the output if this
+    // one is.
     llvm::SmallVector<size_t> dependencies = {};
   };
 
-  // A scope in which output should be buffered because we don't yet know
-  // whether to include it in the final formatted SemIR.
+  // All formatted output within the scope of this object is redirected to a
+  // new tentative `OutputChunk`. The new chunk will depend on
+  // `parent_chunk_index`.
   struct TentativeOutputScope {
     explicit TentativeOutputScope(Formatter& f, size_t parent_chunk_index)
         : formatter(f) {
@@ -71,6 +89,10 @@ class Formatter {
     size_t index;
   };
 
+  // Fills `node_parents_` with parent information. Called at most once during
+  // construction.
+  auto ComputeNodeParents() -> void;
+
   // Flushes the buffered output to the current chunk.
   auto FlushChunk() -> void;
 
@@ -85,19 +107,20 @@ class Formatter {
   // is.
   auto IncludeChunkInOutput(size_t chunk) -> void;
 
-  // Returns true if the node subtree for the instruction or body overlaps with
-  // a dump range, or if there are no ranges.
-  auto OverlapsWithDumpSemIRRange(InstId inst_id,
-                                  llvm::ArrayRef<InstBlockId> body_block_ids)
-      -> bool;
+  // Returns true if the instruction should be included according to its
+  // originating IR. Typically `ShouldFormatEntity` should be used instead.
+  auto ShouldIncludeInstByIR(InstId inst_id) -> bool;
 
   // Determines whether the specified entity should be included in the formatted
-  // output.
-  auto ShouldFormatEntity(InstId decl_id,
-                          llvm::ArrayRef<InstBlockId> body_block_ids) -> bool;
+  // output. `is_definition_start` should indicate whether, if `decl_id`'s
+  // `LocId` is a `NodeId`, it is expected to be a `DefinitionStart` kind.
+  auto ShouldFormatEntity(InstId decl_id, bool is_definition_start) -> bool;
 
-  auto ShouldFormatEntity(const EntityWithParamsBase& entity,
-                          llvm::ArrayRef<InstBlockId> body_block_ids) -> bool;
+  auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool;
+
+  // Determines whether a single instruction should be included in the
+  // formatted output.
+  auto ShouldFormatInst(InstId inst_id) -> bool;
 
   // Begins a braced block. Writes an open brace, and prepares to insert a
   // newline after it if the braced block is non-empty.
@@ -119,8 +142,9 @@ class Formatter {
 
   // Formats a top-level scope, and any of the instructions in that scope that
   // are used.
-  auto FormatScopeIfUsed(InstNamer::ScopeId scope_id,
-                         llvm::ArrayRef<InstId> block) -> void;
+  auto FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
+                                 llvm::ArrayRef<InstId> block,
+                                 bool use_tentative_output_scopes) -> void;
 
   // Formats a full class.
   auto FormatClass(ClassId id) -> void;
@@ -183,7 +207,14 @@ class Formatter {
   // Don't print a constant for ImportRefUnloaded.
   auto FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void;
 
-  // Prints a single instruction.
+  // Prints a single instruction. This typically dispatches to one of the
+  // `FormatInst` overloads, based on a specific instruction type.
+  //
+  // While there is default formatting behavior, we do have overloads when
+  // special behavior is required, although typically of functions called by
+  // `FormatInst` rather than `FormatInst` itself. For example, `FormatInstRhs`
+  // is frequently overloaded because the default argument formatting often
+  // isn't what we want for instructions.
   auto FormatInst(InstId inst_id) -> void;
 
   template <typename InstT>
@@ -200,19 +231,6 @@ class Formatter {
   auto FormatPendingConstantValue(AddSpace space_where) -> void;
 
   auto FormatInstLhs(InstId inst_id, Inst inst) -> void;
-
-  // Format ImportCppDecl name.
-  auto FormatInstLhs(InstId inst_id, ImportCppDecl inst) -> void;
-
-  // Format ImportDecl with its name.
-  auto FormatInstLhs(InstId inst_id, ImportDecl inst) -> void;
-
-  // Print ImportRefUnloaded with type-like semantics even though it lacks a
-  // type_id.
-  auto FormatInstLhs(InstId inst_id, ImportRefUnloaded inst) -> void;
-
-  // Format ImplWitnessTable with its name even though it lacks a type_id.
-  auto FormatInstLhs(InstId inst_id, ImplWitnessTable inst) -> void;
 
   template <typename InstT>
   auto FormatInstRhs(InstT inst) -> void;
@@ -322,8 +340,13 @@ class Formatter {
 
   const File* sem_ir_;
   InstNamer inst_namer_;
-  ShouldFormatEntityFn should_format_entity_;
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
+
+  // For each CheckIRId, whether entities from it should be formatted.
+  llvm::ArrayRef<bool> include_ir_in_dumps_;
+
+  // Whether to use ranges when dumping, or to dump the full SemIR.
+  bool use_dump_sem_ir_ranges_;
 
   // The output stream buffer.
   std::string buffer_;
@@ -369,6 +392,10 @@ class Formatter {
   // referenced, indexed by the instruction's index. This is resized in advance
   // to the correct size.
   llvm::SmallVector<size_t, 0> tentative_inst_chunks_;
+
+  // Maps nodes to their parents. Only set when dump ranges are in use, because
+  // the parents aren't used otherwise.
+  llvm::SmallVector<Parse::NodeId> node_parents_;
 };
 
 template <typename IdT>
@@ -378,10 +405,11 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
   // If this entity was imported from a different IR, annotate the name of
   // that IR in the output before the `{` or `;`.
   if (first_owning_decl_id.has_value()) {
-    auto loc_id = sem_ir_->insts().GetCanonicalLocId(first_owning_decl_id);
-    if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
+    auto import_ir_inst_id =
+        sem_ir_->insts().GetImportSource(first_owning_decl_id);
+    if (import_ir_inst_id.has_value()) {
       auto import_ir_id =
-          sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
+          sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
       const auto* import_file = sem_ir_->import_irs().Get(import_ir_id).sem_ir;
       pending_imported_from_ = import_file->filename();
     }
@@ -417,7 +445,7 @@ auto Formatter::FormatInst(InstId inst_id, InstT inst) -> void {
   Indent();
   FormatInstLhs(inst_id, inst);
   out_ << InstT::Kind.ir_name();
-  pending_constant_value_ = sem_ir_->constant_values().Get(inst_id);
+  pending_constant_value_ = sem_ir_->constant_values().GetAttached(inst_id);
   pending_constant_value_is_self_ = sem_ir_->constant_values().GetInstIdIfValid(
                                         pending_constant_value_) == inst_id;
   FormatInstRhs(inst);

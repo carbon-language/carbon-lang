@@ -48,7 +48,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %require_complete.fe1: <witness> = require_complete_type %tuple.type.30b [symbolic]
 // CHECK:STDOUT:   %Get.specific_fn.f73: <specific function> = specific_function %Get.cf9, @Get(%T, %U) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %require_complete.b54: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.536: <specific function> = specific_function %GetNoDeduce.c9a, @GetNoDeduce(%T, %U) [symbolic]
 // CHECK:STDOUT:   %Class.480: type = class_type @Class, @Class(%A) [concrete]
 // CHECK:STDOUT:   %pattern_type.827: type = pattern_type %Class.480 [concrete]
@@ -213,12 +212,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %tuple.type [symbolic = %pattern_type (constants.%pattern_type.65c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc15_20: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc15_20 (constants.%require_complete.fe1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete.fe1)]
 // CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Class(%T) [symbolic = %Get.type (constants.%Get.type.fd9)]
 // CHECK:STDOUT:   %Get: @Get.%Get.type (%Get.type.fd9) = struct_value () [symbolic = %Get (constants.%Get.cf9)]
 // CHECK:STDOUT:   %Get.specific_fn.loc15_39.2: <specific function> = specific_function %Get, @Get(%T, %U.loc15_10.1) [symbolic = %Get.specific_fn.loc15_39.2 (constants.%Get.specific_fn.f73)]
-// CHECK:STDOUT:   %require_complete.loc15_44.1: <witness> = require_complete_type %T [symbolic = %require_complete.loc15_44.1 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %require_complete.loc15_44.2: <witness> = require_complete_type %U.loc15_10.1 [symbolic = %require_complete.loc15_44.2 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @Get.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:
@@ -226,20 +223,9 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %Get.ref: @Get.%Get.type (%Get.type.fd9) = name_ref Get, %.loc15_39 [symbolic = %Get (constants.%Get.cf9)]
 // CHECK:STDOUT:     %U.ref.loc15_43: type = name_ref U, %U.loc15_10.2 [symbolic = %U.loc15_10.1 (constants.%U)]
 // CHECK:STDOUT:     %Get.specific_fn.loc15_39.1: <specific function> = specific_function %Get.ref, @Get(constants.%T, constants.%U) [symbolic = %Get.specific_fn.loc15_39.2 (constants.%Get.specific_fn.f73)]
-// CHECK:STDOUT:     %.loc15_44.1: ref @Get.%tuple.type (%tuple.type.30b) = temporary_storage
-// CHECK:STDOUT:     %Get.call: init @Get.%tuple.type (%tuple.type.30b) = call %Get.specific_fn.loc15_39.1() to %.loc15_44.1
-// CHECK:STDOUT:     %.loc15_44.2: ref @Get.%tuple.type (%tuple.type.30b) = temporary %.loc15_44.1, %Get.call
-// CHECK:STDOUT:     %tuple.elem0.loc15_44.1: ref @Get.%T (%T) = tuple_access %.loc15_44.2, element0
-// CHECK:STDOUT:     %.loc15_44.3: @Get.%T (%T) = bind_value %tuple.elem0.loc15_44.1
-// CHECK:STDOUT:     %tuple.elem0.loc15_44.2: ref @Get.%T (%T) = tuple_access %return, element0
-// CHECK:STDOUT:     %.loc15_44.4: init @Get.%T (%T) = initialize_from %.loc15_44.3 to %tuple.elem0.loc15_44.2
-// CHECK:STDOUT:     %tuple.elem1.loc15_44.1: ref @Get.%U.loc15_10.1 (%U) = tuple_access %.loc15_44.2, element1
-// CHECK:STDOUT:     %.loc15_44.5: @Get.%U.loc15_10.1 (%U) = bind_value %tuple.elem1.loc15_44.1
-// CHECK:STDOUT:     %tuple.elem1.loc15_44.2: ref @Get.%U.loc15_10.1 (%U) = tuple_access %return, element1
-// CHECK:STDOUT:     %.loc15_44.6: init @Get.%U.loc15_10.1 (%U) = initialize_from %.loc15_44.5 to %tuple.elem1.loc15_44.2
-// CHECK:STDOUT:     %.loc15_44.7: init @Get.%tuple.type (%tuple.type.30b) = tuple_init (%.loc15_44.4, %.loc15_44.6) to %return
-// CHECK:STDOUT:     %.loc15_45: init @Get.%tuple.type (%tuple.type.30b) = converted %Get.call, %.loc15_44.7
-// CHECK:STDOUT:     return %.loc15_45 to %return
+// CHECK:STDOUT:     %.loc15_20: ref @Get.%tuple.type (%tuple.type.30b) = splice_block %return {}
+// CHECK:STDOUT:     %Get.call: init @Get.%tuple.type (%tuple.type.30b) = call %Get.specific_fn.loc15_39.1() to %.loc15_20
+// CHECK:STDOUT:     return %Get.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,7 +242,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce: @GetNoDeduce.%GetNoDeduce.type (%GetNoDeduce.type.766) = struct_value () [symbolic = %GetNoDeduce (constants.%GetNoDeduce.c9a)]
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.loc16_53.2: <specific function> = specific_function %GetNoDeduce, @GetNoDeduce(%T, %U.loc16_24.1) [symbolic = %GetNoDeduce.specific_fn.loc16_53.2 (constants.%GetNoDeduce.specific_fn.536)]
 // CHECK:STDOUT:   %require_complete.loc16_70: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc16_70 (constants.%require_complete.fe1)]
-// CHECK:STDOUT:   %require_complete.loc16_69: <witness> = require_complete_type %U.loc16_24.1 [symbolic = %require_complete.loc16_69 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @GetNoDeduce.%T (%T)) -> %return.param: @GetNoDeduce.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:
@@ -265,20 +250,9 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %x.ref: @GetNoDeduce.%T (%T) = name_ref x, %x
 // CHECK:STDOUT:     %U.ref.loc16_68: type = name_ref U, %U.loc16_24.2 [symbolic = %U.loc16_24.1 (constants.%U)]
 // CHECK:STDOUT:     %GetNoDeduce.specific_fn.loc16_53.1: <specific function> = specific_function %GetNoDeduce.ref, @GetNoDeduce(constants.%T, constants.%U) [symbolic = %GetNoDeduce.specific_fn.loc16_53.2 (constants.%GetNoDeduce.specific_fn.536)]
-// CHECK:STDOUT:     %.loc16_69.1: ref @GetNoDeduce.%tuple.type (%tuple.type.30b) = temporary_storage
-// CHECK:STDOUT:     %GetNoDeduce.call: init @GetNoDeduce.%tuple.type (%tuple.type.30b) = call %GetNoDeduce.specific_fn.loc16_53.1(%x.ref) to %.loc16_69.1
-// CHECK:STDOUT:     %.loc16_69.2: ref @GetNoDeduce.%tuple.type (%tuple.type.30b) = temporary %.loc16_69.1, %GetNoDeduce.call
-// CHECK:STDOUT:     %tuple.elem0.loc16_69.1: ref @GetNoDeduce.%T (%T) = tuple_access %.loc16_69.2, element0
-// CHECK:STDOUT:     %.loc16_69.3: @GetNoDeduce.%T (%T) = bind_value %tuple.elem0.loc16_69.1
-// CHECK:STDOUT:     %tuple.elem0.loc16_69.2: ref @GetNoDeduce.%T (%T) = tuple_access %return, element0
-// CHECK:STDOUT:     %.loc16_69.4: init @GetNoDeduce.%T (%T) = initialize_from %.loc16_69.3 to %tuple.elem0.loc16_69.2
-// CHECK:STDOUT:     %tuple.elem1.loc16_69.1: ref @GetNoDeduce.%U.loc16_24.1 (%U) = tuple_access %.loc16_69.2, element1
-// CHECK:STDOUT:     %.loc16_69.5: @GetNoDeduce.%U.loc16_24.1 (%U) = bind_value %tuple.elem1.loc16_69.1
-// CHECK:STDOUT:     %tuple.elem1.loc16_69.2: ref @GetNoDeduce.%U.loc16_24.1 (%U) = tuple_access %return, element1
-// CHECK:STDOUT:     %.loc16_69.6: init @GetNoDeduce.%U.loc16_24.1 (%U) = initialize_from %.loc16_69.5 to %tuple.elem1.loc16_69.2
-// CHECK:STDOUT:     %.loc16_69.7: init @GetNoDeduce.%tuple.type (%tuple.type.30b) = tuple_init (%.loc16_69.4, %.loc16_69.6) to %return
-// CHECK:STDOUT:     %.loc16_70: init @GetNoDeduce.%tuple.type (%tuple.type.30b) = converted %GetNoDeduce.call, %.loc16_69.7
-// CHECK:STDOUT:     return %.loc16_70 to %return
+// CHECK:STDOUT:     %.loc16_34: ref @GetNoDeduce.%tuple.type (%tuple.type.30b) = splice_block %return {}
+// CHECK:STDOUT:     %GetNoDeduce.call: init @GetNoDeduce.%tuple.type (%tuple.type.30b) = call %GetNoDeduce.specific_fn.loc16_53.1(%x.ref) to %.loc16_34
+// CHECK:STDOUT:     return %GetNoDeduce.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -329,12 +303,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.65c
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc15_20 => constants.%require_complete.fe1
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.fe1
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.fd9
 // CHECK:STDOUT:   %Get => constants.%Get.cf9
 // CHECK:STDOUT:   %Get.specific_fn.loc15_39.2 => constants.%Get.specific_fn.f73
-// CHECK:STDOUT:   %require_complete.loc15_44.1 => constants.%require_complete.4ae
-// CHECK:STDOUT:   %require_complete.loc15_44.2 => constants.%require_complete.b54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetNoDeduce(constants.%T, constants.%U) {
@@ -350,18 +322,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce => constants.%GetNoDeduce.c9a
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.loc16_53.2 => constants.%GetNoDeduce.specific_fn.536
 // CHECK:STDOUT:   %require_complete.loc16_70 => constants.%require_complete.fe1
-// CHECK:STDOUT:   %require_complete.loc16_69 => constants.%require_complete.b54
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc14_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Get.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Get(%T, %U.loc15_10.1) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetNoDeduce.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GetNoDeduce(%T, %U.loc16_24.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%A) {
 // CHECK:STDOUT:   %T.loc14_13.2 => constants.%A
@@ -380,12 +341,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.edc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc15_20 => constants.%complete_type.56a
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.56a
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.501
 // CHECK:STDOUT:   %Get => constants.%Get.f37
 // CHECK:STDOUT:   %Get.specific_fn.loc15_39.2 => constants.%Get.specific_fn.213
-// CHECK:STDOUT:   %require_complete.loc15_44.1 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc15_44.2 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetNoDeduce(constants.%A, constants.%B) {
@@ -401,6 +360,5 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce => constants.%GetNoDeduce.162
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.loc16_53.2 => constants.%GetNoDeduce.specific_fn.438
 // CHECK:STDOUT:   %require_complete.loc16_70 => constants.%complete_type.56a
-// CHECK:STDOUT:   %require_complete.loc16_69 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

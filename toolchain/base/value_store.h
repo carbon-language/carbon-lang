@@ -16,6 +16,7 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/Compiler.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/yaml.h"
 
@@ -27,6 +28,17 @@ namespace Internal {
 // std::conditional, not as an API.
 class ValueStoreNotPrintable {};
 }  // namespace Internal
+
+// Setup our compile time condition controlling poisoning of value stores. This
+// is set to one by the Bazel flag `--features=poison_value_stores`.
+//
+// TODO: Eventually, this will always enabled when ASan is enabled, but we can't
+// do that until we clean up all of the latent bugs.
+#ifndef CARBON_POISON_VALUE_STORES
+#define CARBON_POISON_VALUE_STORES 0
+#elif !LLVM_ADDRESS_SANITIZER_BUILD
+#error "CARBON_POISON_VALUE_STORES requires address sanitizer"
+#endif
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
@@ -51,6 +63,28 @@ class ValueStore
       std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
                          llvm::StringRef, const ValueType&>;
 
+  ValueStore() = default;
+  ValueStore(ValueStore&& other) noexcept
+      : values_((other.UnpoisonAll(), std::move(other.values_)))
+#if CARBON_POISON_VALUE_STORES
+        ,
+        all_poisoned_(false)
+#endif
+  {
+    PoisonAll();
+  }
+  auto operator=(ValueStore&& other) noexcept -> ValueStore& {
+    UnpoisonAll();
+    other.UnpoisonAll();
+    values_ = std::move(other.values_);
+#if CARBON_POISON_VALUE_STORES
+    all_poisoned_ = false;
+#endif
+    PoisonAll();
+    return *this;
+  }
+  ~ValueStore() { UnpoisonAll(); }
+
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT {
     IdT id(values_.size());
@@ -58,27 +92,55 @@ class ValueStore
     // for the value provided, so only do this in debug builds to make tracking
     // down issues easier.
     CARBON_DCHECK(id.index >= 0, "Id overflow");
+
+    bool realloc = values_.capacity() == values_.size();
+    if (realloc) {
+      // Unpoison everything if the push will reallocate, in order to allow the
+      // vector to make a copy of the elements.
+      UnpoisonAll();
+    } else {
+      PoisonAll();
+    }
+
     values_.push_back(std::move(value));
+
+    if (realloc) {
+      PoisonAll();
+    } else {
+      PoisonElement(id.index);
+    }
+
     return id;
   }
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
+    UnpoisonElement(id.index);
     return values_[id.index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
+    UnpoisonElement(id.index);
     return values_[id.index];
   }
 
   // Reserves space.
-  auto Reserve(size_t size) -> void { values_.reserve(size); }
+  auto Reserve(size_t size) -> void {
+    UnpoisonAll();
+    values_.reserve(size);
+    PoisonAll();
+  }
+
+  // Invalidates all current pointers and references into the value store. Used
+  // in debug builds to trigger use-after-invalidation bugs.
+  auto Invalidate() -> void { PoisonAll(); }
 
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
+    UnpoisonAll();
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto [id, value] : enumerate()) {
         map.Add(PrintToString(id), Yaml::OutputScalar(value));
@@ -89,10 +151,14 @@ class ValueStore
   // Collects memory usage of the values.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
+    UnpoisonAll();
     mem_usage.Collect(label.str(), values_);
   }
 
-  auto array_ref() const -> llvm::ArrayRef<ValueType> { return values_; }
+  auto array_ref() const -> llvm::ArrayRef<ValueType> {
+    UnpoisonAll();
+    return values_;
+  }
   auto size() const -> size_t { return values_.size(); }
 
   // Makes an iterable range over pairs of the index and a reference to the
@@ -105,6 +171,7 @@ class ValueStore
   // for (auto [id, value] : store.enumerate()) { ... }
   // ```
   auto enumerate() const -> auto {
+    UnpoisonAll();
     auto index_to_id = [](auto pair) -> std::pair<IdT, ConstRefType> {
       auto [index, value] = pair;
       return std::pair<IdT, ConstRefType>(IdT(index), value);
@@ -113,9 +180,53 @@ class ValueStore
   }
 
  private:
+  // Poison the entire contents of the value store. This is used to detect cases
+  // where references to elements in a value store are used across calls that
+  // might modify the store.
+  auto PoisonAll() const -> void {
+#if CARBON_POISON_VALUE_STORES
+    if (!all_poisoned_) {
+      __asan_poison_memory_region(values_.data(),
+                                  values_.size() * sizeof(values_[0]));
+      all_poisoned_ = true;
+    }
+#endif
+  }
+  // Unpoison the entire contents of the value store.
+  auto UnpoisonAll() const -> void {
+#if CARBON_POISON_VALUE_STORES
+    __asan_unpoison_memory_region(values_.data(),
+                                  values_.size() * sizeof(values_[0]));
+    all_poisoned_ = false;
+#endif
+  }
+  // Poison a single element.
+  auto PoisonElement([[maybe_unused]] int element) const -> void {
+#if CARBON_POISON_VALUE_STORES
+    __asan_unpoison_memory_region(values_.data() + element, sizeof(values_[0]));
+#endif
+  }
+  // Unpoison a single element.
+  auto UnpoisonElement([[maybe_unused]] int element) const -> void {
+#if CARBON_POISON_VALUE_STORES
+    __asan_unpoison_memory_region(values_.data() + element, sizeof(values_[0]));
+    all_poisoned_ = false;
+#endif
+  }
+
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
   llvm::SmallVector<std::decay_t<ValueType>, 0> values_;
+
+#if CARBON_POISON_VALUE_STORES
+  // Whether the vector is currently fully poisoned.
+  //
+  // We use this to avoid repeated re-poisoning of the entire store. Doing so is
+  // linear in the size of the store, and we trigger re-poisoning frequently,
+  // for example on each import. Tracking that here allows us to coalesce these
+  // into a single linear operation.
+  mutable bool all_poisoned_ = true;
+#endif
 };
 
 // A wrapper for accumulating immutable values with deduplication, providing IDs
@@ -141,6 +252,10 @@ class CanonicalValueStore {
 
   // Reserves space.
   auto Reserve(size_t size) -> void;
+
+  // Invalidates all current pointers and references into the value store. Used
+  // in debug builds to trigger use-after-invalidation bugs.
+  auto Invalidate() -> void { values_.Invalidate(); }
 
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {

@@ -306,8 +306,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(%T.loc4_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%Param) {
 // CHECK:STDOUT:   %T.loc4_16.2 => constants.%Param
 // CHECK:STDOUT:
@@ -539,10 +537,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %pattern_type.loc5_20 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%U) {
 // CHECK:STDOUT:   %U.loc8_9.2 => constants.%U
 // CHECK:STDOUT:
@@ -575,12 +569,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %F => constants.%F.b02
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(@impl.%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%U) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %X => constants.%X
@@ -590,10 +578,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %pattern_type.loc10_22 => constants.%pattern_type.7dcd0a.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(@F.2.%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.2.%U) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%U, constants.%I.facet) {
 // CHECK:STDOUT:   %T => constants.%U
 // CHECK:STDOUT:   %I.type => constants.%I.type.325e65.2
@@ -602,6 +586,4 @@ class X(U:! type) {
 // CHECK:STDOUT:   %pattern_type.loc5_8 => constants.%pattern_type.830
 // CHECK:STDOUT:   %pattern_type.loc5_20 => constants.%pattern_type.7dcd0a.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@X.%U.loc8_9.2) {}
 // CHECK:STDOUT:

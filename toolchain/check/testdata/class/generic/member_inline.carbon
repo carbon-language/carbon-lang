@@ -201,10 +201,6 @@ class C(T:! type) {
 // CHECK:STDOUT:   %pattern_type.loc9_22 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_member_inline.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -290,8 +286,4 @@ class C(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc4_9.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%T) {}
 // CHECK:STDOUT:

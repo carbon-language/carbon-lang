@@ -20,7 +20,7 @@ b
 c
 // CHECK:STDOUT:   - { index: 3, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "c", identifier: 2, has_leading_space: true }
 // CHECK:STDOUT:   dump_sem_ir_ranges:
-// CHECK:STDOUT:   - {begin: 1, end: 4}
+// CHECK:STDOUT:   - {begin: 1, end: 3}
 //@dump-sem-ir-end
 
 // --- multi_section.carbon
@@ -42,16 +42,16 @@ d
 e
 // CHECK:STDOUT:   - { index: 5, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "e", identifier: 4, has_leading_space: true }
 // CHECK:STDOUT:   dump_sem_ir_ranges:
-// CHECK:STDOUT:   - {begin: 2, end: 3}
-// CHECK:STDOUT:   - {begin: 4, end: 5}
+// CHECK:STDOUT:   - {begin: 2, end: 2}
+// CHECK:STDOUT:   - {begin: 4, end: 4}
 
 // --- compact.carbon
 // CHECK:STDOUT: - filename: compact.carbon
 // CHECK:STDOUT:   tokens:
 // CHECK:STDOUT:   dump_sem_ir_ranges:
-// CHECK:STDOUT:   - {begin: 1, end: 1}
-// CHECK:STDOUT:   - {begin: 1, end: 1}
-// CHECK:STDOUT:   - {begin: 1, end: 1}
+// CHECK:STDOUT:   - {begin: 1, end: 0}
+// CHECK:STDOUT:   - {begin: 1, end: 0}
+// CHECK:STDOUT:   - {begin: 1, end: 0}
 //@dump-sem-ir-begin
 //@dump-sem-ir-end
 //@dump-sem-ir-begin
@@ -73,7 +73,7 @@ e
 // CHECK:STDOUT: - filename: fail_start_only.carbon
 // CHECK:STDOUT:   tokens:
 // CHECK:STDOUT:   dump_sem_ir_ranges:
-// CHECK:STDOUT:   - {begin: 1, end: 1}
+// CHECK:STDOUT:   - {begin: 1, end: 0}
 
 //@dump-sem-ir-begin
 // CHECK:STDERR: fail_start_only.carbon:[[@LINE+4]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
@@ -118,8 +118,8 @@ d
 e
 // CHECK:STDOUT:   - { index: 5, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "e", identifier: 4, has_leading_space: true }
 // CHECK:STDOUT:   dump_sem_ir_ranges:
-// CHECK:STDOUT:   - {begin: 2, end: 3}
-// CHECK:STDOUT:   - {begin: 3, end: 4}
+// CHECK:STDOUT:   - {begin: 2, end: 2}
+// CHECK:STDOUT:   - {begin: 3, end: 3}
 
 // --- fail_count_mismatch.carbon
 // CHECK:STDOUT: - filename: fail_count_mismatch.carbon
@@ -137,8 +137,8 @@ c
 d
 // CHECK:STDOUT:   - { index: 4, kind: "Identifier", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "d", identifier: 3, has_leading_space: true }
 // CHECK:STDOUT:   dump_sem_ir_ranges:
-// CHECK:STDOUT:   - {begin: 2, end: 3}
-// CHECK:STDOUT:   - {begin: 4, end: 5}
+// CHECK:STDOUT:   - {begin: 2, end: 2}
+// CHECK:STDOUT:   - {begin: 4, end: 4}
 
 // CHECK:STDERR: fail_count_mismatch.carbon:[[@LINE+3]]:17: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
 // CHECK:STDERR: // CHECK:STDERR:

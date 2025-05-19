@@ -22,5 +22,3 @@ fn N.base() {}
 
 // CHECK:STDOUT: --- fail_base_as_declared_name.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:

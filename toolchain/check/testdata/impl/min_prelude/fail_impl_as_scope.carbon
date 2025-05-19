@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -461,8 +460,6 @@ class X {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6b5(%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Zero.1(constants.%Z.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Method.1(constants.%Z.facet) {
@@ -590,10 +587,4 @@ class X {
 // CHECK:STDOUT: specific @B.1(constants.%Self.31d) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.1(constants.%A.facet) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT: }
 // CHECK:STDOUT:

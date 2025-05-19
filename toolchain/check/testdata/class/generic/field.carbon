@@ -236,8 +236,6 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type.4339b3.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%i32) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%i32
 // CHECK:STDOUT:
@@ -256,8 +254,6 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %pattern_type.loc19_29 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T.loc19_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%U) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%U
 // CHECK:STDOUT:
@@ -275,6 +271,4 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %pattern_type.loc23_16 => constants.%pattern_type.3c18fb.2
 // CHECK:STDOUT:   %pattern_type.loc23_29 => constants.%pattern_type.7dcd0a.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@H.%U.loc23_6.2) {}
 // CHECK:STDOUT:

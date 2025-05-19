@@ -14,13 +14,12 @@
 namespace Carbon::Check {
 
 auto PerformPointerDereference(
-    Context& context, Parse::AnyPointerDeferenceExprId node_id,
-    SemIR::InstId base_id,
+    Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     llvm::function_ref<auto(SemIR::TypeId not_pointer_type_id)->void>
         diagnose_not_pointer) -> SemIR::InstId {
   // TODO: Once we have a finalized design for a pointer interface, use
   //
-  //   HandleUnaryOperator(context, node_id, {"Pointer", "Dereference"});
+  //   HandleUnaryOperator(context, loc_id, {"Pointer", "Dereference"});
   //
   // to convert to a pointer value.
   base_id = ConvertToValueExpr(context, base_id);
@@ -35,7 +34,7 @@ auto PerformPointerDereference(
     diagnose_not_pointer(type_id);
   }
   return AddInst<SemIR::Deref>(
-      context, node_id, {.type_id = result_type_id, .pointer_id = base_id});
+      context, loc_id, {.type_id = result_type_id, .pointer_id = base_id});
 }
 
 }  // namespace Carbon::Check

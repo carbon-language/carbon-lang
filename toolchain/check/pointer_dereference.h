@@ -15,8 +15,7 @@ namespace Carbon::Check {
 // Creates SemIR to perform a pointer dereference with base expression
 // `base_id`. Returns the result of the access.
 auto PerformPointerDereference(
-    Context& context, Parse::AnyPointerDeferenceExprId node_id,
-    SemIR::InstId base_i,
+    Context& context, SemIR::LocId loc_id, SemIR::InstId base_i,
     llvm::function_ref<auto(SemIR::TypeId not_pointer_type_id)->void>
         diagnose_not_pointer) -> SemIR::InstId;
 

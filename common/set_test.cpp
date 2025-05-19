@@ -405,9 +405,8 @@ TEST(SetContextTest, Basic) {
   auto i_result = s.Insert(1, IndexKeyContext<TestData>(keys));
   EXPECT_FALSE(i_result.is_inserted());
   EXPECT_TRUE(s.Contains(1, key_context));
-  EXPECT_TRUE(s.Insert(
-                   TestData(200), [] { return 2; }, key_context)
-                  .is_inserted());
+  EXPECT_TRUE(
+      s.Insert(TestData(200), [] { return 2; }, key_context).is_inserted());
   EXPECT_TRUE(s.Contains(2, key_context));
   EXPECT_TRUE(s.Contains(TestData(200), key_context));
 

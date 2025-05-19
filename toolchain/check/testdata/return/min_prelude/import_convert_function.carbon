@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -245,10 +244,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %pattern_type.loc9_14 => constants.%pattern_type.a93
 // CHECK:STDOUT:   %pattern_type.loc9_28 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T.loc8_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%i32.builtin) {
 // CHECK:STDOUT:   %T.loc8_22.2 => constants.%i32.builtin
@@ -924,10 +919,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: specific @ImplicitAs(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%T, constants.%Self.519) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1677,10 +1668,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.1.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%T, constants.%Self.519) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d62
@@ -1760,11 +1747,5 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %N => constants.%int_7.6ae
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

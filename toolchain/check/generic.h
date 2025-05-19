@@ -5,17 +5,44 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_GENERIC_H_
 #define CARBON_TOOLCHAIN_CHECK_GENERIC_H_
 
+#include "llvm/ADT/BitmaskEnum.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
+LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
+
 // Start processing a declaration or definition that might be a generic entity.
 auto StartGenericDecl(Context& context) -> void;
 
 // Start processing a declaration or definition that might be a generic entity.
-auto StartGenericDefinition(Context& context) -> void;
+auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id)
+    -> void;
+
+// An instruction that depends on a generic parameter in some way.
+struct DependentInst {
+  // Ways in which an instruction can depend on a generic parameter.
+  enum Kind : int8_t {
+    None = 0x0,
+    // The type of the instruction depends on a checked generic parameter.
+    SymbolicType = 0x1,
+    // The constant value of the instruction depends on a checked generic
+    // parameter.
+    SymbolicConstant = 0x2,
+    Template = 0x4,
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Template)
+  };
+
+  SemIR::InstId inst_id;
+  Kind kind;
+};
+
+// Attach a dependent instruction to the current generic, updating its type and
+// constant value as necessary.
+auto AttachDependentInstToCurrentGeneric(Context& context,
+                                         DependentInst dependent_inst) -> void;
 
 // Discard the information about the current generic entity. This should be
 // called instead of `FinishGenericDecl` if the corresponding `Generic` object

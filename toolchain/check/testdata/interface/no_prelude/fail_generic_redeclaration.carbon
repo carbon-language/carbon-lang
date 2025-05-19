@@ -155,8 +155,6 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.loc19_22.2 => constants.%T.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotGeneric.2(%T.loc19_22.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.1(constants.%T.8b3) {
 // CHECK:STDOUT:   %T.loc21_19.2 => constants.%T.8b3
 // CHECK:STDOUT: }
@@ -168,6 +166,4 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: specific @DifferentParams.2(constants.%T.7a6) {
 // CHECK:STDOUT:   %T.loc39_27.2 => constants.%T.7a6
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @DifferentParams.2(%T.loc39_27.2) {}
 // CHECK:STDOUT:

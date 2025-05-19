@@ -4,29 +4,29 @@
 
 #include "toolchain/check/function.h"
 
+#include "common/find.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/pattern.h"
 
 namespace Carbon::Check {
 
-auto CheckFunctionTypeMatches(Context& context,
-                              const SemIR::Function& new_function,
-                              const SemIR::Function& prev_function,
-                              SemIR::SpecificId prev_specific_id,
-                              bool check_syntax, bool check_self) -> bool {
-  // TODO: When check_syntax is false, the functions should be allowed to have
-  // different signatures as long as we can synthesize a suitable thunk. i.e.,
-  // when there's an implicit conversion from the original parameter types to
-  // the overriding parameter types, and from the overriding return type to the
-  // original return type.
-  // Also, build that thunk.
-  if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
-                              DeclParams(prev_function), prev_specific_id,
-                              /*diagnose=*/true, check_syntax, check_self)) {
-    return false;
-  }
+auto FindSelfPattern(Context& context,
+                     SemIR::InstBlockId implicit_param_patterns_id)
+    -> SemIR::InstId {
+  auto implicit_param_patterns =
+      context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
+  return FindIfOrNone(implicit_param_patterns, [&](auto implicit_param_id) {
+    return SemIR::IsSelfPattern(context.sem_ir(), implicit_param_id);
+  });
+}
 
+auto CheckFunctionReturnTypeMatches(Context& context,
+                                    const SemIR::Function& new_function,
+                                    const SemIR::Function& prev_function,
+                                    SemIR::SpecificId prev_specific_id,
+                                    bool diagnose) -> bool {
   // TODO: Pass a specific ID for `prev_function` instead of substitutions and
   // use it here.
   auto new_return_type_id =
@@ -39,6 +39,10 @@ auto CheckFunctionTypeMatches(Context& context,
   }
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
                                                   prev_return_type_id)) {
+    if (!diagnose) {
+      return false;
+    }
+
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffers, Error,
         "function redeclaration differs because return type is {0}",
@@ -70,6 +74,21 @@ auto CheckFunctionTypeMatches(Context& context,
   }
 
   return true;
+}
+
+auto CheckFunctionTypeMatches(Context& context,
+                              const SemIR::Function& new_function,
+                              const SemIR::Function& prev_function,
+                              SemIR::SpecificId prev_specific_id,
+                              bool check_syntax, bool check_self, bool diagnose)
+    -> bool {
+  if (!CheckRedeclParamsMatch(context, DeclParams(new_function),
+                              DeclParams(prev_function), prev_specific_id,
+                              diagnose, check_syntax, check_self)) {
+    return false;
+  }
+  return CheckFunctionReturnTypeMatches(context, new_function, prev_function,
+                                        prev_specific_id, diagnose);
 }
 
 auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
@@ -106,6 +125,42 @@ auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
   }
 
   return return_info;
+}
+
+auto CheckFunctionDefinitionSignature(Context& context,
+                                      SemIR::FunctionId function_id) -> void {
+  auto& function = context.functions().Get(function_id);
+
+  auto params_to_complete =
+      context.inst_blocks().GetOrEmpty(function.call_params_id);
+
+  // Check the return type is complete.
+  if (function.return_slot_pattern_id.has_value()) {
+    CheckFunctionReturnType(context,
+                            SemIR::LocId(function.return_slot_pattern_id),
+                            function, SemIR::SpecificId::None);
+    // Don't re-check the return type below.
+    params_to_complete = params_to_complete.drop_back();
+  }
+
+  // Check the parameter types are complete.
+  for (auto param_ref_id : params_to_complete) {
+    if (param_ref_id == SemIR::ErrorInst::InstId) {
+      continue;
+    }
+
+    // The parameter types need to be complete.
+    RequireCompleteType(
+        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+        SemIR::LocId(param_ref_id), [&] {
+          CARBON_DIAGNOSTIC(
+              IncompleteTypeInFunctionParam, Error,
+              "parameter has incomplete type {0} in function definition",
+              TypeOfInstId);
+          return context.emitter().Build(
+              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
+        });
+  }
 }
 
 }  // namespace Carbon::Check

@@ -768,8 +768,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@A.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%U) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%U
 // CHECK:STDOUT:
@@ -783,8 +781,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Outer.loc7_22.1 => constants.%Outer.99f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.089
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@B.%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%T) {
 // CHECK:STDOUT:   %U.loc3_15.2 => constants.%T
@@ -809,10 +805,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@C.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@C.%T, @C.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.eae
@@ -821,12 +813,4 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.loc13_22.1 => constants.%Inner.c71
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.372
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@D.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@D.%T, @D.%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T, %U.loc3_15.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc2_13.2) {}
 // CHECK:STDOUT:

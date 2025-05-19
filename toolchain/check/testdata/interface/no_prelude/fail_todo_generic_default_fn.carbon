@@ -165,10 +165,6 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4be
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc11_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T.loc23_24 => constants.%T
 // CHECK:STDOUT:   %I.type => constants.%I.type.325
@@ -176,6 +172,4 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %Self.as_type.loc23_24.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4be
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.2.%T.loc23_24) {}
 // CHECK:STDOUT:

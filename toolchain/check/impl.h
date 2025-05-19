@@ -21,9 +21,10 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
 
 // Adds the function members to the witness for `impl`.
-auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void;
+auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void;
 
-// Sets all unset members of the witness for `impl` to the error instruction.
+// Sets all unset members of the witness for `impl` to the error instruction and
+// sets the witness id in the `Impl` to an error.
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
 
 // Sets the `ImplId` in the `ImplWitnessTable`.

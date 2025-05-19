@@ -33,8 +33,7 @@ impl AC as AI {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %I.impl_witness.215123.1: <witness> = impl_witness file.%I.impl_witness_table.loc17 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.215123.2: <witness> = impl_witness file.%I.impl_witness_table.loc26 [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -54,14 +53,12 @@ impl AC as AI {}
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [concrete = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc17 = impl_witness_table (), @impl.7704ae.1 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc17: <witness> = impl_witness %I.impl_witness_table.loc17 [concrete = constants.%I.impl_witness.215123.1]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @impl.7704ae.1 [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.7704ae.2 [concrete] {} {
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [concrete = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc26 = impl_witness_table (), @impl.7704ae.2 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc26: <witness> = impl_witness %I.impl_witness_table.loc26 [concrete = constants.%I.impl_witness.215123.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -74,12 +71,12 @@ impl AC as AI {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.7704ae.1: %AC.ref as %AI.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%I.impl_witness.loc17
+// CHECK:STDOUT:   witness = file.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.7704ae.2: %AC.ref as %AI.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%I.impl_witness.loc26
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

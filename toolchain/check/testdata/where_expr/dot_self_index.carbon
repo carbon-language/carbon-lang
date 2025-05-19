@@ -226,8 +226,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%W, constants.%Self.8c5170.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(%W.loc11_17.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%T) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%T
 // CHECK:STDOUT:
@@ -255,8 +253,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.668
 // CHECK:STDOUT:   %V.loc18_43.2 => constants.%V
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty(@H.%T.loc18_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%i32) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%i32

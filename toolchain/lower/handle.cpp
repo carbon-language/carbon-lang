@@ -291,16 +291,24 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   // Position the first alloca right before the start of the executable code in
   // the function.
-  auto saved_ip = context.builder().saveIP();
-  if (auto* after_allocas = context.GetInstructionAfterAllocas()) {
-    context.builder().SetInsertPoint(after_allocas);
-  } else {
-    context.builder().SetInsertPointPastAllocas(&context.llvm_function());
-  }
+  llvm::AllocaInst* alloca;
+  {
+    llvm::IRBuilderBase::InsertPointGuard guard(context.builder());
 
-  // Create an alloca for this variable in the entry block.
-  auto* alloca = context.builder().CreateAlloca(type);
-  context.builder().restoreIP(saved_ip);
+    auto debug_loc = context.builder().getCurrentDebugLocation();
+    if (auto* after_allocas = context.GetInstructionAfterAllocas()) {
+      context.builder().SetInsertPoint(after_allocas);
+    } else {
+      context.builder().SetInsertPointPastAllocas(&context.llvm_function());
+    }
+
+    // IRBuilder tramples over our debug location when setting the insert point,
+    // so undo that.
+    context.builder().SetCurrentDebugLocation(debug_loc);
+
+    // Create an alloca for this variable in the entry block.
+    alloca = context.builder().CreateAlloca(type);
+  }
 
   // Create a lifetime start intrinsic here to indicate where its scope really
   // begins.

@@ -194,8 +194,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2 => constants.%F.specific_fn.ef1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc6_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
 // CHECK:STDOUT:   %ptr.loc6_20.2 => constants.%ptr.019
@@ -345,8 +343,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2 => constants.%F.specific_fn.ef1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc6_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
 // CHECK:STDOUT:   %const.loc6_19.2 => constants.%const.668
@@ -494,8 +490,6 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2 => constants.%F.specific_fn.ef1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc6_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%const) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%const
 // CHECK:STDOUT:   %ptr.loc6_20.2 => constants.%ptr.801
@@ -639,6 +633,4 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %require_complete.loc6_17 => constants.%require_complete.20b
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2 => constants.%F.specific_fn
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc6_6.2) {}
 // CHECK:STDOUT:

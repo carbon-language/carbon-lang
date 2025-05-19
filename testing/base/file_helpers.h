@@ -12,6 +12,10 @@
 
 namespace Carbon::Testing {
 
+// Returns a directory that should be used to hold temporary files created by
+// test execution.
+auto GetTempDirectory() -> std::filesystem::path;
+
 // Reads a file to string.
 auto ReadFile(std::filesystem::path path) -> ErrorOr<std::string>;
 
