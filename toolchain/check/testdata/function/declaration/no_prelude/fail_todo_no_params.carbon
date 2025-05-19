@@ -166,12 +166,8 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_arrow_body.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_file_generic_regression_test.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
 // CHECK:STDOUT:

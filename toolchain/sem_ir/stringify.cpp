@@ -9,6 +9,7 @@
 #include <utility>
 #include <variant>
 
+#include "common/concepts.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
@@ -269,9 +270,7 @@ class Stringifier {
   }
 
   template <typename InstT>
-    requires(std::same_as<InstT, BindAlias> ||
-             std::same_as<InstT, BindSymbolicName> ||
-             std::same_as<InstT, ExportDecl>)
+    requires(SameAsOneOf<InstT, BindAlias, BindSymbolicName, ExportDecl>)
   auto StringifyInst(InstId /*inst_id*/, InstT inst) -> void {
     step_stack_->PushEntityNameId(inst.entity_name_id);
   }

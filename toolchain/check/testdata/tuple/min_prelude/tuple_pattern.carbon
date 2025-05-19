@@ -569,8 +569,6 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:

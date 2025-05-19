@@ -196,8 +196,6 @@ var test_f128: f128;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- uN.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -268,13 +266,7 @@ var test_f128: f128;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_fN_bad_width.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_fN_todo_unsupported.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
 // CHECK:STDOUT:

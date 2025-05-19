@@ -113,7 +113,15 @@ fn F(T: Z where .X = (), v: T.X);
 
 // CHECK:STDOUT: --- facet_value_copy_from_reference.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %I.type [concrete]
+// CHECK:STDOUT:   %pattern_type.2b5: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
@@ -126,11 +134,21 @@ fn F(T: Z where .X = (), v: T.X);
 // CHECK:STDOUT:   %.loc13_15.2: %I.type = bind_value %.loc13_15.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %a: %I.type = bind_name a, %.loc13_15.2
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_facet_copy_narrowing_from_reference.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <@I & @J> [concrete]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %facet_type [concrete]
+// CHECK:STDOUT:   %pattern_type.2b5: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
@@ -143,5 +161,6 @@ fn F(T: Z where .X = (), v: T.X);
 // CHECK:STDOUT:   %.loc21_15.2: %facet_type = bind_value %.loc21_15.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %a: %I.type = bind_name a, <error>
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -25,7 +25,5 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main();
 // CHECK:STDOUT:

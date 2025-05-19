@@ -64,26 +64,18 @@ Formatter::Formatter(const File* sem_ir,
 }
 
 auto Formatter::Format() -> void {
-  out_ << "--- " << sem_ir_->filename() << "\n\n";
+  out_ << "--- " << sem_ir_->filename() << "\n";
 
-  FormatScopeIfUsed(InstNamer::ScopeId::Constants,
-                    sem_ir_->constants().array_ref());
-  FormatScopeIfUsed(InstNamer::ScopeId::ImportRefs,
-                    sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs));
-
-  out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::File) << " ";
-  OpenBrace();
-
-  // TODO: Handle the case where there are multiple top-level instruction
-  // blocks. For example, there may be branching in the initializer of a
-  // global or a type expression.
-  if (auto block_id = sem_ir_->top_inst_block_id(); block_id.has_value()) {
-    llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::File);
-    FormatCodeBlock(block_id);
-  }
-
-  CloseBrace();
-  out_ << '\n';
+  FormatTopLevelScopeIfUsed(InstNamer::ScopeId::Constants,
+                            sem_ir_->constants().array_ref(),
+                            /*use_tentative_output_scopes=*/true);
+  FormatTopLevelScopeIfUsed(InstNamer::ScopeId::ImportRefs,
+                            sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs),
+                            /*use_tentative_output_scopes=*/true);
+  FormatTopLevelScopeIfUsed(
+      InstNamer::ScopeId::File,
+      sem_ir_->inst_blocks().GetOrEmpty(sem_ir_->top_inst_block_id()),
+      /*use_tentative_output_scopes=*/false);
 
   for (auto [id, _] : sem_ir_->interfaces().enumerate()) {
     FormatInterface(id);
@@ -109,7 +101,6 @@ auto Formatter::Format() -> void {
     FormatSpecific(id);
   }
 
-  // End-of-file newline.
   out_ << "\n";
 }
 
@@ -284,9 +275,11 @@ auto Formatter::IndentLabel() -> void {
   Indent(-2);
 }
 
-auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
-                                  llvm::ArrayRef<InstId> block) -> void {
-  if (use_dump_sem_ir_ranges_) {
+auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
+                                          llvm::ArrayRef<InstId> block,
+                                          bool use_tentative_output_scopes)
+    -> void {
+  if (!use_tentative_output_scopes && use_dump_sem_ir_ranges_) {
     // Don't format the scope if no instructions are in a dump range.
     block = block.drop_while(
         [&](InstId inst_id) { return !ShouldFormatInst(inst_id); });
@@ -299,13 +292,23 @@ auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
   llvm::SaveAndRestore scope(scope_, scope_id);
   // Note, we don't use OpenBrace() / CloseBrace() here because we always want
   // a newline to avoid misformatting if the first instruction is omitted.
-  out_ << inst_namer_.GetScopeName(scope_id) << " {\n";
+  out_ << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
   indent_ += 2;
   for (const InstId inst_id : block) {
-    TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
-    FormatInst(inst_id);
+    // Format instructions when needed, but do nothing for elided entries;
+    // unlike normal code blocks, scopes are non-sequential so skipped
+    // instructions are assumed to be uninteresting.
+    if (use_tentative_output_scopes) {
+      // This is for constants and imports. These use tentative logic to
+      // determine whether an instruction is printed.
+      TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
+      FormatInst(inst_id);
+    } else if (ShouldFormatInst(inst_id)) {
+      // This is for the file scope. It uses only the range-based filtering.
+      FormatInst(inst_id);
+    }
   }
-  out_ << "}\n\n";
+  out_ << "}\n";
   indent_ -= 2;
 }
 
@@ -645,8 +648,17 @@ auto Formatter::FormatParamList(InstBlockId params_id, bool has_return_slot)
 }
 
 auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
+  bool elided = false;
   for (const InstId inst_id : sem_ir_->inst_blocks().GetOrEmpty(block_id)) {
-    FormatInst(inst_id);
+    if (ShouldFormatInst(inst_id)) {
+      FormatInst(inst_id);
+      elided = false;
+    } else if (!elided) {
+      // When formatting a block, leave a hint that instructions were elided.
+      Indent();
+      out_ << "<elided>\n";
+      elided = true;
+    }
   }
 }
 
@@ -753,10 +765,6 @@ auto Formatter::FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
 }
 
 auto Formatter::FormatInst(InstId inst_id) -> void {
-  if (!ShouldFormatInst(inst_id)) {
-    return;
-  }
-
   if (!inst_id.has_value()) {
     Indent();
     out_ << "none\n";

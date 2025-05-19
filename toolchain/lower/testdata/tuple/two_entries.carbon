@@ -46,7 +46,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 3, 2, 4 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

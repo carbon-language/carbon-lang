@@ -467,8 +467,6 @@ fn F() -> {} {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
@@ -524,8 +522,6 @@ fn F() -> {} {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %empty_struct_type;
 // CHECK:STDOUT:

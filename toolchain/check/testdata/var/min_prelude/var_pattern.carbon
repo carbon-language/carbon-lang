@@ -361,16 +361,12 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @f();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%.param: <error>);
 // CHECK:STDOUT:

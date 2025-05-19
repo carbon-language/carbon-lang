@@ -344,8 +344,6 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_export_in_impl.impl.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- export_export.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
