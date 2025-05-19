@@ -772,22 +772,15 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
 auto AddImportedConstant(Context& context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   EvalContext eval_context(&context, SemIR::LocId::None);
-  Phase phase = Phase::Concrete;
-  switch (inst.kind().value_kind()) {
-    case SemIR::InstValueKind::Typed: {
-      phase = GetPhase(context.constant_values(),
-                       context.types().GetConstantId(inst.type_id()));
-      // TODO: Can we avoid doing this replacement? It may do things that are
-      // undesirable during importing, such as resolving specifics.
-      if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-        return SemIR::ConstantId::NotConstant;
-      }
-      break;
-    }
-    case SemIR::InstValueKind::None: {
-      // Instructions without a type_id are not evaluated.
-      break;
-    }
+  CARBON_CHECK(inst.kind().is_typed_value(),
+               "Instructions without a `type_id` shouldn't be evaluated: {0}",
+               inst.kind());
+  Phase phase = GetPhase(context.constant_values(),
+                         context.types().GetConstantId(inst.type_id()));
+  // TODO: Can we avoid doing this replacement? It may do things that are
+  // undesirable during importing, such as resolving specifics.
+  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+    return SemIR::ConstantId::NotConstant;
   }
   return MakeConstantResult(context, inst, phase);
 }

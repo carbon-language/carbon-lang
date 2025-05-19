@@ -841,29 +841,25 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       return;
 
     default:
-      switch (inst.kind().value_kind()) {
-        case InstValueKind::Typed:
-          FormatName(inst_id);
-          out_ << ": ";
-          switch (GetExprCategory(*sem_ir_, inst_id)) {
-            case ExprCategory::NotExpr:
-            case ExprCategory::Error:
-            case ExprCategory::Value:
-            case ExprCategory::Mixed:
-              break;
-            case ExprCategory::DurableRef:
-            case ExprCategory::EphemeralRef:
-              out_ << "ref ";
-              break;
-            case ExprCategory::Initializing:
-              out_ << "init ";
-              break;
-          }
-          FormatTypeOfInst(inst_id);
-          out_ << " = ";
-          break;
-        case InstValueKind::None:
-          break;
+      if (inst.kind().is_typed_value()) {
+        FormatName(inst_id);
+        out_ << ": ";
+        switch (GetExprCategory(*sem_ir_, inst_id)) {
+          case ExprCategory::NotExpr:
+          case ExprCategory::Error:
+          case ExprCategory::Value:
+          case ExprCategory::Mixed:
+            break;
+          case ExprCategory::DurableRef:
+          case ExprCategory::EphemeralRef:
+            out_ << "ref ";
+            break;
+          case ExprCategory::Initializing:
+            out_ << "init ";
+            break;
+        }
+        FormatTypeOfInst(inst_id);
+        out_ << " = ";
       }
   }
 }
