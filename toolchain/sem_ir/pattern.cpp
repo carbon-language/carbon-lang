@@ -61,12 +61,15 @@ auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
       work_list.append(block.rbegin(), block.rend());
       continue;
     }
+
     // TODO: Look through struct patterns.
-    CARBON_CHECK(inst.Is<AnyBindingPattern>(),
-                 "Unhandled pattern inst kind {0}", inst);
-    // Skip unnamed bindings as well as patterns that don't introduce a binding.
-    if (auto [name_id, entity_name_id] = GetBoundEntityName(sem_ir, inst);
-        name_id.has_value() && name_id != NameId::Underscore) {
+
+    auto [name_id, entity_name_id] = GetBoundEntityName(sem_ir, inst);
+    CARBON_CHECK(entity_name_id.has_value(), "Unhandled pattern inst kind {0}",
+                 inst);
+
+    // Skip unnamed bindings.
+    if (name_id != NameId::Underscore) {
       return entity_name_id;
     }
   }
