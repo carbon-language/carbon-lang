@@ -716,7 +716,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     linkage = llvm::GlobalVariable::InternalLinkage;
     if (inst_namer_) {
       mangled_name =
-          ("var." + inst_namer_->GetUnscopedNameFor(var_storage.pattern_id))
+          ("var.anon" + inst_namer_->GetUnscopedNameFor(var_storage.pattern_id))
               .str();
     }
   }

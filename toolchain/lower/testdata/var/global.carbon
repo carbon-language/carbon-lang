@@ -165,7 +165,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: source_filename = "unnamed.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_Cx.Main = global { i32, i32 } zeroinitializer
-// CHECK:STDOUT: @var..var_patt.loc5 = internal global { i32, i32 } zeroinitializer
+// CHECK:STDOUT: @var.anon.var_patt.loc5 = internal global { i32, i32 } zeroinitializer
 // CHECK:STDOUT: @tuple.21c.loc4_1 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT: @tuple.ffd.loc5_1 = internal constant { i32, i32 } { i32 3, i32 4 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
@@ -173,7 +173,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cx.Main, ptr align 4 @tuple.21c.loc4_1, i64 8, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @var..var_patt.loc5, ptr align 4 @tuple.ffd.loc5_1, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @var.anon.var_patt.loc5, ptr align 4 @tuple.ffd.loc5_1, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
