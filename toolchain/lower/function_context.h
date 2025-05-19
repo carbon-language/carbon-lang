@@ -26,21 +26,21 @@ class FunctionContext {
       FileContext::SpecificFunctionFingerprint* specific_function_state);
 
   // Describes a function's body fingerprint while creating the function body.
-  // The final fingerprint is stores in the FileContext as a
+  // The final fingerprint is stored in the FileContext as a
   // SpecificFunctionFingerprint.
+  // Create two function fingerprints, where both fingerprints include data
+  // that's evaluated (and hence lowered) differently based on the specific_id.
+  // The first fingerprint includes global values, types and function_id for
+  // functions called inside the function body. The second fingerprint includes
+  // specific_ids for functions called.
+  // For two specifics of the same generic: if the first fingerprint
+  // (`function_common_fingerprint`) is different, the specifics cannot be
+  // coalesced; if the first and second fingerprint
+  // (`function_specific_fingerprint`) are the same, the specifics can be
+  // coalesced without additional checks. If the `function_common_fingerprint`
+  // is the same but `function_specific_fingerprint` is different, additional
+  // checks are needed, i.e. inspecting the non-hashed specific_ids.
   struct LoweringFunctionFingerprint {
-    // Create a two function fingerprints. Both fingerprints include the data
-    // that's evaluated (and hence lowered) differently based on the
-    // specific_id. The first fingerprint includes global values, types
-    // and function_id for functions called inside the function body.
-    // The second fingerprint includes specific_ids for functions called.
-    // For two specifics of the same generic: if the first fingerprint
-    // (`function_common_fingerprint`) is different, the specifics cannot be
-    // coalesced; if the first and second fingerprint
-    // (`function_specific_fingerprint`) are the same, the specifics can be
-    // coalesced without additional checks. If the `function_common_fingerprint`
-    // is the same but `function_specific_fingerprint` is different, additional
-    // checks are needed, i.e. inspecting the non-hashed specific_ids.
     llvm::BLAKE3 function_common_fingerprint;
     llvm::BLAKE3 function_specific_fingerprint;
   };
@@ -146,47 +146,16 @@ class FunctionContext {
   auto FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
                   SemIR::InstId source_id) -> void;
 
+  // When fingerprinting for a specific, adds the call, found in the function
+  // body, to <function_id, specific_id>.
   auto AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
-                                   SemIR::SpecificId specific_id) {
-    if (!function_fingerprint_) {
-      return;
-    }
-    RawStringOstream os;
-    // TODO: Replace index with info that is translation unit independent.
-    // Using a string that includes the function_id string and the index to
-    // avoid possible collisions. This needs revisiting.
-    os << "function_id" << function_id.index << "\n";
-    current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
-    // TODO: Replace index with info that is translation unit independent.
-    if (specific_id.has_value()) {
-      current_fingerprint_.function_specific_fingerprint.update(
-          specific_id.index);
-      // Use -1 as delimiter. This needs revisiting.
-      current_fingerprint_.function_specific_fingerprint.update(-1);
-      function_fingerprint_->calls.push_back(specific_id);
-    }
-  }
+                                   SemIR::SpecificId specific_id) -> void;
 
-  auto AddTypeToCurrentFingerprint(llvm::Type* type) {
-    if (!function_fingerprint_) {
-      return;
-    }
-    if (type) {
-      RawStringOstream os;
-      type->print(os);
-      os << "\n";
-      current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
-    }
-  }
+  // When fingerprinting for a specific, adds the type.
+  auto AddTypeToCurrentFingerprint(llvm::Type* type) -> void;
 
-  auto EmitFinalFingerprint() {
-    if (function_fingerprint_) {
-      current_fingerprint_.function_common_fingerprint.final(
-          function_fingerprint_->function_common_fingerprint);
-      current_fingerprint_.function_specific_fingerprint.final(
-          function_fingerprint_->function_specific_fingerprint);
-    }
-  }
+  // When function lowering is complete emit the final function fingerprints.
+  auto EmitFinalFingerprint() -> void;
 
   auto llvm_context() -> llvm::LLVMContext& {
     return file_context_->llvm_context();
@@ -243,14 +212,8 @@ class FunctionContext {
   auto CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
 
-  auto AddGlobalToCurrentFingerprint(llvm::Value* global) {
-    if (function_fingerprint_ && global) {
-      RawStringOstream os;
-      global->print(os);
-      os << "\n";
-      current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
-    }
-  }
+  // When fingerprinting for a specific, adds the global.
+  auto AddGlobalToCurrentFingerprint(llvm::Value* global) -> void;
 
   // Context for the overall lowering process.
   FileContext* file_context_;

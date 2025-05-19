@@ -91,7 +91,6 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   lowered_specific_fingerprint_.resize(sem_ir_->specifics().size());
   equivalent_specifics_.resize(sem_ir_->specifics().size(),
                                SemIR::SpecificId::None);
-  is_replaced_specific_.resize(sem_ir_->specifics().size(), false);
 
   // Lower global variable declarations.
   for (auto inst_id :
@@ -141,7 +140,9 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
     // i cannot be unsigned due to the comparison with a negative number when
     // the specifics vector is empty.
     for (int i = 0; i < static_cast<int>(specifics.size()) - 1; ++i) {
-      if (is_replaced_specific_[specifics[i].index]) {
+      // This specific was already replaced, skip it.
+      if (equivalent_specifics_[specifics[i].index].has_value() &&
+          equivalent_specifics_[specifics[i].index] != specifics[i]) {
         specifics[i] = specifics[specifics.size() - 1];
         specifics.pop_back();
         --i;
@@ -150,7 +151,9 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
       // TODO: improve quadratic behavior by using a single hash based on
       // lowered_specifics_type_fingerprint_ and function_common_fingerprint.
       for (int j = i + 1; j < static_cast<int>(specifics.size()); ++j) {
-        if (is_replaced_specific_[specifics[j].index]) {
+        // This specific was already replaced, skip it.
+        if (equivalent_specifics_[specifics[j].index].has_value() &&
+            equivalent_specifics_[specifics[j].index] != specifics[j]) {
           specifics[j] = specifics[specifics.size() - 1];
           specifics.pop_back();
           --j;
@@ -223,7 +226,7 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
 }
 
 auto FileContext::ProcessSpecificEquivalence(
-    std::pair<SemIR::SpecificId, SemIR::SpecificId>& pair,
+    std::pair<SemIR::SpecificId, SemIR::SpecificId> pair,
     Set<SemIR::SpecificId>& specifics_to_delete) -> void {
   auto [specific_id1, specific_id2] = pair;
   CARBON_CHECK(specific_id1.has_value() && specific_id2.has_value(),
@@ -248,22 +251,23 @@ auto FileContext::ProcessSpecificEquivalence(
     std::swap(canon_id1, canon_id2);
   }
 
-  // Update equivalent_specifics_ for both, otherwise, for following
-  // equivalences, we may need to walk the chain/path that will get formed of
-  // equivalent_specifics_, in order to get to the canonical one.
-  // This update ensures the canonical is always "one hop away".
+  // Update equivalent_specifics_ for both. This is used as an indicator that
+  // this specific_id may be the canonical one when reducing the equivalence
+  // chains in `IsKnownEquivalence`.
   equivalent_specifics_[specific_id1.index] = canon_id1;
   equivalent_specifics_[specific_id2.index] = canon_id1;
-  is_replaced_specific_[canon_id2.index] = true;
   specific_functions_[canon_id2.index]->replaceAllUsesWith(
       specific_functions_[canon_id1.index]);
   specifics_to_delete.Insert(canon_id2);
 }
 
-auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific1,
-                                     SemIR::SpecificId specific2) -> bool {
-  if (!equivalent_specifics_[specific1.index].has_value() ||
-      !equivalent_specifics_[specific2.index].has_value()) {
+// This checks if two specific_ids are equivalent and also reduces the
+// equivalence chains/paths. This update ensures the canonical specific is
+// always "one hop away".
+auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific_id1,
+                                     SemIR::SpecificId specific_id2) -> bool {
+  if (!equivalent_specifics_[specific_id1.index].has_value() ||
+      !equivalent_specifics_[specific_id2.index].has_value()) {
     return false;
   }
 
@@ -282,11 +286,11 @@ auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific1,
     }
   };
 
-  update_equivalent_specific(specific1);
-  update_equivalent_specific(specific2);
+  update_equivalent_specific(specific_id1);
+  update_equivalent_specific(specific_id2);
 
-  return equivalent_specifics_[specific1.index] ==
-         equivalent_specifics_[specific2.index];
+  return equivalent_specifics_[specific_id1.index] ==
+         equivalent_specifics_[specific_id2.index];
 }
 
 auto FileContext::DeleteFunctionSpecific(SemIR::SpecificId to_replace) -> void {
@@ -295,22 +299,22 @@ auto FileContext::DeleteFunctionSpecific(SemIR::SpecificId to_replace) -> void {
       specific_functions_[equivalent_specifics_[to_replace.index].index];
 }
 
-auto FileContext::AreFunctionTypesEquivalent(SemIR::SpecificId specific1,
-                                             SemIR::SpecificId specific2)
+auto FileContext::AreFunctionTypesEquivalent(SemIR::SpecificId specific_id1,
+                                             SemIR::SpecificId specific_id2)
     -> bool {
-  CARBON_CHECK(specific1.has_value() && specific2.has_value());
-  return lowered_specifics_type_fingerprint_[specific1.index] ==
-         lowered_specifics_type_fingerprint_[specific2.index];
+  CARBON_CHECK(specific_id1.has_value() && specific_id2.has_value());
+  return lowered_specifics_type_fingerprint_[specific_id1.index] ==
+         lowered_specifics_type_fingerprint_[specific_id2.index];
 }
 
 auto FileContext::AreFunctionBodiesEquivalent(
-    SemIR::SpecificId specific1, SemIR::SpecificId specific2,
+    SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
     Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
         visited_equivalent_specifics,
     Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
         visited_equivalent_specifics_flipped) -> bool {
   llvm::SmallVector<std::pair<SemIR::SpecificId, SemIR::SpecificId>> worklist;
-  worklist.push_back({specific1, specific2});
+  worklist.push_back({specific_id1, specific_id2});
 
   while (!worklist.empty()) {
     auto outer_pair = worklist.pop_back_val();
@@ -338,7 +342,6 @@ auto FileContext::AreFunctionBodiesEquivalent(
     CARBON_CHECK(state1.calls.size() == state2.calls.size(),
                  "Number of specific calls expected to be the same.");
 
-    // for (unsigned i = 0; i < state1.calls.size(); ++i) {
     for (auto [state1_call, state2_call] :
          llvm::zip(state1.calls, state2.calls)) {
       if (state1_call != state2_call) {

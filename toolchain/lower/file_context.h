@@ -33,8 +33,17 @@ class FileContext {
 
   // Describes a specific function's body fingerprint.
   struct SpecificFunctionFingerprint {
+    // Fingerprint with all specific-dependent instructions, except specific
+    // calls. This is built by the `FunctionContext` while lowering each
+    // instruction in the definition of a specific function.
+    // TODO: this can be merged with the function type fingerprint, for a
+    // single upfront non-equivalence check, and hash bucketing for deeper
+    // equivalence evaluation.
     llvm::BLAKE3Result<32> function_common_fingerprint;
+    // Fingerprint for all calls to specific functions (hashes all calls to
+    // other specifics). This is built by the `FunctionContext` while lowering.
     llvm::BLAKE3Result<32> function_specific_fingerprint;
+    // All non-hashed specific_ids of functions called.
     llvm::SmallVector<SemIR::SpecificId> calls;
   };
 
@@ -121,27 +130,6 @@ class FileContext {
     llvm::SmallVector<SemIR::InstId> param_inst_ids;
     llvm::Type* return_type = nullptr;
     SemIR::InstId return_param_id = SemIR::InstId::None;
-
-    // Compares the types of two functions. This is intended to be used for
-    // specifics of the same generic.
-    auto Equals(FunctionTypeInfo& other) -> bool {
-      // Two specifics of the same generic may not have the same number of
-      // params. It's possible one specific uses a return slot (so has one
-      // more param) while another does not.
-      if (param_inst_ids.size() != other.param_inst_ids.size() ||
-          return_param_id != other.return_param_id || type != other.type ||
-          return_type != other.return_type) {
-        return false;
-      }
-
-      for (const auto [param_id, other_param_id] :
-           llvm::zip_equal(param_inst_ids, other.param_inst_ids)) {
-        if (param_id != other_param_id) {
-          return false;
-        }
-      }
-      return true;
-    }
   };
 
   // Retrieve various features of the function's type useful for constructing
@@ -188,8 +176,8 @@ class FileContext {
 
   auto BuildVtable(const SemIR::Class& class_info) -> llvm::GlobalVariable*;
 
-  // Function is used to track which specifics were lowered for each generic.
-  // These are added one by one while lowering their definitions.
+  // Track which specifics were lowered for each generic. These are added one
+  // by one while lowering their definitions.
   auto AddLoweredSpecificForGeneric(SemIR::GenericId generic_id,
                                     SemIR::SpecificId specific_id) {
     lowered_specifics_[generic_id.index].push_back(specific_id);
@@ -206,18 +194,21 @@ class FileContext {
     return &lowered_specific_fingerprint_[specific_id.index];
   }
 
-  // Entry point for coalescing equivalent specifics.
+  // Entry point for coalescing equivalent specifics. Two function definitions,
+  // from the same generic, with different specific_ids are considered
+  // equivalent if, at the LLVM level, one can be replaced with the other, with
+  // no change in behavior. All LLVM types and instructions must be equivalent.
   auto CoalesceEquivalentSpecifics() -> void;
 
   // While coalescing specifics, compare the function types for two specifics.
   // This uses a fingerprint generated for each function type.
-  auto AreFunctionTypesEquivalent(SemIR::SpecificId specific1,
-                                  SemIR::SpecificId specific2) -> bool;
+  auto AreFunctionTypesEquivalent(SemIR::SpecificId specific_id1,
+                                  SemIR::SpecificId specific_id2) -> bool;
 
   // While coalescing specifics, compare the function bodies for two specifics.
   // This uses fingerprints generated during lowering of the function body.
   auto AreFunctionBodiesEquivalent(
-      SemIR::SpecificId specific1, SemIR::SpecificId specific2,
+      SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
       Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
           visited_equivalent_specifics,
       Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
@@ -228,11 +219,12 @@ class FileContext {
   // specific with the canonical one; mark one specific for deletion using
   // specifics_to_delete.
   auto ProcessSpecificEquivalence(
-      std::pair<SemIR::SpecificId, SemIR::SpecificId>& pair,
+      std::pair<SemIR::SpecificId, SemIR::SpecificId> pair,
       Set<SemIR::SpecificId>& specifics_to_delete) -> void;
 
-  // Return if two specifics have been found to be equivalent.
-  auto IsKnownEquivalence(SemIR::SpecificId, SemIR::SpecificId) -> bool;
+  // Return whether two specifics have been found to be equivalent.
+  auto IsKnownEquivalence(SemIR::SpecificId specific_id1,
+                          SemIR::SpecificId specific_id2) -> bool;
 
   // Delete the function body for the given specific. All its uses have already
   // been replaced.
@@ -302,34 +294,35 @@ class FileContext {
   llvm::Value* printf_int_format_string_ = nullptr;
 
   // For a generic function, keep track of the specifics for which LLVM
-  // function declarations were created. Those can be retrieved then via
-  // from specific_functions_, via specific_functions_[specific_id.index].
-  // We resize this to the correct size. Indexed by generic_id.index.
+  // function declarations were created. Those can be retrieved then from
+  // specific_functions_. We resize this to the correct size. Vector indexes
+  // correspond to `GenericId` indexes.
   llvm::SmallVector<llvm::SmallVector<SemIR::SpecificId>, 0> lowered_specifics_;
 
   // For specifics that exist in lowered_specifics, a hash of their function
   // type information: return and parameter types. We resize this to the
-  // correct size. Indexed by specific_id.index.
+  // correct size. Vector indexes correspond to `SpecificId` indexes.
   // TODO: Hashing all members of FunctionTypeInfo may not be necessary.
   llvm::SmallVector<llvm::BLAKE3Result<32>, 0>
       lowered_specifics_type_fingerprint_;
 
   // This is initialized and populated while lowering a specific.
-  // We resize this to the correct size. Indexed by specific_id.index.
+  // We resize this to the correct size. Vector indexes correspond to
+  // `SpecificId` indexes.
   llvm::SmallVector<SpecificFunctionFingerprint, 0>
       lowered_specific_fingerprint_;
 
-  // Equivalent specifics found: for each specific point to the
-  // canonical equivalent specific
+  // Equivalent specifics that have been found. For each specific, this points
+  // to the canonical equivalent specific, which may also be self. We resize
+  // this to the correct size and initialize to SpecificId::None, which defines
+  // that there is no other equivalent specific to this SpecificId. Vector
+  // indexes correspond to `SpecificId` indexes.
   llvm::SmallVector<SemIR::SpecificId> equivalent_specifics_;
 
   // Non-equivalent specifics found.
+  // TODO: Revisit this due to its quadratic space growth.
   Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>
       non_equivalent_specifics_;
-
-  // Track whether a specific was replaced by another. We resize it to the
-  // correct size and initialize with all false. Indexed by specific_id.index.
-  llvm::SmallVector<bool, 0> is_replaced_specific_;
 };
 
 }  // namespace Carbon::Lower

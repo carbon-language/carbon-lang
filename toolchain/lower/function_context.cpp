@@ -260,4 +260,60 @@ auto FunctionContext::Inserter::InsertHelper(
                                          insert_pt);
 }
 
+auto FunctionContext::AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
+                                                  SemIR::SpecificId specific_id)
+    -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+
+  RawStringOstream os;
+  // TODO: Replace index with info that is translation unit independent.
+  // Using a string that includes the function_id string and the index to
+  // avoid possible collisions. This needs revisiting.
+  os << "function_id" << function_id.index << "\n";
+  current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
+  // TODO: Replace index with info that is translation unit independent.
+  if (specific_id.has_value()) {
+    current_fingerprint_.function_specific_fingerprint.update(
+        specific_id.index);
+    // Use -1 as delimiter. This needs revisiting.
+    current_fingerprint_.function_specific_fingerprint.update(-1);
+    function_fingerprint_->calls.push_back(specific_id);
+  }
+}
+
+auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {
+  if (!function_fingerprint_ || !type) {
+    return;
+  }
+
+  RawStringOstream os;
+  type->print(os);
+  os << "\n";
+  current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
+}
+
+auto FunctionContext::AddGlobalToCurrentFingerprint(llvm::Value* global)
+    -> void {
+  if (!function_fingerprint_ || !global) {
+    return;
+  }
+
+  RawStringOstream os;
+  global->print(os);
+  os << "\n";
+  current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
+}
+
+auto FunctionContext::EmitFinalFingerprint() -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+  current_fingerprint_.function_common_fingerprint.final(
+      function_fingerprint_->function_common_fingerprint);
+  current_fingerprint_.function_specific_fingerprint.final(
+      function_fingerprint_->function_specific_fingerprint);
+}
+
 }  // namespace Carbon::Lower
