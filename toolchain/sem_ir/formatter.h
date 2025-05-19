@@ -230,6 +230,8 @@ class Formatter {
   // no such arguments.
   auto FormatPendingConstantValue(AddSpace space_where) -> void;
 
+  // Formats `<name>[: <type>] = `. Skips unnamed instructions. Typed
+  // instructions must be named.
   auto FormatInstLhs(InstId inst_id, Inst inst) -> void;
 
   template <typename InstT>
