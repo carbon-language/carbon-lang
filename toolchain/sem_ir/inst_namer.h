@@ -104,6 +104,9 @@ class InstNamer {
   }
 
  private:
+  // Helper class for naming a single instruction.
+  class SingleInstNamer;
+
   // A space in which unique names can be allocated.
   struct Namespace {
     // A result of a name lookup.
