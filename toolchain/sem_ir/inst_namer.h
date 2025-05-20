@@ -163,7 +163,8 @@ class InstNamer {
                            QueueBlockInstsFn queue_block_insts,
                            InstNamer::ScopeId scope_id, InstId inst_id);
 
-    // Names the single instruction.
+    // Names the single instruction. Use bound names where available. Otherwise,
+    // assign a backup name.
     auto NameInst() -> void;
 
    private:

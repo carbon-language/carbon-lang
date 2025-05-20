@@ -423,7 +423,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
 
   queue_block_insts(top_scope_id, block);
 
-  // Use bound names where available. Otherwise, assign a backup name.
   while (!insts.empty()) {
     auto [scope_id, inst_id] = insts.pop_back_val();
     NamingContext context(this, queue_block_insts, scope_id, inst_id);
