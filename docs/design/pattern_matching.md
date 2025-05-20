@@ -135,7 +135,7 @@ binding is a durable reference expression. Otherwise, it is a _value binding
 pattern_, and the binding is a value expression.
 
 A _variable binding pattern_ is a special kind of reference binding pattern,
-where the enclosing `var` pattern doesn't have a tuple or struct subpattern.
+which is the immediate subpattern of its enclosing `var` pattern.
 
 > **TODO:** Specify the conditions under which a binding can be moved. This is
 > expected to be the only difference between variable binding patterns and other
@@ -714,7 +714,26 @@ pattern.
 
 Any initializing expressions in the scrutinee of a `match` statement are
 [materialized](values.md#temporary-materialization) before pattern matching
-begins, so that the result can be reused by multiple `case`s.
+begins, so that the result can be reused by multiple `case`s. However, the
+objects created by `var` patterns are not reused by multiple `case`s:
+
+```carbon
+class X {
+  destructor { Print("Destroyed!"); }
+}
+fn F(x: X) {
+  match ((x, 1 as i32)) {
+    // Prints "Destroyed!" here, because `y` is initialized before we reach the
+    // expression pattern `0` and determine that this case doesn't match,
+    // so it must be destroyed.
+    case (var y: X, 0) => {}
+    case (var z: X, 1) => {
+      // Prints "Destroyed!" again at the end of the block here, when `z` goes
+      // out of scope.
+    }
+  }
+}
+```
 
 #### Alternatives considered
 
