@@ -200,14 +200,7 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// CHECK:STDERR: repeated_associated.carbon:[[@LINE+7]]:1: error: associated constant Y not given a value in impl of interface M [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl () as M where .X = .Y and .X = .Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: repeated_associated.carbon:[[@LINE-5]]:33: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR: interface M { let X:! type; let Y:! type; }
-// CHECK:STDERR:                                 ^~~~~~~~
-// CHECK:STDERR:
-impl () as M where .X = .Y and .X = .Y {}
+impl () as M where .X = .Y and .X = .Y and .Y = () {}
 
 // --- todo_fail_cycle.carbon
 library "[[@TEST_NAME]]";
