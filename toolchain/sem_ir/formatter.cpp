@@ -745,59 +745,6 @@ auto Formatter::FormatNameScope(NameScopeId id, llvm::StringRef label) -> void {
   }
 }
 
-auto Formatter::FormatInst(InstId inst_id, Inst inst) -> void {
-  CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND(InstT)  \
-  case CARBON_KIND(InstT typed_inst): { \
-    FormatInst(inst_id, typed_inst);    \
-    break;                              \
-  }
-#include "toolchain/sem_ir/inst_kind.def"
-  }
-}
-
-auto Formatter::FormatInst(InstId /*inst_id*/, Branch inst) -> void {
-  if (!in_terminator_sequence_) {
-    Indent();
-  }
-  out_ << Branch::Kind.ir_name() << " ";
-  FormatLabel(inst.target_id);
-  out_ << "\n";
-  in_terminator_sequence_ = false;
-}
-
-auto Formatter::FormatInst(InstId /*inst_id*/, BranchIf inst) -> void {
-  if (!in_terminator_sequence_) {
-    Indent();
-  }
-  out_ << "if ";
-  FormatName(inst.cond_id);
-  out_ << " " << Branch::Kind.ir_name() << " ";
-  FormatLabel(inst.target_id);
-  out_ << " else ";
-  in_terminator_sequence_ = true;
-}
-
-auto Formatter::FormatInst(InstId /*inst_id*/, BranchWithArg inst) -> void {
-  if (!in_terminator_sequence_) {
-    Indent();
-  }
-  out_ << BranchWithArg::Kind.ir_name() << " ";
-  FormatLabel(inst.target_id);
-  out_ << "(";
-  FormatName(inst.arg_id);
-  out_ << ")\n";
-  in_terminator_sequence_ = false;
-}
-
-auto Formatter::FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
-  Indent();
-  FormatInstLhs(inst_id, inst);
-  out_ << ImportRefUnloaded::Kind.ir_name();
-  FormatInstRhs(inst);
-  out_ << "\n";
-}
-
 auto Formatter::FormatInst(InstId inst_id) -> void {
   if (!inst_id.has_value()) {
     Indent();
@@ -805,7 +752,58 @@ auto Formatter::FormatInst(InstId inst_id) -> void {
     return;
   }
 
-  FormatInst(inst_id, sem_ir_->insts().GetWithAttachedType(inst_id));
+  if (!in_terminator_sequence_) {
+    Indent();
+  }
+
+  auto inst = sem_ir_->insts().GetWithAttachedType(inst_id);
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(Branch branch): {
+      out_ << Branch::Kind.ir_name() << " ";
+      FormatLabel(branch.target_id);
+      out_ << "\n";
+      in_terminator_sequence_ = false;
+      return;
+    }
+    case CARBON_KIND(BranchIf branch_if): {
+      out_ << "if ";
+      FormatName(branch_if.cond_id);
+      out_ << " " << Branch::Kind.ir_name() << " ";
+      FormatLabel(branch_if.target_id);
+      out_ << " else ";
+      in_terminator_sequence_ = true;
+      return;
+    }
+    case CARBON_KIND(BranchWithArg branch_with_arg): {
+      out_ << BranchWithArg::Kind.ir_name() << " ";
+      FormatLabel(branch_with_arg.target_id);
+      out_ << "(";
+      FormatName(branch_with_arg.arg_id);
+      out_ << ")\n";
+      in_terminator_sequence_ = false;
+      return;
+    }
+    default: {
+      FormatInstLhs(inst_id, inst);
+      out_ << inst.kind().ir_name();
+
+      // Add constants for everything except `ImportRefUnloaded`.
+      if (!inst.Is<ImportRefUnloaded>()) {
+        pending_constant_value_ =
+            sem_ir_->constant_values().GetAttached(inst_id);
+        pending_constant_value_is_self_ =
+            sem_ir_->constant_values().GetInstIdIfValid(
+                pending_constant_value_) == inst_id;
+      }
+
+      FormatInstRhs(inst);
+      // This usually prints the constant, but when `FormatInstRhs` prints it
+      // first (or for `ImportRefUnloaded`), this does nothing.
+      FormatPendingConstantValue(AddSpace::Before);
+      out_ << "\n";
+      return;
+    }
+  }
 }
 
 auto Formatter::FormatPendingImportedFrom(AddSpace space_where) -> void {

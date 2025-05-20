@@ -203,32 +203,13 @@ class Formatter {
   // Prints the contents of a name scope, with an optional label.
   auto FormatNameScope(NameScopeId id, llvm::StringRef label = "") -> void;
 
-  auto FormatInst(InstId inst_id, Inst inst) -> void;
-
-  // Don't print a constant for ImportRefUnloaded.
-  auto FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void;
-
-  // Formats as "branch <target>".
-  auto FormatInst(InstId inst_id, Branch inst) -> void;
-
-  // Formats as "if <cond> branch_if <target> else ".
-  auto FormatInst(InstId inst_id, BranchIf inst) -> void;
-
-  // Formats as "branch_with_arg <target>(arg)".
-  auto FormatInst(InstId inst_id, BranchWithArg inst) -> void;
-
-  // Prints a single instruction. This typically dispatches to one of the
-  // `FormatInst` overloads, based on a specific instruction type.
+  // Prints a single instruction. This typically formats as:
+  //   `FormatInstLhs()` `<ir_name>` `FormatInstRhs()` `<constant>`
   //
-  // While there is default formatting behavior, we do have overloads when
-  // special behavior is required, although typically of functions called by
-  // `FormatInst` rather than `FormatInst` itself. For example, `FormatInstRhs`
-  // is frequently overloaded because the default argument formatting often
-  // isn't what we want for instructions.
+  // Some instruction kinds are special-cased here. However, it's more common to
+  // provide special-casing of `FormatInstRhs`, for custom argument
+  // formatting.
   auto FormatInst(InstId inst_id) -> void;
-
-  template <typename InstT>
-  auto FormatInst(InstId inst_id, InstT inst) -> void;
 
   // If there is a pending library name that the current instruction was
   // imported from, print it now and clear it out.
@@ -447,19 +428,6 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                                   IdT entity_id) -> void {
   FormatEntityStart(entity_kind, entity.first_owning_decl_id, entity.generic_id,
                     entity_id);
-}
-
-template <typename InstT>
-auto Formatter::FormatInst(InstId inst_id, InstT inst) -> void {
-  Indent();
-  FormatInstLhs(inst_id, inst);
-  out_ << InstT::Kind.ir_name();
-  pending_constant_value_ = sem_ir_->constant_values().GetAttached(inst_id);
-  pending_constant_value_is_self_ = sem_ir_->constant_values().GetInstIdIfValid(
-                                        pending_constant_value_) == inst_id;
-  FormatInstRhs(inst);
-  FormatPendingConstantValue(AddSpace::Before);
-  out_ << "\n";
 }
 
 template <typename... Types>
