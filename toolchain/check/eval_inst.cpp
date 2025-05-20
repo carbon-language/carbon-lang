@@ -199,6 +199,28 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
 }
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::LookupImplWitness inst) -> ConstantEvalResult {
+  // The self value is canonicalized in order to produce a canonical
+  // LookupImplWitness instruction. We save the non-canonical instruction as it
+  // may be a concrete `FacetValue` that contains a concrete witness.
+  auto non_canonical_query_self_inst_id = inst.query_self_inst_id;
+  inst.query_self_inst_id =
+      GetCanonicalizedFacetOrTypeValue(context, inst.query_self_inst_id);
+
+  auto result = EvalLookupSingleImplWitness(
+      context, SemIR::LocId(inst_id), inst, non_canonical_query_self_inst_id,
+      /*poison_concrete_results=*/true);
+  // The `LookupImplWitness` instruction is only created and evaluated when we
+  // already know there is a witness.
+  CARBON_CHECK(result.has_value());
+  if (!result.has_concrete_value()) {
+    return ConstantEvalResult::NewSamePhase(inst);
+  }
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(result.concrete_witness()));
+}
+
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
   // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
   if (auto witness =

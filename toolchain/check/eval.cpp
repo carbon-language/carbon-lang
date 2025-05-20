@@ -1989,47 +1989,21 @@ auto TryEvalTypedInst<SemIR::LookupImplWitness>(EvalContext& eval_context,
 
   Phase phase = Phase::Concrete;
 
-  CARBON_CHECK(
-      ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase));
-  CARBON_CHECK(ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase));
+  bool ok = ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase);
+  CARBON_CHECK(ok);
+  ok = ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase);
+  CARBON_CHECK(ok);
 
   if (!eval_context.has_specific()) {
     return ConvertEvalResultToConstantId(
         eval_context.context(), ConstantEvalResult::NewSamePhase(inst), phase);
   } else {
-    auto lookup_inst = inst.As<SemIR::LookupImplWitness>();
-
-    // The self value is canonicalized in order to produce a canonical
-    // LookupImplWitness instruction. We save the non-canonical instruction as
-    // it may be a concrete `FacetValue` that contains a concrete witness.
-    auto non_canonical_query_self_inst_id = lookup_inst.query_self_inst_id;
-    lookup_inst.query_self_inst_id = GetCanonicalizedFacetOrTypeValue(
-        eval_context.context(), lookup_inst.query_self_inst_id);
-
-    auto result = EvalLookupSingleImplWitness(
-        eval_context.context(), SemIR::LocId(inst_id), lookup_inst,
-        non_canonical_query_self_inst_id,
-        /*poison_concrete_results=*/true);
-    // The `LookupImplWitness` instruction is only created and evaluated when we
-    // already know there is a witness.
-    CARBON_CHECK(result.has_value());
-    if (!result.has_concrete_value()) {
-      return ConvertEvalResultToConstantId(
-          eval_context.context(), ConstantEvalResult::NewSamePhase(lookup_inst),
-          phase);
-    }
     return ConvertEvalResultToConstantId(
         eval_context.context(),
-        ConstantEvalResult::Existing(
-            eval_context.constant_values().Get(result.concrete_witness())),
+        EvalConstantInst(eval_context.context(), inst_id,
+                         inst.As<SemIR::LookupImplWitness>()),
         phase);
   }
-
-  return ConvertEvalResultToConstantId(
-      eval_context.context(),
-      EvalConstantInst(eval_context.context(), inst_id,
-                       inst.As<SemIR::LookupImplWitness>()),
-      phase);
 }
 
 // TODO: Convert this to an EvalConstantInst instruction. This will require
