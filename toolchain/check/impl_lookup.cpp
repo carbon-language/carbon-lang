@@ -389,6 +389,9 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
       .facet_type_id = SemIR::FacetTypeId::None,
   };
 
+  // TODO: This is repeating the implementation of EvalConstantInst. Can we
+  // share even more code?
+
   auto lookup_inst = SemIR::LookupImplWitness{
       .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
       .query_self_inst_id =
