@@ -161,8 +161,7 @@ class InstNamer {
 
     explicit NamingContext(InstNamer* inst_namer,
                            QueueBlockInstsFn queue_block_insts,
-                           InstNamer::ScopeId scope_id, InstId inst_id,
-                           Inst inst);
+                           InstNamer::ScopeId scope_id, InstId inst_id);
 
     // Names the single instruction.
     auto NameInst() -> void;

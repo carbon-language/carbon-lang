@@ -426,13 +426,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   // Use bound names where available. Otherwise, assign a backup name.
   while (!insts.empty()) {
     auto [scope_id, inst_id] = insts.pop_back_val();
-    auto inst = sem_ir_->insts().Get(inst_id);
-
-    if (auto branch = inst.TryAs<AnyBranch>()) {
-      AddBlockLabel(scope_id, LocId(inst_id), *branch);
-    }
-
-    NamingContext context(this, queue_block_insts, scope_id, inst_id, inst);
+    NamingContext context(this, queue_block_insts, scope_id, inst_id);
     context.NameInst();
   }
 }
@@ -451,12 +445,12 @@ auto InstNamer::CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id)
 InstNamer::NamingContext::NamingContext(InstNamer* inst_namer,
                                         QueueBlockInstsFn queue_block_insts,
                                         InstNamer::ScopeId scope_id,
-                                        InstId inst_id, Inst inst)
+                                        InstId inst_id)
     : inst_namer_(inst_namer),
       queue_block_insts_(queue_block_insts),
       scope_id_(scope_id),
       inst_id_(inst_id),
-      inst_(inst) {}
+      inst_(sem_ir().insts().Get(inst_id)) {}
 
 auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
   ScopeId old_scope_id = inst_namer_->insts_[inst_id_.index].first;
@@ -573,6 +567,13 @@ auto InstNamer::NamingContext::NameInst() -> void {
       } else {
         AddInstName("bound_method");
       }
+      return;
+    }
+    case Branch::Kind:
+    case BranchIf::Kind:
+    case BranchWithArg::Kind: {
+      auto branch = inst_.As<AnyBranch>();
+      inst_namer_->AddBlockLabel(scope_id_, LocId(inst_id_), branch);
       return;
     }
     case CARBON_KIND(Call inst): {
