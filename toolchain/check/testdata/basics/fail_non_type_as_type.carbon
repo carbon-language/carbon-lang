@@ -46,7 +46,7 @@ var x: type = 42;
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.98f = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref type = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

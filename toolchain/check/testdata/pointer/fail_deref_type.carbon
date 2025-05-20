@@ -57,7 +57,7 @@ var p2: i32->foo;
 // CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc18: ref <error> = deref %i32.loc18 [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: <error> = bind_name p, <error>
+// CHECK:STDOUT:   %p: <error> = bind_name p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p2.patt: <error> = binding_pattern p2 [concrete]
 // CHECK:STDOUT:     %p2.var_patt: <error> = var_pattern %p2.patt [concrete]
@@ -69,6 +69,6 @@ var p2: i32->foo;
 // CHECK:STDOUT:     %.loc23: ref <error> = deref %i32.loc23 [concrete = <error>]
 // CHECK:STDOUT:     %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p2: <error> = bind_name p2, <error>
+// CHECK:STDOUT:   %p2: <error> = bind_name p2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

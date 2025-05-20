@@ -45,7 +45,7 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:     %.loc15_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc15_9.3: type = converted %.loc15_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

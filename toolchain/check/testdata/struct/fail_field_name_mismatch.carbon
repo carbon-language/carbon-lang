@@ -61,7 +61,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.f4b = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.f4b = var_pattern %y.patt [concrete]
@@ -72,7 +72,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b.0a3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %struct_type.b.0a3 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %struct_type.b.0a3 = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -80,7 +80,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc15: %struct_type.b.a15 = struct_literal (%int_1)
 // CHECK:STDOUT:   assign file.%x.var, <error>
-// CHECK:STDOUT:   %x.ref: ref %struct_type.a = name_ref x, file.%x
+// CHECK:STDOUT:   %x.ref: ref %struct_type.a = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

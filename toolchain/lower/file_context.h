@@ -128,6 +128,11 @@ class FileContext {
   auto BuildFunctionTypeInfo(const SemIR::Function& function,
                              SemIR::SpecificId specific_id) -> FunctionTypeInfo;
 
+  // Builds the global for the given instruction, which should then be cached by
+  // the caller.
+  auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
+      -> llvm::GlobalVariable*;
+
  private:
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
@@ -157,11 +162,6 @@ class FileContext {
   // Builds the type for the given instruction, which should then be cached by
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
-
-  // Builds the global for the given instruction, which should then be cached by
-  // the caller.
-  auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
-      -> llvm::GlobalVariable*;
 
   auto BuildVtable(const SemIR::Class& class_info) -> llvm::GlobalVariable*;
 

@@ -97,7 +97,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_32.loc4: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc4: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.7ce = var_pattern %y.patt [concrete]
@@ -107,7 +107,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -121,7 +121,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc4: init %i32 = converted %int_0, %int.convert_checked [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   assign file.%x.var, %.loc4
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [concrete = package]
-// CHECK:STDOUT:   %x.ref: ref %i32 = name_ref x, file.%x
+// CHECK:STDOUT:   %x.ref: ref %i32 = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   %.loc5: %i32 = bind_value %x.ref
 // CHECK:STDOUT:   assign file.%y.var, %.loc5
 // CHECK:STDOUT:   return
@@ -189,7 +189,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -219,7 +219,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [concrete = package]
-// CHECK:STDOUT:   %x.ref: ref %i32 = name_ref x, file.%x
+// CHECK:STDOUT:   %x.ref: ref %i32 = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   %.loc9_23: %i32 = bind_value %x.ref
 // CHECK:STDOUT:   assign %y.var, %.loc9_23
 // CHECK:STDOUT:   %.loc9_10: type = splice_block %i32.loc9 [concrete = constants.%i32] {

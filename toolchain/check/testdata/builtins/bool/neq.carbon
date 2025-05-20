@@ -159,7 +159,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc11_25.3: bool = converted %bool.neq.loc11, %.loc11_25.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc11: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cc5 = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.cc5 = var_pattern %b.patt [concrete]
@@ -175,7 +175,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc12_26.3: bool = converted %bool.neq.loc12, %.loc12_26.2 [concrete = constants.%true]
 // CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %C.a14 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %C.a14 = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.cc5 = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.cc5 = var_pattern %c.patt [concrete]
@@ -191,7 +191,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc13_26.3: bool = converted %bool.neq.loc13, %.loc13_26.2 [concrete = constants.%true]
 // CHECK:STDOUT:     %C.loc13: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.a14 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C.a14 = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.d8f = binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.d8f = var_pattern %d.patt [concrete]
@@ -207,7 +207,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc14_27.3: bool = converted %bool.neq.loc14, %.loc14_27.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc14: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %C.2ba = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %C.2ba = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%B.loc6_9.1: bool) {
@@ -373,7 +373,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc9_22.3: bool = converted %bool.neq.loc9, %.loc9_22.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc9: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cc5 = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.cc5 = var_pattern %b.patt [concrete]
@@ -390,7 +390,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc10_23.3: bool = converted %bool.neq.loc10, %.loc10_23.2 [concrete = constants.%true]
 // CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %C.a14 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %C.a14 = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.cc5 = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.cc5 = var_pattern %c.patt [concrete]
@@ -407,7 +407,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc11_23.3: bool = converted %bool.neq.loc11, %.loc11_23.2 [concrete = constants.%true]
 // CHECK:STDOUT:     %C.loc11: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.a14 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C.a14 = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.d8f = binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.d8f = var_pattern %d.patt [concrete]
@@ -424,7 +424,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc12_24.3: bool = converted %bool.neq.loc12, %.loc12_24.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %C.2ba = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %C.2ba = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%B.loc4_9.1: bool) {

@@ -81,7 +81,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_i32: ref %i32 = bind_name test_i32, %test_i32.var
+// CHECK:STDOUT:   %test_i32: ref %i32 = bind_name test_i32, %test_i32.var [concrete = %test_i32.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f64.patt: %pattern_type.3de = binding_pattern test_f64 [concrete]
 // CHECK:STDOUT:     %test_f64.var_patt: %pattern_type.3de = var_pattern %test_f64.patt [concrete]
@@ -93,7 +93,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:     %.loc12_15.2: type = value_of_initializer %float.make_type [concrete = f64]
 // CHECK:STDOUT:     %.loc12_15.3: type = converted %float.make_type, %.loc12_15.2 [concrete = f64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_f64: ref f64 = bind_name test_f64, %test_f64.var
+// CHECK:STDOUT:   %test_f64: ref f64 = bind_name test_f64, %test_f64.var [concrete = %test_f64.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_str.patt: %pattern_type.b05 = binding_pattern test_str [concrete]
 // CHECK:STDOUT:   }
@@ -103,7 +103,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:     %test_type.var_patt: %pattern_type.98f = var_pattern %test_type.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_type.var: ref type = var %test_type.var_patt [concrete]
-// CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var
+// CHECK:STDOUT:   %test_type: ref type = bind_name test_type, %test_type.var [concrete = %test_type.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

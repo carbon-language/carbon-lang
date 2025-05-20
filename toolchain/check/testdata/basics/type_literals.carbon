@@ -168,7 +168,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:     %i8: type = class_type @Int, @Int(constants.%int_8) [concrete = constants.%i8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_i8: ref %i8 = bind_name test_i8, %test_i8.var
+// CHECK:STDOUT:   %test_i8: ref %i8 = bind_name test_i8, %test_i8.var [concrete = %test_i8.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i16.patt: %pattern_type.2f8 = binding_pattern test_i16 [concrete]
 // CHECK:STDOUT:     %test_i16.var_patt: %pattern_type.2f8 = var_pattern %test_i16.patt [concrete]
@@ -178,7 +178,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_i16: ref %i16 = bind_name test_i16, %test_i16.var
+// CHECK:STDOUT:   %test_i16: ref %i16 = bind_name test_i16, %test_i16.var [concrete = %test_i16.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_i64.patt: %pattern_type.95b = binding_pattern test_i64 [concrete]
 // CHECK:STDOUT:     %test_i64.var_patt: %pattern_type.95b = var_pattern %test_i64.patt [concrete]
@@ -188,7 +188,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_i64: ref %i64 = bind_name test_i64, %test_i64.var
+// CHECK:STDOUT:   %test_i64: ref %i64 = bind_name test_i64, %test_i64.var [concrete = %test_i64.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_iN_bad_width.carbon
@@ -238,7 +238,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:     %u8: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_u8: ref %u8 = bind_name test_u8, %test_u8.var
+// CHECK:STDOUT:   %test_u8: ref %u8 = bind_name test_u8, %test_u8.var [concrete = %test_u8.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u16.patt: %pattern_type.9db = binding_pattern test_u16 [concrete]
 // CHECK:STDOUT:     %test_u16.var_patt: %pattern_type.9db = var_pattern %test_u16.patt [concrete]
@@ -248,7 +248,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %u16: type = class_type @UInt, @UInt(constants.%int_16) [concrete = constants.%u16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_u16: ref %u16 = bind_name test_u16, %test_u16.var
+// CHECK:STDOUT:   %test_u16: ref %u16 = bind_name test_u16, %test_u16.var [concrete = %test_u16.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_u64.patt: %pattern_type.157 = binding_pattern test_u64 [concrete]
 // CHECK:STDOUT:     %test_u64.var_patt: %pattern_type.157 = var_pattern %test_u64.patt [concrete]
@@ -258,7 +258,7 @@ var test_f128: f128;
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %u64: type = class_type @UInt, @UInt(constants.%int_64) [concrete = constants.%u64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_u64: ref %u64 = bind_name test_u64, %test_u64.var
+// CHECK:STDOUT:   %test_u64: ref %u64 = bind_name test_u64, %test_u64.var [concrete = %test_u64.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_uN_bad_width.carbon

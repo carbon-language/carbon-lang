@@ -168,7 +168,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:     %.loc19_39.4: Core.IntLiteral = converted %int.sadd, %.loc19_39.3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc19_39.4, %i32.loc19_16 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
+// CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var [concrete = %arr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

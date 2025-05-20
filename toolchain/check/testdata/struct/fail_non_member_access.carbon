@@ -76,7 +76,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.a.ba9 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %struct_type.a.ba9 = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.7ce = var_pattern %y.patt [concrete]
@@ -86,7 +86,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -102,7 +102,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %.loc11_27.3: init %struct_type.a.ba9 = struct_init (%.loc11_27.2) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc11_1: init %struct_type.a.ba9 = converted %.loc11_27.1, %.loc11_27.3 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_1
-// CHECK:STDOUT:   %x.ref: ref %struct_type.a.ba9 = name_ref x, file.%x
+// CHECK:STDOUT:   %x.ref: ref %struct_type.a.ba9 = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

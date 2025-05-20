@@ -95,7 +95,7 @@ import library "var";
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo: ref %i32 = bind_name Foo, %Foo.var
+// CHECK:STDOUT:   %Foo: ref %i32 = bind_name Foo, %Foo.var [concrete = %Foo.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon

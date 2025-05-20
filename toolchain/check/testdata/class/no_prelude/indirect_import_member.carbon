@@ -283,7 +283,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -339,7 +339,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "c.carbon"] {
@@ -395,7 +395,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "c.carbon"] {
@@ -455,7 +455,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "e.carbon"] {
@@ -524,7 +524,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "e.carbon"] {

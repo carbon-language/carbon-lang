@@ -152,7 +152,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:     %.loc33_8.2: type = value_of_initializer %float.make_type.loc33 [concrete = f64]
 // CHECK:STDOUT:     %.loc33_8.3: type = converted %float.make_type.loc33, %.loc33_8.2 [concrete = f64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: f64 = bind_name d, <error>
+// CHECK:STDOUT:   %d: f64 = bind_name d, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.3de = binding_pattern e [concrete]
 // CHECK:STDOUT:   }
@@ -162,7 +162,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:     %.loc39_8.2: type = value_of_initializer %float.make_type.loc39 [concrete = f64]
 // CHECK:STDOUT:     %.loc39_8.3: type = converted %float.make_type.loc39, %.loc39_8.2 [concrete = f64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e: f64 = bind_name e, <error>
+// CHECK:STDOUT:   %e: f64 = bind_name e, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

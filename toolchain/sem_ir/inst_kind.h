@@ -80,6 +80,10 @@ enum class InstConstantKind : int8_t {
   // the constants block.
   // TODO: Decide if this is the model we want for these cases.
   Unique,
+  // Same as unique, except that the instruction may or may not be constant.
+  // This is used for `VarStorage`, where global variables are `Unique` and
+  // other variables are non-constant.
+  ConditionalUnique,
 };
 
 // Whether constant evaluation of an instruction needs the instruction to have

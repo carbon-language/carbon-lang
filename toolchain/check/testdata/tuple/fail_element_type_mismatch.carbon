@@ -81,7 +81,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:     %.loc18_17.2: %tuple.type.24b = tuple_literal (%i32.loc18_9, %i32.loc18_14)
 // CHECK:STDOUT:     %.loc18_17.3: type = converted %.loc18_17.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type.d07 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %tuple.type.d07 = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -128,7 +128,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:     %.loc14_17.2: %tuple.type.24b = tuple_literal (%i32.loc14_9, %i32.loc14_14)
 // CHECK:STDOUT:     %.loc14_17.3: type = converted %.loc14_17.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type.d07 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %tuple.type.d07 = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.511 = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.511 = var_pattern %y.patt [concrete]
@@ -142,7 +142,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:     %.loc15_17.2: %tuple.type.24b = tuple_literal (%i32.loc15_9, %i32.loc15_14)
 // CHECK:STDOUT:     %.loc15_17.3: type = converted %.loc15_17.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %tuple.type.d07 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %tuple.type.d07 = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -173,12 +173,12 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc14_28.6: init %tuple.type.d07 = tuple_init (%.loc14_28.3, %.loc14_28.5) to file.%x.var [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc14_1: init %tuple.type.d07 = converted %.loc14_28.1, %.loc14_28.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign file.%x.var, %.loc14_1
-// CHECK:STDOUT:   %x.ref: ref %tuple.type.d07 = name_ref x, file.%x
-// CHECK:STDOUT:   %tuple.elem0.loc15_21.1: ref %i32 = tuple_access %x.ref, element0
+// CHECK:STDOUT:   %x.ref: ref %tuple.type.d07 = name_ref x, file.%x [concrete = file.%x.var]
+// CHECK:STDOUT:   %tuple.elem0.loc15_21.1: ref %i32 = tuple_access %x.ref, element0 [concrete = constants.%tuple.elem0.466]
 // CHECK:STDOUT:   %.loc15_21.1: %i32 = bind_value %tuple.elem0.loc15_21.1
 // CHECK:STDOUT:   %tuple.elem0.loc15_21.2: ref %i32 = tuple_access file.%y.var, element0 [concrete = constants.%tuple.elem0.a37]
 // CHECK:STDOUT:   %.loc15_21.2: init %i32 = initialize_from %.loc15_21.1 to %tuple.elem0.loc15_21.2
-// CHECK:STDOUT:   %tuple.elem1.loc15_21.1: ref %i32 = tuple_access %x.ref, element1
+// CHECK:STDOUT:   %tuple.elem1.loc15_21.1: ref %i32 = tuple_access %x.ref, element1 [concrete = constants.%tuple.elem1.d07]
 // CHECK:STDOUT:   %.loc15_21.3: %i32 = bind_value %tuple.elem1.loc15_21.1
 // CHECK:STDOUT:   %tuple.elem1.loc15_21.2: ref %i32 = tuple_access file.%y.var, element1 [concrete = constants.%tuple.elem1.45d]
 // CHECK:STDOUT:   %.loc15_21.4: init %i32 = initialize_from %.loc15_21.3 to %tuple.elem1.loc15_21.2

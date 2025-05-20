@@ -22,6 +22,7 @@
 #include "toolchain/lower/mangler.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/entry_point.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -92,7 +93,11 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // Specific functions are lowered when we emit a reference to them.
   specific_functions_.resize(sem_ir_->specifics().size());
 
-  // Lower global variable declarations.
+  // Lower constants.
+  constants_.resize(sem_ir_->insts().size());
+  LowerConstants(*this, constants_);
+
+  // Lower global variable definitions.
   // TODO: Storing both a `constants_` array and a separate `global_variables_`
   // map is redundant.
   for (auto inst_id :
@@ -100,17 +105,24 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     // Only `VarStorage` indicates a global variable declaration in the
     // top instruction block.
     if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-      auto* var_decl = BuildGlobalVariableDecl(*var);
-      global_variables_.Insert(inst_id, var_decl);
-      // Also store the global variable with the ID of the pattern so
-      // constant lowering can find it.
-      global_variables_.Insert(var->pattern_id, var_decl);
+      // Get the global variable declaration. We created this when lowering the
+      // constant unless the variable is unnamed, in which case we need to
+      // create it now.
+      llvm::GlobalVariable* llvm_var = nullptr;
+      if (sem_ir().constant_values().Get(inst_id).is_constant()) {
+        llvm_var = cast<llvm::GlobalVariable>(
+            GetGlobal(inst_id, SemIR::SpecificId::None));
+      } else {
+        llvm_var = BuildGlobalVariableDecl(*var);
+      }
+
+      // Convert the declaration of this variable into a definition by adding an
+      // initializer.
+      global_variables_.Insert(inst_id, llvm_var);
+      llvm_var->setInitializer(
+          llvm::Constant::getNullValue(llvm_var->getValueType()));
     }
   }
-
-  // Lower constants.
-  constants_.resize(sem_ir_->insts().size());
-  LowerConstants(*this, constants_);
 
   // Lower function definitions.
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
@@ -186,12 +198,27 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
   CARBON_CHECK(const_id.is_concrete(), "Missing value: {0} {1} {2}", inst_id,
                specific_id, sem_ir().insts().Get(inst_id));
   auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
+  auto* const_value = constants_[const_inst_id.index];
 
   // For value expressions and initializing expressions, the value produced by
   // a constant instruction is a value representation of the constant. For
   // initializing expressions, `FinishInit` will perform a copy if needed.
-  // TODO: Handle reference expression constants.
-  auto* const_value = constants_[const_inst_id.index];
+  switch (auto cat = SemIR::GetExprCategory(sem_ir(), const_inst_id)) {
+    case SemIR::ExprCategory::Value:
+    case SemIR::ExprCategory::Initializing:
+      break;
+
+    case SemIR::ExprCategory::DurableRef:
+    case SemIR::ExprCategory::EphemeralRef:
+      // Constant reference expressions lower to an address.
+      return const_value;
+
+    case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Error:
+    case SemIR::ExprCategory::Mixed:
+      CARBON_FATAL("Unexpected category {0} for lowered constant {1}", cat,
+                   sem_ir().insts().Get(const_inst_id));
+  };
 
   auto value_rep = SemIR::ValueRepr::ForType(
       sem_ir(), sem_ir().insts().Get(const_inst_id).type_id());
@@ -199,6 +226,8 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
     return const_value;
   }
 
+  // The value representation is a pointer. Generate a variable to hold the
+  // value, or find and reuse an existing one.
   if (auto result = global_variables().Lookup(const_inst_id)) {
     return result.value();
   }
@@ -780,11 +809,9 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   }
 
   auto* type = GetType(var_storage.type_id);
-  // TODO: Create a declaration instead of a definition if this variable was
-  // imported.
   return new llvm::GlobalVariable(llvm_module(), type,
                                   /*isConstant=*/false, linkage,
-                                  llvm::Constant::getNullValue(type),
+                                  nullptr,
                                   mangled_name);
 }
 

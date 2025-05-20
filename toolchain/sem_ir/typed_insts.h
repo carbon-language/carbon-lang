@@ -334,7 +334,7 @@ struct BindAlias {
 struct BindName {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::BindName.Define<Parse::NodeId>(
-      {.ir_name = "bind_name", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "bind_name", .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -1875,7 +1875,7 @@ struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
       {.ir_name = "var",
-       .constant_kind = InstConstantKind::Conditional,
+       .constant_kind = InstConstantKind::ConditionalUnique,
        .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent,
        .has_cleanup = true});
 

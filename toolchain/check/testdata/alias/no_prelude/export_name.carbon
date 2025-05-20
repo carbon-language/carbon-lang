@@ -188,7 +188,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %C = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
-// CHECK:STDOUT:   %d: ref %C = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %C = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export.carbon"] {
@@ -230,7 +230,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -250,6 +250,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%c.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -273,7 +274,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.44a = binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.44a = var_pattern %d.patt [concrete]
@@ -283,7 +284,7 @@ var d: D* = &c;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %ptr.019 = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %ptr.019 = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_orig.carbon"] {
@@ -299,8 +300,8 @@ var d: D* = &c;
 // CHECK:STDOUT:   %.loc7_13.2: init %C = class_init (), file.%c.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_13.1, %.loc7_13.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
-// CHECK:STDOUT:   %c.ref: ref %C = name_ref c, file.%c
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c.ref
+// CHECK:STDOUT:   %c.ref: ref %C = name_ref c, file.%c [concrete = file.%c.var]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%d.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

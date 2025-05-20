@@ -90,7 +90,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:     %.loc6_13.2: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc6_13.3: type = converted %bool.make_type, %.loc6_13.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bool = "bool.make_type" [from "types.carbon"];

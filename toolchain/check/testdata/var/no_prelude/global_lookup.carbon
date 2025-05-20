@@ -38,7 +38,7 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:     %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.v.loc11: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.v = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %struct_type.v = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.patt [concrete]
@@ -49,7 +49,7 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:     %.loc12_14.2: type = converted %.loc12_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.v.loc12: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %struct_type.v = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %struct_type.v = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -62,8 +62,8 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:   %.loc11_27.4: init %struct_type.v = struct_init (%.loc11_27.3) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc11_1: init %struct_type.v = converted %.loc11_27.1, %.loc11_27.4 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_1
-// CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc12_19.1: ref %empty_tuple.type = struct_access %x.ref, element0
+// CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x [concrete = file.%x.var]
+// CHECK:STDOUT:   %.loc12_19.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.01b]
 // CHECK:STDOUT:   %.loc12_19.2: ref %empty_tuple.type = struct_access file.%y.var, element0 [concrete = constants.%.333]
 // CHECK:STDOUT:   %.loc12_19.3: init %empty_tuple.type = tuple_init () to %.loc12_19.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_19.4: init %empty_tuple.type = converted %.loc12_19.1, %.loc12_19.3 [concrete = constants.%empty_tuple]

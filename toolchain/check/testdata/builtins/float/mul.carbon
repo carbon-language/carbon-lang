@@ -157,7 +157,7 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %.loc8_8.2: type = value_of_initializer %float.make_type [concrete = f64]
 // CHECK:STDOUT:     %.loc8_8.3: type = converted %float.make_type, %.loc8_8.2 [concrete = f64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref f64 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref f64 = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mul(%a.param: f64, %b.param: f64) -> f64 = "float.mul";

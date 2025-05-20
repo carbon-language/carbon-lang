@@ -99,7 +99,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %package_a.patt: %pattern_type = binding_pattern package_a [concrete]
 // CHECK:STDOUT:     %package_a.var_patt: %pattern_type = var_pattern %package_a.patt [concrete]
@@ -109,7 +109,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     %.loc6_17.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_17.3: type = converted %.loc6_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %package_a: ref %empty_tuple.type = bind_name package_a, %package_a.var
+// CHECK:STDOUT:   %package_a: ref %empty_tuple.type = bind_name package_a, %package_a.var [concrete = %package_a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A [from "implicit.carbon"];
@@ -186,7 +186,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %package_b.patt: %pattern_type = binding_pattern package_b [concrete]
 // CHECK:STDOUT:     %package_b.var_patt: %pattern_type = var_pattern %package_b.patt [concrete]
@@ -196,7 +196,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:     %.loc8_17.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_17.3: type = converted %.loc8_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %package_b: ref %empty_tuple.type = bind_name package_b, %package_b.var
+// CHECK:STDOUT:   %package_b: ref %empty_tuple.type = bind_name package_b, %package_b.var [concrete = %package_b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B [from "same_package.carbon"];

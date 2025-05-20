@@ -97,7 +97,7 @@ var array_index: array(i32, 1) = (0,) as array(i32, ((5, 7, 1, 9) as array(i32, 
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32 [concrete = constants.%array_type.0cb]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %array_index: ref %array_type.0cb = bind_name array_index, %array_index.var
+// CHECK:STDOUT:   %array_index: ref %array_type.0cb = bind_name array_index, %array_index.var [concrete = %array_index.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -168,7 +168,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %.loc6_16.2: type = value_of_initializer %float.make_type [concrete = f64]
 // CHECK:STDOUT:     %.loc6_16.3: type = converted %float.make_type, %.loc6_16.2 [concrete = f64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref f64 = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   %GetFloat.decl: %GetFloat.type = fn_decl @GetFloat [concrete = constants.%GetFloat] {
 // CHECK:STDOUT:     %dyn_size.patt: %pattern_type.501 = binding_pattern dyn_size [concrete]
 // CHECK:STDOUT:     %dyn_size.param_patt: %pattern_type.501 = value_param_pattern %dyn_size.patt, call_param0 [concrete]
@@ -280,7 +280,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %.loc10_28.2: type = value_of_initializer %float.make_type.loc10 [concrete = <error>]
 // CHECK:STDOUT:     %.loc10_28.3: type = converted %float.make_type.loc10, %.loc10_28.2 [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %invalid_float: <error> = bind_name invalid_float, <error>
+// CHECK:STDOUT:   %invalid_float: <error> = bind_name invalid_float, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %dyn_size.patt: %pattern_type.501 = binding_pattern dyn_size [concrete]
 // CHECK:STDOUT:     %dyn_size.var_patt: %pattern_type.501 = var_pattern %dyn_size.patt [concrete]
@@ -290,7 +290,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32.be0]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32.be0) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %dyn_size: ref %i32 = bind_name dyn_size, %dyn_size.var
+// CHECK:STDOUT:   %dyn_size: ref %i32 = bind_name dyn_size, %dyn_size.var [concrete = %dyn_size.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %dyn.patt: <error> = binding_pattern dyn [concrete]
 // CHECK:STDOUT:     %dyn.var_patt: <error> = var_pattern %dyn.patt [concrete]
@@ -298,13 +298,13 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %dyn.var: ref <error> = var %dyn.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Float.ref.loc17: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
-// CHECK:STDOUT:     %dyn_size.ref: ref %i32 = name_ref dyn_size, %dyn_size
+// CHECK:STDOUT:     %dyn_size.ref: ref %i32 = name_ref dyn_size, %dyn_size [concrete = %dyn_size.var]
 // CHECK:STDOUT:     %.loc17_16: %i32 = bind_value %dyn_size.ref
 // CHECK:STDOUT:     %float.make_type.loc17: init type = call %Float.ref.loc17(%.loc17_16)
 // CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %float.make_type.loc17
 // CHECK:STDOUT:     %.loc17_24.2: type = converted %float.make_type.loc17, %.loc17_24.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %dyn: <error> = bind_name dyn, <error>
+// CHECK:STDOUT:   %dyn: <error> = bind_name dyn, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Float = "float.make_type" [from "types.carbon"];

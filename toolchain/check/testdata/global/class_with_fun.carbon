@@ -57,7 +57,7 @@ var a: A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {

@@ -90,7 +90,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, %i32.loc11 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]
@@ -100,7 +100,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7ce = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.7ce = var_pattern %c.patt [concrete]
@@ -110,7 +110,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %i32 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %i32 = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.7ce = binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.7ce = var_pattern %d.patt [concrete]
@@ -120,7 +120,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -157,7 +157,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %bound_method.loc12_1.2(%int_1.loc12) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc12: init %i32 = converted %int_1.loc12, %int.convert_checked.loc12 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   assign file.%b.var, %.loc12
-// CHECK:STDOUT:   %a.ref.loc13: ref %array_type = name_ref a, file.%a
+// CHECK:STDOUT:   %a.ref.loc13: ref %array_type = name_ref a, file.%a [concrete = file.%a.var]
 // CHECK:STDOUT:   %int_0.loc13: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -171,8 +171,8 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc13_17.1: ref %i32 = array_index %a.ref.loc13, %.loc13_16.2
 // CHECK:STDOUT:   %.loc13_17.2: %i32 = bind_value %.loc13_17.1
 // CHECK:STDOUT:   assign file.%c.var, %.loc13_17.2
-// CHECK:STDOUT:   %a.ref.loc14: ref %array_type = name_ref a, file.%a
-// CHECK:STDOUT:   %b.ref: ref %i32 = name_ref b, file.%b
+// CHECK:STDOUT:   %a.ref.loc14: ref %array_type = name_ref a, file.%a [concrete = file.%a.var]
+// CHECK:STDOUT:   %b.ref: ref %i32 = name_ref b, file.%b [concrete = file.%b.var]
 // CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc14_16: %i32 = bind_value %b.ref
