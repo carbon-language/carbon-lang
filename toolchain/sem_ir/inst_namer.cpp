@@ -33,7 +33,7 @@ namespace Carbon::SemIR {
 InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
-  scopes_.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
+  scopes_.resize(GetScopeIdOffset(ScopeIdTypeEnum::None));
   generic_scopes_.resize(sem_ir->generics().size(), ScopeId::None);
 
   // Build the constants scope.
@@ -119,6 +119,42 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
                   impl_fingerprint);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
     CollectNamesInGeneric(impl_scope, impl_info.generic_id);
+  }
+}
+
+auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
+  int offset = 0;
+
+  // For each Id type, add the number of entities *above* its case; for example,
+  // the offset for functions excludes the functions themselves. The fallthrough
+  // handles summing to get uniqueness; order isn't special.
+  switch (id_enum) {
+    case ScopeIdTypeEnum::None:
+      // `None` will be getting a full count of scopes.
+      offset += sem_ir_->associated_constants().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<AssociatedConstantId>:
+      offset += sem_ir_->classes().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<ClassId>:
+      offset += sem_ir_->functions().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<FunctionId>:
+      offset += sem_ir_->impls().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<ImplId>:
+      offset += sem_ir_->interfaces().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<InterfaceId>:
+      offset += sem_ir_->specific_interfaces().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<SpecificInterfaceId>:
+      // All type-specific scopes are offset by `FirstEntityScope`.
+      offset += static_cast<int>(ScopeId::FirstEntityScope);
+      return offset;
+
+    default:
+      CARBON_FATAL("Unexpected ScopeIdTypeEnum: {0}", id_enum);
   }
 }
 
@@ -569,7 +605,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case CARBON_KIND(Call inst): {
         auto callee_function = GetCalleeFunction(*sem_ir_, inst.callee_id);
         if (!callee_function.function_id.has_value()) {
-          break;
+          add_inst_name("");
+          continue;
         }
         const auto& function =
             sem_ir_->functions().Get(callee_function.function_id);
@@ -595,9 +632,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         if (auto literal_info = NumericTypeLiteralInfo::ForType(*sem_ir_, inst);
             literal_info.is_valid()) {
           add_inst_name(literal_info.GetLiteralAsString(*sem_ir_));
-          break;
+        } else {
+          add_inst_name_id(sem_ir_->classes().Get(inst.class_id).name_id);
         }
-        add_inst_name_id(sem_ir_->classes().Get(inst.class_id).name_id);
         continue;
       }
       case CompleteTypeWitness::Kind: {
@@ -685,7 +722,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
         queue_block_id(impl_scope_id, inst.decl_block_id);
-        break;
+        continue;
       }
       case CARBON_KIND(LookupImplWitness inst): {
         const auto& interface = sem_ir_->specific_interfaces().Get(
@@ -859,11 +896,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case ReturnSlot::Kind: {
         add_inst_name_id(NameId::ReturnSlot);
-        break;
+        continue;
       }
       case CARBON_KIND(SpliceBlock inst): {
         queue_block_id(scope_id, inst.block_id);
-        break;
+        add_inst_name("");
+        continue;
       }
       case StringLiteral::Kind: {
         add_inst_name("str");
@@ -963,13 +1001,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       default: {
-        break;
+        // Sequentially number all remaining values.
+        if (untyped_inst.kind().has_type()) {
+          add_inst_name("");
+        }
+        continue;
       }
-    }
-
-    // Sequentially number all remaining values.
-    if (untyped_inst.kind().value_kind() != InstValueKind::None) {
-      add_inst_name("");
     }
   }
 }

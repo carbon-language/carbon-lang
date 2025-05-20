@@ -4,124 +4,144 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/no_prelude/function_decl.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/no_prelude/function.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/function_decl.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/function.carbon
 
-// --- function_decl.h
+// ============================================================================
+// Global
+// ============================================================================
+
+// --- global.h
 
 void foo();
 
-// --- import_function_decl.carbon
+// --- import_global.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "function_decl.h";
+import Cpp library "global.h";
 
 fn MyF() {
   Cpp.foo();
 }
 
-// --- fail_import_function_decl_use_different_name.carbon
+// --- fail_import_global_use_different_name.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "function_decl.h";
+import Cpp library "global.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_function_decl_use_different_name.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.bar();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   Cpp.bar();
 }
 
-// --- function_special_name_decl.h
+// ============================================================================
+// Carbon keyword name
+// ============================================================================
+
+// --- special_name.h
 
 void base();
 
-// --- fail_import_function_special_name_decl.carbon
+// --- fail_import_special_name_call_unescaped.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "function_special_name_decl.h";
+import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_function_special_name_decl.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.base();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   Cpp.base();
 }
 
-// --- import_function_escaped_special_name_decl.carbon
+// --- import_special_name_call_escaped.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "function_special_name_decl.h";
+import Cpp library "special_name.h";
 
 fn MyF() {
   Cpp.r#base();
 }
 
-// --- overloaded_function_decl.h
+// ============================================================================
+// Overloaded
+// ============================================================================
+
+// --- overloaded.h
 
 void foo();
 void foo(int value);
 
-// --- fail_import_overloaded_function_decl.carbon
+// --- fail_todo_import_overloaded.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "overloaded_function_decl.h";
+import Cpp library "overloaded.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overloaded_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_overloaded.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_overloaded_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_overloaded.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   Cpp.foo();
 }
 
-// --- variadic_function_decl.h
+// ============================================================================
+// Variadic
+// ============================================================================
+
+// --- variadic.h
 
 void foo(int...);
 
-// --- fail_import_variadic_function_decl.carbon
+// --- fail_todo_import_variadic.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "variadic_function_decl.h";
+import Cpp library "variadic.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_variadic_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_variadic_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   Cpp.foo();
 }
 
-// --- non_global_function_decl.h
+// ============================================================================
+// Static
+// ============================================================================
+
+// --- static.h
 
 static void foo();
 
-// --- fail_import_non_global_function_decl.carbon
+// --- fail_todo_import_static.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "non_global_function_decl.h";
+import Cpp library "static.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_non_global_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-global function` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_static.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-global function` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_non_global_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_static.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -131,52 +151,65 @@ fn F() {
 // TODO: Test that template functions are unsupported.
 //       This is not tested because template functions are not considered a single result when doing lookup.
 
-// --- unsupported_param_type_function_decl.h
+// ============================================================================
+// Struct param type
+// ============================================================================
+
+// --- struct_param_type.h
 
 struct S {};
 
 auto foo(S) -> void;
 
-// --- fail_import_unsupported_param_type_function_decl.carbon
+// --- fail_todo_import_struct_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "unsupported_param_type_function_decl.h";
+import Cpp library "struct_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_unsupported_param_type_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_struct_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_param_type_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_struct_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   Cpp.foo({});
 }
 
-// --- non_void_return_function_decl.h
+// TODO: Add a test per unsupported param type. See https://github.com/carbon-language/carbon-lang/pull/5477/files/4321e21ed27d987fd71be182d292973fd9849df8#r2094655176
+
+// ============================================================================
+// Struct return type
+// ============================================================================
+
+// --- struct_return_type.h
+
 struct F;
 
 F foo();
 
-// --- fail_import_non_void_return_function_decl.carbon
+// --- fail_todo_import_struct_return_type.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "non_void_return_function_decl.h";
+import Cpp library "struct_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: return type: struct F` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_struct_return_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: return type: struct F` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_non_void_return_function_decl.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_struct_return_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   Cpp.foo();
 }
 
-// CHECK:STDOUT: --- import_function_decl.carbon
+// TODO: Add a test per unsupported return type. See https://github.com/carbon-language/carbon-lang/pull/5477/files/4321e21ed27d987fd71be182d292973fd9849df8#r2094655176
+
+// CHECK:STDOUT: --- import_global.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -199,7 +232,7 @@ fn F() {
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "function_decl.h"
+// CHECK:STDOUT:     import Cpp "global.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -215,7 +248,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_function_decl_use_different_name.carbon
+// CHECK:STDOUT: --- fail_import_global_use_different_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -235,7 +268,7 @@ fn F() {
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "function_decl.h"
+// CHECK:STDOUT:     import Cpp "global.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -247,7 +280,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_function_special_name_decl.carbon
+// CHECK:STDOUT: --- fail_import_special_name_call_unescaped.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -266,7 +299,7 @@ fn F() {
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "function_special_name_decl.h"
+// CHECK:STDOUT:     import Cpp "special_name.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -278,7 +311,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_function_escaped_special_name_decl.carbon
+// CHECK:STDOUT: --- import_special_name_call_escaped.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -301,7 +334,7 @@ fn F() {
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "function_special_name_decl.h"
+// CHECK:STDOUT:     import Cpp "special_name.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -317,7 +350,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @base();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_overloaded_function_decl.carbon
+// CHECK:STDOUT: --- fail_todo_import_overloaded.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -337,7 +370,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "overloaded_function_decl.h"
+// CHECK:STDOUT:     import Cpp "overloaded.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -349,7 +382,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_variadic_function_decl.carbon
+// CHECK:STDOUT: --- fail_todo_import_variadic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -369,7 +402,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "variadic_function_decl.h"
+// CHECK:STDOUT:     import Cpp "variadic.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -381,7 +414,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_non_global_function_decl.carbon
+// CHECK:STDOUT: --- fail_todo_import_static.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -401,7 +434,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "non_global_function_decl.h"
+// CHECK:STDOUT:     import Cpp "static.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -413,7 +446,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_unsupported_param_type_function_decl.carbon
+// CHECK:STDOUT: --- fail_todo_import_struct_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -434,7 +467,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "unsupported_param_type_function_decl.h"
+// CHECK:STDOUT:     import Cpp "struct_param_type.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -447,7 +480,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_non_void_return_function_decl.carbon
+// CHECK:STDOUT: --- fail_todo_import_struct_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -467,7 +500,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "non_void_return_function_decl.h"
+// CHECK:STDOUT:     import Cpp "struct_return_type.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }

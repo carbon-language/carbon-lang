@@ -97,12 +97,12 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.501: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %int_64.fab: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]

@@ -389,12 +389,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst122 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
+// CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst119 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @impl.a8d [concrete]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1468 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1463 [no loc], unloaded
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.595 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -584,7 +584,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1468 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1463 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -702,11 +702,11 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst122 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
+// CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst119 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @impl.a8d [concrete]
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1468 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1463 [no loc], unloaded
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.595 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

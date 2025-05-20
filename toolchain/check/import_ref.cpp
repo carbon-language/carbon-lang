@@ -401,9 +401,14 @@ class ImportContext {
 //      - Fill in any remaining information to complete the import of the
 //        instruction. For example, when importing a class declaration, build
 //        the class scope and information about the definition.
-//      - Return ResolveAs/ResolveAsConstant to finish the resolution process.
-//        This will cause the Resolve loop to set a constant value if we didn't
-//        retry at the end of the second phase.
+//      - Return Done() to finish the resolution process. This will cause the
+//        Resolve loop to set a constant value if we didn't retry at the end of
+//        the second phase.
+//
+//    In the common case where the second phase cannot add new work (because the
+//    inst doesn't represent a declaration of an entity that can be forward
+//    declared), the second and third phases are usually expressed as a call to
+//    ResolveAsDeduplicated or ResolveAsUnique.
 //
 // 3. If resolve didn't return Retry(), pop the work. Otherwise, it needs to
 //    remain, and may no longer be at the top of the stack; update the state of
@@ -516,6 +521,9 @@ class ImportRefResolver : public ImportContext {
   // Returns the ConstantId for an InstId. Adds unresolved constants to
   // work_stack_.
   auto GetLocalConstantValueOrPush(SemIR::InstId inst_id) -> SemIR::ConstantId {
+    if (!inst_id.has_value()) {
+      return SemIR::ConstantId::None;
+    }
     auto const_id =
         local_constant_values_for_import_insts().GetAttached(inst_id);
     if (!const_id.has_value()) {
@@ -654,7 +662,7 @@ static auto SetConstantValue(Context& context, SemIR::InstId inst_id,
 
 // Adds an imported instruction without setting its constant value. The
 // instruction should later be updated by either `SetConstantValue` or
-// `ReplaceImportedInstAndSetConstantValue`.
+// `ReplacePlaceholderImportedInst`.
 template <typename InstT>
 static auto AddPlaceholderImportedInst(ImportContext& context,
                                        SemIR::InstId import_inst_id, InstT inst)
@@ -662,30 +670,10 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
   auto inst_id = context.local_insts().AddInNoBlock(MakeImportedLocIdAndInst(
       context.local_context(), AddImportIRInst(context, import_inst_id), inst));
   CARBON_VLOG_TO(context.local_context().vlog_stream(),
-                 "AddImportedInst: {0}\n", static_cast<SemIR::Inst>(inst));
+                 "AddPlaceholderImportedInst: {0}\n", inst);
   // Track the instruction in the imports block so that it's included in
   // formatted SemIR if it's referenced.
   context.local_context().import_ref_ids().push_back(inst_id);
-  return inst_id;
-}
-
-// Adds an imported instruction. The constant value of the instruction will be
-// computed.
-//
-// Normally `AddImportedConstant` should be used to create the result of
-// resolving a constant, for example by calling `ResolveAs*`. However, we
-// sometimes need to create a new instruction, not just obtain a constant value,
-// such as when importing a declaration or a pattern. In that case, this
-// function should be used to create it.
-//
-// Do not use `AddInst*`, as it will add symbolic constants to the eval block of
-// whatever generic the import happens within.
-template <typename InstT>
-static auto AddImportedInst(ImportContext& context,
-                            SemIR::InstId import_inst_id, InstT inst)
-    -> SemIR::InstId {
-  auto inst_id = AddPlaceholderImportedInst(context, import_inst_id, inst);
-  SetConstantValue(context.local_context(), inst_id, inst);
   return inst_id;
 }
 
@@ -743,35 +731,6 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
                                SemIR::TypeId type_id) -> SemIR::ConstantId {
   return GetLocalConstantId(resolver,
                             resolver.import_types().GetConstantId(type_id));
-}
-
-// Returns the ConstantId for an InstId that is required to have already been
-// imported.
-static auto GetLocalConstantIdChecked(ImportContext& context,
-                                      SemIR::InstId inst_id)
-    -> SemIR::ConstantId {
-  auto result_id =
-      context.local_constant_values_for_import_insts().GetAttached(inst_id);
-  CARBON_CHECK(result_id.has_value());
-  return result_id;
-}
-
-// Returns the ConstantId for a ConstantId that is required to have already been
-// imported.
-static auto GetLocalConstantIdChecked(ImportContext& context,
-                                      SemIR::ConstantId const_id)
-    -> SemIR::ConstantId {
-  return GetLocalConstantIdChecked(
-      context, GetInstWithConstantValue(context.import_ir(), const_id));
-}
-
-// Returns the ConstantId for a TypeId that is required to have already been
-// imported.
-static auto GetLocalConstantIdChecked(ImportContext& context,
-                                      SemIR::TypeId type_id)
-    -> SemIR::ConstantId {
-  return GetLocalConstantIdChecked(
-      context, context.import_types().GetConstantId(type_id));
 }
 
 // Translates a NameId from the import IR to a local NameId.
@@ -1039,164 +998,6 @@ static auto GetLocalSpecificInterface(
   }
 }
 
-// Adds unresolved constants for each parameter's type to the resolver's work
-// stack.
-static auto LoadLocalPatternConstantIds(ImportRefResolver& resolver,
-                                        SemIR::InstBlockId param_patterns_id)
-    -> void {
-  if (!param_patterns_id.has_value() ||
-      param_patterns_id == SemIR::InstBlockId::Empty) {
-    return;
-  }
-
-  const auto& param_patterns =
-      resolver.import_inst_blocks().Get(param_patterns_id);
-  for (auto pattern_id : param_patterns) {
-    auto pattern_inst = resolver.import_insts().GetWithAttachedType(pattern_id);
-    GetLocalConstantId(resolver, pattern_inst.type_id());
-    if (auto addr = pattern_inst.TryAs<SemIR::AddrPattern>()) {
-      pattern_id = addr->inner_id;
-      pattern_inst = resolver.import_insts().GetWithAttachedType(pattern_id);
-      GetLocalConstantId(resolver, pattern_inst.type_id());
-    }
-    // If the parameter is a symbolic binding, build the
-    // SymbolicBindingPattern constant.
-    if (pattern_inst.Is<SemIR::SymbolicBindingPattern>()) {
-      GetLocalConstantId(resolver, pattern_id);
-    }
-  }
-}
-
-// Returns a version of param_patterns_id localized to the current IR.
-//
-// Must only be called after a call to
-// LoadLocalPatternConstantIds(param_patterns_id) has completed without adding
-// any new work to work_stack_.
-//
-// TODO: This is inconsistent with the rest of this class, which expects
-// the relevant constants to be explicitly passed in. That makes it
-// easier to statically detect when an input isn't loaded, but makes it
-// harder to support importing more complex inst structures. We should
-// take a holistic look at how to balance those concerns. For example,
-// could the same function be used to load the constants and use them, with
-// a parameter to select between the two?
-//
-// `self_param_id` is an optional out parameter, populated with the InstId in
-// the resulting parameter patterns that represents the Self parameter.
-static auto GetLocalParamPatternsId(ImportContext& context,
-                                    SemIR::InstBlockId param_patterns_id,
-                                    SemIR::InstId* self_param_id = nullptr)
-    -> SemIR::InstBlockId {
-  CARBON_CHECK(!self_param_id || !self_param_id->has_value());
-  if (!param_patterns_id.has_value() ||
-      param_patterns_id == SemIR::InstBlockId::Empty) {
-    return param_patterns_id;
-  }
-  const auto& param_patterns =
-      context.import_inst_blocks().Get(param_patterns_id);
-  llvm::SmallVector<SemIR::InstId> new_patterns;
-  for (auto inst_id : param_patterns) {
-    // Figure out the pattern structure. This echoes
-    // Function::GetParamPatternInfoFromPatternId.
-    auto inst = context.import_insts().GetWithAttachedType(inst_id);
-
-    auto addr_pattern_id = inst_id;
-    auto addr_inst = inst.TryAs<SemIR::AddrPattern>();
-    if (addr_inst) {
-      inst_id = addr_inst->inner_id;
-      inst = context.import_insts().GetWithAttachedType(inst_id);
-    }
-
-    auto param_pattern_id = inst_id;
-    auto param_pattern = inst.TryAs<SemIR::ValueParamPattern>();
-    if (param_pattern) {
-      inst_id = param_pattern->subpattern_id;
-      inst = context.import_insts().GetWithAttachedType(inst_id);
-    }
-
-    auto binding_id = inst_id;
-    auto binding = inst.As<SemIR::AnyBindingPattern>();
-
-    // Rebuild the pattern.
-    auto entity_name =
-        context.import_entity_names().Get(binding.entity_name_id);
-    auto name_id = GetLocalNameId(context, entity_name.name_id);
-    auto type_id = context.local_context().types().GetTypeIdForTypeConstantId(
-        GetLocalConstantIdChecked(context, binding.type_id));
-
-    auto new_param_id = SemIR::InstId::None;
-    switch (binding.kind) {
-      case SemIR::BindingPattern::Kind: {
-        auto entity_name_id = context.local_entity_names().Add(
-            {.name_id = name_id, .parent_scope_id = SemIR::NameScopeId::None});
-        new_param_id = AddImportedInst<SemIR::BindingPattern>(
-            context, binding_id,
-            {.type_id = type_id, .entity_name_id = entity_name_id});
-        break;
-      }
-      case SemIR::SymbolicBindingPattern::Kind: {
-        // We already imported a constant value for this symbolic binding.
-        // We can reuse most of it, but update the value to point to our
-        // specific parameter, and preserve the constant value.
-        auto bind_const_id = GetLocalConstantIdChecked(context, binding_id);
-        auto new_binding_inst =
-            context.local_insts().GetAs<SemIR::SymbolicBindingPattern>(
-                context.local_constant_values().GetInstId(bind_const_id));
-        new_param_id = AddImportedInst(context, binding_id, new_binding_inst);
-        break;
-      }
-      default: {
-        CARBON_FATAL("Unexpected kind: ", binding.kind);
-      }
-    }
-    if (param_pattern) {
-      new_param_id = AddImportedInst<SemIR::ValueParamPattern>(
-          context, param_pattern_id,
-          {.type_id = type_id,
-           .subpattern_id = new_param_id,
-           .index = param_pattern->index});
-    }
-    if (addr_inst) {
-      type_id = context.local_context().types().GetTypeIdForTypeConstantId(
-          GetLocalConstantIdChecked(context, addr_inst->type_id));
-      new_param_id = AddImportedInst<SemIR::AddrPattern>(
-          context, addr_pattern_id,
-          {.type_id = type_id, .inner_id = new_param_id});
-    }
-    if (self_param_id &&
-        context.import_entity_names().Get(binding.entity_name_id).name_id ==
-            SemIR::NameId::SelfValue) {
-      *self_param_id = new_param_id;
-    }
-    new_patterns.push_back(new_param_id);
-  }
-  return context.local_inst_blocks().Add(new_patterns);
-}
-
-// Returns a version of import_return_slot_pattern_id localized to the current
-// IR.
-static auto GetLocalReturnSlotPatternId(
-    ImportContext& context, SemIR::InstId import_return_slot_pattern_id,
-    SemIR::ConstantId return_type_const_id) -> SemIR::InstId {
-  if (!import_return_slot_pattern_id.has_value()) {
-    return SemIR::InstId::None;
-  }
-
-  auto param_pattern = context.import_insts().GetAs<SemIR::OutParamPattern>(
-      import_return_slot_pattern_id);
-  auto type_id = context.local_context().types().GetTypeIdForTypeConstantId(
-      return_type_const_id);
-
-  auto new_return_slot_pattern_id = AddImportedInst<SemIR::ReturnSlotPattern>(
-      context, param_pattern.subpattern_id,
-      {.type_id = type_id, .type_inst_id = SemIR::TypeInstId::None});
-  return AddImportedInst<SemIR::OutParamPattern>(
-      context, import_return_slot_pattern_id,
-      {.type_id = type_id,
-       .subpattern_id = new_return_slot_pattern_id,
-       .index = param_pattern.index});
-}
-
 // Translates a NameScopeId from the import IR to a local NameScopeId. Adds
 // unresolved constants to the resolver's work stack.
 static auto GetLocalNameScopeId(ImportRefResolver& resolver,
@@ -1395,26 +1196,55 @@ static auto RetryOrDone(ImportRefResolver& resolver, SemIR::ConstantId const_id)
   return ResolveResult::Done(const_id);
 }
 
-// Produces a resolve result for the given instruction that describes a constant
-// value. This should only be used for instructions that describe constants, and
-// not for instructions that represent declarations. For a declaration, we need
-// an associated location, so AddImportedInst should be used instead. Requires
-// that there is no new work.
-static auto ResolveAsUntyped(ImportContext& context, SemIR::Inst inst)
+// Adds `inst` to the local context as a deduplicated constant and returns a
+// successful `ResolveResult`. Requires that there is no new work.
+//
+// This implements phases 2 and 3 of resolving the inst (as described above) for
+// the common case where those phases are combined. Cases where that isn't
+// applicable should instead use `AddPlaceholderImportedInst` and
+// `ReplacePlaceholderImportedInst`.
+//
+// This should not be used for instructions that represent declarations, or
+// other instructions with `constant_kind == InstConstantKind::Unique`, because
+// they should not be deduplicated.
+template <typename InstT>
+static auto ResolveAsDeduplicated(ImportRefResolver& resolver, InstT inst)
     -> ResolveResult {
+  static_assert(InstT::Kind.constant_kind() != SemIR::InstConstantKind::Unique,
+                "Use ResolveAsUnique");
+  CARBON_CHECK(!resolver.HasNewWork());
   // AddImportedConstant produces an unattached constant, so its type must
   // be unattached as well.
-  inst.SetType(
-      context.local_context().types().GetUnattachedType(inst.type_id()));
-  auto result = AddImportedConstant(context.local_context(), inst);
-  CARBON_CHECK(result.is_constant(), "{0} is not constant", inst);
-  return ResolveResult::Done(result);
+  inst.type_id =
+      resolver.local_context().types().GetUnattachedType(inst.type_id);
+  auto const_id = AddImportedConstant(resolver.local_context(), inst);
+  CARBON_CHECK(const_id.is_constant(), "{0} is not constant", inst);
+  return ResolveResult::Done(const_id);
 }
 
-// Same as ResolveAsUntyped, but with an explicit type for convenience.
+// Adds `inst` to the local context as a unique constant and returns a
+// successful `ResolveResult`. `import_inst_id` is the corresponding inst ID in
+// the local context. Requires that there is no new work.
+//
+// This implements phases 2 and 3 of resolving the inst (as described above) for
+// the common case where those phases are combined. Cases where that isn't
+// applicable should instead use `AddPlaceholderImportedInst` and
+// `ReplacePlaceholderImportedInst`.
+//
+// This should only be used for instructions that represent declarations, or
+// other instructions with `constant_kind == InstConstantKind::Unique`, because
+// it does not perform deduplication.
 template <typename InstT>
-static auto ResolveAs(ImportContext& context, InstT inst) -> ResolveResult {
-  return ResolveAsUntyped(context, inst);
+static auto ResolveAsUnique(ImportRefResolver& resolver,
+                            SemIR::InstId import_inst_id, InstT inst)
+    -> ResolveResult {
+  static_assert(InstT::Kind.constant_kind() == SemIR::InstConstantKind::Unique,
+                "Use ResolveAsDeduplicated");
+  CARBON_CHECK(!resolver.HasNewWork());
+  auto inst_id = AddPlaceholderImportedInst(resolver, import_inst_id, inst);
+  auto const_id = SetConstantValue(resolver.local_context(), inst_id, inst);
+  CARBON_CHECK(const_id.is_constant(), "{0} is not constant", inst);
+  return ResolveResult::Done(const_id, inst_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -1432,10 +1262,43 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                          inst.adapted_type_inst_id, adapted_type_const_id));
 
   // Create a corresponding instruction to represent the declaration.
-  auto inst_id = AddImportedInst<SemIR::AdaptDecl>(
+  return ResolveAsUnique<SemIR::AdaptDecl>(
       resolver, import_inst_id, {.adapted_type_inst_id = adapted_type_inst_id});
-  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
-                             inst_id);
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::AddrPattern inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  auto inner_id = GetLocalConstantInstId(resolver, inst.inner_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAsUnique<SemIR::AddrPattern>(
+      resolver, import_inst_id,
+      {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
+           type_const_id),
+       .inner_id = inner_id});
+}
+
+template <typename ParamPatternT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyParamPattern,
+                                            ParamPatternT>
+static auto TryResolveTypedInst(ImportRefResolver& resolver, ParamPatternT inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  auto subpattern_id = GetLocalConstantInstId(resolver, inst.subpattern_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAsUnique<ParamPatternT>(
+      resolver, import_inst_id,
+      {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
+           type_const_id),
+       .subpattern_id = subpattern_id,
+       .index = inst.index});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -1448,7 +1311,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::ArrayType>(
+  return ResolveAsDeduplicated<SemIR::ArrayType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .bound_id = bound_id,
                  .element_type_inst_id = element_type_inst_id});
@@ -1541,7 +1404,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // Add a lazy reference to the target declaration.
   auto decl_id = AddImportRef(resolver, inst.decl_id);
 
-  return ResolveAs<SemIR::AssociatedEntity>(
+  return ResolveAsDeduplicated<SemIR::AssociatedEntity>(
       resolver,
       {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
            type_const_id),
@@ -1562,7 +1425,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto specific_interface =
       GetLocalSpecificInterface(resolver, inst.GetSpecificInterface(), data);
-  return ResolveAs<SemIR::AssociatedEntityType>(
+  return ResolveAsDeduplicated<SemIR::AssociatedEntityType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .interface_id = specific_interface.interface_id,
                  .interface_specific_id = specific_interface.specific_id});
@@ -1584,14 +1447,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                          inst.base_type_inst_id, base_type_const_id));
 
   // Create a corresponding instruction to represent the declaration.
-  auto inst_id = AddImportedInst<SemIR::BaseDecl>(
+  return ResolveAsUnique<SemIR::BaseDecl>(
       resolver, import_inst_id,
       {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
            type_const_id),
        .base_type_inst_id = base_type_inst_id,
        .index = inst.index});
-  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
-                             inst_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Vtable inst)
@@ -1605,7 +1466,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Vtable inst)
 
   auto virtual_functions_id = GetLocalCanonicalInstBlockId(
       resolver, inst.virtual_functions_id, virtual_functions);
-  return ResolveAs<SemIR::Vtable>(
+  return ResolveAsDeduplicated<SemIR::Vtable>(
       resolver,
       {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
            type_const_id),
@@ -1628,12 +1489,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   const auto& import_entity_name =
       resolver.import_entity_names().Get(inst.entity_name_id);
   auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
-  // TODO: Use the same `EntityName` for the `SymbolicBindingPattern` and the
-  // `BindSymbolicName`.
   auto entity_name_id = resolver.local_entity_names().AddSymbolicBindingName(
       name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
       import_entity_name.is_template);
-  return ResolveAs<SemIR::BindSymbolicName>(
+  return ResolveAsDeduplicated<SemIR::BindSymbolicName>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
@@ -1641,10 +1500,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
        .value_id = SemIR::InstId::None});
 }
 
+template <typename BindingPatternT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyBindingPattern,
+                                            BindingPatternT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::SymbolicBindingPattern inst)
-    -> ResolveResult {
-  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+                                BindingPatternT inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1652,15 +1514,15 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   const auto& import_entity_name =
       resolver.import_entity_names().Get(inst.entity_name_id);
   auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
-  // TODO: Use the same `EntityName` for the `SymbolicBindingPattern` and the
-  // `BindSymbolicName`.
-  auto entity_name_id = resolver.local_entity_names().AddSymbolicBindingName(
-      name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
-      import_entity_name.is_template);
-  return ResolveAs<SemIR::SymbolicBindingPattern>(
-      resolver,
-      {.type_id =
-           resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
+  auto entity_name_id = resolver.local_entity_names().Add(
+      {.name_id = name_id,
+       .parent_scope_id = SemIR::NameScopeId::None,
+       .bind_index_value = import_entity_name.bind_index().index,
+       .is_template = import_entity_name.is_template});
+  return ResolveAsUnique<BindingPatternT>(
+      resolver, import_inst_id,
+      {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
+           type_const_id),
        .entity_name_id = entity_name_id});
 }
 
@@ -1676,7 +1538,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::BoundMethod>(
+  return ResolveAsDeduplicated<SemIR::BoundMethod>(
       resolver,
       {.type_id = GetSingletonType(resolver.local_context(),
                                    SemIR::BoundMethodType::TypeInstId),
@@ -1694,7 +1556,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Call inst)
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::Call>(
+  return ResolveAsDeduplicated<SemIR::Call>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
@@ -1815,9 +1677,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // Load constants for the definition.
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_class.parent_scope_id);
-  LoadLocalPatternConstantIds(resolver,
-                              import_class.implicit_param_patterns_id);
-  LoadLocalPatternConstantIds(resolver, import_class.param_patterns_id);
+  auto implicit_param_patterns = GetLocalInstBlockContents(
+      resolver, import_class.implicit_param_patterns_id);
+  auto param_patterns =
+      GetLocalInstBlockContents(resolver, import_class.param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_class.generic_id);
   auto self_const_id = GetLocalConstantId(resolver, import_class.self_type_id);
   auto complete_type_witness_const_id =
@@ -1841,10 +1704,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                        : SemIR::InstId::None;
 
   new_class.parent_scope_id = parent_scope_id;
-  new_class.implicit_param_patterns_id = GetLocalParamPatternsId(
-      resolver, import_class.implicit_param_patterns_id);
-  new_class.param_patterns_id =
-      GetLocalParamPatternsId(resolver, import_class.param_patterns_id);
+  new_class.implicit_param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_class.implicit_param_patterns_id,
+      implicit_param_patterns);
+  new_class.param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_class.param_patterns_id, param_patterns);
   SetGenericData(resolver, import_class.generic_id, new_class.generic_id,
                  generic_data);
   new_class.self_type_id =
@@ -1888,10 +1752,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
             class_const_inst.type_id());
     auto specific_id =
         GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
-    return ResolveAs<SemIR::ClassType>(resolver,
-                                       {.type_id = SemIR::TypeType::TypeId,
-                                        .class_id = generic_class_type.class_id,
-                                        .specific_id = specific_id});
+    return ResolveAsDeduplicated<SemIR::ClassType>(
+        resolver, {.type_id = SemIR::TypeType::TypeId,
+                   .class_id = generic_class_type.class_id,
+                   .specific_id = specific_id});
   }
 }
 
@@ -1905,7 +1769,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
-  return ResolveAs<SemIR::CompleteTypeWitness>(
+  return ResolveAsDeduplicated<SemIR::CompleteTypeWitness>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
                                              SemIR::WitnessType::TypeInstId),
                  .object_repr_type_inst_id = object_repr_type_inst_id});
@@ -1918,7 +1782,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
-  return ResolveAs<SemIR::ConstType>(
+  return ResolveAsDeduplicated<SemIR::ConstType>(
       resolver, {.type_id = SemIR::TypeType::TypeId, .inner_id = inner_id});
 }
 
@@ -1935,14 +1799,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
-  auto inst_id = AddImportedInst<SemIR::FieldDecl>(
+  return ResolveAsUnique<SemIR::FieldDecl>(
       resolver, import_inst_id,
       {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
            const_id),
        .name_id = GetLocalNameId(resolver, inst.name_id),
        .index = inst.index});
-  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
-                             inst_id);
 }
 
 // Make a declaration of a function. This is done as a separate step from
@@ -2017,12 +1879,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_function.parent_scope_id);
-  LoadLocalPatternConstantIds(resolver,
-                              import_function.implicit_param_patterns_id);
-  LoadLocalPatternConstantIds(resolver, import_function.param_patterns_id);
+  auto implicit_param_patterns = GetLocalInstBlockContents(
+      resolver, import_function.implicit_param_patterns_id);
+  auto param_patterns =
+      GetLocalInstBlockContents(resolver, import_function.param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_function.generic_id);
-  auto& new_function = resolver.local_functions().Get(function_id);
+  auto self_param_id =
+      GetLocalConstantInstId(resolver, import_function.self_param_id);
+  auto return_slot_pattern_id =
+      GetLocalConstantInstId(resolver, import_function.return_slot_pattern_id);
 
+  auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(function_const_id,
                                 new_function.first_decl_id());
@@ -2030,14 +1897,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   // Add the function declaration.
   new_function.parent_scope_id = parent_scope_id;
-  SemIR::InstId self_param_id = SemIR::InstId::None;
-  new_function.implicit_param_patterns_id = GetLocalParamPatternsId(
-      resolver, import_function.implicit_param_patterns_id, &self_param_id);
+  new_function.implicit_param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_function.implicit_param_patterns_id,
+      implicit_param_patterns);
   new_function.self_param_id = self_param_id;
-  new_function.param_patterns_id =
-      GetLocalParamPatternsId(resolver, import_function.param_patterns_id);
-  new_function.return_slot_pattern_id = GetLocalReturnSlotPatternId(
-      resolver, import_function.return_slot_pattern_id, return_type_const_id);
+  new_function.param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_function.param_patterns_id, param_patterns);
+  new_function.return_slot_pattern_id = return_slot_pattern_id;
   SetGenericData(resolver, import_function.generic_id, new_function.generic_id,
                  generic_data);
 
@@ -2059,7 +1925,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
   auto fn_type_id = resolver.local_insts().Get(fn_val_id).type_id();
-  return ResolveAs<SemIR::FunctionType>(
+  return ResolveAsDeduplicated<SemIR::FunctionType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .function_id = resolver.local_types()
                                     .GetAs<SemIR::FunctionType>(fn_type_id)
@@ -2079,7 +1945,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::FunctionTypeWithSelfType>(
+  return ResolveAsDeduplicated<SemIR::FunctionTypeWithSelfType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .interface_function_type_id = interface_function_type_id,
                  .self_id = self_id});
@@ -2206,7 +2072,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // Load constants for the definition.
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_impl.parent_scope_id);
-  LoadLocalPatternConstantIds(resolver, import_impl.implicit_param_patterns_id);
+  auto implicit_param_patterns = GetLocalInstBlockContents(
+      resolver, import_impl.implicit_param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_impl.generic_id);
   auto self_const_id = GetLocalConstantId(
       resolver,
@@ -2221,8 +2088,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   new_impl.parent_scope_id = parent_scope_id;
-  new_impl.implicit_param_patterns_id =
-      GetLocalParamPatternsId(resolver, import_impl.implicit_param_patterns_id);
+  new_impl.implicit_param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_impl.implicit_param_patterns_id,
+      implicit_param_patterns);
   SetGenericData(resolver, import_impl.generic_id, new_impl.generic_id,
                  generic_data);
 
@@ -2374,9 +2242,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_interface.parent_scope_id);
-  LoadLocalPatternConstantIds(resolver,
-                              import_interface.implicit_param_patterns_id);
-  LoadLocalPatternConstantIds(resolver, import_interface.param_patterns_id);
+  auto implicit_param_patterns = GetLocalInstBlockContents(
+      resolver, import_interface.implicit_param_patterns_id);
+  auto param_patterns =
+      GetLocalInstBlockContents(resolver, import_interface.param_patterns_id);
   auto generic_data =
       GetLocalGenericData(resolver, import_interface.generic_id);
 
@@ -2393,10 +2262,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   new_interface.parent_scope_id = parent_scope_id;
-  new_interface.implicit_param_patterns_id = GetLocalParamPatternsId(
-      resolver, import_interface.implicit_param_patterns_id);
-  new_interface.param_patterns_id =
-      GetLocalParamPatternsId(resolver, import_interface.param_patterns_id);
+  new_interface.implicit_param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_interface.implicit_param_patterns_id,
+      implicit_param_patterns);
+  new_interface.param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_interface.param_patterns_id, param_patterns);
   SetGenericData(resolver, import_interface.generic_id,
                  new_interface.generic_id, generic_data);
 
@@ -2416,7 +2286,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::FacetAccessType>(
+  return ResolveAsDeduplicated<SemIR::FacetAccessType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .facet_value_inst_id = facet_value_inst_id});
 }
@@ -2471,7 +2341,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // TODO: Also process the other requirements.
   SemIR::FacetTypeId facet_type_id =
       resolver.local_facet_types().Add(std::move(local_facet_type_info));
-  return ResolveAs<SemIR::FacetType>(
+  return ResolveAsDeduplicated<SemIR::FacetType>(
       resolver,
       {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
 }
@@ -2485,7 +2355,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::FacetValue>(
+  return ResolveAsDeduplicated<SemIR::FacetValue>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
@@ -2517,7 +2387,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalSpecificInterface(resolver, import_specific_interface, data);
   auto query_specific_interface_id =
       resolver.local_specific_interfaces().Add(specific_interface);
-  return ResolveAs<SemIR::LookupImplWitness>(
+  return ResolveAsDeduplicated<SemIR::LookupImplWitness>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
                                              SemIR::WitnessType::TypeInstId),
                  .query_self_inst_id = query_self_inst_id,
@@ -2538,7 +2408,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
-  return ResolveAs<SemIR::ImplWitness>(
+  return ResolveAsDeduplicated<SemIR::ImplWitness>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
                                              SemIR::WitnessType::TypeInstId),
                  .witness_table_id = witness_table_id,
@@ -2554,7 +2424,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::ImplWitnessAccess>(
+  return ResolveAsDeduplicated<SemIR::ImplWitnessAccess>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
@@ -2579,11 +2449,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto elements_id = GetLocalImportRefInstBlock(resolver, inst.elements_id);
 
   // Create a corresponding instruction to represent the table.
-  auto inst_id = AddImportedInst<SemIR::ImplWitnessTable>(
+  return ResolveAsUnique<SemIR::ImplWitnessTable>(
       resolver, import_inst_id,
       {.elements_id = elements_id, .impl_id = impl_id});
-  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
-                             inst_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2600,7 +2468,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                     : resolver.local_ints().AddSigned(
                           resolver.import_ints().Get(inst.int_id));
 
-  return ResolveAs<SemIR::IntValue>(
+  return ResolveAsDeduplicated<SemIR::IntValue>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
@@ -2615,10 +2483,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::IntType>(resolver,
-                                   {.type_id = SemIR::TypeType::TypeId,
-                                    .int_kind = inst.int_kind,
-                                    .bit_width_id = bit_width_id});
+  return ResolveAsDeduplicated<SemIR::IntType>(
+      resolver, {.type_id = SemIR::TypeType::TypeId,
+                 .int_kind = inst.int_kind,
+                 .bit_width_id = bit_width_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2668,7 +2536,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::PatternType>(
+  return ResolveAsDeduplicated<SemIR::PatternType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .scrutinee_type_inst_id = scrutinee_type_inst_id});
 }
@@ -2681,7 +2549,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::PointerType>(
+  return ResolveAsDeduplicated<SemIR::PointerType>(
       resolver, {.type_id = SemIR::TypeType::TypeId, .pointee_id = pointee_id});
 }
 
@@ -2697,10 +2565,25 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::RequireCompleteType>(
+  return ResolveAsDeduplicated<SemIR::RequireCompleteType>(
       resolver, {.type_id = GetSingletonType(resolver.local_context(),
                                              SemIR::WitnessType::TypeInstId),
                  .complete_type_inst_id = complete_type_inst_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ReturnSlotPattern inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAsUnique<SemIR::ReturnSlotPattern>(
+      resolver, import_inst_id,
+      {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
+           type_const_id),
+       .type_inst_id = SemIR::TypeInstId::None});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2716,7 +2599,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       type_const_id);
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
-  return ResolveAs<SemIR::SpecificFunction>(
+  return ResolveAsDeduplicated<SemIR::SpecificFunction>(
       resolver,
       {.type_id = type_id, .callee_id = callee_id, .specific_id = specific_id});
 }
@@ -2734,7 +2617,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                   SemIR::SpecificFunctionType::TypeInstId);
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
-  return ResolveAs<SemIR::SpecificImplFunction>(
+  return ResolveAsDeduplicated<SemIR::SpecificImplFunction>(
       resolver,
       {.type_id = type_id, .callee_id = callee_id, .specific_id = specific_id});
 }
@@ -2763,7 +2646,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
         {.name_id = name_id, .type_inst_id = field_type_inst_id});
   }
 
-  return ResolveAs<SemIR::StructType>(
+  return ResolveAsDeduplicated<SemIR::StructType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .fields_id = resolver.local_struct_type_fields().AddCanonical(
                      new_fields)});
@@ -2777,7 +2660,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::StructValue>(
+  return ResolveAsDeduplicated<SemIR::StructValue>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
@@ -2803,7 +2686,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::TupleType>(
+  return ResolveAsDeduplicated<SemIR::TupleType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .type_elements_id = GetLocalCanonicalInstBlockId(
                      resolver, inst.type_elements_id, type_inst_ids)});
@@ -2817,7 +2700,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::TupleValue>(
+  return ResolveAsDeduplicated<SemIR::TupleValue>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
@@ -2837,10 +2720,26 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  return ResolveAs<SemIR::UnboundElementType>(
+  return ResolveAsDeduplicated<SemIR::UnboundElementType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
                  .class_type_inst_id = class_const_inst_id,
                  .element_type_inst_id = elem_const_inst_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::VarPattern inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  auto subpattern_id = GetLocalConstantInstId(resolver, inst.subpattern_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAsUnique<SemIR::VarPattern>(
+      resolver, import_inst_id,
+      {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
+           type_const_id),
+       .subpattern_id = subpattern_id});
 }
 
 // Tries to resolve the InstId, returning a canonical constant when ready, or
@@ -2866,6 +2765,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::AdaptDecl inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
     }
+    case CARBON_KIND(SemIR::AddrPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
+    }
     case CARBON_KIND(SemIR::ArrayType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -2883,6 +2785,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::BindAlias inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::BindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case SemIR::BindName::Kind: {
       // TODO: Should we be resolving BindNames at all?
@@ -2969,14 +2874,23 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::Namespace inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
     }
+    case CARBON_KIND(SemIR::OutParamPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
+    }
     case CARBON_KIND(SemIR::PatternType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::PointerType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::RefParamPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
+    }
     case CARBON_KIND(SemIR::RequireCompleteType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ReturnSlotPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::SpecificFunction inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -2984,14 +2898,14 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::SpecificImplFunction inst): {
       return TryResolveTypedInst(resolver, inst);
     }
-    case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
-      return TryResolveTypedInst(resolver, inst);
-    }
     case CARBON_KIND(SemIR::StructType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::StructValue inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::TupleType inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3001,6 +2915,12 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::UnboundElementType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ValueParamPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
+    }
+    case CARBON_KIND(SemIR::VarPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::Vtable inst): {
       return TryResolveTypedInst(resolver, inst);

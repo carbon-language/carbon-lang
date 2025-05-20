@@ -829,43 +829,37 @@ auto Formatter::FormatPendingConstantValue(AddSpace space_where) -> void {
 }
 
 auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
-  switch (inst.kind()) {
-    case InstKind::ImplWitnessTable:
-    case InstKind::ImportCppDecl:
-    case InstKind::ImportDecl:
-    case InstKind::ImportRefUnloaded:
-      // Although these don't have a typed value, we still want to print the
-      // name.
-      FormatName(inst_id);
-      out_ << " = ";
-      return;
-
-    default:
-      switch (inst.kind().value_kind()) {
-        case InstValueKind::Typed:
-          FormatName(inst_id);
-          out_ << ": ";
-          switch (GetExprCategory(*sem_ir_, inst_id)) {
-            case ExprCategory::NotExpr:
-            case ExprCategory::Error:
-            case ExprCategory::Value:
-            case ExprCategory::Mixed:
-              break;
-            case ExprCategory::DurableRef:
-            case ExprCategory::EphemeralRef:
-              out_ << "ref ";
-              break;
-            case ExprCategory::Initializing:
-              out_ << "init ";
-              break;
-          }
-          FormatTypeOfInst(inst_id);
-          out_ << " = ";
-          break;
-        case InstValueKind::None:
-          break;
-      }
+  // Every typed instruction is named, and there are some untyped instructions
+  // that have names (such as `ImportRefUnloaded`).
+  bool has_name = inst_namer_.has_name(inst_id);
+  if (!has_name) {
+    CARBON_CHECK(!inst.kind().has_type(),
+                 "Missing name for typed instruction: {0}", inst);
+    return;
   }
+
+  FormatName(inst_id);
+
+  if (inst.kind().has_type()) {
+    out_ << ": ";
+    switch (GetExprCategory(*sem_ir_, inst_id)) {
+      case ExprCategory::NotExpr:
+      case ExprCategory::Error:
+      case ExprCategory::Value:
+      case ExprCategory::Mixed:
+        break;
+      case ExprCategory::DurableRef:
+      case ExprCategory::EphemeralRef:
+        out_ << "ref ";
+        break;
+      case ExprCategory::Initializing:
+        out_ << "init ";
+        break;
+    }
+    FormatTypeOfInst(inst_id);
+  }
+
+  out_ << " = ";
 }
 
 auto Formatter::FormatInstRhs(BindSymbolicName inst) -> void {

@@ -583,6 +583,12 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "type_enum",
+    hdrs = ["type_enum.h"],
+    deps = [":ostream"],
+)
+
 # The base version source file only uses non-stamped parts of the version
 # information so we expand it once here without any stamping.
 expand_version_build_info(

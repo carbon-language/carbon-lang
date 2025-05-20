@@ -310,7 +310,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Main//foo, inst143 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
+// CHECK:STDOUT:   %Main.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Main//foo, inst140 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Main.import_ref.773), @impl.a8d [concrete]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//foo, loc4_13, loaded [symbolic = @Class.%T.1 (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]

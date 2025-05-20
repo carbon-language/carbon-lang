@@ -102,6 +102,10 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
   }
 };
 
+// HasInstCategory is true if T::Kind is an element of InstCat::Kinds.
+template <typename InstCat, typename T>
+concept HasInstCategory = InstLikeTypeInfo<InstCat>::IsKind(T::Kind);
+
 // A type is InstLike if InstLikeTypeInfo is defined for it.
 template <typename T>
 concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };

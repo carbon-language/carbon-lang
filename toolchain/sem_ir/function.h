@@ -56,8 +56,8 @@ struct FunctionFields {
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
   int32_t virtual_index = -1;
 
-  // The implicit self parameter, if any, in implicit_param_patterns_id from
-  // EntityWithParamsBase.
+  // The implicit self parameter pattern, if any, in
+  // implicit_param_patterns_id from EntityWithParamsBase.
   InstId self_param_id = InstId::None;
 
   // The following member is set on the first call to the function, or at the
