@@ -123,7 +123,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
 }
 
 auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
-  int offset = static_cast<int>(ScopeId::FirstEntityScope);
+  int offset = 0;
 
   // For each Id type, add the number of entities *above* its case; for example,
   // the offset for functions excludes the functions themselves. The fallthrough
@@ -149,7 +149,8 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       offset += sem_ir_->specific_interfaces().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<SpecificInterfaceId>:
-      // `SpecificInterfaceId` is only offset by `FirstEntityScope`.
+      // All scopes are offset by `FirstEntityScope`.
+      offset += static_cast<int>(ScopeId::FirstEntityScope);
       return offset;
 
     default:
