@@ -178,6 +178,8 @@ fn F() {
   Cpp.foo({});
 }
 
+// TODO: Add a test per unsupported param type. See https://github.com/carbon-language/carbon-lang/pull/5477/files/4321e21ed27d987fd71be182d292973fd9849df8#r2094655176
+
 // ============================================================================
 // Struct return type
 // ============================================================================
@@ -204,6 +206,8 @@ fn F() {
   // CHECK:STDERR:
   Cpp.foo();
 }
+
+// TODO: Add a test per unsupported return type. See https://github.com/carbon-language/carbon-lang/pull/5477/files/4321e21ed27d987fd71be182d292973fd9849df8#r2094655176
 
 // CHECK:STDOUT: --- import_global.carbon
 // CHECK:STDOUT:
