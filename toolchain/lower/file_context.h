@@ -210,9 +210,7 @@ class FileContext {
   auto AreFunctionBodiesEquivalent(
       SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
       Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
-          visited_equivalent_specifics,
-      Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
-          visited_equivalent_specifics_flipped) -> bool;
+          visited_equivalent_specifics) -> bool;
 
   // When an equivalence is found, update the canonical specific to use for
   // each of the two Specifics found to be equivalent, replace all uses of one
@@ -220,15 +218,26 @@ class FileContext {
   // specifics_to_delete.
   auto ProcessSpecificEquivalence(
       std::pair<SemIR::SpecificId, SemIR::SpecificId> pair,
-      Set<SemIR::SpecificId>& specifics_to_delete) -> void;
+      llvm::SmallVector<SemIR::SpecificId>& specifics_to_delete) -> void;
 
   // Return whether two specifics have been found to be equivalent.
   auto IsKnownEquivalence(SemIR::SpecificId specific_id1,
                           SemIR::SpecificId specific_id2) -> bool;
 
-  // Delete the function body for the given specific. All its uses have already
-  // been replaced.
-  auto DeleteFunctionSpecific(SemIR::SpecificId to_replace) -> void;
+  // Helper function for inserting a pair into a set of pairs in canonical
+  // form. Also implicitly checks entry already existed if it cannot be
+  // inserted.
+  auto PairInserted(
+      SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
+      Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
+      -> bool;
+
+  // Helper function for checking if a pair exists into a set of pairs in
+  // canonical form.
+  auto PairExists(
+      SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
+      Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>> set_of_pairs)
+      -> bool;
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;

@@ -40,6 +40,7 @@ class FunctionContext {
   // coalesced without additional checks. If the `function_common_fingerprint`
   // is the same but `function_specific_fingerprint` is different, additional
   // checks are needed, i.e. inspecting the non-hashed specific_ids.
+  // TODO: Consider optimizations for repeated entries in both fingerprints.
   struct LoweringFunctionFingerprint {
     llvm::BLAKE3 function_common_fingerprint;
     llvm::BLAKE3 function_specific_fingerprint;
