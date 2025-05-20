@@ -104,9 +104,6 @@ class InstNamer {
   }
 
  private:
-  // Helper class for naming a single instruction.
-  class SingleInstNamer;
-
   // A space in which unique names can be allocated.
   struct Namespace {
     // A result of a name lookup.
@@ -153,6 +150,55 @@ class InstNamer {
     Namespace::Name name;
     Namespace insts;
     Namespace labels;
+  };
+
+  // Helper class for naming a single instruction.
+  class NamingContext {
+   public:
+    // Enqueues the provided instructions for naming.
+    using QueueBlockInstsFn = llvm::function_ref<
+        auto(ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)->void>;
+
+    explicit NamingContext(InstNamer* inst_namer,
+                           QueueBlockInstsFn queue_block_insts,
+                           InstNamer::ScopeId scope_id, InstId inst_id,
+                           Inst inst);
+
+    // Names the single instruction.
+    auto NameInst() -> void;
+
+   private:
+    // Adds the instruction's name.
+    auto AddInstName(std::string name) -> void;
+
+    // Adds the instruction's name by `NameId`.
+    auto AddInstNameId(NameId name_id, llvm::StringRef suffix = "") -> void {
+      AddInstName(
+          (sem_ir().names().GetIRBaseName(name_id).str() + suffix).str());
+    }
+
+    // Names an `IntType` or `FloatType`.
+    auto AddIntOrFloatTypeName(char type_literal_prefix, InstId bit_width_id,
+                               llvm::StringRef suffix = "") -> void;
+
+    // Names an `ImplWitnessTable` instruction.
+    auto AddWitnessTableName(InstId witness_table_inst_id, std::string name)
+        -> void;
+
+    // Enqueues all instructions in a block, by ID.
+    auto QueueBlockId(ScopeId scope_id, InstBlockId block_id) -> void {
+      if (block_id.has_value()) {
+        queue_block_insts_(scope_id, sem_ir().inst_blocks().Get(block_id));
+      }
+    }
+
+    auto sem_ir() -> const SemIR::File& { return *inst_namer_->sem_ir_; }
+
+    InstNamer* inst_namer_;
+    QueueBlockInstsFn queue_block_insts_;
+    ScopeId scope_id_;
+    InstId inst_id_;
+    Inst inst_;
   };
 
   auto GetScopeInfo(ScopeId scope_id) -> Scope& {

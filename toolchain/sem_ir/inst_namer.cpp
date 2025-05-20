@@ -403,64 +403,62 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
   }
 }
 
-class InstNamer::SingleInstNamer {
- public:
-  // Enqueues the provided instructions for naming.
-  using QueueBlockInstsFn = llvm::function_ref<
-      auto(ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)->void>;
+auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
+                                    llvm::ArrayRef<InstId> block) -> void {
+  llvm::SmallVector<std::pair<ScopeId, InstId>> insts;
 
-  explicit SingleInstNamer(InstNamer* inst_namer,
-                           QueueBlockInstsFn queue_block_insts,
-                           InstNamer::ScopeId scope_id, InstId inst_id,
-                           Inst inst)
-      : inst_namer_(inst_namer),
-        queue_block_insts_(queue_block_insts),
-        scope_id_(scope_id),
-        scope_(inst_namer_->GetScopeInfo(scope_id)),
-        inst_id_(inst_id),
-        inst_(inst) {}
-
-  // Names the single instruction.
-  auto NameInst() -> void;
-
- private:
-  // Adds the instruction's name.
-  auto AddInstName(std::string name) -> void;
-
-  // Adds the instruction's name by `NameId`.
-  auto AddInstNameId(NameId name_id, llvm::StringRef suffix = "") -> void {
-    AddInstName((sem_ir().names().GetIRBaseName(name_id).str() + suffix).str());
-  }
-
-  // Names an `IntType` or `FloatType`.
-  auto AddIntOrFloatTypeName(char type_literal_prefix, InstId bit_width_id,
-                             llvm::StringRef suffix = "") -> void;
-
-  // Names an `ImplWitnessTable` instruction.
-  auto AddWitnessTableName(InstId witness_table_inst_id, std::string name)
-      -> void;
-
-  // Returns the `NameId` for a `FacetAccessType`.
-  auto GetFacetAccessNameId(InstId facet_value_inst_id) -> NameId;
-
-  // Enqueues all instructions in a block, by ID.
-  auto QueueBlockId(ScopeId scope_id, InstBlockId block_id) -> void {
-    if (block_id.has_value()) {
-      queue_block_insts_(scope_id, sem_ir().inst_blocks().Get(block_id));
+  // Adds a scope and instructions to walk. Avoids recursion while allowing
+  // the loop to below add more instructions during iteration. The new
+  // instructions are queued such that they will be the next to be walked.
+  // Internally that means they are reversed and added to the end of the vector,
+  // since we pop from the back of the vector.
+  auto queue_block_insts = [&](ScopeId scope_id,
+                               llvm::ArrayRef<InstId> inst_ids) {
+    for (auto inst_id : llvm::reverse(inst_ids)) {
+      if (inst_id.has_value() && !IsSingletonInstId(inst_id)) {
+        insts.push_back(std::make_pair(scope_id, inst_id));
+      }
     }
+  };
+
+  queue_block_insts(top_scope_id, block);
+
+  // Use bound names where available. Otherwise, assign a backup name.
+  while (!insts.empty()) {
+    auto [scope_id, inst_id] = insts.pop_back_val();
+    auto inst = sem_ir_->insts().Get(inst_id);
+
+    if (auto branch = inst.TryAs<AnyBranch>()) {
+      AddBlockLabel(scope_id, LocId(inst_id), *branch);
+    }
+
+    NamingContext context(this, queue_block_insts, scope_id, inst_id, inst);
+    context.NameInst();
   }
+}
 
-  auto sem_ir() -> const SemIR::File& { return *inst_namer_->sem_ir_; }
+auto InstNamer::CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id)
+    -> void {
+  if (!generic_id.has_value()) {
+    return;
+  }
+  generic_scopes_[generic_id.index] = scope_id;
+  const auto& generic = sem_ir_->generics().Get(generic_id);
+  CollectNamesInBlock(scope_id, generic.decl_block_id);
+  CollectNamesInBlock(scope_id, generic.definition_block_id);
+}
 
-  InstNamer* inst_namer_;
-  QueueBlockInstsFn queue_block_insts_;
-  InstNamer::ScopeId scope_id_;
-  InstNamer::Scope& scope_;
-  InstId inst_id_;
-  Inst inst_;
-};
+InstNamer::NamingContext::NamingContext(InstNamer* inst_namer,
+                                        QueueBlockInstsFn queue_block_insts,
+                                        InstNamer::ScopeId scope_id,
+                                        InstId inst_id, Inst inst)
+    : inst_namer_(inst_namer),
+      queue_block_insts_(queue_block_insts),
+      scope_id_(scope_id),
+      inst_id_(inst_id),
+      inst_(inst) {}
 
-auto InstNamer::SingleInstNamer::AddInstName(std::string name) -> void {
+auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
   ScopeId old_scope_id = inst_namer_->insts_[inst_id_.index].first;
   if (old_scope_id == ScopeId::None) {
     std::variant<LocId, uint64_t> loc_id_or_fingerprint = LocId::None;
@@ -470,18 +468,18 @@ auto InstNamer::SingleInstNamer::AddInstName(std::string name) -> void {
     } else {
       loc_id_or_fingerprint = LocId(inst_id_);
     }
-    inst_namer_->insts_[inst_id_.index] = {
-        scope_id_,
-        scope_.insts.AllocateName(*inst_namer_, loc_id_or_fingerprint, name)};
+    auto scoped_name = inst_namer_->GetScopeInfo(scope_id_).insts.AllocateName(
+        *inst_namer_, loc_id_or_fingerprint, name);
+    inst_namer_->insts_[inst_id_.index] = {scope_id_, scoped_name};
   } else {
     CARBON_CHECK(old_scope_id == scope_id_,
                  "Attempting to name inst in multiple scopes");
   }
 }
 
-auto InstNamer::SingleInstNamer::AddIntOrFloatTypeName(char type_literal_prefix,
-                                                       InstId bit_width_id,
-                                                       llvm::StringRef suffix)
+auto InstNamer::NamingContext::AddIntOrFloatTypeName(char type_literal_prefix,
+                                                     InstId bit_width_id,
+                                                     llvm::StringRef suffix)
     -> void {
   RawStringOstream out;
   out << type_literal_prefix;
@@ -494,8 +492,8 @@ auto InstNamer::SingleInstNamer::AddIntOrFloatTypeName(char type_literal_prefix,
   AddInstName(out.TakeStr());
 }
 
-auto InstNamer::SingleInstNamer::AddWitnessTableName(
-    InstId witness_table_inst_id, std::string name) -> void {
+auto InstNamer::NamingContext::AddWitnessTableName(InstId witness_table_inst_id,
+                                                   std::string name) -> void {
   auto witness_table =
       sem_ir().insts().GetAs<ImplWitnessTable>(witness_table_inst_id);
   if (!witness_table.impl_id.has_value()) {
@@ -512,19 +510,7 @@ auto InstNamer::SingleInstNamer::AddWitnessTableName(
   AddInstNameId(name_id, suffix);
 }
 
-auto InstNamer::SingleInstNamer::GetFacetAccessNameId(
-    InstId facet_value_inst_id) -> NameId {
-  if (auto name = sem_ir().insts().TryGetAs<NameRef>(facet_value_inst_id)) {
-    return name->name_id;
-  }
-  if (auto symbolic =
-          sem_ir().insts().TryGetAs<BindSymbolicName>(facet_value_inst_id)) {
-    return sem_ir().entity_names().Get(symbolic->entity_name_id).name_id;
-  }
-  return NameId::None;
-}
-
-auto InstNamer::SingleInstNamer::NameInst() -> void {
+auto InstNamer::NamingContext::NameInst() -> void {
   CARBON_KIND_SWITCH(inst_) {
     case AddrOf::Kind: {
       AddInstName("addr");
@@ -635,7 +621,15 @@ auto InstNamer::SingleInstNamer::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
-      auto name_id = GetFacetAccessNameId(inst.facet_value_inst_id);
+      auto name_id = NameId::None;
+      if (auto name =
+              sem_ir().insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
+        name_id = name->name_id;
+      } else if (auto symbolic = sem_ir().insts().TryGetAs<BindSymbolicName>(
+                     inst.facet_value_inst_id)) {
+        name_id = sem_ir().entity_names().Get(symbolic->entity_name_id).name_id;
+      }
+
       if (name_id.has_value()) {
         AddInstNameId(name_id, ".as_type");
       } else {
@@ -979,51 +973,6 @@ auto InstNamer::SingleInstNamer::NameInst() -> void {
       return;
     }
   }
-}
-
-auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
-                                    llvm::ArrayRef<InstId> block) -> void {
-  llvm::SmallVector<std::pair<ScopeId, InstId>> insts;
-
-  // Adds a scope and instructions to walk. Avoids recursion while allowing
-  // the loop to below add more instructions during iteration. The new
-  // instructions are queued such that they will be the next to be walked.
-  // Internally that means they are reversed and added to the end of the vector,
-  // since we pop from the back of the vector.
-  auto queue_block_insts = [&](ScopeId scope_id,
-                               llvm::ArrayRef<InstId> inst_ids) {
-    for (auto inst_id : llvm::reverse(inst_ids)) {
-      if (inst_id.has_value() && !IsSingletonInstId(inst_id)) {
-        insts.push_back(std::make_pair(scope_id, inst_id));
-      }
-    }
-  };
-
-  queue_block_insts(top_scope_id, block);
-
-  // Use bound names where available. Otherwise, assign a backup name.
-  while (!insts.empty()) {
-    auto [scope_id, inst_id] = insts.pop_back_val();
-    auto inst = sem_ir_->insts().Get(inst_id);
-
-    if (auto branch = inst.TryAs<AnyBranch>()) {
-      AddBlockLabel(scope_id, LocId(inst_id), *branch);
-    }
-
-    SingleInstNamer namer(this, queue_block_insts, scope_id, inst_id, inst);
-    namer.NameInst();
-  }
-}
-
-auto InstNamer::CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id)
-    -> void {
-  if (!generic_id.has_value()) {
-    return;
-  }
-  generic_scopes_[generic_id.index] = scope_id;
-  const auto& generic = sem_ir_->generics().Get(generic_id);
-  CollectNamesInBlock(scope_id, generic.decl_block_id);
-  CollectNamesInBlock(scope_id, generic.definition_block_id);
 }
 
 }  // namespace Carbon::SemIR
