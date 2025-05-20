@@ -24,15 +24,11 @@ class TypeEnum : public Printable<TypeEnum<Types...>> {
 
   static_assert(NumValues <= 256, "Too many types for raw enum.");
 
-// TODO: Works around a clang-format bug:
-// https://github.com/llvm/llvm-project/issues/85476
-#define CARBON_OPEN_ENUM [[clang::enum_extensibility(open)]]
-
   // The underlying raw enumeration type.
   //
   // The enum_extensibility attribute indicates that this enum is intended to
   // take values that do not correspond to its declared enumerators.
-  enum class CARBON_OPEN_ENUM RawEnumType : uint8_t {
+  enum class [[clang::enum_extensibility(open)]] RawEnumType : uint8_t {
     // The first sizeof...(Types) values correspond to the types.
 
     // An explicitly invalid value.
@@ -43,8 +39,6 @@ class TypeEnum : public Printable<TypeEnum<Types...>> {
     // for all of its users.
     None,
   };
-
-#undef CARBON_OPEN_ENUM
 
   // Accesses the type given an enum value.
   template <RawEnumType K>

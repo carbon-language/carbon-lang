@@ -594,8 +594,8 @@ auto HandleFunctionDefinitionSuspend(Context& context,
 
 auto HandleFunctionDefinitionResume(Context& context,
                                     Parse::FunctionDefinitionStartId node_id,
-                                    SuspendedFunction suspended_fn) -> void {
-  context.decl_name_stack().Restore(suspended_fn.saved_name_state);
+                                    SuspendedFunction&& suspended_fn) -> void {
+  context.decl_name_stack().Restore(std::move(suspended_fn.saved_name_state));
   HandleFunctionDefinitionAfterSignature(
       context, node_id, suspended_fn.function_id, suspended_fn.decl_id);
 }
@@ -681,6 +681,11 @@ static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)
     -> bool {
+  if (!function.call_params_id.has_value()) {
+    // For now, we have no builtins that support positional parameters.
+    return false;
+  }
+
   // Find the list of call parameters other than the implicit return slot.
   auto call_params = context.inst_blocks().Get(function.call_params_id);
   if (function.return_slot_pattern_id.has_value()) {

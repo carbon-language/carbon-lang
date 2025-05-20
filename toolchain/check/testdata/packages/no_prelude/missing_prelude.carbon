@@ -374,9 +374,5 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_prelude_as_namespace.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_prelude_as_class.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
 // CHECK:STDOUT:

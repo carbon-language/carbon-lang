@@ -153,9 +153,16 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
     return llvm::DebugLoc();
   }
   auto loc = file_context_->GetLocForDI(inst_id);
-  CARBON_CHECK(loc.filename == di_subprogram_->getFile()->getFilename(),
-               "Instructions located in a different file from their "
-               "enclosing function aren't handled yet");
+  if (loc.filename != di_subprogram_->getFile()->getFilename()) {
+    // Location is from a different file. We can't represent that directly
+    // within the scope of this function's subprogram, and we don't want to
+    // generate a new subprogram, so just discard the location information. This
+    // happens for thunks when emitting the portion of the thunk that is
+    // duplicated from the original signature.
+    //
+    // TODO: Handle this case better.
+    return llvm::DebugLoc();
+  }
   return llvm::DILocation::get(builder_.getContext(), loc.line_number,
                                loc.column_number, di_subprogram_);
 }

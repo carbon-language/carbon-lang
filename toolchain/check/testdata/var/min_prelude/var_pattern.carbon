@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -36,6 +35,28 @@ fn F(x: (), var y: ());
 fn G() {
   var v: () = ();
   F(v, ());
+}
+
+// --- public_function.carbon
+
+package P;
+
+fn F(x: (), var y: ());
+
+// --- public_function.impl.carbon
+
+impl package P;
+
+fn F(x: (), var y: ()) {}
+
+// --- use_public_function.carbon
+
+library "[[@TEST_NAME]]";
+
+import P;
+
+fn G() {
+  P.F((), ());
 }
 
 // --- fail_nested.carbon
@@ -93,6 +114,17 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn F[var self: Self]();
+}
+
+// --- nested_match.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F() -> ();
+
+fn G() {
+  // The SemIR should contain only two temporary_storage insts, not three.
+  let (x: (), var y: (), z: ()) = (F(), F(), F());
 }
 
 // CHECK:STDOUT: --- basic.carbon
@@ -275,6 +307,152 @@ class C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- public_function.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type = ref_param_pattern %y.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %.loc4_13: %pattern_type = var_pattern %y.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
+// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
+// CHECK:STDOUT:     %y.param: ref %empty_tuple.type = ref_param call_param1
+// CHECK:STDOUT:     %.loc4_21.1: type = splice_block %.loc4_21.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_21.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc4_21.3: type = converted %.loc4_21.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %y: ref %empty_tuple.type = bind_name y, %y.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: %empty_tuple.type);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- public_function.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %P.import = import P
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type = ref_param_pattern %y.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %.loc4_13: %pattern_type = var_pattern %y.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
+// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
+// CHECK:STDOUT:     %y.param: ref %empty_tuple.type = ref_param call_param1
+// CHECK:STDOUT:     %.loc4_21.1: type = splice_block %.loc4_21.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_21.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc4_21.3: type = converted %.loc4_21.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %y: ref %empty_tuple.type = bind_name y, %y.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: %empty_tuple.type) [from "public_function.carbon"] {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- use_public_function.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %P: <namespace> = namespace file.%P.import, [concrete] {
+// CHECK:STDOUT:     .F = %P.F
+// CHECK:STDOUT:     import P//default
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %P.F: %F.type = import_ref P//default, F, loaded [concrete = constants.%F]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .P = imports.%P
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %P.import = import P
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %P.ref: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%P.F [concrete = constants.%F]
+// CHECK:STDOUT:   %.loc7_8.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc7_12.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_8.2: %empty_tuple.type = converted %.loc7_8.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc7_12.2: init %empty_tuple.type = tuple_init () to %.1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.2: init %empty_tuple.type = converted %.loc7_12.1, %.loc7_12.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %.1, %.2
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc7_8.2, %.1)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F [from "public_function.carbon"];
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -362,16 +540,12 @@ class C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @f();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%.param: <error>);
 // CHECK:STDOUT:
@@ -422,9 +596,83 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%self.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
+// CHECK:STDOUT: --- nested_match.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc4_12.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_12.2: type = converted %.loc4_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
+// CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> %empty_tuple.type;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %.loc8_15: %pattern_type.cb1 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %z.patt: %pattern_type.cb1 = binding_pattern z [concrete]
+// CHECK:STDOUT:     %.loc8_31: %pattern_type.8c1 = tuple_pattern (%x.patt, %.loc8_15, %z.patt) [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var y
+// CHECK:STDOUT:   %F.ref.loc8_36: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call.loc8_38: init %empty_tuple.type = call %F.ref.loc8_36()
+// CHECK:STDOUT:   %F.ref.loc8_41: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call.loc8_43: init %empty_tuple.type = call %F.ref.loc8_41()
+// CHECK:STDOUT:   %F.ref.loc8_46: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call.loc8_48: init %empty_tuple.type = call %F.ref.loc8_46()
+// CHECK:STDOUT:   %.loc8_49: %tuple.type = tuple_literal (%F.call.loc8_38, %F.call.loc8_43, %F.call.loc8_48)
+// CHECK:STDOUT:   %.loc8_12.1: type = splice_block %.loc8_12.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_12.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_12.3: type = converted %.loc8_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_38.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc8_38.2: ref %empty_tuple.type = temporary %.loc8_38.1, %F.call.loc8_38
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %.loc8_38.2
+// CHECK:STDOUT:   assign %y.var, %F.call.loc8_43
+// CHECK:STDOUT:   %.loc8_23.1: type = splice_block %.loc8_23.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_23.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_23.3: type = converted %.loc8_23.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %y: ref %empty_tuple.type = bind_name y, %y.var
+// CHECK:STDOUT:   %.loc8_30.1: type = splice_block %.loc8_30.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_30.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_30.3: type = converted %.loc8_30.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_48.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc8_48.2: ref %empty_tuple.type = temporary %.loc8_48.1, %F.call.loc8_48
+// CHECK:STDOUT:   %z: ref %empty_tuple.type = bind_name z, %.loc8_48.2
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

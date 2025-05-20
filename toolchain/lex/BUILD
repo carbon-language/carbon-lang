@@ -192,7 +192,7 @@ cc_library(
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
-        "//common:variant_helpers",
+        "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",

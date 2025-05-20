@@ -649,7 +649,7 @@ static auto GetConstantValue(EvalContext& eval_context,
 // has runtime phase.
 template <typename InstT, typename FieldIdT>
 static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
-                                          InstT* inst, FieldIdT InstT::*field,
+                                          InstT* inst, FieldIdT InstT::* field,
                                           Phase* phase) -> bool {
   auto unwrapped = GetConstantValue(eval_context, inst->*field, phase);
   if (!unwrapped.has_value() && (inst->*field).has_value()) {
@@ -772,22 +772,14 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
 auto AddImportedConstant(Context& context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   EvalContext eval_context(&context, SemIR::LocId::None);
-  Phase phase = Phase::Concrete;
-  switch (inst.kind().value_kind()) {
-    case SemIR::InstValueKind::Typed: {
-      phase = GetPhase(context.constant_values(),
-                       context.types().GetConstantId(inst.type_id()));
-      // TODO: Can we avoid doing this replacement? It may do things that are
-      // undesirable during importing, such as resolving specifics.
-      if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-        return SemIR::ConstantId::NotConstant;
-      }
-      break;
-    }
-    case SemIR::InstValueKind::None: {
-      // Instructions without a type_id are not evaluated.
-      break;
-    }
+  CARBON_CHECK(inst.kind().has_type(), "Can't import untyped instructions: {0}",
+               inst.kind());
+  Phase phase = GetPhase(context.constant_values(),
+                         context.types().GetConstantId(inst.type_id()));
+  // TODO: Can we avoid doing this replacement? It may do things that are
+  // undesirable during importing, such as resolving specifics.
+  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+    return SemIR::ConstantId::NotConstant;
   }
   return MakeConstantResult(context, inst, phase);
 }

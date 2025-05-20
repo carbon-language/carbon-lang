@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -49,7 +48,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     %T.patt: %pattern_type.6c3 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
-// CHECK:STDOUT:     %T.loc16_6.1: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc16_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_6.1: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,38 +60,32 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc16_6.1: %Empty.type) {
-// CHECK:STDOUT:   %T.loc16_6.2: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc16_6.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc15_6.1: %Empty.type) {
+// CHECK:STDOUT:   %T.loc15_6.2: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_6.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc17_10.2: type = facet_access_type %T.loc16_6.2 [symbolic = %T.as_type.loc17_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_10.2 [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc17_10.2 [symbolic = %pattern_type (constants.%pattern_type.dad)]
+// CHECK:STDOUT:   %T.as_type.loc16_10.2: type = facet_access_type %T.loc15_6.2 [symbolic = %T.as_type.loc16_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc16_10.2 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc16_10.2 [symbolic = %pattern_type (constants.%pattern_type.dad)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %x.patt: @F.%pattern_type (%pattern_type.dad) = binding_pattern x [concrete]
-// CHECK:STDOUT:       %.loc17_3: @F.%pattern_type (%pattern_type.dad) = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:       %.loc16_3: @F.%pattern_type (%pattern_type.dad) = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc17_10.2 (%T.as_type) = var x
-// CHECK:STDOUT:     %.loc17_10.1: type = splice_block %.loc17_10.2 [symbolic = %T.as_type.loc17_10.2 (constants.%T.as_type)] {
-// CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc16_6.1 [symbolic = %T.loc16_6.2 (constants.%T)]
-// CHECK:STDOUT:       %T.as_type.loc17_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc17_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc17_10.2: type = converted %T.ref, %T.as_type.loc17_10.1 [symbolic = %T.as_type.loc17_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc16_10.2 (%T.as_type) = var x
+// CHECK:STDOUT:     %.loc16_10.1: type = splice_block %.loc16_10.2 [symbolic = %T.as_type.loc16_10.2 (constants.%T.as_type)] {
+// CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]
+// CHECK:STDOUT:       %T.as_type.loc16_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc16_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc16_10.2: type = converted %T.ref, %T.as_type.loc16_10.1 [symbolic = %T.as_type.loc16_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: ref @F.%T.as_type.loc17_10.2 (%T.as_type) = bind_name x, %x.var
+// CHECK:STDOUT:     %x: ref @F.%T.as_type.loc16_10.2 (%T.as_type) = bind_name x, %x.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc16_6.2 => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %T.loc15_6.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

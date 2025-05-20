@@ -47,6 +47,9 @@ runs:
         echo '*** clang++'
         which clang++
         clang++ --version
+        echo '*** clang-tidy'
+        which clang-tidy
+        clang-tidy --version
 
     # Add our bazel configuration and print basic info to ease debugging.
     - name: Configure Bazel and print info

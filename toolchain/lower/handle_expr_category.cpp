@@ -22,11 +22,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id,
                        llvm::PoisonValue::get(context.GetType(inst.type_id)));
       break;
-    case SemIR::ValueRepr::Copy:
+    case SemIR::ValueRepr::Copy: {
+      auto* type = context.GetType(SemIR::GetTypeOfInstInSpecific(
+          context.sem_ir(), context.specific_id(), inst_id));
       context.SetLocal(inst_id, context.builder().CreateLoad(
-                                    context.GetType(inst.type_id),
-                                    context.GetValue(inst.value_id)));
-      break;
+                                    type, context.GetValue(inst.value_id)));
+    } break;
     case SemIR::ValueRepr::Pointer:
       context.SetLocal(inst_id, context.GetValue(inst.value_id));
       break;
@@ -42,10 +43,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::TemporaryStorage inst) -> void {
+                SemIR::TemporaryStorage /*inst*/) -> void {
+  auto* type = context.GetType(SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), context.specific_id(), inst_id));
   context.SetLocal(inst_id,
-                   context.builder().CreateAlloca(context.GetType(inst.type_id),
-                                                  nullptr, "temp"));
+                   context.builder().CreateAlloca(type, nullptr, "temp"));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

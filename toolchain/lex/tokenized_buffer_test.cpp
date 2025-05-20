@@ -50,6 +50,14 @@ TEST_F(LexerTest, HandlesEmptyBuffer) {
                           {.kind = TokenKind::FileEnd}}));
 }
 
+TEST_F(LexerTest, NullStringRef) {
+  auto& buffer = compile_helper_.GetTokenizedBuffer(llvm::StringRef());
+  EXPECT_FALSE(buffer.has_errors());
+  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                          {.kind = TokenKind::FileStart},
+                          {.kind = TokenKind::FileEnd}}));
+}
+
 TEST_F(LexerTest, TracksLinesAndColumns) {
   auto& buffer = compile_helper_.GetTokenizedBuffer(
       "\n  ;;\n   ;;;\n   x\"foo\" '''baz\n  a\n ''' y");

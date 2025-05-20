@@ -8,6 +8,14 @@ load("llvm_tools.bzl", "LLVM_MAIN_TOOLS", "generate_llvm_tools_def")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "for_each_macro",
+    hdrs = ["for_each_macro.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "index_base",
     hdrs = ["index_base.h"],
     deps = [
@@ -20,7 +28,20 @@ cc_library(
     name = "kind_switch",
     hdrs = ["kind_switch.h"],
     deps = [
+        ":for_each_macro",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "kind_switch_test",
+    size = "small",
+    srcs = ["kind_switch_test.cpp"],
+    deps = [
+        ":kind_switch",
+        "//common:raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 

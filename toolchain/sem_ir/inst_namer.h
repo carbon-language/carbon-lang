@@ -98,6 +98,11 @@ class InstNamer {
   // Returns the IR name to use for a label, when referenced from a given scope.
   auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) const -> std::string;
 
+  // Returns true if the instruction has a specific name assigned.
+  auto has_name(InstId inst_id) const -> bool {
+    return static_cast<bool>(insts_[inst_id.index].second);
+  }
+
  private:
   // A space in which unique names can be allocated.
   struct Namespace {
@@ -166,6 +171,12 @@ class InstNamer {
 
   auto CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id) -> void;
 
+  // Collects names from the provided block.
+  //
+  // This is essential for finding instructions that we need to name. If
+  // `<unexpected>` occurs in output of valid SemIR, it often means the
+  // instruction needs to be handled here. Note that `<unexpected>` can occur in
+  // invalid SemIR just because we're unable to correctly walk the SemIR.
   auto CollectNamesInBlock(ScopeId scope_id, llvm::ArrayRef<InstId> block)
       -> void;
 

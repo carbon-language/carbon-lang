@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
-// EXTRA-ARGS: --no-dump-sem-ir --custom-core
+// EXTRA-ARGS: --no-dump-sem-ir
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -67,4 +67,4 @@ import library "type_d";
 import library "interface_z";
 
 // TODO: Can not write a final impl on `D` outside the file where `D` is defined.
-final impl D as Z(()) where .X = () {}
+final impl D as Z({}) where .X = () {}

@@ -34,17 +34,19 @@ namespace Carbon::SemIR {
 
 Formatter::Formatter(const File* sem_ir,
                      Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-                     llvm::ArrayRef<bool> include_ir_in_dumps)
+                     llvm::ArrayRef<bool> include_ir_in_dumps,
+                     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
       inst_namer_(sem_ir_),
       get_tree_and_subtrees_(get_tree_and_subtrees),
-      include_ir_in_dumps_(include_ir_in_dumps) {
+      include_ir_in_dumps_(include_ir_in_dumps),
+      use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges) {
   // Create a placeholder visible chunk and assign it to all instructions that
   // don't have a chunk of their own.
   auto first_chunk = AddChunkNoFlush(true);
   tentative_inst_chunks_.resize(sem_ir_->insts().size(), first_chunk);
 
-  if (sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+  if (use_dump_sem_ir_ranges_) {
     ComputeNodeParents();
   }
 
@@ -62,26 +64,18 @@ Formatter::Formatter(const File* sem_ir,
 }
 
 auto Formatter::Format() -> void {
-  out_ << "--- " << sem_ir_->filename() << "\n\n";
+  out_ << "--- " << sem_ir_->filename() << "\n";
 
-  FormatScopeIfUsed(InstNamer::ScopeId::Constants,
-                    sem_ir_->constants().array_ref());
-  FormatScopeIfUsed(InstNamer::ScopeId::ImportRefs,
-                    sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs));
-
-  out_ << inst_namer_.GetScopeName(InstNamer::ScopeId::File) << " ";
-  OpenBrace();
-
-  // TODO: Handle the case where there are multiple top-level instruction
-  // blocks. For example, there may be branching in the initializer of a
-  // global or a type expression.
-  if (auto block_id = sem_ir_->top_inst_block_id(); block_id.has_value()) {
-    llvm::SaveAndRestore file_scope(scope_, InstNamer::ScopeId::File);
-    FormatCodeBlock(block_id);
-  }
-
-  CloseBrace();
-  out_ << '\n';
+  FormatTopLevelScopeIfUsed(InstNamer::ScopeId::Constants,
+                            sem_ir_->constants().array_ref(),
+                            /*use_tentative_output_scopes=*/true);
+  FormatTopLevelScopeIfUsed(InstNamer::ScopeId::ImportRefs,
+                            sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs),
+                            /*use_tentative_output_scopes=*/true);
+  FormatTopLevelScopeIfUsed(
+      InstNamer::ScopeId::File,
+      sem_ir_->inst_blocks().GetOrEmpty(sem_ir_->top_inst_block_id()),
+      /*use_tentative_output_scopes=*/false);
 
   for (auto [id, _] : sem_ir_->interfaces().enumerate()) {
     FormatInterface(id);
@@ -107,7 +101,6 @@ auto Formatter::Format() -> void {
     FormatSpecific(id);
   }
 
-  // End-of-file newline.
   out_ << "\n";
 }
 
@@ -184,7 +177,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
     return false;
   }
 
-  if (!sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+  if (!use_dump_sem_ir_ranges_) {
     return true;
   }
 
@@ -224,7 +217,7 @@ auto Formatter::ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
 }
 
 auto Formatter::ShouldFormatInst(InstId inst_id) -> bool {
-  if (!sem_ir_->parse_tree().tokens().has_dump_sem_ir_ranges()) {
+  if (!use_dump_sem_ir_ranges_) {
     return true;
   }
 
@@ -282,8 +275,16 @@ auto Formatter::IndentLabel() -> void {
   Indent(-2);
 }
 
-auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
-                                  llvm::ArrayRef<InstId> block) -> void {
+auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
+                                          llvm::ArrayRef<InstId> block,
+                                          bool use_tentative_output_scopes)
+    -> void {
+  if (!use_tentative_output_scopes && use_dump_sem_ir_ranges_) {
+    // Don't format the scope if no instructions are in a dump range.
+    block = block.drop_while(
+        [&](InstId inst_id) { return !ShouldFormatInst(inst_id); });
+  }
+
   if (block.empty()) {
     return;
   }
@@ -291,13 +292,23 @@ auto Formatter::FormatScopeIfUsed(InstNamer::ScopeId scope_id,
   llvm::SaveAndRestore scope(scope_, scope_id);
   // Note, we don't use OpenBrace() / CloseBrace() here because we always want
   // a newline to avoid misformatting if the first instruction is omitted.
-  out_ << inst_namer_.GetScopeName(scope_id) << " {\n";
+  out_ << "\n" << inst_namer_.GetScopeName(scope_id) << " {\n";
   indent_ += 2;
   for (const InstId inst_id : block) {
-    TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
-    FormatInst(inst_id);
+    // Format instructions when needed, but do nothing for elided entries;
+    // unlike normal code blocks, scopes are non-sequential so skipped
+    // instructions are assumed to be uninteresting.
+    if (use_tentative_output_scopes) {
+      // This is for constants and imports. These use tentative logic to
+      // determine whether an instruction is printed.
+      TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
+      FormatInst(inst_id);
+    } else if (ShouldFormatInst(inst_id)) {
+      // This is for the file scope. It uses only the range-based filtering.
+      FormatInst(inst_id);
+    }
   }
-  out_ << "}\n\n";
+  out_ << "}\n";
   indent_ -= 2;
 }
 
@@ -637,8 +648,17 @@ auto Formatter::FormatParamList(InstBlockId params_id, bool has_return_slot)
 }
 
 auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
+  bool elided = false;
   for (const InstId inst_id : sem_ir_->inst_blocks().GetOrEmpty(block_id)) {
-    FormatInst(inst_id);
+    if (ShouldFormatInst(inst_id)) {
+      FormatInst(inst_id);
+      elided = false;
+    } else if (!elided) {
+      // When formatting a block, leave a hint that instructions were elided.
+      Indent();
+      out_ << "<elided>\n";
+      elided = true;
+    }
   }
 }
 
@@ -745,10 +765,6 @@ auto Formatter::FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
 }
 
 auto Formatter::FormatInst(InstId inst_id) -> void {
-  if (!ShouldFormatInst(inst_id)) {
-    return;
-  }
-
   if (!inst_id.has_value()) {
     Indent();
     out_ << "none\n";
@@ -813,51 +829,36 @@ auto Formatter::FormatPendingConstantValue(AddSpace space_where) -> void {
 }
 
 auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
-  switch (inst.kind().value_kind()) {
-    case InstValueKind::Typed:
-      FormatName(inst_id);
-      out_ << ": ";
-      switch (GetExprCategory(*sem_ir_, inst_id)) {
-        case ExprCategory::NotExpr:
-        case ExprCategory::Error:
-        case ExprCategory::Value:
-        case ExprCategory::Mixed:
-          break;
-        case ExprCategory::DurableRef:
-        case ExprCategory::EphemeralRef:
-          out_ << "ref ";
-          break;
-        case ExprCategory::Initializing:
-          out_ << "init ";
-          break;
-      }
-      FormatTypeOfInst(inst_id);
-      out_ << " = ";
-      break;
-    case InstValueKind::None:
-      break;
+  // Every typed instruction is named, and there are some untyped instructions
+  // that have names (such as `ImportRefUnloaded`).
+  bool has_name = inst_namer_.has_name(inst_id);
+  if (!has_name) {
+    CARBON_CHECK(!inst.kind().has_type(),
+                 "Missing name for typed instruction: {0}", inst);
+    return;
   }
-}
 
-auto Formatter::FormatInstLhs(InstId inst_id, ImportCppDecl /*inst*/) -> void {
   FormatName(inst_id);
-  out_ << " = ";
-}
 
-auto Formatter::FormatInstLhs(InstId inst_id, ImportDecl /*inst*/) -> void {
-  FormatName(inst_id);
-  out_ << " = ";
-}
+  if (inst.kind().has_type()) {
+    out_ << ": ";
+    switch (GetExprCategory(*sem_ir_, inst_id)) {
+      case ExprCategory::NotExpr:
+      case ExprCategory::Error:
+      case ExprCategory::Value:
+      case ExprCategory::Mixed:
+        break;
+      case ExprCategory::DurableRef:
+      case ExprCategory::EphemeralRef:
+        out_ << "ref ";
+        break;
+      case ExprCategory::Initializing:
+        out_ << "init ";
+        break;
+    }
+    FormatTypeOfInst(inst_id);
+  }
 
-auto Formatter::FormatInstLhs(InstId inst_id, ImportRefUnloaded /*inst*/)
-    -> void {
-  FormatName(inst_id);
-  out_ << " = ";
-}
-
-auto Formatter::FormatInstLhs(InstId inst_id, ImplWitnessTable /*inst*/)
-    -> void {
-  FormatName(inst_id);
   out_ << " = ";
 }
 

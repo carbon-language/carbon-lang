@@ -64,6 +64,7 @@ cc_library(
         "decl_introducer_state.h",
         "decl_name_stack.h",
         "deduce.h",
+        "deferred_definition_scope.h",
         "diagnostic_helpers.h",
         "eval.h",
         "eval_inst.h",
@@ -177,7 +178,6 @@ cc_library(
         "//common:find",
         "//common:map",
         "//common:ostream",
-        "//common:variant_helpers",
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/base:pretty_stack_trace_function",
@@ -254,6 +254,7 @@ cc_library(
     deps = [
         "//common:array_stack",
         "//common:check",
+        "//common:move_only",
         "//common:ostream",
         "//common:set",
         "//common:vlog",

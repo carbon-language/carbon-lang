@@ -569,7 +569,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case CARBON_KIND(Call inst): {
         auto callee_function = GetCalleeFunction(*sem_ir_, inst.callee_id);
         if (!callee_function.function_id.has_value()) {
-          break;
+          add_inst_name("");
+          continue;
         }
         const auto& function =
             sem_ir_->functions().Get(callee_function.function_id);
@@ -595,9 +596,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         if (auto literal_info = NumericTypeLiteralInfo::ForType(*sem_ir_, inst);
             literal_info.is_valid()) {
           add_inst_name(literal_info.GetLiteralAsString(*sem_ir_));
-          break;
+        } else {
+          add_inst_name_id(sem_ir_->classes().Get(inst.class_id).name_id);
         }
-        add_inst_name_id(sem_ir_->classes().Get(inst.class_id).name_id);
         continue;
       }
       case CompleteTypeWitness::Kind: {
@@ -685,7 +686,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
         queue_block_id(impl_scope_id, inst.decl_block_id);
-        break;
+        continue;
       }
       case CARBON_KIND(LookupImplWitness inst): {
         const auto& interface = sem_ir_->specific_interfaces().Get(
@@ -859,11 +860,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case ReturnSlot::Kind: {
         add_inst_name_id(NameId::ReturnSlot);
-        break;
+        continue;
       }
       case CARBON_KIND(SpliceBlock inst): {
         queue_block_id(scope_id, inst.block_id);
-        break;
+        add_inst_name("");
+        continue;
       }
       case StringLiteral::Kind: {
         add_inst_name("str");
@@ -953,13 +955,12 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       default: {
-        break;
+        // Sequentially number all remaining values.
+        if (untyped_inst.kind().has_type()) {
+          add_inst_name("");
+        }
+        continue;
       }
-    }
-
-    // Sequentially number all remaining values.
-    if (untyped_inst.kind().value_kind() != InstValueKind::None) {
-      add_inst_name("");
     }
   }
 }

@@ -21,17 +21,6 @@ enum class InstIsType : int8_t {
   Never,
 };
 
-// Whether an instruction produces or represents a value, and if so, what kind
-// of value.
-enum class InstValueKind : int8_t {
-  // This instruction doesn't produce a value, and shouldn't be referenced by
-  // other instructions.
-  None,
-  // This instruction represents an expression or expression-like construct that
-  // produces a value of the type indicated by its `type_id` field.
-  Typed,
-};
-
 // Whether an instruction can have a constant value, and whether it can be used
 // to define a constant value.
 //
@@ -169,8 +158,8 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // Returns whether this instruction kind defines a type.
   auto is_type() const -> InstIsType { return definition_info(*this).is_type; }
 
-  // Returns whether this instruction kind is expected to produce a value.
-  auto value_kind() const -> InstValueKind;
+  // Returns whether this instruction kind is expected to produce a typed value.
+  auto has_type() const -> bool;
 
   // Returns this instruction kind's category of allowed constants.
   auto constant_kind() const -> InstConstantKind {
