@@ -165,6 +165,9 @@ class InstNamer {
 
     // Names the single instruction. Use bound names where available. Otherwise,
     // assign a backup name.
+    //
+    // Insts with a type_id are required to add names; other insts may
+    // optionally set a name. All insts may enqueue other insts to be named.
     auto NameInst() -> void;
 
    private:
