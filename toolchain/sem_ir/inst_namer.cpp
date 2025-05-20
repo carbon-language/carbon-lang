@@ -149,7 +149,7 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       offset += sem_ir_->specific_interfaces().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<SpecificInterfaceId>:
-      // All scopes are offset by `FirstEntityScope`.
+      // All type-specific scopes are offset by `FirstEntityScope`.
       offset += static_cast<int>(ScopeId::FirstEntityScope);
       return offset;
 
