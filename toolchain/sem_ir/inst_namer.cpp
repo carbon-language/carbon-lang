@@ -405,27 +405,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
 
 auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                                     llvm::ArrayRef<InstId> block) -> void {
-  llvm::SmallVector<std::pair<ScopeId, InstId>> insts;
+  llvm::SmallVector<std::pair<ScopeId, InstId>> queue;
 
-  // Adds a scope and instructions to walk. Avoids recursion while allowing
-  // the loop to below add more instructions during iteration. The new
-  // instructions are queued such that they will be the next to be walked.
-  // Internally that means they are reversed and added to the end of the vector,
-  // since we pop from the back of the vector.
-  auto queue_block_insts = [&](ScopeId scope_id,
-                               llvm::ArrayRef<InstId> inst_ids) {
-    for (auto inst_id : llvm::reverse(inst_ids)) {
-      if (inst_id.has_value() && !IsSingletonInstId(inst_id)) {
-        insts.push_back(std::make_pair(scope_id, inst_id));
-      }
-    }
-  };
+  QueueBlockInsts(queue, top_scope_id, block);
 
-  queue_block_insts(top_scope_id, block);
-
-  while (!insts.empty()) {
-    auto [scope_id, inst_id] = insts.pop_back_val();
-    NamingContext context(this, queue_block_insts, scope_id, inst_id);
+  while (!queue.empty()) {
+    auto [scope_id, inst_id] = queue.pop_back_val();
+    NamingContext context(this, &queue, scope_id, inst_id);
     context.NameInst();
   }
 }
@@ -441,12 +427,21 @@ auto InstNamer::CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id)
   CollectNamesInBlock(scope_id, generic.definition_block_id);
 }
 
-InstNamer::NamingContext::NamingContext(InstNamer* inst_namer,
-                                        QueueBlockInstsFn queue_block_insts,
-                                        InstNamer::ScopeId scope_id,
-                                        InstId inst_id)
+auto InstNamer::QueueBlockInsts(
+    llvm::SmallVector<std::pair<ScopeId, InstId>>& queue, ScopeId scope_id,
+    llvm::ArrayRef<InstId> inst_ids) -> void {
+  for (auto inst_id : llvm::reverse(inst_ids)) {
+    if (inst_id.has_value() && !IsSingletonInstId(inst_id)) {
+      queue.push_back(std::make_pair(scope_id, inst_id));
+    }
+  }
+}
+
+InstNamer::NamingContext::NamingContext(
+    InstNamer* inst_namer, llvm::SmallVector<std::pair<ScopeId, InstId>>* queue,
+    InstNamer::ScopeId scope_id, InstId inst_id)
     : inst_namer_(inst_namer),
-      queue_block_insts_(queue_block_insts),
+      queue_(queue),
       scope_id_(scope_id),
       inst_id_(inst_id),
       inst_(sem_ir().insts().Get(inst_id)) {}
@@ -777,14 +772,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
       if (const_id.has_value() && const_id.is_concrete()) {
         auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
         if (!inst_namer_->insts_[const_inst_id.index].second) {
-          queue_block_insts_(ScopeId::ImportRefs,
-                             llvm::ArrayRef(const_inst_id));
+          inst_namer_->QueueBlockInsts(*queue_, ScopeId::ImportRefs,
+                                       llvm::ArrayRef(const_inst_id));
         }
       }
       return;
     }
     case CARBON_KIND(InstValue inst): {
-      queue_block_insts_(scope_id_, inst.inst_id);
+      inst_namer_->QueueBlockInsts(*queue_, scope_id_, inst.inst_id);
       AddInstName(
           ("inst." + sem_ir().insts().Get(inst.inst_id).kind().ir_name())
               .str());

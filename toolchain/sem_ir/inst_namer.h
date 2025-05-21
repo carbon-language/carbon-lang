@@ -155,12 +155,8 @@ class InstNamer {
   // Helper class for naming a single instruction.
   class NamingContext {
    public:
-    // Enqueues the provided instructions for naming.
-    using QueueBlockInstsFn = llvm::function_ref<
-        auto(ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)->void>;
-
     explicit NamingContext(InstNamer* inst_namer,
-                           QueueBlockInstsFn queue_block_insts,
+                           llvm::SmallVector<std::pair<ScopeId, InstId>>* queue,
                            InstNamer::ScopeId scope_id, InstId inst_id);
 
     // Names the single instruction. Use bound names where available. Otherwise,
@@ -191,14 +187,15 @@ class InstNamer {
     // Enqueues all instructions in a block, by ID.
     auto QueueBlockId(ScopeId scope_id, InstBlockId block_id) -> void {
       if (block_id.has_value()) {
-        queue_block_insts_(scope_id, sem_ir().inst_blocks().Get(block_id));
+        inst_namer_->QueueBlockInsts(*queue_, scope_id,
+                                     sem_ir().inst_blocks().Get(block_id));
       }
     }
 
     auto sem_ir() -> const SemIR::File& { return *inst_namer_->sem_ir_; }
 
     InstNamer* inst_namer_;
-    QueueBlockInstsFn queue_block_insts_;
+    llvm::SmallVector<std::pair<ScopeId, InstId>>* queue_;
     ScopeId scope_id_;
     InstId inst_id_;
     Inst inst_;
@@ -233,6 +230,15 @@ class InstNamer {
       -> void;
 
   auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
+
+  // Adds a scope and instructions to walk. Avoids recursion while allowing
+  // the loop to below add more instructions during iteration. The new
+  // instructions are queued such that they will be the next to be walked.
+  // Internally that means they are reversed and added to the end of the vector,
+  // since we pop from the back of the vector.
+  auto QueueBlockInsts(llvm::SmallVector<std::pair<ScopeId, InstId>>& queue,
+                       ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)
+      -> void;
 
   const File* sem_ir_;
   InstFingerprinter fingerprinter_;
