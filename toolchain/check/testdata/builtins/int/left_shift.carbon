@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -31,7 +31,9 @@ fn F() {
 }
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
+  //@dump-sem-ir-begin
   return LeftShift(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- u32.carbon
@@ -55,7 +57,9 @@ fn F() {
 }
 
 fn RuntimeCall(a: u32, b: i32) -> u32 {
+  //@dump-sem-ir-begin
   return LeftShift(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- literal.carbon
@@ -223,3 +227,325 @@ let bad3: i32 = LeftShiftByLit(an_i32, 12);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
+
+// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Expect.185: type = class_type @Expect, @Expect(%N.51e) [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.a0f: type = pattern_type %Expect.185 [symbolic]
+// CHECK:STDOUT:   %LeftShift.type.ed3: type = fn_type @LeftShift.1 [concrete]
+// CHECK:STDOUT:   %LeftShift: %LeftShift.type.ed3 = struct_value () [concrete]
+// CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
+// CHECK:STDOUT:   %Expect.1b5: type = class_type @Expect, @Expect(%int_0.6a9) [concrete]
+// CHECK:STDOUT:   %pattern_type.362: type = pattern_type %Expect.1b5 [concrete]
+// CHECK:STDOUT:   %int_1073741824.175: %i32 = int_value 1073741824 [concrete]
+// CHECK:STDOUT:   %Expect.c60: type = class_type @Expect, @Expect(%int_1073741824.175) [concrete]
+// CHECK:STDOUT:   %pattern_type.102: type = pattern_type %Expect.c60 [concrete]
+// CHECK:STDOUT:   %int_20.37c: %i32 = int_value 20 [concrete]
+// CHECK:STDOUT:   %Expect.240: type = class_type @Expect, @Expect(%int_20.37c) [concrete]
+// CHECK:STDOUT:   %pattern_type.136: type = pattern_type %Expect.240 [concrete]
+// CHECK:STDOUT:   %int_-2.321: %i32 = int_value -2 [concrete]
+// CHECK:STDOUT:   %Expect.675: type = class_type @Expect, @Expect(%int_-2.321) [concrete]
+// CHECK:STDOUT:   %pattern_type.c8e: type = pattern_type %Expect.675 [concrete]
+// CHECK:STDOUT:   %int_-4.e56: %i32 = int_value -4 [concrete]
+// CHECK:STDOUT:   %Expect.e6d: type = class_type @Expect, @Expect(%int_-4.e56) [concrete]
+// CHECK:STDOUT:   %pattern_type.f4d: type = pattern_type %Expect.e6d [concrete]
+// CHECK:STDOUT:   %int_-6.70c: %i32 = int_value -6 [concrete]
+// CHECK:STDOUT:   %Expect.e9d: type = class_type @Expect, @Expect(%int_-6.70c) [concrete]
+// CHECK:STDOUT:   %pattern_type.e8a: type = pattern_type %Expect.e9d [concrete]
+// CHECK:STDOUT:   %Expect.val.239: %Expect.1b5 = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.ae6: %Expect.c60 = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.fa0: %Expect.240 = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.a9e: %Expect.675 = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.ebf: %Expect.e6d = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.0b5: %Expect.e9d = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type.ed3 = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.left_shift: init %i32 = call %LeftShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc22_25.1: %i32 = value_of_initializer %int.left_shift
+// CHECK:STDOUT:   %.loc22_25.2: %i32 = converted %int.left_shift, %.loc22_25.1
+// CHECK:STDOUT:   return %.loc22_25.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%N.51e) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%N.51e
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%N.51e) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%N.51e
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.185
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a0f
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_0.6a9) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_0.6a9
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.1b5
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.362
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.239
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_0.6a9) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_0.6a9
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_1073741824.175) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_1073741824.175
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.c60
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.102
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.ae6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_1073741824.175) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_1073741824.175
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_20.37c) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_20.37c
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.240
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.136
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.fa0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_20.37c) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_20.37c
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_-2.321) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_-2.321
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.675
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c8e
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.a9e
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_-2.321) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_-2.321
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_-4.e56) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_-4.e56
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.e6d
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f4d
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.ebf
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_-4.e56) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_-4.e56
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_-6.70c) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_-6.70c
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.e9d
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e8a
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.0b5
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_-6.70c) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_-6.70c
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- u32.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
+// CHECK:STDOUT:   %N.1ff: %u32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Expect.c91: type = class_type @Expect, @Expect(%N.1ff) [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.f4c: type = pattern_type %Expect.c91 [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %LeftShift.type.ed3: type = fn_type @LeftShift.1 [concrete]
+// CHECK:STDOUT:   %LeftShift: %LeftShift.type.ed3 = struct_value () [concrete]
+// CHECK:STDOUT:   %int_0.7d7: %u32 = int_value 0 [concrete]
+// CHECK:STDOUT:   %Expect.eda: type = class_type @Expect, @Expect(%int_0.7d7) [concrete]
+// CHECK:STDOUT:   %pattern_type.000: type = pattern_type %Expect.eda [concrete]
+// CHECK:STDOUT:   %int_1073741824.d0a: %u32 = int_value 1073741824 [concrete]
+// CHECK:STDOUT:   %Expect.13f: type = class_type @Expect, @Expect(%int_1073741824.d0a) [concrete]
+// CHECK:STDOUT:   %pattern_type.e46: type = pattern_type %Expect.13f [concrete]
+// CHECK:STDOUT:   %int_20.50c: %u32 = int_value 20 [concrete]
+// CHECK:STDOUT:   %Expect.3c2: type = class_type @Expect, @Expect(%int_20.50c) [concrete]
+// CHECK:STDOUT:   %pattern_type.2eb: type = pattern_type %Expect.3c2 [concrete]
+// CHECK:STDOUT:   %int_4294967294.161: %u32 = int_value 4294967294 [concrete]
+// CHECK:STDOUT:   %Expect.c4f: type = class_type @Expect, @Expect(%int_4294967294.161) [concrete]
+// CHECK:STDOUT:   %pattern_type.837: type = pattern_type %Expect.c4f [concrete]
+// CHECK:STDOUT:   %int_4294967292.f53: %u32 = int_value 4294967292 [concrete]
+// CHECK:STDOUT:   %Expect.b08: type = class_type @Expect, @Expect(%int_4294967292.f53) [concrete]
+// CHECK:STDOUT:   %pattern_type.80b: type = pattern_type %Expect.b08 [concrete]
+// CHECK:STDOUT:   %int_3454992640.e56: %u32 = int_value 3454992640 [concrete]
+// CHECK:STDOUT:   %Expect.155: type = class_type @Expect, @Expect(%int_3454992640.e56) [concrete]
+// CHECK:STDOUT:   %pattern_type.440: type = pattern_type %Expect.155 [concrete]
+// CHECK:STDOUT:   %Expect.val.3c2: %Expect.eda = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.dc3: %Expect.13f = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.f04: %Expect.3c2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.de9: %Expect.c4f = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.8f8: %Expect.b08 = struct_value () [concrete]
+// CHECK:STDOUT:   %Expect.val.db6: %Expect.155 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32) -> %u32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type.ed3 = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
+// CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.left_shift: init %u32 = call %LeftShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc22_25.1: %u32 = value_of_initializer %int.left_shift
+// CHECK:STDOUT:   %.loc22_25.2: %u32 = converted %int.left_shift, %.loc22_25.1
+// CHECK:STDOUT:   return %.loc22_25.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%N.1ff) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%N.1ff
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%N.1ff) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%N.1ff
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.c91
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f4c
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_0.7d7) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_0.7d7
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.eda
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.000
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.3c2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_0.7d7) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_0.7d7
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_1073741824.d0a) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_1073741824.d0a
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.13f
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e46
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.dc3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_1073741824.d0a) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_1073741824.d0a
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_20.50c) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_20.50c
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.3c2
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2eb
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.f04
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_20.50c) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_20.50c
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_4294967294.161) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_4294967294.161
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.c4f
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.837
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.de9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_4294967294.161) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_4294967294.161
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_4294967292.f53) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_4294967292.f53
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.b08
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.80b
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.8f8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_4294967292.f53) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_4294967292.f53
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_3454992640.e56) {
+// CHECK:STDOUT:   %N.loc5_9.2 => constants.%int_3454992640.e56
+// CHECK:STDOUT:   %Expect.loc5_29.2 => constants.%Expect.155
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.440
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.db6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_3454992640.e56) {
+// CHECK:STDOUT:   %N.loc4_14.2 => constants.%int_3454992640.e56
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

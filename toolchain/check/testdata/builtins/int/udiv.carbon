@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -12,18 +12,22 @@
 
 // --- int_div.carbon
 
+library "[[@TEST_NAME]]";
+
 fn Div(a: i32, b: i32) -> i32 = "int.udiv";
 
 var arr: array(i32, Div(3, 2));
 let arr_p: array(i32, 1)* = &arr;
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
+  //@dump-sem-ir-begin
   return Div(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- overflow.carbon
 
-package Overflow;
+library "[[@TEST_NAME]]";
 
 fn Div(a: i32, b: i32) -> i32 = "int.udiv";
 fn Sub(a: i32, b: i32) -> i32 = "int.usub";
@@ -40,7 +44,7 @@ let c: i32 = Div(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 
 // --- fail_div_by_zero.carbon
 
-package FailDivByZero;
+library "[[@TEST_NAME]]";
 
 fn Div(a: i32, b: i32) -> i32 = "int.udiv";
 
@@ -55,3 +59,32 @@ let a: i32 = Div(1, 0);
 // CHECK:STDERR:              ^~~~~~~~~
 // CHECK:STDERR:
 let b: i32 = Div(0, 0);
+
+// CHECK:STDOUT: --- int_div.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Div.type.ab4: type = fn_type @Div.1 [concrete]
+// CHECK:STDOUT:   %Div: %Div.type.ab4 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Div.ref: %Div.type.ab4 = name_ref Div, file.%Div.decl [concrete = constants.%Div]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.udiv: init %i32 = call %Div.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %int.udiv
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int.udiv, %.loc11_19.1
+// CHECK:STDOUT:   return %.loc11_19.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -12,18 +12,22 @@
 
 // --- int_sub.carbon
 
+library "[[@TEST_NAME]]";
+
 fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 
 var arr: array(i32, Sub(3, 2));
 let arr_p: array(i32, 1)* = &arr;
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
+  //@dump-sem-ir-begin
   return Sub(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- fail_overflow.carbon
 
-package FailOverflow;
+library "[[@TEST_NAME]]";
 
 fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 
@@ -34,3 +38,32 @@ let b: i32 = Sub(Sub(0, 0x7FFFFFFF), 1);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
+
+// CHECK:STDOUT: --- int_sub.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Sub.type.765: type = fn_type @Sub.1 [concrete]
+// CHECK:STDOUT:   %Sub: %Sub.type.765 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Sub.ref: %Sub.type.765 = name_ref Sub, file.%Sub.decl [concrete = constants.%Sub]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.ssub: init %i32 = call %Sub.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %int.ssub
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int.ssub, %.loc11_19.1
+// CHECK:STDOUT:   return %.loc11_19.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

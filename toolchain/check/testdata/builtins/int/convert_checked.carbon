@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -42,6 +42,53 @@ fn Uint32ToInt64(a: u32) -> i64 = "int.convert_checked";
 fn Uint32ToUint64(a: u32) -> u64 = "int.convert_checked";
 fn Int32ToIntLiteral(a: i32) -> IntLiteral() = "int.convert_checked";
 fn Uint32ToUintLiteral(a: u32) -> IntLiteral() = "int.convert_checked";
+
+// --- runtime_call.carbon
+
+library "[[@TEST_NAME]]";
+import library "int_ops";
+
+fn SizePreserving(a: i32) -> u32 {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   return Int32ToUint32(a);
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: runtime_call.carbon:[[@LINE-7]]:1: in import [InImport]
+  // CHECK:STDERR: int_ops.carbon:11:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Int32ToUint32(a: i32) -> u32 = "int.convert_checked";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  return Int32ToUint32(a);
+  //@dump-sem-ir-end
+}
+
+fn Narrowing(a: i32) -> i16 {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   return Int32ToInt16(a);
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: runtime_call.carbon:[[@LINE-21]]:1: in import [InImport]
+  // CHECK:STDERR: int_ops.carbon:18:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Int32ToInt16(a: i32) -> i16 = "int.convert_checked";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  return Int32ToInt16(a);
+  //@dump-sem-ir-end
+}
+
+fn Widening(a: i32) -> i64 {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   return Int32ToInt64(a);
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: runtime_call.carbon:[[@LINE-35]]:1: in import [InImport]
+  // CHECK:STDERR: int_ops.carbon:26:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Int32ToInt64(a: i32) -> i64 = "int.convert_checked";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  return Int32ToInt64(a);
+  //@dump-sem-ir-end
+}
 
 // --- identity.carbon
 
@@ -250,3 +297,58 @@ let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
+
+// CHECK:STDOUT: --- runtime_call.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
+// CHECK:STDOUT:   %Int32ToUint32.type: type = fn_type @Int32ToUint32 [concrete]
+// CHECK:STDOUT:   %Int32ToUint32: %Int32ToUint32.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %Int32ToInt16.type: type = fn_type @Int32ToInt16 [concrete]
+// CHECK:STDOUT:   %Int32ToInt16: %Int32ToInt16.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
+// CHECK:STDOUT:   %Int32ToInt64.type: type = fn_type @Int32ToInt64 [concrete]
+// CHECK:STDOUT:   %Int32ToInt64: %Int32ToInt64.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.Int32ToUint32: %Int32ToUint32.type = import_ref Main//int_ops, Int32ToUint32, loaded [concrete = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %Main.Int32ToInt16: %Int32ToInt16.type = import_ref Main//int_ops, Int32ToInt16, loaded [concrete = constants.%Int32ToInt16]
+// CHECK:STDOUT:   %Main.Int32ToInt64: %Int32ToInt64.type = import_ref Main//int_ops, Int32ToInt64, loaded [concrete = constants.%Int32ToInt64]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SizePreserving(%a.param: %i32) -> %u32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Int32ToUint32.ref: %Int32ToUint32.type = name_ref Int32ToUint32, imports.%Main.Int32ToUint32 [concrete = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %int.convert_checked: init %u32 = call %Int32ToUint32.ref(%a.ref)
+// CHECK:STDOUT:   %.loc15_26.1: %u32 = value_of_initializer %int.convert_checked
+// CHECK:STDOUT:   %.loc15_26.2: %u32 = converted %int.convert_checked, %.loc15_26.1
+// CHECK:STDOUT:   return %.loc15_26.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Narrowing(%a.param: %i32) -> %i16 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Int32ToInt16.ref: %Int32ToInt16.type = name_ref Int32ToInt16, imports.%Main.Int32ToInt16 [concrete = constants.%Int32ToInt16]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %int.convert_checked: init %i16 = call %Int32ToInt16.ref(%a.ref)
+// CHECK:STDOUT:   %.loc29_25.1: %i16 = value_of_initializer %int.convert_checked
+// CHECK:STDOUT:   %.loc29_25.2: %i16 = converted %int.convert_checked, %.loc29_25.1
+// CHECK:STDOUT:   return %.loc29_25.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Widening(%a.param: %i32) -> %i64 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Int32ToInt64.ref: %Int32ToInt64.type = name_ref Int32ToInt64, imports.%Main.Int32ToInt64 [concrete = constants.%Int32ToInt64]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %int.convert_checked: init %i64 = call %Int32ToInt64.ref(%a.ref)
+// CHECK:STDOUT:   %.loc43_25.1: %i64 = value_of_initializer %int.convert_checked
+// CHECK:STDOUT:   %.loc43_25.2: %i64 = converted %int.convert_checked, %.loc43_25.1
+// CHECK:STDOUT:   return %.loc43_25.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -17,7 +17,9 @@ library "[[@TEST_NAME]]";
 fn Builtin(a: i32*, b: i32) = "int.and_assign";
 
 fn Call(a: i32*, b: i32) {
+  //@dump-sem-ir-begin
   Builtin(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- fail_unsized.carbon
@@ -30,18 +32,48 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn Builtin(a: Core.IntLiteral()*, b: Core.IntLiteral()) = "int.and_assign";
 
-// --- fail_bad_decl.carbon
+// --- fail_not_ptr.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and_assign" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_not_ptr.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and_assign" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn NotPtr(a: i32, b: i32) = "int.and_assign";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn NotPtr(a: i32, b: i32) = "int.and_assign";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and_assign" [InvalidBuiltinSignature]
+// TODO: There's a crash bug preventing splitting tests, it'd probably be good
+// to split. (also, look at examples in other files)
+// // --- fail_not_ptr.carbon
+//
+// library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_not_ptr.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and_assign" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn MixedTypes(a: i32*, b: i64) = "int.and_assign";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn MixedTypes(a: i32*, b: i64) = "int.and_assign";
+
+// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %Builtin.type: type = fn_type @Builtin [concrete]
+// CHECK:STDOUT:   %Builtin: %Builtin.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Call(%a.param: %ptr, %b.param: %i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Builtin.ref: %Builtin.type = name_ref Builtin, file.%Builtin.decl [concrete = constants.%Builtin]
+// CHECK:STDOUT:   %a.ref: %ptr = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.and_assign: init %empty_tuple.type = call %Builtin.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
