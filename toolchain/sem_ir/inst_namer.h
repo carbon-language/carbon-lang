@@ -153,53 +153,7 @@ class InstNamer {
   };
 
   // Helper class for naming a single instruction.
-  class NamingContext {
-   public:
-    explicit NamingContext(InstNamer* inst_namer,
-                           llvm::SmallVector<std::pair<ScopeId, InstId>>* queue,
-                           InstNamer::ScopeId scope_id, InstId inst_id);
-
-    // Names the single instruction. Use bound names where available. Otherwise,
-    // assign a backup name.
-    //
-    // Insts with a type_id are required to add names; other insts may
-    // optionally set a name. All insts may enqueue other insts to be named.
-    auto NameInst() -> void;
-
-   private:
-    // Adds the instruction's name.
-    auto AddInstName(std::string name) -> void;
-
-    // Adds the instruction's name by `NameId`.
-    auto AddInstNameId(NameId name_id, llvm::StringRef suffix = "") -> void {
-      AddInstName(
-          (sem_ir().names().GetIRBaseName(name_id).str() + suffix).str());
-    }
-
-    // Names an `IntType` or `FloatType`.
-    auto AddIntOrFloatTypeName(char type_literal_prefix, InstId bit_width_id,
-                               llvm::StringRef suffix = "") -> void;
-
-    // Names an `ImplWitnessTable` instruction.
-    auto AddWitnessTableName(InstId witness_table_inst_id, std::string name)
-        -> void;
-
-    // Enqueues all instructions in a block, by ID.
-    auto QueueBlockId(ScopeId scope_id, InstBlockId block_id) -> void {
-      if (block_id.has_value()) {
-        inst_namer_->QueueBlockInsts(*queue_, scope_id,
-                                     sem_ir().inst_blocks().Get(block_id));
-      }
-    }
-
-    auto sem_ir() -> const SemIR::File& { return *inst_namer_->sem_ir_; }
-
-    InstNamer* inst_namer_;
-    llvm::SmallVector<std::pair<ScopeId, InstId>>* queue_;
-    ScopeId scope_id_;
-    InstId inst_id_;
-    Inst inst_;
-  };
+  class NamingContext;
 
   auto GetScopeInfo(ScopeId scope_id) -> Scope& {
     return scopes_[static_cast<int>(scope_id)];
