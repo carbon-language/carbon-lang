@@ -6,12 +6,12 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/builtin_insts.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/dump_raw_builtins.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/builtin_insts.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/dump_raw_builtins.carbon
 
 // CHECK:STDOUT: ---
-// CHECK:STDOUT: filename:        builtin_insts.carbon
+// CHECK:STDOUT: filename:        dump_raw_builtins.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}

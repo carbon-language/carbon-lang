@@ -2,15 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/run_i32.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/main_run/return_i32.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/run_i32.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/main_run/return_i32.carbon
 
 fn Run() -> i32 { return 0; }
 
-// CHECK:STDOUT: --- run_i32.carbon
+// CHECK:STDOUT: --- return_i32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -75,12 +77,12 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc11_27.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc13_27.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_27.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc11_27.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc11_27.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc11_27.2: %i32 = converted %int_0, %.loc11_27.1 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc11_27.2
+// CHECK:STDOUT:   %bound_method.loc13_27.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc13_27.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc13_27.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc13_27.2: %i32 = converted %int_0, %.loc13_27.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   return %.loc13_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
