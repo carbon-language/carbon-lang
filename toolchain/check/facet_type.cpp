@@ -526,9 +526,9 @@ class RewriteRulesFromImplWitness {
 
   auto Next() -> std::optional<RewriteRule> {
     while (true) {
-      // The witness table may have fewer entries in it (or even zero if there's
-      // no impl definition) than the interface has, but they are in the same
-      // order for whatever is present.
+      // The witness table (the RHS) may have fewer entries in it (or even zero
+      // if there's no impl definition) than the interface (the LHS) has, but
+      // they are in the same order for whatever is present.
       if (lhs_inst_ids_it_ == lhs_inst_ids_.end()) {
         return std::nullopt;
       }
