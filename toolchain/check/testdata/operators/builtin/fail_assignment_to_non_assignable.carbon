@@ -181,17 +181,17 @@ fn Main() {
 // CHECK:STDOUT:   %.loc28_8.2: %tuple.type.f94 = converted %.loc28_8.1, %tuple.loc28 [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
-// CHECK:STDOUT:     %.loc29_3.1: %pattern_type.7ce = var_pattern %n.patt [concrete]
+// CHECK:STDOUT:     %n.var_patt: %pattern_type.7ce = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %i32 = var n
+// CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc29: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc29_3.1: <bound method> = bound_method %int_0, %impl.elem0.loc29 [concrete = constants.%Convert.bound.d04]
 // CHECK:STDOUT:   %specific_fn.loc29: <specific function> = specific_function %impl.elem0.loc29, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc29_3.2: <bound method> = bound_method %int_0, %specific_fn.loc29 [concrete = constants.%bound_method.b6e]
 // CHECK:STDOUT:   %int.convert_checked.loc29: init %i32 = call %bound_method.loc29_3.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc29_3.2: init %i32 = converted %int_0, %int.convert_checked.loc29 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   assign %n.var, %.loc29_3.2
+// CHECK:STDOUT:   %.loc29_3: init %i32 = converted %int_0, %int.convert_checked.loc29 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   assign %n.var, %.loc29_3
 // CHECK:STDOUT:   %.loc29_10: type = splice_block %i32.loc29 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -286,10 +286,10 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc49_4, %.loc49_27
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc52_3: %pattern_type.7ce = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %i32 = var a
-// CHECK:STDOUT:   %.loc52_10: type = splice_block %i32.loc52 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
+// CHECK:STDOUT:   %.loc52: type = splice_block %i32.loc52 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc52: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc52: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }

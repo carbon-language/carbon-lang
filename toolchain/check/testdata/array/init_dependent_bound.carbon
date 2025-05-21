@@ -116,9 +116,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: @F.%pattern_type (%pattern_type.ccc) = binding_pattern arr [concrete]
-// CHECK:STDOUT:       %.loc9_3: @F.%pattern_type (%pattern_type.ccc) = var_pattern %arr.patt [concrete]
+// CHECK:STDOUT:       %arr.var_patt: @F.%pattern_type (%pattern_type.ccc) = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr.var: ref @F.%array_type.loc9_24.2 (%array_type) = var arr
+// CHECK:STDOUT:     %arr.var: ref @F.%array_type.loc9_24.2 (%array_type) = var %arr.var_patt
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
@@ -251,9 +251,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %arr.patt: <error> = binding_pattern arr [concrete]
-// CHECK:STDOUT:       %.loc10_3: <error> = var_pattern %arr.patt [concrete]
+// CHECK:STDOUT:       %arr.var_patt: <error> = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr.var: ref <error> = var arr
+// CHECK:STDOUT:     %arr.var: ref <error> = var %arr.var_patt [concrete = <error>]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]

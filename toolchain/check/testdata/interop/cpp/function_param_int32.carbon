@@ -77,7 +77,7 @@ fn F() {
 }
 
 // ============================================================================
-// signed_int
+// signed int
 // ============================================================================
 
 // --- signed_int.h
@@ -154,7 +154,7 @@ fn F() {
 }
 
 // ============================================================================
-// multiple_ints
+// Multiple ints
 // ============================================================================
 
 // --- multiple_ints.h
@@ -175,7 +175,7 @@ fn F() {
 }
 
 // ============================================================================
-// unnamed_int
+// Unnamed int
 // ============================================================================
 
 // --- unnamed_int.h
@@ -193,7 +193,7 @@ fn F() {
 }
 
 // ============================================================================
-// int_default
+// int default
 // ============================================================================
 
 // --- int_default.h
@@ -226,7 +226,7 @@ fn F() {
 }
 
 // ============================================================================
-// const_int
+// const int
 // ============================================================================
 
 // --- const_int.h
@@ -244,7 +244,7 @@ fn F() {
 }
 
 // ============================================================================
-// int_ref
+// int reference
 // ============================================================================
 
 // --- int_ref.h
@@ -270,7 +270,7 @@ fn F() {
 }
 
 // ============================================================================
-// const_int_ref
+// const int reference
 // ============================================================================
 
 // --- const_int_ref.h
@@ -296,7 +296,7 @@ fn F() {
 }
 
 // ============================================================================
-// int_pointer
+// int pointer
 // ============================================================================
 
 // --- int_pointer.h
@@ -322,7 +322,7 @@ fn F() {
 }
 
 // ============================================================================
-// const_int_pointer
+// const int pointer
 // ============================================================================
 
 // --- const_int_pointer.h
@@ -1628,17 +1628,17 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc7_3.1: %pattern_type.7ce = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %i32 = var a
+// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc7_3.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc7_3.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %a.var, %.loc7_3.2
+// CHECK:STDOUT:   %.loc7_3: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %.loc7_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -1713,17 +1713,17 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc7_3.1: %pattern_type.7ce = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %i32 = var a
+// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc7_3.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc7_3.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %a.var, %.loc7_3.2
+// CHECK:STDOUT:   %.loc7_3: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %.loc7_11: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -1799,17 +1799,17 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc7_3.1: %pattern_type.7ce = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %i32 = var a
+// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc7_3.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc7_3.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %a.var, %.loc7_3.2
+// CHECK:STDOUT:   %.loc7_3: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %.loc7_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -1886,17 +1886,17 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc7_3.1: %pattern_type.7ce = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %i32 = var a
+// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc7_3.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc7_3.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %a.var, %.loc7_3.2
+// CHECK:STDOUT:   %.loc7_3: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %.loc7_11: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

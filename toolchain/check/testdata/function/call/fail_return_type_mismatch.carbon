@@ -86,12 +86,12 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc21_3.1: %pattern_type.7ce = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.7ce = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %i32 = var x
+// CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
-// CHECK:STDOUT:   %.loc21_3.2: %i32 = converted %Foo.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21_3: %i32 = converted %Foo.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.loc21_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

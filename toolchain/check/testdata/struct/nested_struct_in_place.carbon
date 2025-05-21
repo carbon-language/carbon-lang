@@ -72,9 +72,9 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.3c2 = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.3c2 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.3c2 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %struct_type.a.b.2f9 = var v
+// CHECK:STDOUT:   %v.var: ref %struct_type.a.b.2f9 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc14_61: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc14_74.1: ref %tuple.type.189 = struct_access %v.var, element0
 // CHECK:STDOUT:   %F.call.loc14_63: init %tuple.type.189 = call %F.ref.loc14_61() to %.loc14_74.1
@@ -83,8 +83,8 @@ fn G() {
 // CHECK:STDOUT:   %F.call.loc14_73: init %tuple.type.189 = call %F.ref.loc14_71() to %.loc14_74.2
 // CHECK:STDOUT:   %.loc14_74.3: %struct_type.a.b.2f9 = struct_literal (%F.call.loc14_63, %F.call.loc14_73)
 // CHECK:STDOUT:   %.loc14_74.4: init %struct_type.a.b.2f9 = struct_init (%F.call.loc14_63, %F.call.loc14_73) to %v.var
-// CHECK:STDOUT:   %.loc14_3.2: init %struct_type.a.b.2f9 = converted %.loc14_74.3, %.loc14_74.4
-// CHECK:STDOUT:   assign %v.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %struct_type.a.b.2f9 = converted %.loc14_74.3, %.loc14_74.4
+// CHECK:STDOUT:   assign %v.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_51: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.2f9] {
 // CHECK:STDOUT:     %int_32.loc14_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

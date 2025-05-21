@@ -35,7 +35,8 @@ auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     bool prelude_import, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::raw_ostream* vlog_stream, bool fuzzing) -> void;
+    llvm::StringRef target, llvm::raw_ostream* vlog_stream, bool fuzzing)
+    -> void;
 
 }  // namespace Carbon::Check
 

@@ -144,9 +144,9 @@ class C(C:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.7db = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc8_3.1: %pattern_type.7db = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.7db = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %C.d45 = var v
+// CHECK:STDOUT:   %v.var: ref %C.d45 = var %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc8_26.1: %struct_type.x.c96 = struct_literal (%int_1)
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -158,8 +158,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %.loc8_26.3: ref %i32 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %.loc8_26.4: init %i32 = initialize_from %.loc8_26.2 to %.loc8_26.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_26.5: init %C.d45 = class_init (%.loc8_26.4), %v.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8_3.2: init %C.d45 = converted %.loc8_26.1, %.loc8_26.5 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %v.var, %.loc8_3.2
+// CHECK:STDOUT:   %.loc8_3: init %C.d45 = converted %.loc8_26.1, %.loc8_26.5 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %v.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_15: type = splice_block %C [concrete = constants.%C.d45] {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

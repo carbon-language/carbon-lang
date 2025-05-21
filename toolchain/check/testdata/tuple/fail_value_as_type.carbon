@@ -43,9 +43,9 @@ var x: (1, );
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref <error> = var x
+// CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %.loc18_12.1: %tuple.type = tuple_literal (%int_1)

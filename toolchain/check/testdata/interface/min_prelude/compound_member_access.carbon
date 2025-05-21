@@ -813,9 +813,9 @@ fn Works() {
 // CHECK:STDOUT:     %.loc10_8: init %empty_tuple.type = call %bound_method.loc10_8(%x.ref.loc10)
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %xcopy.patt: @Simple4.%pattern_type (%pattern_type.ad3e89.2) = binding_pattern xcopy [concrete]
-// CHECK:STDOUT:       %.loc11_3: @Simple4.%pattern_type (%pattern_type.ad3e89.2) = var_pattern %xcopy.patt [concrete]
+// CHECK:STDOUT:       %xcopy.var_patt: @Simple4.%pattern_type (%pattern_type.ad3e89.2) = var_pattern %xcopy.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %xcopy.var: ref @Simple4.%T.as_type.loc9_23.2 (%T.as_type) = var xcopy
+// CHECK:STDOUT:     %xcopy.var: ref @Simple4.%T.as_type.loc9_23.2 (%T.as_type) = var %xcopy.var_patt
 // CHECK:STDOUT:     %x.ref.loc11: @Simple4.%T.as_type.loc9_23.2 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     assign %xcopy.var, %x.ref.loc11
 // CHECK:STDOUT:     %.loc11_14.1: type = splice_block %.loc11_14.2 [symbolic = %T.as_type.loc9_23.2 (constants.%T.as_type)] {
@@ -868,9 +868,9 @@ fn Works() {
 // CHECK:STDOUT:     %.loc17_13: init %empty_tuple.type = call %bound_method.loc17_13(%y.ref.loc17)
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %ycopy.patt: @Compound4.%pattern_type (%pattern_type.ad3e89.3) = binding_pattern ycopy [concrete]
-// CHECK:STDOUT:       %.loc18_3: @Compound4.%pattern_type (%pattern_type.ad3e89.3) = var_pattern %ycopy.patt [concrete]
+// CHECK:STDOUT:       %ycopy.var_patt: @Compound4.%pattern_type (%pattern_type.ad3e89.3) = var_pattern %ycopy.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %ycopy.var: ref @Compound4.%V.as_type.loc16_25.2 (%V.as_type) = var ycopy
+// CHECK:STDOUT:     %ycopy.var: ref @Compound4.%V.as_type.loc16_25.2 (%V.as_type) = var %ycopy.var_patt
 // CHECK:STDOUT:     %y.ref.loc18: @Compound4.%V.as_type.loc16_25.2 (%V.as_type) = name_ref y, %y
 // CHECK:STDOUT:     assign %ycopy.var, %y.ref.loc18
 // CHECK:STDOUT:     %.loc18_14.1: type = splice_block %.loc18_14.2 [symbolic = %V.as_type.loc16_25.2 (constants.%V.as_type)] {

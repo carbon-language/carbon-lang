@@ -53,10 +53,10 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.268 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc15_1: %pattern_type.268 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.268 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
-// CHECK:STDOUT:   %.loc15_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:   %x.var: ref %struct_type.a = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %.loc15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
@@ -64,10 +64,10 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.f4b = binding_pattern y [concrete]
-// CHECK:STDOUT:     %.loc21_1: %pattern_type.f4b = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.f4b = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %struct_type.b.0a3 = var y
-// CHECK:STDOUT:   %.loc21_16: type = splice_block %struct_type.b [concrete = constants.%struct_type.b.0a3] {
+// CHECK:STDOUT:   %y.var: ref %struct_type.b.0a3 = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %.loc21: type = splice_block %struct_type.b [concrete = constants.%struct_type.b.0a3] {
 // CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b.0a3]

@@ -275,9 +275,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %.loc21_21
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc22_3: %pattern_type.7ce = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %i32 = var b
+// CHECK:STDOUT:   %b.var: ref %i32 = var %b.var_patt
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc22_17: %HasF.assoc_type.257 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [concrete = constants.%assoc0.afb]
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type.257 = name_ref F, %.loc22_17 [concrete = constants.%assoc0.afb]

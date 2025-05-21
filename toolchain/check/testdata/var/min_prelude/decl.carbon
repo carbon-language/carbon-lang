@@ -44,9 +44,9 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc3_3: %pattern_type = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var %x.var_patt
 // CHECK:STDOUT:   %.loc3_11.1: type = splice_block %.loc3_11.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc3_11.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc3_11.3: type = converted %.loc3_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

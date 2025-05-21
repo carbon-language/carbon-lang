@@ -70,6 +70,11 @@ class ConstantContext {
     return file_context_->GetTypeAsValue();
   }
 
+  // Returns a lowered address for the given global.
+  auto GetGlobal(SemIR::InstId inst_id) const -> llvm::Constant* {
+    return file_context_->global_variables().Lookup(inst_id).value();
+  }
+
   // Sets the index of the constant we most recently lowered. This is used to
   // check we don't look at constants that we've not lowered yet.
   auto SetLastLoweredConstantIndex(int32_t index) -> void {
@@ -148,6 +153,34 @@ static auto EmitAsConstant(ConstantContext& /*context*/, SemIR::AddrOf /*inst*/)
 }
 
 static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::AnyAggregateAccess inst) -> llvm::Constant* {
+  auto* aggr_addr = context.GetConstant(inst.aggregate_id);
+  auto* aggr_type = context.GetType(
+      context.sem_ir().insts().Get(inst.aggregate_id).type_id());
+
+  auto* i32_type = llvm::Type::getInt32Ty(context.llvm_context());
+  // For now, we rely on the LLVM type's GEP indexes matching the SemIR
+  // aggregate element indexes.
+  llvm::Constant* indexes[2] = {
+      llvm::ConstantInt::get(i32_type, 0),
+      llvm::ConstantInt::get(i32_type, inst.index.index),
+  };
+  auto no_wrap_flags =
+      llvm::GEPNoWrapFlags::inBounds() | llvm::GEPNoWrapFlags::noUnsignedWrap();
+  return llvm::ConstantExpr::getGetElementPtr(aggr_type, aggr_addr, indexes,
+                                              no_wrap_flags);
+}
+
+template <typename InstT>
+  requires(SemIR::Internal::InstLikeTypeInfo<SemIR::AnyAggregateAccess>::IsKind(
+      InstT::Kind))
+static auto EmitAsConstant(ConstantContext& context, InstT inst)
+    -> llvm::Constant* {
+  return EmitAsConstant(context,
+                        SemIR::Inst(inst).As<SemIR::AnyAggregateAccess>());
+}
+
+static auto EmitAsConstant(ConstantContext& context,
                            SemIR::AssociatedEntity inst) -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);
 }
@@ -217,6 +250,15 @@ static auto EmitAsConstant(ConstantContext& context,
 static auto EmitAsConstant(ConstantContext& /*context*/,
                            SemIR::StringLiteral inst) -> llvm::Constant* {
   CARBON_FATAL("TODO: Add support: {0}", inst);
+}
+
+static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
+    -> llvm::Constant* {
+  // Look up the variable by its `pattern_id`.
+  // TODO: Look it up by its `inst_id` instead, and stop including a mapping
+  // from `pattern_id` to global variables in the file context's global
+  // variables list.
+  return context.GetGlobal(inst.pattern_id);
 }
 
 // Tries to emit an LLVM constant value for this constant instruction. Centrally

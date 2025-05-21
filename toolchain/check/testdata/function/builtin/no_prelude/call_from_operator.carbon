@@ -596,9 +596,9 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Self.65a: %As.type.eed = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.843: type = fn_type @Convert.1, @As(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.95f: %Convert.type.843 = struct_value () [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Self.as_type.04d: type = facet_access_type %Self.65a [symbolic]
 // CHECK:STDOUT:   %pattern_type.ca4: type = pattern_type %Self.as_type.04d [symbolic]
-// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %As.assoc_type.760: type = assoc_entity_type @As, @As(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0.076: %As.assoc_type.760 = assoc_entity element0, imports.%Core.import_ref.708 [symbolic]
 // CHECK:STDOUT:   %As.type.a6d: type = facet_type <@As, @As(%i32.builtin)> [concrete]
@@ -748,9 +748,9 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %arr.patt: %pattern_type.9e2 = binding_pattern arr [concrete]
-// CHECK:STDOUT:     %.loc4_1: %pattern_type.9e2 = var_pattern %arr.patt [concrete]
+// CHECK:STDOUT:     %arr.var_patt: %pattern_type.9e2 = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr.var: ref %array_type = var arr
+// CHECK:STDOUT:   %arr.var: ref %array_type = var %arr.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_44: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc4_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc4_16: init type = call constants.%Int(%int_32.loc4_16) [concrete = constants.%i32.builtin]

@@ -227,13 +227,6 @@ considering if they fit your workflow.
         **either** normal terminals **or** Visual Studio Code to run `bazel`,
         not both in combination. Visual Studio Code can still be used for other
         purposes, such as editing files, without interfering with `bazel`.
-    -   [DevContainers](https://code.visualstudio.com/docs/remote/containers): A
-        way to use Docker for build environments.
-        -   After following the
-            [installation instructions](https://code.visualstudio.com/docs/remote/containers#_installation),
-            you should be prompted to use Carbon's
-            [devcontainer](/.devcontainer/devcontainer.json) with "Reopen in
-            container".
 -   [clangd](https://clangd.llvm.org/installation): An LSP server implementation
     for C/C++.
     -   To ensure that `clangd` reports accurate diagnostics. It needs a

@@ -310,7 +310,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Main//foo, inst143 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
+// CHECK:STDOUT:   %Main.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Main//foo, inst140 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Main.import_ref.773), @impl.a8d [concrete]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//foo, loc4_13, loaded [symbolic = @Class.%T.1 (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
@@ -490,7 +490,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.import_ref.e76: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) = import_ref Main//foo, loc7_8, loaded [concrete = %.364]
 // CHECK:STDOUT:   %Main.import_ref.a52: @CompleteClass.%F.type (%F.type.14f) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.874)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
-// CHECK:STDOUT:   %.364: %CompleteClass.elem.28a = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.364: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) = field_decl n, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -547,12 +547,12 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.0b0 = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc6_3.1: %pattern_type.0b0 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.0b0 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %CompleteClass.e9e = var v
+// CHECK:STDOUT:   %v.var: ref %CompleteClass.e9e = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc6: %F.type.b25 = name_ref F, imports.%Main.F [concrete = constants.%F.c41]
-// CHECK:STDOUT:   %.loc6_3.2: ref %CompleteClass.e9e = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.e9e = call %F.ref.loc6() to %.loc6_3.2
+// CHECK:STDOUT:   %.loc6_3: ref %CompleteClass.e9e = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.e9e = call %F.ref.loc6() to %.loc6_3
 // CHECK:STDOUT:   assign %v.var, %F.call.loc6
 // CHECK:STDOUT:   %.loc6_27: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.e9e] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
@@ -583,12 +583,12 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.0b0 = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc11_3.1: %pattern_type.0b0 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.0b0 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %CompleteClass.e9e = var v
+// CHECK:STDOUT:   %v.var: ref %CompleteClass.e9e = var %v.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type.b25 = name_ref F, imports.%Main.F [concrete = constants.%F.c41]
-// CHECK:STDOUT:   %.loc11_3.2: ref %CompleteClass.e9e = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call: init %CompleteClass.e9e = call %F.ref() to %.loc11_3.2
+// CHECK:STDOUT:   %.loc11_3: ref %CompleteClass.e9e = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call: init %CompleteClass.e9e = call %F.ref() to %.loc11_3
 // CHECK:STDOUT:   assign %v.var, %F.call
 // CHECK:STDOUT:   %.loc11_27: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.e9e] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
@@ -720,13 +720,13 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.062 = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.062 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.062 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %CompleteClass.0fe = var v
+// CHECK:STDOUT:   %v.var: ref %CompleteClass.0fe = var %v.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type.b25 = name_ref F, imports.%Main.F [concrete = constants.%F.c41]
 // CHECK:STDOUT:   %.loc14_34: ref %CompleteClass.a06 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %CompleteClass.a06 = call %F.ref() to %.loc14_34
-// CHECK:STDOUT:   %.loc14_3.2: %CompleteClass.0fe = converted %F.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_3: %CompleteClass.0fe = converted %F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.loc14_28: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.0fe] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]

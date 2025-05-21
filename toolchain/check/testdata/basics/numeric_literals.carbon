@@ -117,9 +117,9 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ints.patt: %pattern_type.0c8 = binding_pattern ints [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.0c8 = var_pattern %ints.patt [concrete]
+// CHECK:STDOUT:     %ints.var_patt: %pattern_type.0c8 = var_pattern %ints.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ints.var: ref %array_type.d49 = var ints
+// CHECK:STDOUT:   %ints.var: ref %array_type.d49 = var %ints.var_patt
 // CHECK:STDOUT:   %int_8.loc15: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9.988]
 // CHECK:STDOUT:   %int_8.loc17: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
@@ -182,8 +182,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_3.18: ref %i32 = array_index %ints.var, %int_5.loc21
 // CHECK:STDOUT:   %.loc21_3.19: init %i32 = initialize_from %.loc21_3.17 to %.loc21_3.18 [concrete = constants.%int_2147483647.a74]
 // CHECK:STDOUT:   %.loc21_3.20: init %array_type.d49 = array_init (%.loc21_3.4, %.loc21_3.7, %.loc21_3.10, %.loc21_3.13, %.loc21_3.16, %.loc21_3.19) to %ints.var [concrete = constants.%array.ae2]
-// CHECK:STDOUT:   %.loc14_3.2: init %array_type.d49 = converted %.loc21_3.1, %.loc21_3.20 [concrete = constants.%array.ae2]
-// CHECK:STDOUT:   assign %ints.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %array_type.d49 = converted %.loc21_3.1, %.loc21_3.20 [concrete = constants.%array.ae2]
+// CHECK:STDOUT:   assign %ints.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_25: type = splice_block %array_type.loc14 [concrete = constants.%array_type.d49] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -193,9 +193,9 @@ fn F() {
 // CHECK:STDOUT:   %ints: ref %array_type.d49 = bind_name ints, %ints.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %floats.patt: %pattern_type.601 = binding_pattern floats [concrete]
-// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.601 = var_pattern %floats.patt [concrete]
+// CHECK:STDOUT:     %floats.var_patt: %pattern_type.601 = var_pattern %floats.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %floats.var: ref %array_type.72b = var floats
+// CHECK:STDOUT:   %floats.var: ref %array_type.72b = var %floats.var_patt
 // CHECK:STDOUT:   %float.loc23: f64 = float_literal 0.90000000000000002 [concrete = constants.%float.952]
 // CHECK:STDOUT:   %float.loc24: f64 = float_literal 8 [concrete = constants.%float.298]
 // CHECK:STDOUT:   %float.loc25: f64 = float_literal 80 [concrete = constants.%float.dcb]
@@ -222,8 +222,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc29_3.12: ref f64 = array_index %floats.var, %int_5.loc29
 // CHECK:STDOUT:   %.loc29_3.13: init f64 = initialize_from %float.loc28 to %.loc29_3.12 [concrete = constants.%float.401]
 // CHECK:STDOUT:   %.loc29_3.14: init %array_type.72b = array_init (%.loc29_3.3, %.loc29_3.5, %.loc29_3.7, %.loc29_3.9, %.loc29_3.11, %.loc29_3.13) to %floats.var [concrete = constants.%array.a2f]
-// CHECK:STDOUT:   %.loc22_3.2: init %array_type.72b = converted %.loc29_3.1, %.loc29_3.14 [concrete = constants.%array.a2f]
-// CHECK:STDOUT:   assign %floats.var, %.loc22_3.2
+// CHECK:STDOUT:   %.loc22_3: init %array_type.72b = converted %.loc29_3.1, %.loc29_3.14 [concrete = constants.%array.a2f]
+// CHECK:STDOUT:   assign %floats.var, %.loc22_3
 // CHECK:STDOUT:   %.loc22_27: type = splice_block %array_type.loc22 [concrete = constants.%array_type.72b] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]

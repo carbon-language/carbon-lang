@@ -101,9 +101,9 @@ var a: array(i32, Negate(1));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc17_1: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc17_28: type = splice_block %array_type [concrete = <error>] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

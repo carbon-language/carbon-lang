@@ -106,13 +106,13 @@ fn Constant() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc19_3.1: %pattern_type.cb1 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
 // CHECK:STDOUT:   %.loc19_43.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_43.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19_3.2: init %empty_tuple.type = converted %.loc19_43.1, %.loc19_43.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %a.var, %.loc19_3.2
+// CHECK:STDOUT:   %.loc19_3: init %empty_tuple.type = converted %.loc19_43.1, %.loc19_43.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %a.var, %.loc19_3
 // CHECK:STDOUT:   br !.loc19_17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc19_17:
@@ -139,9 +139,9 @@ fn Constant() {
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc20_3: %pattern_type.831 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref bool = var b
+// CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt
 // CHECK:STDOUT:   %true.loc20: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   assign %b.var, %true.loc20
 // CHECK:STDOUT:   br !.loc20_17

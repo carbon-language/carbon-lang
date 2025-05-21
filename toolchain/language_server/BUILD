@@ -45,6 +45,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/source:source_buffer",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 

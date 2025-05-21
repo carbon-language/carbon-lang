@@ -18,7 +18,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.loc12_3.2 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
+// CHECK:STDOUT: @struct.loc12_3 = internal constant { double, i32 } { double 0.000000e+00, i32 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -28,7 +28,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %x.var), !dbg !7
 // CHECK:STDOUT:   %.loc12_48.2.a = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %.loc12_48.5.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.loc12_3.2, i64 16, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.loc12_3, i64 16, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %y.var), !dbg !8
 // CHECK:STDOUT:   %.loc13_17.1.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   %.loc13_17.2 = load i32, ptr %.loc13_17.1.b, align 4, !dbg !11

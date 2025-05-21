@@ -79,17 +79,17 @@ fn F(x: X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.b05 = binding_pattern s [concrete]
-// CHECK:STDOUT:     %.loc21: %pattern_type.b05 = var_pattern %s.patt [concrete]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.b05 = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref String = var s
+// CHECK:STDOUT:   %s.var: ref String = var %s.var_patt
 // CHECK:STDOUT:   %str: String = string_literal "hello" [concrete = constants.%str]
 // CHECK:STDOUT:   assign %s.var, <error>
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.019 = binding_pattern y [concrete]
-// CHECK:STDOUT:     %.loc28: %pattern_type.019 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.019 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %X = var y
+// CHECK:STDOUT:   %y.var: ref %X = var %y.var_patt
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT:   %X.ref.loc28: type = name_ref X, file.%X.decl [concrete = constants.%X]

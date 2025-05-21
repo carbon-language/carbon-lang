@@ -123,9 +123,9 @@ fn Var() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.bb7 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc17_3.1: %pattern_type.bb7 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.bb7 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %tuple.type.b67 = var b
+// CHECK:STDOUT:   %b.var: ref %tuple.type.b67 = var %b.var_patt
 // CHECK:STDOUT:   %Make.ref.loc17_20: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %tuple.elem0: ref %X = tuple_access %b.var, element0
 // CHECK:STDOUT:   %Make.call.loc17_25: init %X = call %Make.ref.loc17_20() to %tuple.elem0
@@ -138,8 +138,8 @@ fn Var() {
 // CHECK:STDOUT:   %.loc17_44.1: %tuple.type.24b = tuple_literal (%X.ref.loc17_40, %X.ref.loc17_43)
 // CHECK:STDOUT:   %.loc17_44.2: type = converted %.loc17_44.1, constants.%tuple.type.b67 [concrete = constants.%tuple.type.b67]
 // CHECK:STDOUT:   %.loc17_34.2: init %tuple.type.b67 = tuple_init (%Make.call.loc17_25, %Make.call.loc17_33) to %b.var
-// CHECK:STDOUT:   %.loc17_3.2: init %tuple.type.b67 = converted %.loc17_34.1, %.loc17_34.2
-// CHECK:STDOUT:   assign %b.var, %.loc17_3.2
+// CHECK:STDOUT:   %.loc17_3: init %tuple.type.b67 = converted %.loc17_34.1, %.loc17_34.2
+// CHECK:STDOUT:   assign %b.var, %.loc17_3
 // CHECK:STDOUT:   %.loc17_15.1: type = splice_block %.loc17_15.3 [concrete = constants.%tuple.type.b67] {
 // CHECK:STDOUT:     %X.ref.loc17_11: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %X.ref.loc17_14: type = name_ref X, file.%X.decl [concrete = constants.%X]

@@ -17,6 +17,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -503,6 +504,30 @@ auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)
   // operand.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.init_id));
+}
+
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::VarStorage inst) -> ConstantEvalResult {
+  // A variable is constant if it's global.
+  auto entity_name_id = SemIR::GetFirstBindingNameFromPatternId(
+      context.sem_ir(), inst.pattern_id);
+  if (!entity_name_id.has_value()) {
+    // Variable doesn't introduce any bindings, so can only be referenced by its
+    // own initializer. We treat such a reference as not being constant.
+    return ConstantEvalResult::NotConstant;
+  }
+
+  auto scope_id = context.entity_names().Get(entity_name_id).parent_scope_id;
+  if (!scope_id.has_value() ||
+      !context.insts().Is<SemIR::Namespace>(
+          context.name_scopes().Get(scope_id).inst_id())) {
+    // Only namespace-scope variables are reference constants.
+    return ConstantEvalResult::NotConstant;
+  }
+
+  // This is a constant reference expression denoting this global variable.
+  return ConstantEvalResult::Existing(
+      SemIR::ConstantId::ForConcreteConstant(inst_id));
 }
 
 }  // namespace Carbon::Check

@@ -129,7 +129,7 @@ base class Base(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CIntermediate.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @"_CDerived.Classes.$vtable" = external unnamed_addr constant ptr
-// CHECK:STDOUT: @Base.val.loc7_3.2 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @Base.val.loc7_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Create() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -138,18 +138,18 @@ base class Base(T:! type) {
 // CHECK:STDOUT:   %d.var = alloca { { ptr, {} } }, align 8, !dbg !9
 // CHECK:STDOUT:   %d2.var = alloca { { ptr, {} } }, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %b.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var, ptr align 1 @Base.val.loc7_3.2, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var, ptr align 1 @Base.val.loc7_3, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %i.var), !dbg !8
 // CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   store ptr @"_CIntermediate.Classes.$vtable", ptr %.loc8_44.2.vptr, align 8, !dbg !11
 // CHECK:STDOUT:   %.loc8_44.5.base = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc8_44.5.base, ptr align 1 @Base.val.loc7_3.2, i64 0, i1 false), !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc8_44.5.base, ptr align 1 @Base.val.loc7_3, i64 0, i1 false), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %d.var), !dbg !9
 // CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %d.var, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc9_48.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   store ptr @"_CDerived.Classes.$vtable", ptr %.loc9_48.2.vptr, align 8, !dbg !13
 // CHECK:STDOUT:   %.loc9_48.5.base = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc9_48.5.base, ptr align 1 @Base.val.loc7_3.2, i64 0, i1 false), !dbg !13
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc9_48.5.base, ptr align 1 @Base.val.loc7_3, i64 0, i1 false), !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %d2.var), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }

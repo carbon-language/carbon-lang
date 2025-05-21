@@ -118,9 +118,9 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %arr.patt: %pattern_type.5d8 = binding_pattern arr [concrete]
-// CHECK:STDOUT:     %.loc13_1: %pattern_type.5d8 = var_pattern %arr.patt [concrete]
+// CHECK:STDOUT:     %arr.var_patt: %pattern_type.5d8 = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr.var: ref %array_type = var arr
+// CHECK:STDOUT:   %arr.var: ref %array_type = var %arr.var_patt [concrete]
 // CHECK:STDOUT:   %.loc13_30: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

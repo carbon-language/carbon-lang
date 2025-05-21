@@ -38,9 +38,9 @@ var a: A = {};
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc12: %pattern_type = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %A = var a
+// CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT: }

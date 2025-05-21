@@ -296,13 +296,13 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %param_addr.patt: %pattern_type.fe8 = binding_pattern param_addr [concrete]
-// CHECK:STDOUT:     %.loc100_3: %pattern_type.fe8 = var_pattern %param_addr.patt [concrete]
+// CHECK:STDOUT:     %param_addr.var_patt: %pattern_type.fe8 = var_pattern %param_addr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %param_addr.var: ref %ptr.235 = var param_addr
+// CHECK:STDOUT:   %param_addr.var: ref %ptr.235 = var %param_addr.var_patt
 // CHECK:STDOUT:   %param.ref: %i32 = name_ref param, %param
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %param_addr.var, %addr
-// CHECK:STDOUT:   %.loc100_22: type = splice_block %ptr [concrete = constants.%ptr.235] {
+// CHECK:STDOUT:   %.loc100: type = splice_block %ptr [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc100: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc100: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc100 [concrete = constants.%ptr.235]

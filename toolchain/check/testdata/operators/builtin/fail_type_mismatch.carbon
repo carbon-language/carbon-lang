@@ -56,9 +56,9 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.831 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc19_3: %pattern_type.831 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.831 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref bool = var x
+// CHECK:STDOUT:   %x.var: ref bool = var %x.var_patt
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
 // CHECK:STDOUT:   %.loc19_17.1: bool = converted %int_12, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc19_17.2: <error> = not <error> [concrete = <error>]

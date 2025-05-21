@@ -216,10 +216,10 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_11.2: ref %A = temporary %.loc7_11.1, %F.call.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc10_3: %pattern_type = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %A = var a
-// CHECK:STDOUT:   %.loc10_19: type = splice_block %A.ref [concrete = constants.%A] {
+// CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt
+// CHECK:STDOUT:   %.loc10: type = splice_block %A.ref [concrete = constants.%A] {
 // CHECK:STDOUT:     %Other.ref.loc10: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1.b9a [concrete = imports.%NS1.b9a]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Other.A [concrete = constants.%A]

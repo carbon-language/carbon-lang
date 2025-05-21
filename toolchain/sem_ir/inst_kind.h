@@ -21,17 +21,6 @@ enum class InstIsType : int8_t {
   Never,
 };
 
-// Whether an instruction produces or represents a value, and if so, what kind
-// of value.
-enum class InstValueKind : int8_t {
-  // This instruction doesn't produce a value, and shouldn't be referenced by
-  // other instructions.
-  None,
-  // This instruction represents an expression or expression-like construct that
-  // produces a value of the type indicated by its `type_id` field.
-  Typed,
-};
-
 // Whether an instruction can have a constant value, and whether it can be used
 // to define a constant value.
 //
@@ -54,6 +43,13 @@ enum class InstConstantKind : int8_t {
   // a symbolic constant but never a concrete constant. The instruction may have
   // a concrete constant value of a different kind.
   SymbolicOnly,
+  // This instruction may define a symbolic constant if it has symbolic
+  // operands, and may define a concrete constant if it is a reference
+  // expression, but never defines a concrete constant if it is a value or
+  // initializing expression. For example, a `TupleAccess` instruction can be a
+  // symbolic constant when applied to a symbolic constant, and can be a
+  // concrete reference constant when applied to a reference constant.
+  SymbolicOrReference,
   // This instruction is a metaprogramming or template instantiation action that
   // generates an instruction. Like `SymbolicOnly`, it may define a symbolic
   // constant, depending on its operands, but never defines a concrete constant.
@@ -169,8 +165,8 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // Returns whether this instruction kind defines a type.
   auto is_type() const -> InstIsType { return definition_info(*this).is_type; }
 
-  // Returns whether this instruction kind is expected to produce a value.
-  auto value_kind() const -> InstValueKind;
+  // Returns whether this instruction kind is expected to produce a typed value.
+  auto has_type() const -> bool;
 
   // Returns this instruction kind's category of allowed constants.
   auto constant_kind() const -> InstConstantKind {
@@ -247,6 +243,19 @@ class InstKind::Definition : public InstKind {
 
   // Returns whether this instruction kind defines a type.
   constexpr auto is_type() const -> InstIsType { return info_.is_type; }
+
+  // Returns whether instructions of this kind are always symbolic whenever they
+  // are types. For convenience, also returns false if the instruction cannot be
+  // a type, because this is typically used in requires expressions where that
+  // case is handled by a separate overload.
+  constexpr auto is_symbolic_when_type() const -> bool {
+    // Types are values (not references) of type `type`, so if the instruction
+    // kind is always symbolic when it's a value, then it's always symbolic when
+    // it's a type.
+    return is_type() != InstIsType::Never &&
+           (constant_kind() == InstConstantKind::SymbolicOnly ||
+            constant_kind() == InstConstantKind::SymbolicOrReference);
+  }
 
   // Returns this instruction kind's category of allowed constants.
   constexpr auto constant_kind() const -> InstConstantKind {

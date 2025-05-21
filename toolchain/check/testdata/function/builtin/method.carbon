@@ -128,9 +128,9 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %arr.patt: %pattern_type.5d8 = binding_pattern arr [concrete]
-// CHECK:STDOUT:     %.loc19_1: %pattern_type.5d8 = var_pattern %arr.patt [concrete]
+// CHECK:STDOUT:     %arr.var_patt: %pattern_type.5d8 = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr.var: ref %array_type = var arr
+// CHECK:STDOUT:   %arr.var: ref %array_type = var %arr.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19_40: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc19_16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc19_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

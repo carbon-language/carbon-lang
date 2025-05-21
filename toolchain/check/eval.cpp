@@ -679,8 +679,7 @@ using ArgHandlerFnT = auto(EvalContext& context, int32_t arg, Phase* phase)
 // Returns a lookup table to get constants by Id::Kind. Requires a null IdKind
 // as a parameter in order to get the type pack.
 template <typename... Types>
-static constexpr auto MakeArgHandlerTable(
-    SemIR::TypeEnum<Types...>* /*id_kind*/)
+static constexpr auto MakeArgHandlerTable(TypeEnum<Types...>* /*id_kind*/)
     -> std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> {
   std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> table = {};
   ((table[SemIR::IdKind::template For<Types>.ToIndex()] =
@@ -772,22 +771,14 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
 auto AddImportedConstant(Context& context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   EvalContext eval_context(&context, SemIR::LocId::None);
-  Phase phase = Phase::Concrete;
-  switch (inst.kind().value_kind()) {
-    case SemIR::InstValueKind::Typed: {
-      phase = GetPhase(context.constant_values(),
-                       context.types().GetConstantId(inst.type_id()));
-      // TODO: Can we avoid doing this replacement? It may do things that are
-      // undesirable during importing, such as resolving specifics.
-      if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-        return SemIR::ConstantId::NotConstant;
-      }
-      break;
-    }
-    case SemIR::InstValueKind::None: {
-      // Instructions without a type_id are not evaluated.
-      break;
-    }
+  CARBON_CHECK(inst.kind().has_type(), "Can't import untyped instructions: {0}",
+               inst.kind());
+  Phase phase = GetPhase(context.constant_values(),
+                         context.types().GetConstantId(inst.type_id()));
+  // TODO: Can we avoid doing this replacement? It may do things that are
+  // undesirable during importing, such as resolving specifics.
+  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+    return SemIR::ConstantId::NotConstant;
   }
   return MakeConstantResult(context, inst, phase);
 }
@@ -841,8 +832,8 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   auto aggregate =
       eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(aggregate_id);
   if (!aggregate) {
-    CARBON_CHECK(phase != Phase::Concrete,
-                 "Unexpected representation for template constant aggregate");
+    // TODO: Consider forming a symbolic constant or reference constant array
+    // index in this case.
     return MakeNonConstantResult(phase);
   }
 
@@ -1743,9 +1734,9 @@ static auto ConvertEvalResultToConstantId(Context& context,
 // instruction:
 //
 //  -  InstConstantKind::Never: returns ConstantId::NotConstant.
-//  -  InstConstantKind::Indirect, SymbolicOnly, Conditional: evaluates all the
-//     operands of the instruction, and calls `EvalConstantInst` to evaluate the
-//     resulting constant instruction.
+//  -  InstConstantKind::Indirect, SymbolicOnly, SymbolicOrReference,
+//     Conditional: evaluates all the operands of the instruction, and calls
+//     `EvalConstantInst` to evaluate the resulting constant instruction.
 //  -  InstConstantKind::WheneverPossible, Always: evaluates all the operands of
 //     the instruction, and produces the resulting constant instruction as the
 //     result.

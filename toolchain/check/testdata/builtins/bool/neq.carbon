@@ -146,9 +146,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d8f = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.d8f = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.d8f = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.2ba = var a
+// CHECK:STDOUT:   %a.var: ref %C.2ba = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc11_25.1: type = splice_block %C.loc11 [concrete = constants.%C.2ba] {
 // CHECK:STDOUT:     %C.ref.loc11: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Neq.ref.loc11: %Neq.type = name_ref Neq, %Neq.decl [concrete = constants.%Neq]
@@ -162,9 +162,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cc5 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc12_1: %pattern_type.cc5 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.cc5 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %C.a14 = var b
+// CHECK:STDOUT:   %b.var: ref %C.a14 = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc12_26.1: type = splice_block %C.loc12 [concrete = constants.%C.a14] {
 // CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Neq.ref.loc12: %Neq.type = name_ref Neq, %Neq.decl [concrete = constants.%Neq]
@@ -178,9 +178,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %b: ref %C.a14 = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.cc5 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc13_1: %pattern_type.cc5 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.cc5 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C.a14 = var c
+// CHECK:STDOUT:   %c.var: ref %C.a14 = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc13_26.1: type = splice_block %C.loc13 [concrete = constants.%C.a14] {
 // CHECK:STDOUT:     %C.ref.loc13: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Neq.ref.loc13: %Neq.type = name_ref Neq, %Neq.decl [concrete = constants.%Neq]
@@ -194,9 +194,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %c: ref %C.a14 = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.d8f = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc14_1: %pattern_type.d8f = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.d8f = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %C.2ba = var d
+// CHECK:STDOUT:   %d.var: ref %C.2ba = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %.loc14_27.1: type = splice_block %C.loc14 [concrete = constants.%C.2ba] {
 // CHECK:STDOUT:     %C.ref.loc14: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Neq.ref.loc14: %Neq.type = name_ref Neq, %Neq.decl [concrete = constants.%Neq]
@@ -234,19 +234,19 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %False.ref.loc11: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
-// CHECK:STDOUT:   %.loc11: ref %C.2ba = splice_block file.%a.var {}
+// CHECK:STDOUT:   %.loc11: ref %C.2ba = splice_block file.%a.var [concrete = file.%a.var] {}
 // CHECK:STDOUT:   %False.call.loc11: init %C.2ba = call %False.ref.loc11() to %.loc11
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc11
 // CHECK:STDOUT:   %True.ref.loc12: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc12: ref %C.a14 = splice_block file.%b.var {}
+// CHECK:STDOUT:   %.loc12: ref %C.a14 = splice_block file.%b.var [concrete = file.%b.var] {}
 // CHECK:STDOUT:   %True.call.loc12: init %C.a14 = call %True.ref.loc12() to %.loc12
 // CHECK:STDOUT:   assign file.%b.var, %True.call.loc12
 // CHECK:STDOUT:   %True.ref.loc13: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc13: ref %C.a14 = splice_block file.%c.var {}
+// CHECK:STDOUT:   %.loc13: ref %C.a14 = splice_block file.%c.var [concrete = file.%c.var] {}
 // CHECK:STDOUT:   %True.call.loc13: init %C.a14 = call %True.ref.loc13() to %.loc13
 // CHECK:STDOUT:   assign file.%c.var, %True.call.loc13
 // CHECK:STDOUT:   %False.ref.loc14: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
-// CHECK:STDOUT:   %.loc14: ref %C.2ba = splice_block file.%d.var {}
+// CHECK:STDOUT:   %.loc14: ref %C.2ba = splice_block file.%d.var [concrete = file.%d.var] {}
 // CHECK:STDOUT:   %False.call.loc14: init %C.2ba = call %False.ref.loc14() to %.loc14
 // CHECK:STDOUT:   assign file.%d.var, %False.call.loc14
 // CHECK:STDOUT:   return
@@ -359,9 +359,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d8f = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc9_1: %pattern_type.d8f = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.d8f = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.2ba = var a
+// CHECK:STDOUT:   %a.var: ref %C.2ba = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc9_22.1: type = splice_block %C.loc9 [concrete = constants.%C.2ba] {
 // CHECK:STDOUT:     %C.ref.loc9: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc9_10: bool = bool_literal true [concrete = constants.%true]
@@ -376,9 +376,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cc5 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc10_1: %pattern_type.cc5 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.cc5 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %C.a14 = var b
+// CHECK:STDOUT:   %b.var: ref %C.a14 = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_23.1: type = splice_block %C.loc10 [concrete = constants.%C.a14] {
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc10: bool = bool_literal true [concrete = constants.%true]
@@ -393,9 +393,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %b: ref %C.a14 = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.cc5 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.cc5 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.cc5 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C.a14 = var c
+// CHECK:STDOUT:   %c.var: ref %C.a14 = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc11_23.1: type = splice_block %C.loc11 [concrete = constants.%C.a14] {
 // CHECK:STDOUT:     %C.ref.loc11: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %false.loc11: bool = bool_literal false [concrete = constants.%false]
@@ -410,9 +410,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %c: ref %C.a14 = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.d8f = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc12_1: %pattern_type.d8f = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.d8f = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %C.2ba = var d
+// CHECK:STDOUT:   %d.var: ref %C.2ba = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %.loc12_24.1: type = splice_block %C.loc12 [concrete = constants.%C.2ba] {
 // CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %false.loc12_10: bool = bool_literal false [concrete = constants.%false]
@@ -449,19 +449,19 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %False.ref.loc9: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
-// CHECK:STDOUT:   %.loc9: ref %C.2ba = splice_block file.%a.var {}
+// CHECK:STDOUT:   %.loc9: ref %C.2ba = splice_block file.%a.var [concrete = file.%a.var] {}
 // CHECK:STDOUT:   %False.call.loc9: init %C.2ba = call %False.ref.loc9() to %.loc9
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc9
 // CHECK:STDOUT:   %True.ref.loc10: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc10: ref %C.a14 = splice_block file.%b.var {}
+// CHECK:STDOUT:   %.loc10: ref %C.a14 = splice_block file.%b.var [concrete = file.%b.var] {}
 // CHECK:STDOUT:   %True.call.loc10: init %C.a14 = call %True.ref.loc10() to %.loc10
 // CHECK:STDOUT:   assign file.%b.var, %True.call.loc10
 // CHECK:STDOUT:   %True.ref.loc11: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc11: ref %C.a14 = splice_block file.%c.var {}
+// CHECK:STDOUT:   %.loc11: ref %C.a14 = splice_block file.%c.var [concrete = file.%c.var] {}
 // CHECK:STDOUT:   %True.call.loc11: init %C.a14 = call %True.ref.loc11() to %.loc11
 // CHECK:STDOUT:   assign file.%c.var, %True.call.loc11
 // CHECK:STDOUT:   %False.ref.loc12: %False.type = name_ref False, file.%False.decl [concrete = constants.%False]
-// CHECK:STDOUT:   %.loc12: ref %C.2ba = splice_block file.%d.var {}
+// CHECK:STDOUT:   %.loc12: ref %C.2ba = splice_block file.%d.var [concrete = file.%d.var] {}
 // CHECK:STDOUT:   %False.call.loc12: init %C.2ba = call %False.ref.loc12() to %.loc12
 // CHECK:STDOUT:   assign file.%d.var, %False.call.loc12
 // CHECK:STDOUT:   return

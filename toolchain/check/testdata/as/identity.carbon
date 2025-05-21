@@ -139,12 +139,12 @@ fn Initializing() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.019 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc28_3.1: %pattern_type.019 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.019 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %X = var x
+// CHECK:STDOUT:   %x.var: ref %X = var %x.var_patt
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc28_3.2: ref %X = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %X = call %Make.ref() to %.loc28_3.2
+// CHECK:STDOUT:   %.loc28: ref %X = splice_block %x.var {}
+// CHECK:STDOUT:   %Make.call: init %X = call %Make.ref() to %.loc28
 // CHECK:STDOUT:   %X.ref.loc28_25: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   assign %x.var, %Make.call
 // CHECK:STDOUT:   %X.ref.loc28_10: type = name_ref X, file.%X.decl [concrete = constants.%X]

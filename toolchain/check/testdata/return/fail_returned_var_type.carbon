@@ -69,9 +69,9 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.3de = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc19_12: %pattern_type.3de = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.3de = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref f64 = var v
+// CHECK:STDOUT:   %v.var: ref f64 = var %v.var_patt
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]
 // CHECK:STDOUT:   assign %v.var, %float
 // CHECK:STDOUT:   %.loc19_19.1: type = splice_block %.loc19_19.3 [concrete = f64] {

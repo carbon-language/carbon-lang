@@ -517,9 +517,9 @@ base class T1(T:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.fb9 = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.fb9 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.fb9 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %Derived = var d
+// CHECK:STDOUT:   %d.var: ref %Derived = var %d.var_patt
 // CHECK:STDOUT:   %.loc12_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc12_31.1: %struct_type.base.f5e = struct_literal (%.loc12_30.1)
 // CHECK:STDOUT:   %.loc12_31.2: ref %Base = class_element_access %d.var, element0
@@ -529,8 +529,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %.loc12_30.5: init %Base = class_init (%.loc12_30.4), %.loc12_31.2
 // CHECK:STDOUT:   %.loc12_31.3: init %Base = converted %.loc12_30.1, %.loc12_30.5
 // CHECK:STDOUT:   %.loc12_31.4: init %Derived = class_init (%.loc12_31.3), %d.var
-// CHECK:STDOUT:   %.loc12_3.2: init %Derived = converted %.loc12_31.1, %.loc12_31.4
-// CHECK:STDOUT:   assign %d.var, %.loc12_3.2
+// CHECK:STDOUT:   %.loc12_3: init %Derived = converted %.loc12_31.1, %.loc12_31.4
+// CHECK:STDOUT:   assign %d.var, %.loc12_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %d: ref %Derived = bind_name d, %d.var
 // CHECK:STDOUT:   return
@@ -670,16 +670,16 @@ base class T1(T:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc7_3.1: %pattern_type = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %Base = var v
+// CHECK:STDOUT:   %v.var: ref %Base = var %v.var_patt
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_28.2: ref %ptr.454 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %.loc7_28.3: ref %ptr.454 = vtable_ptr imports.%Modifiers.import_ref.ace
 // CHECK:STDOUT:   %.loc7_28.4: init %ptr.454 = initialize_from %.loc7_28.3 to %.loc7_28.2
 // CHECK:STDOUT:   %.loc7_28.5: init %Base = class_init (%.loc7_28.4), %v.var
-// CHECK:STDOUT:   %.loc7_3.2: init %Base = converted %.loc7_28.1, %.loc7_28.5
-// CHECK:STDOUT:   assign %v.var, %.loc7_3.2
+// CHECK:STDOUT:   %.loc7_3: init %Base = converted %.loc7_28.1, %.loc7_28.5
+// CHECK:STDOUT:   assign %v.var, %.loc7_3
 // CHECK:STDOUT:   %.loc7_19: type = splice_block %Base.ref [concrete = constants.%Base] {
 // CHECK:STDOUT:     %Modifiers.ref: <namespace> = name_ref Modifiers, imports.%Modifiers [concrete = imports.%Modifiers]
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, imports.%Modifiers.Base [concrete = constants.%Base]
@@ -907,23 +907,23 @@ base class T1(T:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b1.patt: %pattern_type.e47 = binding_pattern b1 [concrete]
-// CHECK:STDOUT:     %.loc19_3.1: %pattern_type.e47 = var_pattern %b1.patt [concrete]
+// CHECK:STDOUT:     %b1.var_patt: %pattern_type.e47 = var_pattern %b1.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b1.var: ref %B1 = var b1
+// CHECK:STDOUT:   %b1.var: ref %B1 = var %b1.var_patt
 // CHECK:STDOUT:   %.loc19_17.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_17.2: ref %ptr.454 = class_element_access %b1.var, element0
 // CHECK:STDOUT:   %.loc19_17.3: ref %ptr.454 = vtable_ptr @B1.%.loc6
 // CHECK:STDOUT:   %.loc19_17.4: init %ptr.454 = initialize_from %.loc19_17.3 to %.loc19_17.2
 // CHECK:STDOUT:   %.loc19_17.5: init %B1 = class_init (%.loc19_17.4), %b1.var
-// CHECK:STDOUT:   %.loc19_3.2: init %B1 = converted %.loc19_17.1, %.loc19_17.5
-// CHECK:STDOUT:   assign %b1.var, %.loc19_3.2
+// CHECK:STDOUT:   %.loc19_3: init %B1 = converted %.loc19_17.1, %.loc19_17.5
+// CHECK:STDOUT:   assign %b1.var, %.loc19_3
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
 // CHECK:STDOUT:   %b1: ref %B1 = bind_name b1, %b1.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b2.patt: %pattern_type.b19 = binding_pattern b2 [concrete]
-// CHECK:STDOUT:     %.loc20_3.1: %pattern_type.b19 = var_pattern %b2.patt [concrete]
+// CHECK:STDOUT:     %b2.var_patt: %pattern_type.b19 = var_pattern %b2.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b2.var: ref %B2 = var b2
+// CHECK:STDOUT:   %b2.var: ref %B2 = var %b2.var_patt
 // CHECK:STDOUT:   %.loc20_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc20_27.1: %struct_type.base.f5e = struct_literal (%.loc20_26.1)
 // CHECK:STDOUT:   %.loc20_27.2: ref %B1 = class_element_access %b2.var, element0
@@ -933,15 +933,15 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %.loc20_26.5: init %B1 = class_init (%.loc20_26.4), %.loc20_27.2
 // CHECK:STDOUT:   %.loc20_27.3: init %B1 = converted %.loc20_26.1, %.loc20_26.5
 // CHECK:STDOUT:   %.loc20_27.4: init %B2 = class_init (%.loc20_27.3), %b2.var
-// CHECK:STDOUT:   %.loc20_3.2: init %B2 = converted %.loc20_27.1, %.loc20_27.4
-// CHECK:STDOUT:   assign %b2.var, %.loc20_3.2
+// CHECK:STDOUT:   %.loc20_3: init %B2 = converted %.loc20_27.1, %.loc20_27.4
+// CHECK:STDOUT:   assign %b2.var, %.loc20_3
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
 // CHECK:STDOUT:   %b2: ref %B2 = bind_name b2, %b2.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc21_3.1: %pattern_type.c48 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
 // CHECK:STDOUT:   %.loc21_33.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc21_34.1: %struct_type.base.f5e = struct_literal (%.loc21_33.1)
 // CHECK:STDOUT:   %.loc21_35.1: %struct_type.base.a0c = struct_literal (%.loc21_34.1)
@@ -955,8 +955,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %.loc21_34.4: init %B2 = class_init (%.loc21_34.3), %.loc21_35.2
 // CHECK:STDOUT:   %.loc21_35.3: init %B2 = converted %.loc21_34.1, %.loc21_34.4
 // CHECK:STDOUT:   %.loc21_35.4: init %C = class_init (%.loc21_35.3), %c.var
-// CHECK:STDOUT:   %.loc21_3.2: init %C = converted %.loc21_35.1, %.loc21_35.4
-// CHECK:STDOUT:   assign %c.var, %.loc21_3.2
+// CHECK:STDOUT:   %.loc21_3: init %C = converted %.loc21_35.1, %.loc21_35.4
+// CHECK:STDOUT:   assign %c.var, %.loc21_3
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   return
@@ -1117,17 +1117,17 @@ base class T1(T:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %pattern_type.7ce = binding_pattern i [concrete]
-// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.7ce = var_pattern %i.patt [concrete]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.7ce = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %i32 = var i
+// CHECK:STDOUT:   %i.var: ref %i32 = var %i.var_patt
 // CHECK:STDOUT:   %int_3.loc12: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc12: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %int_3.loc12, %impl.elem0.loc12 [concrete = constants.%Convert.bound.b30]
 // CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_3.2: <bound method> = bound_method %int_3.loc12, %specific_fn.loc12 [concrete = constants.%bound_method.047]
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %bound_method.loc12_3.2(%int_3.loc12) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc12_3.2: init %i32 = converted %int_3.loc12, %int.convert_checked.loc12 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   assign %i.var, %.loc12_3.2
+// CHECK:STDOUT:   %.loc12_3: init %i32 = converted %int_3.loc12, %int.convert_checked.loc12 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   assign %i.var, %.loc12_3
 // CHECK:STDOUT:   %.loc12_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -1135,9 +1135,9 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %i: ref %i32 = bind_name i, %i.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b1.patt: %pattern_type.bcc = binding_pattern b1 [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.bcc = var_pattern %b1.patt [concrete]
+// CHECK:STDOUT:     %b1.var_patt: %pattern_type.bcc = var_pattern %b1.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b1.var: ref %Base = var b1
+// CHECK:STDOUT:   %b1.var: ref %Base = var %b1.var_patt
 // CHECK:STDOUT:   %i.ref.loc14_25: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %i.ref.loc14_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.68c = struct_literal (%i.ref.loc14_25, %i.ref.loc14_34)
@@ -1151,15 +1151,15 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %.loc14_35.7: ref %i32 = class_element_access %b1.var, element1
 // CHECK:STDOUT:   %.loc14_35.8: init %i32 = initialize_from %.loc14_25 to %.loc14_35.7
 // CHECK:STDOUT:   %.loc14_35.9: init %Base = class_init (%.loc14_35.4, %.loc14_35.6, %.loc14_35.8), %b1.var
-// CHECK:STDOUT:   %.loc14_3.2: init %Base = converted %.loc14_35.1, %.loc14_35.9
-// CHECK:STDOUT:   assign %b1.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %Base = converted %.loc14_35.1, %.loc14_35.9
+// CHECK:STDOUT:   assign %b1.var, %.loc14_3
 // CHECK:STDOUT:   %Base.ref.loc14: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %b1: ref %Base = bind_name b1, %b1.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b2.patt: %pattern_type.bcc = binding_pattern b2 [concrete]
-// CHECK:STDOUT:     %.loc15_3.1: %pattern_type.bcc = var_pattern %b2.patt [concrete]
+// CHECK:STDOUT:     %b2.var_patt: %pattern_type.bcc = var_pattern %b2.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b2.var: ref %Base = var b2
+// CHECK:STDOUT:   %b2.var: ref %Base = var %b2.var_patt
 // CHECK:STDOUT:   %int_3.loc15: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc15_35.1: %struct_type.m2.m1.5f2 = struct_literal (%int_3.loc15, %int_5)
@@ -1183,8 +1183,8 @@ base class T1(T:! type) {
 // CHECK:STDOUT:   %.loc15_35.9: ref %i32 = class_element_access %b2.var, element1
 // CHECK:STDOUT:   %.loc15_35.10: init %i32 = initialize_from %.loc15_35.8 to %.loc15_35.9 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc15_35.11: init %Base = class_init (%.loc15_35.4, %.loc15_35.7, %.loc15_35.10), %b2.var
-// CHECK:STDOUT:   %.loc15_3.2: init %Base = converted %.loc15_35.1, %.loc15_35.11
-// CHECK:STDOUT:   assign %b2.var, %.loc15_3.2
+// CHECK:STDOUT:   %.loc15_3: init %Base = converted %.loc15_35.1, %.loc15_35.11
+// CHECK:STDOUT:   assign %b2.var, %.loc15_3
 // CHECK:STDOUT:   %Base.ref.loc15: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %b2: ref %Base = bind_name b2, %b2.var
 // CHECK:STDOUT:   %b1.ref: ref %Base = name_ref b1, %b1

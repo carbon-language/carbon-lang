@@ -50,10 +50,10 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc20_1: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %.loc20_27: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %.loc20: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %Incomplete.ref.loc20 [concrete = constants.%array_type]
@@ -61,10 +61,10 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type = binding_pattern p [concrete]
-// CHECK:STDOUT:     %.loc22_1: %pattern_type = var_pattern %p.patt [concrete]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr = var p
-// CHECK:STDOUT:   %.loc22_18: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt [concrete]
+// CHECK:STDOUT:   %.loc22: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc22 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }

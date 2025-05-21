@@ -153,9 +153,9 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.loc4: %empty_struct_type = bind_name _, %.loc4_14
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc5: %pattern_type = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %.loc5_1: %pattern_type = var_pattern %_.patt.loc5 [concrete]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type = var_pattern %_.patt.loc5 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.var: ref %empty_struct_type = var _
+// CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -179,13 +179,13 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.loc8: %empty_struct_type = bind_name _, %.loc8_16.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc9: %pattern_type = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %.loc9_3.1: %pattern_type = var_pattern %_.patt.loc9 [concrete]
+// CHECK:STDOUT:     %_.var_patt: %pattern_type = var_pattern %_.patt.loc9 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.var: ref %empty_struct_type = var _
+// CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
 // CHECK:STDOUT:   %.loc9_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_16.2: init %empty_struct_type = struct_init () to %_.var [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc9_3.2: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   assign %_.var, %.loc9_3.2
+// CHECK:STDOUT:   %.loc9_3: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   assign %_.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_11.1: type = splice_block %.loc9_11.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc9_11.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc9_11.3: type = converted %.loc9_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

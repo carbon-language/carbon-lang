@@ -150,9 +150,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.831 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc19_3: %pattern_type.831 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.831 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref bool = var a
+// CHECK:STDOUT:   %a.var: ref bool = var %a.var_patt
 // CHECK:STDOUT:   %true.loc19_47: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   assign %a.var, %true.loc19_47
 // CHECK:STDOUT:   br !.loc19_13
@@ -189,13 +189,13 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %a: ref bool = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc20_3.1: %pattern_type.cb1 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.cb1 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
+// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt
 // CHECK:STDOUT:   %.loc20_49.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc20_49.2: init %empty_tuple.type = tuple_init () to %b.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc20_3.2: init %empty_tuple.type = converted %.loc20_49.1, %.loc20_49.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %b.var, %.loc20_3.2
+// CHECK:STDOUT:   %.loc20_3: init %empty_tuple.type = converted %.loc20_49.1, %.loc20_49.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %b.var, %.loc20_3
 // CHECK:STDOUT:   br !.loc20_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc20_13:
@@ -230,13 +230,13 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.cb1 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc21_3.1: %pattern_type.cb1 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.cb1 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var c
+// CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt
 // CHECK:STDOUT:   %.loc21_49.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc21_49.2: init %empty_tuple.type = tuple_init () to %c.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc21_3.2: init %empty_tuple.type = converted %.loc21_49.1, %.loc21_49.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %c.var, %.loc21_3.2
+// CHECK:STDOUT:   %.loc21_3: init %empty_tuple.type = converted %.loc21_49.1, %.loc21_49.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %c.var, %.loc21_3
 // CHECK:STDOUT:   br !.loc21_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc21_13:
@@ -271,13 +271,13 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.cb1 = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc22_3.1: %pattern_type.cb1 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt
 // CHECK:STDOUT:   %.loc22_50.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc22_50.2: init %empty_tuple.type = tuple_init () to %d.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22_3.2: init %empty_tuple.type = converted %.loc22_50.1, %.loc22_50.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %d.var, %.loc22_3.2
+// CHECK:STDOUT:   %.loc22_3: init %empty_tuple.type = converted %.loc22_50.1, %.loc22_50.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %d.var, %.loc22_3
 // CHECK:STDOUT:   br !.loc22_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc22_13:
@@ -317,13 +317,13 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc26_3.1: %pattern_type.cb1 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
 // CHECK:STDOUT:   %.loc26_46.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc26_46.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_3.2: init %empty_tuple.type = converted %.loc26_46.1, %.loc26_46.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %a.var, %.loc26_3.2
+// CHECK:STDOUT:   %.loc26_3: init %empty_tuple.type = converted %.loc26_46.1, %.loc26_46.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %a.var, %.loc26_3
 // CHECK:STDOUT:   br !.loc26_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc26_13:

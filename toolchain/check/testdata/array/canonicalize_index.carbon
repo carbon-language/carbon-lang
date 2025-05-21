@@ -162,9 +162,9 @@ let c: array(i32, ConvertToU32(3))* = &a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.5d8 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc14_1: %pattern_type.5d8 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.5d8 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type = var a
+// CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc14_28: type = splice_block %array_type.loc14 [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

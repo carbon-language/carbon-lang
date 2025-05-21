@@ -74,17 +74,17 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT: !if.then.loc11_18:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt.loc11_26: %pattern_type.7ce = binding_pattern n [concrete]
-// CHECK:STDOUT:     %.loc11_22.1: %pattern_type.7ce = var_pattern %n.patt.loc11_26 [concrete]
+// CHECK:STDOUT:     %n.var_patt.loc11_22: %pattern_type.7ce = var_pattern %n.patt.loc11_26 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var.loc11_22: ref %i32 = var n
+// CHECK:STDOUT:   %n.var.loc11_22: ref %i32 = var %n.var_patt.loc11_22
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc11_22: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_22.1: <bound method> = bound_method %int_1, %impl.elem0.loc11_22 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn.loc11_22: <specific function> = specific_function %impl.elem0.loc11_22, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_22.2: <bound method> = bound_method %int_1, %specific_fn.loc11_22 [concrete = constants.%bound_method.9a1]
 // CHECK:STDOUT:   %int.convert_checked.loc11_22: init %i32 = call %bound_method.loc11_22.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11_22.2: init %i32 = converted %int_1, %int.convert_checked.loc11_22 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %n.var.loc11_22, %.loc11_22.2
+// CHECK:STDOUT:   %.loc11_22: init %i32 = converted %int_1, %int.convert_checked.loc11_22 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %n.var.loc11_22, %.loc11_22
 // CHECK:STDOUT:   %.loc11_29: type = splice_block %i32.loc11_29 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc11_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -99,17 +99,17 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT: !if.then.loc11_48:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt.loc11_56: %pattern_type.7ce = binding_pattern n [concrete]
-// CHECK:STDOUT:     %.loc11_52.1: %pattern_type.7ce = var_pattern %n.patt.loc11_56 [concrete]
+// CHECK:STDOUT:     %n.var_patt.loc11_52: %pattern_type.7ce = var_pattern %n.patt.loc11_56 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var.loc11_52: ref %i32 = var n
+// CHECK:STDOUT:   %n.var.loc11_52: ref %i32 = var %n.var_patt.loc11_52
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc11_52: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_52.1: <bound method> = bound_method %int_2, %impl.elem0.loc11_52 [concrete = constants.%Convert.bound.ef9]
 // CHECK:STDOUT:   %specific_fn.loc11_52: <specific function> = specific_function %impl.elem0.loc11_52, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_52.2: <bound method> = bound_method %int_2, %specific_fn.loc11_52 [concrete = constants.%bound_method.b92]
 // CHECK:STDOUT:   %int.convert_checked.loc11_52: init %i32 = call %bound_method.loc11_52.2(%int_2) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc11_52.2: init %i32 = converted %int_2, %int.convert_checked.loc11_52 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   assign %n.var.loc11_52, %.loc11_52.2
+// CHECK:STDOUT:   %.loc11_52: init %i32 = converted %int_2, %int.convert_checked.loc11_52 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   assign %n.var.loc11_52, %.loc11_52
 // CHECK:STDOUT:   %.loc11_59: type = splice_block %i32.loc11_59 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc11_59: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_59: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

@@ -279,9 +279,9 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc15: <error> = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref <error> = var v
+// CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   return
