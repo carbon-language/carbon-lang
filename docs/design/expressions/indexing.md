@@ -65,12 +65,12 @@ Its semantics are defined in terms of the following interfaces:
 interface IndexWith(SubscriptType:! type) {
   let ElementType:! type;
   fn At[self: Self](subscript: SubscriptType) -> ElementType;
-  fn Addr[addr self: Self*](subscript: SubscriptType) -> ElementType*;
+  fn Ref[bound ref self: Self](subscript: SubscriptType) -> ref ElementType;
 }
 
 interface IndirectIndexWith(SubscriptType:! type) {
   require Self impls IndexWith(SubscriptType);
-  fn Addr[self: Self](subscript: SubscriptType) -> ElementType*;
+  fn Ref[bound self: Self](subscript: SubscriptType) -> ref ElementType;
 }
 ```
 
@@ -79,11 +79,11 @@ rewritten based on the expression category of _lhs_ and whether `T` is known to
 implement `IndirectIndexWith(I)`:
 
 -   If `T` implements `IndirectIndexWith(I)`, the expression is rewritten to
-    "`*((` _lhs_ `).(IndirectIndexWith(I).Addr)(` _index_ `))`".
+    "`(` _lhs_ `).(IndirectIndexWith(I).Ref)(` _index_ `)`".
 -   Otherwise, if _lhs_ is a
     [_durable reference expression_](/docs/design/values.md#durable-reference-expressions),
-    the expression is rewritten to "`*((` _lhs_ `).(IndexWith(I).Addr)(` _index_
-    `))`".
+    the expression is rewritten to "`(` _lhs_ `).(IndexWith(I).Ref)(` _index_
+    `)`".
 -   Otherwise, the expression is rewritten to "`(` _lhs_ `).(IndexWith(I).At)(`
     _index_ `)`".
 
@@ -93,12 +93,12 @@ implement `IndirectIndexWith(I)`:
 final impl forall
     [SubscriptType:! type, T:! IndirectIndexWith(SubscriptType)]
     T as IndexWith(SubscriptType) {
-  let ElementType:! type = T.(IndirectIndexWith(SubscriptType)).ElementType;
+  let ElementType:! type = T.(IndirectIndexWith(SubscriptType).ElementType);
   fn At[self: Self](subscript: SubscriptType) -> ElementType {
-    return *(self.(IndirectIndexWith(SubscriptType).Addr)(index));
+    return self.(IndirectIndexWith(SubscriptType).Ref)(index);
   }
-  fn Addr[addr self: Self*](subscript: SubscriptType) -> ElementType* {
-    return self->(IndirectIndexWith(SubscriptType).Addr)(index);
+  fn Ref[bound ref self: Self](subscript: SubscriptType) -> ref ElementType {
+    return self.(IndirectIndexWith(SubscriptType).Ref)(index);
   }
 }
 ```
