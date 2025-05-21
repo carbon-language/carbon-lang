@@ -53,9 +53,10 @@ FileContext::FileContext(
           tree_and_subtrees_getters_for_debug_info),
       sem_ir_(&sem_ir),
       cpp_ast_(cpp_ast),
-      cpp_code_generator_(CreateCppCodeGenerator()),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
+  // Initialization that relies on invariants of the class.
+  cpp_code_generator_ = CreateCppCodeGenerator();
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }

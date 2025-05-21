@@ -50,10 +50,7 @@ class FileContext {
                           llvm::DIBuilder& di_builder) -> llvm::DICompileUnit*;
 
   // Creates the Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Returns null when not importing C++. Can be called only after the
-  // following data members are initialized: `llvm_context_`, `llvm_module_`,
-  // `fs_`, `cpp_ast_`, `cpp_header_search_options_`,
-  // `cpp_preprocessor_options_`, `cpp_code_gen_options_`, .
+  // code. Returns null when not importing C++.
   auto CreateCppCodeGenerator() -> std::unique_ptr<clang::CodeGenerator>;
 
   // Gets a callable's function. Returns nullptr for a builtin.
