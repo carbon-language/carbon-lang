@@ -12,6 +12,8 @@
 
 // --- literal_values.carbon
 
+library "[[@TEST_NAME]]";
+
 fn F() {
   // 8 and 9 trigger special behavior in APInt when mishandling signed versus
   // unsigned, so we pay extra attention to those.
@@ -37,51 +39,51 @@ fn F() {
   );
 }
 
-// --- overflow_very_large.carbon
-// CHECK:STDERR: overflow_very_large.carbon: error: `Main//default` previously provided by `literal_values.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
+// --- fail_overflow_very_large.carbon
 
-// CHECK:STDERR: overflow_very_large.carbon:[[@LINE+4]]:14: error: integer value 39999999999999999993 too large for type `i32` [IntTooLargeForType]
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_overflow_very_large.carbon:[[@LINE+4]]:14: error: integer value 39999999999999999993 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let a: i32 = 39999999999999999993;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let a: i32 = 39999999999999999993;
 
-// --- overflow_boundary.carbon
-// CHECK:STDERR: overflow_boundary.carbon: error: `Main//default` previously provided by `literal_values.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
+// --- fail_overflow_boundary.carbon
 
-// CHECK:STDERR: overflow_boundary.carbon:[[@LINE+4]]:14: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_overflow_boundary.carbon:[[@LINE+4]]:14: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let b: i32 = 2_147_483_648;
 // CHECK:STDERR:              ^~~~~~~~~~~~~
 // CHECK:STDERR:
 let b: i32 = 2_147_483_648;
 
-// --- overflow_boundary_hex.carbon
-// CHECK:STDERR: overflow_boundary_hex.carbon: error: `Main//default` previously provided by `literal_values.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
+// --- fail_overflow_boundary_hex.carbon
 
-// CHECK:STDERR: overflow_boundary_hex.carbon:[[@LINE+4]]:14: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_overflow_boundary_hex.carbon:[[@LINE+4]]:14: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let c: i32 = 0x8000_0000;
 // CHECK:STDERR:              ^~~~~~~~~~~
 // CHECK:STDERR:
 let c: i32 = 0x8000_0000;
 
-// --- overflow_very_large_mantissa.carbon
-// CHECK:STDERR: overflow_very_large_mantissa.carbon: error: `Main//default` previously provided by `literal_values.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
+// --- fail_overflow_very_large_mantissa.carbon
 
-// CHECK:STDERR: overflow_very_large_mantissa.carbon:[[@LINE+4]]:14: error: real mantissa with value 399999999999999999930 does not fit in i64 [RealMantissaTooLargeForI64]
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+4]]:14: error: real mantissa with value 399999999999999999930 does not fit in i64 [RealMantissaTooLargeForI64]
 // CHECK:STDERR: let d: f64 = 39999999999999999993.0e3;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let d: f64 = 39999999999999999993.0e3;
 
-// --- overflow_very_large_exponent.carbon
-// CHECK:STDERR: overflow_very_large_exponent.carbon: error: `Main//default` previously provided by `literal_values.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
+// --- fail_overflow_very_large_exponent.carbon
 
-// CHECK:STDERR: overflow_very_large_exponent.carbon:[[@LINE+4]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_overflow_very_large_exponent.carbon:[[@LINE+4]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
 // CHECK:STDERR: let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -107,19 +109,19 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %int_8.loc7: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
-// CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9.988]
 // CHECK:STDOUT:   %int_8.loc9: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
-// CHECK:STDOUT:   %int_8.loc10: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
-// CHECK:STDOUT:   %int_2147483647.loc11: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
-// CHECK:STDOUT:   %int_2147483647.loc12: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
+// CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9.988]
+// CHECK:STDOUT:   %int_8.loc11: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
+// CHECK:STDOUT:   %int_8.loc12: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
+// CHECK:STDOUT:   %int_2147483647.loc13: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
+// CHECK:STDOUT:   %int_2147483647.loc14: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %float.loc17: f64 = float_literal 0.90000000000000002 [concrete = constants.%float.952]
-// CHECK:STDOUT:   %float.loc18: f64 = float_literal 8 [concrete = constants.%float.298]
-// CHECK:STDOUT:   %float.loc19: f64 = float_literal 80 [concrete = constants.%float.dcb]
-// CHECK:STDOUT:   %float.loc20: f64 = float_literal 1.0E+7 [concrete = constants.%float.1d0]
-// CHECK:STDOUT:   %float.loc21: f64 = float_literal 1.0E+8 [concrete = constants.%float.9f6]
-// CHECK:STDOUT:   %float.loc22: f64 = float_literal 1.0E-8 [concrete = constants.%float.401]
+// CHECK:STDOUT:   %float.loc19: f64 = float_literal 0.90000000000000002 [concrete = constants.%float.952]
+// CHECK:STDOUT:   %float.loc20: f64 = float_literal 8 [concrete = constants.%float.298]
+// CHECK:STDOUT:   %float.loc21: f64 = float_literal 80 [concrete = constants.%float.dcb]
+// CHECK:STDOUT:   %float.loc22: f64 = float_literal 1.0E+7 [concrete = constants.%float.1d0]
+// CHECK:STDOUT:   %float.loc23: f64 = float_literal 1.0E+8 [concrete = constants.%float.9f6]
+// CHECK:STDOUT:   %float.loc24: f64 = float_literal 1.0E-8 [concrete = constants.%float.401]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
