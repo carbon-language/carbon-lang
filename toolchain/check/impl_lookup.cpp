@@ -368,10 +368,10 @@ static auto LookupImplWitnessInSelfFacetValue(
 
 struct WitnessResult {
   // Either a concrete `ImplWitness` or a symbolic `LookupImplWitness`.
-  SemIR::InstId witness_id;
+  SemIR::InstId witness_id = SemIR::InstId::None;
   // If the witness is not concrete, and was found through a facet value, this
   // is the `FacetType` info from the type of that facet value.
-  SemIR::FacetTypeId facet_type_id;
+  SemIR::FacetTypeId facet_type_id = SemIR::FacetTypeId::None;
 };
 
 // Begin a search for an impl declaration matching the query. We do this by
@@ -382,47 +382,42 @@ struct WitnessResult {
 // context the query came from.
 static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
                                       SemIR::ConstantId query_self_const_id,
-                                      SemIR::SpecificInterface interface)
+                                      SemIR::SpecificInterface query_interface)
     -> WitnessResult {
-  auto result = WitnessResult{
-      .witness_id = SemIR::InstId::None,
-      .facet_type_id = SemIR::FacetTypeId::None,
-  };
-
-  // TODO: This is repeating the implementation of EvalConstantInst. Can we
-  // share even more code?
-
-  auto lookup_inst = SemIR::LookupImplWitness{
-      .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-      .query_self_inst_id =
-          context.constant_values().GetInstId(query_self_const_id),
-      .query_specific_interface_id =
-          context.specific_interfaces().Add(interface),
-  };
-  auto non_canon = lookup_inst.query_self_inst_id;
-  lookup_inst.query_self_inst_id =
-      GetCanonicalizedFacetOrTypeValue(context, lookup_inst.query_self_inst_id);
-
-  auto lookup_result =
-      EvalLookupSingleImplWitness(context, loc_id, lookup_inst, non_canon,
-                                  /*poison_concrete_results=*/true);
+  auto query_self_inst_id =
+      context.constant_values().GetInstId(query_self_const_id);
+  auto [lookup_result, canonical_self_inst_id] = EvalLookupSingleImplWitness(
+      context, loc_id, query_self_inst_id, query_interface,
+      /*poison_concrete_results=*/true);
   if (!lookup_result.has_value()) {
-    return result;
-  }
-  if (lookup_result.has_concrete_value()) {
-    result.witness_id = lookup_result.concrete_witness();
-    return result;
-  }
-  if (lookup_result.has_facet_type_value()) {
-    result.facet_type_id = lookup_result.facet_value_type();
+    return {};
   }
 
-  auto witness_const_id = EvalOrAddInst(
+  // If a concrete witness was found, the result is that concrete witness (an
+  // `ImplWitness` instruction. So we do not need to create a
+  // `LookupImplWitness` instruction to return.
+  if (lookup_result.has_concrete_value()) {
+    return {.witness_id = lookup_result.concrete_witness()};
+  }
+
+  // A symbolic witness was found, so the result is a `LookupImplWitness`
+  // instruction which will re-execute the query in the future once the it can
+  // be made more specific (when applying a `SpecificId`).
+  //
+  // Since we already ran this query above (via `EvalLookupSingleImplWitness`)
+  // we want eval to not actually do another lookup here, but we must create the
+  // instruction through eval. It takes care to bypass running lookup again for
+  // this caller.
+  auto witness_const_id = EvalOrAddInst<SemIR::LookupImplWitness>(
       context, context.insts().GetCanonicalLocId(loc_id).ToImplicit(),
-      lookup_inst);
-  CARBON_CHECK(witness_const_id.is_constant());
-  result.witness_id = context.constant_values().GetInstId(witness_const_id);
-  return result;
+      {
+          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+          .query_self_inst_id = canonical_self_inst_id,
+          .query_specific_interface_id =
+              context.specific_interfaces().Add(query_interface),
+      });
+  return {.witness_id = context.constant_values().GetInstId(witness_const_id),
+          .facet_type_id = lookup_result.facet_value_type()};
 }
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
@@ -630,23 +625,21 @@ static auto CollectCandidateImplsForQuery(
   return candidate_impls;
 }
 
-auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                                 SemIR::LookupImplWitness eval_query,
-                                 SemIR::InstId non_canonical_query_self_inst_id,
-                                 bool poison_concrete_results)
-    -> EvalImplLookupResult {
-  // NOTE: Do not retain this reference to the SpecificInterface obtained from a
-  // value store by SpecificInterfaceId. Doing impl lookup does deduce which can
-  // do more impl lookups, and impl lookup can add a new SpecificInterface to
-  // the store which can reallocate and invalidate any references held here into
-  // the store.
-  auto query_specific_interface =
-      context.specific_interfaces().Get(eval_query.query_specific_interface_id);
+auto EvalLookupSingleImplWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::InstId non_canonical_query_self_inst_id,
+    SemIR::SpecificInterface query_specific_interface,
+    bool poison_concrete_results)
+    -> std::pair<EvalImplLookupResult, SemIR::InstId> {
+  auto query_self_inst_id = GetCanonicalizedFacetOrTypeValue(
+      context, non_canonical_query_self_inst_id);
 
+  // The non-canonical self type may be a `FacetValue` which can provide a
+  // witness, so we use that instruction here.
   auto facet_lookup_result = LookupImplWitnessInSelfFacetValue(
       context, non_canonical_query_self_inst_id, query_specific_interface);
   if (facet_lookup_result.has_concrete_value()) {
-    return facet_lookup_result;
+    return {facet_lookup_result, query_self_inst_id};
   }
 
   // If the self type is a facet that provides a witness, then we are in an
@@ -664,17 +657,17 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   bool self_facet_provides_witness = facet_lookup_result.has_value();
   if (self_facet_provides_witness) {
     if (auto bind = context.insts().TryGetAs<SemIR::BindSymbolicName>(
-            eval_query.query_self_inst_id)) {
+            query_self_inst_id)) {
       const auto& entity = context.entity_names().Get(bind->entity_name_id);
       if (entity.name_id == SemIR::NameId::PeriodSelf ||
           entity.name_id == SemIR::NameId::SelfType) {
-        return facet_lookup_result;
+        return {facet_lookup_result, query_self_inst_id};
       }
     }
   }
 
   SemIR::ConstantId query_self_const_id =
-      context.constant_values().Get(eval_query.query_self_inst_id);
+      context.constant_values().Get(query_self_inst_id);
 
   auto query_type_structure = BuildTypeStructure(
       context, context.constant_values().GetInstId(query_self_const_id),
@@ -725,12 +718,12 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                   context.impls().Get(candidate.impl_id))) {
         context.poisoned_concrete_impl_lookup_queries().push_back(
             {.loc_id = loc_id,
-             .query = eval_query,
              .non_canonical_query_self_inst_id =
                  non_canonical_query_self_inst_id,
+             .query_specific_interface = query_specific_interface,
              .impl_witness = result.concrete_witness()});
       }
-      return result;
+      return {result, query_self_inst_id};
     }
   }
 
@@ -738,10 +731,10 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     // If we did not find a final impl, but the self value is a facet that
     // provides a symbolic witness, when we record that an impl will exist for
     // the specific, but is yet unknown.
-    return facet_lookup_result;
+    return {facet_lookup_result, query_self_inst_id};
   }
 
-  return EvalImplLookupResult::MakeNone();
+  return {EvalImplLookupResult::MakeNone(), query_self_inst_id};
 }
 
 auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,

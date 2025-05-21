@@ -200,22 +200,37 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::LookupImplWitness inst) -> ConstantEvalResult {
-  // The self value is canonicalized in order to produce a canonical
-  // LookupImplWitness instruction. We save the non-canonical instruction as it
-  // may be a concrete `FacetValue` that contains a concrete witness.
-  auto non_canonical_query_self_inst_id = inst.query_self_inst_id;
-  inst.query_self_inst_id =
-      GetCanonicalizedFacetOrTypeValue(context, inst.query_self_inst_id);
+  // NOTE: Do not retain a reference to the SpecificInterface obtained from a
+  // value store by SpecificInterfaceId. Doing impl lookup does deduce which can
+  // do more impl lookups, and impl lookup can add a new SpecificInterface to
+  // the store which can reallocate and invalidate any references held here into
+  // the store.
+  auto query_specific_interface =
+      context.specific_interfaces().Get(inst.query_specific_interface_id);
 
-  auto result = EvalLookupSingleImplWitness(
-      context, SemIR::LocId(inst_id), inst, non_canonical_query_self_inst_id,
+  // We use the potentially non-canonical instruction substituted into the
+  // LookupImplWitness as it may be a concrete `FacetValue` that contains a
+  // concrete witness.
+  auto [result, canonical_self_inst_id] = EvalLookupSingleImplWitness(
+      context, SemIR::LocId(inst_id), inst.query_self_inst_id,
+      query_specific_interface,
       /*poison_concrete_results=*/true);
   // The `LookupImplWitness` instruction is only created and evaluated when we
   // already know there is a witness.
   CARBON_CHECK(result.has_value());
+
+  // Store the canonicalized self instruction to make the `LookupImplWitness`
+  // instruction canonical as well.
+  inst.query_self_inst_id = canonical_self_inst_id;
+
   if (!result.has_concrete_value()) {
+    // If a non-concrete witness was found, return the current
+    // `LookupImplWitness` instruction so that it can be evaluated again in the
+    // future against another specific to look for a concrete witness.
     return ConstantEvalResult::NewSamePhase(inst);
   }
+  // Return the found concrete witness, an `ImplWitness` instruction. This ends
+  // the use of this `LookupImplWitness` instruction.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(result.concrete_witness()));
 }

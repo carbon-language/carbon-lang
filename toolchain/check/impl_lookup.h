@@ -63,7 +63,7 @@ class [[nodiscard]] EvalImplLookupResult {
     return EvalImplLookupResult(inst_id);
   }
   static auto MakeNonFinalImpl() -> EvalImplLookupResult {
-    return EvalImplLookupResult(FoundNonFinalImpl());
+    return EvalImplLookupResult(SemIR::FacetTypeId::None);
   }
   static auto MakeNonFinalFacetValue(SemIR::FacetTypeId facet_type_id)
       -> EvalImplLookupResult {
@@ -73,10 +73,10 @@ class [[nodiscard]] EvalImplLookupResult {
 
   // True if a concrete impl witness was found or a non-final impl. In the
   // latter case the InstId of the impl's witness is not returned, only the fact
-  // that it exists.
+  // that it exists, and possibly a `FacetTypeId` if the witness was obtained
+  // from a facet value.
   auto has_value() const -> bool {
-    return std::holds_alternative<FoundNonFinalImpl>(result_) ||
-           std::holds_alternative<SemIR::FacetTypeId>(result_) ||
+    return std::holds_alternative<SemIR::FacetTypeId>(result_) ||
            std::get<SemIR::InstId>(result_).has_value();
   }
 
@@ -94,27 +94,21 @@ class [[nodiscard]] EvalImplLookupResult {
     return std::get<SemIR::InstId>(result_);
   }
 
-  // True if there is a non-concrete witness in the result which was derived
-  // from a facet value. A non-final impl was found and a further more specific
-  // query will need to be done, but the `FacetType` can be observed to
-  // determine constraints written on it.
-  auto has_facet_type_value() const -> bool {
-    return std::holds_alternative<SemIR::FacetTypeId>(result_);
-  }
-
+  // Only valid if `has_concrete_value()` is false. Returns the FacetTypeId for
+  // the facet from which a non-concrete witness was found, if any.
   auto facet_value_type() const -> SemIR::FacetTypeId {
     return std::get<SemIR::FacetTypeId>(result_);
   }
 
  private:
-  struct FoundNonFinalImpl {};
-
   explicit EvalImplLookupResult(SemIR::InstId inst_id) : result_(inst_id) {}
   explicit EvalImplLookupResult(SemIR::FacetTypeId facet_type_id)
       : result_(facet_type_id) {}
-  explicit EvalImplLookupResult(FoundNonFinalImpl f) : result_(f) {}
 
-  std::variant<SemIR::InstId, FoundNonFinalImpl, SemIR::FacetTypeId> result_;
+  // - If FacetTypeId is active, it means a non-concrete witness was found.
+  // - If InstId is active but None, is means no witness was found.
+  // - If InstId is active and not None, it means a concrete witness was found.
+  std::variant<SemIR::InstId, SemIR::FacetTypeId> result_;
 };
 
 // Looks for a witness instruction of an impl declaration for a query consisting
@@ -122,11 +116,16 @@ class [[nodiscard]] EvalImplLookupResult {
 // execute lookup via the LookupImplWitness instruction. It does not consider
 // the self facet value for finding a witness, since LookupImplWitness() would
 // have found that and not caused us to defer lookup to here.
-auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                                 SemIR::LookupImplWitness eval_query,
-                                 SemIR::InstId non_canonical_query_self_inst_id,
-                                 bool poison_concrete_results)
-    -> EvalImplLookupResult;
+//
+// Returns with the lookup result the canonicalized query self instruction,
+// which is to be stored in the `LookupImplWitness` instruction to make it
+// canonical.
+auto EvalLookupSingleImplWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::InstId non_canonical_query_self_inst_id,
+    SemIR::SpecificInterface query_specific_interface,
+    bool poison_concrete_results)
+    -> std::pair<EvalImplLookupResult, SemIR::InstId>;
 
 }  // namespace Carbon::Check
 

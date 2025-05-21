@@ -154,10 +154,9 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return "`" + StringifySpecificInterface(*sem_ir_, specific_interface) + "`";
   }
   if (auto* specific_interface_raw =
-          llvm::any_cast<SpecificInterfaceIdAsRawType>(&arg)) {
-    auto specific_interface = sem_ir_->specific_interfaces().Get(
-        specific_interface_raw->specific_interface_id);
-    return StringifySpecificInterface(*sem_ir_, specific_interface);
+          llvm::any_cast<SpecificInterfaceAsRawType>(&arg)) {
+    return StringifySpecificInterface(
+        *sem_ir_, specific_interface_raw->specific_interface);
   }
   return DiagnosticEmitterBase::ConvertArg(arg);
 }

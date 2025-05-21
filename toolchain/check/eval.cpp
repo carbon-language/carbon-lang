@@ -1989,15 +1989,24 @@ auto TryEvalTypedInst<SemIR::LookupImplWitness>(EvalContext& eval_context,
 
   Phase phase = Phase::Concrete;
 
-  bool ok = ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase);
-  CARBON_CHECK(ok);
-  ok = ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase);
-  CARBON_CHECK(ok);
+  bool type_constant_result =
+      ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase);
+  CARBON_CHECK(type_constant_result);
+  bool fields_constant_result =
+      ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase);
+  CARBON_CHECK(fields_constant_result);
 
   if (!eval_context.has_specific()) {
+    // This is a shortcut in the case where `LookupImplWitness()` has already
+    // done the impl lookup and found a non-concrete result. Then it needs to
+    // make a `LookupImplWitness` instruction to be executed later against a
+    // specific, where is how we got here, but we don't need to do another
+    // lookup immediately. We just return the instruction as-is.
     return ConvertEvalResultToConstantId(
         eval_context.context(), ConstantEvalResult::NewSamePhase(inst), phase);
   } else {
+    // The instruction is being re-evaluated against a specific, so we should
+    // execute impl lookup now.
     return ConvertEvalResultToConstantId(
         eval_context.context(),
         EvalConstantInst(eval_context.context(), inst_id,

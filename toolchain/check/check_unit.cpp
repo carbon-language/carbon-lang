@@ -525,10 +525,10 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   auto poisoned_queries =
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
   for (const auto& poison : poisoned_queries) {
-    auto witness_result =
-        EvalLookupSingleImplWitness(context_, poison.loc_id, poison.query,
-                                    poison.non_canonical_query_self_inst_id,
-                                    /*poison_concrete_results=*/false);
+    auto [witness_result, _] = EvalLookupSingleImplWitness(
+        context_, poison.loc_id, poison.non_canonical_query_self_inst_id,
+        poison.query_specific_interface,
+        /*poison_concrete_results=*/false);
     CARBON_CHECK(witness_result.has_concrete_value());
     auto found_witness_id = witness_result.concrete_witness();
     if (found_witness_id != poison.impl_witness) {
@@ -553,11 +553,11 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
           PoisonedImplLookupConcreteResult, Error,
           "found `impl` that would change the result of an earlier "
           "use of `{0} as {1}`",
-          InstIdAsRawType, SpecificInterfaceIdAsRawType);
+          InstIdAsRawType, SpecificInterfaceAsRawType);
       auto builder =
           emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
-                         poison.query.query_self_inst_id,
-                         poison.query.query_specific_interface_id);
+                         poison.non_canonical_query_self_inst_id,
+                         poison.query_specific_interface);
       CARBON_DIAGNOSTIC(
           PoisonedImplLookupConcreteResultNoteBadImpl, Note,
           "the use would select the `impl` here but it was not found yet");

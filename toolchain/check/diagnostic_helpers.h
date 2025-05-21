@@ -127,14 +127,14 @@ struct TypedInt {
   llvm::APInt value;
 };
 
-struct SpecificInterfaceIdAsRawType {
+struct SpecificInterfaceAsRawType {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   // NOLINTNEXTLINE(google-explicit-constructor)
-  SpecificInterfaceIdAsRawType(SemIR::SpecificInterfaceId specific_interface_id)
-      : specific_interface_id(specific_interface_id) {}
+  SpecificInterfaceAsRawType(SemIR::SpecificInterface specific_interface)
+      : specific_interface(specific_interface) {}
 
-  SemIR::SpecificInterfaceId specific_interface_id;
+  SemIR::SpecificInterface specific_interface;
 };
 
 }  // namespace Carbon::Check

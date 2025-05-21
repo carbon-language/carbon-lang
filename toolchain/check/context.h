@@ -214,8 +214,8 @@ class Context {
     // The location the LookupImplWitness originated from.
     SemIR::LocId loc_id;
     // The query for a witness of an impl for an interface.
-    SemIR::LookupImplWitness query;
     SemIR::InstId non_canonical_query_self_inst_id;
+    SemIR::SpecificInterface query_specific_interface;
     // The resulting ImplWitness.
     SemIR::InstId impl_witness;
   };
