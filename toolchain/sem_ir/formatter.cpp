@@ -538,7 +538,7 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
 auto Formatter::FormatSpecific(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   const auto& generic = sem_ir_->generics().Get(specific.generic_id);
-  if (!ShouldIncludeInstByIR(generic.decl_id)) {
+  if (!ShouldFormatEntity(generic.decl_id, /*is_definition_start=*/false)) {
     // Omit specifics if we also omitted the generic.
     return;
   }
