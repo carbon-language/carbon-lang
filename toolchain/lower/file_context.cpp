@@ -813,8 +813,8 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
   auto* type = GetType(var_storage.type_id);
   return new llvm::GlobalVariable(llvm_module(), type,
-                                  /*isConstant=*/false, linkage, /*Initializer=*/nullptr,
-                                  mangled_name);
+                                  /*isConstant=*/false, linkage,
+                                  /*Initializer=*/nullptr, mangled_name);
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
