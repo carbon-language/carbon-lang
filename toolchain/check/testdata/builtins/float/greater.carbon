@@ -33,7 +33,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
   // CHECK:STDERR:   //@dump-sem-ir-begin
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
-  //@dump-sem-ir-begin
+  //@dump-sem-ir-end
 }
 
 // CHECK:STDERR: float_greater.carbon:[[@LINE+24]]:17: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
