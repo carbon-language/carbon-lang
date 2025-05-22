@@ -17,8 +17,7 @@ namespace Carbon::Check {
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                    llvm::StringRef target, bool use_pie)
-    -> std::unique_ptr<clang::ASTUnit>;
+                    llvm::StringRef target) -> std::unique_ptr<clang::ASTUnit>;
 
 // Looks up the given name in the Clang AST generated when importing C++ code.
 // If successful, generates the instruction and returns the new `InstId`.

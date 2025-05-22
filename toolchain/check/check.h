@@ -31,15 +31,12 @@ struct Unit {
 
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
-// TODO: target and use_pie are essentially compile flags, forwarded to Clang.
-// This needs a more flexible way of adding more, and probably not just for
-// Clang.
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     bool prelude_import, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::StringRef target, bool use_pie, llvm::raw_ostream* vlog_stream,
-    bool fuzzing) -> void;
+    llvm::StringRef target, llvm::raw_ostream* vlog_stream, bool fuzzing)
+    -> void;
 
 }  // namespace Carbon::Check
 

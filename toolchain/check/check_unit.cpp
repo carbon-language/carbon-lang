@@ -54,7 +54,7 @@ CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
-    bool use_pie, llvm::raw_ostream* vlog_stream)
+    llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(
           tree_and_subtrees_getters
@@ -62,7 +62,6 @@ CheckUnit::CheckUnit(
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       target_(target),
-      use_pie_(use_pie),
       vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
@@ -156,7 +155,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
     CARBON_CHECK(!cpp_ast->get());
     *cpp_ast =
         ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                       cpp_import_names, fs_, target_, use_pie_);
+                       cpp_import_names, fs_, target_);
   }
 }
 

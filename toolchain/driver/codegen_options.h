@@ -19,7 +19,6 @@ struct CodegenOptions {
 
   std::string host = llvm::sys::getDefaultTargetTriple();
   llvm::StringRef target;
-  bool pie;
 };
 
 }  // namespace Carbon

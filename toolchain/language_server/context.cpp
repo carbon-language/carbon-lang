@@ -154,7 +154,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   Check::CheckParseTrees(
       units, llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
       /*prelude_import=*/false, fs, llvm::sys::getDefaultTargetTriple(),
-      /*use_pie=*/true, context.vlog_stream(), /*fuzzing=*/false);
+      context.vlog_stream(), /*fuzzing=*/false);
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing
