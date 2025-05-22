@@ -9,7 +9,6 @@
 #include <optional>
 #include <utility>
 
-#include "common/concepts.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -834,6 +833,8 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
         break;
       }
 
+        // These id types have a GetConstantValue() overload but that overload
+        // does not canonicalize any SpecificId in the value type.
       case CARBON_KIND(SemIR::DestInstId _):
         break;
       case CARBON_KIND(SemIR::EntityNameId _):
