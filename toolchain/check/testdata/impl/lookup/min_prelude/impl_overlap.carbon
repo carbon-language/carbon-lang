@@ -371,7 +371,7 @@ class D;
 // Partially overlaps the blanket impl, which is fine.
 impl D as Z(D) {}
 
-// --- final_overlap_where_each_is_more_specific_than_the_other.carbon
+// --- fail_final_overlap_where_each_is_more_specific_than_the_other.carbon
 
 interface Z(T:! type) {}
 
