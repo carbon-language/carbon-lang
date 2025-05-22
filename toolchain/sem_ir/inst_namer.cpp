@@ -80,7 +80,7 @@ class InstNamer::NamingContext {
 InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
-  scopes_.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
+  scopes_.resize(GetScopeIdOffset(ScopeIdTypeEnum::None));
   generic_scopes_.resize(sem_ir->generics().size(), ScopeId::None);
 
   // Build the constants scope.
@@ -166,6 +166,42 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
                   impl_fingerprint);
     CollectNamesInBlock(impl_scope, impl_info.body_block_id);
     CollectNamesInGeneric(impl_scope, impl_info.generic_id);
+  }
+}
+
+auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
+  int offset = 0;
+
+  // For each Id type, add the number of entities *above* its case; for example,
+  // the offset for functions excludes the functions themselves. The fallthrough
+  // handles summing to get uniqueness; order isn't special.
+  switch (id_enum) {
+    case ScopeIdTypeEnum::None:
+      // `None` will be getting a full count of scopes.
+      offset += sem_ir_->associated_constants().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<AssociatedConstantId>:
+      offset += sem_ir_->classes().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<ClassId>:
+      offset += sem_ir_->functions().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<FunctionId>:
+      offset += sem_ir_->impls().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<ImplId>:
+      offset += sem_ir_->interfaces().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<InterfaceId>:
+      offset += sem_ir_->specific_interfaces().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<SpecificInterfaceId>:
+      // All type-specific scopes are offset by `FirstEntityScope`.
+      offset += static_cast<int>(ScopeId::FirstEntityScope);
+      return offset;
+
+    default:
+      CARBON_FATAL("Unexpected ScopeIdTypeEnum: {0}", id_enum);
   }
 }
 
@@ -1003,8 +1039,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
+    case VarPattern::Kind: {
+      AddInstNameId(GetPrettyNameFromPatternId(sem_ir(), inst_id_),
+                    ".var_patt");
+      return;
+    }
     case CARBON_KIND(VarStorage inst): {
-      AddInstNameId(inst.pretty_name_id, ".var");
+      if (inst.pattern_id.has_value()) {
+        AddInstNameId(GetPrettyNameFromPatternId(sem_ir(), inst.pattern_id),
+                      ".var");
+      } else {
+        AddInstName("var");
+      }
       return;
     }
     default: {

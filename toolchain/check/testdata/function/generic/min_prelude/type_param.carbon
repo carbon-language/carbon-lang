@@ -62,10 +62,10 @@ fn F(T:! type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %p.patt: @F.%pattern_type.loc14 (%pattern_type.afe) = binding_pattern p [concrete]
-// CHECK:STDOUT:       %.loc14_3: @F.%pattern_type.loc14 (%pattern_type.afe) = var_pattern %p.patt [concrete]
+// CHECK:STDOUT:       %p.var_patt: @F.%pattern_type.loc14 (%pattern_type.afe) = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p.var: ref @F.%ptr.loc14_11.2 (%ptr) = var p
-// CHECK:STDOUT:     %.loc14_11: type = splice_block %ptr.loc14_11.1 [symbolic = %ptr.loc14_11.2 (constants.%ptr)] {
+// CHECK:STDOUT:     %p.var: ref @F.%ptr.loc14_11.2 (%ptr) = var %p.var_patt
+// CHECK:STDOUT:     %.loc14: type = splice_block %ptr.loc14_11.1 [symbolic = %ptr.loc14_11.2 (constants.%ptr)] {
 // CHECK:STDOUT:       %T.ref.loc14: type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc14_11.1: type = ptr_type %T.ref.loc14 [symbolic = %ptr.loc14_11.2 (constants.%ptr)]
 // CHECK:STDOUT:     }

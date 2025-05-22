@@ -96,9 +96,9 @@ var f: () = F();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc6_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

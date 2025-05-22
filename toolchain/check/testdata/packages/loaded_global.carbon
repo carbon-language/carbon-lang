@@ -92,9 +92,9 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc4_1: %pattern_type = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -102,9 +102,9 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %package_a.patt: %pattern_type = binding_pattern package_a [concrete]
-// CHECK:STDOUT:     %.loc6_1: %pattern_type = var_pattern %package_a.patt [concrete]
+// CHECK:STDOUT:     %package_a.var_patt: %pattern_type = var_pattern %package_a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %package_a.var: ref %empty_tuple.type = var package_a
+// CHECK:STDOUT:   %package_a.var: ref %empty_tuple.type = var %package_a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_17.1: type = splice_block %.loc6_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_17.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_17.3: type = converted %.loc6_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -179,9 +179,9 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc6_1: %pattern_type = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
+// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -189,9 +189,9 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %package_b.patt: %pattern_type = binding_pattern package_b [concrete]
-// CHECK:STDOUT:     %.loc8_1: %pattern_type = var_pattern %package_b.patt [concrete]
+// CHECK:STDOUT:     %package_b.var_patt: %pattern_type = var_pattern %package_b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %package_b.var: ref %empty_tuple.type = var package_b
+// CHECK:STDOUT:   %package_b.var: ref %empty_tuple.type = var %package_b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8_17.1: type = splice_block %.loc8_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc8_17.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_17.3: type = converted %.loc8_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

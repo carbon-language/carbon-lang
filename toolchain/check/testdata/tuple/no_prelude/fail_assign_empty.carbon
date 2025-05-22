@@ -28,9 +28,9 @@ var x: ((),) = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc15_1: %pattern_type = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %tuple.type = var x
+// CHECK:STDOUT:   %x.var: ref %tuple.type = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_12.1: type = splice_block %.loc15_12.4 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:     %.loc15_10: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: %tuple.type = tuple_literal (%.loc15_10)

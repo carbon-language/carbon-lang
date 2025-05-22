@@ -93,19 +93,19 @@ var b: T = *a;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc8_1: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %.loc8_9: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %.loc8: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = bind_name a, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc13: <error> = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref <error> = var b
+// CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT: }

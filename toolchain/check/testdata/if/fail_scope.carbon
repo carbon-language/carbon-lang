@@ -102,17 +102,17 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
-// CHECK:STDOUT:     %.loc13_5.1: %pattern_type.7ce = var_pattern %n.patt [concrete]
+// CHECK:STDOUT:     %n.var_patt: %pattern_type.7ce = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %i32 = var n
+// CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc13_5.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_5.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc13_5.2(%int_2) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc13_5.2: init %i32 = converted %int_2, %int.convert_checked [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   assign %n.var, %.loc13_5.2
+// CHECK:STDOUT:   %.loc13_5: init %i32 = converted %int_2, %int.convert_checked [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   assign %n.var, %.loc13_5
 // CHECK:STDOUT:   %.loc13_12: type = splice_block %i32.loc13 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

@@ -841,11 +841,11 @@ interface J {
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc12_1: <error> = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref <error> = var v
+// CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %.loc12_9: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %Id.ref: %Id.type = name_ref Id, %Id.decl [concrete = constants.%Id]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]

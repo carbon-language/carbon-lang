@@ -266,9 +266,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.a63 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc9_3.1: %pattern_type.a63 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.a63 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal ()
@@ -286,8 +286,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_34.2: init %C = class_init (), %.loc9_35.6 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_35.7: init %C = converted %.loc9_34.1, %.loc9_34.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_35.8: init %array_type.002 = array_init (%.loc9_35.3, %.loc9_35.5, %.loc9_35.7) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc9_3.2: init %array_type.002 = converted %.loc9_35.1, %.loc9_35.8 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc9_3.2
+// CHECK:STDOUT:   %.loc9_3: init %array_type.002 = converted %.loc9_35.1, %.loc9_35.8 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_20: type = splice_block %array_type [concrete = constants.%array_type.002] {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
@@ -475,9 +475,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.a63 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc9_3.1: %pattern_type.a63 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.a63 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal ()
@@ -495,8 +495,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_34.2: init %C = class_init (), %.loc9_35.6 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_35.7: init %C = converted %.loc9_34.1, %.loc9_34.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_35.8: init %array_type.002 = array_init (%.loc9_35.3, %.loc9_35.5, %.loc9_35.7) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc9_3.2: init %array_type.002 = converted %.loc9_35.1, %.loc9_35.8 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc9_3.2
+// CHECK:STDOUT:   %.loc9_3: init %array_type.002 = converted %.loc9_35.1, %.loc9_35.8 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_20: type = splice_block %array_type [concrete = constants.%array_type.002] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -636,9 +636,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.a63 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc9_3.1: %pattern_type.a63 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.a63 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal ()
@@ -656,8 +656,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_34.2: init %C = class_init (), %.loc9_35.6 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_35.7: init %C = converted %.loc9_34.1, %.loc9_34.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_35.8: init %array_type.002 = array_init (%.loc9_35.3, %.loc9_35.5, %.loc9_35.7) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc9_3.2: init %array_type.002 = converted %.loc9_35.1, %.loc9_35.8 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc9_3.2
+// CHECK:STDOUT:   %.loc9_3: init %array_type.002 = converted %.loc9_35.1, %.loc9_35.8 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_20: type = splice_block %array_type [concrete = constants.%array_type.002] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
@@ -836,9 +836,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.a63 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc10_3.1: %pattern_type.a63 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.a63 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var %a.var_patt
 // CHECK:STDOUT:   %.loc10_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_34.1: %empty_struct_type = struct_literal ()
@@ -856,8 +856,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc10_34.2: init %C = class_init (), %.loc10_35.6 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_35.7: init %C = converted %.loc10_34.1, %.loc10_34.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_35.8: init %array_type.002 = array_init (%.loc10_35.3, %.loc10_35.5, %.loc10_35.7) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc10_3.2: init %array_type.002 = converted %.loc10_35.1, %.loc10_35.8 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc10_3.2
+// CHECK:STDOUT:   %.loc10_3: init %array_type.002 = converted %.loc10_35.1, %.loc10_35.8 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc10_3
 // CHECK:STDOUT:   %.loc10_20: type = splice_block %array_type [concrete = constants.%array_type.002] {
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
@@ -1059,9 +1059,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.f30 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc11_3.1: %pattern_type.f30 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.f30 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.fe4 = var a
+// CHECK:STDOUT:   %a.var: ref %array_type.fe4 = var %a.var_patt
 // CHECK:STDOUT:   %.loc11_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc11_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc11_34.1: %empty_struct_type = struct_literal ()
@@ -1079,8 +1079,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc11_34.2: init %D = class_init (), %.loc11_35.6 [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc11_35.7: init %D = converted %.loc11_34.1, %.loc11_34.2 [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc11_35.8: init %array_type.fe4 = array_init (%.loc11_35.3, %.loc11_35.5, %.loc11_35.7) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc11_3.2: init %array_type.fe4 = converted %.loc11_35.1, %.loc11_35.8 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc11_3.2
+// CHECK:STDOUT:   %.loc11_3: init %array_type.fe4 = converted %.loc11_35.1, %.loc11_35.8 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_20: type = splice_block %array_type [concrete = constants.%array_type.fe4] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -1256,9 +1256,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.a63 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc9_3.1: %pattern_type.a63 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.a63 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var %a.var_patt
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal ()
@@ -1276,8 +1276,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_34.2: init %C = class_init (), %.loc9_35.6 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_35.7: init %C = converted %.loc9_34.1, %.loc9_34.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_35.8: init %array_type.002 = array_init (%.loc9_35.3, %.loc9_35.5, %.loc9_35.7) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc9_3.2: init %array_type.002 = converted %.loc9_35.1, %.loc9_35.8 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc9_3.2
+// CHECK:STDOUT:   %.loc9_3: init %array_type.002 = converted %.loc9_35.1, %.loc9_35.8 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_20: type = splice_block %array_type [concrete = constants.%array_type.002] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]

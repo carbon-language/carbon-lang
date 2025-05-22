@@ -712,9 +712,9 @@ auto CompilationUnit::RunLower() -> void {
     if (options_->include_debug_info) {
       subtrees = cache_->tree_and_subtrees_getters();
     }
-    module_ =
-        Lower::LowerToLLVM(*llvm_context_, subtrees, input_filename_, *sem_ir_,
-                           sem_ir_->cpp_ast(), &inst_namer, vlog_stream_);
+    module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs, subtrees,
+                                 input_filename_, *sem_ir_, sem_ir_->cpp_ast(),
+                                 &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");
@@ -964,6 +964,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
   Check::CheckParseTrees(check_units, cache.tree_and_subtrees_getters(),
                          options_.prelude_import, driver_env.fs,
+                         options_.codegen_options.target,
                          driver_env.vlog_stream, driver_env.fuzzing);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");

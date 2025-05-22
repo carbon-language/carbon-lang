@@ -127,10 +127,10 @@ fn G(o: Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %pattern_type.906 = binding_pattern i [concrete]
-// CHECK:STDOUT:     %.loc22_3: %pattern_type.906 = var_pattern %i.patt [concrete]
+// CHECK:STDOUT:     %i.var_patt: %pattern_type.906 = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i.var: ref %Inner = var i
-// CHECK:STDOUT:   %.loc22_11: type = splice_block %Inner.ref [concrete = constants.%Inner] {
+// CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
+// CHECK:STDOUT:   %.loc22: type = splice_block %Inner.ref [concrete = constants.%Inner] {
 // CHECK:STDOUT:     %o.ref: %Outer = name_ref o, %o
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   }

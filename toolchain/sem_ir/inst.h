@@ -67,7 +67,9 @@ struct InstLikeTypeInfo<TypedInst> : InstLikeTypeInfoBase<TypedInst> {
   static auto GetKind(TypedInst /*inst*/) -> InstKind {
     return TypedInst::Kind;
   }
-  static auto IsKind(InstKind kind) -> bool { return kind == TypedInst::Kind; }
+  static constexpr auto IsKind(InstKind kind) -> bool {
+    return kind == TypedInst::Kind;
+  }
   // A name that can be streamed to an llvm::raw_ostream.
   static auto DebugName() -> InstKind { return TypedInst::Kind; }
 };

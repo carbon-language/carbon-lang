@@ -88,10 +88,10 @@ import library "var";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Foo.patt: %pattern_type.7ce = binding_pattern Foo [concrete]
-// CHECK:STDOUT:     %.loc4_1: %pattern_type.7ce = var_pattern %Foo.patt [concrete]
+// CHECK:STDOUT:     %Foo.var_patt: %pattern_type.7ce = var_pattern %Foo.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.var: ref %i32 = var Foo
-// CHECK:STDOUT:   %.loc4_10: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %Foo.var: ref %i32 = var %Foo.var_patt [concrete]
+// CHECK:STDOUT:   %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }

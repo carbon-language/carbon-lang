@@ -53,9 +53,9 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.72b = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc15_1: %pattern_type.72b = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.72b = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %tuple.type.ff1 = var x
+// CHECK:STDOUT:   %x.var: ref %tuple.type.ff1 = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_31.1: type = splice_block %.loc15_31.5 [concrete = constants.%tuple.type.ff1] {
 // CHECK:STDOUT:     %int_32.loc15_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

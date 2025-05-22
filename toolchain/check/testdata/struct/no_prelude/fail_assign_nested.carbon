@@ -29,9 +29,9 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc15_1: %pattern_type = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var x
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.225] {
 // CHECK:STDOUT:     %.loc15_14.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc15_14.2: type = converted %.loc15_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

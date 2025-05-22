@@ -81,9 +81,9 @@ var b: Bool() = false;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc6_1: %pattern_type.831 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref bool = var b
+// CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_13.1: type = splice_block %.loc6_13.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.ref: %Bool.type = name_ref Bool, imports.%Main.Bool [concrete = constants.%Bool]
 // CHECK:STDOUT:     %bool.make_type: init type = call %Bool.ref() [concrete = bool]

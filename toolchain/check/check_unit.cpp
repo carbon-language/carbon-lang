@@ -53,7 +53,7 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(
@@ -61,6 +61,7 @@ CheckUnit::CheckUnit(
               [unit_and_imports->unit->sem_ir->check_ir_id().index]),
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
+      target_(target),
       vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
@@ -154,7 +155,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
     CARBON_CHECK(!cpp_ast->get());
     *cpp_ast =
         ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                       cpp_import_names, fs_);
+                       cpp_import_names, fs_, target_);
   }
 }
 

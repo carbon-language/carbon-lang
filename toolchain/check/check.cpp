@@ -326,7 +326,8 @@ auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     bool prelude_import, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::raw_ostream* vlog_stream, bool fuzzing) -> void {
+    llvm::StringRef target, llvm::raw_ostream* vlog_stream, bool fuzzing)
+    -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
@@ -380,7 +381,8 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
+    CheckUnit(unit_info, tree_and_subtrees_getters, fs, target, vlog_stream)
+        .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -427,7 +429,9 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
+        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, target,
+                  vlog_stream)
+            .Run();
       }
     }
   }

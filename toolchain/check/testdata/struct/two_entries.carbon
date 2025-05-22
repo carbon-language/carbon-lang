@@ -46,6 +46,10 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %bound_method.b92: <bound method> = bound_method %int_2.ecc, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.501 = struct_value (%int_1.5d2, %int_2.ef8) [concrete]
+// CHECK:STDOUT:   %.22f: ref %i32 = struct_access file.%x.var, element0 [concrete]
+// CHECK:STDOUT:   %.5fc: ref %i32 = struct_access file.%x.var, element1 [concrete]
+// CHECK:STDOUT:   %.4ca: ref %i32 = struct_access file.%y.var, element0 [concrete]
+// CHECK:STDOUT:   %.86e: ref %i32 = struct_access file.%y.var, element1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -110,10 +114,10 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %w: %struct_type.a.b.501 = bind_name w, @__global_init.%v.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.851 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc14_1: %pattern_type.851 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.851 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.b.501 = var x
-// CHECK:STDOUT:   %.loc14_25: type = splice_block %struct_type.a.b.loc14 [concrete = constants.%struct_type.a.b.501] {
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.b.501 = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %.loc14: type = splice_block %struct_type.a.b.loc14 [concrete = constants.%struct_type.a.b.501] {
 // CHECK:STDOUT:     %int_32.loc14_13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14_13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc14_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -123,10 +127,10 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.501 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.851 = binding_pattern y [concrete]
-// CHECK:STDOUT:     %.loc15_1: %pattern_type.851 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.851 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %struct_type.a.b.501 = var y
-// CHECK:STDOUT:   %.loc15_25: type = splice_block %struct_type.a.b.loc15 [concrete = constants.%struct_type.a.b.501] {
+// CHECK:STDOUT:   %y.var: ref %struct_type.a.b.501 = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %.loc15: type = splice_block %struct_type.a.b.loc15 [concrete = constants.%struct_type.a.b.501] {
 // CHECK:STDOUT:     %int_32.loc15_13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc15_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -151,7 +155,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %bound_method.loc14_44.2: <bound method> = bound_method %int_1.loc14, %specific_fn.loc14_44.1 [concrete = constants.%bound_method.9a1]
 // CHECK:STDOUT:   %int.convert_checked.loc14_44.1: init %i32 = call %bound_method.loc14_44.2(%int_1.loc14) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc14_44.2: init %i32 = converted %int_1.loc14, %int.convert_checked.loc14_44.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc14_44.3: ref %i32 = struct_access file.%x.var, element0
+// CHECK:STDOUT:   %.loc14_44.3: ref %i32 = struct_access file.%x.var, element0 [concrete = constants.%.22f]
 // CHECK:STDOUT:   %.loc14_44.4: init %i32 = initialize_from %.loc14_44.2 to %.loc14_44.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc14_44.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc14_44.3: <bound method> = bound_method %int_2.loc14, %impl.elem0.loc14_44.2 [concrete = constants.%Convert.bound.ef9]
@@ -159,7 +163,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %bound_method.loc14_44.4: <bound method> = bound_method %int_2.loc14, %specific_fn.loc14_44.2 [concrete = constants.%bound_method.b92]
 // CHECK:STDOUT:   %int.convert_checked.loc14_44.2: init %i32 = call %bound_method.loc14_44.4(%int_2.loc14) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc14_44.5: init %i32 = converted %int_2.loc14, %int.convert_checked.loc14_44.2 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc14_44.6: ref %i32 = struct_access file.%x.var, element1
+// CHECK:STDOUT:   %.loc14_44.6: ref %i32 = struct_access file.%x.var, element1 [concrete = constants.%.5fc]
 // CHECK:STDOUT:   %.loc14_44.7: init %i32 = initialize_from %.loc14_44.5 to %.loc14_44.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc14_44.8: init %struct_type.a.b.501 = struct_init (%.loc14_44.4, %.loc14_44.7) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc14_1: init %struct_type.a.b.501 = converted %.loc14_44.1, %.loc14_44.8 [concrete = constants.%struct]
@@ -167,11 +171,11 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.501 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc15_29.1: ref %i32 = struct_access %x.ref, element0
 // CHECK:STDOUT:   %.loc15_29.2: %i32 = bind_value %.loc15_29.1
-// CHECK:STDOUT:   %.loc15_29.3: ref %i32 = struct_access file.%y.var, element0
+// CHECK:STDOUT:   %.loc15_29.3: ref %i32 = struct_access file.%y.var, element0 [concrete = constants.%.4ca]
 // CHECK:STDOUT:   %.loc15_29.4: init %i32 = initialize_from %.loc15_29.2 to %.loc15_29.3
 // CHECK:STDOUT:   %.loc15_29.5: ref %i32 = struct_access %x.ref, element1
 // CHECK:STDOUT:   %.loc15_29.6: %i32 = bind_value %.loc15_29.5
-// CHECK:STDOUT:   %.loc15_29.7: ref %i32 = struct_access file.%y.var, element1
+// CHECK:STDOUT:   %.loc15_29.7: ref %i32 = struct_access file.%y.var, element1 [concrete = constants.%.86e]
 // CHECK:STDOUT:   %.loc15_29.8: init %i32 = initialize_from %.loc15_29.6 to %.loc15_29.7
 // CHECK:STDOUT:   %.loc15_29.9: init %struct_type.a.b.501 = struct_init (%.loc15_29.4, %.loc15_29.8) to file.%y.var
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a.b.501 = converted %x.ref, %.loc15_29.9

@@ -538,7 +538,9 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
 auto Formatter::FormatSpecific(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   const auto& generic = sem_ir_->generics().Get(specific.generic_id);
-  if (!ShouldIncludeInstByIR(generic.decl_id)) {
+  if (!ShouldFormatEntity(
+          generic.decl_id,
+          /*is_definition_start=*/generic.definition_block_id.has_value())) {
     // Omit specifics if we also omitted the generic.
     return;
   }
@@ -745,25 +747,6 @@ auto Formatter::FormatNameScope(NameScopeId id, llvm::StringRef label) -> void {
   }
 }
 
-auto Formatter::FormatInst(InstId inst_id, Inst inst) -> void {
-  CARBON_KIND_SWITCH(inst) {
-#define CARBON_SEM_IR_INST_KIND(InstT)  \
-  case CARBON_KIND(InstT typed_inst): { \
-    FormatInst(inst_id, typed_inst);    \
-    break;                              \
-  }
-#include "toolchain/sem_ir/inst_kind.def"
-  }
-}
-
-auto Formatter::FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void {
-  Indent();
-  FormatInstLhs(inst_id, inst);
-  out_ << ImportRefUnloaded::Kind.ir_name();
-  FormatInstRhs(inst);
-  out_ << "\n";
-}
-
 auto Formatter::FormatInst(InstId inst_id) -> void {
   if (!inst_id.has_value()) {
     Indent();
@@ -771,7 +754,58 @@ auto Formatter::FormatInst(InstId inst_id) -> void {
     return;
   }
 
-  FormatInst(inst_id, sem_ir_->insts().GetWithAttachedType(inst_id));
+  if (!in_terminator_sequence_) {
+    Indent();
+  }
+
+  auto inst = sem_ir_->insts().GetWithAttachedType(inst_id);
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(Branch branch): {
+      out_ << Branch::Kind.ir_name() << " ";
+      FormatLabel(branch.target_id);
+      out_ << "\n";
+      in_terminator_sequence_ = false;
+      return;
+    }
+    case CARBON_KIND(BranchIf branch_if): {
+      out_ << "if ";
+      FormatName(branch_if.cond_id);
+      out_ << " " << Branch::Kind.ir_name() << " ";
+      FormatLabel(branch_if.target_id);
+      out_ << " else ";
+      in_terminator_sequence_ = true;
+      return;
+    }
+    case CARBON_KIND(BranchWithArg branch_with_arg): {
+      out_ << BranchWithArg::Kind.ir_name() << " ";
+      FormatLabel(branch_with_arg.target_id);
+      out_ << "(";
+      FormatName(branch_with_arg.arg_id);
+      out_ << ")\n";
+      in_terminator_sequence_ = false;
+      return;
+    }
+    default: {
+      FormatInstLhs(inst_id, inst);
+      out_ << inst.kind().ir_name();
+
+      // Add constants for everything except `ImportRefUnloaded`.
+      if (!inst.Is<ImportRefUnloaded>()) {
+        pending_constant_value_ =
+            sem_ir_->constant_values().GetAttached(inst_id);
+        pending_constant_value_is_self_ =
+            sem_ir_->constant_values().GetInstIdIfValid(
+                pending_constant_value_) == inst_id;
+      }
+
+      FormatInstRhs(inst);
+      // This usually prints the constant, but when `FormatInstRhs` prints it
+      // first (or for `ImportRefUnloaded`), this does nothing.
+      FormatPendingConstantValue(AddSpace::Before);
+      out_ << "\n";
+      return;
+    }
+  }
 }
 
 auto Formatter::FormatPendingImportedFrom(AddSpace space_where) -> void {
@@ -862,64 +896,223 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
   out_ << " = ";
 }
 
-auto Formatter::FormatInstRhs(BindSymbolicName inst) -> void {
-  // A BindSymbolicName with no value is a purely symbolic binding, such as
-  // the `Self` in an interface. Don't print out `none` for the value.
-  if (inst.value_id.has_value()) {
-    FormatArgs(inst.entity_name_id, inst.value_id);
-  } else {
-    FormatArgs(inst.entity_name_id);
+auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
+  static constexpr auto Table =
+      MakeFormatArgFnTable(static_cast<SemIR::IdKind*>(nullptr));
+  Table[arg_and_kind.kind().ToIndex()](*this, arg_and_kind.value());
+}
+
+auto Formatter::FormatInstRhs(Inst inst) -> void {
+  CARBON_KIND_SWITCH(inst) {
+    case SemIR::InstKind::ArrayInit:
+    case SemIR::InstKind::StructInit:
+    case SemIR::InstKind::TupleInit: {
+      auto init = inst.As<AnyAggregateInit>();
+      FormatArgs(init.elements_id);
+      FormatReturnSlotArg(init.dest_id);
+      return;
+    }
+
+    case SemIR::InstKind::ImportRefLoaded:
+    case SemIR::InstKind::ImportRefUnloaded:
+      FormatImportRefRhs(inst.As<AnyImportRef>());
+      return;
+
+    case SemIR::InstKind::OutParam:
+    case SemIR::InstKind::RefParam:
+    case SemIR::InstKind::ValueParam: {
+      auto param = inst.As<AnyParam>();
+      FormatArgs(param.index);
+      // Omit pretty_name because it's an implementation detail of
+      // pretty-printing.
+      return;
+    }
+
+    case CARBON_KIND(AssociatedConstantDecl decl): {
+      FormatArgs(decl.assoc_const_id);
+      llvm::SaveAndRestore scope(scope_,
+                                 inst_namer_.GetScopeFor(decl.assoc_const_id));
+      FormatTrailingBlock(decl.decl_block_id);
+      return;
+    }
+
+    case CARBON_KIND(BindSymbolicName bind): {
+      // A BindSymbolicName with no value is a purely symbolic binding, such as
+      // the `Self` in an interface. Don't print out `none` for the value.
+      if (bind.value_id.has_value()) {
+        FormatArgs(bind.entity_name_id, bind.value_id);
+      } else {
+        FormatArgs(bind.entity_name_id);
+      }
+      return;
+    }
+
+    case CARBON_KIND(BlockArg block): {
+      out_ << " ";
+      FormatLabel(block.block_id);
+      return;
+    }
+
+    case CARBON_KIND(Call call): {
+      FormatCallRhs(call);
+      return;
+    }
+
+    case CARBON_KIND(ClassDecl decl): {
+      FormatDeclRhs(decl.class_id,
+                    sem_ir_->classes().Get(decl.class_id).pattern_block_id,
+                    decl.decl_block_id);
+      return;
+    }
+
+    case CARBON_KIND(FloatLiteral value): {
+      llvm::SmallVector<char, 16> buffer;
+      sem_ir_->floats().Get(value.float_id).toString(buffer);
+      out_ << " " << buffer;
+      return;
+    }
+
+    case CARBON_KIND(FunctionDecl decl): {
+      FormatDeclRhs(decl.function_id,
+                    sem_ir_->functions().Get(decl.function_id).pattern_block_id,
+                    decl.decl_block_id);
+      return;
+    }
+
+    case InstKind::ImportCppDecl: {
+      FormatImportCppDeclRhs();
+      return;
+    }
+
+    case CARBON_KIND(ImplDecl decl): {
+      FormatDeclRhs(decl.impl_id,
+                    sem_ir_->impls().Get(decl.impl_id).pattern_block_id,
+                    decl.decl_block_id);
+      return;
+    }
+
+    case CARBON_KIND(InitializeFrom init): {
+      FormatArgs(init.src_id);
+      FormatReturnSlotArg(init.dest_id);
+      return;
+    }
+
+    case CARBON_KIND(InstValue inst): {
+      out_ << ' ';
+      OpenBrace();
+      // TODO: Should we use a more compact representation in the case where the
+      // inst is a SpliceBlock?
+      FormatInst(inst.inst_id);
+      CloseBrace();
+      return;
+    }
+
+    case CARBON_KIND(InterfaceDecl decl): {
+      FormatDeclRhs(
+          decl.interface_id,
+          sem_ir_->interfaces().Get(decl.interface_id).pattern_block_id,
+          decl.decl_block_id);
+      return;
+    }
+
+    case CARBON_KIND(IntValue value): {
+      out_ << " ";
+      sem_ir_->ints()
+          .Get(value.int_id)
+          .print(out_, sem_ir_->types().IsSignedInt(value.type_id));
+      return;
+    }
+
+    case CARBON_KIND(NameBindingDecl name): {
+      FormatTrailingBlock(name.pattern_block_id);
+      return;
+    }
+
+    case CARBON_KIND(Namespace ns): {
+      if (ns.import_id.has_value()) {
+        FormatArgs(ns.import_id, ns.name_scope_id);
+      } else {
+        FormatArgs(ns.name_scope_id);
+      }
+      return;
+    }
+
+    case CARBON_KIND(ReturnExpr ret): {
+      FormatArgs(ret.expr_id);
+      if (ret.dest_id.has_value()) {
+        FormatReturnSlotArg(ret.dest_id);
+      }
+      return;
+    }
+
+    case CARBON_KIND(ReturnSlot ret): {
+      // Omit inst.type_inst_id because it's not semantically significant.
+      FormatArgs(ret.storage_id);
+      return;
+    }
+
+    case InstKind::ReturnSlotPattern:
+      // No-op because type_id is the only semantically significant field,
+      // and it's handled separately.
+      return;
+
+    case CARBON_KIND(SpliceBlock splice): {
+      FormatArgs(splice.result_id);
+      FormatTrailingBlock(splice.block_id);
+      return;
+    }
+
+    case CARBON_KIND(StructType struct_type): {
+      out_ << " {";
+      llvm::ListSeparator sep;
+      for (auto field :
+           sem_ir_->struct_type_fields().Get(struct_type.fields_id)) {
+        out_ << sep << ".";
+        FormatName(field.name_id);
+        out_ << ": ";
+        FormatInstAsType(field.type_inst_id);
+      }
+      out_ << "}";
+      return;
+    }
+
+    case CARBON_KIND(WhereExpr where): {
+      FormatArgs(where.period_self_id);
+      FormatTrailingBlock(where.requirements_id);
+      return;
+    }
+
+    default:
+      FormatInstRhsDefault(inst);
+      return;
   }
 }
 
-auto Formatter::FormatInstRhs(BlockArg inst) -> void {
+auto Formatter::FormatInstRhsDefault(Inst inst) -> void {
+  auto arg0 = inst.arg0_and_kind();
+  if (arg0.kind() == IdKind::None) {
+    return;
+  }
   out_ << " ";
-  FormatLabel(inst.block_id);
-}
+  FormatInstArgAndKind(arg0);
 
-auto Formatter::FormatInstRhs(Namespace inst) -> void {
-  if (inst.import_id.has_value()) {
-    FormatArgs(inst.import_id, inst.name_scope_id);
-  } else {
-    FormatArgs(inst.name_scope_id);
+  auto arg1 = inst.arg1_and_kind();
+  if (arg1.kind() == IdKind::None) {
+    return;
   }
-}
 
-auto Formatter::FormatInst(InstId /*inst_id*/, BranchIf inst) -> void {
-  if (!in_terminator_sequence_) {
-    Indent();
+  // Several instructions have a second operand that's a specific ID. We
+  // don't include it in the argument list if there is no corresponding
+  // specific, that is, when we're not in a generic context.
+  if (auto arg1_specific_id = arg1.TryAs<SpecificId>();
+      arg1_specific_id && !arg1_specific_id->has_value()) {
+    return;
   }
-  out_ << "if ";
-  FormatName(inst.cond_id);
-  out_ << " " << Branch::Kind.ir_name() << " ";
-  FormatLabel(inst.target_id);
-  out_ << " else ";
-  in_terminator_sequence_ = true;
+  out_ << ", ";
+  FormatInstArgAndKind(arg1);
 }
 
-auto Formatter::FormatInst(InstId /*inst_id*/, BranchWithArg inst) -> void {
-  if (!in_terminator_sequence_) {
-    Indent();
-  }
-  out_ << BranchWithArg::Kind.ir_name() << " ";
-  FormatLabel(inst.target_id);
-  out_ << "(";
-  FormatName(inst.arg_id);
-  out_ << ")\n";
-  in_terminator_sequence_ = false;
-}
-
-auto Formatter::FormatInst(InstId /*inst_id*/, Branch inst) -> void {
-  if (!in_terminator_sequence_) {
-    Indent();
-  }
-  out_ << Branch::Kind.ir_name() << " ";
-  FormatLabel(inst.target_id);
-  out_ << "\n";
-  in_terminator_sequence_ = false;
-}
-
-auto Formatter::FormatInstRhs(Call inst) -> void {
+auto Formatter::FormatCallRhs(Call inst) -> void {
   out_ << " ";
   FormatArg(inst.callee_id);
 
@@ -955,116 +1148,7 @@ auto Formatter::FormatInstRhs(Call inst) -> void {
   }
 }
 
-auto Formatter::FormatInstRhs(ArrayInit inst) -> void {
-  FormatArgs(inst.inits_id);
-  FormatReturnSlotArg(inst.dest_id);
-}
-
-auto Formatter::Formatter::FormatInstRhs(InitializeFrom inst) -> void {
-  FormatArgs(inst.src_id);
-  FormatReturnSlotArg(inst.dest_id);
-}
-
-auto Formatter::FormatInstRhs(ValueParam inst) -> void {
-  FormatArgs(inst.index);
-  // Omit pretty_name because it's an implementation detail of
-  // pretty-printing.
-}
-
-auto Formatter::FormatInstRhs(RefParam inst) -> void {
-  FormatArgs(inst.index);
-  // Omit pretty_name because it's an implementation detail of
-  // pretty-printing.
-}
-
-auto Formatter::FormatInstRhs(OutParam inst) -> void {
-  FormatArgs(inst.index);
-  // Omit pretty_name because it's an implementation detail of
-  // pretty-printing.
-}
-
-auto Formatter::FormatInstRhs(ReturnExpr ret) -> void {
-  FormatArgs(ret.expr_id);
-  if (ret.dest_id.has_value()) {
-    FormatReturnSlotArg(ret.dest_id);
-  }
-}
-
-auto Formatter::FormatInstRhs(ReturnSlot inst) -> void {
-  // Omit inst.type_inst_id because it's not semantically significant.
-  FormatArgs(inst.storage_id);
-}
-
-auto Formatter::FormatInstRhs(ReturnSlotPattern /*inst*/) -> void {
-  // No-op because type_id is the only semantically significant field,
-  // and it's handled separately.
-}
-
-auto Formatter::FormatInstRhs(StructInit init) -> void {
-  FormatArgs(init.elements_id);
-  FormatReturnSlotArg(init.dest_id);
-}
-
-auto Formatter::FormatInstRhs(TupleInit init) -> void {
-  FormatArgs(init.elements_id);
-  FormatReturnSlotArg(init.dest_id);
-}
-
-auto Formatter::FormatInstRhs(FunctionDecl inst) -> void {
-  FormatArgs(inst.function_id);
-  llvm::SaveAndRestore class_scope(scope_,
-                                   inst_namer_.GetScopeFor(inst.function_id));
-  FormatTrailingBlock(
-      sem_ir_->functions().Get(inst.function_id).pattern_block_id);
-  FormatTrailingBlock(inst.decl_block_id);
-}
-
-auto Formatter::FormatInstRhs(ClassDecl inst) -> void {
-  FormatArgs(inst.class_id);
-  llvm::SaveAndRestore class_scope(scope_,
-                                   inst_namer_.GetScopeFor(inst.class_id));
-  FormatTrailingBlock(sem_ir_->classes().Get(inst.class_id).pattern_block_id);
-  FormatTrailingBlock(inst.decl_block_id);
-}
-
-auto Formatter::FormatInstRhs(ImplDecl inst) -> void {
-  FormatArgs(inst.impl_id);
-  llvm::SaveAndRestore class_scope(scope_,
-                                   inst_namer_.GetScopeFor(inst.impl_id));
-  FormatTrailingBlock(sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
-  FormatTrailingBlock(inst.decl_block_id);
-}
-
-auto Formatter::FormatInstRhs(InterfaceDecl inst) -> void {
-  FormatArgs(inst.interface_id);
-  llvm::SaveAndRestore class_scope(scope_,
-                                   inst_namer_.GetScopeFor(inst.interface_id));
-  FormatTrailingBlock(
-      sem_ir_->interfaces().Get(inst.interface_id).pattern_block_id);
-  FormatTrailingBlock(inst.decl_block_id);
-}
-
-auto Formatter::FormatInstRhs(AssociatedConstantDecl inst) -> void {
-  FormatArgs(inst.assoc_const_id);
-  llvm::SaveAndRestore assoc_const_scope(
-      scope_, inst_namer_.GetScopeFor(inst.assoc_const_id));
-  FormatTrailingBlock(inst.decl_block_id);
-}
-
-auto Formatter::FormatInstRhs(IntValue inst) -> void {
-  out_ << " ";
-  sem_ir_->ints()
-      .Get(inst.int_id)
-      .print(out_, sem_ir_->types().IsSignedInt(inst.type_id));
-}
-
-auto Formatter::FormatInstRhs(FloatLiteral inst) -> void {
-  llvm::SmallVector<char, 16> buffer;
-  sem_ir_->floats().Get(inst.float_id).toString(buffer);
-  out_ << " " << buffer;
-}
-
-auto Formatter::FormatInstRhs(ImportCppDecl /*inst*/) -> void {
+auto Formatter::FormatImportCppDeclRhs() -> void {
   out_ << " ";
   OpenBrace();
   for (ImportCpp import_cpp : sem_ir_->import_cpps().array_ref()) {
@@ -1077,16 +1161,14 @@ auto Formatter::FormatInstRhs(ImportCppDecl /*inst*/) -> void {
   CloseBrace();
 }
 
-auto Formatter::FormatImportRefRhs(ImportIRInstId import_ir_inst_id,
-                                   EntityNameId entity_name_id,
-                                   llvm::StringLiteral loaded_label) -> void {
+auto Formatter::FormatImportRefRhs(AnyImportRef inst) -> void {
   out_ << " ";
-  auto import_ir_inst = sem_ir_->import_ir_insts().Get(import_ir_inst_id);
+  auto import_ir_inst = sem_ir_->import_ir_insts().Get(inst.import_ir_inst_id);
   FormatArg(import_ir_inst.ir_id());
   out_ << ", ";
-  if (entity_name_id.has_value()) {
+  if (inst.entity_name_id.has_value()) {
     // Prefer to show the entity name when possible.
-    FormatArg(entity_name_id);
+    FormatArg(inst.entity_name_id);
   } else {
     // Show a name based on the location when possible, or the numeric
     // instruction as a last resort.
@@ -1116,50 +1198,8 @@ auto Formatter::FormatImportRefRhs(ImportIRInstId import_ir_inst_id,
         CARBON_FATAL("Unexpected LocId: {0}", loc_id);
     }
   }
-  out_ << ", " << loaded_label;
-}
-
-auto Formatter::FormatInstRhs(ImportRefLoaded inst) -> void {
-  FormatImportRefRhs(inst.import_ir_inst_id, inst.entity_name_id, "loaded");
-}
-
-auto Formatter::FormatInstRhs(ImportRefUnloaded inst) -> void {
-  FormatImportRefRhs(inst.import_ir_inst_id, inst.entity_name_id, "unloaded");
-}
-
-auto Formatter::FormatInstRhs(InstValue inst) -> void {
-  out_ << ' ';
-  OpenBrace();
-  // TODO: Should we use a more compact representation in the case where the
-  // inst is a SpliceBlock?
-  FormatInst(inst.inst_id);
-  CloseBrace();
-}
-
-auto Formatter::FormatInstRhs(NameBindingDecl inst) -> void {
-  FormatTrailingBlock(inst.pattern_block_id);
-}
-
-auto Formatter::FormatInstRhs(SpliceBlock inst) -> void {
-  FormatArgs(inst.result_id);
-  FormatTrailingBlock(inst.block_id);
-}
-
-auto Formatter::FormatInstRhs(WhereExpr inst) -> void {
-  FormatArgs(inst.period_self_id);
-  FormatTrailingBlock(inst.requirements_id);
-}
-
-auto Formatter::FormatInstRhs(StructType inst) -> void {
-  out_ << " {";
-  llvm::ListSeparator sep;
-  for (auto field : sem_ir_->struct_type_fields().Get(inst.fields_id)) {
-    out_ << sep << ".";
-    FormatName(field.name_id);
-    out_ << ": ";
-    FormatInstAsType(field.type_inst_id);
-  }
-  out_ << "}";
+  out_ << ", "
+       << (inst.kind == InstKind::ImportRefLoaded ? "loaded" : "unloaded");
 }
 
 auto Formatter::FormatArg(EntityNameId id) -> void {

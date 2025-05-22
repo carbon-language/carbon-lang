@@ -179,7 +179,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 // TODO: Consider to always have a (non-null) AST.
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                        llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
+                        llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                        llvm::StringRef target)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
   // TODO: Use all import locations by referring each Clang diagnostic to the
   // relevant import.
@@ -190,9 +191,12 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
       GenerateCppIncludesHeaderCode(context, imports),
-      // Parse C++ (and not C)
-      {"-x", "c++"}, (importing_file_path + ".generated.cpp_imports.h").str(),
-      "clang-tool", std::make_shared<clang::PCHContainerOperations>(),
+      // Parse C++ (and not C).
+      {"-x", "c++",
+       // Propagate the target to Clang.
+       "-target", target.str()},
+      (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
+      std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
   // Remove link to the diagnostics consumer before its deletion.
@@ -235,8 +239,8 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
-    -> std::unique_ptr<clang::ASTUnit> {
+                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                    llvm::StringRef target) -> std::unique_ptr<clang::ASTUnit> {
   if (imports.empty()) {
     return nullptr;
   }
@@ -244,7 +248,7 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   CARBON_CHECK(!context.sem_ir().cpp_ast());
 
   auto [generated_ast, ast_has_error] =
-      GenerateAst(context, importing_file_path, imports, fs);
+      GenerateAst(context, importing_file_path, imports, fs, target);
 
   PackageNameId package_id = imports.front().package_id;
   CARBON_CHECK(
@@ -422,7 +426,7 @@ static auto GetReturnType(Context& context, SemIR::LocId loc_id,
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                SemIR::NameScopeId scope_id,
                                SemIR::NameId name_id,
-                               const clang::FunctionDecl* clang_decl)
+                               clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
@@ -603,7 +607,7 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
 static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
                            SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                            clang::NamedDecl* clang_decl) -> SemIR::InstId {
-  if (const auto* clang_function_decl =
+  if (auto* clang_function_decl =
           clang::dyn_cast<clang::FunctionDecl>(clang_decl)) {
     return ImportFunctionDecl(context, loc_id, scope_id, name_id,
                               clang_function_decl);

@@ -16,6 +16,7 @@ namespace Carbon::Lower {
 
 // Lowers SemIR to LLVM IR.
 auto LowerToLLVM(llvm::LLVMContext& llvm_context,
+                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                  std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
                      tree_and_subtrees_getters_for_debug_info,
                  llvm::StringRef module_name, const SemIR::File& sem_ir,

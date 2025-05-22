@@ -130,10 +130,10 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %w: %i32 = bind_name w, <error>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.268 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc45_1: %pattern_type.268 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.268 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.ba9 = var x
-// CHECK:STDOUT:   %.loc45_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.ba9] {
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.ba9 = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %.loc45: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.ba9] {
 // CHECK:STDOUT:     %int_32.loc45: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc45: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
@@ -141,10 +141,10 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %x: ref %struct_type.a.ba9 = bind_name x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.366 = binding_pattern y [concrete]
-// CHECK:STDOUT:     %.loc54_1: %pattern_type.366 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.366 = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %struct_type.b.c = var y
-// CHECK:STDOUT:   %.loc54_25: type = splice_block %struct_type.b.c [concrete = constants.%struct_type.b.c] {
+// CHECK:STDOUT:   %y.var: ref %struct_type.b.c = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %.loc54: type = splice_block %struct_type.b.c [concrete = constants.%struct_type.b.c] {
 // CHECK:STDOUT:     %int_32.loc54_13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc54_13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc54_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

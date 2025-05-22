@@ -171,16 +171,16 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.3c1) = binding_pattern v [concrete]
-// CHECK:STDOUT:       %.loc9_3.1: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.3c1) = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:       %v.var_patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.3c1) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = var v
+// CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = var %v.var_patt
 // CHECK:STDOUT:     %x.ref: @InitFromStructGeneric.%T.loc8_26.2 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc9_28.1: @InitFromStructGeneric.%struct_type.k (%struct_type.k.b21) = struct_literal (%x.ref)
 // CHECK:STDOUT:     %.loc9_28.2: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = class_element_access %v.var, element0
 // CHECK:STDOUT:     %.loc9_28.3: init @InitFromStructGeneric.%T.loc8_26.2 (%T) = initialize_from %x.ref to %.loc9_28.2
 // CHECK:STDOUT:     %.loc9_28.4: init @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = class_init (%.loc9_28.3), %v.var
-// CHECK:STDOUT:     %.loc9_3.2: init @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = converted %.loc9_28.1, %.loc9_28.4
-// CHECK:STDOUT:     assign %v.var, %.loc9_3.2
+// CHECK:STDOUT:     %.loc9_3: init @InitFromStructGeneric.%Class.loc9_17.2 (%Class.fe1) = converted %.loc9_28.1, %.loc9_28.4
+// CHECK:STDOUT:     assign %v.var, %.loc9_3
 // CHECK:STDOUT:     %.loc9_17: type = splice_block %Class.loc9_17.1 [symbolic = %Class.loc9_17.2 (constants.%Class.fe1)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %T.ref.loc9: type = name_ref T, %T.loc8_26.1 [symbolic = %T.loc8_26.2 (constants.%T)]
@@ -199,16 +199,16 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.0fa = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.0fa = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.0fa = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %Class.247 = var v
+// CHECK:STDOUT:   %v.var: ref %Class.247 = var %v.var_patt
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %.loc14_30.1: %struct_type.k.0bf = struct_literal (%x.ref)
 // CHECK:STDOUT:   %.loc14_30.2: ref %i32 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %.loc14_30.3: init %i32 = initialize_from %x.ref to %.loc14_30.2
 // CHECK:STDOUT:   %.loc14_30.4: init %Class.247 = class_init (%.loc14_30.3), %v.var
-// CHECK:STDOUT:   %.loc14_3.2: init %Class.247 = converted %.loc14_30.1, %.loc14_30.4
-// CHECK:STDOUT:   assign %v.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %Class.247 = converted %.loc14_30.1, %.loc14_30.4
+// CHECK:STDOUT:   assign %v.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_19: type = splice_block %Class [concrete = constants.%Class.247] {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

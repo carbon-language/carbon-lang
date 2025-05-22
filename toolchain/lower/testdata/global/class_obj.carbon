@@ -14,13 +14,13 @@ var a: A = {};
 // CHECK:STDOUT: ; ModuleID = 'class_obj.carbon'
 // CHECK:STDOUT: source_filename = "class_obj.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = internal global {} zeroinitializer
+// CHECK:STDOUT: @_Ca.Main = global {} zeroinitializer
 // CHECK:STDOUT: @A.val.loc12_1 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @a, ptr align 1 @A.val.loc12_1, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @_Ca.Main, ptr align 1 @A.val.loc12_1, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -9,10 +9,12 @@
 #include <string>
 #include <utility>
 
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "common/check.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/constant.h"
@@ -33,6 +35,7 @@ namespace Carbon::Lower {
 
 FileContext::FileContext(
     llvm::LLVMContext& llvm_context,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
         tree_and_subtrees_getters_for_debug_info,
     llvm::StringRef module_name, const SemIR::File& sem_ir,
@@ -40,6 +43,7 @@ FileContext::FileContext(
     llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
+      fs_(std::move(fs)),
       di_builder_(*llvm_module_),
       di_compile_unit_(
           tree_and_subtrees_getters_for_debug_info
@@ -51,6 +55,8 @@ FileContext::FileContext(
       cpp_ast_(cpp_ast),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
+  // Initialization that relies on invariants of the class.
+  cpp_code_generator_ = CreateCppCodeGenerator();
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
@@ -58,6 +64,10 @@ FileContext::FileContext(
 // TODO: Move this to lower.cpp.
 auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_, "Run can only be called once.");
+
+  if (cpp_code_generator_) {
+    cpp_code_generator_->Initialize(cpp_ast()->getASTContext());
+  }
 
   // Lower all types that were required to be complete.
   types_.resize(sem_ir_->insts().size());
@@ -83,12 +93,18 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   specific_functions_.resize(sem_ir_->specifics().size());
 
   // Lower global variable declarations.
+  // TODO: Storing both a `constants_` array and a separate `global_variables_`
+  // map is redundant.
   for (auto inst_id :
        sem_ir().inst_blocks().Get(sem_ir().top_inst_block_id())) {
     // Only `VarStorage` indicates a global variable declaration in the
     // top instruction block.
     if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-      global_variables_.Insert(inst_id, BuildGlobalVariableDecl(*var));
+      auto* var_decl = BuildGlobalVariableDecl(*var);
+      global_variables_.Insert(inst_id, var_decl);
+      // Also store the global variable with the ID of the pattern so
+      // constant lowering can find it.
+      global_variables_.Insert(var->pattern_id, var_decl);
     }
   }
 
@@ -118,6 +134,15 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
                               /*Priority=*/0);
   }
 
+  if (cpp_code_generator_) {
+    cpp_code_generator_->HandleTranslationUnit(cpp_ast()->getASTContext());
+    bool link_error = llvm::Linker::linkModules(
+        /*Dest=*/*llvm_module_,
+        /*Src=*/std::unique_ptr<llvm::Module>(
+            cpp_code_generator_->ReleaseModule()));
+    CARBON_CHECK(!link_error);
+  }
+
   return std::move(llvm_module_);
 }
 
@@ -138,6 +163,21 @@ auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
                                       "carbon",
                                       /*isOptimized=*/false, /*Flags=*/"",
                                       /*RV=*/0);
+}
+
+auto FileContext::CreateCppCodeGenerator()
+    -> std::unique_ptr<clang::CodeGenerator> {
+  if (!cpp_ast()) {
+    return nullptr;
+  }
+
+  RawStringOstream clang_module_name_stream;
+  clang_module_name_stream << llvm_module_->getName() << ".clang";
+
+  return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
+      cpp_ast()->getASTContext().getDiagnostics(),
+      clang_module_name_stream.TakeStr(), fs_, cpp_header_search_options_,
+      cpp_preprocessor_options_, cpp_code_gen_options_, *llvm_context_));
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id,
@@ -361,7 +401,8 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id,
     -> void {
   const auto& function = sem_ir().functions().Get(function_id);
   const auto& body_block_ids = function.body_block_ids;
-  if (body_block_ids.empty()) {
+  if (body_block_ids.empty() &&
+      (!function.cpp_decl || !function.cpp_decl->isDefined())) {
     // Function is probably defined in another file; not an error.
     return;
   }
@@ -390,6 +431,29 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                                     SemIR::SpecificId specific_id) -> void {
   const auto& body_block_ids = function.body_block_ids;
   CARBON_DCHECK(llvm_function, "LLVM Function not found when lowering body.");
+
+  if (function.cpp_decl) {
+    // TODO: To support recursive inline functions, collect all calls to
+    // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
+    // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
+    // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
+    clang::FunctionDecl* cpp_def = function.cpp_decl->getDefinition();
+    CARBON_DCHECK(cpp_def, "No Clang function body found during lowering");
+
+    // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`) so
+    // that code generation (`CodeGenModule::EmitGlobal()`) would see this
+    // function name (`CodeGenModule::getMangledName()`), and will generate its
+    // definition.
+    llvm::Constant* function_address =
+        cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
+                                             /*isForDefinition=*/false);
+    CARBON_DCHECK(function_address);
+
+    // Emit the function code.
+    cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
+    return;
+  }
+
   CARBON_DCHECK(!body_block_ids.empty(),
                 "No function body blocks found during lowering.");
 
@@ -530,9 +594,7 @@ static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
 }
 
 template <typename InstT>
-  requires(InstT::Kind.constant_kind() ==
-               SemIR::InstConstantKind::SymbolicOnly &&
-           InstT::Kind.is_type() != SemIR::InstIsType::Never)
+  requires(InstT::Kind.is_symbolic_when_type())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Treat non-monomorphized symbolic types as opaque.
@@ -701,14 +763,29 @@ auto FileContext::BuildType(SemIR::InstId inst_id) -> llvm::Type* {
 
 auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  // TODO: Mangle name.
-  auto mangled_name =
-      *sem_ir().names().GetAsStringIfIdentifier(var_storage.pretty_name_id);
+  Mangler m(*this);
+  auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
+  auto linkage = llvm::GlobalVariable::ExternalLinkage;
+
+  // If the variable doesn't have an externally-visible name, demote it to
+  // internal linkage and invent a plausible name that shouldn't collide with
+  // any of our real manglings.
+  if (mangled_name.empty()) {
+    linkage = llvm::GlobalVariable::InternalLinkage;
+    if (inst_namer_) {
+      mangled_name =
+          ("var.anon" + inst_namer_->GetUnscopedNameFor(var_storage.pattern_id))
+              .str();
+    }
+  }
+
   auto* type = GetType(var_storage.type_id);
-  return new llvm::GlobalVariable(
-      llvm_module(), type,
-      /*isConstant=*/false, llvm::GlobalVariable::InternalLinkage,
-      llvm::Constant::getNullValue(type), mangled_name);
+  // TODO: Create a declaration instead of a definition if this variable was
+  // imported.
+  return new llvm::GlobalVariable(llvm_module(), type,
+                                  /*isConstant=*/false, linkage,
+                                  llvm::Constant::getNullValue(type),
+                                  mangled_name);
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {

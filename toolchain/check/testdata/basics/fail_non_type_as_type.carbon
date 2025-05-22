@@ -43,9 +43,9 @@ var x: type = 42;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.98f = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc18: %pattern_type.98f = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.98f = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref type = var x
+// CHECK:STDOUT:   %x.var: ref type = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

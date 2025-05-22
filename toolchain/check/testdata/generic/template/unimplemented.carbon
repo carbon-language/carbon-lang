@@ -286,30 +286,30 @@ fn F[template T:! type](x: T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %ImplicitAs.type.loc14_3.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc4_15.2)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
-// CHECK:STDOUT:   %.loc14_3.4: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
-// CHECK:STDOUT:   %.loc14_3.5: type = type_of_inst %.loc14_3.4 [template]
+// CHECK:STDOUT:   %.loc14_3.3: <instruction> = access_member_action %ImplicitAs.type.loc14_3.1, Convert [template]
+// CHECK:STDOUT:   %.loc14_3.4: type = type_of_inst %.loc14_3.3 [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = binding_pattern v [concrete]
-// CHECK:STDOUT:       %.loc14_3.1: @F.%pattern_type (%pattern_type.7dcd0a.1) = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:       %v.var_patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @F.%T.loc4_15.2 (%T) = var v
+// CHECK:STDOUT:     %v.var: ref @F.%T.loc4_15.2 (%T) = var %v.var_patt
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:     %ImplicitAs.type.loc14_3.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T)> [template = %ImplicitAs.type.loc14_3.2 (constants.%ImplicitAs.type.d628ce.2)]
-// CHECK:STDOUT:     %.loc14_3.2: @F.%.loc14_3.5 (@F.%.loc14_3.5) = splice_inst %.loc14_3.4
-// CHECK:STDOUT:     %.loc14_3.3: @F.%T.loc4_15.2 (%T) = converted %int_0, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc14_3.1: @F.%.loc14_3.4 (@F.%.loc14_3.4) = splice_inst %.loc14_3.3
+// CHECK:STDOUT:     %.loc14_3.2: @F.%T.loc4_15.2 (%T) = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %v.var, <error>
 // CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:     %v: ref @F.%T.loc4_15.2 (%T) = bind_name v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %w.patt: %pattern_type.7ce = binding_pattern w [concrete]
-// CHECK:STDOUT:       %.loc22_3.1: %pattern_type.7ce = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:       %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w.var: ref %i32 = var w
+// CHECK:STDOUT:     %w.var: ref %i32 = var %w.var_patt
 // CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc22_3.2: %i32 = converted %x.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc22_3: %i32 = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %w.var, <error>
 // CHECK:STDOUT:     %.loc22_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

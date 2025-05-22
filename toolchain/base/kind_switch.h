@@ -186,7 +186,7 @@ constexpr auto CaseValueOfTypeInStdVariant =
 // Given `CARBON_KIND_SWITCH(value)` this returns the actual value to switch on.
 //
 // For types with a `kind()` accessor, this is the just the value of `kind()`.
-// The type returned from `kind()` is expected to be a `SemIR::TypeEnum`, as it
+// The type returned from `kind()` is expected to be a `TypeEnum`, as it
 // is required to have its API, including a nested `RawEnumType`.
 //
 // For std::variant<...> this is an enum synthesized from the types in the

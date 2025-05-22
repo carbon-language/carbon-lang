@@ -225,9 +225,9 @@ private class Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc4: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %Def = var c
+// CHECK:STDOUT:   %c.var: ref %Def = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def]
 // CHECK:STDOUT:   %c: ref %Def = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -262,9 +262,9 @@ private class Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
 // CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT: }
@@ -297,9 +297,9 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
@@ -339,9 +339,9 @@ private class Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc4: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %ForwardWithDef = var c
+// CHECK:STDOUT:   %c.var: ref %ForwardWithDef = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %c: ref %ForwardWithDef = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -376,9 +376,9 @@ private class Redecl {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
 // CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT: }
@@ -411,9 +411,9 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
