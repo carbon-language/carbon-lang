@@ -29,17 +29,9 @@ fn F(true_: True, false_: False) {
 fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
   //@dump-sem-ir-begin
   return Greater(a, b);
-  // CHECK:STDERR: float_greater.carbon:[[@LINE+4]]:3: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
-  // CHECK:STDERR:   //@dump-sem-ir-begin
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR:
   //@dump-sem-ir-end
 }
 
-// CHECK:STDERR: float_greater.carbon:[[@LINE+24]]:17: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
-// CHECK:STDERR: // CHECK:STDOUT:
-// CHECK:STDERR:                 ^
-// CHECK:STDERR:
 // CHECK:STDOUT: --- float_greater.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
