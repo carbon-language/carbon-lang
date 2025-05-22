@@ -17,6 +17,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
@@ -2610,6 +2611,27 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::StructAccess inst) -> ResolveResult {
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  auto struct_id = GetLocalConstantInstId(resolver, inst.struct_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  // A `struct_access` constant requires its struct operand to have a complete
+  // type.
+  CompleteTypeOrCheckFail(resolver.local_context(),
+                          resolver.local_insts().Get(struct_id).type_id());
+
+  return ResolveAsDeduplicated<SemIR::StructAccess>(
+      resolver,
+      {.type_id =
+           resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
+       .struct_id = struct_id,
+       .index = inst.index});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::StructType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
   auto orig_fields = resolver.import_struct_type_fields().Get(inst.fields_id);
@@ -2653,6 +2675,44 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
        .elements_id =
            GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elems)});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::TupleAccess inst) -> ResolveResult {
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  auto tuple_id = GetLocalConstantInstId(resolver, inst.tuple_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  // A `tuple_access` constant requires its struct operand to have a complete
+  // type.
+  CompleteTypeOrCheckFail(resolver.local_context(),
+                          resolver.local_insts().Get(tuple_id).type_id());
+
+  return ResolveAsDeduplicated<SemIR::TupleAccess>(
+      resolver,
+      {.type_id =
+           resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
+       .tuple_id = tuple_id,
+       .index = inst.index});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::TuplePattern inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAsUnique<SemIR::TuplePattern>(
+      resolver, import_inst_id,
+      {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
+           type_const_id),
+       .elements_id =
+           GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2915,6 +2975,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::SpecificImplFunction inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::StructAccess inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::StructType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -2922,6 +2985,12 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
+    }
+    case CARBON_KIND(SemIR::TupleAccess inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::TuplePattern inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::TupleType inst): {
