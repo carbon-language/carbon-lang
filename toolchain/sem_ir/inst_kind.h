@@ -79,11 +79,10 @@ enum class InstConstantKind : int8_t {
   // directly back to the instruction, rather than to a separate instruction in
   // the constants block.
   // TODO: Decide if this is the model we want for these cases.
-  Unique,
+  AlwaysUnique,
   // The instruction may be a unique constant, as described for `Unique`.
-  // Otherwise the instruction is not constant.
-  // This is used for `VarStorage`, where global variables are `Unique` and
-  // other variables are non-constant.
+  // Otherwise the instruction is not constant. This is used for `VarStorage`,
+  // where global variables are `Unique` and other variables are non-constant.
   ConditionalUnique,
 };
 
@@ -138,7 +137,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     InstIsType is_type = InstIsType::Never;
     InstConstantKind constant_kind = InstConstantKind::Indirect;
     InstConstantNeedsInstIdKind constant_needs_inst_id =
-        constant_kind == InstConstantKind::Unique
+        constant_kind == InstConstantKind::AlwaysUnique
             ? InstConstantNeedsInstIdKind::Permanent
             : InstConstantNeedsInstIdKind::No;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;

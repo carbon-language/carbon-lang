@@ -107,7 +107,7 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
     case SemIR::InstConstantKind::InstAction:
     case SemIR::InstConstantKind::WheneverPossible:
     case SemIR::InstConstantKind::Always:
-    case SemIR::InstConstantKind::Unique:
+    case SemIR::InstConstantKind::AlwaysUnique:
       return false;
 
     case SemIR::InstConstantKind::Indirect:

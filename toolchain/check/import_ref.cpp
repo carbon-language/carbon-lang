@@ -1211,8 +1211,11 @@ static auto RetryOrDone(ImportRefResolver& resolver, SemIR::ConstantId const_id)
 template <typename InstT>
 static auto ResolveAsDeduplicated(ImportRefResolver& resolver, InstT inst)
     -> ResolveResult {
-  static_assert(InstT::Kind.constant_kind() != SemIR::InstConstantKind::Unique,
-                "Use ResolveAsUnique");
+  static_assert(
+      InstT::Kind.constant_kind() != SemIR::InstConstantKind::AlwaysUnique &&
+          InstT::Kind.constant_kind() !=
+              SemIR::InstConstantKind::ConditionalUnique,
+      "Use ResolveAsUnique");
   CARBON_CHECK(!resolver.HasNewWork());
   // AddImportedConstant produces an unattached constant, so its type must
   // be unattached as well.
@@ -1240,7 +1243,7 @@ static auto ResolveAsUnique(ImportRefResolver& resolver,
                             SemIR::InstId import_inst_id, InstT inst)
     -> ResolveResult {
   static_assert(
-      InstT::Kind.constant_kind() == SemIR::InstConstantKind::Unique ||
+      InstT::Kind.constant_kind() == SemIR::InstConstantKind::AlwaysUnique ||
           InstT::Kind.constant_kind() ==
               SemIR::InstConstantKind::ConditionalUnique,
       "Use ResolveAsDeduplicated");
