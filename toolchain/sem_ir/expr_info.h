@@ -43,7 +43,7 @@ enum class ExprCategory : int8_t {
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
 // Returns whether the given expression category is for a reference expression.
-inline auto IsReferenceCategory(ExprCategory cat) -> bool {
+inline auto IsRefCategory(ExprCategory cat) -> bool {
   return cat == ExprCategory::DurableRef || cat == ExprCategory::EphemeralRef;
 }
 

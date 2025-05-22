@@ -105,12 +105,9 @@ auto EvalConstantInst(Context& context, SemIR::BindAlias inst)
 
 auto EvalConstantInst(Context& context, SemIR::BindName inst)
     -> ConstantEvalResult {
-  if (!inst.value_id.has_value()) {
-    return ConstantEvalResult::NotConstant;
-  }
-
   // A reference binding evaluates to the value it's bound to.
-  if (SemIR::IsReferenceCategory(
+  if (inst.value_id.has_value() &&
+      SemIR::IsRefCategory(
           SemIR::GetExprCategory(context.sem_ir(), inst.value_id))) {
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst.value_id));
