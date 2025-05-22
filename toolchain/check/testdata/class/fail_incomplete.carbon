@@ -252,9 +252,9 @@ class C {
 // CHECK:STDOUT:   %CallClassFunction.decl: %CallClassFunction.type = fn_decl @CallClassFunction [concrete = constants.%CallClassFunction] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %global_var.patt: <error> = binding_pattern global_var [concrete]
-// CHECK:STDOUT:     %.loc33: <error> = var_pattern %global_var.patt [concrete]
+// CHECK:STDOUT:     %global_var.var_patt: <error> = var_pattern %global_var.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %global_var.var: ref <error> = var global_var
+// CHECK:STDOUT:   %global_var.var: ref <error> = var %global_var.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %global_var: <error> = bind_name global_var, <error>
 // CHECK:STDOUT:   %ConvertFromStruct.decl: %ConvertFromStruct.type = fn_decl @ConvertFromStruct [concrete = constants.%ConvertFromStruct] {

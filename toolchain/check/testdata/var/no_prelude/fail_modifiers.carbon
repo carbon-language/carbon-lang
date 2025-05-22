@@ -58,9 +58,9 @@ abstract var e: ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc15_11: %pattern_type = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
+// CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_19.1: type = splice_block %.loc15_19.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc15_19.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_19.3: type = converted %.loc15_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -68,9 +68,9 @@ abstract var e: ();
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc24_19: %pattern_type = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var c
+// CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc24_27.1: type = splice_block %.loc24_27.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc24_27.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc24_27.3: type = converted %.loc24_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -78,9 +78,9 @@ abstract var e: ();
 // CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc37_21: %pattern_type = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
+// CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %.loc37_29.1: type = splice_block %.loc37_29.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc37_29.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc37_29.3: type = converted %.loc37_29.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -88,9 +88,9 @@ abstract var e: ();
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type = binding_pattern e [concrete]
-// CHECK:STDOUT:     %.loc43_10: %pattern_type = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %.loc43_18.1: type = splice_block %.loc43_18.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc43_18.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc43_18.3: type = converted %.loc43_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

@@ -111,9 +111,9 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.a98 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.a98 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.a98 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %array_type = var x
+// CHECK:STDOUT:   %x.var: ref %array_type = var %x.var_patt
 // CHECK:STDOUT:   %int_0.loc12_27: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc12_29.1: %tuple.type = tuple_literal (%int_0.loc12_27)
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -126,8 +126,8 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %.loc12_29.3: ref %i32 = array_index %x.var, %int_0.loc12_29
 // CHECK:STDOUT:   %.loc12_29.4: init %i32 = initialize_from %.loc12_29.2 to %.loc12_29.3 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc12_29.5: init %array_type = array_init (%.loc12_29.4) to %x.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc12_3.2: init %array_type = converted %.loc12_29.1, %.loc12_29.5 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %x.var, %.loc12_3.2
+// CHECK:STDOUT:   %.loc12_3: init %array_type = converted %.loc12_29.1, %.loc12_29.5 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %x.var, %.loc12_3
 // CHECK:STDOUT:   %.loc12_22: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

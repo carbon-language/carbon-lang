@@ -8,6 +8,7 @@
 #include <utility>
 #include <variant>
 
+#include "common/concepts.h"
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -298,18 +299,15 @@ struct Worklist {
   }
 
   template <typename T>
-    requires(std::same_as<T, BoolValue> ||
-             std::same_as<T, CompileTimeBindIndex> ||
-             std::same_as<T, ElementIndex> || std::same_as<T, FloatKind> ||
-             std::same_as<T, IntKind> || std::same_as<T, CallParamIndex>)
+    requires(SameAsOneOf<T, BoolValue, CompileTimeBindIndex, ElementIndex,
+                         FloatKind, IntKind, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
     contents.push_back(arg.index);
   }
 
   template <typename T>
-    requires(std::same_as<T, AnyRawId> || std::same_as<T, ExprRegionId> ||
-             std::same_as<T, LocId> || std::same_as<T, RealId>)
+    requires(SameAsOneOf<T, AnyRawId, ExprRegionId, LocId, RealId>)
   auto Add(T /*arg*/) -> void {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }

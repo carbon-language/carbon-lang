@@ -43,9 +43,9 @@ var A: () = ();
 // CHECK:STDOUT:   %A.loc11: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %A.patt.loc20: %pattern_type = binding_pattern A [concrete]
-// CHECK:STDOUT:     %.loc20_1: %pattern_type = var_pattern %A.patt.loc20 [concrete]
+// CHECK:STDOUT:     %A.var_patt.loc20: %pattern_type = var_pattern %A.patt.loc20 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.var.loc20: ref %empty_tuple.type = var A
+// CHECK:STDOUT:   %A.var.loc20: ref %empty_tuple.type = var %A.var_patt.loc20 [concrete]
 // CHECK:STDOUT:   %.loc20_9.1: type = splice_block %.loc20_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc20_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc20_9.3: type = converted %.loc20_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -53,9 +53,9 @@ var A: () = ();
 // CHECK:STDOUT:   %A.loc20: ref %empty_tuple.type = bind_name A, %A.var.loc20
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %A.patt.loc29: %pattern_type = binding_pattern A [concrete]
-// CHECK:STDOUT:     %.loc29_1: %pattern_type = var_pattern %A.patt.loc29 [concrete]
+// CHECK:STDOUT:     %A.var_patt.loc29: %pattern_type = var_pattern %A.patt.loc29 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.var.loc29: ref %empty_tuple.type = var A
+// CHECK:STDOUT:   %A.var.loc29: ref %empty_tuple.type = var %A.var_patt.loc29 [concrete]
 // CHECK:STDOUT:   %.loc29_9.1: type = splice_block %.loc29_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc29_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc29_9.3: type = converted %.loc29_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

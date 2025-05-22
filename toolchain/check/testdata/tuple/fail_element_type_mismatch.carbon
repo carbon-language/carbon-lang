@@ -30,6 +30,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 65.890000000000001 [concrete]
 // CHECK:STDOUT:   %tuple.type.2c1: type = tuple_type (Core.IntLiteral, f64) [concrete]
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -69,9 +70,9 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.511 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc18_1: %pattern_type.511 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.511 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %tuple.type.d07 = var x
+// CHECK:STDOUT:   %x.var: ref %tuple.type.d07 = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc18_17.1: type = splice_block %.loc18_17.3 [concrete = constants.%tuple.type.d07] {
 // CHECK:STDOUT:     %int_32.loc18_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc18_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -94,7 +95,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %bound_method.loc18_30.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc18_30.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_30.2: init %i32 = converted %int_2, %int.convert_checked [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access file.%x.var, element0
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access file.%x.var, element0 [concrete = constants.%tuple.elem0]
 // CHECK:STDOUT:   %.loc18_30.3: init %i32 = initialize_from %.loc18_30.2 to %tuple.elem0 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_30.4: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>

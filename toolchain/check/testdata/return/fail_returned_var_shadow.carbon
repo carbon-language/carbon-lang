@@ -124,17 +124,17 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc13_14.1: %pattern_type.7ce = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %i32 = var v
+// CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
 // CHECK:STDOUT:   %int_0.loc13: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc13: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc13_14.1: <bound method> = bound_method %int_0.loc13, %impl.elem0.loc13 [concrete = constants.%Convert.bound.d04]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_14.2: <bound method> = bound_method %int_0.loc13, %specific_fn.loc13 [concrete = constants.%bound_method.b6e]
 // CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %bound_method.loc13_14.2(%int_0.loc13) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc13_14.2: init %i32 = converted %int_0.loc13, %int.convert_checked.loc13 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   assign %v.var, %.loc13_14.2
+// CHECK:STDOUT:   %.loc13_14: init %i32 = converted %int_0.loc13, %int.convert_checked.loc13 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   assign %v.var, %.loc13_14
 // CHECK:STDOUT:   %.loc13_21: type = splice_block %i32.loc13 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -142,17 +142,17 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.7ce = binding_pattern w [concrete]
-// CHECK:STDOUT:     %.loc21_14.1: %pattern_type.7ce = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %i32 = var w
+// CHECK:STDOUT:   %w.var: ref %i32 = var %w.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc21: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc21_14.1: <bound method> = bound_method %int_1, %impl.elem0.loc21 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem0.loc21, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc21_14.2: <bound method> = bound_method %int_1, %specific_fn.loc21 [concrete = constants.%bound_method.9a1]
 // CHECK:STDOUT:   %int.convert_checked.loc21: init %i32 = call %bound_method.loc21_14.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc21_14.2: init %i32 = converted %int_1, %int.convert_checked.loc21 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %w.var, %.loc21_14.2
+// CHECK:STDOUT:   %.loc21_14: init %i32 = converted %int_1, %int.convert_checked.loc21 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %w.var, %.loc21_14
 // CHECK:STDOUT:   %.loc21_21: type = splice_block %i32.loc21 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -180,17 +180,17 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT: !if.then.loc27:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc28_14.1: %pattern_type.7ce = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %i32 = var v
+// CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
 // CHECK:STDOUT:   %int_0.loc28: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc28: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc28_14.1: <bound method> = bound_method %int_0.loc28, %impl.elem0.loc28 [concrete = constants.%Convert.bound.d04]
 // CHECK:STDOUT:   %specific_fn.loc28: <specific function> = specific_function %impl.elem0.loc28, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc28_14.2: <bound method> = bound_method %int_0.loc28, %specific_fn.loc28 [concrete = constants.%bound_method.b6e]
 // CHECK:STDOUT:   %int.convert_checked.loc28: init %i32 = call %bound_method.loc28_14.2(%int_0.loc28) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc28_14.2: init %i32 = converted %int_0.loc28, %int.convert_checked.loc28 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   assign %v.var, %.loc28_14.2
+// CHECK:STDOUT:   %.loc28_14: init %i32 = converted %int_0.loc28, %int.convert_checked.loc28 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   assign %v.var, %.loc28_14
 // CHECK:STDOUT:   %.loc28_21: type = splice_block %i32.loc28 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc28: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -202,17 +202,17 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT: !if.then.loc29:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.7ce = binding_pattern w [concrete]
-// CHECK:STDOUT:     %.loc37_16.1: %pattern_type.7ce = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %i32 = var w
+// CHECK:STDOUT:   %w.var: ref %i32 = var %w.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc37: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc37_16.1: <bound method> = bound_method %int_1, %impl.elem0.loc37 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn.loc37: <specific function> = specific_function %impl.elem0.loc37, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc37_16.2: <bound method> = bound_method %int_1, %specific_fn.loc37 [concrete = constants.%bound_method.9a1]
 // CHECK:STDOUT:   %int.convert_checked.loc37: init %i32 = call %bound_method.loc37_16.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc37_16.2: init %i32 = converted %int_1, %int.convert_checked.loc37 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %w.var, %.loc37_16.2
+// CHECK:STDOUT:   %.loc37_16: init %i32 = converted %int_1, %int.convert_checked.loc37 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %w.var, %.loc37_16
 // CHECK:STDOUT:   %.loc37_23: type = splice_block %i32.loc37 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc37: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc37: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

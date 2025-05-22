@@ -10,6 +10,7 @@
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
+#include "llvm/TargetParser/Host.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/check.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -152,7 +153,8 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   // TODO: Include the prelude.
   Check::CheckParseTrees(
       units, llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
-      /*prelude_import=*/false, fs, context.vlog_stream(), /*fuzzing=*/false);
+      /*prelude_import=*/false, fs, llvm::sys::getDefaultTargetTriple(),
+      context.vlog_stream(), /*fuzzing=*/false);
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

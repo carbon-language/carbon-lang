@@ -100,12 +100,12 @@ fn H() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.511 = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.511 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.511 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %tuple.type.d07 = var v
+// CHECK:STDOUT:   %v.var: ref %tuple.type.d07 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc14: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc14_3.2: ref %tuple.type.d07 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call.loc14: init %tuple.type.d07 = call %F.ref.loc14() to %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: ref %tuple.type.d07 = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call.loc14: init %tuple.type.d07 = call %F.ref.loc14() to %.loc14_3
 // CHECK:STDOUT:   assign %v.var, %F.call.loc14
 // CHECK:STDOUT:   %.loc14_19.1: type = splice_block %.loc14_19.3 [concrete = constants.%tuple.type.d07] {
 // CHECK:STDOUT:     %int_32.loc14_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

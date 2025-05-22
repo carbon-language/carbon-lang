@@ -143,27 +143,27 @@ class Foo[T:! type];
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.71d = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc15: %pattern_type.71d = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.71d = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %NotGenericNoParams = var a
+// CHECK:STDOUT:   %a.var: ref %NotGenericNoParams = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [concrete = constants.%NotGenericNoParams]
 // CHECK:STDOUT:   %a: ref %NotGenericNoParams = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.4f9 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc16_1: %pattern_type.4f9 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.4f9 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %NotGenericButParams = var b
-// CHECK:STDOUT:   %.loc16_28: type = splice_block %NotGenericButParams [concrete = constants.%NotGenericButParams] {
+// CHECK:STDOUT:   %b.var: ref %NotGenericButParams = var %b.var_patt [concrete]
+// CHECK:STDOUT:   %.loc16: type = splice_block %NotGenericButParams [concrete = constants.%NotGenericButParams] {
 // CHECK:STDOUT:     %NotGenericButParams.ref: %NotGenericButParams.type = name_ref NotGenericButParams, %NotGenericButParams.decl [concrete = constants.%NotGenericButParams.generic]
 // CHECK:STDOUT:     %NotGenericButParams: type = class_type @NotGenericButParams [concrete = constants.%NotGenericButParams]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %NotGenericButParams = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.569 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc17_1: %pattern_type.569 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.569 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %GenericAndParams.2bb = var c
-// CHECK:STDOUT:   %.loc17_26: type = splice_block %GenericAndParams.loc17 [concrete = constants.%GenericAndParams.2bb] {
+// CHECK:STDOUT:   %c.var: ref %GenericAndParams.2bb = var %c.var_patt [concrete]
+// CHECK:STDOUT:   %.loc17: type = splice_block %GenericAndParams.loc17 [concrete = constants.%GenericAndParams.2bb] {
 // CHECK:STDOUT:     %GenericAndParams.ref.loc17: %GenericAndParams.type.c8d = name_ref GenericAndParams, %GenericAndParams.decl [concrete = constants.%GenericAndParams.generic.1e4]
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.loc17: type = class_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [concrete = constants.%GenericAndParams.2bb]
@@ -171,9 +171,9 @@ class Foo[T:! type];
 // CHECK:STDOUT:   %c: ref %GenericAndParams.2bb = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.518 = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc18_1: %pattern_type.518 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.518 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %GenericNoParams.fa1 = var d
+// CHECK:STDOUT:   %d.var: ref %GenericNoParams.fa1 = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %.loc18_12.1: type = splice_block %GenericNoParams.ref [concrete = constants.%GenericNoParams.fa1] {
 // CHECK:STDOUT:     %C.ref.loc18: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc18: type = name_ref X, %X.decl [concrete = constants.%X]
@@ -184,9 +184,9 @@ class Foo[T:! type];
 // CHECK:STDOUT:   %d: ref %GenericNoParams.fa1 = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.806 = binding_pattern e [concrete]
-// CHECK:STDOUT:     %.loc19_1: %pattern_type.806 = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type.806 = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e.var: ref %GenericAndParams.91f = var e
+// CHECK:STDOUT:   %e.var: ref %GenericAndParams.91f = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19_31: type = splice_block %GenericAndParams.loc19 [concrete = constants.%GenericAndParams.91f] {
 // CHECK:STDOUT:     %C.ref.loc19: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc19_10: type = name_ref X, %X.decl [concrete = constants.%X]

@@ -67,7 +67,9 @@ struct InstLikeTypeInfo<TypedInst> : InstLikeTypeInfoBase<TypedInst> {
   static auto GetKind(TypedInst /*inst*/) -> InstKind {
     return TypedInst::Kind;
   }
-  static auto IsKind(InstKind kind) -> bool { return kind == TypedInst::Kind; }
+  static constexpr auto IsKind(InstKind kind) -> bool {
+    return kind == TypedInst::Kind;
+  }
   // A name that can be streamed to an llvm::raw_ostream.
   static auto DebugName() -> InstKind { return TypedInst::Kind; }
 };
@@ -79,7 +81,7 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
   static_assert(HasKindMemberAsField<InstCat>,
                 "Instruction category should have a kind field");
   static auto GetKind(InstCat cat) -> InstKind { return cat.kind; }
-  static auto IsKind(InstKind kind) -> bool {
+  static constexpr auto IsKind(InstKind kind) -> bool {
     for (InstKind k : InstCat::Kinds) {
       if (k == kind) {
         return true;
@@ -99,6 +101,10 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
     return out.TakeStr();
   }
 };
+
+// HasInstCategory is true if T::Kind is an element of InstCat::Kinds.
+template <typename InstCat, typename T>
+concept HasInstCategory = InstLikeTypeInfo<InstCat>::IsKind(T::Kind);
 
 // A type is InstLike if InstLikeTypeInfo is defined for it.
 template <typename T>

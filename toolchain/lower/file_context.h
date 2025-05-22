@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
+#include "clang/Basic/CodeGenOptions.h"
+#include "clang/CodeGen/ModuleBuilder.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
@@ -30,6 +33,7 @@ class FileContext {
 
   explicit FileContext(
       llvm::LLVMContext& llvm_context,
+      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
           tree_and_subtrees_getters_for_debug_info,
       llvm::StringRef module_name, const SemIR::File& sem_ir,
@@ -44,6 +48,10 @@ class FileContext {
   auto BuildDICompileUnit(llvm::StringRef module_name,
                           llvm::Module& llvm_module,
                           llvm::DIBuilder& di_builder) -> llvm::DICompileUnit*;
+
+  // Creates the Clang `CodeGenerator` to generate LLVM module from imported C++
+  // code. Returns null when not importing C++.
+  auto CreateCppCodeGenerator() -> std::unique_ptr<clang::CodeGenerator>;
 
   // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
@@ -161,6 +169,9 @@ class FileContext {
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;
 
+  // The filesystem for source code.
+  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
+
   // State for building the LLVM IR debug info metadata.
   llvm::DIBuilder di_builder_;
 
@@ -177,6 +188,16 @@ class FileContext {
   // A mutable Clang AST is necessary for lowering since using the AST in lower
   // modifies it.
   clang::ASTUnit* cpp_ast_;
+
+  // The options used to create the Clang Code Generator.
+  clang::HeaderSearchOptions cpp_header_search_options_;
+  clang::PreprocessorOptions cpp_preprocessor_options_;
+  clang::CodeGenOptions cpp_code_gen_options_;
+
+  // The Clang `CodeGenerator` to generate LLVM module from imported C++
+  // code. Should be initialized using `CreateCppCodeGenerator()`. Can be null
+  // if no C++ code is imported.
+  std::unique_ptr<clang::CodeGenerator> cpp_code_generator_;
 
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;

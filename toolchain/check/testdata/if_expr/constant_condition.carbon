@@ -241,17 +241,17 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc23_3.1: %pattern_type.7ce = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %i32 = var v
+// CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc23_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc23_3.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc23_3.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %v.var, %.loc23_3.2
+// CHECK:STDOUT:   %.loc23_3: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %v.var, %.loc23_3
 // CHECK:STDOUT:   br !.loc23_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc23_13:
@@ -277,9 +277,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = binding_pattern w [concrete]
-// CHECK:STDOUT:     %.loc24_3: %pattern_type.fe8 = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.fe8 = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %ptr.235 = var w
+// CHECK:STDOUT:   %w.var: ref %ptr.235 = var %w.var_patt
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of %v.ref
 // CHECK:STDOUT:   assign %w.var, %addr
@@ -301,7 +301,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result.loc24(%ptr.loc24)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc24:
-// CHECK:STDOUT:   %.loc24_10: type = block_arg !if.expr.result.loc24 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:   %.loc24: type = block_arg !if.expr.result.loc24 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   br !.loc24_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc24_7:
@@ -317,17 +317,17 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc29_3.1: %pattern_type.7ce = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %i32 = var v
+// CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc29_3.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc29_3.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc29_3.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc29_3.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign %v.var, %.loc29_3.2
+// CHECK:STDOUT:   %.loc29_3: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign %v.var, %.loc29_3
 // CHECK:STDOUT:   br !.loc29_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc29_13:
@@ -351,9 +351,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = binding_pattern w [concrete]
-// CHECK:STDOUT:     %.loc30_3: %pattern_type.fe8 = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.fe8 = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %ptr.235 = var w
+// CHECK:STDOUT:   %w.var: ref %ptr.235 = var %w.var_patt
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of %v.ref
 // CHECK:STDOUT:   assign %w.var, %addr
@@ -374,7 +374,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !if.expr.result.loc30(%ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc30:
-// CHECK:STDOUT:   %.loc30_10: type = block_arg !if.expr.result.loc30 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:   %.loc30: type = block_arg !if.expr.result.loc30 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   br !.loc30_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc30_7:

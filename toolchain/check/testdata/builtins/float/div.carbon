@@ -156,9 +156,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.3de = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc8_1: %pattern_type.3de = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.3de = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref f64 = var a
+// CHECK:STDOUT:   %a.var: ref f64 = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8_8.1: type = splice_block %.loc8_8.3 [concrete = f64] {
 // CHECK:STDOUT:     %int_64.loc8: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type.loc8: init type = call constants.%Float(%int_64.loc8) [concrete = f64]

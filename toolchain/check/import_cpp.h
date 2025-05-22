@@ -16,8 +16,8 @@ namespace Carbon::Check {
 // and warnings. If successful, adds a `Cpp` namespace and returns the AST.
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
-    -> std::unique_ptr<clang::ASTUnit>;
+                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                    llvm::StringRef target) -> std::unique_ptr<clang::ASTUnit>;
 
 // Looks up the given name in the Clang AST generated when importing C++ code.
 // If successful, generates the instruction and returns the new `InstId`.

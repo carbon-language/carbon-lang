@@ -131,6 +131,7 @@ struct ArrayIndex {
   static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
       {.ir_name = "array_index",
        .is_type = InstIsType::Maybe,
+       // TODO: This should probably be SymbolicOrReference.
        .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
@@ -561,7 +562,7 @@ struct ClassElementAccess {
       InstKind::ClassElementAccess.Define<Parse::NodeId>(
           {.ir_name = "class_element_access",
            .is_type = InstIsType::Maybe,
-           .constant_kind = InstConstantKind::SymbolicOnly});
+           .constant_kind = InstConstantKind::SymbolicOrReference});
 
   TypeId type_id;
   InstId base_id;
@@ -1628,7 +1629,7 @@ struct StructAccess {
   static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
       {.ir_name = "struct_access",
        .is_type = InstIsType::Maybe,
-       .constant_kind = InstConstantKind::SymbolicOnly});
+       .constant_kind = InstConstantKind::SymbolicOrReference});
 
   TypeId type_id;
   InstId struct_id;
@@ -1706,7 +1707,7 @@ struct TupleAccess {
   static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
       {.ir_name = "tuple_access",
        .is_type = InstIsType::Maybe,
-       .constant_kind = InstConstantKind::SymbolicOnly});
+       .constant_kind = InstConstantKind::SymbolicOrReference});
 
   TypeId type_id;
   InstId tuple_id;
@@ -1874,15 +1875,14 @@ struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
       {.ir_name = "var",
-       .constant_kind = InstConstantKind::Never,
+       .constant_kind = InstConstantKind::Conditional,
+       .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent,
        .has_cleanup = true});
 
   TypeId type_id;
 
-  // A name to associate with this var in pretty-printed IR. This is not
-  // necessarily unique, and can even be `None`; it has no semantic
-  // significance.
-  NameId pretty_name_id;
+  // If this storage was created for a `var` pattern, the pattern.
+  AbsoluteInstId pattern_id;
 };
 
 // The type of virtual function tables.

@@ -131,7 +131,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.761 = binding_pattern s [concrete]
-// CHECK:STDOUT:     %.loc14: %pattern_type.761 = var_pattern %s.patt [concrete]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.761 = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref.loc14: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   %s: ref %Class = bind_name s, %return

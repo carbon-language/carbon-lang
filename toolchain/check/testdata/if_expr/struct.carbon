@@ -113,9 +113,9 @@ fn F(cond: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.851 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.851 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.851 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %struct_type.a.b.501 = var a
+// CHECK:STDOUT:   %a.var: ref %struct_type.a.b.501 = var %a.var_patt
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc14_46.1: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
@@ -136,8 +136,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc14_46.6: ref %i32 = struct_access %a.var, element1
 // CHECK:STDOUT:   %.loc14_46.7: init %i32 = initialize_from %.loc14_46.5 to %.loc14_46.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc14_46.8: init %struct_type.a.b.501 = struct_init (%.loc14_46.4, %.loc14_46.7) to %a.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc14_3.2: init %struct_type.a.b.501 = converted %.loc14_46.1, %.loc14_46.8 [concrete = constants.%struct]
-// CHECK:STDOUT:   assign %a.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %struct_type.a.b.501 = converted %.loc14_46.1, %.loc14_46.8 [concrete = constants.%struct]
+// CHECK:STDOUT:   assign %a.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
 // CHECK:STDOUT:     %int_32.loc14_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

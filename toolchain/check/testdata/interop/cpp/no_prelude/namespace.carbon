@@ -8,21 +8,57 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/namespace.carbon
 
-// --- namespace.h
+// ============================================================================
+// Single
+// ============================================================================
+
+// --- single.h
 
 namespace my_namespace { void foo(); }
 
-// --- import_namespace.carbon
+// --- import_single.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "namespace.h";
+import Cpp library "single.h";
 
 fn MyF() {
   Cpp.my_namespace.foo();
 }
 
-// --- multiple_namespaces.h
+// --- fail_import_namespace_wrong_member_name.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "single.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_import_namespace_wrong_member_name.carbon:[[@LINE+4]]:3: error: member name `not_foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   Cpp.my_namespace.not_foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.my_namespace.not_foo();
+}
+
+// --- fail_import_namespace_wrong_name.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "single.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_import_namespace_wrong_name.carbon:[[@LINE+4]]:3: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   Cpp.not_my_namespace.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.not_my_namespace.foo();
+}
+
+// ============================================================================
+// Multiple
+// ============================================================================
+
+// --- multiple.h
 
 namespace my_namespace1 {
   void foo1();
@@ -34,11 +70,11 @@ namespace my_namespace1 {
   }
 }
 
-// --- import_multiple_namespaces.carbon
+// --- import_multiple.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "multiple_namespaces.h";
+import Cpp library "multiple.h";
 
 fn MyF() {
   Cpp.my_namespace1.foo1();
@@ -46,63 +82,39 @@ fn MyF() {
   Cpp.my_namespace1.my_namespace2.my_namespace3.foo3();
 }
 
-// --- fail_import_namespace_wrong_name_in_namespace.carbon
+// ============================================================================
+// Carbon keyword name
+// ============================================================================
 
-library "[[@TEST_NAME]]";
-
-import Cpp library "namespace.h";
-
-fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_wrong_name_in_namespace.carbon:[[@LINE+4]]:3: error: member name `not_foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.my_namespace.not_foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  Cpp.my_namespace.not_foo();
-}
-
-// --- fail_import_namespace_use_different_name.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "namespace.h";
-
-fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_use_different_name.carbon:[[@LINE+4]]:3: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.not_my_namespace.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  Cpp.not_my_namespace.foo();
-}
-
-// --- namespace_special_name_decl.h
+// --- special_name.h
 
 namespace base { void foo(); }
 
-// --- fail_import_namespace_special_name_decl.carbon
+// --- fail_import_special_name_call_unescpaed.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "namespace_special_name_decl.h";
+import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_special_name_decl.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_special_name_call_unescpaed.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.base.foo();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   Cpp.base.foo();
 }
 
-// --- import_namespace_escaped_special_name_decl.carbon
+// --- import_special_name_call_escpaed.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "namespace_special_name_decl.h";
+import Cpp library "special_name.h";
 
 fn MyF() {
   Cpp.r#base.foo();
 }
 
-// CHECK:STDOUT: --- import_namespace.carbon
+// CHECK:STDOUT: --- import_single.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -129,7 +141,7 @@ fn MyF() {
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "namespace.h"
+// CHECK:STDOUT:     import Cpp "single.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -146,7 +158,77 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_multiple_namespaces.carbon
+// CHECK:STDOUT: --- fail_import_namespace_wrong_member_name.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .my_namespace = %my_namespace
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .not_foo = <poisoned>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .MyF = %MyF.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "single.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %my_namespace.ref: <namespace> = name_ref my_namespace, imports.%my_namespace [concrete = imports.%my_namespace]
+// CHECK:STDOUT:   %not_foo.ref: <error> = name_ref not_foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_import_namespace_wrong_name.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .not_my_namespace = <poisoned>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .MyF = %MyF.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "single.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %not_my_namespace.ref: <error> = name_ref not_my_namespace, <error> [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_multiple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -187,7 +269,7 @@ fn MyF() {
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "multiple_namespaces.h"
+// CHECK:STDOUT:     import Cpp "multiple.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -221,77 +303,7 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo3();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_namespace_wrong_name_in_namespace.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .my_namespace = %my_namespace
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .not_foo = <poisoned>
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "namespace.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %my_namespace.ref: <namespace> = name_ref my_namespace, imports.%my_namespace [concrete = imports.%my_namespace]
-// CHECK:STDOUT:   %not_foo.ref: <error> = name_ref not_foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_namespace_use_different_name.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .not_my_namespace = <poisoned>
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "namespace.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %not_my_namespace.ref: <error> = name_ref not_my_namespace, <error> [concrete = <error>]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_namespace_special_name_decl.carbon
+// CHECK:STDOUT: --- fail_import_special_name_call_unescpaed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -310,7 +322,7 @@ fn MyF() {
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "namespace_special_name_decl.h"
+// CHECK:STDOUT:     import Cpp "special_name.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
@@ -323,7 +335,7 @@ fn MyF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_namespace_escaped_special_name_decl.carbon
+// CHECK:STDOUT: --- import_special_name_call_escpaed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
@@ -350,7 +362,7 @@ fn MyF() {
 // CHECK:STDOUT:     .MyF = %MyF.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "namespace_special_name_decl.h"
+// CHECK:STDOUT:     import Cpp "special_name.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }

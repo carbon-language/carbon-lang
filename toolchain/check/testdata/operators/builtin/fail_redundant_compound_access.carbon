@@ -108,17 +108,17 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.7ce = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %i32 = var a
+// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc14_3.1: <bound method> = bound_method %int_3, %impl.elem0 [concrete = constants.%Convert.bound.b30]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_3.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method.047]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc14_3.2(%int_3) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc14_3.2: init %i32 = converted %int_3, %int.convert_checked [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   assign %a.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %i32 = converted %int_3, %int.convert_checked [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   assign %a.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

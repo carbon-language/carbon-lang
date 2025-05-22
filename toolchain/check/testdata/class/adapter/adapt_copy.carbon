@@ -216,9 +216,9 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.cdf = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc11: %pattern_type.cdf = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.cdf = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %AdaptCopyable = var d
+// CHECK:STDOUT:   %d.var: ref %AdaptCopyable = var %d.var_patt
 // CHECK:STDOUT:   %c.ref: %AdaptCopyable = name_ref c, %c
 // CHECK:STDOUT:   assign %d.var, %c.ref
 // CHECK:STDOUT:   %AdaptCopyable.ref.loc11: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
@@ -232,9 +232,9 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.813 = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc16_3.1: %pattern_type.813 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.813 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %tuple.type.2a3 = var d
+// CHECK:STDOUT:   %d.var: ref %tuple.type.2a3 = var %d.var_patt
 // CHECK:STDOUT:   %c.ref: %tuple.type.2a3 = name_ref c, %c
 // CHECK:STDOUT:   %tuple.elem0.loc16_33.1: %AdaptCopyable = tuple_access %c.ref, element0
 // CHECK:STDOUT:   %tuple.elem0.loc16_33.2: ref %AdaptCopyable = tuple_access %d.var, element0
@@ -243,8 +243,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.elem1.loc16_33.2: ref %u32 = tuple_access %d.var, element1
 // CHECK:STDOUT:   %.loc16_33.2: init %u32 = initialize_from %tuple.elem1.loc16_33.1 to %tuple.elem1.loc16_33.2
 // CHECK:STDOUT:   %.loc16_33.3: init %tuple.type.2a3 = tuple_init (%.loc16_33.1, %.loc16_33.2) to %d.var
-// CHECK:STDOUT:   %.loc16_3.2: init %tuple.type.2a3 = converted %c.ref, %.loc16_33.3
-// CHECK:STDOUT:   assign %d.var, %.loc16_3.2
+// CHECK:STDOUT:   %.loc16_3: init %tuple.type.2a3 = converted %c.ref, %.loc16_33.3
+// CHECK:STDOUT:   assign %d.var, %.loc16_3
 // CHECK:STDOUT:   %.loc16_29.1: type = splice_block %.loc16_29.3 [concrete = constants.%tuple.type.2a3] {
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -367,22 +367,22 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.562 = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc9_3.1: %pattern_type.562 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.562 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %AdaptTuple = var d
+// CHECK:STDOUT:   %d.var: ref %AdaptTuple = var %d.var_patt
 // CHECK:STDOUT:   %c.ref: %AdaptTuple = name_ref c, %c
-// CHECK:STDOUT:   %.loc9_3.2: %tuple.type.d07 = as_compatible %c.ref
-// CHECK:STDOUT:   %tuple.elem0.loc9_3.1: %i32 = tuple_access %.loc9_3.2, element0
-// CHECK:STDOUT:   %.loc9_3.3: ref %tuple.type.d07 = as_compatible %d.var
-// CHECK:STDOUT:   %tuple.elem0.loc9_3.2: ref %i32 = tuple_access %.loc9_3.3, element0
-// CHECK:STDOUT:   %.loc9_3.4: init %i32 = initialize_from %tuple.elem0.loc9_3.1 to %tuple.elem0.loc9_3.2
-// CHECK:STDOUT:   %tuple.elem1.loc9_3.1: %i32 = tuple_access %.loc9_3.2, element1
-// CHECK:STDOUT:   %tuple.elem1.loc9_3.2: ref %i32 = tuple_access %.loc9_3.3, element1
-// CHECK:STDOUT:   %.loc9_3.5: init %i32 = initialize_from %tuple.elem1.loc9_3.1 to %tuple.elem1.loc9_3.2
-// CHECK:STDOUT:   %.loc9_3.6: init %tuple.type.d07 = tuple_init (%.loc9_3.4, %.loc9_3.5) to %.loc9_3.3
-// CHECK:STDOUT:   %.loc9_3.7: init %AdaptTuple = as_compatible %.loc9_3.6
-// CHECK:STDOUT:   %.loc9_3.8: init %AdaptTuple = converted %c.ref, %.loc9_3.7
-// CHECK:STDOUT:   assign %d.var, %.loc9_3.8
+// CHECK:STDOUT:   %.loc9_3.1: %tuple.type.d07 = as_compatible %c.ref
+// CHECK:STDOUT:   %tuple.elem0.loc9_3.1: %i32 = tuple_access %.loc9_3.1, element0
+// CHECK:STDOUT:   %.loc9_3.2: ref %tuple.type.d07 = as_compatible %d.var
+// CHECK:STDOUT:   %tuple.elem0.loc9_3.2: ref %i32 = tuple_access %.loc9_3.2, element0
+// CHECK:STDOUT:   %.loc9_3.3: init %i32 = initialize_from %tuple.elem0.loc9_3.1 to %tuple.elem0.loc9_3.2
+// CHECK:STDOUT:   %tuple.elem1.loc9_3.1: %i32 = tuple_access %.loc9_3.1, element1
+// CHECK:STDOUT:   %tuple.elem1.loc9_3.2: ref %i32 = tuple_access %.loc9_3.2, element1
+// CHECK:STDOUT:   %.loc9_3.4: init %i32 = initialize_from %tuple.elem1.loc9_3.1 to %tuple.elem1.loc9_3.2
+// CHECK:STDOUT:   %.loc9_3.5: init %tuple.type.d07 = tuple_init (%.loc9_3.3, %.loc9_3.4) to %.loc9_3.2
+// CHECK:STDOUT:   %.loc9_3.6: init %AdaptTuple = as_compatible %.loc9_3.5
+// CHECK:STDOUT:   %.loc9_3.7: init %AdaptTuple = converted %c.ref, %.loc9_3.6
+// CHECK:STDOUT:   assign %d.var, %.loc9_3.7
 // CHECK:STDOUT:   %AdaptTuple.ref.loc9: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
 // CHECK:STDOUT:   %d: ref %AdaptTuple = bind_name d, %d.var
 // CHECK:STDOUT:   %d.ref: ref %AdaptTuple = name_ref d, %d
@@ -406,9 +406,9 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.c9e = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.c9e = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.c9e = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %tuple.type.f69 = var d
+// CHECK:STDOUT:   %d.var: ref %tuple.type.f69 = var %d.var_patt
 // CHECK:STDOUT:   %c.ref: %tuple.type.f69 = name_ref c, %c
 // CHECK:STDOUT:   %tuple.elem0.loc14_30.1: %AdaptTuple = tuple_access %c.ref, element0
 // CHECK:STDOUT:   %.loc14_30.1: %tuple.type.d07 = as_compatible %tuple.elem0.loc14_30.1
@@ -427,8 +427,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.elem1.loc14_30.4: ref %u32 = tuple_access %d.var, element1
 // CHECK:STDOUT:   %.loc14_30.8: init %u32 = initialize_from %tuple.elem1.loc14_30.3 to %tuple.elem1.loc14_30.4
 // CHECK:STDOUT:   %.loc14_30.9: init %tuple.type.f69 = tuple_init (%.loc14_30.7, %.loc14_30.8) to %d.var
-// CHECK:STDOUT:   %.loc14_3.2: init %tuple.type.f69 = converted %c.ref, %.loc14_30.9
-// CHECK:STDOUT:   assign %d.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %tuple.type.f69 = converted %c.ref, %.loc14_30.9
+// CHECK:STDOUT:   assign %d.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_26.1: type = splice_block %.loc14_26.3 [concrete = constants.%tuple.type.f69] {
 // CHECK:STDOUT:     %AdaptTuple.ref.loc14: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -530,9 +530,9 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc17: %pattern_type = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %AdaptNoncopyable = var b
+// CHECK:STDOUT:   %b.var: ref %AdaptNoncopyable = var %b.var_patt
 // CHECK:STDOUT:   %a.ref: %AdaptNoncopyable = name_ref a, %a
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %AdaptNoncopyable.ref.loc17: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
@@ -625,16 +625,16 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7e5 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc20_3.1: %pattern_type.7e5 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.7e5 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %AdaptNoncopyableIndirect = var b
+// CHECK:STDOUT:   %b.var: ref %AdaptNoncopyableIndirect = var %b.var_patt
 // CHECK:STDOUT:   %a.ref: %AdaptNoncopyableIndirect = name_ref a, %a
-// CHECK:STDOUT:   %.loc20_3.2: %tuple.type.c9a = as_compatible %a.ref
-// CHECK:STDOUT:   %tuple.elem0.loc20_3.1: %i32 = tuple_access %.loc20_3.2, element0
-// CHECK:STDOUT:   %.loc20_3.3: ref %tuple.type.c9a = as_compatible %b.var
-// CHECK:STDOUT:   %tuple.elem0.loc20_3.2: ref %i32 = tuple_access %.loc20_3.3, element0
-// CHECK:STDOUT:   %.loc20_3.4: init %i32 = initialize_from %tuple.elem0.loc20_3.1 to %tuple.elem0.loc20_3.2
-// CHECK:STDOUT:   %tuple.elem1.loc20: %Noncopyable = tuple_access %.loc20_3.2, element1
+// CHECK:STDOUT:   %.loc20_3.1: %tuple.type.c9a = as_compatible %a.ref
+// CHECK:STDOUT:   %tuple.elem0.loc20_3.1: %i32 = tuple_access %.loc20_3.1, element0
+// CHECK:STDOUT:   %.loc20_3.2: ref %tuple.type.c9a = as_compatible %b.var
+// CHECK:STDOUT:   %tuple.elem0.loc20_3.2: ref %i32 = tuple_access %.loc20_3.2, element0
+// CHECK:STDOUT:   %.loc20_3.3: init %i32 = initialize_from %tuple.elem0.loc20_3.1 to %tuple.elem0.loc20_3.2
+// CHECK:STDOUT:   %tuple.elem1.loc20: %Noncopyable = tuple_access %.loc20_3.1, element1
 // CHECK:STDOUT:   assign %b.var, <error>
 // CHECK:STDOUT:   %AdaptNoncopyableIndirect.ref.loc20: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [concrete = constants.%AdaptNoncopyableIndirect]
 // CHECK:STDOUT:   %b: ref %AdaptNoncopyableIndirect = bind_name b, %b.var
@@ -749,22 +749,22 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %h.patt: %pattern_type.f45 = binding_pattern h [concrete]
-// CHECK:STDOUT:     %.loc9_3.1: %pattern_type.f45 = var_pattern %h.patt [concrete]
+// CHECK:STDOUT:     %h.var_patt: %pattern_type.f45 = var_pattern %h.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %h.var: ref %AdaptStruct = var h
+// CHECK:STDOUT:   %h.var: ref %AdaptStruct = var %h.var_patt
 // CHECK:STDOUT:   %g.ref: %AdaptStruct = name_ref g, %g
-// CHECK:STDOUT:   %.loc9_3.2: %struct_type.e.f = as_compatible %g.ref
-// CHECK:STDOUT:   %.loc9_3.3: %i32 = struct_access %.loc9_3.2, element0
-// CHECK:STDOUT:   %.loc9_3.4: ref %struct_type.e.f = as_compatible %h.var
-// CHECK:STDOUT:   %.loc9_3.5: ref %i32 = struct_access %.loc9_3.4, element0
-// CHECK:STDOUT:   %.loc9_3.6: init %i32 = initialize_from %.loc9_3.3 to %.loc9_3.5
-// CHECK:STDOUT:   %.loc9_3.7: %i32 = struct_access %.loc9_3.2, element1
-// CHECK:STDOUT:   %.loc9_3.8: ref %i32 = struct_access %.loc9_3.4, element1
-// CHECK:STDOUT:   %.loc9_3.9: init %i32 = initialize_from %.loc9_3.7 to %.loc9_3.8
-// CHECK:STDOUT:   %.loc9_3.10: init %struct_type.e.f = struct_init (%.loc9_3.6, %.loc9_3.9) to %.loc9_3.4
-// CHECK:STDOUT:   %.loc9_3.11: init %AdaptStruct = as_compatible %.loc9_3.10
-// CHECK:STDOUT:   %.loc9_3.12: init %AdaptStruct = converted %g.ref, %.loc9_3.11
-// CHECK:STDOUT:   assign %h.var, %.loc9_3.12
+// CHECK:STDOUT:   %.loc9_3.1: %struct_type.e.f = as_compatible %g.ref
+// CHECK:STDOUT:   %.loc9_3.2: %i32 = struct_access %.loc9_3.1, element0
+// CHECK:STDOUT:   %.loc9_3.3: ref %struct_type.e.f = as_compatible %h.var
+// CHECK:STDOUT:   %.loc9_3.4: ref %i32 = struct_access %.loc9_3.3, element0
+// CHECK:STDOUT:   %.loc9_3.5: init %i32 = initialize_from %.loc9_3.2 to %.loc9_3.4
+// CHECK:STDOUT:   %.loc9_3.6: %i32 = struct_access %.loc9_3.1, element1
+// CHECK:STDOUT:   %.loc9_3.7: ref %i32 = struct_access %.loc9_3.3, element1
+// CHECK:STDOUT:   %.loc9_3.8: init %i32 = initialize_from %.loc9_3.6 to %.loc9_3.7
+// CHECK:STDOUT:   %.loc9_3.9: init %struct_type.e.f = struct_init (%.loc9_3.5, %.loc9_3.8) to %.loc9_3.3
+// CHECK:STDOUT:   %.loc9_3.10: init %AdaptStruct = as_compatible %.loc9_3.9
+// CHECK:STDOUT:   %.loc9_3.11: init %AdaptStruct = converted %g.ref, %.loc9_3.10
+// CHECK:STDOUT:   assign %h.var, %.loc9_3.11
 // CHECK:STDOUT:   %AdaptStruct.ref.loc9: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]
 // CHECK:STDOUT:   %h: ref %AdaptStruct = bind_name h, %h.var
 // CHECK:STDOUT:   %h.ref: ref %AdaptStruct = name_ref h, %h
@@ -788,9 +788,9 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.31d = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc14_3.1: %pattern_type.31d = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.31d = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %tuple.type.80b = var d
+// CHECK:STDOUT:   %d.var: ref %tuple.type.80b = var %d.var_patt
 // CHECK:STDOUT:   %c.ref: %tuple.type.80b = name_ref c, %c
 // CHECK:STDOUT:   %tuple.elem0.loc14_31.1: %AdaptStruct = tuple_access %c.ref, element0
 // CHECK:STDOUT:   %.loc14_31.1: %struct_type.e.f = as_compatible %tuple.elem0.loc14_31.1
@@ -809,8 +809,8 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.elem1.loc14_31.2: ref %u32 = tuple_access %d.var, element1
 // CHECK:STDOUT:   %.loc14_31.12: init %u32 = initialize_from %tuple.elem1.loc14_31.1 to %tuple.elem1.loc14_31.2
 // CHECK:STDOUT:   %.loc14_31.13: init %tuple.type.80b = tuple_init (%.loc14_31.11, %.loc14_31.12) to %d.var
-// CHECK:STDOUT:   %.loc14_3.2: init %tuple.type.80b = converted %c.ref, %.loc14_31.13
-// CHECK:STDOUT:   assign %d.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3: init %tuple.type.80b = converted %c.ref, %.loc14_31.13
+// CHECK:STDOUT:   assign %d.var, %.loc14_3
 // CHECK:STDOUT:   %.loc14_27.1: type = splice_block %.loc14_27.3 [concrete = constants.%tuple.type.80b] {
 // CHECK:STDOUT:     %AdaptStruct.ref.loc14: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

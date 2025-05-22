@@ -81,6 +81,8 @@ auto TypeIterator::Next() -> Step {
       case SemIR::BoolType::Kind:
       case SemIR::FacetType::Kind:
       case SemIR::FloatType::Kind:
+      case SemIR::FunctionType::Kind:
+      case SemIR::FunctionTypeWithSelfType::Kind:
       case SemIR::GenericClassType::Kind:
       case SemIR::GenericInterfaceType::Kind:
       case SemIR::ImplWitnessAccess::Kind:

@@ -381,9 +381,10 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
       }
     }
 
-    // If it's not being substituted, don't look through it. Its constant
-    // value doesn't depend on its operand.
-    return true;
+    // If it's not being substituted, we still need to look through it, as we
+    // may need to substitute into its type (a `FacetType`, with one or more
+    // `SpecificInterfaces` within).
+    return false;
   }
 
   // Rebuilds an instruction by building a new constant.
@@ -396,6 +397,8 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
             new_inst));
     CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");
+    CARBON_CHECK(const_id.is_constant(),
+                 "Substitution into constant produced runtime value");
     return context().constant_values().GetInstId(const_id);
   }
 

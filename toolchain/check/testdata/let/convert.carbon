@@ -91,9 +91,9 @@ fn F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.b5a = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc12_3.1: %pattern_type.b5a = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.b5a = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %tuple.type.189 = var v
+// CHECK:STDOUT:   %v.var: ref %tuple.type.189 = var %v.var_patt
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -123,8 +123,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %tuple.elem2: ref %i32 = tuple_access %v.var, element2
 // CHECK:STDOUT:   %.loc12_36.7: init %i32 = initialize_from %.loc12_36.6 to %tuple.elem2 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc12_36.8: init %tuple.type.189 = tuple_init (%.loc12_36.3, %.loc12_36.5, %.loc12_36.7) to %v.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc12_3.2: init %tuple.type.189 = converted %.loc12_36.1, %.loc12_36.8 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %v.var, %.loc12_3.2
+// CHECK:STDOUT:   %.loc12_3: init %tuple.type.189 = converted %.loc12_36.1, %.loc12_36.8 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %v.var, %.loc12_3
 // CHECK:STDOUT:   %.loc12_24.1: type = splice_block %.loc12_24.3 [concrete = constants.%tuple.type.189] {
 // CHECK:STDOUT:     %int_32.loc12_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]

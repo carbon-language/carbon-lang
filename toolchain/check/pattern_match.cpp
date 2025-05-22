@@ -303,7 +303,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      CARBON_CHECK(!param_pattern.index.has_value());
+      CARBON_CHECK(!param_pattern.index.has_value(),
+                   "ValueParamPattern index set before callee pattern match");
       param_pattern.index = NextRuntimeIndex();
       ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::ValueParam>(

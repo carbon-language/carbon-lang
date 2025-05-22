@@ -37,8 +37,6 @@ fn F() -> bool {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %bool.make_type [concrete = bool]

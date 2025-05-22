@@ -133,12 +133,9 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
 
   return AddInstWithCleanup(
       context, pattern.loc_id,
-      SemIR::VarStorage{
-          .type_id =
-              ExtractScrutineeType(context.sem_ir(), pattern.inst.type_id()),
-          .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
-              context.sem_ir(),
-              pattern.inst.As<SemIR::VarPattern>().subpattern_id)});
+      SemIR::VarStorage{.type_id = ExtractScrutineeType(context.sem_ir(),
+                                                        pattern.inst.type_id()),
+                        .pattern_id = var_pattern_id});
 }
 
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
