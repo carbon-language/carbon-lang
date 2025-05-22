@@ -781,7 +781,7 @@ struct KindHasGetConstantValueOverload<TypeEnum<Types...>> {
 // Resolves the specific declarations for a specific id in any field of the
 // `inst` instruction. This must be done for any field type that has a
 // GetConstantValue() overload which canonicalizes a specific (and thus
-// potentially forming a new specific) as part of forming its constant value.
+// potentially forms a new specific) as part of forming its constant value.
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
                                        const SemIR::Inst& inst) -> void {
   auto resolve_specific_decl = [&](SemIR::SpecificId specific_id) {
