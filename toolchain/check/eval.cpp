@@ -779,9 +779,7 @@ struct KindHasGetConstantValueOverload<TypeEnum<Types...>> {
 };
 
 // Resolves the specific declarations for a specific id in any field of the
-// `inst` instruction. This must be done for any field type that has a
-// GetConstantValue() overload which canonicalizes a specific (and thus
-// potentially forms a new specific) as part of forming its constant value.
+// `inst` instruction.
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
                                        const SemIR::Inst& inst) -> void {
   auto resolve_specific_decl = [&](SemIR::SpecificId specific_id) {
@@ -791,18 +789,13 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
 
     const auto& specific = eval_context.specifics().Get(specific_id);
     const auto& generic = eval_context.generics().Get(specific.generic_id);
-    if (!generic.decl_block_id.has_value()) {
-      // Impl witness table construction happens before its own generic is
-      // finished, in order to make the table's instructions dependent
-      // instructions of the Impl's generic. So we can not resolve the specific
-      // declaration for such instructions at the time they are created, as the
-      // generic's declaration eval block is not yet constructed (with those
-      // dependent instructions in it).
-      //
-      // TODO: Find a way to avoid this early out by making the evaluation of
-      // instructions in the witness table that require a specific happen after
-      // the generic is complete. Or find a way to limit this just to the impl
-      // witness table and ensure the declarations will be resolved.
+    if (specific_id == generic.self_specific_id) {
+      // Impl witness table construction happens before its generic decl is
+      // finish, in order to make the table's instructions dependent
+      // instructions of the Impl's generic. But those instructions can refer to
+      // the generic's self specific. We can not resolve the specific
+      // declaration for the self specific until the generic is finished, but it
+      // is explicitly resolved at that time in `FinishGenericDecl()`.
       return;
     }
     ResolveSpecificDecl(eval_context.context(), eval_context.fallback_loc_id(),
@@ -810,6 +803,9 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
   };
 
   for (auto arg_and_kind : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
+    // This switch must handle any field type that has a GetConstantValue()
+    // overload which canonicalizes a specific (and thus potentially forms a new
+    // specific) as part of forming its constant value.
     CARBON_KIND_SWITCH(arg_and_kind) {
       case CARBON_KIND(SemIR::SpecificId specific_id): {
         resolve_specific_decl(specific_id);
