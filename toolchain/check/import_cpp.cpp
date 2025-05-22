@@ -192,9 +192,15 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
       GenerateCppIncludesHeaderCode(context, imports),
       // Parse C++ (and not C).
-      {"-x", "c++",
-       // Propagate the target to Clang.
-       "-target", target.str()},
+      {
+          "-x",
+          "c++",
+          // Propagate the target to Clang.
+          "-target",
+          target.str(),
+          // Require PIE. Note its default is configurable in Clang.
+          "-fPIE",
+      },
       (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
       std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),

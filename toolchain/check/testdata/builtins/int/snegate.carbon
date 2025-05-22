@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -12,6 +12,8 @@
 
 // --- int_negate.carbon
 
+library "[[@TEST_NAME]]";
+
 fn Negate(a: i32) -> i32 = "int.snegate";
 
 var arr: array(i32, Negate(Negate(123)));
@@ -20,7 +22,9 @@ let arr_p: array(i32, 123)* = &arr;
 let n: i32 = Negate(1);
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
+  //@dump-sem-ir-begin
   return Negate(a);
+  //@dump-sem-ir-end
 }
 
 // --- literal.carbon
@@ -38,88 +42,84 @@ fn F() {
   Test(Negate(0 - 0x8000_0000_0000_0000)) as Expect(0x8000_0000_0000_0000);
 }
 
-// --- fail_bad_decl.carbon
+// --- fail_too_few.carbon
 
-package FailBadDecl;
+library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn TooFew() -> i32 = "int.snegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooFew() -> i32 = "int.snegate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.snegate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn BadReturnType(a: i32) -> bool = "int.snegate";
-fn JustRight(a: i32) -> i32 = "int.snegate";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:25: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:25: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var too_few: array(i32, TooFew());
 // CHECK:STDERR:                         ^~~~~~~~
 // CHECK:STDERR:
 var too_few: array(i32, TooFew());
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:26: error: array bound is not a constant [InvalidArrayExpr]
+
+fn RuntimeCallIsValidTooFew() -> i32 {
+  return TooFew();
+}
+
+// --- fail_too_many.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
+
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:26: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var too_many: array(i32, TooMany(1, 2));
 // CHECK:STDERR:                          ^~~~~~~~~~~~~
 // CHECK:STDERR:
 var too_many: array(i32, TooMany(1, 2));
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:33: error: array bound is not a constant [InvalidArrayExpr]
+
+fn RuntimeCallIsValidTooMany(a: i32, b: i32) -> i32 {
+  return TooMany(a, b);
+}
+
+// --- fail_bad_return_type.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.snegate";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn BadReturnType(a: i32) -> bool = "int.snegate";
+
+// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:33: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var bad_return_type: array(i32, BadReturnType(1));
 // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_return_type: array(i32, BadReturnType(1));
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:26: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: var bad_call: array(i32, JustRight(1, 2));
-// CHECK:STDERR:                          ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here [InCallToEntity]
-// CHECK:STDERR: fn JustRight(a: i32) -> i32 = "int.snegate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+fn RuntimeCallIsValidBadReturnType(a: i32) -> bool {
+  return BadReturnType(a);
+}
+
+// --- fail_bad_call.carbon
+
+library "[[@TEST_NAME]]";
+
+fn Negate(a: i32) -> i32 = "int.snegate";
+
+// CHECK:STDERR: fail_bad_call.carbon:[[@LINE+7]]:26: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: var bad_call: array(i32, Negate(1, 2));
+// CHECK:STDERR:                          ^~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_call.carbon:[[@LINE-5]]:1: note: calling function declared here [InCallToEntity]
+// CHECK:STDERR: fn Negate(a: i32) -> i32 = "int.snegate";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-var bad_call: array(i32, JustRight(1, 2));
-
-fn RuntimeCallIsValidTooFew(a: i32) -> i32 {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:   return TooFew(a);
-  // CHECK:STDERR:          ^~~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR: fn TooFew() -> i32 = "int.snegate";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  return TooFew(a);
-}
-
-fn RuntimeCallIsValidTooMany(a: i32, b: i32, c: i32) -> i32 {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 3 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:   return TooMany(a, b, c);
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  return TooMany(a, b, c);
-}
-
-fn RuntimeCallIsValidBadReturnType(a: i32, b: i32) -> bool {
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR:   return BadReturnType(a, b);
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: note: calling function declared here [InCallToEntity]
-  // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.snegate";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  return BadReturnType(a, b);
-}
+var bad_call: array(i32, Negate(1, 2));
 
 // --- fail_overflow.carbon
 
-package FailOverflow;
+library "[[@TEST_NAME]]";
 
 fn Negate(a: i32) -> i32 = "int.snegate";
 fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
@@ -133,3 +133,31 @@ let a: i32 = Negate(Negate(0x7FFF_FFFF));
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let b: i32 = Negate(-0x8000_0000);
+
+// CHECK:STDOUT: --- int_negate.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.1 [concrete]
+// CHECK:STDOUT:   %Negate: %Negate.type.15b = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Negate.ref: %Negate.type.15b = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %.loc13_19.1: %i32 = value_of_initializer %int.snegate
+// CHECK:STDOUT:   %.loc13_19.2: %i32 = converted %int.snegate, %.loc13_19.1
+// CHECK:STDOUT:   return %.loc13_19.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

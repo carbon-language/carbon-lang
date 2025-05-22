@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -29,7 +29,9 @@ fn F(true_: True, false_: False) {
 }
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
+  //@dump-sem-ir-begin
   return GreaterEq(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- literal.carbon
@@ -67,3 +69,27 @@ fn F() {
   Test(GreaterEq(-1, 1)) as Expect(false);
   Test(GreaterEq(1, -1)) as Expect(true);
 }
+
+// CHECK:STDOUT: --- int_greater_eq.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %GreaterEq.type: type = fn_type @GreaterEq [concrete]
+// CHECK:STDOUT:   %GreaterEq: %GreaterEq.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %GreaterEq.ref: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [concrete = constants.%GreaterEq]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.greater_eq: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc20_25.1: bool = value_of_initializer %int.greater_eq
+// CHECK:STDOUT:   %.loc20_25.2: bool = converted %int.greater_eq, %.loc20_25.1
+// CHECK:STDOUT:   return %.loc20_25.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

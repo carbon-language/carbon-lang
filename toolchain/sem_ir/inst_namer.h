@@ -135,6 +135,9 @@ class InstNamer {
     Namespace labels;
   };
 
+  // Helper class for naming a single instruction.
+  class NamingContext;
+
   auto GetScopeInfo(ScopeId scope_id) -> Scope& {
     return scopes_[static_cast<int>(scope_id)];
   }
@@ -169,6 +172,15 @@ class InstNamer {
       -> void;
 
   auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
+
+  // Adds a scope and instructions to walk. Avoids recursion while allowing
+  // the loop to below add more instructions during iteration. The new
+  // instructions are queued such that they will be the next to be walked.
+  // Internally that means they are reversed and added to the end of the vector,
+  // since we pop from the back of the vector.
+  auto QueueBlockInsts(llvm::SmallVector<std::pair<ScopeId, InstId>>& queue,
+                       ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)
+      -> void;
 
   const File* sem_ir_;
   InstFingerprinter fingerprinter_;
