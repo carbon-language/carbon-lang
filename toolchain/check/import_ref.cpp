@@ -1197,6 +1197,12 @@ static auto RetryOrDone(ImportRefResolver& resolver, SemIR::ConstantId const_id)
   return ResolveResult::Done(const_id);
 }
 
+// Internal concept for instruction kinds that produce unique constants.
+template <typename InstT>
+concept HasUniqueConstantKind =
+    InstT::Kind.constant_kind() == SemIR::InstConstantKind::AlwaysUnique ||
+    InstT::Kind.constant_kind() == SemIR::InstConstantKind::ConditionalUnique;
+
 // Adds `inst` to the local context as a deduplicated constant and returns a
 // successful `ResolveResult`. Requires that there is no new work.
 //
@@ -1209,13 +1215,9 @@ static auto RetryOrDone(ImportRefResolver& resolver, SemIR::ConstantId const_id)
 // other instructions with `constant_kind == InstConstantKind::Unique`, because
 // they should not be deduplicated.
 template <typename InstT>
+  requires(!HasUniqueConstantKind<InstT>)
 static auto ResolveAsDeduplicated(ImportRefResolver& resolver, InstT inst)
     -> ResolveResult {
-  static_assert(
-      InstT::Kind.constant_kind() != SemIR::InstConstantKind::AlwaysUnique &&
-          InstT::Kind.constant_kind() !=
-              SemIR::InstConstantKind::ConditionalUnique,
-      "Use ResolveAsUnique");
   CARBON_CHECK(!resolver.HasNewWork());
   // AddImportedConstant produces an unattached constant, so its type must
   // be unattached as well.
@@ -1239,14 +1241,10 @@ static auto ResolveAsDeduplicated(ImportRefResolver& resolver, InstT inst)
 // other instructions with `constant_kind == InstConstantKind::Unique`, because
 // it does not perform deduplication.
 template <typename InstT>
+  requires HasUniqueConstantKind<InstT>
 static auto ResolveAsUnique(ImportRefResolver& resolver,
                             SemIR::InstId import_inst_id, InstT inst)
     -> ResolveResult {
-  static_assert(
-      InstT::Kind.constant_kind() == SemIR::InstConstantKind::AlwaysUnique ||
-          InstT::Kind.constant_kind() ==
-              SemIR::InstConstantKind::ConditionalUnique,
-      "Use ResolveAsDeduplicated");
   CARBON_CHECK(!resolver.HasNewWork());
   auto inst_id = AddPlaceholderImportedInst(resolver, import_inst_id, inst);
   auto const_id = SetConstantValue(resolver.local_context(), inst_id, inst);
