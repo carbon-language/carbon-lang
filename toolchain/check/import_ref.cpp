@@ -3015,8 +3015,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     default: {
-      auto inst_constant_id =
-          resolver.import_constant_values().Get(inst_id);
+      auto inst_constant_id = resolver.import_constant_values().Get(inst_id);
       if (!inst_constant_id.is_constant()) {
         // TODO: Import of non-constant BindNames happens when importing `let`
         // declarations.
