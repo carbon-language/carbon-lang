@@ -84,6 +84,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     info.FormatDiagnostic(message);
 
     RawStringOstream diagnostics_stream;
+    auto lang_opts = clang::LangOptions();
     clang::TextDiagnostic text_diagnostic(
         diagnostics_stream,
         // TODO: Consider allowing setting `LangOptions` or use
@@ -180,7 +181,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                         llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                        llvm::StringRef target)
+                        llvm::StringRef target, bool use_pie)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
   // TODO: Use all import locations by referring each Clang diagnostic to the
   // relevant import.
@@ -193,8 +194,8 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
       GenerateCppIncludesHeaderCode(context, imports),
       // Parse C++ (and not C).
       {"-x", "c++",
-       // Propagate the target to Clang.
-       "-target", target.str()},
+       // Propagate compile flag to Clang.
+       "-target", target.str(), use_pie ? "-fpie" : "-fno-pie"},
       (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
       std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
@@ -240,7 +241,8 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                    llvm::StringRef target) -> std::unique_ptr<clang::ASTUnit> {
+                    llvm::StringRef target, bool use_pie)
+    -> std::unique_ptr<clang::ASTUnit> {
   if (imports.empty()) {
     return nullptr;
   }
@@ -248,7 +250,7 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   CARBON_CHECK(!context.sem_ir().cpp_ast());
 
   auto [generated_ast, ast_has_error] =
-      GenerateAst(context, importing_file_path, imports, fs, target);
+      GenerateAst(context, importing_file_path, imports, fs, target, use_pie);
 
   PackageNameId package_id = imports.front().package_id;
   CARBON_CHECK(

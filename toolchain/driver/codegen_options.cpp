@@ -23,6 +23,19 @@ https://clang.llvm.org/docs/CrossCompilation.html#target-triple
         arg_b.Default(host);
         arg_b.Set(&target);
       });
+
+  // TODO: We probably need a better infrstructure for forwarding flags to LLVM.
+  b.AddFlag(
+      {
+          .name = "pie",
+          .help = R"""(
+Toggles PIE output in LLVM.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&pie);
+      });
 }
 
 }  // namespace Carbon

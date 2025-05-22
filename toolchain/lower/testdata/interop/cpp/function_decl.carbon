@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=lower --dump-llvm-ir  --exclude-dump-file-prefix=%{core_package_dir} --target=x86_64-unknown-linux-gnu %s
-//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/interop/cpp/function_decl.carbon
@@ -127,7 +125,7 @@ fn MyF() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 1}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_function_decl.carbon", directory: "")
 // CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
@@ -165,7 +163,7 @@ fn MyF() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 1}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_inline_function_decl.carbon", directory: "")
 // CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
@@ -208,7 +206,7 @@ fn MyF() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 1}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_inline_used_function_decl.carbon", directory: "")
 // CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
@@ -264,7 +262,7 @@ fn MyF() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 1}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_multiple_inline_function_decls.carbon", directory: "")
 // CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
@@ -308,7 +306,7 @@ fn MyF() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
-// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 1}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "todo_import_inline_recursive_function_decl.carbon", directory: "")
 // CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
