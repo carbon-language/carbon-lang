@@ -81,31 +81,6 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Mul.type.b2a: type = fn_type @Mul.1 [concrete]
 // CHECK:STDOUT:   %Mul: %Mul.type.b2a = struct_value () [concrete]
-// CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %Expect.185: type = class_type @Expect, @Expect(%N.51e) [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type.a0f: type = pattern_type %Expect.185 [symbolic]
-// CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
-// CHECK:STDOUT:   %Expect.1b5: type = class_type @Expect, @Expect(%int_0.6a9) [concrete]
-// CHECK:STDOUT:   %pattern_type.362: type = pattern_type %Expect.1b5 [concrete]
-// CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
-// CHECK:STDOUT:   %Expect.2e8: type = class_type @Expect, @Expect(%int_2.ef8) [concrete]
-// CHECK:STDOUT:   %pattern_type.43e: type = pattern_type %Expect.2e8 [concrete]
-// CHECK:STDOUT:   %int_6.e56: %i32 = int_value 6 [concrete]
-// CHECK:STDOUT:   %Expect.008: type = class_type @Expect, @Expect(%int_6.e56) [concrete]
-// CHECK:STDOUT:   %pattern_type.9ad: type = pattern_type %Expect.008 [concrete]
-// CHECK:STDOUT:   %int_2147483647.a74: %i32 = int_value 2147483647 [concrete]
-// CHECK:STDOUT:   %Expect.993: type = class_type @Expect, @Expect(%int_2147483647.a74) [concrete]
-// CHECK:STDOUT:   %pattern_type.e13: type = pattern_type %Expect.993 [concrete]
-// CHECK:STDOUT:   %int_-2147483647.1b3: %i32 = int_value -2147483647 [concrete]
-// CHECK:STDOUT:   %Expect.300: type = class_type @Expect, @Expect(%int_-2147483647.1b3) [concrete]
-// CHECK:STDOUT:   %pattern_type.992: type = pattern_type %Expect.300 [concrete]
-// CHECK:STDOUT:   %Expect.val.239: %Expect.1b5 = struct_value () [concrete]
-// CHECK:STDOUT:   %Expect.val.f2d: %Expect.2e8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Expect.val.49c: %Expect.008 = struct_value () [concrete]
-// CHECK:STDOUT:   %Expect.val.f73: %Expect.993 = struct_value () [concrete]
-// CHECK:STDOUT:   %Expect.val.db5: %Expect.300 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -120,97 +95,5 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %.loc20_19.1: %i32 = value_of_initializer %int.smul
 // CHECK:STDOUT:   %.loc20_19.2: %i32 = converted %int.smul, %.loc20_19.1
 // CHECK:STDOUT:   return %.loc20_19.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Expect(constants.%N.51e) {
-// CHECK:STDOUT:   %N.loc6_14.2 => constants.%N.51e
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Test(constants.%N.51e) {
-// CHECK:STDOUT:   %N.loc7_9.2 => constants.%N.51e
-// CHECK:STDOUT:   %Expect.loc7_29.2 => constants.%Expect.185
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a0f
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Test(constants.%int_0.6a9) {
-// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_0.6a9
-// CHECK:STDOUT:   %Expect.loc7_29.2 => constants.%Expect.1b5
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.362
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
-// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.239
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Expect(constants.%int_0.6a9) {
-// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_0.6a9
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Test(constants.%int_2.ef8) {
-// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_2.ef8
-// CHECK:STDOUT:   %Expect.loc7_29.2 => constants.%Expect.2e8
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.43e
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
-// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.f2d
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Expect(constants.%int_2.ef8) {
-// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_2.ef8
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Test(constants.%int_6.e56) {
-// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_6.e56
-// CHECK:STDOUT:   %Expect.loc7_29.2 => constants.%Expect.008
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ad
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
-// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.49c
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Expect(constants.%int_6.e56) {
-// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_6.e56
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Test(constants.%int_2147483647.a74) {
-// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_2147483647.a74
-// CHECK:STDOUT:   %Expect.loc7_29.2 => constants.%Expect.993
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e13
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
-// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.f73
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Expect(constants.%int_2147483647.a74) {
-// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_2147483647.a74
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Test(constants.%int_-2147483647.1b3) {
-// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_-2147483647.1b3
-// CHECK:STDOUT:   %Expect.loc7_29.2 => constants.%Expect.300
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.992
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
-// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.db5
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Expect(constants.%int_-2147483647.1b3) {
-// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_-2147483647.1b3
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

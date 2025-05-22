@@ -107,9 +107,6 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %i64.builtin: type = int_type signed, %int_64 [concrete]
 // CHECK:STDOUT:   %int_13: Core.IntLiteral = int_value 13 [concrete]
 // CHECK:STDOUT:   %i13.builtin: type = int_type signed, %int_13 [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN.builtin: type = int_type signed, %N [symbolic]
-// CHECK:STDOUT:   %pattern_type.099: type = pattern_type %iN.builtin [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -123,11 +120,5 @@ var m: Int(1000000000);
 // CHECK:STDOUT: fn @G(%n.param: %i13.builtin) -> %i13.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Symbolic(constants.%N) {
-// CHECK:STDOUT:   %N.loc22_13.2 => constants.%N
-// CHECK:STDOUT:   %iN.builtin => constants.%iN.builtin
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.099
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

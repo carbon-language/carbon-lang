@@ -49,7 +49,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Neq.type: type = fn_type @Neq [concrete]
 // CHECK:STDOUT:   %Neq: %Neq.type = struct_value () [concrete]
-// CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -91,26 +90,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%B) {
-// CHECK:STDOUT:   %B.loc6_9.2 => constants.%B
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%true) {
-// CHECK:STDOUT:   %B.loc6_9.2 => constants.%true
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%false) {
-// CHECK:STDOUT:   %B.loc6_9.2 => constants.%false
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -162,21 +144,5 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %False.call.loc10: init %C.2ba = call %False.ref.loc10() to %.loc10
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc10
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%B) {
-// CHECK:STDOUT:   %B.loc4_9.2 => constants.%B
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%true) {
-// CHECK:STDOUT:   %B.loc4_9.2 => constants.%true
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%false) {
-// CHECK:STDOUT:   %B.loc4_9.2 => constants.%false
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

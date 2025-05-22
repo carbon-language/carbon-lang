@@ -49,7 +49,6 @@ var d: C(false == false) = True();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [concrete]
 // CHECK:STDOUT:   %Eq: %Eq.type = struct_value () [concrete]
-// CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -57,7 +56,6 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %pattern_type.cc5: type = pattern_type %C.a14 [concrete]
 // CHECK:STDOUT:   %True.type: type = fn_type @True [concrete]
 // CHECK:STDOUT:   %True: %True.type = struct_value () [concrete]
-// CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -91,26 +89,9 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%B) {
-// CHECK:STDOUT:   %B.loc6_9.2 => constants.%B
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%true) {
-// CHECK:STDOUT:   %B.loc6_9.2 => constants.%true
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%false) {
-// CHECK:STDOUT:   %B.loc6_9.2 => constants.%false
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -118,7 +99,6 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %pattern_type.cc5: type = pattern_type %C.a14 [concrete]
 // CHECK:STDOUT:   %True.type: type = fn_type @True [concrete]
 // CHECK:STDOUT:   %True: %True.type = struct_value () [concrete]
-// CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [concrete]
 // CHECK:STDOUT:   %Equal.type.79c: type = fn_type @Equal.1 [concrete]
 // CHECK:STDOUT:   %Eq.impl_witness: <witness> = impl_witness imports.%Eq.impl_witness_table [concrete]
@@ -162,21 +142,5 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %True.call.loc10: init %C.a14 = call %True.ref.loc10() to %.loc10
 // CHECK:STDOUT:   assign file.%a.var, %True.call.loc10
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%B) {
-// CHECK:STDOUT:   %B.loc4_9.2 => constants.%B
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%true) {
-// CHECK:STDOUT:   %B.loc4_9.2 => constants.%true
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%false) {
-// CHECK:STDOUT:   %B.loc4_9.2 => constants.%false
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
