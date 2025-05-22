@@ -43,17 +43,17 @@ fn Uint32ToUint64(a: u32) -> u64 = "int.convert_checked";
 fn Int32ToIntLiteral(a: i32) -> IntLiteral() = "int.convert_checked";
 fn Uint32ToUintLiteral(a: u32) -> IntLiteral() = "int.convert_checked";
 
-// --- runtime_call.carbon
+// --- fail_runtime_call.carbon
 
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
 fn SizePreserving(a: i32) -> u32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   return Int32ToUint32(a);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: runtime_call.carbon:[[@LINE-7]]:1: in import [InImport]
+  // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE-7]]:1: in import [InImport]
   // CHECK:STDERR: int_ops.carbon:11:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: fn Int32ToUint32(a: i32) -> u32 = "int.convert_checked";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,10 +64,10 @@ fn SizePreserving(a: i32) -> u32 {
 
 fn Narrowing(a: i32) -> i16 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   return Int32ToInt16(a);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: runtime_call.carbon:[[@LINE-21]]:1: in import [InImport]
+  // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE-21]]:1: in import [InImport]
   // CHECK:STDERR: int_ops.carbon:18:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: fn Int32ToInt16(a: i32) -> i16 = "int.convert_checked";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,10 +78,10 @@ fn Narrowing(a: i32) -> i16 {
 
 fn Widening(a: i32) -> i64 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE+8]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   return Int32ToInt64(a);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: runtime_call.carbon:[[@LINE-35]]:1: in import [InImport]
+  // CHECK:STDERR: fail_runtime_call.carbon:[[@LINE-35]]:1: in import [InImport]
   // CHECK:STDERR: int_ops.carbon:26:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: fn Int32ToInt64(a: i32) -> i64 = "int.convert_checked";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -298,7 +298,7 @@ let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 // CHECK:STDERR:
 let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 
-// CHECK:STDOUT: --- runtime_call.carbon
+// CHECK:STDOUT: --- fail_runtime_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
