@@ -382,10 +382,10 @@ class C(T:! type) {}
 // more specific in the self type. They overlap for the query `C(()) as Z(())`
 // but neither impl is completely more specific than the other.
 final impl forall [T:! type] C(T) as Z(()) {}
-// CHECK:STDERR: final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE+7]]:1: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
+// CHECK:STDERR: fail_final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE+7]]:1: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
 // CHECK:STDERR: final impl forall [T:! type] C(()) as Z(T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE-4]]:1: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR: fail_final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE-4]]:1: note: other `final impl` here [FinalImplOverlapsSameFileNote]
 // CHECK:STDERR: final impl forall [T:! type] C(T) as Z(()) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
