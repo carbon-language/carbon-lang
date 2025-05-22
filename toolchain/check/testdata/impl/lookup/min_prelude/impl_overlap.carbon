@@ -370,3 +370,23 @@ final impl C as Z(C) {}
 class D;
 // Partially overlaps the blanket impl, which is fine.
 impl D as Z(D) {}
+
+// --- final_overlap_where_each_is_more_specific_than_the_other.carbon
+
+interface Z(T:! type) {}
+
+class C(T:! type) {}
+
+// This should be diagnosed as overlapping final impls outside a `match_first`.
+// The first impl is more specific in the interface constraint. The second is
+// more specific in the self type. They overlap for the query `C(()) as Z(())`
+// but neither impl is completely more specific than the other.
+final impl forall [T:! type] C(T) as Z(()) {}
+// CHECK:STDERR: final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE+7]]:1: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
+// CHECK:STDERR: final impl forall [T:! type] C(()) as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE-4]]:1: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR: final impl forall [T:! type] C(T) as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+final impl forall [T:! type] C(()) as Z(T) {}

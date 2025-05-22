@@ -15,8 +15,8 @@
 
 namespace Carbon::Check {
 
-auto TypeStructure::IsEqualToOrMoreSpecificThan(
-    const TypeStructure& other) const -> bool {
+auto TypeStructure::CompareStructure(CompareTest test,
+                                     const TypeStructure& other) const -> bool {
   const auto& lhs = structure_;
   const auto& rhs = other.structure_;
 
@@ -61,19 +61,36 @@ auto TypeStructure::IsEqualToOrMoreSpecificThan(
       return false;
     }
 
-    // From here we know one side is a Symbolic and the other is not.
-    //
-    // If the symbolic is on the LHS, then the RHS structure is more specific
-    // and we return false.
-    //
-    // If the symbolic is on the RHS, we can match the Symbolic against either a
-    // single Concrete or a larger bracketed set of Concrete structural elements
-    // from the (more-specific) LHS.
-    if (*lhs_cursor == Structural::Symbolic) {
-      return false;
-    }
-    if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
-      return false;
+    // From here we know one side is a Symbolic and the other is not. We can
+    // match the Symbolic against either a single Concrete or a larger bracketed
+    // set of Concrete structural elements.
+    switch (test) {
+      case CompareTest::IsEqualToOrMoreSpecificThan:
+        // If the symbolic is on the LHS, then the RHS structure is more
+        // specific and we return false. If the symbolic is on the RHS, we
+        // consume it and match it against the structure on the LHS.
+        if (*lhs_cursor == Structural::Symbolic) {
+          return false;
+        }
+        if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
+          return false;
+        }
+        break;
+      case CompareTest::HasOverlap:
+        // The symbolic can be on either side, and whichever side it is on, we
+        // consume it and match it against the structure on the other side.
+        if (*lhs_cursor == Structural::Symbolic) {
+          if (!ConsumeRhsSymbolic(rhs_cursor, rhs_concrete_cursor,
+                                  lhs_cursor)) {
+            return false;
+          }
+        } else {
+          if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor,
+                                  rhs_cursor)) {
+            return false;
+          }
+        }
+        break;
     }
   }
 

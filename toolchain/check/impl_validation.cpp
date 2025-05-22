@@ -301,11 +301,16 @@ static auto ValidateImplsForInterface(
         // Rules between two non-final impls.
         // =====================================================================
         if (!did_diagnose_non_final_impls_with_same_type_structure) {
-          if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
-                                                         impl_b)) {
-            // The same final `impl_a` may overlap with multiple `impl_b`s, and
-            // we want to diagnose each `impl_b`.
-            did_diagnose_non_final_impls_with_same_type_structure = true;
+          // Two impls in separate files will need to have some different
+          // concrete element in their type structure, as enforced by the orphan
+          // rule. So we don't need to check against non-local impls.
+          if (impl_a.is_local && impl_b.is_local) {
+            if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
+                                                           impl_b)) {
+              // The same final `impl_a` may overlap with multiple `impl_b`s,
+              // and we want to diagnose each `impl_b`.
+              did_diagnose_non_final_impls_with_same_type_structure = true;
+            }
           }
         }
       } else if (!impl_a.is_final || !impl_b.is_final) {
@@ -318,10 +323,9 @@ static auto ValidateImplsForInterface(
             did_diagnose_unmatchable_non_final_impl_with_final_impl = true;
           }
         }
-      } else if (impl_a.type_structure.IsEqualToOrMoreSpecificThan(
-                     impl_b.type_structure) ||
-                 impl_b.type_structure.IsEqualToOrMoreSpecificThan(
-                     impl_a.type_structure)) {
+      } else if (impl_a.type_structure.CompareStructure(
+                     TypeStructure::CompareTest::HasOverlap,
+                     impl_b.type_structure)) {
         // =====================================================================
         // Rules between two overlapping final impls.
         // =====================================================================
