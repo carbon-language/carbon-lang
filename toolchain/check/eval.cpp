@@ -762,9 +762,6 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
   return IsConstant(*phase);
 }
 
-static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
-                                       const SemIR::Inst& inst) -> void;
-
 // Resolve the specific declaration in the given instruction field. There is an
 // overload for any field type that has a GetConstantValue() overload which
 // canonicalizes a specific as part of forming its constant value.
@@ -791,7 +788,7 @@ static auto ResolveSpecificDeclForField(EvalContext& eval_context,
     return;
   }
 
-  ResolveSpecificDeclaration(eval_context.context(),
+  ResolveSpecificDecl(eval_context.context(),
                              eval_context.fallback_loc_id(), specific_id);
 }
 
@@ -854,6 +851,8 @@ static constexpr auto MakeResolveSpecificHandlerTable(
   return table;
 }
 
+// Resolves the specific declarations for a specific id in any field of the
+// `inst` instruction.
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
                                        const SemIR::Inst& inst) -> void {
   static constexpr auto Table =

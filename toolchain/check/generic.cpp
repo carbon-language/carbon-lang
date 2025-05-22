@@ -475,8 +475,8 @@ auto FinishGenericDecl(Context& context, SemIR::LocId loc_id,
   context.generic_region_stack().Pop();
   context.generics().Get(generic_id).decl_block_id = decl_block_id;
 
-  ResolveSpecificDeclaration(context, loc_id,
-                             context.generics().GetSelfSpecific(generic_id));
+  ResolveSpecificDecl(context, loc_id,
+                      context.generics().GetSelfSpecific(generic_id));
 }
 
 auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
@@ -643,8 +643,8 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
   context.generics().Get(generic_id).definition_block_id = definition_block_id;
 }
 
-auto ResolveSpecificDeclaration(Context& context, SemIR::LocId loc_id,
-                                SemIR::SpecificId specific_id) -> void {
+auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
+                         SemIR::SpecificId specific_id) -> void {
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
   if (!context.specifics().Get(specific_id).decl_block_id.has_value()) {
@@ -666,7 +666,7 @@ auto MakeSpecific(Context& context, SemIR::LocId loc_id,
                   SemIR::GenericId generic_id, SemIR::InstBlockId args_id)
     -> SemIR::SpecificId {
   auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
-  ResolveSpecificDeclaration(context, loc_id, specific_id);
+  ResolveSpecificDecl(context, loc_id, specific_id);
   return specific_id;
 }
 
@@ -703,7 +703,7 @@ auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
   // TODO: This could be made more efficient. We don't need to perform
   // substitution here; we know we want identity mappings for all constants and
   // types. We could also consider not storing the mapping at all in this case.
-  ResolveSpecificDeclaration(context, loc_id, specific_id);
+  ResolveSpecificDecl(context, loc_id, specific_id);
   return specific_id;
 }
 
