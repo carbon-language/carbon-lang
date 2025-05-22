@@ -174,6 +174,9 @@ auto FileContext::CreateCppCodeGenerator()
   RawStringOstream clang_module_name_stream;
   clang_module_name_stream << llvm_module_->getName() << ".clang";
 
+  // Do not emit Clang's name and version as the creator of the output file.
+  cpp_code_gen_options_.EmitVersionIdentMetadata = false;
+
   return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
       cpp_ast()->getASTContext().getDiagnostics(),
       clang_module_name_stream.TakeStr(), fs_, cpp_header_search_options_,

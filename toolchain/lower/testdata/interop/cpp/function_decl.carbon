@@ -111,17 +111,16 @@ fn MyF() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !8 {
+// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z3foov(), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   call void @_Z3foov(), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3foov()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.ident = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
@@ -130,12 +129,11 @@ fn MyF() {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_function_decl.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !9, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
-// CHECK:STDOUT: !10 = !{}
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 6, column: 1, scope: !8)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
+// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'import_inline_function_decl.carbon'
 // CHECK:STDOUT: source_filename = "import_inline_function_decl.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -143,10 +141,10 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z3foov = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !8 {
+// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z3foov(), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   call void @_Z3foov(), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
@@ -159,7 +157,6 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.ident = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
@@ -168,12 +165,11 @@ fn MyF() {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_inline_function_decl.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !9, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
-// CHECK:STDOUT: !10 = !{}
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 6, column: 1, scope: !8)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
+// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'import_inline_used_function_decl.carbon'
 // CHECK:STDOUT: source_filename = "import_inline_used_function_decl.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -183,10 +179,10 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @llvm.compiler.used = appending global [1 x ptr] [ptr @_Z3foov], section "llvm.metadata"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !8 {
+// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z3foov(), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   call void @_Z3foov(), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
@@ -202,7 +198,6 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.ident = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
@@ -211,12 +206,11 @@ fn MyF() {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_inline_used_function_decl.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !9, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
-// CHECK:STDOUT: !10 = !{}
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 6, column: 1, scope: !8)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
+// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'import_multiple_inline_function_decls.carbon'
 // CHECK:STDOUT: source_filename = "import_multiple_inline_function_decls.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -228,12 +222,12 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z4foo3v = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !8 {
+// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4foo1v(), !dbg !11
-// CHECK:STDOUT:   call void @_Z4foo2v(), !dbg !12
-// CHECK:STDOUT:   call void @_Z4foo3v(), !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT:   call void @_Z4foo1v(), !dbg !10
+// CHECK:STDOUT:   call void @_Z4foo2v(), !dbg !11
+// CHECK:STDOUT:   call void @_Z4foo3v(), !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
@@ -258,7 +252,6 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.ident = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
@@ -267,14 +260,13 @@ fn MyF() {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_multiple_inline_function_decls.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !9, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
-// CHECK:STDOUT: !10 = !{}
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 8, column: 3, scope: !8)
-// CHECK:STDOUT: !13 = !DILocation(line: 9, column: 3, scope: !8)
-// CHECK:STDOUT: !14 = !DILocation(line: 6, column: 1, scope: !8)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
+// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 3, scope: !7)
+// CHECK:STDOUT: !12 = !DILocation(line: 9, column: 3, scope: !7)
+// CHECK:STDOUT: !13 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'todo_import_inline_recursive_function_decl.carbon'
 // CHECK:STDOUT: source_filename = "todo_import_inline_recursive_function_decl.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -282,10 +274,10 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z4foo2v = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !8 {
+// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4foo2v(), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   call void @_Z4foo2v(), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline optnone
@@ -302,7 +294,6 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.ident = !{!7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
@@ -311,9 +302,8 @@ fn MyF() {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "todo_import_inline_recursive_function_decl.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!"clang version 21.0.0git"}
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !9, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
-// CHECK:STDOUT: !10 = !{}
-// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 6, column: 1, scope: !8)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
+// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 3, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
