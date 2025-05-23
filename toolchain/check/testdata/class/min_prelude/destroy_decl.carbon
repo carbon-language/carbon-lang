@@ -180,3 +180,16 @@ class C {
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn C.destroy.Foo() {}
+
+// --- fail_return_type_after_no_params.carbon
+
+library "[[@TEST_NAME]]";
+
+// Return type handling special-cases the "no params" case.
+class C {
+  // CHECK:STDERR: fail_return_type_after_no_params.carbon:[[@LINE+4]]:3: error: missing implicit `self` parameter [DestroyFunctionMissingSelf]
+  // CHECK:STDERR:   fn destroy -> ();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  fn destroy -> ();
+}
