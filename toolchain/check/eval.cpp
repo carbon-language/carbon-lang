@@ -761,22 +761,12 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
   return IsConstant(*phase);
 }
 
-template <typename... T>
-struct KindHasGetConstantValueOverload;
-
 template <typename... Types>
-struct KindHasGetConstantValueOverload<TypeEnum<Types...>> {
-  static constexpr auto Value(TypeEnum<Types...> e) -> bool {
-    constexpr auto Values = [] {
-      std::array<bool, SemIR::IdKind::NumValues> values = {false};
-      ((values[SemIR::IdKind::template For<Types>.ToIndex()] =
-            HasGetConstantValueOverload<Types>),
-       ...);
-      return values;
-    }();
-    return Values[e.ToIndex()];
-  }
-};
+static auto KindHasGetConstantValueOverload(TypeEnum<Types...> e) -> bool {
+  static constexpr std::array<bool, SemIR::IdKind::NumTypes> Values = {
+      (HasGetConstantValueOverload<Types>)...};
+  return Values[e.ToIndex()];
+}
 
 static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
                                              SemIR::SpecificId specific_id)
@@ -843,10 +833,13 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
       case SemIR::IdKind::For<SemIR::TypeInstId>:
         break;
 
+      case SemIR::IdKind::None:
+        // No arg.
+        break;
+
       default:
         CARBON_CHECK(
-            !KindHasGetConstantValueOverload<SemIR::IdKind>::Value(
-                arg_and_kind.kind()),
+            !KindHasGetConstantValueOverload(arg_and_kind.kind()),
             "Missing case for {0} which has a GetConstantValue() overload",
             arg_and_kind.kind());
         break;
