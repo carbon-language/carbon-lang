@@ -168,8 +168,23 @@ auto Formatter::ShouldIncludeInstByIR(InstId inst_id) -> bool {
   return include_ir_in_dumps_[import_ir->check_ir_id().index];
 }
 
-auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
-    -> bool {
+// Returns true for a `DefinitionStart` node.
+static auto IsDefinitionStart(Parse::NodeKind node_kind) -> bool {
+  switch (node_kind) {
+    case Parse::NodeKind::BuiltinFunctionDefinitionStart:
+    case Parse::NodeKind::ChoiceDefinitionStart:
+    case Parse::NodeKind::ClassDefinitionStart:
+    case Parse::NodeKind::FunctionDefinitionStart:
+    case Parse::NodeKind::ImplDefinitionStart:
+    case Parse::NodeKind::InterfaceDefinitionStart:
+    case Parse::NodeKind::NamedConstraintDefinitionStart:
+      return true;
+    default:
+      return false;
+  }
+}
+
+auto Formatter::ShouldFormatEntity(InstId decl_id) -> bool {
   if (!decl_id.has_value()) {
     return true;
   }
@@ -201,7 +216,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
   // to find the `Definition`, giving a range that includes the definition's
   // body.
   auto end_node_id = loc_id.node_id();
-  if (is_definition_start) {
+  if (IsDefinitionStart(sem_ir_->parse_tree().node_kind(end_node_id))) {
     end_node_id = node_parents_[end_node_id.index];
   }
 
@@ -212,8 +227,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
 }
 
 auto Formatter::ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
-  return ShouldFormatEntity(entity.latest_decl_id(),
-                            entity.definition_id.has_value());
+  return ShouldFormatEntity(entity.latest_decl_id());
 }
 
 auto Formatter::ShouldFormatInst(InstId inst_id) -> bool {
@@ -379,8 +393,7 @@ auto Formatter::FormatInterface(InterfaceId id) -> void {
 auto Formatter::FormatAssociatedConstant(AssociatedConstantId id) -> void {
   const AssociatedConstant& assoc_const =
       sem_ir_->associated_constants().Get(id);
-  if (!ShouldFormatEntity(assoc_const.decl_id,
-                          /*is_definition_start=*/false)) {
+  if (!ShouldFormatEntity(assoc_const.decl_id)) {
     return;
   }
 
@@ -538,9 +551,7 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
 auto Formatter::FormatSpecific(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   const auto& generic = sem_ir_->generics().Get(specific.generic_id);
-  if (!ShouldFormatEntity(
-          generic.decl_id,
-          /*is_definition_start=*/generic.definition_block_id.has_value())) {
+  if (!ShouldFormatEntity(generic.decl_id)) {
     // Omit specifics if we also omitted the generic.
     return;
   }

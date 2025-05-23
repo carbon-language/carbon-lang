@@ -113,9 +113,8 @@ class Formatter {
   auto ShouldIncludeInstByIR(InstId inst_id) -> bool;
 
   // Determines whether the specified entity should be included in the formatted
-  // output. `is_definition_start` should indicate whether, if `decl_id`'s
-  // `LocId` is a `NodeId`, it is expected to be a `DefinitionStart` kind.
-  auto ShouldFormatEntity(InstId decl_id, bool is_definition_start) -> bool;
+  // output.
+  auto ShouldFormatEntity(InstId decl_id) -> bool;
 
   auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool;
 
