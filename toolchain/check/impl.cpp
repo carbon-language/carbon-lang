@@ -98,7 +98,9 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
       context.generics().GetSelfSpecific(impl.generic_id), has_definition);
 }
 
-auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
+// Note: `impl` is copied to avoid a pointer being invalidated when this
+// function imports.
+auto ImplWitnessStartDefinition(Context& context, SemIR::Impl impl) -> void {
   CARBON_CHECK(impl.is_being_defined());
   CARBON_CHECK(impl.witness_id.has_value());
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
@@ -122,6 +124,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
       return;
     }
 
+    // This function imports, which can invalidate pointers into value stores.
     AllocateFacetTypeImplWitness(context, impl.interface.interface_id,
                                  witness_table.elements_id);
     witness_block = context.inst_blocks().GetMutable(witness_table.elements_id);
@@ -166,7 +169,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
 auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
   // Make a copy of the impl. We're going to reference it a lot, and `impl`s
   // could get invalidated by some of the things we do.
-  const auto impl = context.impls().Get(impl_id);
+  auto impl = context.impls().Get(impl_id);
 
   CARBON_CHECK(impl.is_being_defined());
   CARBON_CHECK(impl.witness_id.has_value());
@@ -183,6 +186,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
+  auto interface_name_id = interface.name_id;
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
   for (auto [assoc_entity, witness_value] :
@@ -204,6 +208,8 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
           CARBON_FATAL("Unexpected type: {0}", type_inst);
         }
         auto& fn = context.functions().Get(fn_type->function_id);
+        // This function imports, which can invalidate `interface` and other
+        // pointers into value stores.
         auto lookup_result =
             LookupNameInExactScope(context, SemIR::LocId(decl_id), fn.name_id,
                                    impl.scope_id, impl_scope);
@@ -219,7 +225,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
               SemIR::NameId, SemIR::NameId);
           auto builder =
               context.emitter().Build(impl.definition_id, ImplMissingFunction,
-                                      fn.name_id, interface.name_id);
+                                      fn.name_id, interface_name_id);
           NoteAssociatedFunction(context, builder, fn_type->function_id);
           builder.Emit();
 

@@ -265,8 +265,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::ClassType inst): {
-      auto& class_info = context_->classes().Get(inst.class_id);
-      if (!class_info.is_complete()) {
+      auto* class_info = &context_->classes().Get(inst.class_id);
+      if (!class_info->is_complete()) {
         if (diagnoser_) {
           auto builder = diagnoser_();
           NoteIncompleteClass(*context_, inst.class_id, builder);
@@ -275,14 +275,17 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         return false;
       }
       if (inst.specific_id.has_value()) {
+        // This function runs eval, which can import and invalidate `class_info`
+        // and other pointers into value stores.
         ResolveSpecificDefinition(*context_, loc_id_, inst.specific_id);
+        class_info = &context_->classes().Get(inst.class_id);
       }
       if (auto adapted_type_id =
-              class_info.GetAdaptedType(context_->sem_ir(), inst.specific_id);
+              class_info->GetAdaptedType(context_->sem_ir(), inst.specific_id);
           adapted_type_id.has_value()) {
         Push(adapted_type_id);
       } else {
-        Push(class_info.GetObjectRepr(context_->sem_ir(), inst.specific_id));
+        Push(class_info->GetObjectRepr(context_->sem_ir(), inst.specific_id));
       }
       break;
     }

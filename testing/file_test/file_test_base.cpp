@@ -386,6 +386,9 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
   if (absl::GetFlag(FLAGS_dump_output)) {
     std::unique_lock<std::mutex> lock(output_mutex);
     llvm::errs() << "\n--- Dumping: " << test.test_name << "\n\n";
+  } else if (absl::GetFlag(FLAGS_threads) == 1) {
+    std::unique_lock<std::mutex> lock(output_mutex);
+    llvm::errs() << "\nTEST " << test.test_name << " ";
   }
 
   // Load expected output.

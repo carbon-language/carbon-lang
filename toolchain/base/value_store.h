@@ -29,15 +29,11 @@ namespace Internal {
 class ValueStoreNotPrintable {};
 }  // namespace Internal
 
-// Setup our compile time condition controlling poisoning of value stores. This
-// is set to one by the Bazel flag `--features=poison_value_stores`.
-//
-// TODO: Eventually, this will always enabled when ASan is enabled, but we can't
-// do that until we clean up all of the latent bugs.
-#ifndef CARBON_POISON_VALUE_STORES
-#define CARBON_POISON_VALUE_STORES 0
-#elif !LLVM_ADDRESS_SANITIZER_BUILD
-#error "CARBON_POISON_VALUE_STORES requires address sanitizer"
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
+namespace Internal {
+auto LogPoison(std::string_view label, int element) -> void;
+auto LogUnpoison(std::string_view label, int element) -> void;
+}  // namespace Internal
 #endif
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
@@ -66,7 +62,7 @@ class ValueStore
   ValueStore() = default;
   ValueStore(ValueStore&& other) noexcept
       : values_((other.UnpoisonAll(), std::move(other.values_)))
-#if CARBON_POISON_VALUE_STORES
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
         ,
         all_poisoned_(false)
 #endif
@@ -77,7 +73,7 @@ class ValueStore
     UnpoisonAll();
     other.UnpoisonAll();
     values_ = std::move(other.values_);
-#if CARBON_POISON_VALUE_STORES
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
     all_poisoned_ = false;
 #endif
     PoisonAll();
@@ -98,15 +94,13 @@ class ValueStore
       // Unpoison everything if the push will reallocate, in order to allow the
       // vector to make a copy of the elements.
       UnpoisonAll();
-    } else {
-      PoisonAll();
     }
 
     values_.push_back(std::move(value));
 
-    if (realloc) {
-      PoisonAll();
-    } else {
+    if (!PoisonAll()) {
+      // If we did not realloc, and the store was already poisoned, the
+      // PoisonAll did nothing. So we poison the new element.
       PoisonElement(id.index);
     }
 
@@ -183,18 +177,22 @@ class ValueStore
   // Poison the entire contents of the value store. This is used to detect cases
   // where references to elements in a value store are used across calls that
   // might modify the store.
-  auto PoisonAll() const -> void {
-#if CARBON_POISON_VALUE_STORES
+  auto PoisonAll() const -> bool {
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
     if (!all_poisoned_) {
+      Internal::LogPoison(IdT::Label, -1);
       __asan_poison_memory_region(values_.data(),
                                   values_.size() * sizeof(values_[0]));
       all_poisoned_ = true;
+      return true;
     }
 #endif
+    return false;
   }
   // Unpoison the entire contents of the value store.
   auto UnpoisonAll() const -> void {
-#if CARBON_POISON_VALUE_STORES
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
+    Internal::LogUnpoison(IdT::Label, -1);
     __asan_unpoison_memory_region(values_.data(),
                                   values_.size() * sizeof(values_[0]));
     all_poisoned_ = false;
@@ -202,13 +200,15 @@ class ValueStore
   }
   // Poison a single element.
   auto PoisonElement([[maybe_unused]] int element) const -> void {
-#if CARBON_POISON_VALUE_STORES
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
+    Internal::LogPoison(IdT::Label, element);
     __asan_unpoison_memory_region(values_.data() + element, sizeof(values_[0]));
 #endif
   }
   // Unpoison a single element.
   auto UnpoisonElement([[maybe_unused]] int element) const -> void {
-#if CARBON_POISON_VALUE_STORES
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
+    Internal::LogUnpoison(IdT::Label, element);
     __asan_unpoison_memory_region(values_.data() + element, sizeof(values_[0]));
     all_poisoned_ = false;
 #endif
@@ -218,7 +218,7 @@ class ValueStore
   // stack, while this does make File smaller.
   llvm::SmallVector<std::decay_t<ValueType>, 0> values_;
 
-#if CARBON_POISON_VALUE_STORES
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
   // Whether the vector is currently fully poisoned.
   //
   // We use this to avoid repeated re-poisoning of the entire store. Doing so is

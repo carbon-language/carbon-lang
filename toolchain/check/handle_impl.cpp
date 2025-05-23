@@ -566,6 +566,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context, impl_info.generic_id);
+  // This function imports, which can invalidate `impl_info` and other pointers
+  // into value stores.
   ImplWitnessStartDefinition(context, impl_info);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
@@ -579,7 +581,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   //
   // We may need to track a list of instruction blocks here, as we do for a
   // function.
-  impl_info.body_block_id = context.inst_block_stack().PeekOrAdd();
+  context.impls().Get(impl_id).body_block_id =
+      context.inst_block_stack().PeekOrAdd();
   return true;
 }
 

@@ -235,7 +235,9 @@ static auto CheckCompleteClassType(
   }
 
   if (class_info.is_dynamic) {
-    class_info.vtable_id = BuildVtable(
+    // This function imports, which can invalidate `class_info` and other
+    // pointers into value stores.
+    context.classes().Get(class_id).vtable_id = BuildVtable(
         context, node_id,
         defining_vptr ? SemIR::InstId::None : base_class_info->vtable_id,
         vtable_contents);

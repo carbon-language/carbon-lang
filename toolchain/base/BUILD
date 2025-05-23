@@ -86,6 +86,7 @@ cc_library(
 
 cc_library(
     name = "value_store",
+    srcs = ["value_store.cpp"],
     hdrs = ["value_store.h"],
     deps = [
         ":mem_usage",
@@ -94,6 +95,7 @@ cc_library(
         "//common:hashtable_key_context",
         "//common:ostream",
         "//common:set",
+        "@abseil-cpp//absl/flags:flag",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -19,6 +19,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Lower](#lower)
 -   [Tests and debugging](#tests-and-debugging)
     -   [Running tests](#running-tests)
+        -   [Debugging ASAN Poisoning](#debugging-asan-poisoning)
+            -   [Non-determinism in the poison log](#non-determinism-in-the-poison-log)
     -   [Updating tests](#updating-tests)
         -   [Reviewing test deltas](#reviewing-test-deltas)
     -   [Minimal Core prelude](#minimal-core-prelude)
@@ -474,6 +476,167 @@ example, with `toolchain/parse/testdata/basics/empty.carbon`:
 -   `bazel run //toolchain -- -v compile --phase=check toolchain/check/testdata/basics/run.carbon`
     -   Runs using `-v` for verbose log output, and running through the `check`
         phase.
+
+#### Debugging ASAN Poisoning
+
+If a pointer is held across a ValueStore being modified and then used afterward
+it may have been invalidated and this is a bug.
+
+Our default build enables ASAN, and with ASAN enabled we look for these bugs by
+poisoning ValueStores on modification. If a test fails due to ValueStore
+poisoning, it will give an ASAN stack trace that says `use-after-poison` and
+looks like this:
+
+```
+==12==ERROR: AddressSanitizer: use-after-poison on address 0x50800020feec at pc 0x55f9c9777abe bp 0x7fff51624df0 sp 0x7fff51624de8
+WRITE of size 4 at 0x50800020feec thread T0
+    #0 0x55f9c9777abd in Carbon::Check::HandleParseNode(Carbon::Check::Context&, Carbon::Parse::NodeIdForKind<Carbon::Parse::NodeKind::ImplDefinitionStart>) /proc/self/cwd/toolchain/check/handle_impl.cpp:584:27
+    #1 0x55f9c9717b1e in Carbon::Check::CheckUnit::ProcessNodeIds() /proc/self/cwd/./toolchain/parse/node_kind.def:357:1
+    #2 0x55f9c9712c0a in Carbon::Check::CheckUnit::Run() /proc/self/cwd/toolchain/check/check_unit.cpp:91:8
+```
+
+Debugging use-after-poison is a little tricky, as it takes some work to
+determine how the poisoning occurred. Here we will look at how to do this
+debugging.
+
+Some suggested aliases for the common commands in this section:
+
+```sh
+alias pbuild='bazel build //toolchain/testing:file_test'
+alias ptestall='bazel test //toolchain/testing:file_test --test_arg=--threads=1'
+alias ptestfile='bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests'
+```
+
+If the test failed in the usual testing configuration, you will get a stack
+trace but an ASAN stack does not display which test failed. To determine this,
+run the tests again with `--threads=1`, which will print the name of each test
+before running it:
+
+```sh
+bazel test //toolchain/testing:file_test --test_arg=--threads=1
+```
+
+In the failure log, it should now be clear which test failed, as it will be the
+last test name printed before the ASAN stack trace, like this:
+
+```
+TEST toolchain/check/testdata/poisoned.carbon =================================================================
+==12==ERROR: AddressSanitizer: use-after-poison on address 0x50800020feec at pc 0x55f9c9777abe bp 0x7fff51624df0 sp 0x7fff51624de8
+WRITE of size 4 at 0x50800020feec thread T0
+    #0 0x55f9c9777abd in Carbon::Check::HandleParseNode(Carbon::Check::Context&, Carbon::Parse::NodeIdForKind<Carbon::Parse::NodeKind::ImplDefinitionStart>) /proc/self/cwd/toolchain/check/handle_impl.cpp:584:27
+    #1 0x55f9c9717b1e in Carbon::Check::CheckUnit::ProcessNodeIds() /proc/self/cwd/./toolchain/parse/node_kind.def:357:1
+    #2 0x55f9c9712c0a in Carbon::Check::CheckUnit::Run() /proc/self/cwd/toolchain/check/check_unit.cpp:91:8
+```
+
+The ASAN stack trace printed on a use-after-poison includes two sections. To
+debug, we need to get information from each stack trace section:
+
+1. The use-after-poison stack, which shows the invalid use of a pointer.
+2. The allocation stack, which shows which `ValueStore<T>` the pointer is into.
+   For example, if the invalid pointer read was to an `Impl`, the allocation
+   stack will name `ValueStore<SemIR::Impl>` in the first few frames below the
+   `llvm::SmallVector` frames.
+
+Now we know which pointer is invalid and where from (1) above. But we don't know
+what invalidated it yet. To do that we need to get a stack trace for the
+poisoning event.
+
+We do know which value store type was poisoned from (2) above. Run the
+individual test that failed with `--poison_verbose` to list all poison events.
+We only do this for a single test at a time because it prints a _lot_ and will
+be too slow to run all the tests.
+
+```sh
+bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon
+```
+
+This will print a lot of `Poison` and `Unpoison` log messages and eventually
+crash again on the use-after-poison event. We use the information from (2) to
+look up through the logs and find the last `Poison` event for the type of value
+store from (2). For example, if the allocation stack showed
+`ValueStore<SemIR::Impl>` then we'd look for the last `Poison` event on `impl`.
+
+For example, if the log ended at the use-after-poison crash as follows, then we
+would be interested in the `++ impl PoisonAll (impl:911)` line:
+
+```
+-- inst UnpoisonElement 18
+-- interface UnpoisonElement 0
+-- inst_block UnpoisonElement 10
+++ facet_type PoisonAll (facet_type:910)
+++ impl PoisonAll (impl:911)
+++ interface PoisonAll (interface:912)
+-- inst UnpoisonElement 31
+-- inst_block UnpoisonElement 5
+-- inst_block UnpoisonElement 5
+-- inst_block UnpoisonElement 5
+-- interface UnpoisonElement 0
+-- inst_block UnpoisonElement 10
+-- inst UnpoisonElement 34
+++ inst_block PoisonAll (inst_block:913)
+=================================================================
+==554912==ERROR: AddressSanitizer: use-after-poison on address 0x50800006c06c at pc 0x55ee267f0abe bp 0x7fff197bdbf0 sp 0x7fff197bdbe8
+WRITE of size 4 at 0x50800006c06c thread T0
+    #0 0x55ee267f0abd in Carbon::Check::HandleParseNode(Carbon::Check::Context&, Carbon::Parse::NodeIdForKind<Carbon::Parse::NodeKind::ImplDefinitionStart>) /proc/self/cwd/toolchain/check/handle_impl.cpp:584:27
+```
+
+From the poison log, we get the label and counter value of interest. In the
+example above that is `impl:911`, and we can use that with `--poison_stop` to
+get the stack trace of the poisoning event, in order to find out where the
+pointer was invalidated.
+
+```sh
+bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon --poison_stop=impl:911
+```
+
+If everything goes well, it will run up to this poison event and dump a stack
+trace showing the source of the pointer invalidation:
+
+```
+-- interface UnpoisonElement 0
+-- inst UnpoisonElement 18
+-- interface UnpoisonElement 0
+-- inst_block UnpoisonElement 10
+++ facet_type PoisonAll (facet_type:910)
+++ impl PoisonAll (impl:911)
+*** Stopping on poison event. Stack trace below.
+...
+ #0 0x000055d7bb2b623a ___interceptor_backtrace (bazel-bin/toolchain/testing/file_test+0xbe9023a)
+ #1 0x000055d7c7c74d1d llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) /proc/self/cwd/external/+llvm_project+llvm-project/llvm/lib/Support/Unix/Signals.inc:804:13
+...
+ 13 0x000055d7bd409b0a Invalidate /proc/self/cwd/./toolchain/sem_ir/impl.h:186:39
+#14 0x000055d7bd409b0a Carbon::Check::LoadImportRef(Carbon::Check::Context&, Carbon::SemIR::InstId) /proc/self/cwd/toolchain/check/import_ref.cpp:3217:19
+#15 0x000055d7bd38cf54 Carbon::Check::AllocateFacetTypeImplWitness(Carbon::Check::Context&, Carbon::SemIR::InterfaceId, Carbon::SemIR::InstBlockId) /proc/self/cwd/toolchain/check/facet_type.cpp:257:21
+```
+
+In this example, `AllocateFacetTypeImplWitness()` caused an import to occur, and
+imports can load arbitrary things and invalidate value stores. This shows use
+where we need to stop using the pointer. We document the function call that
+causes the invalidation and ensure code afterward avoids reusing the invalidated
+pointer.
+
+Then rebuild and run the test again to see if the issue was correctly resolved,
+and there are no further issues, iterating as needed:
+
+```sh
+bazel build //toolchain/testing:file_test
+bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon
+```
+
+##### Non-determinism in the poison log
+
+The counter in the poison log can be non-deterministic across runs,
+unfortunately, due to non-determinism in our data structures such as maps, and
+sorting. For example, if you used `--poison_stop=impl:911`, you might see on the
+next run that the last `impl` poison event is now `impl:908`. To help deal with
+this, `--poison_stop` will abort when the label matches and the counter value is
+any value equal to or greater than the one you specify. So using
+`--poison_stop=impl:908` would then catch the poison event whether it was
+recorded as `908` or `911` in the next run.
+
+If a ValueStore is invalidated frequently (such as the `inst` store), this
+non-determinism may make the poison stack less reliable. It may require
+collecting a few poison logs to find the correct one (sorry).
 
 ### Updating tests
 
