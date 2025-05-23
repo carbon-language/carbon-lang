@@ -408,7 +408,7 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   // we want eval to not actually do another lookup here, but we must create the
   // instruction through eval. It takes care to bypass running lookup again for
   // this caller.
-  auto witness_const_id = EvalOrAddInst<SemIR::LookupImplWitness>(
+  auto witness_const_id = AddInstWithoutEval<SemIR::LookupImplWitness>(
       context, context.insts().GetCanonicalLocId(loc_id).ToImplicit(),
       {
           .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),

@@ -97,6 +97,23 @@ auto EvalOrAddInst(Context& context, LocT loc, InstT inst)
   return EvalOrAddInst(context, SemIR::LocIdAndInst(loc, inst));
 }
 
+// Add an instruction and return its constant value by canonicalizing it but
+// without evaluating the instruction. The instruction will need to be evaluated
+// later to have any effect.
+auto AddInstWithoutEval(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::ConstantId;
+
+// Convenience for AddInstWithoutEval with typed nodes.
+//
+// As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
+template <typename InstT, typename LocT>
+  requires(!InstT::Kind.has_cleanup() &&
+           std::convertible_to<LocT, SemIR::LocId>)
+auto AddInstWithoutEval(Context& context, LocT loc, InstT inst)
+    -> SemIR::ConstantId {
+  return AddInstWithoutEval(context, SemIR::LocIdAndInst(loc, inst));
+}
+
 // Adds an instruction and enqueues it to be added to the eval block of the
 // enclosing generic, returning the produced ID. The instruction is expected to
 // be a dependent template instantiation action.

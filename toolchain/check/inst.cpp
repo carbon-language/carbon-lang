@@ -14,10 +14,18 @@
 
 namespace Carbon::Check {
 
+namespace {
+enum WithOrWithoutEval {
+  WithEval,
+  WithoutEval,
+};
+}
+
 // Finish producing an instruction. Set its constant value, and register it in
 // any applicable instruction lists.
 static auto FinishInst(Context& context, SemIR::InstId inst_id,
-                       SemIR::Inst inst) -> void {
+                       SemIR::Inst inst, WithOrWithoutEval eval = WithEval)
+    -> void {
   DependentInst::Kind dep_kind = DependentInst::None;
 
   // If the instruction has a symbolic constant type, track that we need to
@@ -28,7 +36,15 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
   }
 
   // If the instruction has a constant value, compute it.
-  auto const_id = TryEvalInstUnsafe(context, inst_id, inst);
+  auto const_id = SemIR::ConstantId::None;
+  switch (eval) {
+    case WithEval:
+      const_id = TryEvalInstUnsafe(context, inst_id, inst);
+      break;
+    case WithoutEval:
+      const_id = AddImportedConstant(context, inst);
+      break;
+  }
   context.constant_values().Set(inst_id, const_id);
   if (const_id.is_constant()) {
     CARBON_VLOG_TO(context.vlog_stream(), "Constant: {0} -> {1}\n", inst,
@@ -54,19 +70,32 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
   }
 }
 
-auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
-    -> SemIR::InstId {
-  auto inst_id = AddInstInNoBlock(context, loc_id_and_inst);
+static auto AddInstInNoBlockWithOptionalEval(
+    Context& context, SemIR::LocIdAndInst loc_id_and_inst,
+    WithOrWithoutEval eval) -> SemIR::InstId {
+  auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
+  CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n", loc_id_and_inst.inst);
+  FinishInst(context, inst_id, loc_id_and_inst.inst, eval);
+  return inst_id;
+}
+
+static auto AddInstWithOptionalEval(Context& context,
+                                    SemIR::LocIdAndInst loc_id_and_inst,
+                                    WithOrWithoutEval eval) -> SemIR::InstId {
+  auto inst_id =
+      AddInstInNoBlockWithOptionalEval(context, loc_id_and_inst, eval);
   context.inst_block_stack().AddInstId(inst_id);
   return inst_id;
 }
 
+auto AddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  return AddInstWithOptionalEval(context, loc_id_and_inst, WithEval);
+}
+
 auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
-  auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG_TO(context.vlog_stream(), "AddInst: {0}\n", loc_id_and_inst.inst);
-  FinishInst(context, inst_id, loc_id_and_inst.inst);
-  return inst_id;
+  return AddInstInNoBlockWithOptionalEval(context, loc_id_and_inst, WithEval);
 }
 
 auto AddDependentActionInst(Context& context,
@@ -188,6 +217,32 @@ auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     case SemIR::InstConstantNeedsInstIdKind::Permanent: {
       // Evaluation needs a permanent InstId. Add the instruction.
       auto inst_id = AddInst(context, loc_id_and_inst);
+      return context.constant_values().Get(inst_id);
+    }
+  }
+}
+
+auto AddInstWithoutEval(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::ConstantId {
+  CARBON_CHECK(!loc_id_and_inst.inst.kind().has_cleanup());
+  switch (loc_id_and_inst.inst.kind().constant_needs_inst_id()) {
+    case SemIR::InstConstantNeedsInstIdKind::No: {
+      return AddImportedConstant(context, loc_id_and_inst.inst);
+    }
+
+    case SemIR::InstConstantNeedsInstIdKind::DuringEvaluation: {
+      // Evaluation temporarily needs an InstId. Add one for now.
+      auto inst_id = AddInstInNoBlockWithOptionalEval(context, loc_id_and_inst,
+                                                      WithoutEval);
+      // TODO: Consider removing `inst_id` from `insts` if it's still the most
+      // recently added instruction.
+      return context.constant_values().Get(inst_id);
+    }
+
+    case SemIR::InstConstantNeedsInstIdKind::Permanent: {
+      // Evaluation needs a permanent InstId. Add the instruction.
+      auto inst_id =
+          AddInstWithOptionalEval(context, loc_id_and_inst, WithoutEval);
       return context.constant_values().Get(inst_id);
     }
   }
