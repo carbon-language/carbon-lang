@@ -768,7 +768,7 @@ template <typename... Types>
 struct KindHasGetConstantValueOverload<TypeEnum<Types...>> {
   static constexpr auto Value(TypeEnum<Types...> e) -> bool {
     constexpr auto Values = [] {
-      std::array<bool, SemIR::IdKind::NumValues> values = {false};
+      std::array<bool, SemIR::IdKind::NumTypes> values = {};
       ((values[SemIR::IdKind::template For<Types>.ToIndex()] =
             HasGetConstantValueOverload<Types>),
        ...);
