@@ -778,72 +778,69 @@ struct KindHasGetConstantValueOverload<TypeEnum<Types...>> {
   }
 };
 
+static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
+                                             SemIR::SpecificId specific_id)
+    -> void {
+  if (!specific_id.has_value()) {
+    return;
+  }
+
+  const auto& specific = eval_context.specifics().Get(specific_id);
+  const auto& generic = eval_context.generics().Get(specific.generic_id);
+  if (specific_id == generic.self_specific_id) {
+    // Impl witness table construction happens before its generic decl is
+    // finish, in order to make the table's instructions dependent
+    // instructions of the Impl's generic. But those instructions can refer to
+    // the generic's self specific. We can not resolve the specific
+    // declaration for the self specific until the generic is finished, but it
+    // is explicitly resolved at that time in `FinishGenericDecl()`.
+    return;
+  }
+  ResolveSpecificDecl(eval_context.context(), eval_context.fallback_loc_id(),
+                      specific_id);
+}
+
 // Resolves the specific declarations for a specific id in any field of the
 // `inst` instruction.
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
                                        const SemIR::Inst& inst) -> void {
-  auto resolve_specific_decl = [&](SemIR::SpecificId specific_id) {
-    if (!specific_id.has_value()) {
-      return;
-    }
-
-    const auto& specific = eval_context.specifics().Get(specific_id);
-    const auto& generic = eval_context.generics().Get(specific.generic_id);
-    if (specific_id == generic.self_specific_id) {
-      // Impl witness table construction happens before its generic decl is
-      // finish, in order to make the table's instructions dependent
-      // instructions of the Impl's generic. But those instructions can refer to
-      // the generic's self specific. We can not resolve the specific
-      // declaration for the self specific until the generic is finished, but it
-      // is explicitly resolved at that time in `FinishGenericDecl()`.
-      return;
-    }
-    ResolveSpecificDecl(eval_context.context(), eval_context.fallback_loc_id(),
-                        specific_id);
-  };
-
   for (auto arg_and_kind : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
     // This switch must handle any field type that has a GetConstantValue()
     // overload which canonicalizes a specific (and thus potentially forms a new
     // specific) as part of forming its constant value.
     CARBON_KIND_SWITCH(arg_and_kind) {
-      case CARBON_KIND(SemIR::SpecificId specific_id): {
-        resolve_specific_decl(specific_id);
-        break;
-      }
-      case CARBON_KIND(SemIR::SpecificInterfaceId specific_interface_id): {
-        resolve_specific_decl(eval_context.specific_interfaces()
-                                  .Get(specific_interface_id)
-                                  .specific_id);
-        break;
-      }
       case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
         const auto& info =
             eval_context.context().facet_types().Get(facet_type_id);
         for (const auto& interface : info.extend_constraints) {
-          resolve_specific_decl(interface.specific_id);
+          ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
         }
         for (const auto& interface : info.self_impls_constraints) {
-          resolve_specific_decl(interface.specific_id);
+          ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
         }
+        break;
+      }
+      case CARBON_KIND(SemIR::SpecificId specific_id): {
+        ResolveSpecificDeclForSpecificId(eval_context, specific_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::SpecificInterfaceId specific_interface_id): {
+        ResolveSpecificDeclForSpecificId(eval_context,
+                                         eval_context.specific_interfaces()
+                                             .Get(specific_interface_id)
+                                             .specific_id);
         break;
       }
 
         // These id types have a GetConstantValue() overload but that overload
         // does not canonicalize any SpecificId in the value type.
-      case CARBON_KIND(SemIR::DestInstId _):
-        break;
-      case CARBON_KIND(SemIR::EntityNameId _):
-        break;
-      case CARBON_KIND(SemIR::InstBlockId _):
-        break;
-      case CARBON_KIND(SemIR::InstId _):
-        break;
-      case CARBON_KIND(SemIR::MetaInstId _):
-        break;
-      case CARBON_KIND(SemIR::StructTypeFieldsId _):
-        break;
-      case CARBON_KIND(SemIR::TypeInstId _):
+      case SemIR::IdKind::For<SemIR::DestInstId>:
+      case SemIR::IdKind::For<SemIR::EntityNameId>:
+      case SemIR::IdKind::For<SemIR::InstBlockId>:
+      case SemIR::IdKind::For<SemIR::InstId>:
+      case SemIR::IdKind::For<SemIR::MetaInstId>:
+      case SemIR::IdKind::For<SemIR::StructTypeFieldsId>:
+      case SemIR::IdKind::For<SemIR::TypeInstId>:
         break;
 
       default:
