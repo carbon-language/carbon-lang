@@ -81,9 +81,9 @@ for dep in deps:
     # exist. Specially diagnose them to try to provide a more helpful
     # message.
     if repo in (
-        "@google_benchmark",
-        "@abseil-cpp",
-        "@googletest",
+        "@@google_benchmark+",
+        "@@abseil-cpp+",
+        "@@googletest+",
     ):
         sys.exit("ERROR: dependency only allowed in test code: %s" % dep)
 

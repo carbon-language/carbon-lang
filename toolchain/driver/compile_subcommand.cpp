@@ -16,6 +16,7 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/timings.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -294,6 +295,35 @@ Whether to emit DWARF debug information.
         arg_b.Default(true);
         arg_b.Set(&include_debug_info);
       });
+  b.AddFlag(
+      {
+          .name = "poison_verbose",
+          .help = R"""(
+Print verbose logs of ASAN poisoning events in the value stores. Used to debug
+ASAN use-after-poison crashes, and only has an effect when run with the ASAN
+sanitizer.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(false);
+        arg_b.Set(&poison_verbose);
+      });
+  b.AddStringOption(
+      {
+          .name = "poison_stop",
+          .value_name = "LABEL:COUNTER",
+          .help = R"""(
+Set a condition after which the process will abort on the next ASAN poison
+event. The format is LABEL:COUNTER. Once the LABEL is poisoned with a counter
+value >= COUNTER, the process will abort and print the stack trace of the
+ASAN poisoning event. Note that the poison counter can vary slightly from run to
+run, so you can use a smaller number to catch the ASAN poison event that you
+want. The possible LABEL and COUNTER values are printed when --poison_verbose is
+used. Used to debug ASAN use-after-poison crashes, and only has an effect when
+run with the ASAN sanitizer.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&poison_stop); });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -855,6 +885,11 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (!ValidateOptions(driver_env.emitter)) {
     return {.success = false};
   }
+
+#ifdef LLVM_ADDRESS_SANITIZER_BUILD
+  SetPoisonVerbose(options_.poison_verbose);
+  SetPoisonStop(options_.poison_stop);
+#endif
 
   // Find the files comprising the prelude if we are importing it.
   // TODO: Replace this with a search for library api files in a

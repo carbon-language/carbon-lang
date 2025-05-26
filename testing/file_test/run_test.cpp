@@ -90,6 +90,7 @@ static auto DoArgReplacements(llvm::SmallVector<std::string>& test_args,
 }
 
 auto RunTestFile(const FileTestBase& test_base, bool dump_output,
+                 llvm::ArrayRef<std::string> pass_through_args,
                  TestFile& test_file) -> ErrorOr<Success> {
   llvm::SmallVector<TestFile::Split*> all_splits;
   for (auto& split : test_file.file_splits) {
@@ -138,9 +139,14 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
   // expectations of PrettyStackTraceProgram and Run.
   llvm::SmallVector<llvm::StringRef> test_args_ref;
   llvm::SmallVector<const char*> test_argv_for_stack_trace;
-  test_args_ref.reserve(test_file.test_args.size());
-  test_argv_for_stack_trace.reserve(test_file.test_args.size() + 1);
+  test_args_ref.reserve(test_file.test_args.size() + pass_through_args.size());
+  test_argv_for_stack_trace.reserve(test_file.test_args.size() +
+                                    pass_through_args.size() + 1);
   for (const auto& arg : test_file.test_args) {
+    test_args_ref.push_back(arg);
+    test_argv_for_stack_trace.push_back(arg.c_str());
+  }
+  for (const auto& arg : pass_through_args) {
     test_args_ref.push_back(arg);
     test_argv_for_stack_trace.push_back(arg.c_str());
   }

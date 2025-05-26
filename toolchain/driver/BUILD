@@ -128,6 +128,7 @@ cc_library(
         "//toolchain/base:pretty_stack_trace_function",
         "//toolchain/base:shared_value_stores",
         "//toolchain/base:timings",
+        "//toolchain/base:value_store",
         "//toolchain/check",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",

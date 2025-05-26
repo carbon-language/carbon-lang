@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Running tests](#running-tests)
         -   [Debugging ASAN Poisoning](#debugging-asan-poisoning)
             -   [Non-determinism in the poison log](#non-determinism-in-the-poison-log)
+            -   [malloc: nano zone abandoned](#malloc-nano-zone-abandoned)
     -   [Updating tests](#updating-tests)
         -   [Reviewing test deltas](#reviewing-test-deltas)
     -   [Minimal Core prelude](#minimal-core-prelude)
@@ -637,6 +638,17 @@ recorded as `908` or `911` in the next run.
 If a ValueStore is invalidated frequently (such as the `inst` store), this
 non-determinism may make the poison stack less reliable. It may require
 collecting a few poison logs to find the correct one (sorry).
+
+##### malloc: nano zone abandoned
+
+On MacOS when running ASAN binaries, you will get this error message in stderr:
+
+```
+file_test(61907,0x20b351f00) malloc: nano zone abandoned due to inability to reserve vm space.
+```
+
+To avoid this, set `MallocNanoZone=0` in your environment. This issue is tracked
+in https://github.com/google/sanitizers/issues/1666.
 
 ### Updating tests
 

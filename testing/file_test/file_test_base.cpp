@@ -71,6 +71,12 @@ ABSL_FLAG(int, print_slowest_tests, 5,
           "The number of tests to print when showing slowest tests. Set to 0 "
           "to disabling printing. Set to -1 to print all tests.");
 
+// Flags known by a driver that are passed through to it.
+ABSL_FLAG(bool, poison_verbose, false, "Passed through to the driver.");
+ABSL_FLAG(std::string, poison_stop, "", "Passed through to the driver.");
+
+static const std::vector<std::string>* g_pass_through_args = nullptr;
+
 namespace Carbon::Testing {
 
 // Information for a test case.
@@ -369,7 +375,7 @@ static auto RunSingleTestHelper(FileTestInfo& test, FileTestBase& test_instance)
   llvm::PrettyStackTraceString stack_trace_entry(test_command.c_str());
 
   if (auto err = RunTestFile(test_instance, absl::GetFlag(FLAGS_dump_output),
-                             **test.test_result);
+                             *g_pass_through_args, **test.test_result);
       !err.ok()) {
     test.test_result = std::move(err).error();
   }
@@ -547,12 +553,23 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
 
   Carbon::InitLLVM init_llvm(argc, argv);
   testing::InitGoogleTest(&argc, argv);
-  auto args = absl::ParseCommandLine(argc, argv);
+  auto positional_args = absl::ParseCommandLine(argc, argv);
 
-  if (args.size() > 1) {
+  std::vector<std::string> pass_through_args;
+  if (absl::GetFlag(FLAGS_poison_verbose)) {
+    pass_through_args.push_back("--poison_verbose");
+  }
+  if (auto value = absl::GetFlag(FLAGS_poison_stop); !value.empty()) {
+    std::string stop = "--poison_stop=";
+    stop += value;
+    pass_through_args.push_back(std::move(stop));
+  }
+  g_pass_through_args = &pass_through_args;
+
+  if (positional_args.size() > 1) {
     ErrorBuilder b;
     b << "Unexpected arguments:";
-    for (char* arg : llvm::ArrayRef(args).drop_front()) {
+    for (char* arg : llvm::ArrayRef(positional_args).drop_front()) {
       b << " " << FormatEscaped(arg);
     }
     return b;

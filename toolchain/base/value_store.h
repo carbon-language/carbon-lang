@@ -23,7 +23,6 @@
 namespace Carbon {
 
 namespace Internal {
-
 // Used as a parent class for non-printable types. This is just for
 // std::conditional, not as an API.
 class ValueStoreNotPrintable {};
@@ -34,6 +33,13 @@ namespace Internal {
 auto LogPoison(std::string_view label, int element) -> void;
 auto LogUnpoison(std::string_view label, int element) -> void;
 }  // namespace Internal
+
+// Control whether to print verbose ASAN poisoning logs showing each poison
+// event in the value stores. See --poison_verbose.
+auto SetPoisonVerbose(bool v) -> void;
+// Set the condition on which an ASAN poison event will abort the process and
+// dump a stack trace. See --poison_stop.
+auto SetPoisonStop(llvm::StringRef s) -> void;
 #endif
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the

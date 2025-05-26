@@ -65,8 +65,10 @@ struct CompileOptions {
   bool builtin_sem_ir = false;
   bool prelude_import = false;
   bool include_debug_info = true;
+  bool poison_verbose = false;
 
   llvm::StringRef exclude_dump_file_prefix;
+  llvm::StringRef poison_stop;
 };
 
 // Implements the compile subcommand of the driver.

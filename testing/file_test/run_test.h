@@ -13,6 +13,7 @@ namespace Carbon::Testing {
 
 // Runs the test, updating `test_file`.
 auto RunTestFile(const FileTestBase& test_base, bool dump_output,
+                 llvm::ArrayRef<std::string> pass_through_args,
                  TestFile& test_file) -> ErrorOr<Success>;
 
 }  // namespace Carbon::Testing
