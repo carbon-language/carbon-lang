@@ -30,8 +30,12 @@ class ValueStoreNotPrintable {};
 
 #ifdef LLVM_ADDRESS_SANITIZER_BUILD
 namespace Internal {
-auto LogPoison(std::string_view label, int element) -> void;
-auto LogUnpoison(std::string_view label, int element) -> void;
+// Logs the poison event to stderr if `SetPoisonVerbose()` was set to true. A
+// negative `element` indicates the entire store was poisoned.
+auto LogPoison(llvm::StringRef label, int element) -> void;
+// Logs the unpoison event to stderr if `SetPoisonVerbose()` was set to true. A
+// negative `element` indicates the entire store was unpoisoned.
+auto LogUnpoison(llvm::StringRef label, int element) -> void;
 }  // namespace Internal
 
 // Control whether to print verbose ASAN poisoning logs showing each poison

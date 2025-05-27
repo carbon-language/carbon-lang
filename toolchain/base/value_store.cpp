@@ -54,7 +54,7 @@ static auto ShouldStop(std::string_view label, uint64_t counter) -> bool {
   return counter >= condition.counter && label == condition.label;
 }
 
-auto LogPoison(std::string_view label, int element) -> void {
+auto LogPoison(llvm::StringRef label, int element) -> void {
   if (!ShouldPrint()) {
     return;
   }
@@ -73,7 +73,7 @@ auto LogPoison(std::string_view label, int element) -> void {
   ++counter;
 }
 
-auto LogUnpoison(std::string_view label, int element) -> void {
+auto LogUnpoison(llvm::StringRef label, int element) -> void {
   if (!ShouldPrint()) {
     return;
   }
