@@ -537,9 +537,8 @@ debugging.
 Some suggested aliases for the common commands in this section:
 
 ```sh
-alias pbuild='bazel build //toolchain/testing:file_test'
 alias ptestall='bazel test //toolchain/testing:file_test --test_arg=--threads=1'
-alias ptestfile='bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests'
+alias ptestfile='bazel run //toolchain/testing:file_test -- --dump_output --poison_verbose --file_tests'
 ```
 
 If the test failed in the usual testing configuration, you will get a stack
@@ -582,7 +581,7 @@ We only do this for a single test at a time because it prints a _lot_ and will
 be too slow to run all the tests.
 
 ```sh
-bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon
+bazel run //toolchain/testing:file_test -- --dump_output --poison_verbose --file_tests -- --dump_output --poison_verbose --file_tests path/to/test.carbon
 ```
 
 This will print a lot of `Poison` and `Unpoison` log messages and eventually
@@ -621,7 +620,7 @@ get the stack trace of the poisoning event, in order to find out where the
 pointer was invalidated.
 
 ```sh
-bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon --poison_abort=impl:911
+bazel run //toolchain/testing:file_test -- --dump_output --poison_verbose --file_tests -- --dump_output --poison_verbose --file_tests path/to/test.carbon --poison_abort=impl:911
 ```
 
 If everything goes well, it will run up to this poison event and dump a stack
@@ -654,8 +653,7 @@ Then rebuild and run the test again to see if the issue was correctly resolved,
 and there are no further issues, iterating as needed:
 
 ```sh
-bazel build //toolchain/testing:file_test
-bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon
+bazel run //toolchain/testing:file_test -- --dump_output --poison_verbose --file_tests -- --dump_output --poison_verbose --file_tests path/to/test.carbon
 ```
 
 #### Non-determinism in the poison log
