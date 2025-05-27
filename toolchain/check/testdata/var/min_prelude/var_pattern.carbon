@@ -691,7 +691,7 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%.param: <error>);
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var_self.carbon
 // CHECK:STDOUT:
