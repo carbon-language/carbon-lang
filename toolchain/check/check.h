@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_CHECK_H_
 
 #include "common/ostream.h"
+#include "toolchain/base/in_flight_clang.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/diagnostic_emitter.h"
@@ -28,7 +29,7 @@ struct Unit {
 
   // Storage for the unit's Clang AST. The unique_ptr should start empty, and
   // can be assigned as part of checking.
-  std::unique_ptr<clang::ASTUnit>* cpp_ast;
+  std::unique_ptr<InFlightClang>* cpp_ast = nullptr;
 };
 
 struct CheckParseTreesOptions {

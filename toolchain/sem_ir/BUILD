@@ -137,6 +137,7 @@ cc_library(
         "//common:set",
         "//common:struct_reflection",
         "//toolchain/base:canonical_value_store",
+        "//toolchain/base:in_flight_clang",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:kind_switch",

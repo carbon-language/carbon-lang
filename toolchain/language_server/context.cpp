@@ -11,6 +11,7 @@
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/TargetParser/Host.h"
+#include "toolchain/base/in_flight_clang.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/check.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -146,7 +147,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
 
   SemIR::File sem_ir(tree_.get(), SemIR::CheckIRId(0), tree_->packaging_decl(),
                      *value_stores_, uri_.file().str());
-  std::unique_ptr<clang::ASTUnit> cpp_ast;
+  std::unique_ptr<InFlightClang> cpp_ast;
   // TODO: Support cross-file checking when multiple files have edits.
   llvm::SmallVector<Check::Unit> units = {{{.consumer = &consumer,
                                             .value_stores = value_stores_.get(),

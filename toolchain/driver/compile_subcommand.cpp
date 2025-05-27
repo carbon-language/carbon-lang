@@ -17,6 +17,7 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
@@ -478,7 +479,7 @@ class CompilationUnit {
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
-  std::unique_ptr<clang::ASTUnit> cpp_ast_;
+  std::unique_ptr<Carbon::InFlightClang> cpp_ast_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
 };
@@ -674,7 +675,12 @@ auto CompilationUnit::PostCheck() -> void {
 
 auto CompilationUnit::RunLower() -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
-    llvm_context_ = std::make_unique<llvm::LLVMContext>();
+    // Clang and Carbon must use the same LLVMContext.
+    if (cpp_ast_) {
+      llvm_context_ = cpp_ast_->takeLLVMContext();
+    } else {
+      llvm_context_ = std::make_unique<llvm::LLVMContext>();
+    }
     Lower::LowerToLLVMOptions options;
     options.llvm_verifier_stream =
         options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;

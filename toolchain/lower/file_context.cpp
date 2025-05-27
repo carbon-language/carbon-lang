@@ -18,6 +18,7 @@
 #include "llvm/Linker/Linker.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+#include "toolchain/base/in_flight_clang.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
@@ -55,21 +56,12 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
           sem_ir.insts().size(), nullptr)),
       lowered_specifics_(sem_ir.generics(), {}),
       coalescer_(vlog_stream_, sem_ir.specifics()) {
-  // Initialization that relies on invariants of the class.
-  cpp_code_generator_ = CreateCppCodeGenerator();
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
 
 // TODO: Move this to lower.cpp.
 auto FileContext::PrepareToLower() -> void {
-  if (cpp_code_generator_) {
-    // Clang code generation should not actually modify the AST, but isn't
-    // const-correct.
-    cpp_code_generator_->Initialize(
-        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
-  }
-
   // Lower all types that were required to be complete.
   for (auto type_id : sem_ir_->types().complete_types()) {
     if (type_id.index >= 0) {
@@ -147,15 +139,14 @@ auto FileContext::LowerDefinitions() -> void {
 }
 
 auto FileContext::Finalize() -> void {
-  if (cpp_code_generator_) {
+  if (cpp_ast()) {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
-    cpp_code_generator_->HandleTranslationUnit(
-        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
+    std::unique_ptr<llvm::Module> cpp_module =
+        std::move(*cpp_ast()).finishCompilation();
     bool link_error = llvm::Linker::linkModules(
         /*Dest=*/llvm_module(),
-        /*Src=*/std::unique_ptr<llvm::Module>(
-            cpp_code_generator_->ReleaseModule()));
+        /*Src=*/std::move(cpp_module));
     CARBON_CHECK(!link_error);
   }
 
@@ -163,25 +154,6 @@ auto FileContext::Finalize() -> void {
   // remove duplicately lowered function definitions.
   coalescer_.CoalesceEquivalentSpecifics(lowered_specifics_,
                                          specific_functions_);
-}
-
-auto FileContext::CreateCppCodeGenerator()
-    -> std::unique_ptr<clang::CodeGenerator> {
-  if (!cpp_ast()) {
-    return nullptr;
-  }
-
-  RawStringOstream clang_module_name_stream;
-  clang_module_name_stream << llvm_module().getName() << ".clang";
-
-  // Do not emit Clang's name and version as the creator of the output file.
-  cpp_code_gen_options_.EmitVersionIdentMetadata = false;
-
-  return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-      cpp_ast()->getASTContext().getDiagnostics(),
-      clang_module_name_stream.TakeStr(), context().file_system(),
-      cpp_header_search_options_, cpp_preprocessor_options_,
-      cpp_code_gen_options_, llvm_context()));
 }
 
 auto FileContext::GetConstant(SemIR::ConstantId const_id,
@@ -374,12 +346,12 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
   // function name (`CodeGenModule::getMangledName()`), and will generate
   // its definition.
   llvm::Constant* function_address =
-      cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
+      cpp_code_generator().GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
                                            /*isForDefinition=*/false);
   CARBON_CHECK(function_address);
 
   // Emit the function code.
-  cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
+  cpp_code_generator().HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
 }
 
 auto FileContext::HandleReferencedSpecificFunction(

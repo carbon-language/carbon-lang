@@ -52,7 +52,6 @@ fn MyF() {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @foo(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
@@ -80,7 +79,6 @@ fn MyF() {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @bar(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }

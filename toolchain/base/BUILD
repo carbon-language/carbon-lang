@@ -62,6 +62,21 @@ cc_library(
 )
 
 cc_library(
+    name = "in_flight_clang",
+    srcs = ["in_flight_clang.cpp"],
+    hdrs = ["in_flight_clang.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//clang:ast",
+        "@llvm-project//clang:basic",
+        "@llvm-project//clang:driver",
+        "@llvm-project//clang:frontend",
+        "@llvm-project//clang:frontend_tool",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "kind_switch",
     hdrs = ["kind_switch.h"],
     deps = [

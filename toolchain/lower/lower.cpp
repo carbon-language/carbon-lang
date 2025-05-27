@@ -9,6 +9,7 @@
 
 #include "common/vlog.h"
 #include "llvm/IR/Verifier.h"
+#include "toolchain/base/in_flight_clang.h"
 #include "toolchain/lower/context.h"
 #include "toolchain/lower/file_context.h"
 

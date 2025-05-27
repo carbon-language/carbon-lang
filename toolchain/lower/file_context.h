@@ -8,6 +8,7 @@
 #include "clang/Basic/CodeGenOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Lex/PreprocessorOptions.h"
+#include "toolchain/base/in_flight_clang.h"
 #include "toolchain/lower/context.h"
 #include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
@@ -26,10 +27,6 @@ class FileContext {
   explicit FileContext(Context& context, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
-
-  // Creates the Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Returns null when not importing C++.
-  auto CreateCppCodeGenerator() -> std::unique_ptr<clang::CodeGenerator>;
 
   // Prepares to lower code in this IR, by precomputing needed LLVM types,
   // constants, declarations, etc. Should only be called once, before we lower
@@ -93,11 +90,10 @@ class FileContext {
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
   auto llvm_module() -> llvm::Module& { return context().llvm_module(); }
   auto cpp_code_generator() -> clang::CodeGenerator& {
-    CARBON_CHECK(cpp_code_generator_);
-    return *cpp_code_generator_;
+    return cpp_ast()->getCodeGenerator();
   }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
-  auto cpp_ast() -> const clang::ASTUnit* { return sem_ir().cpp_ast(); }
+  auto cpp_ast() -> InFlightClang* { return sem_ir().cpp_ast(); }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
@@ -198,16 +194,6 @@ class FileContext {
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
-
-  // The options used to create the Clang Code Generator.
-  clang::HeaderSearchOptions cpp_header_search_options_;
-  clang::PreprocessorOptions cpp_preprocessor_options_;
-  clang::CodeGenOptions cpp_code_gen_options_;
-
-  // The Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Should be initialized using `CreateCppCodeGenerator()`. Can be null
-  // if no C++ code is imported.
-  std::unique_ptr<clang::CodeGenerator> cpp_code_generator_;
 
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;

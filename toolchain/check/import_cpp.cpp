@@ -16,7 +16,10 @@
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/MemoryBufferRef.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/in_flight_clang.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
@@ -182,6 +185,19 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
 }  // namespace
 
+static auto OverlayFile(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> base,
+                        llvm::StringRef path, llvm::StringRef contents)
+    -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> {
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> single_file(
+      new llvm::vfs::InMemoryFileSystem);
+  single_file->addFile(path, 0, llvm::MemoryBuffer::getMemBufferCopy(contents));
+
+  llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> overlay(
+      new llvm::vfs::OverlayFileSystem(std::move(base)));
+  overlay->pushOverlay(single_file);
+  return overlay;
+}
+
 // Returns an AST for the C++ imports and a bool that represents whether
 // compilation errors where encountered or the generated AST is null due to an
 // error. Sets the AST in the context's `sem_ir`.
@@ -190,34 +206,45 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                         llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                         llvm::StringRef target)
-    -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
-  CarbonClangDiagnosticConsumer diagnostics_consumer(&context);
+    -> std::pair<std::unique_ptr<InFlightClang>, bool> {
+  auto generated_imports_h =
+      (importing_file_path + ".generated.cpp_imports.h").str();
+  fs = OverlayFile(fs, generated_imports_h,
+                   GenerateCppIncludesHeaderCode(context, imports));
 
   // TODO: Share compilation flags with ClangRunner.
-  auto ast = clang::tooling::buildASTFromCodeWithArgs(
-      GenerateCppIncludesHeaderCode(context, imports),
+  std::string target_storage = target.str();
+  const char* args[]{
       // Parse C++ (and not C).
-      {
-          "-x",
-          "c++",
-          // Propagate the target to Clang.
-          "-target",
-          target.str(),
-          // Require PIE. Note its default is configurable in Clang.
-          "-fPIE",
-      },
-      (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
-      std::make_shared<clang::PCHContainerOperations>(),
-      clang::tooling::getClangStripDependencyFileAdjuster(),
-      clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
-  // Remove link to the diagnostics consumer before its deletion.
-  ast->getDiagnostics().setClient(nullptr);
+      "clang-tool", "-x", "c++",
+      // Do not emit compiler version metadata.
+      "-Qn",
+      // Flags to match LLVM IR output of default code generation options, which
+      // was used in an earlier version.
+      // TODO: remove them when sharing flags with ClangRunner.
+      "-fomit-frame-pointer", "-fno-unwind-tables",
+      "-fno-asynchronous-unwind-tables", "-fno-exceptions",
+      // TODO: is this really necessary now that target also gets passed?
+      // Propagate the target to Clang.
+      "-target", target_storage.c_str(),
+      // Require PIE. Note its default is configurable in Clang.
+      "-fPIE", "-c", generated_imports_h.c_str()};
+
+  // TODO: Use all import locations by referring each Clang diagnostic to the
+  // relevant import.
+  SemIR::LocId loc_id = imports.back().node_id;
+  auto owned_diagnostics_consumer =
+      std::make_unique<CarbonClangDiagnosticConsumer>(&context);
+  auto* diagnostics_consumer = owned_diagnostics_consumer.get();
+  auto ast = InFlightClang::CompileFromArguments(
+      args, target, fs, std::move(owned_diagnostics_consumer));
 
   // In order to emit diagnostics, we need the AST.
   context.sem_ir().set_cpp_ast(ast.get());
-  diagnostics_consumer.EmitDiagnostics();
+  diagnostics_consumer->EmitDiagnostics();
 
-  return {std::move(ast), !ast || diagnostics_consumer.getNumErrors() > 0};
+  bool has_errors = !ast || diagnostics_consumer->getNumErrors() > 0;
+  return {std::move(ast), has_errors};
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
@@ -251,7 +278,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                    llvm::StringRef target) -> std::unique_ptr<clang::ASTUnit> {
+                    llvm::StringRef target) -> std::unique_ptr<InFlightClang> {
   if (imports.empty()) {
     return nullptr;
   }
@@ -293,7 +320,7 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
     return std::nullopt;
   }
 
-  clang::ASTUnit* ast = context.sem_ir().cpp_ast();
+  InFlightClang* ast = context.sem_ir().cpp_ast();
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
 

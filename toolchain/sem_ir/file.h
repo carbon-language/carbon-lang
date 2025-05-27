@@ -5,13 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
-#include "clang/Frontend/ASTUnit.h"
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/in_flight_clang.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/relational_value_store.h"
 #include "toolchain/base/shared_value_stores.h"
@@ -191,12 +191,16 @@ class File : public Printable<File> {
   }
   auto import_cpps() -> ImportCppStore& { return import_cpps_; }
   auto import_cpps() const -> const ImportCppStore& { return import_cpps_; }
-  auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
-  auto cpp_ast() const -> const clang::ASTUnit* { return cpp_ast_; }
+  // TODO: Refactor to avoid exposing a non-const pointer from a const method.
+  // Currently FileContext.cpp accepts the SemIR::File as const, but the access
+  // to AST is always mutable.
+  auto cpp_ast() const -> Carbon::InFlightClang* { return cpp_ast_; }
   // TODO: When the AST can be created before creating `File`, initialize the
   // pointer in the constructor and remove this function. This is part of
   // https://github.com/carbon-language/carbon-lang/issues/4666
-  auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
+  auto set_cpp_ast(Carbon::InFlightClang* cpp_ast) -> void {
+    cpp_ast_ = cpp_ast;
+  }
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
   auto names() const -> NameStoreWrapper {
@@ -325,7 +329,7 @@ class File : public Printable<File> {
 
   // The Clang AST to use when looking up `Cpp` names. Null if there are no
   // `Cpp` imports.
-  clang::ASTUnit* cpp_ast_ = nullptr;
+  Carbon::InFlightClang* cpp_ast_ = nullptr;
 
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
