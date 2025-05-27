@@ -97,7 +97,9 @@ auto LogUnpoison(llvm::StringRef label, int element) -> void {
 }  // namespace Internal
 
 auto SetPoisonVerbose(bool v) -> void { Internal::GetShouldPrint(v); }
-auto SetPoisonAbortCondition(llvm::StringRef s) -> void { Internal::GetAbortCondition(s); }
+auto SetPoisonAbortCondition(llvm::StringRef s) -> void {
+  Internal::GetAbortCondition(s);
+}
 
 }  // namespace Carbon
 

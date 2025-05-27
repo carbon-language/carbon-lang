@@ -19,15 +19,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Lower](#lower)
 -   [Tests and debugging](#tests-and-debugging)
     -   [Running tests](#running-tests)
-        -   [Debugging ASAN Poisoning](#debugging-asan-poisoning)
-            -   [Non-determinism in the poison log](#non-determinism-in-the-poison-log)
-            -   [malloc: nano zone abandoned](#malloc-nano-zone-abandoned)
     -   [Updating tests](#updating-tests)
         -   [Reviewing test deltas](#reviewing-test-deltas)
     -   [Minimal Core prelude](#minimal-core-prelude)
+    -   [Debugging ASAN Poisoning](#debugging-asan-poisoning)
+        -   [Non-determinism in the poison log](#non-determinism-in-the-poison-log)
     -   [Verbose output](#verbose-output)
     -   [Stack traces](#stack-traces)
+        -   [ASAN stack trace quality](#asan-stack-trace-quality)
     -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
+    -   [ASAN error: `malloc: nano zone abandoned`](#asan-error-malloc-nano-zone-abandoned)
 
 <!-- tocstop -->
 
@@ -661,10 +662,10 @@ bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_t
 
 The counter in the poison log can be non-deterministic across runs,
 unfortunately, due to non-determinism in our data structures such as maps, and
-sorting. For example, if you used `--poison_abort=impl:911`, you might see on the
-next run that the last `impl` poison event is now `impl:908`. To help deal with
-this, `--poison_abort` will abort when the label matches and the counter value is
-any value equal to or greater than the one you specify. So using
+sorting. For example, if you used `--poison_abort=impl:911`, you might see on
+the next run that the last `impl` poison event is now `impl:908`. To help deal
+with this, `--poison_abort` will abort when the label matches and the counter
+value is any value equal to or greater than the one you specify. So using
 `--poison_abort=impl:908` would then catch the poison event whether it was
 recorded as `908` or `911` in the next run.
 
@@ -707,7 +708,8 @@ these will lack contextual information.
 
 ### ASAN error: `malloc: nano zone abandoned`
 
-On MacOS when running ASAN binaries directly, you will get this error message in stderr:
+On MacOS when running ASAN binaries directly, you will get this error message in
+stderr:
 
 ```
 file_test(61907,0x20b351f00) malloc: nano zone abandoned due to inability to reserve vm space.
