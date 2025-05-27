@@ -311,7 +311,7 @@ specified on all threads to get deterministic behaviour.
       });
   b.AddStringOption(
       {
-          .name = "poison_stop",
+          .name = "poison_abort",
           .value_name = "LABEL:COUNTER",
           .help = R"""(
 Set a condition after which the process will abort on the next ASAN poison
@@ -325,7 +325,7 @@ run with the ASAN sanitizer. If used in a multi-thread environment, the same
 value should be specified on all threads to get deterministic behaviour.
 )""",
       },
-      [&](auto& arg_b) { arg_b.Set(&poison_stop); });
+      [&](auto& arg_b) { arg_b.Set(&poison_abort); });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -890,7 +890,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
 #ifdef LLVM_ADDRESS_SANITIZER_BUILD
   SetPoisonVerbose(options_.poison_verbose);
-  SetPoisonStop(options_.poison_stop);
+  SetPoisonAbortCondition(options_.poison_abort);
 #endif
 
   // Find the files comprising the prelude if we are importing it.

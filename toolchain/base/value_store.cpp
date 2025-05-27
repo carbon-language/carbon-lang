@@ -28,7 +28,7 @@ struct Condition {
   uint64_t counter;
 };
 
-static auto ParseStopCondition(llvm::StringRef condition) -> Condition {
+static auto ParseAbortCondition(llvm::StringRef condition) -> Condition {
   if (condition.empty()) {
     return {.counter = static_cast<uint64_t>(-1)};
   }
@@ -36,7 +36,7 @@ static auto ParseStopCondition(llvm::StringRef condition) -> Condition {
   auto [label, counter_str] = condition.split(':');
   if (counter_str.empty()) {
     llvm::errs()
-        << "ERROR: --poison_stop condition should be 'label:counter'\n";
+        << "ERROR: --poison_abort condition should be 'label:counter'\n";
     std::exit(1);
   }
   uint64_t counter;
@@ -44,7 +44,7 @@ static auto ParseStopCondition(llvm::StringRef condition) -> Condition {
   if (counter_str.getAsInteger(0, counter)) {
     llvm::errs() << "ERROR: counter could not be parsed as an integer\n";
     llvm::errs()
-        << "ERROR: --poison_stop condition should be 'label:counter'\n";
+        << "ERROR: --poison_abort condition should be 'label:counter'\n";
     llvm::errs() << " NOTE: found label:'" << label << "' counter:'"
                  << counter_str << "'\n";
     std::exit(1);
@@ -52,14 +52,14 @@ static auto ParseStopCondition(llvm::StringRef condition) -> Condition {
   return {.label = std::string(label), .counter = counter};
 }
 
-// Gets the global (thread-safe) stop Condition.
+// Gets the global (thread-safe) abort Condition.
 //
 // Initially this is called on each thread (with the same `condition_str`) when
-// setting the stop condition, and the first such thread to win which sets the
+// setting the abort condition, and the first such thread to win which sets the
 // static global `Condition`. Further calls without a string input just query
 // and get back that `Condition`.
-static auto GetStopCondition(llvm::StringRef condition_str = "") -> Condition {
-  static Condition condition = ParseStopCondition(condition_str);
+static auto GetAbortCondition(llvm::StringRef condition_str = "") -> Condition {
+  static Condition condition = ParseAbortCondition(condition_str);
   return condition;
 }
 
@@ -75,9 +75,9 @@ auto LogPoison(llvm::StringRef label, int element) -> void {
     llvm::errs() << "++ " << label << " PoisonElement " << element << " ("
                  << label << ":" << counter << ")\n";
   }
-  auto condition = GetStopCondition();
+  auto condition = GetAbortCondition();
   if (counter >= condition.counter && label == condition.label) {
-    llvm::errs() << "*** Stopping on poison event. Stack trace below.\n";
+    llvm::errs() << "*** Aborting on poison event. Stack trace below.\n";
     std::abort();
   }
   ++counter;
@@ -97,7 +97,7 @@ auto LogUnpoison(llvm::StringRef label, int element) -> void {
 }  // namespace Internal
 
 auto SetPoisonVerbose(bool v) -> void { Internal::GetShouldPrint(v); }
-auto SetPoisonStop(llvm::StringRef s) -> void { Internal::GetStopCondition(s); }
+auto SetPoisonAbortCondition(llvm::StringRef s) -> void { Internal::GetAbortCondition(s); }
 
 }  // namespace Carbon
 

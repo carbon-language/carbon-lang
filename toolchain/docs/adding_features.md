@@ -582,12 +582,12 @@ WRITE of size 4 at 0x50800006c06c thread T0
 ```
 
 From the poison log, we get the label and counter value of interest. In the
-example above that is `impl:911`, and we can use that with `--poison_stop` to
+example above that is `impl:911`, and we can use that with `--poison_abort` to
 get the stack trace of the poisoning event, in order to find out where the
 pointer was invalidated.
 
 ```sh
-bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon --poison_stop=impl:911
+bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon --poison_abort=impl:911
 ```
 
 If everything goes well, it will run up to this poison event and dump a stack
@@ -628,11 +628,11 @@ bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_t
 
 The counter in the poison log can be non-deterministic across runs,
 unfortunately, due to non-determinism in our data structures such as maps, and
-sorting. For example, if you used `--poison_stop=impl:911`, you might see on the
+sorting. For example, if you used `--poison_abort=impl:911`, you might see on the
 next run that the last `impl` poison event is now `impl:908`. To help deal with
-this, `--poison_stop` will abort when the label matches and the counter value is
+this, `--poison_abort` will abort when the label matches and the counter value is
 any value equal to or greater than the one you specify. So using
-`--poison_stop=impl:908` would then catch the poison event whether it was
+`--poison_abort=impl:908` would then catch the poison event whether it was
 recorded as `908` or `911` in the next run.
 
 If a ValueStore is invalidated frequently (such as the `inst` store), this

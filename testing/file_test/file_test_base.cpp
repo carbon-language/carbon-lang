@@ -73,7 +73,7 @@ ABSL_FLAG(int, print_slowest_tests, 5,
 
 // Flags known by a driver that are passed through to it.
 ABSL_FLAG(bool, poison_verbose, false, "Passed through to the driver.");
-ABSL_FLAG(std::string, poison_stop, "", "Passed through to the driver.");
+ABSL_FLAG(std::string, poison_abort, "", "Passed through to the driver.");
 
 static const std::vector<std::string>* g_pass_through_args = nullptr;
 
@@ -559,8 +559,8 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   if (absl::GetFlag(FLAGS_poison_verbose)) {
     pass_through_args.push_back("--poison_verbose");
   }
-  if (auto value = absl::GetFlag(FLAGS_poison_stop); !value.empty()) {
-    std::string stop = "--poison_stop=";
+  if (auto value = absl::GetFlag(FLAGS_poison_abort); !value.empty()) {
+    std::string stop = "--poison_abort=";
     stop += value;
     pass_through_args.push_back(std::move(stop));
   }

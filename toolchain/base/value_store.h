@@ -42,8 +42,8 @@ auto LogUnpoison(llvm::StringRef label, int element) -> void;
 // event in the value stores. See --poison_verbose.
 auto SetPoisonVerbose(bool v) -> void;
 // Set the condition on which an ASAN poison event will abort the process and
-// dump a stack trace. See --poison_stop.
-auto SetPoisonStop(llvm::StringRef s) -> void;
+// dump a stack trace. See --poison_abort.
+auto SetPoisonAbortCondition(llvm::StringRef s) -> void;
 #endif
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the

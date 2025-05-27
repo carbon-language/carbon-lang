@@ -68,7 +68,7 @@ struct CompileOptions {
   bool poison_verbose = false;
 
   llvm::StringRef exclude_dump_file_prefix;
-  llvm::StringRef poison_stop;
+  llvm::StringRef poison_abort;
 };
 
 // Implements the compile subcommand of the driver.
