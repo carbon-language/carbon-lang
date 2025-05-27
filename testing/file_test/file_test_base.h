@@ -83,6 +83,11 @@ class FileTestBase {
     return {};
   }
 
+  // Returns additional arguments to add to the Run call, if any.
+  virtual auto GetAdditionalArgs() const -> llvm::SmallVector<std::string> {
+    return {};
+  }
+
   // Returns a regex to match the default file when a line may not be present.
   // May return nullptr if unused. If GetLineNumberReplacements returns an entry
   // with has_file=false, this is required.

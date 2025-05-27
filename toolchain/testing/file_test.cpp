@@ -11,6 +11,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/flags/flag.h"
 #include "absl/strings/str_replace.h"
 #include "common/error.h"
 #include "llvm/ADT/STLExtras.h"
@@ -20,6 +21,10 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
+
+// Flags known by the driver that are passed through to it.
+ABSL_FLAG(bool, poison_verbose, false, "Passed through to the driver.");
+ABSL_FLAG(std::string, poison_abort, "", "Passed through to the driver.");
 
 namespace Carbon::Testing {
 namespace {
@@ -43,6 +48,9 @@ class ToolchainFileTest : public FileTestBase {
 
   // Sets different default flags based on the component being tested.
   auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override;
+
+  // Returns the arguments that are being passed through to the driver.
+  auto GetAdditionalArgs() const -> llvm::SmallVector<std::string> override;
 
   // Generally uses the parent implementation, with special handling for lex.
   auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames) const
@@ -219,6 +227,20 @@ auto ToolchainFileTest::GetDefaultArgs() const
   }
 
   args.push_back("%s");
+  return args;
+}
+
+auto ToolchainFileTest::GetAdditionalArgs() const
+    -> llvm::SmallVector<std::string> {
+  llvm::SmallVector<std::string> args;
+  if (absl::GetFlag(FLAGS_poison_verbose)) {
+    args.push_back("--poison_verbose");
+  }
+  if (auto value = absl::GetFlag(FLAGS_poison_abort); !value.empty()) {
+    std::string stop = "--poison_abort=";
+    stop += value;
+    args.push_back(std::move(stop));
+  }
   return args;
 }
 

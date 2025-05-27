@@ -69,6 +69,7 @@ file_test(
         "//common:error",
         "//testing/file_test:file_test_base",
         "//toolchain/driver",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/strings",
         "@llvm-project//llvm:Support",
     ],
