@@ -10,27 +10,30 @@
 
 namespace Carbon {
 
-static bool g_poison_verbose = false;
-static llvm::StringRef g_poison_stop_condition;
-
-auto SetPoisonVerbose(bool v) -> void { g_poison_verbose = v; }
-auto SetPoisonStop(llvm::StringRef s) -> void { g_poison_stop_condition = s; }
-
 namespace Internal {
 
-static auto ShouldPrint() -> bool { return g_poison_verbose; }
+// Gets the global (thread-safe) decision to print poison logs.
+//
+// Initially this is called on each thread (with the same `val`) when deciding
+// to print logs or not, and the first such thread to win which sets the static
+// global bool. Further calls (which do not need to pass a value) just query and
+// get back that `Condition`.
+static auto GetShouldPrint(std::optional<bool> val = std::nullopt) -> bool {
+  static auto should_print = *val;
+  return should_print;
+}
 
 struct Condition {
-  std::string_view label;
+  std::string label;
   uint64_t counter;
 };
 
-static auto ParseStopCondition() -> Condition {
-  if (g_poison_stop_condition.empty()) {
-    return {.label = std::string_view(), .counter = static_cast<uint64_t>(-1)};
+static auto ParseStopCondition(llvm::StringRef condition) -> Condition {
+  if (condition.empty()) {
+    return {.counter = static_cast<uint64_t>(-1)};
   }
 
-  auto [label, counter_str] = g_poison_stop_condition.split(':');
+  auto [label, counter_str] = condition.split(':');
   if (counter_str.empty()) {
     llvm::errs()
         << "ERROR: --poison_stop condition should be 'label:counter'\n";
@@ -46,16 +49,22 @@ static auto ParseStopCondition() -> Condition {
                  << counter_str << "'\n";
     std::exit(1);
   }
-  return {.label = static_cast<std::string_view>(label), .counter = counter};
+  return {.label = std::string(label), .counter = counter};
 }
 
-static auto ShouldStop(std::string_view label, uint64_t counter) -> bool {
-  static auto condition = ParseStopCondition();
-  return counter >= condition.counter && label == condition.label;
+// Gets the global (thread-safe) stop Condition.
+//
+// Initially this is called on each thread (with the same `condition_str`) when
+// setting the stop condition, and the first such thread to win which sets the
+// static global `Condition`. Further calls without a string input just query
+// and get back that `Condition`.
+static auto GetStopCondition(llvm::StringRef condition_str = "") -> Condition {
+  static Condition condition = ParseStopCondition(condition_str);
+  return condition;
 }
 
 auto LogPoison(llvm::StringRef label, int element) -> void {
-  if (!ShouldPrint()) {
+  if (!GetShouldPrint()) {
     return;
   }
   static uint64_t counter = 0;
@@ -66,7 +75,8 @@ auto LogPoison(llvm::StringRef label, int element) -> void {
     llvm::errs() << "++ " << label << " PoisonElement " << element << " ("
                  << label << ":" << counter << ")\n";
   }
-  if (ShouldStop(label, counter)) {
+  auto condition = GetStopCondition();
+  if (counter >= condition.counter && label == condition.label) {
     llvm::errs() << "*** Stopping on poison event. Stack trace below.\n";
     std::abort();
   }
@@ -74,7 +84,7 @@ auto LogPoison(llvm::StringRef label, int element) -> void {
 }
 
 auto LogUnpoison(llvm::StringRef label, int element) -> void {
-  if (!ShouldPrint()) {
+  if (!GetShouldPrint()) {
     return;
   }
   if (element < 0) {
@@ -85,6 +95,10 @@ auto LogUnpoison(llvm::StringRef label, int element) -> void {
 }
 
 }  // namespace Internal
+
+auto SetPoisonVerbose(bool v) -> void { Internal::GetShouldPrint(v); }
+auto SetPoisonStop(llvm::StringRef s) -> void { Internal::GetStopCondition(s); }
+
 }  // namespace Carbon
 
 #endif

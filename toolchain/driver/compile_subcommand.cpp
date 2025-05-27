@@ -301,7 +301,8 @@ Whether to emit DWARF debug information.
           .help = R"""(
 Print verbose logs of ASAN poisoning events in the value stores. Used to debug
 ASAN use-after-poison crashes, and only has an effect when run with the ASAN
-sanitizer.
+sanitizer. If used in a multi-thread environment, the same value should be
+specified on all threads to get deterministic behaviour.
 )""",
       },
       [&](auto& arg_b) {
@@ -320,7 +321,8 @@ ASAN poisoning event. Note that the poison counter can vary slightly from run to
 run, so you can use a smaller number to catch the ASAN poison event that you
 want. The possible LABEL and COUNTER values are printed when --poison_verbose is
 used. Used to debug ASAN use-after-poison crashes, and only has an effect when
-run with the ASAN sanitizer.
+run with the ASAN sanitizer. If used in a multi-thread environment, the same
+value should be specified on all threads to get deterministic behaviour.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&poison_stop); });
