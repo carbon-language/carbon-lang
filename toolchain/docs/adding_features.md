@@ -478,7 +478,40 @@ example, with `toolchain/parse/testdata/basics/empty.carbon`:
     -   Runs using `-v` for verbose log output, and running through the `check`
         phase.
 
-#### Debugging ASAN Poisoning
+### Updating tests
+
+The `toolchain/autoupdate_testdata.py` script can be used to update output. It
+invokes the `file_test` autoupdate support. See
+[testing/file_test/README.md](/testing/file_test/README.md) for file syntax.
+
+#### Reviewing test deltas
+
+Using `autoupdate_testdata.py` can be useful to produce deltas during the
+development process because it allows `git status` and `git diff` to be used to
+examine what changed.
+
+### Minimal Core prelude
+
+For most file tests in `check/`, very little of the `Core` package is used, and
+the test is not intentionally testing the `Core` package itself. Compiling the
+entire `Core` package adds a lot of noise during interactive debugging, which
+can be avoided by using a minimal prelude.
+
+To replace the production `Core` package with a minimal one, add the path to a
+minimal `Core` package and `prelude` library to the file test with the
+`INCLUDE-FILE` directive, and tell the toolchain to avoid loading the production
+`Core` package by putting it in a `min_prelude` subdirectory. For example,
+`check/testdata/facet_types/min_prelude/my_test.carbon` might contain:
+
+```
+// INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
+```
+
+We have a set of minimal `Core` preludes for testing different compiler feature
+areas in `//toolchain/testing/min_prelude/`. Each file begins with the line
+`package Core library "prelude";` to make it provide a prelude.
+
+### Debugging ASAN Poisoning
 
 If a pointer is held across a ValueStore being modified and then used afterward
 it may have been invalidated and this is a bug.
@@ -624,7 +657,7 @@ bazel build //toolchain/testing:file_test
 bazel-bin/toolchain/testing/file_test -- --dump_output --poison_verbose --file_tests path/to/test.carbon
 ```
 
-##### Non-determinism in the poison log
+#### Non-determinism in the poison log
 
 The counter in the poison log can be non-deterministic across runs,
 unfortunately, due to non-determinism in our data structures such as maps, and
@@ -638,50 +671,6 @@ recorded as `908` or `911` in the next run.
 If a ValueStore is invalidated frequently (such as the `inst` store), this
 non-determinism may make the poison stack less reliable. It may require
 collecting a few poison logs to find the correct one (sorry).
-
-##### malloc: nano zone abandoned
-
-On MacOS when running ASAN binaries, you will get this error message in stderr:
-
-```
-file_test(61907,0x20b351f00) malloc: nano zone abandoned due to inability to reserve vm space.
-```
-
-To avoid this, set `MallocNanoZone=0` in your environment. This issue is tracked
-in https://github.com/google/sanitizers/issues/1666.
-
-### Updating tests
-
-The `toolchain/autoupdate_testdata.py` script can be used to update output. It
-invokes the `file_test` autoupdate support. See
-[testing/file_test/README.md](/testing/file_test/README.md) for file syntax.
-
-#### Reviewing test deltas
-
-Using `autoupdate_testdata.py` can be useful to produce deltas during the
-development process because it allows `git status` and `git diff` to be used to
-examine what changed.
-
-### Minimal Core prelude
-
-For most file tests in `check/`, very little of the `Core` package is used, and
-the test is not intentionally testing the `Core` package itself. Compiling the
-entire `Core` package adds a lot of noise during interactive debugging, which
-can be avoided by using a minimal prelude.
-
-To replace the production `Core` package with a minimal one, add the path to a
-minimal `Core` package and `prelude` library to the file test with the
-`INCLUDE-FILE` directive, and tell the toolchain to avoid loading the production
-`Core` package by putting it in a `min_prelude` subdirectory. For example,
-`check/testdata/facet_types/min_prelude/my_test.carbon` might contain:
-
-```
-// INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
-```
-
-We have a set of minimal `Core` preludes for testing different compiler feature
-areas in `//toolchain/testing/min_prelude/`. Each file begins with the line
-`package Core library "prelude";` to make it provide a prelude.
 
 ### Verbose output
 
@@ -705,3 +694,15 @@ regarding support.
 
 Objects which inherit from `Printable` also have `Dump` member functions, but
 these will lack contextual information.
+
+### ASAN error: `malloc: nano zone abandoned`
+
+On MacOS when running ASAN binaries directly, you will get this error message in stderr:
+
+```
+file_test(61907,0x20b351f00) malloc: nano zone abandoned due to inability to reserve vm space.
+```
+
+To avoid this, set `MallocNanoZone=0` in your environment. This issue is tracked
+in https://github.com/google/sanitizers/issues/1666. Note that when running
+binaries through bazel we set this environment variable for you.
