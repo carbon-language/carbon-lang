@@ -26,7 +26,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Non-instance members](#non-instance-members)
 -   [Non-vacuous member access restriction](#non-vacuous-member-access-restriction)
 -   [Precedence and associativity](#precedence-and-associativity)
--   [Expression form](#expression-form)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -938,8 +937,6 @@ var p: A.B*;
 // ✅ OK, `1 + (X.Y)` not `(1 + X).Y`.
 var n: i32 = 1 + X.Y;
 ```
-
-## Expression form
 
 ## Alternatives considered
 
