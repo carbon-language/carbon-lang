@@ -685,6 +685,16 @@ minimal context for how the current function is reached, we use LLVM's
 `PrettyStackTrace` to include details about the state stack. The state stack
 will be above the function stack in crash output.
 
+#### ASAN stack trace quality
+
+In order to get a symbolized stack trace from ASAN (which is enabled in the
+default build), ensure that `llvm-symbolizer` is in your path or set the
+`LLVM_SYMBOLIZER_PATH` environment variable to point to the `llvm-symbolizer`
+binary.
+
+If the quality of the stack trace is low, it is possible to enable ASAN and
+debug symbols together by building under bazel with `--config=asan -c dbg`.
+
 ### Dumping objects in interactive debuggers
 
 We provide namespace-scoped `Dump` functions in several components, such as
