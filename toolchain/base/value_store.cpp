@@ -90,8 +90,8 @@ auto LogUnpoison(llvm::StringRef label, int element) -> void {
   if (element < 0) {
     llvm::errs() << "-- " << label << " UnpoisonAll\n";
   } else {
+    llvm::errs() << "-- " << label << " UnpoisonElement " << element << '\n';
   }
-  llvm::errs() << "-- " << label << " UnpoisonElement " << element << '\n';
 }
 
 }  // namespace Internal
