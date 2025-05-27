@@ -31,6 +31,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Function calls and returns](#function-calls-and-returns)
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
+    -   [Expression forms](#expression-forms)
+        -   [Form conversions](#form-conversions)
+        -   [Form semantics](#form-semantics)
 -   [Pointers](#pointers)
     -   [Reference types](#reference-types)
     -   [Pointer syntax](#pointer-syntax)
@@ -622,6 +625,121 @@ where that initialization is not necessary.
 The model of initialization of returns also facilitates the use of
 [`returned var` declarations](control_flow/return.md#returned-var). These
 directly observe the storage provided for initialization of a function's return.
+
+### Expression forms
+
+We typically treat the category and type of an expression as independent
+properties. However, in some cases they can become entangled, and we need deal
+with them as an integrated whole. The _form_ of an expression captures all of
+the information about it that is visible to the type system, while abstracting
+away all other information about it. Thus, forms are a generalization of types:
+what we conventionally call "types" are really the types of objects and values,
+whereas forms are the types of expressions and patterns.
+
+A _primitive form_ consists of a type, an expression category, an expression
+phase, and optionally a constant value (which is present if and only if the
+expression phase is not "runtime"). When dealing with primitive forms, which is
+the common case, we can treat each of those properties as independent. For
+convenience, in this section we will use the notation `[T, C, P, V]` to
+represent a primitive form with type `T`, category `C`, phase `P` and value `V`,
+but this is not Carbon syntax.
+
+Other forms are called _composite forms_, and there are two kinds:
+
+A _tuple form_ can be thought of as a tuple of forms, just as a tuple type can
+be thought of as a tuple of types. The form of a tuple literal is a tuple form,
+whose elements are the forms of the literal elements.
+
+> **TODO:** Extend this to support variadic forms.
+
+A _struct form_ can be thought of as a struct whose fields are forms, just as a
+struct type can be thought of as a struct whose fields are types. The form of a
+struct literal is a struct form with the same field names, whose values are the
+forms of the corresponding fields of the struct literal.
+
+An expression with a composite form still has a well-defined type, phase, and
+(if the phase is not "runtime") constant value. However, it does not have a
+well-defined expression category.
+
+#### Form conversions
+
+An expression with a primitive form can be converted to another primitive form
+by applying type, category, and phase conversions independently. Form
+conversions can be applied to different elements of a composite form
+independently.
+
+_Form composition_ converts a composite form to a primitive form as follows:
+
+-   A tuple form `([T1, C, P, V1], [T2, C, P, V2], ... [TN, C, P, VN])` can be
+    converted to a primitive form `[(T1, T2, ..., TN), C, P, (V1, V2, ... VN)]`.
+-   A struct form
+    `{.a = [Ta, C, P, Va], .b = [Tb, C, P, Vb], ... .z = [Tz, C, P, Vz]}` can be
+    converted to a primitive form
+    `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, {.a = Va, .b = Vb, ... .z = Vz}]`.
+
+In both cases, `C` cannot be "reference", because an aggregate of references to
+independent objects can't necessarily be replaced by a reference to a single
+aggregate object.
+
+_Form decomposition_ is the inverse of form composition. It converts a primitive
+form to a composite form as follows:
+
+-   A primitive form `[(T1, T2, ..., TN), C, P, V]` can be converted to a tuple
+    form `([T1, C, P, V.1], [T2, C, P, V.2], ... [TN, C, P, V.(N)])`.
+-   A primitive form `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V]` can be
+    converted to a struct form
+    `{.a = [Ta, C, P, V.a], .b = [Tb, C, P, V.b], ... .z = [Tz, C, P, V.z]}`.
+
+In both cases, if `C` is "initializing", the expression is first converted to an
+ephemeral reference by materialization, because an initializer for a single
+object of an aggregate type can't necessarily be used to initialize independent
+objects of the element types.
+
+In all of the above definitions, if `P` is runtime, the constant-value
+components are omitted.
+
+#### Form semantics
+
+Almost all operations expect their expression operands to have a primitive form
+with a particular expression category, and possibly a particular phase and/or
+type. Operands are converted to a suitable primitive form as follows:
+
+1. If the target expression category is "reference", or a type conversion will
+   be applied in step 5 below, we treat the target expression category as
+   "initializing".
+2. The categories of all primitive sub-forms are converted to the target
+   category.
+3. The phases of all primitive sub-forms are converted to a single common phase:
+   "runtime" if any of them are "runtime", or else "symbolic" if any of them are
+   "symbolic", or else "template".
+4. The operand is converted to a primitive form by form composition.
+5. If the operand is expected to have a particular type, implicit type
+   conversions are applied as needed.
+6. If the target category was changed in step 1, the operand is converted to the
+   original target category.
+7. If the operand is expected to have a particular phase, it is converted to
+   that phase.
+
+In some cases, such as when matching an
+[unused binding pattern](pattern_matching.md#unused-bindings), the operand's
+value is known to be unused. In those cases, the conversions described above may
+not actually be performed in the generated code, but the Carbon code is still
+typechecked as if they were.
+
+A few operations expect operands that have composite forms:
+
+-   A struct member access expression expects its first operand to have struct
+    form. The form of the member access expression is given by the corresponding
+    element of the struct form.
+-   A tuple indexing expression expects its first operand to have tuple form.
+    The form of the member access expression is given by the corresponding
+    element of the tuple form.
+-   A tuple or struct pattern expects its scrutinee to have tuple or struct form
+    (respectively). In either case, the subpattern scrutinees are member access
+    expressions, and their forms are determined using the above rule.
+
+If an operand with a primitive form is used where a composite form is expected,
+it is converted to the expected form kind by decomposition, if possible.
 
 ## Pointers
 

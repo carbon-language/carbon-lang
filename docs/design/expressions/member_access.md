@@ -26,6 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Non-instance members](#non-instance-members)
 -   [Non-vacuous member access restriction](#non-vacuous-member-access-restriction)
 -   [Precedence and associativity](#precedence-and-associativity)
+-   [Expression form](#expression-form)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -717,8 +718,8 @@ fn SumIntegers(v: Vector(Integer)) -> Integer {
 ## Instance binding
 
 Next, _instance binding_ may be performed. This associates an expression with a
-particular object instance. For example, this is the value bound to `self` when
-calling a method.
+particular object or value instance. For example, this is the value bound to
+`self` when calling a method.
 
 For the simple member access syntax `x.y`, if `x` is an entity that has member
 names, such as a namespace or a type, then `y` is looked up within `x`, and
@@ -727,6 +728,18 @@ of `x` and instance binding is performed if an instance member is found.
 
 If instance binding is performed:
 
+-   For a field member of a struct type, `x` is required to have that struct
+    type, and it is converted to a
+    [struct form](/docs/design/values.md#expression-forms) by applying form
+    decomposition (if it doesn't have a struct form already). Then, the form of
+    `x.f` is the value of the corresponding field of the struct form, and `x.f`
+    evaluates to the corresponding field of `x`.
+-   For an element member of a tuple type, `x` is required to have that tuple
+    type, and it is converted to a
+    [tuple form](/docs/design/values.md#expression-forms) by applying form
+    decomposition (if it doesn't have a tuple form already). Then, the form of
+    `x.f` is the value of the corresponding element of the tuple form, and `x.f`
+    evaluates to the corresponding element of `x`.
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.
     If `x` is an
@@ -925,6 +938,8 @@ var p: A.B*;
 // ✅ OK, `1 + (X.Y)` not `(1 + X).Y`.
 var n: i32 = 1 + X.Y;
 ```
+
+## Expression form
 
 ## Alternatives considered
 

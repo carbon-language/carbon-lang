@@ -130,9 +130,8 @@ A name binding pattern is a pattern.
 
 A name binding pattern declares a _binding_ with a name specified by the
 _identifier_, which can be used as an expression. If the binding pattern is
-enclosed by a `var` pattern, it is a _reference binding pattern_, and the
-binding is a durable reference expression. Otherwise, it is a _value binding
-pattern_, and the binding is a value expression.
+enclosed by a `var` pattern, it is a _reference binding pattern_, and otherwise
+it is a _value binding pattern_, and the binding is a value expression.
 
 A _variable binding pattern_ is a special kind of reference binding pattern,
 which is the immediate subpattern of its enclosing `var` pattern.
@@ -141,15 +140,14 @@ which is the immediate subpattern of its enclosing `var` pattern.
 > expected to be the only difference between variable binding patterns and other
 > reference binding patterns.
 
-The type of the binding is specified by the _expression_. If the pattern is a
-value binding pattern, the scrutinee is implicitly converted to a value
-expression of that type if necessary, and the binding is _bound_ to the
-converted value. If the pattern is a reference binding pattern, the enclosing
-`var` pattern will ensure that the scrutinee is already a durable reference
-expression with the specified type, and the binding is bound directly to it.
-
-A use of a value binding is a value expression of the declared type, and a use
-of a reference binding is a durable reference expression of the declared type.
+The scrutinee is expected to be a runtime expression of the type specified by
+the _expression_. The scrutinee is expected to be a value expression if the
+pattern is a value binding pattern, or a durable reference expression if the
+pattern is a reference binding pattern. To match a binding pattern, the
+scrutinee is converted to the expected type, category, and phase, and then the
+binding is _bound_ to the converted expression. This makes the binding an alias
+for the converted expression, with the same [form](values.md#expression-forms)
+and value.
 
 ```carbon
 fn F() -> i32 {
@@ -161,35 +159,6 @@ fn F() -> i32 {
       return n;
     }
   }
-}
-```
-
-When a new object needs to be created for the binding, the lifetime of the bound
-value matches the scope of the binding.
-
-```carbon
-class NoisyDestructor {
-  fn Make() -> Self { return {}; }
-  impl i32 as ImplicitAs(NoisyDestructor) {
-    fn Convert[me: i32]() -> Self { return Make(); }
-  }
-  destructor {
-    Print("Destroyed!");
-  }
-}
-
-fn G() {
-  // Does not print "Destroyed!".
-  let n: NoisyDestructor = NoisyDestructor.Make();
-  Print("Body of G");
-  // Prints "Destroyed!" here.
-}
-
-fn H(n: i32) {
-  // Does not print "Destroyed!".
-  let (v: NoisyDestructor, w: i32) = (n, n);
-  Print("Body of H");
-  // Prints "Destroyed!" here.
 }
 ```
 
@@ -257,9 +226,9 @@ fn F(T:! type, x: T) {
 }
 ```
 
-The `template` keyword indicates the binding pattern is introducing a template
-binding, so name lookups into the binding will not be fully resolved until its
-value is known.
+This form behaves the same as a runtime binding pattern, except that the
+scrutinee is expected to have symbolic phase, or template phase if the
+`template` form is used. This form cannot appear inside a `var` pattern.
 
 #### `auto` and type deduction
 
@@ -313,10 +282,17 @@ scrutinee.
 
 -   _proper-pattern_ ::= `var` _proper-pattern_
 
-A `var` pattern matches when its nested pattern matches. The type of the storage
-is the resolved type of the nested _pattern_. Any binding patterns within the
-nested pattern are reference binding patterns, and their bindings refer to
-portions of the corresponding storage rather than to the scrutinee.
+The scrutinee is expected to have the same type as the resolved type of the
+nested _proper-pattern_, and it is expected to be a runtime-phase initializing
+expression. The scrutinee expression is converted as needed to satisfy those
+expectations, and then used to initialize a newly-allocated object of that type.
+The `var` pattern then matches if the nested _proper-pattern_ matches a durable
+reference expression referring to that object. As a result, any reference
+binding patterns within the nested pattern refer to portions of the
+corresponding object rather than to the original scrutinee.
+
+The lifetime of the allocated object extends to the end of scope of the `var`
+pattern (that is the scope that any bindings declared within it would have).
 
 ```carbon
 fn F(p: i32*);
@@ -353,8 +329,13 @@ A _tuple-pattern_ containing no commas is treated as grouping parens: the
 contained _proper-pattern_ is matched directly against the scrutinee. Otherwise,
 the behavior is as follows.
 
-A tuple pattern is matched left-to-right. The scrutinee is required to be of
-tuple type.
+The scrutinee is expected to have a [tuple form](values.md#expression-forms)
+with the same arity as the number of nested _proper_patterns_, and form
+decomposition (but no other conversion) is applied if necessary to satisfy that.
+Then, each nested _proper-pattern_ is matched against `s.i`, where `s` is the
+converted scrutinee expression and `i` is the 0-based index of the nested
+pattern within the tuple pattern. The tuple pattern matches if all of these
+sub-matches succeed.
 
 Note that a tuple pattern must contain at least one _proper-pattern_. Otherwise,
 it is a tuple-valued expression. However, a tuple pattern and a corresponding
@@ -387,10 +368,13 @@ match ({.a = 1, .b = 2}) {
 }
 ```
 
-The scrutinee is required to be of struct type, and to have the same set of
-field names as the pattern. The pattern is matched left-to-right, meaning that
-matching is performed in the field order specified in the pattern, not in the
-field order of the scrutinee. This is consistent with the behavior of matching
+The scrutinee is expected to have a [struct form](values.md#expression-forms)
+with the same set of field names as the pattern, and form decomposition (but no
+other conversion) is applied if necessary to satisfy that. Then, each subpattern
+of the struct pattern in left-to-right order is matched with `s.f`, where `s` is
+the converted scrutinee expression and `f` is the field name associated with the
+subpattern. The struct pattern matches if all of these sub-matches succeed.
+Matching in left-to-right order is consistent with the behavior of matching
 against a struct-valued expression, where the expression pattern becomes the
 left operand of the `==` and so determines the order in which `==` comparisons
 for fields are performed.
@@ -712,10 +696,12 @@ In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
 
-Any initializing expressions in the scrutinee of a `match` statement are
-[materialized](values.md#temporary-materialization) before pattern matching
-begins, so that the result can be reused by multiple `case`s. However, the
-objects created by `var` patterns are not reused by multiple `case`s:
+If the scrutinee expression's [form](values.md#expression-forms) contains any
+primitive forms with category "initializing", they are converted to ephemeral
+reference expressions by [materialization](values.md#temporary-materialization)
+before pattern matching begins, so that the result can be reused by multiple
+`case`s. However, the objects created by `var` patterns are not reused by
+multiple `case`s:
 
 ```carbon
 class X {
