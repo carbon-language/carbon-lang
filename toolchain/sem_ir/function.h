@@ -149,14 +149,11 @@ struct CalleeFunction : public Printable<CalleeFunction> {
   bool is_error;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{";
-    out << "function_id: " << function_id;
-    out << ", enclosing_specific_id: " << enclosing_specific_id;
-    out << ", resolved_specific_id: " << resolved_specific_id;
-    out << ", self_type_id: " << self_type_id;
-    out << ", self_id: " << self_id;
-    out << ", is_error: " << is_error;
-    out << "}";
+    out << "{function_id: " << function_id
+        << ", enclosing_specific_id: " << enclosing_specific_id
+        << ", resolved_specific_id: " << resolved_specific_id
+        << ", self_type_id: " << self_type_id << ", self_id: " << self_id
+        << ", is_error: " << is_error << "}";
   }
 };
 
