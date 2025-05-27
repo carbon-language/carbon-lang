@@ -66,11 +66,7 @@ fn MakeOuter() -> Outer {
   //@dump-sem-ir-end
 }
 
-// --- fail_init.carbon
-// CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:1: error: library's API previously provided by `init.carbon` [DuplicateLibraryApi]
-// CHECK:STDERR: library "init";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
+// --- fail_bad_init.carbon
 library "[[@TEST_NAME]]";
 
 class Class {
@@ -79,17 +75,17 @@ class Class {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: cannot initialize class with 2 fields from struct with 1 field [StructInitElementCountMismatch]
+  // CHECK:STDERR: fail_bad_init.carbon:[[@LINE+4]]:3: error: cannot initialize class with 2 fields from struct with 1 field [StructInitElementCountMismatch]
   // CHECK:STDERR:   {.a = ()} as Class;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   {.a = ()} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: missing value for field `b` in struct initialization [StructInitMissingFieldInLiteral]
+  // CHECK:STDERR: fail_bad_init.carbon:[[@LINE+4]]:3: error: missing value for field `b` in struct initialization [StructInitMissingFieldInLiteral]
   // CHECK:STDERR:   {.a = (), .c = ()} as Class;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   {.a = (), .c = ()} as Class;
-  // CHECK:STDERR: fail_init.carbon:[[@LINE+4]]:3: error: cannot initialize class with 2 fields from struct with 3 fields [StructInitElementCountMismatch]
+  // CHECK:STDERR: fail_bad_init.carbon:[[@LINE+4]]:3: error: cannot initialize class with 2 fields from struct with 3 fields [StructInitElementCountMismatch]
   // CHECK:STDERR:   {.a = (), .b = (), .c = ()} as Class;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

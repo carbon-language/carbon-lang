@@ -47,15 +47,11 @@ class Class {
   fn F[self: Self]() -> self;
 }
 
-// --- fail_self.carbon
-// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:1: error: library's API previously provided by `self.carbon` [DuplicateLibraryApi]
-// CHECK:STDERR: library "self";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
+// --- fail_bad_self.carbon
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:8: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
+  // CHECK:STDERR: fail_bad_self.carbon:[[@LINE+4]]:8: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
   // CHECK:STDERR:   fn F(self: Self);
   // CHECK:STDERR:        ^~~~~~~~~~
   // CHECK:STDERR:
@@ -64,7 +60,7 @@ class Class {
   fn G() -> Self;
 }
 
-// CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:12: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
+// CHECK:STDERR: fail_bad_self.carbon:[[@LINE+4]]:12: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
 // CHECK:STDERR: fn Class.F(self: Self) {
 // CHECK:STDERR:            ^~~~~~~~~~
 // CHECK:STDERR:
@@ -72,12 +68,12 @@ fn Class.F(self: Self) {
 }
 
 fn Class.G() -> Self {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:7: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
+  // CHECK:STDERR: fail_bad_self.carbon:[[@LINE+4]]:7: error: `self` can only be declared in an implicit parameter list [SelfOutsideImplicitParamList]
   // CHECK:STDERR:   var self: Self;
   // CHECK:STDERR:       ^~~~~~~~~~
   // CHECK:STDERR:
   var self: Self;
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+4]]:10: error: cannot copy value of type `Class` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_bad_self.carbon:[[@LINE+4]]:10: error: cannot copy value of type `Class` [CopyOfUncopyableType]
   // CHECK:STDERR:   return self;
   // CHECK:STDERR:          ^~~~
   // CHECK:STDERR:

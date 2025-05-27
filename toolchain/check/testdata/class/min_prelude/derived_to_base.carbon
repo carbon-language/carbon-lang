@@ -47,12 +47,8 @@ fn ConvertInit() {
 }
 //@dump-sem-ir-end
 
-// --- fail_derived_to_base.carbon
+// --- fail_bad_derived_to_base.carbon
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:1: error: library's API previously provided by `derived_to_base.carbon` [DuplicateLibraryApi]
-// CHECK:STDERR: library "derived_to_base";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 library "[[@TEST_NAME]]";
 
 base class A1 {
@@ -68,10 +64,10 @@ class B2 {
   var b: ();
 }
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+7]]:38: error: cannot implicitly convert expression of type `B2*` to `A1*` [ConversionFailure]
+// CHECK:STDERR: fail_bad_derived_to_base.carbon:[[@LINE+7]]:38: error: cannot implicitly convert expression of type `B2*` to `A1*` [ConversionFailure]
 // CHECK:STDERR: fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDERR:                                      ^~~~~~~~~
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:38: note: type `B2*` does not implement interface `Core.ImplicitAs(A1*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_bad_derived_to_base.carbon:[[@LINE+4]]:38: note: type `B2*` does not implement interface `Core.ImplicitAs(A1*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 // CHECK:STDERR:                                      ^~~~~~~~~
 // CHECK:STDERR:
@@ -79,10 +75,10 @@ fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 
 class Incomplete;
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+7]]:47: error: cannot implicitly convert expression of type `Incomplete*` to `A2*` [ConversionFailure]
+// CHECK:STDERR: fail_bad_derived_to_base.carbon:[[@LINE+7]]:47: error: cannot implicitly convert expression of type `Incomplete*` to `A2*` [ConversionFailure]
 // CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDERR:                                               ^~~~~~~~~
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:47: note: type `Incomplete*` does not implement interface `Core.ImplicitAs(A2*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_bad_derived_to_base.carbon:[[@LINE+4]]:47: note: type `Incomplete*` does not implement interface `Core.ImplicitAs(A2*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDERR:                                               ^~~~~~~~~
 // CHECK:STDERR:

@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/no_prelude/member_functions.carbon
 
-// --- method.carbon
+// --- basics.carbon
 library "[[@TEST_NAME]]";
 
 class Class {
@@ -143,11 +143,7 @@ fn D.F() {}
 // CHECK:STDERR:
 fn D.C.F() {}
 
-// --- fail_method.carbon
-// CHECK:STDERR: fail_method.carbon:[[@LINE+4]]:1: error: library's API previously provided by `method.carbon` [DuplicateLibraryApi]
-// CHECK:STDERR: library "method";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
+// --- fail_method_binding.carbon
 library "[[@TEST_NAME]]";
 
 class Class {
@@ -162,27 +158,27 @@ fn F(c: Class) {
   c.WithSelf();
 
   Class.NoSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_method_binding.carbon:[[@LINE+7]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   Class.WithSelf();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-13]]:3: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_method_binding.carbon:[[@LINE-13]]:3: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf();
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
+  // CHECK:STDERR: fail_method_binding.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Class.WithSelf(c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-21]]:3: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR: fail_method_binding.carbon:[[@LINE-21]]:3: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Class.WithSelf(c);
 
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_method_binding.carbon:[[@LINE+7]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   A();
   // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_method_binding.carbon:[[@LINE-30]]:3: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -286,7 +282,7 @@ fn F(s: {.a: A}, b: B) {
   b.a.F();
 }
 
-// CHECK:STDOUT: --- method.carbon
+// CHECK:STDOUT: --- basics.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
