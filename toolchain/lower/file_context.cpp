@@ -160,28 +160,26 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   return std::move(llvm_module_);
 }
 
-auto FileContext::PairInserted(
+auto FileContext::InsertPair(
     SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
     Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
     -> bool {
   if (specific_id1.index > specific_id2.index) {
     std::swap(specific_id1.index, specific_id2.index);
   }
-  std::pair<SemIR::SpecificId, SemIR::SpecificId> pair = {specific_id1,
-                                                          specific_id2};
-  auto insert_result = set_of_pairs.Insert(pair);
+  auto insert_result =
+      set_of_pairs.Insert(std::make_pair(specific_id1, specific_id2));
   return insert_result.is_inserted();
 }
 
-auto FileContext::PairExists(
+auto FileContext::ContainsPair(
     SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
-    Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>> set_of_pairs) -> bool {
+    const Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
+    -> bool {
   if (specific_id1.index > specific_id2.index) {
     std::swap(specific_id1.index, specific_id2.index);
   }
-  std::pair<SemIR::SpecificId, SemIR::SpecificId> pair = {specific_id1,
-                                                          specific_id2};
-  return set_of_pairs.Contains(pair);
+  return set_of_pairs.Contains(std::make_pair(specific_id1, specific_id2));
 }
 
 auto FileContext::CoalesceEquivalentSpecifics() -> void {
@@ -197,10 +195,10 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
         --i;
         continue;
       }
-      // TODO: improve quadratic behavior by using a single hash based on
-      // lowered_specifics_type_fingerprint_ and function_common_fingerprint.
+      // TODO: Improve quadratic behavior by using a single hash based on
+      // `lowered_specifics_type_fingerprint_` and `common_fingerprint`.
       for (int j = i + 1; j < static_cast<int>(specifics.size()); ++j) {
-        // This specific was already replaced, skip it.
+        // When the specific was already replaced, skip it.
         if (equivalent_specifics_[specifics[j].index].has_value() &&
             equivalent_specifics_[specifics[j].index] != specifics[j]) {
           specifics[j] = specifics[specifics.size() - 1];
@@ -209,29 +207,26 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
           continue;
         }
 
-        // The two specifics are not equivalent due to the function type info,
-        // stored in lowered_specifics_types.
-        // Mark non-equivalance in case it can be reused to short-cut another
-        // path and continue the search for other equivalences.
+        // When the two specifics are not equivalent due to the function type
+        // info stored in lowered_specifics_types, mark non-equivalance. This
+        // can be reused to short-cut another path and continue the search for
+        // other equivalences.
         if (!AreFunctionTypesEquivalent(specifics[i], specifics[j])) {
-          (void)PairInserted(specifics[i], specifics[j],
-                             non_equivalent_specifics_);
+          InsertPair(specifics[i], specifics[j], non_equivalent_specifics_);
           continue;
         }
 
         Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>
             visited_equivalent_specifics;
-        (void)PairInserted(specifics[i], specifics[j],
-                           visited_equivalent_specifics);
-        // Function type information matches, check usages inside function body
-        // that are dependent on the specific. This information has been stored
-        // in lowered_states while lowering each function body.
+        InsertPair(specifics[i], specifics[j], visited_equivalent_specifics);
+        // Function type information matches; check usages inside the function
+        // body that are dependent on the specific. This information has been
+        // stored in lowered_states while lowering each function body.
         if (AreFunctionBodiesEquivalent(specifics[i], specifics[j],
                                         visited_equivalent_specifics)) {
-          // This is a Set, because it's possible, when processing equivalences
-          // found, that the same function is found to need replacement multiple
-          // times, when a new ("better") canonical is found after an initial
-          // replacement.
+          // When processing equivalences, we may change the canonical specific
+          // multiple times, so we don't delete replaced specifics until the
+          // end.
           llvm::SmallVector<SemIR::SpecificId> specifics_to_delete;
           visited_equivalent_specifics.ForEach(
               [&](std::pair<SemIR::SpecificId, SemIR::SpecificId>
@@ -258,8 +253,7 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
           --j;
         } else {
           // Only mark non-equivalence based on state for starting specifics.
-          (void)PairInserted(specifics[i], specifics[j],
-                             non_equivalent_specifics_);
+          InsertPair(specifics[i], specifics[j], non_equivalent_specifics_);
         }
       }
     }
@@ -306,9 +300,6 @@ auto FileContext::ProcessSpecificEquivalence(
   }
 }
 
-// This checks if two specific_ids are equivalent and also reduces the
-// equivalence chains/paths. This update ensures the canonical specific is
-// always "one hop away".
 auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific_id1,
                                      SemIR::SpecificId specific_id2) -> bool {
   if (!equivalent_specifics_[specific_id1.index].has_value() ||
@@ -359,13 +350,11 @@ auto FileContext::AreFunctionBodiesEquivalent(
 
     auto state1 = lowered_specific_fingerprint_[specific_id1.index];
     auto state2 = lowered_specific_fingerprint_[specific_id2.index];
-    if (state1.function_common_fingerprint !=
-        state2.function_common_fingerprint) {
-      (void)PairInserted(specific_id1, specific_id2, non_equivalent_specifics_);
+    if (state1.common_fingerprint != state2.common_fingerprint) {
+      InsertPair(specific_id1, specific_id2, non_equivalent_specifics_);
       return false;
     }
-    if (state1.function_specific_fingerprint ==
-        state2.function_specific_fingerprint) {
+    if (state1.specific_fingerprint == state2.specific_fingerprint) {
       continue;
     }
 
@@ -376,14 +365,14 @@ auto FileContext::AreFunctionBodiesEquivalent(
     for (auto [state1_call, state2_call] :
          llvm::zip(state1.calls, state2.calls)) {
       if (state1_call != state2_call) {
-        if (PairExists(state1_call, state2_call, non_equivalent_specifics_)) {
+        if (ContainsPair(state1_call, state2_call, non_equivalent_specifics_)) {
           return false;
         }
         if (IsKnownEquivalence(state1_call, state2_call)) {
           continue;
         }
-        if (!PairInserted(state1_call, state2_call,
-                          visited_equivalent_specifics)) {
+        if (!InsertPair(state1_call, state2_call,
+                        visited_equivalent_specifics)) {
           continue;
         }
         // Leave the added equivalence pair in place and continue.
@@ -620,19 +609,14 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
 
-  // Create a unique fingerprint for the function type
+  // Create a unique fingerprint for the function type.
   // For now, compute the function type fingerprint only for specifics, though
   // we might need it for all functions in order to create a canonical
   // fingerprint across translation units.
   if (specific_id.has_value()) {
     llvm::BLAKE3 function_type_fingerprint;
     RawStringOstream os;
-    if (function_type_info.type) {
-      function_type_info.type->print(os);
-    }
-    if (function_type_info.return_type) {
-      function_type_info.return_type->print(os);
-    }
+    function_type_info.type->print(os);
     function_type_fingerprint.update(os.TakeStr());
     function_type_fingerprint.final(
         lowered_specifics_type_fingerprint_[specific_id.index]);
@@ -731,8 +715,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
 
   FunctionContext function_lowering(
       *this, llvm_function, specific_id,
-      BuildDISubprogram(function, llvm_function), vlog_stream_,
-      InitializeFingerprintForSpecific(specific_id));
+      InitializeFingerprintForSpecific(specific_id),
+      BuildDISubprogram(function, llvm_function), vlog_stream_);
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
@@ -833,7 +817,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     llvm::BranchInst::Create(entry_block, new_entry_block);
   }
 
-  // Emit fingerprint accumulatd inside the function context.
+  // Emit fingerprint accumulated inside the function context.
   function_lowering.EmitFinalFingerprint();
 }
 

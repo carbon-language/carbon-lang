@@ -19,31 +19,36 @@ namespace Carbon::Lower {
 // `llvm::Function` definition.
 class FunctionContext {
  public:
+  // `function` must not be null. `function_fingerprint` and `di_subprogram` may
+  // be null (see members).
   explicit FunctionContext(
       FileContext& file_context, llvm::Function* function,
-      SemIR::SpecificId specific_id, llvm::DISubprogram* di_subprogram,
-      llvm::raw_ostream* vlog_stream,
-      FileContext::SpecificFunctionFingerprint* specific_function_state);
+      SemIR::SpecificId specific_id,
+      FileContext::SpecificFunctionFingerprint* function_fingerprint,
+      llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream);
 
   // Describes a function's body fingerprint while creating the function body.
-  // The final fingerprint is stored in the FileContext as a
-  // SpecificFunctionFingerprint.
+  // The final fingerprint is stored in the `FileContext` as a
+  // `SpecificFunctionFingerprint`.
+  //
   // Create two function fingerprints, where both fingerprints include data
-  // that's evaluated (and hence lowered) differently based on the specific_id.
-  // The first fingerprint includes global values, types and function_id for
-  // functions called inside the function body. The second fingerprint includes
-  // specific_ids for functions called.
-  // For two specifics of the same generic: if the first fingerprint
-  // (`function_common_fingerprint`) is different, the specifics cannot be
-  // coalesced; if the first and second fingerprint
-  // (`function_specific_fingerprint`) are the same, the specifics can be
-  // coalesced without additional checks. If the `function_common_fingerprint`
-  // is the same but `function_specific_fingerprint` is different, additional
-  // checks are needed, i.e. inspecting the non-hashed specific_ids.
+  // that's evaluated (and hence lowered) differently based on the
+  // `SpecificId`. `common_fingerprint` includes global values, types
+  // and `FunctionId` for functions called inside the function body.
+  // `specific_fingerprint` includes `SpecificId`s for functions called.
+  //
+  // For two specifics of the same generic:
+  // - If `common_fingerprint` is different, the specifics cannot be coalesced.
+  // - If `common_fingerprint` and `specific_fingerprint` are the
+  //   same, the specifics can be coalesced without additional checks.
+  // - If `common_fingerprint` is the same but `specific_fingerprint` is
+  //   different, additional checks are needed, i.e. inspecting the non-hashed
+  //   `SpecificId`s.
+  //
   // TODO: Consider optimizations for repeated entries in both fingerprints.
   struct LoweringFunctionFingerprint {
-    llvm::BLAKE3 function_common_fingerprint;
-    llvm::BLAKE3 function_specific_fingerprint;
+    llvm::BLAKE3 common_fingerprint;
+    llvm::BLAKE3 specific_fingerprint;
   };
 
   // Returns a basic block corresponding to the start of the given semantics
@@ -155,7 +160,8 @@ class FunctionContext {
   // When fingerprinting for a specific, adds the type.
   auto AddTypeToCurrentFingerprint(llvm::Type* type) -> void;
 
-  // When function lowering is complete emit the final function fingerprints.
+  // Emits the final function fingerprints. Only called when function lowering
+  // is complete.
   auto EmitFinalFingerprint() -> void;
 
   auto llvm_context() -> llvm::LLVMContext& {
@@ -242,8 +248,9 @@ class FunctionContext {
   // When complete, this is used to complete the function_fingerprint_.
   LoweringFunctionFingerprint current_fingerprint_;
 
-  // Accumulated fingerprint is stored in the state owned by the file_context.
-  // Currently only building a fingerprint for specific functions.
+  // The accumulated fingerprint is owned by the FileContext and passed into
+  // the FunctionContext. The function fingerprint is currently only built for
+  // specific functions, otherwise, this will be nullptr.
   FileContext::SpecificFunctionFingerprint* function_fingerprint_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.

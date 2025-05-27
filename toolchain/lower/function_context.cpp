@@ -13,9 +13,9 @@ namespace Carbon::Lower {
 
 FunctionContext::FunctionContext(
     FileContext& file_context, llvm::Function* function,
-    SemIR::SpecificId specific_id, llvm::DISubprogram* di_subprogram,
-    llvm::raw_ostream* vlog_stream,
-    FileContext::SpecificFunctionFingerprint* specific_function_state)
+    SemIR::SpecificId specific_id,
+    FileContext::SpecificFunctionFingerprint* function_fingerprint,
+    llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
       specific_id_(specific_id),
@@ -23,7 +23,7 @@ FunctionContext::FunctionContext(
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),
       vlog_stream_(vlog_stream),
-      function_fingerprint_(specific_function_state) {
+      function_fingerprint_(function_fingerprint) {
   function_->setSubprogram(di_subprogram_);
 }
 
@@ -269,16 +269,15 @@ auto FunctionContext::AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
 
   RawStringOstream os;
   // TODO: Replace index with info that is translation unit independent.
-  // Using a string that includes the function_id string and the index to
+  // Using a string that includes the `FunctionId` string and the index to
   // avoid possible collisions. This needs revisiting.
   os << "function_id" << function_id.index << "\n";
-  current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
   // TODO: Replace index with info that is translation unit independent.
   if (specific_id.has_value()) {
-    current_fingerprint_.function_specific_fingerprint.update(
-        specific_id.index);
-    // Use -1 as delimiter. This needs revisiting.
-    current_fingerprint_.function_specific_fingerprint.update(-1);
+    current_fingerprint_.specific_fingerprint.update(specific_id.index);
+    // TODO: Uses -1 as delimiter. This needs revisiting.
+    current_fingerprint_.specific_fingerprint.update(-1);
     function_fingerprint_->calls.push_back(specific_id);
   }
 }
@@ -291,7 +290,7 @@ auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {
   RawStringOstream os;
   type->print(os);
   os << "\n";
-  current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
 }
 
 auto FunctionContext::AddGlobalToCurrentFingerprint(llvm::Value* global)
@@ -303,17 +302,17 @@ auto FunctionContext::AddGlobalToCurrentFingerprint(llvm::Value* global)
   RawStringOstream os;
   global->print(os);
   os << "\n";
-  current_fingerprint_.function_common_fingerprint.update(os.TakeStr());
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
 }
 
 auto FunctionContext::EmitFinalFingerprint() -> void {
   if (!function_fingerprint_) {
     return;
   }
-  current_fingerprint_.function_common_fingerprint.final(
-      function_fingerprint_->function_common_fingerprint);
-  current_fingerprint_.function_specific_fingerprint.final(
-      function_fingerprint_->function_specific_fingerprint);
+  current_fingerprint_.common_fingerprint.final(
+      function_fingerprint_->common_fingerprint);
+  current_fingerprint_.specific_fingerprint.final(
+      function_fingerprint_->specific_fingerprint);
 }
 
 }  // namespace Carbon::Lower
