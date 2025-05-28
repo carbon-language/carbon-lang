@@ -367,7 +367,7 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
   };
 
   llvm::SmallVector<InterfaceToImport> interfaces_to_import;
-  for (const auto& impl : context.impls().array_ref()) {
+  for (const auto& impl : context.impls().values()) {
     if (impl.witness_id == SemIR::ErrorInst::InstId) {
       continue;
     }

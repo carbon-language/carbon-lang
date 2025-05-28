@@ -183,6 +183,7 @@ cc_library(
         ":inst_namer",
         ":typed_insts",
         "//common:concepts",
+        "//common:flatten",
         "//common:ostream",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",

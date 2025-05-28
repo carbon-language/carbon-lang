@@ -181,10 +181,6 @@ class ImplStore {
   // Returns the value for an ID.
   auto Get(ImplId id) const -> const Impl& { return values_.Get(id); }
 
-  // Invalidates all current pointers and references into the value store. Used
-  // in debug builds to trigger use-after-invalidation bugs.
-  auto Invalidate() -> void { values_.Invalidate(); }
-
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
   }
@@ -196,7 +192,7 @@ class ImplStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "lookup_"), lookup_);
   }
 
-  auto array_ref() const -> llvm::ArrayRef<Impl> { return values_.array_ref(); }
+  auto values() const -> ValueStoreRange<ImplId> { return values_.values(); }
   auto size() const -> size_t { return values_.size(); }
   auto enumerate() const -> auto { return values_.enumerate(); }
 

@@ -19,16 +19,16 @@ class SpecificStore::KeyContext : public TranslatingKeyContext<KeyContext> {
     friend auto operator==(const Key&, const Key&) -> bool = default;
   };
 
-  explicit KeyContext(llvm::ArrayRef<Specific> specifics)
+  explicit KeyContext(const ValueStore<SpecificId>* specifics)
       : specifics_(specifics) {}
 
   auto TranslateKey(SpecificId id) const -> Key {
-    const auto& specific = specifics_[id.index];
+    const auto& specific = specifics_->Get(id);
     return {.generic_id = specific.generic_id, .args_id = specific.args_id};
   }
 
  private:
-  llvm::ArrayRef<Specific> specifics_;
+  const ValueStore<SpecificId>* specifics_;
 };
 
 auto SpecificStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
@@ -41,7 +41,7 @@ auto SpecificStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
             return specifics_.Add(
                 {.generic_id = generic_id, .args_id = args_id});
           },
-          KeyContext(specifics_.array_ref()))
+          KeyContext(&specifics_))
       .key();
 }
 
@@ -49,7 +49,7 @@ auto SpecificStore::CollectMemUsage(MemUsage& mem_usage,
                                     llvm::StringRef label) const -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "specifics_"), specifics_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "lookup_table_"),
-                    lookup_table_, KeyContext(specifics_.array_ref()));
+                    lookup_table_, KeyContext(&specifics_));
 }
 
 static auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,

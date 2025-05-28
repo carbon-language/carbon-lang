@@ -222,6 +222,14 @@ cc_test(
 )
 
 cc_library(
+    name = "flatten",
+    hdrs = ["flatten.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "hashing",
     srcs = ["hashing.cpp"],
     hdrs = ["hashing.h"],

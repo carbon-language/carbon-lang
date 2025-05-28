@@ -127,10 +127,6 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
                                    : InstBlockId::Empty;
   }
 
-  // Invalidates all current pointers and references into the value store. Used
-  // in debug builds to trigger use-after-invalidation bugs.
-  auto Invalidate() -> void { specifics_.Invalidate(); }
-
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
     return specifics_.OutputYaml();
@@ -140,8 +136,8 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto array_ref() const -> llvm::ArrayRef<Specific> {
-    return specifics_.array_ref();
+  auto values() const -> ValueStoreRange<SpecificId> {
+    return specifics_.values();
   }
   auto size() const -> size_t { return specifics_.size(); }
   auto enumerate() const -> auto { return specifics_.enumerate(); }

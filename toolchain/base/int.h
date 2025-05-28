@@ -346,9 +346,7 @@ class IntStore {
   // into the ID space.
   auto OutputYaml() const -> Yaml::OutputMapping;
 
-  auto array_ref() const -> llvm::ArrayRef<llvm::APInt> {
-    return values_.array_ref();
-  }
+  auto values() const -> auto { return values_.values(); }
   auto size() const -> size_t { return values_.size(); }
 
   // Collects the memory usage of the separately stored integers.

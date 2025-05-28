@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 
+#include "common/flatten.h"
 #include "common/ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
@@ -51,12 +52,10 @@ Formatter::Formatter(const File* sem_ir,
   }
 
   // Create empty placeholder chunks for instructions that we output lazily.
-  for (auto lazy_insts :
-       {sem_ir_->constants().array_ref(),
-        sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs)}) {
-    for (auto inst_id : lazy_insts) {
-      tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
-    }
+  for (auto inst_id :
+       Flatten({sem_ir_->constants().array_ref(),
+                sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs)})) {
+    tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
   }
 
   // Create a real chunk for the start of the output.
@@ -1151,7 +1150,7 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 auto Formatter::FormatImportCppDeclRhs() -> void {
   out_ << " ";
   OpenBrace();
-  for (ImportCpp import_cpp : sem_ir_->import_cpps().array_ref()) {
+  for (ImportCpp import_cpp : sem_ir_->import_cpps().values()) {
     Indent();
     out_ << "import Cpp \""
          << FormatEscaped(
