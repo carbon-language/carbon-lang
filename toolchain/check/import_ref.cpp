@@ -1718,6 +1718,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           self_const_id);
 
   if (import_class.is_complete()) {
+    // The `NameScope` was allocated in phase 2 to ensure references between
+    // phase 2 and 3 can use the id - now in phase 3 the details are filled in.
     auto& new_scope = resolver.local_name_scopes().Get(new_class.scope_id);
     new_scope.inst_id() = new_class.first_owning_decl_id;
     new_scope.parent_scope_id() = new_class.parent_scope_id;
