@@ -43,35 +43,32 @@ class DeriveFromNonType {
 
 fn AccessMemberWithInvalidBasNonType(p: DeriveFromNonType*) -> {} { return (*p).n; }
 
-// --- fail_derive_from_{}.carbon
+// --- fail_derive_from_builtin.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_derive_from_{}.carbon:[[@LINE+8]]:20: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: class DeriveFrom{} {
-// CHECK:STDERR:                    ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_{}.carbon:[[@LINE+4]]:20: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: class DeriveFrom{} {
-// CHECK:STDERR:                    ^
-// CHECK:STDERR:
-class DeriveFrom{} {
-  extend base: {};
+fn Bool() -> type = "bool.make_type";
+
+class DeriveFromBuiltin {
+  // CHECK:STDERR: fail_derive_from_builtin.carbon:[[@LINE+4]]:16: error: deriving from final type `bool`; base type must be an `abstract` or `base` class [BaseIsFinal]
+  // CHECK:STDERR:   extend base: Bool();
+  // CHECK:STDERR:                ^~~~~~
+  // CHECK:STDERR:
+  extend base: Bool();
 }
 
 // It's not really important whether this conversion produces an error or not,
 // but it shouldn't crash.
-// CHECK:STDERR: fail_derive_from_{}.carbon:[[@LINE+4]]:22: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: fn ConvertToBadBase{}(p: DeriveFrom{}*) -> {}* { return p; }
-// CHECK:STDERR:                      ^
+// CHECK:STDERR: fail_derive_from_builtin.carbon:[[@LINE+7]]:64: error: cannot implicitly convert expression of type `DeriveFromBuiltin*` to `bool*` [ConversionFailure]
+// CHECK:STDERR: fn ConvertToBadBaseBuiltin(p: DeriveFromBuiltin*) -> Bool()* { return p; }
+// CHECK:STDERR:                                                                ^~~~~~~~~
+// CHECK:STDERR: fail_derive_from_builtin.carbon:[[@LINE+4]]:64: note: type `DeriveFromBuiltin*` does not implement interface `Core.ImplicitAs(bool*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fn ConvertToBadBaseBuiltin(p: DeriveFromBuiltin*) -> Bool()* { return p; }
+// CHECK:STDERR:                                                                ^~~~~~~~~
 // CHECK:STDERR:
-fn ConvertToBadBase{}(p: DeriveFrom{}*) -> {}* { return p; }
+fn ConvertToBadBaseBuiltin(p: DeriveFromBuiltin*) -> Bool()* { return p; }
 
-// CHECK:STDERR: fail_derive_from_{}.carbon:[[@LINE+4]]:33: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: fn AccessMemberWithInvalidBase{}(p: DeriveFrom{}*) -> {} { return (*p).n; }
-// CHECK:STDERR:                                 ^
-// CHECK:STDERR:
-fn AccessMemberWithInvalidBase{}(p: DeriveFrom{}*) -> {} { return (*p).n; }
+fn AccessMemberWithInvalidBaseBuiltin(p: DeriveFromBuiltin*) -> Bool() { return (*p).n; }
 
 // --- fail_derive_from_tuple.carbon
 

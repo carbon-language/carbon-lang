@@ -12,9 +12,11 @@
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 class C(a:! i32) {}
 class D(b:! C(1_000));
 class D(b:! C(1_000)) {}
+//@dump-sem-ir-end
 
 // --- fail_int_mismatch.carbon
 
@@ -35,8 +37,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %a: %i32 = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
@@ -46,8 +46,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_1000.ff9: Core.IntLiteral = int_value 1000 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
@@ -71,50 +69,19 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .D = %D.decl.loc5
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc5: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.2 (constants.%a)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc5: %D.type = class_decl @D [concrete = constants.%D.generic] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.dfb = symbolic_binding_pattern b, 0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc5_20.1: type = splice_block %C.loc5 [concrete = constants.%C.262] {
-// CHECK:STDOUT:       %C.ref.loc5: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:       %int_1000.loc5: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
-// CHECK:STDOUT:       %impl.elem0.loc5: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:       %bound_method.loc5_20.1: <bound method> = bound_method %int_1000.loc5, %impl.elem0.loc5 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:       %specific_fn.loc5: <specific function> = specific_function %impl.elem0.loc5, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:       %bound_method.loc5_20.2: <bound method> = bound_method %int_1000.loc5, %specific_fn.loc5 [concrete = constants.%bound_method]
-// CHECK:STDOUT:       %int.convert_checked.loc5: init %i32 = call %bound_method.loc5_20.2(%int_1000.loc5) [concrete = constants.%int_1000.1b6]
-// CHECK:STDOUT:       %.loc5_20.2: %i32 = value_of_initializer %int.convert_checked.loc5 [concrete = constants.%int_1000.1b6]
-// CHECK:STDOUT:       %.loc5_20.3: %i32 = converted %int_1000.loc5, %.loc5_20.2 [concrete = constants.%int_1000.1b6]
-// CHECK:STDOUT:       %C.loc5: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc5_9.1: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
+// CHECK:STDOUT:     %a.loc5_9.1: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc5_9.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc6: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt: %pattern_type.dfb = symbolic_binding_pattern b, 0 [concrete]
@@ -131,12 +98,29 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:       %.loc6_20.3: %i32 = converted %int_1000.loc6, %.loc6_20.2 [concrete = constants.%int_1000.1b6]
 // CHECK:STDOUT:       %C.loc6: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc6: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
+// CHECK:STDOUT:     %b.loc6_9.1: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc6_9.2 (constants.%b)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %D.decl.loc7: %D.type = class_decl @D [concrete = constants.%D.generic] {
+// CHECK:STDOUT:     %b.patt: %pattern_type.dfb = symbolic_binding_pattern b, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc7_20.1: type = splice_block %C.loc7 [concrete = constants.%C.262] {
+// CHECK:STDOUT:       %C.ref.loc7: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:       %int_1000.loc7: Core.IntLiteral = int_value 1000 [concrete = constants.%int_1000.ff9]
+// CHECK:STDOUT:       %impl.elem0.loc7: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:       %bound_method.loc7_20.1: <bound method> = bound_method %int_1000.loc7, %impl.elem0.loc7 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:       %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:       %bound_method.loc7_20.2: <bound method> = bound_method %int_1000.loc7, %specific_fn.loc7 [concrete = constants.%bound_method]
+// CHECK:STDOUT:       %int.convert_checked.loc7: init %i32 = call %bound_method.loc7_20.2(%int_1000.loc7) [concrete = constants.%int_1000.1b6]
+// CHECK:STDOUT:       %.loc7_20.2: %i32 = value_of_initializer %int.convert_checked.loc7 [concrete = constants.%int_1000.1b6]
+// CHECK:STDOUT:       %.loc7_20.3: %i32 = converted %int_1000.loc7, %.loc7_20.2 [concrete = constants.%int_1000.1b6]
+// CHECK:STDOUT:       %C.loc7: type = class_type @C, @C(constants.%int_1000.1b6) [concrete = constants.%C.262]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b.loc7: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc6_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%a.loc4_9.1: %i32) {
-// CHECK:STDOUT:   %a.loc4_9.2: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.2 (constants.%a)]
+// CHECK:STDOUT: generic class @C(%a.loc5_9.1: %i32) {
+// CHECK:STDOUT:   %a.loc5_9.2: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc5_9.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -150,8 +134,8 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D(%b.loc5_9.1: %C.262) {
-// CHECK:STDOUT:   %b.loc5_9.2: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
+// CHECK:STDOUT: generic class @D(%b.loc6_9.1: %C.262) {
+// CHECK:STDOUT:   %b.loc6_9.2: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc6_9.2 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -166,15 +150,15 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%a) {
-// CHECK:STDOUT:   %a.loc4_9.2 => constants.%a
+// CHECK:STDOUT:   %a.loc5_9.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_1000.1b6) {
-// CHECK:STDOUT:   %a.loc4_9.2 => constants.%int_1000.1b6
+// CHECK:STDOUT:   %a.loc5_9.2 => constants.%int_1000.1b6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%b) {
-// CHECK:STDOUT:   %b.loc5_9.2 => constants.%b
+// CHECK:STDOUT:   %b.loc6_9.2 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_mismatch.carbon

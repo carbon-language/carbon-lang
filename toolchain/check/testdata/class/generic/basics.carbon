@@ -72,11 +72,15 @@ fn F(c: Class(i32)) -> i32 {
 }
 
 fn G(T:! type, c: Class(T)) -> T {
+  //@dump-sem-ir-begin
   return c.x;
+  //@dump-sem-ir-end
 }
 
 fn H(U:! type, c: Class(U)) -> U {
+  //@dump-sem-ir-begin
   return c.x;
+  //@dump-sem-ir-end
 }
 
 // --- fail_derived_to_base.carbon
@@ -440,10 +444,21 @@ var v: C(0);
 // CHECK:STDOUT: --- field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Class.fe1b2d.1: type = class_type @Class, @Class(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.4aeca8.1: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %Class.elem.e262de.1: type = unbound_element_type %Class.fe1b2d.1, %T [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Class.247: type = class_type @Class, @Class(%i32) [concrete]
 // CHECK:STDOUT:   %Class.elem.2d8: type = unbound_element_type %Class.247, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.3c18fb.1: type = pattern_type %Class.fe1b2d.1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %Class.fe1b2d.2: type = class_type @Class, @Class(%U) [symbolic]
+// CHECK:STDOUT:   %pattern_type.3c18fb.2: type = pattern_type %Class.fe1b2d.2 [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dcd0a.2: type = pattern_type %U [symbolic]
+// CHECK:STDOUT:   %Class.elem.e262de.2: type = unbound_element_type %Class.fe1b2d.2, %U [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -456,5 +471,54 @@ var v: C(0);
 // CHECK:STDOUT:   %.loc10_11.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc10_11.2: %i32 = bind_value %.loc10_11.1
 // CHECK:STDOUT:   return %.loc10_11.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @G(%T.loc14_6.1: type) {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc14_26.2, %T.loc14_6.2 [symbolic = %Class.elem (constants.%Class.elem.e262de.1)]
+// CHECK:STDOUT:   %require_complete.loc16: <witness> = require_complete_type %T.loc14_6.2 [symbolic = %require_complete.loc16 (constants.%require_complete.4aeca8.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%c.param: @G.%Class.loc14_26.2 (%Class.fe1b2d.1)) -> @G.%T.loc14_6.2 (%T) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %c.ref: @G.%Class.loc14_26.2 (%Class.fe1b2d.1) = name_ref c, %c
+// CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.e262de.1) = name_ref x, @Class.%.loc5 [concrete = @Class.%.loc5]
+// CHECK:STDOUT:     %.loc16_11.1: ref @G.%T.loc14_6.2 (%T) = class_element_access %c.ref, element0
+// CHECK:STDOUT:     %.loc16_11.2: @G.%T.loc14_6.2 (%T) = bind_value %.loc16_11.1
+// CHECK:STDOUT:     return %.loc16_11.2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @H(%U.loc20_6.1: type) {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc20_26.2, %U.loc20_6.2 [symbolic = %Class.elem (constants.%Class.elem.e262de.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%c.param: @H.%Class.loc20_26.2 (%Class.fe1b2d.2)) -> @H.%U.loc20_6.2 (%U) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %c.ref: @H.%Class.loc20_26.2 (%Class.fe1b2d.2) = name_ref c, %c
+// CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.e262de.2) = name_ref x, @Class.%.loc5 [concrete = @Class.%.loc5]
+// CHECK:STDOUT:     %.loc22_11.1: ref @H.%U.loc20_6.2 (%U) = class_element_access %c.ref, element0
+// CHECK:STDOUT:     %.loc22_11.2: @H.%U.loc20_6.2 (%U) = bind_value %.loc22_11.1
+// CHECK:STDOUT:     return %.loc22_11.2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @G(constants.%T) {
+// CHECK:STDOUT:   %T.loc14_6.2 => constants.%T
+// CHECK:STDOUT:   %Class.loc14_26.2 => constants.%Class.fe1b2d.1
+// CHECK:STDOUT:   %pattern_type.loc14_16 => constants.%pattern_type.3c18fb.1
+// CHECK:STDOUT:   %pattern_type.loc14_29 => constants.%pattern_type.7dcd0a.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @H(constants.%U) {
+// CHECK:STDOUT:   %U.loc20_6.2 => constants.%U
+// CHECK:STDOUT:   %Class.loc20_26.2 => constants.%Class.fe1b2d.2
+// CHECK:STDOUT:   %pattern_type.loc20_16 => constants.%pattern_type.3c18fb.2
+// CHECK:STDOUT:   %pattern_type.loc20_29 => constants.%pattern_type.7dcd0a.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
