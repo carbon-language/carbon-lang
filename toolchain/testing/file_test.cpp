@@ -194,7 +194,7 @@ auto ToolchainFileTest::GetDefaultArgs() const
   } else if (component_ == "check") {
     args.push_back("--dump-sem-ir");
   } else if (component_ == "lower") {
-    args.push_back("--dump-llvm-ir");
+    args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
   } else {
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
   }

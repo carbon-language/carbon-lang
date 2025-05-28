@@ -288,7 +288,6 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceIncompleteWithinDefinition)
-CARBON_DIAGNOSTIC_KIND(VarInInterfaceDecl)
 
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
@@ -320,6 +319,11 @@ CARBON_DIAGNOSTIC_KIND(ImplFinalOverlapsNonFinal)
 CARBON_DIAGNOSTIC_KIND(ImplFinalOverlapsNonFinalNote)
 CARBON_DIAGNOSTIC_KIND(ImplNonFinalSameTypeStructure)
 CARBON_DIAGNOSTIC_KIND(ImplNonFinalSameTypeStructureNote)
+CARBON_DIAGNOSTIC_KIND(FinalImplInvalidFile)
+CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsSameFile)
+CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsSameFileNote)
+CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFile)
+CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFileNote)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)

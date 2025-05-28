@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -21,7 +21,9 @@ var arr: array(i32, And(Complement(0x123456), 0xFFFFFF));
 let arr_p: array(i32, 0xEDCBA9)* = &arr;
 
 fn RuntimeCallIsValid(a: i32) -> i32 {
+  //@dump-sem-ir-begin
   return Complement(a);
+  //@dump-sem-ir-end
 }
 
 // --- literal.carbon
@@ -59,3 +61,31 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
   // CHECK:STDERR:
   return Complement(a);
 }
+
+// CHECK:STDOUT: --- int_complement.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Complement.type: type = fn_type @Complement [concrete]
+// CHECK:STDOUT:   %Complement: %Complement.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Complement.ref: %Complement.type = name_ref Complement, file.%Complement.decl [concrete = constants.%Complement]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %int.complement: init %i32 = call %Complement.ref(%a.ref)
+// CHECK:STDOUT:   %.loc12_23.1: %i32 = value_of_initializer %int.complement
+// CHECK:STDOUT:   %.loc12_23.2: %i32 = converted %int.complement, %.loc12_23.1
+// CHECK:STDOUT:   return %.loc12_23.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

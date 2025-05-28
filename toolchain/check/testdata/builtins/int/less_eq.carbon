@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -29,7 +29,9 @@ fn F(true_: True, false_: False) {
 }
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
+  //@dump-sem-ir-begin
   return LessEq(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- literal.carbon
@@ -102,3 +104,27 @@ fn Test(n: Core.IntLiteral()) {
   // CHECK:STDERR:
   LessEq(n, n);
 }
+
+// CHECK:STDOUT: --- int_less_eq.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %LessEq.type: type = fn_type @LessEq [concrete]
+// CHECK:STDOUT:   %LessEq: %LessEq.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %LessEq.ref: %LessEq.type = name_ref LessEq, file.%LessEq.decl [concrete = constants.%LessEq]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.less_eq: init bool = call %LessEq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc20_22.1: bool = value_of_initializer %int.less_eq
+// CHECK:STDOUT:   %.loc20_22.2: bool = converted %int.less_eq, %.loc20_22.1
+// CHECK:STDOUT:   return %.loc20_22.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

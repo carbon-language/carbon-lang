@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -20,7 +20,9 @@ var arr: array(i32, And(12, 10));
 let arr_p: array(i32, 8)* = &arr;
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
+  //@dump-sem-ir-begin
   return And(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- literal.carbon
@@ -120,3 +122,32 @@ fn Test(n: Core.IntLiteral()) {
   // CHECK:STDERR:
   And(n, n);
 }
+
+// CHECK:STDOUT: --- int_and.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %And.type: type = fn_type @And [concrete]
+// CHECK:STDOUT:   %And: %And.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %And.ref: %And.type = name_ref And, file.%And.decl [concrete = constants.%And]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.and: init %i32 = call %And.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %int.and
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int.and, %.loc11_19.1
+// CHECK:STDOUT:   return %.loc11_19.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/parens.carbon
@@ -67,9 +69,9 @@ var b: i32 = ((2));
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc11: type = splice_block %i32.loc11 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc13: type = splice_block %i32.loc13 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -77,9 +79,9 @@ var b: i32 = ((2));
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var %b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc12: type = splice_block %i32.loc12 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc14: type = splice_block %i32.loc14 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -87,21 +89,21 @@ var b: i32 = ((2));
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc11: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc11_1.1: <bound method> = bound_method %int_1, %impl.elem0.loc11 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_1.2: <bound method> = bound_method %int_1, %specific_fn.loc11 [concrete = constants.%bound_method.9a1]
-// CHECK:STDOUT:   %int.convert_checked.loc11: init %i32 = call %bound_method.loc11_1.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11: init %i32 = converted %int_1, %int.convert_checked.loc11 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   assign file.%a.var, %.loc11
+// CHECK:STDOUT:   %impl.elem0.loc13: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc13_1.1: <bound method> = bound_method %int_1, %impl.elem0.loc13 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_1.2: <bound method> = bound_method %int_1, %specific_fn.loc13 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %bound_method.loc13_1.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc13: init %i32 = converted %int_1, %int.convert_checked.loc13 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   assign file.%a.var, %.loc13
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc12: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc12_1.1: <bound method> = bound_method %int_2, %impl.elem0.loc12 [concrete = constants.%Convert.bound.ef9]
-// CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_1.2: <bound method> = bound_method %int_2, %specific_fn.loc12 [concrete = constants.%bound_method.b92]
-// CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %bound_method.loc12_1.2(%int_2) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc12: init %i32 = converted %int_2, %int.convert_checked.loc12 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   assign file.%b.var, %.loc12
+// CHECK:STDOUT:   %impl.elem0.loc14: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc14_1.1: <bound method> = bound_method %int_2, %impl.elem0.loc14 [concrete = constants.%Convert.bound.ef9]
+// CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14_1.2: <bound method> = bound_method %int_2, %specific_fn.loc14 [concrete = constants.%bound_method.b92]
+// CHECK:STDOUT:   %int.convert_checked.loc14: init %i32 = call %bound_method.loc14_1.2(%int_2) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc14: init %i32 = converted %int_2, %int.convert_checked.loc14 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   assign file.%b.var, %.loc14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -63,6 +63,26 @@ struct ClassFields {
   // The virtual function table. `None` if the class has no (direct or
   // inherited) virtual functions.
   InstId vtable_id = InstId::None;
+
+  auto PrintClassFields(llvm::raw_ostream& out) const -> void {
+    out << "self_type_id: " << self_type_id << ", inheritance_kind: ";
+    switch (inheritance_kind) {
+      case Abstract:
+        out << "Abstract";
+        break;
+      case Base:
+        out << "Base";
+        break;
+      case Final:
+        out << "Final";
+        break;
+    }
+    out << ", is_dynamic: " << is_dynamic << ", scope_id: " << scope_id
+        << ", body_block_id: " << body_block_id << ", adapt_id: " << adapt_id
+        << ", base_id: " << base_id
+        << ", complete_type_witness_id: " << complete_type_witness_id
+        << ", vtable_id: " << vtable_id << "}";
+  }
 };
 
 // A class. See EntityWithParamsBase regarding the inheritance here.
@@ -72,6 +92,8 @@ struct Class : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
+    out << ", ";
+    PrintClassFields(out);
     out << "}";
   }
 
