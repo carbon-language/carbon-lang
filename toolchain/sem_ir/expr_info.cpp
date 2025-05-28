@@ -45,7 +45,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TuplePattern::Kind:
       case ValueParamPattern::Kind:
       case VarPattern::Kind:
-      case Vtable::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:

@@ -1750,24 +1750,6 @@ struct VarStorage {
   AbsoluteInstId pattern_id;
 };
 
-// Definition of ABI-neutral vtable information for a dynamic class.
-struct Vtable {
-  static constexpr auto Kind = InstKind::Vtable.Define<Parse::NodeId>(
-      {.ir_name = "vtable",
-       .constant_kind = InstConstantKind::Always,
-       .is_lowered = false});
-  TypeId type_id;
-  InstBlockId virtual_functions_id;
-};
-
-// Initializer for virtual function table pointers in object initialization.
-struct VtablePtr {
-  static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
-      {.ir_name = "vtable_ptr", .constant_kind = InstConstantKind::Never});
-  TypeId type_id;
-  InstId vtable_id;
-};
-
 // The type of virtual function tables.
 struct VtableType {
   static constexpr auto Kind = InstKind::VtableType.Define<Parse::NoneNodeId>(
@@ -1779,6 +1761,16 @@ struct VtableType {
   static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
+};
+
+// Initializer for virtual function table pointers in object initialization.
+struct VtablePtr {
+  static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
+      {.ir_name = "vtable_ptr",
+       .constant_kind = InstConstantKind::WheneverPossible});
+  TypeId type_id;
+  VtableId vtable_id;
+  SpecificId specific_id;
 };
 
 // An `expr where requirements` expression.

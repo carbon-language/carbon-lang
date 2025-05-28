@@ -62,7 +62,7 @@ struct ClassFields {
 
   // The virtual function table. `None` if the class has no (direct or
   // inherited) virtual functions.
-  InstId vtable_id = InstId::None;
+  InstId vtable_ptr_id = InstId::None;
 
   auto PrintClassFields(llvm::raw_ostream& out) const -> void {
     out << "self_type_id: " << self_type_id << ", inheritance_kind: ";
@@ -81,7 +81,7 @@ struct ClassFields {
         << ", body_block_id: " << body_block_id << ", adapt_id: " << adapt_id
         << ", base_id: " << base_id
         << ", complete_type_witness_id: " << complete_type_witness_id
-        << ", vtable_id: " << vtable_id << "}";
+        << ", vtable_ptr_id: " << vtable_ptr_id << "}";
   }
 };
 

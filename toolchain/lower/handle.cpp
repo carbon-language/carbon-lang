@@ -302,7 +302,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VtablePtr inst) -> void {
-  context.SetLocal(inst_id, context.GetValue(inst.vtable_id));
+  context.SetLocal(inst_id, context.GetVtable(inst.vtable_id));
 }
 
 }  // namespace Carbon::Lower
