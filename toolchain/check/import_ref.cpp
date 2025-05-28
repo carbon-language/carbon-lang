@@ -1582,7 +1582,12 @@ static auto MakeIncompleteClass(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, class_decl_id, import_class),
        {.self_type_id = SemIR::TypeId::None,
         .inheritance_kind = import_class.inheritance_kind,
-        .is_dynamic = import_class.is_dynamic}});
+        .is_dynamic = import_class.is_dynamic,
+        .scope_id = import_class.is_complete()
+                        ? context.local_name_scopes().Add(
+                              SemIR::InstId::None, SemIR::NameId::None,
+                              SemIR::NameScopeId::None)
+                        : SemIR::NameScopeId::None}});
 
   if (import_class.has_parameters()) {
     class_decl.type_id = GetGenericClassType(
@@ -1606,9 +1611,6 @@ static auto AddClassDefinition(ImportContext& context,
 
   new_class.complete_type_witness_id = complete_type_witness_id;
 
-  new_class.scope_id = context.local_name_scopes().Add(
-      new_class.first_owning_decl_id, SemIR::NameId::None,
-      new_class.parent_scope_id);
   auto& new_scope = context.local_name_scopes().Get(new_class.scope_id);
   const auto& import_scope =
       context.import_name_scopes().Get(import_class.scope_id);
@@ -1716,6 +1718,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           self_const_id);
 
   if (import_class.is_complete()) {
+    auto& new_scope = resolver.local_name_scopes().Get(new_class.scope_id);
+    new_scope.inst_id() = new_class.first_owning_decl_id;
+    new_scope.parent_scope_id() = new_class.parent_scope_id;
+
     auto complete_type_witness_id = AddLoadedImportRef(
         resolver,
         GetSingletonType(resolver.local_context(),

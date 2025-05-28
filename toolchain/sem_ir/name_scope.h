@@ -196,10 +196,12 @@ class NameScope : public Printable<NameScope> {
   }
 
   auto inst_id() const -> InstId { return inst_id_; }
+  auto inst_id() -> InstId& { return inst_id_; }
 
   auto name_id() const -> NameId { return name_id_; }
 
   auto parent_scope_id() const -> NameScopeId { return parent_scope_id_; }
+  auto parent_scope_id() -> NameScopeId& { return parent_scope_id_; }
 
   auto has_error() const -> bool { return has_error_; }
 
