@@ -355,7 +355,7 @@ class D {
 // CHECK:STDOUT: fn @G(%U.param: %Empty_where.type.c85) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [concrete = constants.%H]
-// CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %U.ref: %Empty_where.type.c85 = name_ref U, %U
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %H.specific_fn: <specific function> = specific_function %H.ref, @H(constants.%C, constants.%D) [concrete = constants.%H.specific_fn]
