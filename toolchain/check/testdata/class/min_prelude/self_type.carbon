@@ -72,21 +72,21 @@ fn Call(p: Derived*) -> () {
 
 class C {}
 
-class Class {
+class D {
   var b: C;
 }
 
-fn F() -> {} {
-  var c1: Class = {.b = {}};
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+8]]:17: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   var c2: Class.Self = c1;
-  // CHECK:STDERR:                 ^~~~
+fn F() -> C {
+  var c1: D = {.b = {}};
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+8]]:13: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:   var c2: D.Self = c1;
+  // CHECK:STDERR:             ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+4]]:17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   var c2: Class.Self = c1;
-  // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+4]]:13: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   var c2: D.Self = c1;
+  // CHECK:STDERR:             ^~~~
   // CHECK:STDERR:
-  var c2: Class.Self = c1;
+  var c2: D.Self = c1;
   return c2.b;
 }
 
