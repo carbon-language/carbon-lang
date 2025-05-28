@@ -1564,6 +1564,21 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Call inst)
        .args_id = GetLocalCanonicalInstBlockId(resolver, inst.args_id, args)});
 }
 
+static auto AddPlaceholderNameScope(ImportContext& context)
+    -> SemIR::NameScopeId {
+  return context.local_name_scopes().Add(
+      SemIR::InstId::None, SemIR::NameId::None, SemIR::NameScopeId::None);
+}
+
+static auto ReplaceNameScopeBeforeConstantUse(
+    ImportContext& context, SemIR::NameScopeId name_scope_id,
+    SemIR::InstId inst_id, SemIR::NameId name_id,
+    SemIR::NameScopeId parent_scope_id) {
+  context.local_name_scopes()
+      .Get(name_scope_id)
+      .Set(inst_id, name_id, parent_scope_id);
+}
+
 // Makes an incomplete class. This is necessary even with classes with a
 // complete declaration, because things such as `Self` may refer back to the
 // type.
@@ -1584,9 +1599,7 @@ static auto MakeIncompleteClass(ImportContext& context,
         .inheritance_kind = import_class.inheritance_kind,
         .is_dynamic = import_class.is_dynamic,
         .scope_id = import_class.is_complete()
-                        ? context.local_name_scopes().Add(
-                              SemIR::InstId::None, SemIR::NameId::None,
-                              SemIR::NameScopeId::None)
+                        ? AddPlaceholderNameScope(context)
                         : SemIR::NameScopeId::None}});
 
   if (import_class.has_parameters()) {
@@ -1720,9 +1733,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (import_class.is_complete()) {
     // The `NameScope` was allocated in phase 2 to ensure references between
     // phase 2 and 3 can use the id - now in phase 3 the details are filled in.
-    auto& new_scope = resolver.local_name_scopes().Get(new_class.scope_id);
-    new_scope.inst_id() = new_class.first_owning_decl_id;
-    new_scope.parent_scope_id() = new_class.parent_scope_id;
+    ReplaceNameScopeBeforeConstantUse(
+        resolver, new_class.scope_id, new_class.first_owning_decl_id,
+        SemIR::NameId::None, new_class.parent_scope_id);
 
     auto complete_type_witness_id = AddLoadedImportRef(
         resolver,

@@ -195,13 +195,17 @@ class NameScope : public Printable<NameScope> {
     extended_scopes_.push_back(extended_scope);
   }
 
+  auto Set(InstId inst_id, NameId name_id, NameScopeId parent_scope_id) {
+    inst_id_ = inst_id;
+    name_id_ = name_id;
+    parent_scope_id_ = parent_scope_id;
+  }
+
   auto inst_id() const -> InstId { return inst_id_; }
-  auto inst_id() -> InstId& { return inst_id_; }
 
   auto name_id() const -> NameId { return name_id_; }
 
   auto parent_scope_id() const -> NameScopeId { return parent_scope_id_; }
-  auto parent_scope_id() -> NameScopeId& { return parent_scope_id_; }
 
   auto has_error() const -> bool { return has_error_; }
 
