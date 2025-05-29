@@ -372,11 +372,13 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
 
+  auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
+                                         : llvm::Function::ExternalLinkage;
+
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
 
-  auto* llvm_function = llvm::Function::Create(function_type_info.type,
-                                               llvm::Function::ExternalLinkage,
+  auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
                                                mangled_name, llvm_module());
 
   CARBON_CHECK(llvm_function->getName() == mangled_name,
