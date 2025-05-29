@@ -6,6 +6,7 @@
 #define CARBON_COMMON_FLATTEN_H_
 
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace Carbon {
 
@@ -57,9 +58,16 @@ template <class T>
     { llvm::adl_begin(t) };
     { llvm::adl_end(t) };
   })
-auto Flatten(std::initializer_list<T> range)
-    -> FlattenRange<std::initializer_list<T>> {
-  return FlattenRange<std::initializer_list<T>>(std::move(range));
+auto Flatten(std::initializer_list<T> init_list)
+    -> FlattenRange<llvm::SmallVector<T, 16>> {
+  // Extend the lifetime of the things pointed to by the initializer_list so
+  // that we can retain iterators into them. Assert that they all fit into the
+  // stack, otherwise this is the wrong tool for the job, and the caller should
+  // figure out how to make a range without initializer_list in order to Flatten
+  // it.
+  llvm::SmallVector<T, 16> range = init_list;
+  CARBON_CHECK(range.size() <= 16);
+  return FlattenRange<llvm::SmallVector<T, 16>>(std::move(range));
 }
 
 // Flattening iterator. Given iterators of iterators of `T`, this iterates
