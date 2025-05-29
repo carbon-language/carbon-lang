@@ -51,12 +51,10 @@ Formatter::Formatter(const File* sem_ir,
   }
 
   // Create empty placeholder chunks for instructions that we output lazily.
-  for (auto lazy_insts :
-       {sem_ir_->constants().array_ref(),
-        sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs)}) {
-    for (auto inst_id : lazy_insts) {
-      tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
-    }
+  for (auto inst_id : llvm::concat<const InstId>(
+           sem_ir_->constants().array_ref(),
+           sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs))) {
+    tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
   }
 
   // Create a real chunk for the start of the output.
