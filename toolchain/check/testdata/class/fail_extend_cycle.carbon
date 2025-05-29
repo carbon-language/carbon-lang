@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_extend_cycle.carbon
@@ -56,14 +59,14 @@ base class A {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .A = %A.decl.loc11
+// CHECK:STDOUT:     .A = %A.decl.loc14
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [concrete = constants.%A.466950.1] {} {}
+// CHECK:STDOUT:   %A.decl.loc14: type = class_decl @A.1 [concrete = constants.%A.466950.1] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   %A.decl.loc26: type = class_decl @A.2 [concrete = constants.%A.466950.2] {} {}
+// CHECK:STDOUT:   %A.decl.loc29: type = class_decl @A.2 [concrete = constants.%A.466950.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
@@ -77,8 +80,8 @@ base class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
-// CHECK:STDOUT:   %.loc16: %B.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc14 [concrete = constants.%A.466950.1]
+// CHECK:STDOUT:   %.loc19: %B.elem = base_decl %A.ref, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A.466950.1} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.020]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -86,15 +89,15 @@ base class A {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   .base = %.loc16
+// CHECK:STDOUT:   .base = %.loc19
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc11 [concrete = constants.%A.466950.1]
-// CHECK:STDOUT:   %.loc27: %A.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl.loc14 [concrete = constants.%A.466950.1]
+// CHECK:STDOUT:   %.loc30: %A.elem = base_decl %A.ref, element0 [concrete]
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc32: <error> = field_decl c, element1 [concrete]
+// CHECK:STDOUT:   %.loc35: <error> = field_decl c, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.base.c: type = struct_type {.base: %A.466950.1, .c: <error>} [concrete = <error>]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -102,9 +105,9 @@ base class A {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.466950.2
 // CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   .base = %.loc27
+// CHECK:STDOUT:   .base = %.loc30
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .c = %.loc32
+// CHECK:STDOUT:   .c = %.loc35
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

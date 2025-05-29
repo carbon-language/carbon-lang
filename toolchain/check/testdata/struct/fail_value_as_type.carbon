@@ -54,6 +54,6 @@ var x: {.a = 1};
 // CHECK:STDOUT:     %.loc21_15.1: %struct_type.a = struct_literal (%int_1)
 // CHECK:STDOUT:     %.loc21_15.2: type = converted %.loc21_15.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: <error> = bind_name x, <error>
+// CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

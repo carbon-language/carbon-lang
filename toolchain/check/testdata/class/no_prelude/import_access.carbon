@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/no_prelude/import_access.carbon
@@ -229,7 +232,7 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Def = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def]
-// CHECK:STDOUT:   %c: ref %Def = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %Def = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Def [from "def.carbon"] {
@@ -266,7 +269,7 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -304,7 +307,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -343,7 +346,7 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %ForwardWithDef = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %c: ref %ForwardWithDef = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %ForwardWithDef = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef [from "forward_with_def.carbon"] {
@@ -380,7 +383,7 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -418,7 +421,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -501,7 +504,7 @@ private class Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
+// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -540,7 +543,7 @@ private class Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
+// CHECK:STDOUT:     %c: <error> = bind_name c, %c.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

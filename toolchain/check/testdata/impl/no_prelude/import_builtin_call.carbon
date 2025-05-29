@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/no_prelude/import_builtin_call.carbon
@@ -1095,7 +1098,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_signed.loc6 [concrete = constants.%i64.builtin]
 // CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_signed.loc6, %.loc6_14.2 [concrete = constants.%i64.builtin]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %m: ref %i64.builtin = bind_name m, %m.var
+// CHECK:STDOUT:   %m: ref %i64.builtin = bind_name m, %m.var [concrete = %m.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.e13 = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.e13 = var_pattern %n.patt [concrete]
@@ -1108,7 +1111,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %.loc7_14.2: type = value_of_initializer %int.make_type_signed.loc7 [concrete = constants.%i64.builtin]
 // CHECK:STDOUT:     %.loc7_14.3: type = converted %int.make_type_signed.loc7, %.loc7_14.2 [concrete = constants.%i64.builtin]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %i64.builtin = bind_name n, %n.var
+// CHECK:STDOUT:   %n: ref %i64.builtin = bind_name n, %n.var [concrete = %n.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @OtherInt [from "convert_symbolic.carbon"] {

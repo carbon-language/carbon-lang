@@ -87,7 +87,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:     %.loc19_14.1: ref @F.%T.loc13_6.2 (%T) = deref %.loc19_15
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc13_16.1 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:     %.loc19_14.2: @F.%U.loc13_16.2 (%U) = converted %.loc19_14.1, <error> [concrete = <error>]
-// CHECK:STDOUT:     %n: @F.%U.loc13_16.2 (%U) = bind_name n, <error>
+// CHECK:STDOUT:     %n: @F.%U.loc13_16.2 (%U) = bind_name n, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

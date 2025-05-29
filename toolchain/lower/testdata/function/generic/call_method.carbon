@@ -44,7 +44,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.C.Main.b88d1103f417c6d4(ptr %self, i32 %x) !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.b88d1103f417c6d4(ptr %self, i32 %x) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !13
 // CHECK:STDOUT: }

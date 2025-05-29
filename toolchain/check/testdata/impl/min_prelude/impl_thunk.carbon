@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/convert.carbon
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

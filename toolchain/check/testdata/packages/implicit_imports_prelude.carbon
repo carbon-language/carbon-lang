@@ -77,7 +77,7 @@ var b: i32 = a;
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -104,13 +104,16 @@ var b: i32 = a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.a: ref %i32 = import_ref Main//lib, a, loaded
+// CHECK:STDOUT:   %Main.a: ref %i32 = import_ref Main//lib, a, loaded [concrete = %a.var]
 // CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %a.patt: %pattern_type.501 = binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.501 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -131,12 +134,12 @@ var b: i32 = a;
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, imports.%Main.a
+// CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, imports.%Main.a [concrete = imports.%a.var]
 // CHECK:STDOUT:   %.loc4: %i32 = bind_value %a.ref
 // CHECK:STDOUT:   assign file.%b.var, %.loc4
 // CHECK:STDOUT:   return

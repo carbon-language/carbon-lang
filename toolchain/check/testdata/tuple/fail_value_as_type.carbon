@@ -51,6 +51,6 @@ var x: (1, );
 // CHECK:STDOUT:     %.loc18_12.1: %tuple.type = tuple_literal (%int_1)
 // CHECK:STDOUT:     %.loc18_12.2: type = converted %int_1, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: <error> = bind_name x, <error>
+// CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/no_prelude/import_access.carbon
@@ -136,7 +139,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: %empty_tuple.type = bind_name v2, <error>
+// CHECK:STDOUT:   %v2: %empty_tuple.type = bind_name v2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -172,7 +175,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: %empty_tuple.type = bind_name v2, <error>
+// CHECK:STDOUT:   %v2: %empty_tuple.type = bind_name v2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

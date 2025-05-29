@@ -89,7 +89,7 @@ var z: i32 = y;
 // CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: f64, .b: %i32} [concrete = constants.%struct_type.a.b.ddf]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.a.b.ddf = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %struct_type.a.b.ddf = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.7ce = var_pattern %y.patt [concrete]
@@ -99,7 +99,7 @@ var z: i32 = y;
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %z.patt: %pattern_type.7ce = binding_pattern z [concrete]
 // CHECK:STDOUT:     %z.var_patt: %pattern_type.7ce = var_pattern %z.patt [concrete]
@@ -109,7 +109,7 @@ var z: i32 = y;
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %z: ref %i32 = bind_name z, %z.var
+// CHECK:STDOUT:   %z: ref %i32 = bind_name z, %z.var [concrete = %z.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -130,11 +130,11 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc14_46.7: init %struct_type.a.b.ddf = struct_init (%.loc14_46.3, %.loc14_46.6) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc14_1: init %struct_type.a.b.ddf = converted %.loc14_46.1, %.loc14_46.7 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc14_1
-// CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.ddf = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc15_15.1: ref %i32 = struct_access %x.ref, element1
+// CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.ddf = name_ref x, file.%x [concrete = file.%x.var]
+// CHECK:STDOUT:   %.loc15_15.1: ref %i32 = struct_access %x.ref, element1 [concrete = constants.%.865]
 // CHECK:STDOUT:   %.loc15_15.2: %i32 = bind_value %.loc15_15.1
 // CHECK:STDOUT:   assign file.%y.var, %.loc15_15.2
-// CHECK:STDOUT:   %y.ref: ref %i32 = name_ref y, file.%y
+// CHECK:STDOUT:   %y.ref: ref %i32 = name_ref y, file.%y [concrete = file.%y.var]
 // CHECK:STDOUT:   %.loc16: %i32 = bind_value %y.ref
 // CHECK:STDOUT:   assign file.%z.var, %.loc16
 // CHECK:STDOUT:   return

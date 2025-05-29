@@ -70,9 +70,9 @@ class ConstantContext {
     return file_context_->GetTypeAsValue();
   }
 
-  // Returns a lowered address for the given global.
-  auto GetGlobal(SemIR::InstId inst_id) const -> llvm::Constant* {
-    return file_context_->global_variables().Lookup(inst_id).value();
+  // Returns a lowered global variable declaration.
+  auto BuildGlobalVariableDecl(SemIR::VarStorage inst) -> llvm::Constant* {
+    return file_context_->BuildGlobalVariableDecl(inst);
   }
 
   // Sets the index of the constant we most recently lowered. This is used to
@@ -145,11 +145,11 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::TupleValue inst)
       cast<llvm::StructType>(context.GetType(inst.type_id)));
 }
 
-static auto EmitAsConstant(ConstantContext& /*context*/, SemIR::AddrOf /*inst*/)
+static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOf inst)
     -> llvm::Constant* {
-  // TODO: Constant lvalue support. For now we have no constant lvalues, so we
-  // should never form a constant AddrOf.
-  CARBON_FATAL("AddrOf constants not supported yet");
+  // A constant reference expression is lowered as a pointer, so `AddrOf` is a
+  // no-op.
+  return context.GetConstant(inst.lvalue_id);
 }
 
 static auto EmitAsConstant(ConstantContext& context,
@@ -254,11 +254,8 @@ static auto EmitAsConstant(ConstantContext& /*context*/,
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
     -> llvm::Constant* {
-  // Look up the variable by its `pattern_id`.
-  // TODO: Look it up by its `inst_id` instead, and stop including a mapping
-  // from `pattern_id` to global variables in the file context's global
-  // variables list.
-  return context.GetGlobal(inst.pattern_id);
+  // Create the corresponding global variable declaration.
+  return context.BuildGlobalVariableDecl(inst);
 }
 
 // Tries to emit an LLVM constant value for this constant instruction. Centrally

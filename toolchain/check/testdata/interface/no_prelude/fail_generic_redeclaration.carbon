@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_generic_redeclaration.carbon
@@ -65,45 +68,45 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .NotGeneric = %NotGeneric.decl.loc11
-// CHECK:STDOUT:     .Generic = %Generic.decl.loc21
-// CHECK:STDOUT:     .DifferentParams = %DifferentParams.decl.loc31
+// CHECK:STDOUT:     .NotGeneric = %NotGeneric.decl.loc14
+// CHECK:STDOUT:     .Generic = %Generic.decl.loc24
+// CHECK:STDOUT:     .DifferentParams = %DifferentParams.decl.loc34
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotGeneric.decl.loc11: type = interface_decl @NotGeneric.1 [concrete = constants.%NotGeneric.type.10e] {} {}
-// CHECK:STDOUT:   %NotGeneric.decl.loc19: %NotGeneric.type.93b = interface_decl @NotGeneric.2 [concrete = constants.%NotGeneric.generic] {
+// CHECK:STDOUT:   %NotGeneric.decl.loc14: type = interface_decl @NotGeneric.1 [concrete = constants.%NotGeneric.type.10e] {} {}
+// CHECK:STDOUT:   %NotGeneric.decl.loc22: %NotGeneric.type.93b = interface_decl @NotGeneric.2 [concrete = constants.%NotGeneric.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc19_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc19_22.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc22_22.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc22_22.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Generic.decl.loc21: %Generic.type.c21 = interface_decl @Generic.1 [concrete = constants.%Generic.generic] {
+// CHECK:STDOUT:   %Generic.decl.loc24: %Generic.type.c21 = interface_decl @Generic.1 [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc21_19.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_19.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc24_19.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc24_19.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Generic.decl.loc29: type = interface_decl @Generic.2 [concrete = constants.%Generic.type.c99] {} {}
-// CHECK:STDOUT:   %DifferentParams.decl.loc31: %DifferentParams.type.d40e5c.1 = interface_decl @DifferentParams.1 [concrete = constants.%DifferentParams.generic.d33670.1] {
+// CHECK:STDOUT:   %Generic.decl.loc32: type = interface_decl @Generic.2 [concrete = constants.%Generic.type.c99] {} {}
+// CHECK:STDOUT:   %DifferentParams.decl.loc34: %DifferentParams.type.d40e5c.1 = interface_decl @DifferentParams.1 [concrete = constants.%DifferentParams.generic.d33670.1] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc31_27.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc31_27.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc34_27.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc34_27.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %DifferentParams.decl.loc39: %DifferentParams.type.d40e5c.2 = interface_decl @DifferentParams.2 [concrete = constants.%DifferentParams.generic.d33670.2] {
+// CHECK:STDOUT:   %DifferentParams.decl.loc42: %DifferentParams.type.d40e5c.2 = interface_decl @DifferentParams.2 [concrete = constants.%DifferentParams.generic.d33670.2] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.cb1 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc39_32.1: type = splice_block %.loc39_32.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc39_32.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc39_32.3: type = converted %.loc39_32.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc42_32.1: type = splice_block %.loc42_32.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc42_32.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc42_32.3: type = converted %.loc42_32.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc39_27.1: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic = %T.loc39_27.2 (constants.%T.7a6)]
+// CHECK:STDOUT:     %T.loc42_27.1: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic = %T.loc42_27.2 (constants.%T.7a6)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NotGeneric.1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @NotGeneric.2(%T.loc19_22.1: type) {
-// CHECK:STDOUT:   %T.loc19_22.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc19_22.2 (constants.%T.8b3)]
+// CHECK:STDOUT: generic interface @NotGeneric.2(%T.loc22_22.1: type) {
+// CHECK:STDOUT:   %T.loc22_22.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc22_22.2 (constants.%T.8b3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %NotGeneric.type: type = facet_type <@NotGeneric.2, @NotGeneric.2(%T.loc19_22.2)> [symbolic = %NotGeneric.type (constants.%NotGeneric.type.8cb)]
+// CHECK:STDOUT:   %NotGeneric.type: type = facet_type <@NotGeneric.2, @NotGeneric.2(%T.loc22_22.2)> [symbolic = %NotGeneric.type (constants.%NotGeneric.type.8cb)]
 // CHECK:STDOUT:   %Self.2: @NotGeneric.2.%NotGeneric.type (%NotGeneric.type.8cb) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.c08)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -115,8 +118,8 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Generic.1(%T.loc21_19.1: type) {
-// CHECK:STDOUT:   %T.loc21_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_19.2 (constants.%T.8b3)]
+// CHECK:STDOUT: generic interface @Generic.1(%T.loc24_19.1: type) {
+// CHECK:STDOUT:   %T.loc24_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc24_19.2 (constants.%T.8b3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
@@ -129,17 +132,17 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @DifferentParams.1(%T.loc31_27.1: type) {
-// CHECK:STDOUT:   %T.loc31_27.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc31_27.2 (constants.%T.8b3)]
+// CHECK:STDOUT: generic interface @DifferentParams.1(%T.loc34_27.1: type) {
+// CHECK:STDOUT:   %T.loc34_27.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc34_27.2 (constants.%T.8b3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @DifferentParams.2(%T.loc39_27.1: %empty_tuple.type) {
-// CHECK:STDOUT:   %T.loc39_27.2: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic = %T.loc39_27.2 (constants.%T.7a6)]
+// CHECK:STDOUT: generic interface @DifferentParams.2(%T.loc42_27.1: %empty_tuple.type) {
+// CHECK:STDOUT:   %T.loc42_27.2: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic = %T.loc42_27.2 (constants.%T.7a6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %DifferentParams.type: type = facet_type <@DifferentParams.2, @DifferentParams.2(%T.loc39_27.2)> [symbolic = %DifferentParams.type (constants.%DifferentParams.type.12c)]
+// CHECK:STDOUT:   %DifferentParams.type: type = facet_type <@DifferentParams.2, @DifferentParams.2(%T.loc42_27.2)> [symbolic = %DifferentParams.type (constants.%DifferentParams.type.12c)]
 // CHECK:STDOUT:   %Self.2: @DifferentParams.2.%DifferentParams.type (%DifferentParams.type.12c) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.8d7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -152,18 +155,18 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NotGeneric.2(constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc19_22.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.loc22_22.2 => constants.%T.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.1(constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc21_19.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.loc24_19.2 => constants.%T.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.1(constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc31_27.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.loc34_27.2 => constants.%T.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DifferentParams.2(constants.%T.7a6) {
-// CHECK:STDOUT:   %T.loc39_27.2 => constants.%T.7a6
+// CHECK:STDOUT:   %T.loc42_27.2 => constants.%T.7a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

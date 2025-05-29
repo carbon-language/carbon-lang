@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/reenter_scope.carbon
@@ -55,10 +58,10 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param call_param0
-// CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
+// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %return.param.loc19: ref %i32 = out_param call_param0
+// CHECK:STDOUT:     %return.loc19: ref %i32 = return_slot %return.param.loc19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,10 +70,10 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %return.param.loc12: ref %i32 = out_param call_param0
-// CHECK:STDOUT:     %return.loc12: ref %i32 = return_slot %return.param.loc12
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %return.param.loc15: ref %i32 = out_param call_param0
+// CHECK:STDOUT:     %return.loc15: ref %i32 = return_slot %return.param.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
@@ -94,13 +97,13 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:   %G.ref.loc17: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %G.call.loc17: init %i32 = call %G.ref.loc17()
-// CHECK:STDOUT:   %G.ref.loc18: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %G.call.loc18: init %i32 = call %G.ref.loc18()
-// CHECK:STDOUT:   %.loc18_13.1: %i32 = value_of_initializer %G.call.loc18
-// CHECK:STDOUT:   %.loc18_13.2: %i32 = converted %G.call.loc18, %.loc18_13.1
-// CHECK:STDOUT:   return %.loc18_13.2
+// CHECK:STDOUT:   %G.ref.loc20: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
+// CHECK:STDOUT:   %G.call.loc20: init %i32 = call %G.ref.loc20()
+// CHECK:STDOUT:   %G.ref.loc21: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
+// CHECK:STDOUT:   %G.call.loc21: init %i32 = call %G.ref.loc21()
+// CHECK:STDOUT:   %.loc21_13.1: %i32 = value_of_initializer %G.call.loc21
+// CHECK:STDOUT:   %.loc21_13.2: %i32 = converted %G.call.loc21, %.loc21_13.1
+// CHECK:STDOUT:   return %.loc21_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32;

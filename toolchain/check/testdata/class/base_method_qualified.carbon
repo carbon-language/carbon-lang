@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/base_method_qualified.carbon
@@ -87,7 +90,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Derived = %Derived.decl.loc11
+// CHECK:STDOUT:     .Derived = %Derived.decl.loc14
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .Call = %Call.decl
 // CHECK:STDOUT:     .CallIndirect = %CallIndirect.decl
@@ -95,9 +98,9 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     .PassDerivedToBaseIndirect = %PassDerivedToBaseIndirect.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Derived.decl.loc11: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT:   %Derived.decl.loc14: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %Derived.decl.loc18: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT:   %Derived.decl.loc21: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.fb9 = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.fb9 = value_param_pattern %a.patt, call_param0 [concrete]
@@ -107,7 +110,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Derived = value_param call_param0
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc11 [concrete = constants.%Derived]
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc14 [concrete = constants.%Derived]
 // CHECK:STDOUT:     %a: %Derived = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -121,8 +124,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %p.param: %ptr.404 = value_param call_param0
-// CHECK:STDOUT:     %.loc29: type = splice_block %ptr [concrete = constants.%ptr.404] {
-// CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc11 [concrete = constants.%Derived]
+// CHECK:STDOUT:     %.loc32: type = splice_block %ptr [concrete = constants.%ptr.404] {
+// CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc14 [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.404]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.404 = bind_name p, %p.param
@@ -138,7 +141,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Derived = value_param call_param0
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc11 [concrete = constants.%Derived]
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc14 [concrete = constants.%Derived]
 // CHECK:STDOUT:     %a: %Derived = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -152,8 +155,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %p.param: %ptr.404 = value_param call_param0
-// CHECK:STDOUT:     %.loc37: type = splice_block %ptr [concrete = constants.%ptr.404] {
-// CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc11 [concrete = constants.%Derived]
+// CHECK:STDOUT:     %.loc40: type = splice_block %ptr [concrete = constants.%ptr.404] {
+// CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc14 [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.404]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.404 = bind_name p, %p.param
@@ -164,7 +167,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %.loc19: %Derived.elem = base_decl %Base.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc22: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [concrete = constants.%F.fa3] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.fb9 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.fb9 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -188,7 +191,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .Base = <poisoned>
-// CHECK:STDOUT:   .base = %.loc19
+// CHECK:STDOUT:   .base = %.loc22
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   extend %Base.ref
@@ -218,7 +221,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc11 [concrete = constants.%Derived]
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc14 [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -248,13 +251,13 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %F.ref: %F.type.7c6 = name_ref F, @Base.%F.decl [concrete = constants.%F.d17]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc26_10.1: ref %Base = class_element_access %a.ref, element0
-// CHECK:STDOUT:   %.loc26_10.2: ref %Base = converted %a.ref, %.loc26_10.1
-// CHECK:STDOUT:   %.loc26_10.3: %Base = bind_value %.loc26_10.2
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc26_10.3)
-// CHECK:STDOUT:   %.loc26_22.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc26_22.2: %i32 = converted %F.call, %.loc26_22.1
-// CHECK:STDOUT:   return %.loc26_22.2
+// CHECK:STDOUT:   %.loc29_10.1: ref %Base = class_element_access %a.ref, element0
+// CHECK:STDOUT:   %.loc29_10.2: ref %Base = converted %a.ref, %.loc29_10.1
+// CHECK:STDOUT:   %.loc29_10.3: %Base = bind_value %.loc29_10.2
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc29_10.3)
+// CHECK:STDOUT:   %.loc29_22.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc29_22.2: %i32 = converted %F.call, %.loc29_22.1
+// CHECK:STDOUT:   return %.loc29_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallIndirect(%p.param: %ptr.404) -> %i32 {
@@ -262,15 +265,15 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %p.ref: %ptr.404 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %F.ref: %F.type.7c6 = name_ref F, @Base.%F.decl [concrete = constants.%F.d17]
-// CHECK:STDOUT:   %.loc30_11.1: ref %Derived = deref %p.ref
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc30_11.1, %F.ref
-// CHECK:STDOUT:   %.loc30_11.2: ref %Base = class_element_access %.loc30_11.1, element0
-// CHECK:STDOUT:   %.loc30_11.3: ref %Base = converted %.loc30_11.1, %.loc30_11.2
-// CHECK:STDOUT:   %.loc30_11.4: %Base = bind_value %.loc30_11.3
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc30_11.4)
-// CHECK:STDOUT:   %.loc30_23.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc30_23.2: %i32 = converted %F.call, %.loc30_23.1
-// CHECK:STDOUT:   return %.loc30_23.2
+// CHECK:STDOUT:   %.loc33_11.1: ref %Derived = deref %p.ref
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc33_11.1, %F.ref
+// CHECK:STDOUT:   %.loc33_11.2: ref %Base = class_element_access %.loc33_11.1, element0
+// CHECK:STDOUT:   %.loc33_11.3: ref %Base = converted %.loc33_11.1, %.loc33_11.2
+// CHECK:STDOUT:   %.loc33_11.4: %Base = bind_value %.loc33_11.3
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc33_11.4)
+// CHECK:STDOUT:   %.loc33_23.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc33_23.2: %i32 = converted %F.call, %.loc33_23.1
+// CHECK:STDOUT:   return %.loc33_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassDerivedToBase(%a.param: %Derived) -> %i32 {
@@ -280,9 +283,9 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %G.ref: %G.type.6ee = name_ref G, @Base.%G.decl [concrete = constants.%G.663]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %a.ref, %G.ref
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%a.ref)
-// CHECK:STDOUT:   %.loc34_22.1: %i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc34_22.2: %i32 = converted %G.call, %.loc34_22.1
-// CHECK:STDOUT:   return %.loc34_22.2
+// CHECK:STDOUT:   %.loc37_22.1: %i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc37_22.2: %i32 = converted %G.call, %.loc37_22.1
+// CHECK:STDOUT:   return %.loc37_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PassDerivedToBaseIndirect(%p.param: %ptr.404) -> %i32 {
@@ -290,12 +293,12 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %p.ref: %ptr.404 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %G.ref: %G.type.6ee = name_ref G, @Base.%G.decl [concrete = constants.%G.663]
-// CHECK:STDOUT:   %.loc38_11.1: ref %Derived = deref %p.ref
-// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc38_11.1, %G.ref
-// CHECK:STDOUT:   %.loc38_11.2: %Derived = bind_value %.loc38_11.1
-// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc38_11.2)
-// CHECK:STDOUT:   %.loc38_23.1: %i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc38_23.2: %i32 = converted %G.call, %.loc38_23.1
-// CHECK:STDOUT:   return %.loc38_23.2
+// CHECK:STDOUT:   %.loc41_11.1: ref %Derived = deref %p.ref
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc41_11.1, %G.ref
+// CHECK:STDOUT:   %.loc41_11.2: %Derived = bind_value %.loc41_11.1
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc41_11.2)
+// CHECK:STDOUT:   %.loc41_23.1: %i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc41_23.2: %i32 = converted %G.call, %.loc41_23.1
+// CHECK:STDOUT:   return %.loc41_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
