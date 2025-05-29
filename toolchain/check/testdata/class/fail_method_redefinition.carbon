@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_method_redefinition.carbon
@@ -49,15 +52,15 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl.loc12: %F.type.f1baa3.1 = fn_decl @F.1 [concrete = constants.%F.1f2582.1] {} {}
-// CHECK:STDOUT:   %F.decl.loc20: %F.type.f1baa3.2 = fn_decl @F.2 [concrete = constants.%F.1f2582.2] {} {}
+// CHECK:STDOUT:   %F.decl.loc15: %F.type.f1baa3.1 = fn_decl @F.1 [concrete = constants.%F.1f2582.1] {} {}
+// CHECK:STDOUT:   %F.decl.loc23: %F.type.f1baa3.2 = fn_decl @F.2 [concrete = constants.%F.1f2582.2] {} {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = %F.decl.loc12
+// CHECK:STDOUT:   .F = %F.decl.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
