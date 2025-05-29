@@ -30,7 +30,7 @@ export v;
 // Test files
 // ============================================================================
 
-// --- fail_todo_use_export.carbon
+// --- use_export.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -83,7 +83,7 @@ var w: () = v;
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = export v, imports.%Main.v [concrete = imports.%v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_use_export.carbon
+// CHECK:STDOUT: --- use_export.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
