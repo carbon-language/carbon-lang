@@ -93,7 +93,7 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:     %.loc11_24.3: type = converted %.loc11_18, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %.loc11_24.4: type = converted %.loc11_24.2, constants.%tuple.type.f72 [concrete = constants.%tuple.type.f72]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type.f72 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %tuple.type.f72 = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -30,16 +30,10 @@ export v;
 // Test files
 // ============================================================================
 
-// --- fail_todo_use_export.carbon
+// --- use_export.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_use_export.carbon:[[@LINE+6]]:1: in import [InImport]
-// CHECK:STDERR: export.carbon:4:1: in import [InImport]
-// CHECK:STDERR: base.carbon:4:5: error: semantics TODO: `Non-constant ImportRefLoaded (comes up with var)` [SemanticsTodo]
-// CHECK:STDERR: var v: ();
-// CHECK:STDERR:     ^
-// CHECK:STDERR:
 import library "export";
 
 var w: () = v;
@@ -64,17 +58,21 @@ var w: () = v;
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.v: ref %empty_tuple.type = import_ref Main//base, v, loaded
+// CHECK:STDOUT:   %Main.v: ref %empty_tuple.type = import_ref Main//base, v, loaded [concrete = %v.var]
+// CHECK:STDOUT:   %v.patt: %pattern_type = binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -82,10 +80,10 @@ var w: () = v;
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %v: ref %empty_tuple.type = export v, imports.%Main.v
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = export v, imports.%Main.v [concrete = imports.%v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_use_export.carbon
+// CHECK:STDOUT: --- use_export.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -94,7 +92,10 @@ var w: () = v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.v: ref %empty_tuple.type = import_ref Main//export, v, loaded
+// CHECK:STDOUT:   %Main.v: ref %empty_tuple.type = import_ref Main//export, v, loaded [concrete = %v.var]
+// CHECK:STDOUT:   %v.patt: %pattern_type = binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.var_patt: %pattern_type = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -108,19 +109,19 @@ var w: () = v;
 // CHECK:STDOUT:     %w.var_patt: %pattern_type = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %empty_tuple.type = var %w.var_patt [concrete]
-// CHECK:STDOUT:   %.loc12_9.1: type = splice_block %.loc12_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc12_9.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc12_9.3: type = converted %.loc12_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %empty_tuple.type = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %empty_tuple.type = bind_name w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%Main.v
-// CHECK:STDOUT:   %.loc12_13: init %empty_tuple.type = tuple_init () to file.%w.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_1: init %empty_tuple.type = converted %v.ref, %.loc12_13 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%w.var, %.loc12_1
+// CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%Main.v [concrete = imports.%v.var]
+// CHECK:STDOUT:   %.loc6_13: init %empty_tuple.type = tuple_init () to file.%w.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_1: init %empty_tuple.type = converted %v.ref, %.loc6_13 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%w.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

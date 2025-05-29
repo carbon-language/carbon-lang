@@ -1831,7 +1831,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
   constexpr auto ConstantKind = InstT::Kind.constant_kind();
   if constexpr (ConstantKind == SemIR::InstConstantKind::Never) {
     return SemIR::ConstantId::NotConstant;
-  } else if constexpr (ConstantKind == SemIR::InstConstantKind::Unique) {
+  } else if constexpr (ConstantKind == SemIR::InstConstantKind::AlwaysUnique) {
     CARBON_CHECK(inst_id.has_value());
     return SemIR::ConstantId::ForConcreteConstant(inst_id);
   } else {

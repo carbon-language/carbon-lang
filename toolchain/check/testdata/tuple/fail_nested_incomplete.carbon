@@ -66,7 +66,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:     %.loc20_24.2: %tuple.type.24b = tuple_literal (%i32, %Incomplete.ref.loc20)
 // CHECK:STDOUT:     %.loc20_24.3: type = converted %.loc20_24.2, constants.%tuple.type.8a4 [concrete = constants.%tuple.type.8a4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: <error> = bind_name t, <error>
+// CHECK:STDOUT:   %t: <error> = bind_name t, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.275 = binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.275 = var_pattern %p.patt [concrete]
@@ -76,7 +76,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc22 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var [concrete = %p.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

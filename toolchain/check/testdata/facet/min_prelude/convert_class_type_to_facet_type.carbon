@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 // INCLUDE-FILE: toolchain/testing/min_prelude/convert.carbon
 //
 // AUTOUPDATE
@@ -68,7 +70,7 @@ fn F() {
 // CHECK:STDOUT:     %A.patt: %pattern_type = symbolic_binding_pattern A, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:     %A.loc18_15.1: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc18_15.2 (constants.%A)]
+// CHECK:STDOUT:     %A.loc20_15.1: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc20_15.2 (constants.%A)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -95,8 +97,8 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(%A.loc18_15.1: %Animal.type) {
-// CHECK:STDOUT:   %A.loc18_15.2: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc18_15.2 (constants.%A)]
+// CHECK:STDOUT: generic fn @WalkAnimal(%A.loc20_15.1: %Animal.type) {
+// CHECK:STDOUT:   %A.loc20_15.2: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc20_15.2 (constants.%A)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -111,18 +113,18 @@ fn F() {
 // CHECK:STDOUT:   %WalkAnimal.ref: %WalkAnimal.type = name_ref WalkAnimal, file.%WalkAnimal.decl [concrete = constants.%WalkAnimal]
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc21: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc23: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
 // CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%A) {
-// CHECK:STDOUT:   %A.loc18_15.2 => constants.%A
+// CHECK:STDOUT:   %A.loc20_15.2 => constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%Animal.facet) {
-// CHECK:STDOUT:   %A.loc18_15.2 => constants.%Animal.facet
+// CHECK:STDOUT:   %A.loc20_15.2 => constants.%Animal.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

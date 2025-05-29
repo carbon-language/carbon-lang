@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_namespace.carbon
@@ -50,10 +53,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc18: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc18: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc23: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc23: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc21: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc21: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc26: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc26: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
