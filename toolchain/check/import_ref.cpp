@@ -1630,6 +1630,9 @@ static auto AddClassDefinition(ImportContext& context,
 
   // Push a block so that we can add scoped instructions to it.
   context.local_context().inst_block_stack().Push();
+  ReplaceNameScopeBeforeConstantUse(
+      context, new_class.scope_id, new_class.first_owning_decl_id,
+      SemIR::NameId::None, new_class.parent_scope_id);
   AddNameScopeImportRefs(context, import_scope, new_scope);
   new_class.body_block_id = context.local_context().inst_block_stack().Pop();
 
@@ -1731,12 +1734,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           self_const_id);
 
   if (import_class.is_complete()) {
-    // The `NameScope` was allocated in phase 2 to ensure references between
-    // phase 2 and 3 can use the id - now in phase 3 the details are filled in.
-    ReplaceNameScopeBeforeConstantUse(
-        resolver, new_class.scope_id, new_class.first_owning_decl_id,
-        SemIR::NameId::None, new_class.parent_scope_id);
-
     auto complete_type_witness_id = AddLoadedImportRef(
         resolver,
         GetSingletonType(resolver.local_context(),
