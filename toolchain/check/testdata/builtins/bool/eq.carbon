@@ -77,7 +77,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %.loc12_24.3: bool = converted %bool.eq.loc12, %.loc12_24.2 [concrete = constants.%true]
 // CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.a14 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %C.a14 = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -132,7 +132,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %.loc10_22.3: bool = converted %bool.eq.loc10, %.loc10_22.2 [concrete = constants.%true]
 // CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%true) [concrete = constants.%C.a14]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.a14 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %C.a14 = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

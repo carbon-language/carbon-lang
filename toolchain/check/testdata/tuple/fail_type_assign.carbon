@@ -59,7 +59,7 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:     %.loc18_14.2: %tuple.type.85c = tuple_literal (%i32)
 // CHECK:STDOUT:     %.loc18_14.3: type = converted %.loc18_14.2, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type.a1c = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %tuple.type.a1c = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

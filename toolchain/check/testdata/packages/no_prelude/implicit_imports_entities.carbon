@@ -362,14 +362,14 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C1 = var %c1.var_patt [concrete]
 // CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%Main.C1 [concrete = constants.%C1]
-// CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var
+// CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var [concrete = %c1.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.838 = binding_pattern c2 [concrete]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.838 = var_pattern %c2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C2 = var %c2.var_patt [concrete]
 // CHECK:STDOUT:   %C2.ref: type = name_ref C2, imports.%Main.C2 [concrete = constants.%C2]
-// CHECK:STDOUT:   %c2: ref %C2 = bind_name c2, %c2.var
+// CHECK:STDOUT:   %c2: ref %C2 = bind_name c2, %c2.var [concrete = %c2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 [from "c1.carbon"] {
@@ -441,7 +441,7 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C1 = var %c1.var_patt [concrete]
 // CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%Main.C1 [concrete = constants.%C1]
-// CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var
+// CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var [concrete = %c1.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 [from "c1.carbon"] {
@@ -513,7 +513,7 @@ import Other library "o1";
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS.528 [concrete = imports.%NS.528]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "ns.carbon"] {
@@ -593,7 +593,7 @@ import Other library "o1";
 // CHECK:STDOUT:     %Other.ref.loc6: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O1.ref: type = name_ref O1, imports.%Other.O1 [concrete = constants.%O1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var
+// CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var [concrete = %o1.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %o2.patt: %pattern_type.7dd = binding_pattern o2 [concrete]
 // CHECK:STDOUT:     %o2.var_patt: %pattern_type.7dd = var_pattern %o2.patt [concrete]
@@ -603,7 +603,7 @@ import Other library "o1";
 // CHECK:STDOUT:     %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O2.ref: type = name_ref O2, imports.%Other.O2 [concrete = constants.%O2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o2: ref %O2 = bind_name o2, %o2.var
+// CHECK:STDOUT:   %o2: ref %O2 = bind_name o2, %o2.var [concrete = %o2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 [from "o1.carbon"] {
@@ -685,7 +685,7 @@ import Other library "o1";
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O1.ref: type = name_ref O1, imports.%Other.O1 [concrete = constants.%O1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var
+// CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var [concrete = %o1.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 [from "o1.carbon"] {

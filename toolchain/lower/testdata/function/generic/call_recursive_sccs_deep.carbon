@@ -112,34 +112,34 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CA.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !20 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CA.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CB.Main.b88d1103f417c6d4(i32 %x, i32 %count), !dbg !21
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.b88d1103f417c6d4(i32 %x, i32 %count), !dbg !22
 // CHECK:STDOUT:   ret i32 %D.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CA.Main.66be507887ceee78(double %x, i32 %count) !dbg !24 {
+// CHECK:STDOUT: define linkonce_odr double @_CA.Main.66be507887ceee78(double %x, i32 %count) !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CB.Main.66be507887ceee78(double %x, i32 %count), !dbg !25
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.66be507887ceee78(double %x, i32 %count), !dbg !26
 // CHECK:STDOUT:   ret double %D.call, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CA.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !28 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CA.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CB.Main.e8193710fd35b608(ptr %x, i32 %count), !dbg !29
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.e8193710fd35b608(ptr %x, i32 %count), !dbg !30
 // CHECK:STDOUT:   ret ptr %D.call, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CB.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !32 {
+// CHECK:STDOUT: define linkonce_odr void @_CB.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CC.Main.b88d1103f417c6d4(i32 %x, i32 %count), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CD.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !35 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CD.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 4, !dbg !36
 // CHECK:STDOUT:   br i1 %int.greater, label %if.then.loc46, label %if.else.loc46, !dbg !37
@@ -161,13 +161,13 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CB.Main.66be507887ceee78(double %x, i32 %count) !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @_CB.Main.66be507887ceee78(double %x, i32 %count) !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CC.Main.66be507887ceee78(double %x, i32 %count), !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CD.Main.66be507887ceee78(double %x, i32 %count) !dbg !48 {
+// CHECK:STDOUT: define linkonce_odr double @_CD.Main.66be507887ceee78(double %x, i32 %count) !dbg !48 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 4, !dbg !49
 // CHECK:STDOUT:   br i1 %int.greater, label %if.then.loc46, label %if.else.loc46, !dbg !50
@@ -189,13 +189,13 @@ fn M() {
 // CHECK:STDOUT:   ret double %F.call, !dbg !57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CB.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !58 {
+// CHECK:STDOUT: define linkonce_odr void @_CB.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !58 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CC.Main.e8193710fd35b608(ptr %x, i32 %count), !dbg !59
 // CHECK:STDOUT:   ret void, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CD.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !61 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CD.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !61 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 4, !dbg !62
 // CHECK:STDOUT:   br i1 %int.greater, label %if.then.loc46, label %if.else.loc46, !dbg !63
@@ -217,7 +217,7 @@ fn M() {
 // CHECK:STDOUT:   ret ptr %F.call, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CC.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !71 {
+// CHECK:STDOUT: define linkonce_odr void @_CC.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !71 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.less_eq = icmp sle i32 %count, 2, !dbg !72
 // CHECK:STDOUT:   br i1 %int.less_eq, label %if.then, label %if.else, !dbg !73
@@ -232,19 +232,19 @@ fn M() {
 // CHECK:STDOUT:   ret void, !dbg !78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CE.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !79 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CE.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !79 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %x, i32 %count), !dbg !80
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !82 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !82 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %x, i32 %count), !dbg !83
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !84
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CC.Main.66be507887ceee78(double %x, i32 %count) !dbg !85 {
+// CHECK:STDOUT: define linkonce_odr void @_CC.Main.66be507887ceee78(double %x, i32 %count) !dbg !85 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.less_eq = icmp sle i32 %count, 2, !dbg !86
 // CHECK:STDOUT:   br i1 %int.less_eq, label %if.then, label %if.else, !dbg !87
@@ -259,19 +259,19 @@ fn M() {
 // CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CE.Main.66be507887ceee78(double %x, i32 %count) !dbg !93 {
+// CHECK:STDOUT: define linkonce_odr double @_CE.Main.66be507887ceee78(double %x, i32 %count) !dbg !93 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call double @_CG.Main.66be507887ceee78(double %x, i32 %count), !dbg !94
 // CHECK:STDOUT:   ret double %G.call, !dbg !95
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CF.Main.66be507887ceee78(double %x, i32 %count) !dbg !96 {
+// CHECK:STDOUT: define linkonce_odr double @_CF.Main.66be507887ceee78(double %x, i32 %count) !dbg !96 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call double @_CG.Main.66be507887ceee78(double %x, i32 %count), !dbg !97
 // CHECK:STDOUT:   ret double %G.call, !dbg !98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CC.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !99 {
+// CHECK:STDOUT: define linkonce_odr void @_CC.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !99 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.less_eq = icmp sle i32 %count, 2, !dbg !100
 // CHECK:STDOUT:   br i1 %int.less_eq, label %if.then, label %if.else, !dbg !101
@@ -286,13 +286,13 @@ fn M() {
 // CHECK:STDOUT:   ret void, !dbg !106
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CE.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !107 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CE.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !107 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call ptr @_CG.Main.e8193710fd35b608(ptr %x, i32 %count), !dbg !108
 // CHECK:STDOUT:   ret ptr %G.call, !dbg !109
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !110 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !110 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call ptr @_CG.Main.e8193710fd35b608(ptr %x, i32 %count), !dbg !111
 // CHECK:STDOUT:   ret ptr %G.call, !dbg !112
@@ -300,21 +300,21 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CG.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !113 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !113 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !114
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.b88d1103f417c6d4(i32 %x, i32 %int.sadd), !dbg !115
 // CHECK:STDOUT:   ret i32 %D.call, !dbg !116
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CG.Main.66be507887ceee78(double %x, i32 %count) !dbg !117 {
+// CHECK:STDOUT: define linkonce_odr double @_CG.Main.66be507887ceee78(double %x, i32 %count) !dbg !117 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !118
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.66be507887ceee78(double %x, i32 %int.sadd), !dbg !119
 // CHECK:STDOUT:   ret double %D.call, !dbg !120
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CG.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !121 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CG.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !121 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !122
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.e8193710fd35b608(ptr %x, i32 %int.sadd), !dbg !123

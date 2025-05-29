@@ -432,7 +432,7 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %nsc.patt: %pattern_type.373 = binding_pattern nsc [concrete]
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.373 = var_pattern %nsc.patt [concrete]
@@ -442,7 +442,7 @@ private export C;
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var [concrete = %nsc.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export.carbon"] {
@@ -531,7 +531,7 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %nsc.patt: %pattern_type.c0b = binding_pattern nsc [concrete]
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.c0b = var_pattern %nsc.patt [concrete]
@@ -541,7 +541,7 @@ private export C;
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var [concrete = %nsc.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_export.carbon"] {
@@ -629,7 +629,7 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %nsc.patt: %pattern_type.c0b = binding_pattern nsc [concrete]
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.c0b = var_pattern %nsc.patt [concrete]
@@ -639,7 +639,7 @@ private export C;
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var [concrete = %nsc.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_export.carbon"] {
@@ -807,7 +807,7 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %nsc.patt: %pattern_type.d03 = binding_pattern nsc [concrete]
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.d03 = var_pattern %nsc.patt [concrete]
@@ -817,7 +817,7 @@ private export C;
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var [concrete = %nsc.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -905,7 +905,7 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %nsc.patt: %pattern_type.373 = binding_pattern nsc [concrete]
 // CHECK:STDOUT:     %nsc.var_patt: %pattern_type.373 = var_pattern %nsc.patt [concrete]
@@ -915,7 +915,7 @@ private export C;
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS [concrete = imports.%NS]
 // CHECK:STDOUT:     %NSC.ref: type = name_ref NSC, imports.%Main.NSC [concrete = constants.%NSC]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
+// CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var [concrete = %nsc.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export.carbon"] {
@@ -1042,7 +1042,7 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "repeat_export.carbon"] {

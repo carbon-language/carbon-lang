@@ -49,7 +49,7 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.Main.2fe87eb83f5a4614(ptr %x, ptr %y, i32 %count) !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2fe87eb83f5a4614(ptr %x, ptr %y, i32 %count) !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 2, !dbg !18
 // CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !19

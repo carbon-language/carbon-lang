@@ -80,31 +80,31 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.e8193710fd35b608(ptr %x) !dbg !25 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.e8193710fd35b608(ptr %x) !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call ptr @_CG.Main.e8193710fd35b608(ptr %x), !dbg !26
 // CHECK:STDOUT:   ret ptr %G.call, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.Main.b88d1103f417c6d4(i32 %x) !dbg !28 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.b88d1103f417c6d4(i32 %x) !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %x), !dbg !29
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CF.Main.66be507887ceee78(double %x) !dbg !31 {
+// CHECK:STDOUT: define linkonce_odr double @_CF.Main.66be507887ceee78(double %x) !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call double @_CG.Main.66be507887ceee78(double %x), !dbg !32
 // CHECK:STDOUT:   ret double %G.call, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @_CF.Main.5754c7a55c7cbe4a(%type %x) !dbg !34 {
+// CHECK:STDOUT: define linkonce_odr %type @_CF.Main.5754c7a55c7cbe4a(%type %x) !dbg !34 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %G.call = call %type @_CG.Main.5754c7a55c7cbe4a(%type %x), !dbg !35
 // CHECK:STDOUT:   ret %type %G.call, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CG.Main.e8193710fd35b608(ptr %x) !dbg !37 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CG.Main.e8193710fd35b608(ptr %x) !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !38
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !38
@@ -112,7 +112,7 @@ fn M() {
 // CHECK:STDOUT:   ret ptr %Cfn.call, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CG.Main.b88d1103f417c6d4(i32 %x) !dbg !41 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.b88d1103f417c6d4(i32 %x) !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !42
@@ -120,7 +120,7 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %Cfn.call, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CG.Main.66be507887ceee78(double %x) !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr double @_CG.Main.66be507887ceee78(double %x) !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !46
@@ -128,7 +128,7 @@ fn M() {
 // CHECK:STDOUT:   ret double %Cfn.call, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @_CG.Main.5754c7a55c7cbe4a(%type %x) !dbg !49 {
+// CHECK:STDOUT: define linkonce_odr %type @_CG.Main.5754c7a55c7cbe4a(%type %x) !dbg !49 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !50
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !50
@@ -136,22 +136,22 @@ fn M() {
 // CHECK:STDOUT:   ret %type %Cfn.call, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CCfn.C.Main.e8193710fd35b608(ptr %self, ptr %x) !dbg !53 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CCfn.C.Main.e8193710fd35b608(ptr %self, ptr %x) !dbg !53 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CCfn.C.Main.b88d1103f417c6d4(ptr %self, i32 %x) !dbg !55 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CCfn.C.Main.b88d1103f417c6d4(ptr %self, i32 %x) !dbg !55 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CCfn.C.Main.66be507887ceee78(ptr %self, double %x) !dbg !57 {
+// CHECK:STDOUT: define linkonce_odr double @_CCfn.C.Main.66be507887ceee78(ptr %self, double %x) !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret double %x, !dbg !58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @_CCfn.C.Main.5754c7a55c7cbe4a(ptr %self, %type %x) !dbg !59 {
+// CHECK:STDOUT: define linkonce_odr %type @_CCfn.C.Main.5754c7a55c7cbe4a(ptr %self, %type %x) !dbg !59 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret %type %x, !dbg !60
 // CHECK:STDOUT: }

@@ -37,7 +37,7 @@ var x: ((),) = ();
 // CHECK:STDOUT:     %.loc15_12.3: type = converted %.loc15_10, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc15_12.4: type = converted %.loc15_12.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %tuple.type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/static_method.carbon
@@ -98,8 +101,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc17_15.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc17_15.2: %i32 = converted %F.call, %.loc17_15.1
-// CHECK:STDOUT:   return %.loc17_15.2
+// CHECK:STDOUT:   %.loc20_15.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc20_15.2: %i32 = converted %F.call, %.loc20_15.1
+// CHECK:STDOUT:   return %.loc20_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

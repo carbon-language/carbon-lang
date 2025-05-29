@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/forward_declared.carbon
@@ -43,12 +46,12 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc13_20: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc13_25: type = ptr_type %Class.ref.loc13_20 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %Class.ref.loc16_20: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc16_25: type = ptr_type %Class.ref.loc16_20 [concrete = constants.%ptr]
 // CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
-// CHECK:STDOUT:     %.loc13: type = splice_block %ptr.loc13_14 [concrete = constants.%ptr] {
-// CHECK:STDOUT:       %Class.ref.loc13_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc13_14: type = ptr_type %Class.ref.loc13_9 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %.loc16: type = splice_block %ptr.loc16_14 [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %Class.ref.loc16_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:       %ptr.loc16_14: type = ptr_type %Class.ref.loc16_9 [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr = out_param call_param1

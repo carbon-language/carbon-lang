@@ -160,7 +160,7 @@ fn F(T: Z where .X = (), v: T.X);
 // CHECK:STDOUT:   %.loc21_15.1: ref %facet_type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc21_15.2: %facet_type = bind_value %.loc21_15.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %a: %I.type = bind_name a, <error>
+// CHECK:STDOUT:   %a: %I.type = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

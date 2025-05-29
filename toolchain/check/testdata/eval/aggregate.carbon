@@ -116,7 +116,7 @@ var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 // CHECK:STDOUT:     %.loc11_26.2: %tuple.type.24b = tuple_literal (%i32.loc11_18, %i32.loc11_23)
 // CHECK:STDOUT:     %.loc11_26.3: type = converted %.loc11_26.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple_copy: ref %tuple.type.d07 = bind_name tuple_copy, %tuple_copy.var
+// CHECK:STDOUT:   %tuple_copy: ref %tuple.type.d07 = bind_name tuple_copy, %tuple_copy.var [concrete = %tuple_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %struct_copy.patt: %pattern_type.8ae = binding_pattern struct_copy [concrete]
 // CHECK:STDOUT:     %struct_copy.var_patt: %pattern_type.8ae = var_pattern %struct_copy.patt [concrete]
@@ -131,7 +131,7 @@ var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 // CHECK:STDOUT:     %i32.loc13_41: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [concrete = constants.%struct_type.a.b.c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = bind_name struct_copy, %struct_copy.var
+// CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = bind_name struct_copy, %struct_copy.var [concrete = %struct_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %tuple_index.patt: %pattern_type.a98 = binding_pattern tuple_index [concrete]
 // CHECK:STDOUT:     %tuple_index.var_patt: %pattern_type.a98 = var_pattern %tuple_index.patt [concrete]
@@ -143,7 +143,7 @@ var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 // CHECK:STDOUT:     %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type.loc15: type = array_type %int_1.loc15, %i32.loc15 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple_index: ref %array_type = bind_name tuple_index, %tuple_index.var
+// CHECK:STDOUT:   %tuple_index: ref %array_type = bind_name tuple_index, %tuple_index.var [concrete = %tuple_index.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %struct_access.patt: %pattern_type.a98 = binding_pattern struct_access [concrete]
 // CHECK:STDOUT:     %struct_access.var_patt: %pattern_type.a98 = var_pattern %struct_access.patt [concrete]
@@ -155,7 +155,7 @@ var struct_access: array(i32, 1) = (0,) as array(i32, {.a = 3, .b = 1}.b);
 // CHECK:STDOUT:     %int_1.loc17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type.loc17: type = array_type %int_1.loc17, %i32.loc17 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %struct_access: ref %array_type = bind_name struct_access, %struct_access.var
+// CHECK:STDOUT:   %struct_access: ref %array_type = bind_name struct_access, %struct_access.var [concrete = %struct_access.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
