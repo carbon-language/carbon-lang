@@ -1570,15 +1570,6 @@ static auto AddPlaceholderNameScope(ImportContext& context)
       SemIR::InstId::None, SemIR::NameId::None, SemIR::NameScopeId::None);
 }
 
-static auto ReplaceNameScopeBeforeConstantUse(
-    ImportContext& context, SemIR::NameScopeId name_scope_id,
-    SemIR::InstId inst_id, SemIR::NameId name_id,
-    SemIR::NameScopeId parent_scope_id) {
-  context.local_name_scopes()
-      .Get(name_scope_id)
-      .Set(inst_id, name_id, parent_scope_id);
-}
-
 // Makes an incomplete class. This is necessary even with classes with a
 // complete declaration, because things such as `Self` may refer back to the
 // type.
