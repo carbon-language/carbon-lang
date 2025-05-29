@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/alias.carbon
@@ -76,7 +79,7 @@ fn G(c: C) {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc26: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -125,14 +128,14 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %G.ref.loc24: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc24: %.fec = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%F.dc7]
-// CHECK:STDOUT:   %F.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
+// CHECK:STDOUT:   %C.ref.loc27: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %G.ref.loc27: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0.loc27: %.fec = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%F.dc7]
+// CHECK:STDOUT:   %F.call.loc27: init %empty_tuple.type = call %impl.elem0.loc27()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc25: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc25: %.fec = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%F.dc7]
-// CHECK:STDOUT:   %F.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
+// CHECK:STDOUT:   %G.ref.loc28: %HasF.assoc_type = name_ref G, @C.%G [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0.loc28: %.fec = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%F.dc7]
+// CHECK:STDOUT:   %F.call.loc28: init %empty_tuple.type = call %impl.elem0.loc28()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
