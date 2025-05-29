@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/address_of_deref.carbon
@@ -66,8 +69,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -82,23 +85,23 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc15_3.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_3.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc12_3.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc12_3: init %i32 = converted %int_0, %int.convert_checked [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   assign %n.var, %.loc12_3
-// CHECK:STDOUT:   %.loc12_10: type = splice_block %i32.loc12 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %bound_method.loc15_3.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc15_3.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc15_3: init %i32 = converted %int_0, %int.convert_checked [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   assign %n.var, %.loc15_3
+// CHECK:STDOUT:   %.loc15_10: type = splice_block %i32.loc15 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
-// CHECK:STDOUT:   %addr.loc13_13: %ptr.235 = addr_of %n.ref
-// CHECK:STDOUT:   %.loc13_12: ref %i32 = deref %addr.loc13_13
-// CHECK:STDOUT:   %addr.loc13_11: %ptr.235 = addr_of %.loc13_12
-// CHECK:STDOUT:   %.loc13_10.1: ref %i32 = deref %addr.loc13_11
-// CHECK:STDOUT:   %.loc13_10.2: %i32 = bind_value %.loc13_10.1
-// CHECK:STDOUT:   return %.loc13_10.2
+// CHECK:STDOUT:   %addr.loc16_13: %ptr.235 = addr_of %n.ref
+// CHECK:STDOUT:   %.loc16_12: ref %i32 = deref %addr.loc16_13
+// CHECK:STDOUT:   %addr.loc16_11: %ptr.235 = addr_of %.loc16_12
+// CHECK:STDOUT:   %.loc16_10.1: ref %i32 = deref %addr.loc16_11
+// CHECK:STDOUT:   %.loc16_10.2: %i32 = bind_value %.loc16_10.1
+// CHECK:STDOUT:   return %.loc16_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
