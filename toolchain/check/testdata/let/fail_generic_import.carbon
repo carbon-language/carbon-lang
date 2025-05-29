@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/fail_generic_import.carbon
@@ -94,7 +97,7 @@ let a: T = 0;
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%Implicit.T
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

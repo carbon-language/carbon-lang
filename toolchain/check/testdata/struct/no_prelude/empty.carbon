@@ -33,7 +33,7 @@ var y: {} = x;
 // CHECK:STDOUT:     %.loc11_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc11_9.3: type = converted %.loc11_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.patt [concrete]
@@ -43,7 +43,7 @@ var y: {} = x;
 // CHECK:STDOUT:     %.loc12_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc12_9.3: type = converted %.loc12_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -52,7 +52,7 @@ var y: {} = x;
 // CHECK:STDOUT:   %.loc11_14.2: init %empty_struct_type = struct_init () to file.%x.var [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc11_1: init %empty_struct_type = converted %.loc11_14.1, %.loc11_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_1
-// CHECK:STDOUT:   %x.ref: ref %empty_struct_type = name_ref x, file.%x
+// CHECK:STDOUT:   %x.ref: ref %empty_struct_type = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   %.loc12_13: init %empty_struct_type = struct_init () to file.%y.var [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc12_1: init %empty_struct_type = converted %x.ref, %.loc12_13 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%y.var, %.loc12_1

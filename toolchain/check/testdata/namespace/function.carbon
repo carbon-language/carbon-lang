@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/namespace/function.carbon
@@ -44,15 +47,15 @@ fn Bar() {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Foo = %Foo
-// CHECK:STDOUT:     .Baz = %Baz.decl.loc14
+// CHECK:STDOUT:     .Baz = %Baz.decl.loc17
 // CHECK:STDOUT:     .Bar = %Bar.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Baz = %Baz.decl.loc17
+// CHECK:STDOUT:     .Baz = %Baz.decl.loc20
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc14: %Baz.type.03f = fn_decl @Baz.1 [concrete = constants.%Baz.5ea] {} {}
-// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.898 = fn_decl @Baz.2 [concrete = constants.%Baz.eb4] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.03f = fn_decl @Baz.1 [concrete = constants.%Baz.5ea] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc20: %Baz.type.898 = fn_decl @Baz.2 [concrete = constants.%Baz.eb4] {} {}
 // CHECK:STDOUT:   %Bar.decl: %Bar.type = fn_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,7 +72,7 @@ fn Bar() {
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Foo.ref: <namespace> = name_ref Foo, file.%Foo [concrete = file.%Foo]
-// CHECK:STDOUT:   %Baz.ref: %Baz.type.898 = name_ref Baz, file.%Baz.decl.loc17 [concrete = constants.%Baz.eb4]
+// CHECK:STDOUT:   %Baz.ref: %Baz.type.898 = name_ref Baz, file.%Baz.decl.loc20 [concrete = constants.%Baz.eb4]
 // CHECK:STDOUT:   %Baz.call: init %empty_tuple.type = call %Baz.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

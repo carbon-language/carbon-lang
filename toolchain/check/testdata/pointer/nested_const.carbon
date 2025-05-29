@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/nested_const.carbon
@@ -52,18 +55,18 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.a65 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.a65 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc12_47: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12_47: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc12_41: type = const_type %i32.loc12_47 [concrete = constants.%const.20a]
+// CHECK:STDOUT:     %int_32.loc15_47: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15_47: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %const.loc15_41: type = const_type %i32.loc15_47 [concrete = constants.%const.20a]
 // CHECK:STDOUT:     %p.param: %const.fa2 = value_param call_param0
-// CHECK:STDOUT:     %.loc12: type = splice_block %const.loc12_9 [concrete = constants.%const.fa2] {
-// CHECK:STDOUT:       %int_32.loc12_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc12_29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc12_23: type = const_type %i32.loc12_29 [concrete = constants.%const.20a]
-// CHECK:STDOUT:       %ptr.loc12_32: type = ptr_type %const.loc12_23 [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:       %const.loc12_16: type = const_type %ptr.loc12_32 [concrete = constants.%const.58f]
-// CHECK:STDOUT:       %ptr.loc12_34: type = ptr_type %const.loc12_16 [concrete = constants.%ptr.6e8]
-// CHECK:STDOUT:       %const.loc12_9: type = const_type %ptr.loc12_34 [concrete = constants.%const.fa2]
+// CHECK:STDOUT:     %.loc15: type = splice_block %const.loc15_9 [concrete = constants.%const.fa2] {
+// CHECK:STDOUT:       %int_32.loc15_29: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc15_29: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %const.loc15_23: type = const_type %i32.loc15_29 [concrete = constants.%const.20a]
+// CHECK:STDOUT:       %ptr.loc15_32: type = ptr_type %const.loc15_23 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:       %const.loc15_16: type = const_type %ptr.loc15_32 [concrete = constants.%const.58f]
+// CHECK:STDOUT:       %ptr.loc15_34: type = ptr_type %const.loc15_16 [concrete = constants.%ptr.6e8]
+// CHECK:STDOUT:       %const.loc15_9: type = const_type %ptr.loc15_34 [concrete = constants.%const.fa2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %const.fa2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.20a = out_param call_param1
@@ -74,10 +77,10 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT: fn @F(%p.param: %const.fa2) -> %const.20a {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.fa2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc13_11.1: ref %const.58f = deref %p.ref
-// CHECK:STDOUT:   %.loc13_11.2: %const.58f = bind_value %.loc13_11.1
-// CHECK:STDOUT:   %.loc13_10.1: ref %const.20a = deref %.loc13_11.2
-// CHECK:STDOUT:   %.loc13_10.2: %const.20a = bind_value %.loc13_10.1
-// CHECK:STDOUT:   return %.loc13_10.2
+// CHECK:STDOUT:   %.loc16_11.1: ref %const.58f = deref %p.ref
+// CHECK:STDOUT:   %.loc16_11.2: %const.58f = bind_value %.loc16_11.1
+// CHECK:STDOUT:   %.loc16_10.1: ref %const.20a = deref %.loc16_11.2
+// CHECK:STDOUT:   %.loc16_10.2: %const.20a = bind_value %.loc16_10.1
+// CHECK:STDOUT:   return %.loc16_10.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

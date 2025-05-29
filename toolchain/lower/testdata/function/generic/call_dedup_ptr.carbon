@@ -47,17 +47,17 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.e8193710fd35b608(ptr %x) !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.e8193710fd35b608(ptr %x) !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.04bf2edaaa84aa22(ptr %x) !dbg !19 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.04bf2edaaa84aa22(ptr %x) !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.bda010de15e6a5ad(ptr %x) !dbg !21 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.bda010de15e6a5ad(ptr %x) !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !22
 // CHECK:STDOUT: }

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_import_misuses.carbon
@@ -119,7 +122,7 @@ var a: Incomplete;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, imports.%Main.Incomplete [concrete = constants.%Incomplete]
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty.1 [from "a.carbon"] {

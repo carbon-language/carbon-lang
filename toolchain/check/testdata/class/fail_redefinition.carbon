@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_redefinition.carbon
@@ -78,11 +81,11 @@ fn Class.I() {}
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Class = %Class.decl.loc11
+// CHECK:STDOUT:     .Class = %Class.decl.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Class.decl.loc11: type = class_decl @Class.1 [concrete = constants.%Class.301e72.1] {} {}
-// CHECK:STDOUT:   %Class.decl.loc24: type = class_decl @Class.2 [concrete = constants.%Class.301e72.2] {} {}
+// CHECK:STDOUT:   %Class.decl.loc14: type = class_decl @Class.1 [concrete = constants.%Class.301e72.1] {} {}
+// CHECK:STDOUT:   %Class.decl.loc27: type = class_decl @Class.2 [concrete = constants.%Class.301e72.2] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type.621c12.2 = fn_decl @G.2 [concrete = constants.%G.f0cac0.2] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type.91d18a.1 = fn_decl @H.1 [concrete = constants.%H.d38c33.1] {} {}

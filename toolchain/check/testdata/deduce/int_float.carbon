@@ -237,7 +237,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %.loc9_44.1: type = value_of_initializer %float.make_type
 // CHECK:STDOUT:       %.loc9_44.2: type = converted %float.make_type, %.loc9_44.1
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: <error> = bind_name n, %n.param
+// CHECK:STDOUT:     %n: <error> = bind_name n, %n.param [concrete = <error>]
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }

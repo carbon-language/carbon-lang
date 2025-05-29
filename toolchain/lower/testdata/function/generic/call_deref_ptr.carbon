@@ -60,45 +60,45 @@ fn M() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.b88d1103f417c6d4(ptr %x) !dbg !14 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.b88d1103f417c6d4(ptr %x) !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.call = call %type @_CA.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !15
 // CHECK:STDOUT:   call void @_CB.Main.b88d1103f417c6d4(ptr %x), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.66be507887ceee78(ptr %x) !dbg !18 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.66be507887ceee78(ptr %x) !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.call = call %type @_CA.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !19
 // CHECK:STDOUT:   call void @_CB.Main.66be507887ceee78(ptr %x), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %type @_CA.Main.5754c7a55c7cbe4a(%type %x) !dbg !22 {
+// CHECK:STDOUT: define linkonce_odr %type @_CA.Main.5754c7a55c7cbe4a(%type %x) !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret %type %x, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CB.Main.b88d1103f417c6d4(ptr %x) !dbg !24 {
+// CHECK:STDOUT: define linkonce_odr void @_CB.Main.b88d1103f417c6d4(ptr %x) !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc25_5.2 = load i32, ptr %x, align 4, !dbg !25
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.b88d1103f417c6d4(i32 %.loc25_5.2), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CB.Main.66be507887ceee78(ptr %x) !dbg !28 {
+// CHECK:STDOUT: define linkonce_odr void @_CB.Main.66be507887ceee78(ptr %x) !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc25_5.2 = load double, ptr %x, align 8, !dbg !29
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.66be507887ceee78(double %.loc25_5.2), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CD.Main.b88d1103f417c6d4(i32 %x) !dbg !32 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CD.Main.b88d1103f417c6d4(i32 %x) !dbg !32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CD.Main.66be507887ceee78(double %x) !dbg !34 {
+// CHECK:STDOUT: define linkonce_odr double @_CD.Main.66be507887ceee78(double %x) !dbg !34 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret double %x, !dbg !35
 // CHECK:STDOUT: }

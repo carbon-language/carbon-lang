@@ -173,6 +173,6 @@ var v: e where .x = 3;
 // CHECK:STDOUT:       requirement_rewrite %x.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

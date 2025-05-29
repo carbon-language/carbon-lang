@@ -68,7 +68,7 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc18_19.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc18_19.3: type = converted %.loc18_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
@@ -78,7 +78,7 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc27_27.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc27_27.3: type = converted %.loc27_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type = var_pattern %d.patt [concrete]
@@ -88,7 +88,7 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc40_29.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc40_29.3: type = converted %.loc40_29.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type = binding_pattern e [concrete]
 // CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete]
@@ -98,6 +98,6 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc46_18.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc46_18.3: type = converted %.loc46_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

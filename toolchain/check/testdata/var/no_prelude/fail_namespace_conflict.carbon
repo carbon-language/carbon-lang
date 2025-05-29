@@ -53,7 +53,7 @@ var A: () = ();
 // CHECK:STDOUT:     %.loc23_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc23_9.3: type = converted %.loc23_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc23: ref %empty_tuple.type = bind_name A, %A.var.loc23
+// CHECK:STDOUT:   %A.loc23: ref %empty_tuple.type = bind_name A, %A.var.loc23 [concrete = %A.var.loc23]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %A.patt.loc32: %pattern_type = binding_pattern A [concrete]
 // CHECK:STDOUT:     %A.var_patt.loc32: %pattern_type = var_pattern %A.patt.loc32 [concrete]
@@ -63,7 +63,7 @@ var A: () = ();
 // CHECK:STDOUT:     %.loc32_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc32_9.3: type = converted %.loc32_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc32: ref %empty_tuple.type = bind_name A, %A.var.loc32
+// CHECK:STDOUT:   %A.loc32: ref %empty_tuple.type = bind_name A, %A.var.loc32 [concrete = %A.var.loc32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

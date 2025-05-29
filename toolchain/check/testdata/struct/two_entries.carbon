@@ -124,7 +124,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:     %i32.loc14_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.loc14: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.a.b.501 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %struct_type.a.b.501 = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.851 = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.851 = var_pattern %y.patt [concrete]
@@ -137,7 +137,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:     %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.loc15: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %struct_type.a.b.501 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %struct_type.a.b.501 = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -168,12 +168,12 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc14_44.8: init %struct_type.a.b.501 = struct_init (%.loc14_44.4, %.loc14_44.7) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc14_1: init %struct_type.a.b.501 = converted %.loc14_44.1, %.loc14_44.8 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc14_1
-// CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.501 = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc15_29.1: ref %i32 = struct_access %x.ref, element0
+// CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.501 = name_ref x, file.%x [concrete = file.%x.var]
+// CHECK:STDOUT:   %.loc15_29.1: ref %i32 = struct_access %x.ref, element0 [concrete = constants.%.22f]
 // CHECK:STDOUT:   %.loc15_29.2: %i32 = bind_value %.loc15_29.1
 // CHECK:STDOUT:   %.loc15_29.3: ref %i32 = struct_access file.%y.var, element0 [concrete = constants.%.4ca]
 // CHECK:STDOUT:   %.loc15_29.4: init %i32 = initialize_from %.loc15_29.2 to %.loc15_29.3
-// CHECK:STDOUT:   %.loc15_29.5: ref %i32 = struct_access %x.ref, element1
+// CHECK:STDOUT:   %.loc15_29.5: ref %i32 = struct_access %x.ref, element1 [concrete = constants.%.5fc]
 // CHECK:STDOUT:   %.loc15_29.6: %i32 = bind_value %.loc15_29.5
 // CHECK:STDOUT:   %.loc15_29.7: ref %i32 = struct_access file.%y.var, element1 [concrete = constants.%.86e]
 // CHECK:STDOUT:   %.loc15_29.8: init %i32 = initialize_from %.loc15_29.6 to %.loc15_29.7

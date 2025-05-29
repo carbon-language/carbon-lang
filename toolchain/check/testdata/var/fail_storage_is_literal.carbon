@@ -63,7 +63,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_1.loc22_10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %.loc22: type = converted %int_1.loc22_10, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: <error> = bind_name x, <error>
+// CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

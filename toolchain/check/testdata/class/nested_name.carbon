@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/nested_name.carbon
@@ -72,7 +75,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %oi.param: %Inner = value_param call_param0
-// CHECK:STDOUT:     %.loc17: type = splice_block %Inner.ref [concrete = constants.%Inner] {
+// CHECK:STDOUT:     %.loc20: type = splice_block %Inner.ref [concrete = constants.%Inner] {
 // CHECK:STDOUT:       %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:       %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:     }
@@ -104,23 +107,23 @@ fn G(o: Outer) {
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc13: %Inner.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %.loc16: %Inner.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .n = %.loc13
+// CHECK:STDOUT:   .n = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%oi.param: %Inner) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
-// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13 [concrete = @Inner.%.loc13]
-// CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %oi.ref, element0
-// CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
-// CHECK:STDOUT:   return %.loc18_12.2
+// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc16 [concrete = @Inner.%.loc16]
+// CHECK:STDOUT:   %.loc21_12.1: ref %i32 = class_element_access %oi.ref, element0
+// CHECK:STDOUT:   %.loc21_12.2: %i32 = bind_value %.loc21_12.1
+// CHECK:STDOUT:   return %.loc21_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%o.param: %Outer) {
@@ -130,7 +133,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.906 = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
-// CHECK:STDOUT:   %.loc22: type = splice_block %Inner.ref [concrete = constants.%Inner] {
+// CHECK:STDOUT:   %.loc25: type = splice_block %Inner.ref [concrete = constants.%Inner] {
 // CHECK:STDOUT:     %o.ref: %Outer = name_ref o, %o
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   }

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/fail_return_type_mismatch.carbon
@@ -68,8 +71,8 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc11_13.2: type = converted %float.make_type, %.loc11_13.1 [concrete = f64]
+// CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %float.make_type [concrete = f64]
+// CHECK:STDOUT:     %.loc14_13.2: type = converted %float.make_type, %.loc14_13.1 [concrete = f64]
 // CHECK:STDOUT:     %return.param: ref f64 = out_param call_param0
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -91,9 +94,9 @@ fn Run() {
 // CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
-// CHECK:STDOUT:   %.loc21_3: %i32 = converted %Foo.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc24_3: %i32 = converted %Foo.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc21_10: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc24_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }

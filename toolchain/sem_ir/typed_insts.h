@@ -91,7 +91,7 @@ struct AnyFoundationDecl {
 struct AdaptDecl {
   static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
       {.ir_name = "adapt_decl",
-       .constant_kind = InstConstantKind::Unique,
+       .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
 
   // No type_id; this is not a value.
@@ -115,7 +115,7 @@ struct AddrOf {
 struct AddrPattern {
   static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
       {.ir_name = "addr_pattern",
-       .constant_kind = InstConstantKind::Unique,
+       .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
 
   // Always a PatternType whose scrutinee type represents the pointee type
@@ -228,7 +228,7 @@ struct AssociatedConstantDecl {
       InstKind::AssociatedConstantDecl
           .Define<Parse::CompileTimeBindingPatternId>(
               {.ir_name = "assoc_const_decl",
-               .constant_kind = InstConstantKind::Unique,
+               .constant_kind = InstConstantKind::AlwaysUnique,
                .is_lowered = false});
 
   TypeId type_id;
@@ -288,7 +288,8 @@ struct AutoType {
 // an `UnboundElementType`.
 struct BaseDecl {
   static constexpr auto Kind = InstKind::BaseDecl.Define<Parse::BaseDeclId>(
-      {.ir_name = "base_decl", .constant_kind = InstConstantKind::Unique});
+      {.ir_name = "base_decl",
+       .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
   TypeInstId base_type_inst_id;
@@ -334,7 +335,7 @@ struct BindAlias {
 struct BindName {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::BindName.Define<Parse::NodeId>(
-      {.ir_name = "bind_name", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "bind_name", .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -387,7 +388,7 @@ struct AnyBindingPattern {
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
       {.ir_name = "binding_pattern",
-       .constant_kind = InstConstantKind::Unique,
+       .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
 
   TypeId type_id;
@@ -399,7 +400,7 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
-          .constant_kind = InstConstantKind::Unique,
+          .constant_kind = InstConstantKind::AlwaysUnique,
           .is_lowered = false,
       });
 
@@ -739,7 +740,8 @@ struct FacetValue {
 struct FieldDecl {
   static constexpr auto Kind =
       InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
-          {.ir_name = "field_decl", .constant_kind = InstConstantKind::Unique});
+          {.ir_name = "field_decl",
+           .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
   NameId name_id;
@@ -871,7 +873,7 @@ struct ImplDecl {
       {.ir_name = "impl_decl",
        // TODO: Modeling impls as unique doesn't properly handle impl
        // redeclarations.
-       .constant_kind = InstConstantKind::Unique,
+       .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
 
   // No type: an impl declaration is not a value.
@@ -958,7 +960,7 @@ struct ImplWitnessAssociatedConstant {
 struct ImplWitnessTable {
   static constexpr auto Kind = InstKind::ImplWitnessTable.Define<Parse::NodeId>(
       {.ir_name = "impl_witness_table",
-       .constant_kind = InstConstantKind::Unique,
+       .constant_kind = InstConstantKind::AlwaysUnique,
        // TODO: For dynamic dispatch, we might want to lower witness tables as
        // constants.
        .is_lowered = false});
@@ -987,7 +989,7 @@ struct ImplWitnessTablePlaceholder {
   static constexpr auto Kind =
       InstKind::ImplWitnessTablePlaceholder.Define<Parse::NodeId>(
           {.ir_name = "impl_witness_table_placeholder",
-           .constant_kind = InstConstantKind::Unique,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
   static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
@@ -1202,7 +1204,7 @@ struct Namespace {
           {.ir_name = "namespace",
            // TODO: Modeling namespaces as unique doesn't properly handle
            // namespace redeclarations.
-           .constant_kind = InstConstantKind::Unique});
+           .constant_kind = InstConstantKind::AlwaysUnique});
   // The file's package namespace is a well-known instruction to help `package.`
   // qualified names. It will always be immediately after singletons.
   static constexpr InstId PackageInstId = InstId(SingletonInstKinds.size());
@@ -1298,7 +1300,7 @@ struct OutParamPattern {
   static constexpr auto Kind =
       InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "out_param_pattern",
-           .constant_kind = InstConstantKind::Unique,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1311,7 +1313,7 @@ struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
       {.ir_name = "ref_param_pattern",
-       .constant_kind = InstConstantKind::Unique,
+       .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1325,7 +1327,7 @@ struct ValueParamPattern {
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
           {.ir_name = "value_param_pattern",
-           .constant_kind = InstConstantKind::Unique,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   TypeId type_id;
@@ -1442,7 +1444,7 @@ struct ReturnSlotPattern {
   static constexpr auto Kind =
       InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "return_slot_pattern",
-           .constant_kind = InstConstantKind::Unique,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is the return type of the
@@ -1740,7 +1742,7 @@ struct TuplePattern {
   static constexpr auto Kind =
       InstKind::TuplePattern.Define<Parse::TuplePatternId>(
           {.ir_name = "tuple_pattern",
-           .constant_kind = InstConstantKind::Unique,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // Always a PatternType whose scrutinee type is a tuple of the scrutinee
@@ -1861,7 +1863,7 @@ struct VarPattern {
   static constexpr auto Kind =
       InstKind::VarPattern.Define<Parse::VariablePatternId>(
           {.ir_name = "var_pattern",
-           .constant_kind = InstConstantKind::Unique,
+           .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
   // Always a PatternType that represents the same type as the type of
@@ -1875,7 +1877,7 @@ struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
       {.ir_name = "var",
-       .constant_kind = InstConstantKind::Conditional,
+       .constant_kind = InstConstantKind::ConditionalUnique,
        .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent,
        .has_cleanup = true});
 
