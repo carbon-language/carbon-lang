@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_modifiers.carbon
@@ -156,9 +159,9 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc97: %AbstractWithDefinition = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc97: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
-// CHECK:STDOUT:     %self.loc97: %AbstractWithDefinition = bind_name self, %self.param.loc97
+// CHECK:STDOUT:     %self.param.loc100: %AbstractWithDefinition = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc100: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
+// CHECK:STDOUT:     %self.loc100: %AbstractWithDefinition = bind_name self, %self.param.loc100
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -219,11 +222,11 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param.loc91: %AbstractWithDefinition = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc91: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
-// CHECK:STDOUT:     %self.loc91: %AbstractWithDefinition = bind_name self, %self.param.loc91
+// CHECK:STDOUT:     %self.param.loc94: %AbstractWithDefinition = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc94: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
+// CHECK:STDOUT:     %self.loc94: %AbstractWithDefinition = bind_name self, %self.param.loc94
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc92: <vtable> = vtable (%F.decl, %G.decl) [concrete = constants.%.9a5]
+// CHECK:STDOUT:   %.loc95: <vtable> = vtable (%F.decl, %G.decl) [concrete = constants.%.9a5]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -239,7 +242,7 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: abstract fn @G(%self.param.loc97: %AbstractWithDefinition) {
+// CHECK:STDOUT: abstract fn @G(%self.param.loc100: %AbstractWithDefinition) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
