@@ -1630,9 +1630,8 @@ static auto AddClassDefinition(ImportContext& context,
 
   // Push a block so that we can add scoped instructions to it.
   context.local_context().inst_block_stack().Push();
-  ReplaceNameScopeBeforeConstantUse(
-      context, new_class.scope_id, new_class.first_owning_decl_id,
-      SemIR::NameId::None, new_class.parent_scope_id);
+  new_scope.Set(new_class.first_owning_decl_id, SemIR::NameId::None,
+                new_class.parent_scope_id);
   AddNameScopeImportRefs(context, import_scope, new_scope);
   new_class.body_block_id = context.local_context().inst_block_stack().Pop();
 
