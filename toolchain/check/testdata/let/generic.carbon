@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/generic.carbon
@@ -61,9 +64,9 @@ fn F() {
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.afe = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt
-// CHECK:STDOUT:   %.loc13: type = splice_block %ptr [symbolic = constants.%ptr] {
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc13 [symbolic = constants.%ptr]
+// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [symbolic = constants.%ptr] {
+// CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc16 [symbolic = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -72,11 +75,11 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %T = var %a.var_patt
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p
-// CHECK:STDOUT:   %.loc14_15: %ptr = bind_value %p.ref
-// CHECK:STDOUT:   %.loc14_14.1: ref %T = deref %.loc14_15
-// CHECK:STDOUT:   %.loc14_14.2: %T = bind_value %.loc14_14.1
-// CHECK:STDOUT:   assign %a.var, %.loc14_14.2
-// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc17_15: %ptr = bind_value %p.ref
+// CHECK:STDOUT:   %.loc17_14.1: ref %T = deref %.loc17_15
+// CHECK:STDOUT:   %.loc17_14.2: %T = bind_value %.loc17_14.1
+// CHECK:STDOUT:   assign %a.var, %.loc17_14.2
+// CHECK:STDOUT:   %T.ref.loc17: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

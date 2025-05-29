@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/namespace/fail_params.carbon
@@ -72,11 +75,11 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .F = %F.decl.loc18
+// CHECK:STDOUT:     .F = %F.decl.loc21
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc18: %F.type.bd7 = fn_decl @F.1 [concrete = constants.%F.199] {} {}
+// CHECK:STDOUT:   %F.decl.loc21: %F.type.bd7 = fn_decl @F.1 [concrete = constants.%F.199] {} {}
 // CHECK:STDOUT:   %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:   %.loc24: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc27: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -88,8 +91,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %x: %T = bind_name x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %F.decl.loc40: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {} {
-// CHECK:STDOUT:     %T.loc40_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc40_6.2 (constants.%T)]
+// CHECK:STDOUT:   %F.decl.loc43: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {} {
+// CHECK:STDOUT:     %T.loc43_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc43_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,8 +101,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(%T.loc40_6.1: type) {
-// CHECK:STDOUT:   %T.loc40_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc40_6.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @F.2(%T.loc43_6.1: type) {
+// CHECK:STDOUT:   %T.loc43_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc43_6.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -110,6 +113,6 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
-// CHECK:STDOUT:   %T.loc40_6.2 => constants.%T
+// CHECK:STDOUT:   %T.loc43_6.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

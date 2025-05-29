@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 // INCLUDE-FILE: toolchain/testing/min_prelude/convert.carbon
 //
 // AUTOUPDATE
@@ -102,8 +104,8 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Animal.type, (constants.%Eats.impl_witness) [concrete = constants.%Eats.facet]
-// CHECK:STDOUT:   %.loc21: %Eats.type = converted %Animal.ref, %Eats.facet [concrete = constants.%Eats.facet]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc21)
+// CHECK:STDOUT:   %.loc23: %Eats.type = converted %Animal.ref, %Eats.facet [concrete = constants.%Eats.facet]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc23)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
