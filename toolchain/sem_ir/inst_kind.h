@@ -73,9 +73,10 @@ enum class InstConstantKind : int8_t {
   // same as `WheneverPossible`, except that the operands are known in advance
   // to always be constant. For example, `IntValue`.
   Always,
-  // The instruction may be a unique constant, as described below for `Unique`.
-  // Otherwise the instruction is not constant. This is used for `VarStorage`,
-  // where global variables are `Unique` and other variables are non-constant.
+  // The instruction may be a unique constant, as described below for
+  // `AlwaysUnique`. Otherwise the instruction is not constant. This is used for
+  // `VarStorage`, where global variables are `AlwaysUnique` and other variables
+  // are non-constant.
   ConditionalUnique,
   // This instruction is itself a unique constant. This is used for declarations
   // whose constant identity is simply themselves. The `ConstantId` for this
