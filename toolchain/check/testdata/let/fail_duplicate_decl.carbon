@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/fail_duplicate_decl.carbon
@@ -78,37 +81,37 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc12: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt.loc15: %pattern_type.7ce = binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc12_10: type = splice_block %i32.loc12 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc15_10: type = splice_block %i32.loc15 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc12: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc12_16.1: <bound method> = bound_method %int_1, %impl.elem0.loc12 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_16.2: <bound method> = bound_method %int_1, %specific_fn.loc12 [concrete = constants.%bound_method.9a1]
-// CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %bound_method.loc12_16.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc12_16.1: %i32 = value_of_initializer %int.convert_checked.loc12 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc12_16.2: %i32 = converted %int_1, %.loc12_16.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %a.loc12: %i32 = bind_name a, %.loc12_16.2
+// CHECK:STDOUT:   %impl.elem0.loc15: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc15_16.1: <bound method> = bound_method %int_1, %impl.elem0.loc15 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem0.loc15, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc15_16.2: <bound method> = bound_method %int_1, %specific_fn.loc15 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %bound_method.loc15_16.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc15_16.1: %i32 = value_of_initializer %int.convert_checked.loc15 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc15_16.2: %i32 = converted %int_1, %.loc15_16.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %a.loc15: %i32 = bind_name a, %.loc15_16.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc20: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt.loc23: %pattern_type.7ce = binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc20_10: type = splice_block %i32.loc20 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc23_10: type = splice_block %i32.loc23 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc20: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc20_16.1: <bound method> = bound_method %int_2, %impl.elem0.loc20 [concrete = constants.%Convert.bound.ef9]
-// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_16.2: <bound method> = bound_method %int_2, %specific_fn.loc20 [concrete = constants.%bound_method.b92]
-// CHECK:STDOUT:   %int.convert_checked.loc20: init %i32 = call %bound_method.loc20_16.2(%int_2) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc20_16.1: %i32 = value_of_initializer %int.convert_checked.loc20 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc20_16.2: %i32 = converted %int_2, %.loc20_16.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %a.loc20: %i32 = bind_name a, %.loc20_16.2
+// CHECK:STDOUT:   %impl.elem0.loc23: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc23_16.1: <bound method> = bound_method %int_2, %impl.elem0.loc23 [concrete = constants.%Convert.bound.ef9]
+// CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc23_16.2: <bound method> = bound_method %int_2, %specific_fn.loc23 [concrete = constants.%bound_method.b92]
+// CHECK:STDOUT:   %int.convert_checked.loc23: init %i32 = call %bound_method.loc23_16.2(%int_2) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc23_16.1: %i32 = value_of_initializer %int.convert_checked.loc23 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc23_16.2: %i32 = converted %int_2, %.loc23_16.1 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %a.loc23: %i32 = bind_name a, %.loc23_16.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
