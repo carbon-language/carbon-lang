@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/builtin/fail_redundant_compound_access.carbon
@@ -95,13 +98,13 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc11_25.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %bound_method.loc14_25.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound.d04]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_25.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.b6e]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc11_25.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc11_25.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc11_25.2: %i32 = converted %int_0, %.loc11_25.1 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc11_25.2
+// CHECK:STDOUT:   %bound_method.loc14_25.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.b6e]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc14_25.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc14_25.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc14_25.2: %i32 = converted %int_0, %.loc14_25.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   return %.loc14_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -113,27 +116,27 @@ fn Main() {
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc14_3.1: <bound method> = bound_method %int_3, %impl.elem0 [concrete = constants.%Convert.bound.b30]
+// CHECK:STDOUT:   %bound_method.loc17_3.1: <bound method> = bound_method %int_3, %impl.elem0 [concrete = constants.%Convert.bound.b30]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_3.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method.047]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc14_3.2(%int_3) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc14_3: init %i32 = converted %int_3, %int.convert_checked [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   assign %a.var, %.loc14_3
-// CHECK:STDOUT:   %.loc14_10: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %bound_method.loc17_3.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method.047]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc17_3.2(%int_3) [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc17_3: init %i32 = converted %int_3, %int.convert_checked [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   assign %a.var, %.loc17_3
+// CHECK:STDOUT:   %.loc17_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %a.ref.loc19_3: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc19_7: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc19_10: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc19: %i32 = bind_value %a.ref.loc19_10
-// CHECK:STDOUT:   assign %a.ref.loc19_3, %.loc19
-// CHECK:STDOUT:   %a.ref.loc24_3: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc24_7: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc22_3: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc22_7: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc22_10: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc22: %i32 = bind_value %a.ref.loc22_10
+// CHECK:STDOUT:   assign %a.ref.loc22_3, %.loc22
+// CHECK:STDOUT:   %a.ref.loc27_3: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc27_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   assign %a.ref.loc24_3, %F.call
+// CHECK:STDOUT:   assign %a.ref.loc27_3, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

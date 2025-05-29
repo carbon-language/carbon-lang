@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
@@ -60,13 +63,13 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref bool = var %x.var_patt
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
-// CHECK:STDOUT:   %.loc19_17.1: bool = converted %int_12, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_17.2: <error> = not <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_17.1: bool = converted %int_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_17.2: <error> = not <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc19_10.1: type = splice_block %.loc19_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc22_10.1: type = splice_block %.loc22_10.3 [concrete = bool] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc19_10.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc19_10.3: type = converted %bool.make_type, %.loc19_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc22_10.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:     %.loc22_10.3: type = converted %bool.make_type, %.loc22_10.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
 // CHECK:STDOUT:   return
