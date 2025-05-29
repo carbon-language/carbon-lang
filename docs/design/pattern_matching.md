@@ -226,9 +226,10 @@ fn F(T:! type, x: T) {
 }
 ```
 
-This form behaves the same as a runtime binding pattern, except that the
-scrutinee is expected to have symbolic phase, or template phase if the
-`template` form is used. This form cannot appear inside a `var` pattern.
+A compile-time binding pattern behaves the same as a runtime binding pattern,
+except that the `template` version expects the scrutinee to have template phase,
+and the non-`template` version expects the scrutinee to have symbolic phase. A
+compile-time binding cannot appear inside a `var` pattern.
 
 #### `auto` and type deduction
 
@@ -330,12 +331,12 @@ contained _proper-pattern_ is matched directly against the scrutinee. Otherwise,
 the behavior is as follows.
 
 The scrutinee is expected to have a [tuple form](values.md#expression-forms)
-with the same arity as the number of nested _proper_patterns_, and form
-decomposition (but no other conversion) is applied if necessary to satisfy that.
-Then, each nested _proper-pattern_ is matched against `s.i`, where `s` is the
-converted scrutinee expression and `i` is the 0-based index of the nested
-pattern within the tuple pattern. The tuple pattern matches if all of these
-sub-matches succeed.
+with the same arity as the number of nested _proper_patterns_, and
+[form decomposition](values.md#form-conversions) (but no other conversion) is
+applied if necessary to satisfy that. Then, each nested _proper-pattern_ is
+matched against `s.i`, where `s` is the converted scrutinee expression and `i`
+is the 0-based index of the nested pattern within the tuple pattern. The tuple
+pattern matches if all of these sub-matches succeed.
 
 Note that a tuple pattern must contain at least one _proper-pattern_. Otherwise,
 it is a tuple-valued expression. However, a tuple pattern and a corresponding
@@ -369,12 +370,13 @@ match ({.a = 1, .b = 2}) {
 ```
 
 The scrutinee is expected to have a [struct form](values.md#expression-forms)
-with the same set of field names as the pattern, and form decomposition (but no
-other conversion) is applied if necessary to satisfy that. Then, each subpattern
-of the struct pattern in left-to-right order is matched with `s.f`, where `s` is
-the converted scrutinee expression and `f` is the field name associated with the
-subpattern. The struct pattern matches if all of these sub-matches succeed.
-Matching in left-to-right order is consistent with the behavior of matching
+with the same set of field names as the pattern, and
+[form decomposition](values.md#form-conversions) (but no other conversion) is
+applied if necessary to satisfy that. Then, for each subpattern of the struct
+pattern in left-to-right order, the subpattern is matched with `s.f`, where `s`
+is the converted scrutinee expression and `f` is the field name associated with
+the subpattern. The struct pattern matches if all of these sub-matches succeed.
+Note that the left-to-right order is consistent with the behavior of matching
 against a struct-valued expression, where the expression pattern becomes the
 left operand of the `==` and so determines the order in which `==` comparisons
 for fields are performed.

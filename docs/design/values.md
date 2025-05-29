@@ -629,12 +629,12 @@ directly observe the storage provided for initialization of a function's return.
 ### Expression forms
 
 We typically treat the category and type of an expression as independent
-properties. However, in some cases they can become entangled, and we need deal
-with them as an integrated whole. The _form_ of an expression captures all of
-the information about it that is visible to the type system, while abstracting
-away all other information about it. Thus, forms are a generalization of types:
-what we conventionally call "types" are really the types of objects and values,
-whereas forms are the types of expressions and patterns.
+properties. However, in some cases we need deal with them as an integrated
+whole. The _form_ of an expression captures all of the information about it that
+is visible to the type system, while abstracting away all other information
+about it. Thus, forms are a generalization of types: what we conventionally call
+"types" are really the types of objects and values, whereas forms are the types
+of expressions and patterns.
 
 A _primitive form_ consists of a type, an expression category, an expression
 phase, and optionally a constant value (which is present if and only if the
@@ -664,11 +664,18 @@ well-defined expression category.
 #### Form conversions
 
 An expression with a primitive form can be converted to another primitive form
-by applying type, category, and phase conversions independently. Form
-conversions can be applied to different elements of a composite form
+with the same type by applying a phase conversion followed by a category
+conversion. An expression with a primitive form can be converted to a primitive
+form with a different type by first selecting a suitable
+[implicit type conversion](/docs/design/expressions/implicit_conversions.md) for
+the two types, and then applying phase and category conversions to its input and
+output as needed.
+
+Form conversions can be applied to different elements of a composite form
 independently.
 
-_Form composition_ converts a composite form with consistent category and phase to a primitive form as follows:
+_Form composition_ converts a composite form with consistent category and phase
+to a primitive form as follows:
 
 -   A tuple form `([T1, C, P, V1], [T2, C, P, V2], ... [TN, C, P, VN])` can be
     converted to a primitive form `[(T1, T2, ..., TN), C, P, (V1, V2, ... VN)]`.
