@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/raw_identifier.carbon
@@ -45,12 +47,12 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11_17.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc11_17.2: type = converted %.loc11_17.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_17.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_17.2: type = converted %.loc13_17.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc11_10.1: type = splice_block %.loc11_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc11_10.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc11_10.3: type = converted %.loc11_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc13_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc13_10.3: type = converted %.loc13_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %empty_tuple.type = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
@@ -62,12 +64,12 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_19.2: type = converted %.loc15_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc17_19.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc17_19.2: type = converted %.loc17_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc15_12.1: type = splice_block %.loc15_12.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc15_12.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc15_12.3: type = converted %.loc15_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc17_12.1: type = splice_block %.loc17_12.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc17_12.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc17_12.3: type = converted %.loc17_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %empty_tuple.type = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
@@ -79,12 +81,12 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc19_20.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_20.2: type = converted %.loc19_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc21_20.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc21_20.2: type = converted %.loc21_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %if.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc19_13.1: type = splice_block %.loc19_13.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc19_13.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc19_13.3: type = converted %.loc19_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc21_13.1: type = splice_block %.loc21_13.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc21_13.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc21_13.3: type = converted %.loc21_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %if: %empty_tuple.type = bind_name r#if, %if.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1

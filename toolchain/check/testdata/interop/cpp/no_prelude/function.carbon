@@ -14,7 +14,7 @@
 
 // --- global.h
 
-void foo();
+auto foo() -> void;
 
 // --- import_global.carbon
 
@@ -46,7 +46,7 @@ fn MyF() {
 
 // --- special_name.h
 
-void base();
+auto base() -> void;
 
 // --- fail_import_special_name_call_unescaped.carbon
 
@@ -78,8 +78,8 @@ fn MyF() {
 
 // --- overloaded.h
 
-void foo();
-void foo(int value);
+auto foo() -> void;
+auto foo(int value) -> void;
 
 // --- fail_todo_import_overloaded.carbon
 
@@ -104,7 +104,7 @@ fn F() {
 
 // --- variadic.h
 
-void foo(int...);
+auto foo(int...) -> void;
 
 // --- fail_todo_import_variadic.carbon
 
@@ -129,7 +129,7 @@ fn F() {
 
 // --- static.h
 
-static void foo();
+static auto foo() -> void;
 
 // --- fail_todo_import_static.carbon
 
@@ -188,7 +188,7 @@ fn F() {
 
 struct F;
 
-F foo();
+auto foo() -> F;
 
 // --- fail_todo_import_struct_return_type.carbon
 

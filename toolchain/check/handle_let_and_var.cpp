@@ -21,6 +21,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -142,6 +143,11 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
   auto subpattern_id = context.node_stack().PopPattern();
   auto type_id = context.insts().Get(subpattern_id).type_id();
+
+  if (subpattern_id == SemIR::ErrorInst::InstId) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    return true;
+  }
 
   // In a parameter list, a `var` pattern is always a single `Call` parameter,
   // even if it contains multiple binding patterns.
@@ -369,7 +375,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::VariableDeclId /*node_id*/)
+    -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
                  Parse::NodeKind::VariableInitializer>(context);
@@ -377,13 +384,6 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   LimitModifiersOnDecl(
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
-
-  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
-                      "`var` declaration in interface");
-    context.emitter().Emit(node_id, VarInInterfaceDecl);
-    return true;
-  }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   return true;

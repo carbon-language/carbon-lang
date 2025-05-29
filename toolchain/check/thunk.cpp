@@ -4,6 +4,8 @@
 
 #include "toolchain/check/thunk.h"
 
+#include <utility>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/convert.h"

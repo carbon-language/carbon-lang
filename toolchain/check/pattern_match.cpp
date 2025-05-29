@@ -44,10 +44,15 @@ enum class MatchKind : uint8_t {
 // The collected state of a pattern-matching operation.
 class MatchContext {
  public:
-  struct WorkItem {
+  struct WorkItem : Printable<WorkItem> {
     SemIR::InstId pattern_id;
     // `None` when processing the callee side.
     SemIR::InstId scrutinee_id;
+
+    auto Print(llvm::raw_ostream& out) const -> void {
+      out << "{pattern_id: " << pattern_id << ", scrutinee_id: " << scrutinee_id
+          << "}";
+    }
   };
 
   // Constructs a MatchContext. If `callee_specific_id` is not `None`, this

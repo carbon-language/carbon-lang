@@ -64,7 +64,9 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // not on the pattern stacks yet. They are only needed in that case if we have
   // a return type, which we now know that we do.
   if (context.node_stack().PeekNodeKind() ==
-      Parse::NodeKind::IdentifierNameNotBeforeParams) {
+          Parse::NodeKind::IdentifierNameNotBeforeParams ||
+      context.node_stack().PeekNodeKind() ==
+          Parse::NodeKind::KeywordNameNotBeforeParams) {
     context.pattern_block_stack().Push();
     context.full_pattern_stack().PushFullPattern(
         FullPatternStack::Kind::ExplicitParamList);
