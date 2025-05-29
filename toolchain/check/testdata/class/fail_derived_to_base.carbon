@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_derived_to_base.carbon
@@ -108,11 +111,11 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d72 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, file.%A1.decl [concrete = constants.%A1]
-// CHECK:STDOUT:     %ptr.loc31_34: type = ptr_type %A1.ref [concrete = constants.%ptr.678]
+// CHECK:STDOUT:     %ptr.loc34_34: type = ptr_type %A1.ref [concrete = constants.%ptr.678]
 // CHECK:STDOUT:     %p.param: %ptr.afe = value_param call_param0
-// CHECK:STDOUT:     %.loc31_26: type = splice_block %ptr.loc31_26 [concrete = constants.%ptr.afe] {
+// CHECK:STDOUT:     %.loc34_26: type = splice_block %ptr.loc34_26 [concrete = constants.%ptr.afe] {
 // CHECK:STDOUT:       %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
-// CHECK:STDOUT:       %ptr.loc31_26: type = ptr_type %B2.ref [concrete = constants.%ptr.afe]
+// CHECK:STDOUT:       %ptr.loc34_26: type = ptr_type %B2.ref [concrete = constants.%ptr.afe]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.afe = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.678 = out_param call_param1
@@ -126,11 +129,11 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.2c5 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [concrete = constants.%A2]
-// CHECK:STDOUT:     %ptr.loc42_43: type = ptr_type %A2.ref [concrete = constants.%ptr.590]
+// CHECK:STDOUT:     %ptr.loc45_43: type = ptr_type %A2.ref [concrete = constants.%ptr.590]
 // CHECK:STDOUT:     %p.param: %ptr.c62 = value_param call_param0
-// CHECK:STDOUT:     %.loc42_35: type = splice_block %ptr.loc42_35 [concrete = constants.%ptr.c62] {
+// CHECK:STDOUT:     %.loc45_35: type = splice_block %ptr.loc45_35 [concrete = constants.%ptr.c62] {
 // CHECK:STDOUT:       %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete]
-// CHECK:STDOUT:       %ptr.loc42_35: type = ptr_type %Incomplete.ref [concrete = constants.%ptr.c62]
+// CHECK:STDOUT:       %ptr.loc45_35: type = ptr_type %Incomplete.ref [concrete = constants.%ptr.c62]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.c62 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.590 = out_param call_param1
@@ -141,35 +144,35 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: class @A1 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc12: %A1.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc15: %A1.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A1
-// CHECK:STDOUT:   .a = %.loc12
+// CHECK:STDOUT:   .a = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc16: %A2.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc19: %A2.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A2
-// CHECK:STDOUT:   .a = %.loc16
+// CHECK:STDOUT:   .a = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2.decl [concrete = constants.%A2]
-// CHECK:STDOUT:   %.loc20: %B2.elem.a92 = base_decl %A2.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc23: %B2.elem.a92 = base_decl %A2.ref, element0 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc21: %B2.elem.4b2 = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %.loc24: %B2.elem.4b2 = field_decl b, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.base.b: type = struct_type {.base: %A2, .b: %i32} [concrete = constants.%struct_type.base.b.618]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b [concrete = constants.%complete_type.92f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -177,8 +180,8 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
 // CHECK:STDOUT:   .A2 = <poisoned>
-// CHECK:STDOUT:   .base = %.loc20
-// CHECK:STDOUT:   .b = %.loc21
+// CHECK:STDOUT:   .base = %.loc23
+// CHECK:STDOUT:   .b = %.loc24
 // CHECK:STDOUT:   extend %A2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,14 +190,14 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: fn @ConvertUnrelated(%p.param: %ptr.afe) -> %ptr.678 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.afe = name_ref p, %p
-// CHECK:STDOUT:   %.loc31_46: %ptr.678 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc34_46: %ptr.678 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertIncomplete(%p.param: %ptr.c62) -> %ptr.590 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.c62 = name_ref p, %p
-// CHECK:STDOUT:   %.loc42_55: %ptr.590 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc45_55: %ptr.590 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

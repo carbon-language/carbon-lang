@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/impl_as.carbon
@@ -107,10 +110,10 @@ class C {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
-// CHECK:STDOUT:   %.loc19_19.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc19_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc19_7: init %C = converted %.loc19_19.1, %.loc19_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc19_7
+// CHECK:STDOUT:   %.loc22_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc22_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc22_7: init %C = converted %.loc22_19.1, %.loc22_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc22_7
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   return

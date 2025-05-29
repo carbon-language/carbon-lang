@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/tuple.carbon
@@ -73,12 +76,12 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc12_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc12_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc12_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc12_23.1: %tuple.type.24b = tuple_literal (%i32.loc12_15, %i32.loc12_20)
-// CHECK:STDOUT:     %.loc12_23.2: type = converted %.loc12_23.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:     %int_32.loc15_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc15_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15_23.1: %tuple.type.24b = tuple_literal (%i32.loc15_15, %i32.loc15_20)
+// CHECK:STDOUT:     %.loc15_23.2: type = converted %.loc15_23.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %return.param: ref %tuple.type.d07 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.d07 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -88,25 +91,25 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_15: Core.IntLiteral = int_value 15 [concrete = constants.%int_15.447]
 // CHECK:STDOUT:   %int_35: Core.IntLiteral = int_value 35 [concrete = constants.%int_35.c79]
-// CHECK:STDOUT:   %.loc13_17.1: %tuple.type.f94 = tuple_literal (%int_15, %int_35)
-// CHECK:STDOUT:   %impl.elem0.loc13_17.1: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc13_17.1: <bound method> = bound_method %int_15, %impl.elem0.loc13_17.1 [concrete = constants.%Convert.bound.75f]
-// CHECK:STDOUT:   %specific_fn.loc13_17.1: <specific function> = specific_function %impl.elem0.loc13_17.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_17.2: <bound method> = bound_method %int_15, %specific_fn.loc13_17.1 [concrete = constants.%bound_method.984]
-// CHECK:STDOUT:   %int.convert_checked.loc13_17.1: init %i32 = call %bound_method.loc13_17.2(%int_15) [concrete = constants.%int_15.7f7]
-// CHECK:STDOUT:   %.loc13_17.2: init %i32 = converted %int_15, %int.convert_checked.loc13_17.1 [concrete = constants.%int_15.7f7]
+// CHECK:STDOUT:   %.loc16_17.1: %tuple.type.f94 = tuple_literal (%int_15, %int_35)
+// CHECK:STDOUT:   %impl.elem0.loc16_17.1: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc16_17.1: <bound method> = bound_method %int_15, %impl.elem0.loc16_17.1 [concrete = constants.%Convert.bound.75f]
+// CHECK:STDOUT:   %specific_fn.loc16_17.1: <specific function> = specific_function %impl.elem0.loc16_17.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc16_17.2: <bound method> = bound_method %int_15, %specific_fn.loc16_17.1 [concrete = constants.%bound_method.984]
+// CHECK:STDOUT:   %int.convert_checked.loc16_17.1: init %i32 = call %bound_method.loc16_17.2(%int_15) [concrete = constants.%int_15.7f7]
+// CHECK:STDOUT:   %.loc16_17.2: init %i32 = converted %int_15, %int.convert_checked.loc16_17.1 [concrete = constants.%int_15.7f7]
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc13_17.3: init %i32 = initialize_from %.loc13_17.2 to %tuple.elem0 [concrete = constants.%int_15.7f7]
-// CHECK:STDOUT:   %impl.elem0.loc13_17.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc13_17.3: <bound method> = bound_method %int_35, %impl.elem0.loc13_17.2 [concrete = constants.%Convert.bound.76a]
-// CHECK:STDOUT:   %specific_fn.loc13_17.2: <specific function> = specific_function %impl.elem0.loc13_17.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_17.4: <bound method> = bound_method %int_35, %specific_fn.loc13_17.2 [concrete = constants.%bound_method.231]
-// CHECK:STDOUT:   %int.convert_checked.loc13_17.2: init %i32 = call %bound_method.loc13_17.4(%int_35) [concrete = constants.%int_35.c78]
-// CHECK:STDOUT:   %.loc13_17.4: init %i32 = converted %int_35, %int.convert_checked.loc13_17.2 [concrete = constants.%int_35.c78]
+// CHECK:STDOUT:   %.loc16_17.3: init %i32 = initialize_from %.loc16_17.2 to %tuple.elem0 [concrete = constants.%int_15.7f7]
+// CHECK:STDOUT:   %impl.elem0.loc16_17.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc16_17.3: <bound method> = bound_method %int_35, %impl.elem0.loc16_17.2 [concrete = constants.%Convert.bound.76a]
+// CHECK:STDOUT:   %specific_fn.loc16_17.2: <specific function> = specific_function %impl.elem0.loc16_17.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc16_17.4: <bound method> = bound_method %int_35, %specific_fn.loc16_17.2 [concrete = constants.%bound_method.231]
+// CHECK:STDOUT:   %int.convert_checked.loc16_17.2: init %i32 = call %bound_method.loc16_17.4(%int_35) [concrete = constants.%int_35.c78]
+// CHECK:STDOUT:   %.loc16_17.4: init %i32 = converted %int_35, %int.convert_checked.loc16_17.2 [concrete = constants.%int_35.c78]
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc13_17.5: init %i32 = initialize_from %.loc13_17.4 to %tuple.elem1 [concrete = constants.%int_35.c78]
-// CHECK:STDOUT:   %.loc13_17.6: init %tuple.type.d07 = tuple_init (%.loc13_17.3, %.loc13_17.5) to %return [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc13_18: init %tuple.type.d07 = converted %.loc13_17.1, %.loc13_17.6 [concrete = constants.%tuple]
-// CHECK:STDOUT:   return %.loc13_18 to %return
+// CHECK:STDOUT:   %.loc16_17.5: init %i32 = initialize_from %.loc16_17.4 to %tuple.elem1 [concrete = constants.%int_35.c78]
+// CHECK:STDOUT:   %.loc16_17.6: init %tuple.type.d07 = tuple_init (%.loc16_17.3, %.loc16_17.5) to %return [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc16_18: init %tuple.type.d07 = converted %.loc16_17.1, %.loc16_17.6 [concrete = constants.%tuple]
+// CHECK:STDOUT:   return %.loc16_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

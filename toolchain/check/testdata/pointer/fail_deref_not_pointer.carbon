@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_deref_not_pointer.carbon
@@ -77,7 +80,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc11: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc14: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -87,29 +90,29 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n.param: %i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref.loc16: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc16: ref <error> = deref %n.ref.loc16 [concrete = <error>]
-// CHECK:STDOUT:   %n.ref.loc21: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc21: ref <error> = deref %n.ref.loc21 [concrete = <error>]
-// CHECK:STDOUT:   %foo.ref.loc21: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc26_5.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %empty_tuple.loc26: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_5.2: %empty_tuple.type = converted %.loc26_5.1, %empty_tuple.loc26 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_3: ref <error> = deref %.loc26_5.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc31_4.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %empty_tuple.loc31: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc31_4.2: %empty_tuple.type = converted %.loc31_4.1, %empty_tuple.loc31 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc31_5: ref <error> = deref %.loc31_4.2 [concrete = <error>]
-// CHECK:STDOUT:   %foo.ref.loc31: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc36_5.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %empty_struct.loc36: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc36_5.2: %empty_struct_type = converted %.loc36_5.1, %empty_struct.loc36 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc36_3: ref <error> = deref %.loc36_5.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc41_4.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %empty_struct.loc41: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc41_4.2: %empty_struct_type = converted %.loc41_4.1, %empty_struct.loc41 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc41_5: ref <error> = deref %.loc41_4.2 [concrete = <error>]
-// CHECK:STDOUT:   %foo.ref.loc41: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n.ref.loc19: %i32 = name_ref n, %n
+// CHECK:STDOUT:   %.loc19: ref <error> = deref %n.ref.loc19 [concrete = <error>]
+// CHECK:STDOUT:   %n.ref.loc24: %i32 = name_ref n, %n
+// CHECK:STDOUT:   %.loc24: ref <error> = deref %n.ref.loc24 [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref.loc24: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_5.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %empty_tuple.loc29: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc29_5.2: %empty_tuple.type = converted %.loc29_5.1, %empty_tuple.loc29 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc29_3: ref <error> = deref %.loc29_5.2 [concrete = <error>]
+// CHECK:STDOUT:   %.loc34_4.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %empty_tuple.loc34: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc34_4.2: %empty_tuple.type = converted %.loc34_4.1, %empty_tuple.loc34 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc34_5: ref <error> = deref %.loc34_4.2 [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref.loc34: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc39_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %empty_struct.loc39: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc39_5.2: %empty_struct_type = converted %.loc39_5.1, %empty_struct.loc39 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc39_3: ref <error> = deref %.loc39_5.2 [concrete = <error>]
+// CHECK:STDOUT:   %.loc44_4.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %empty_struct.loc44: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc44_4.2: %empty_struct_type = converted %.loc44_4.1, %empty_struct.loc44 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc44_5: ref <error> = deref %.loc44_4.2 [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref.loc44: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

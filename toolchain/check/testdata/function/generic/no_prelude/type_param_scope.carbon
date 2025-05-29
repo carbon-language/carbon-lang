@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/no_prelude/type_param_scope.carbon
@@ -35,38 +38,38 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type (%pattern_type.7dc) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc11_25: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %T.loc11_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %n.param: @F.%T.loc11_6.2 (%T) = value_param call_param0
-// CHECK:STDOUT:     %T.ref.loc11_19: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %n: @F.%T.loc11_6.2 (%T) = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref @F.%T.loc11_6.2 (%T) = out_param call_param1
-// CHECK:STDOUT:     %return: ref @F.%T.loc11_6.2 (%T) = return_slot %return.param
+// CHECK:STDOUT:     %T.ref.loc14_25: type = name_ref T, %T.loc14_6.1 [symbolic = %T.loc14_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc14_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_6.2 (constants.%T)]
+// CHECK:STDOUT:     %n.param: @F.%T.loc14_6.2 (%T) = value_param call_param0
+// CHECK:STDOUT:     %T.ref.loc14_19: type = name_ref T, %T.loc14_6.1 [symbolic = %T.loc14_6.2 (constants.%T)]
+// CHECK:STDOUT:     %n: @F.%T.loc14_6.2 (%T) = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: ref @F.%T.loc14_6.2 (%T) = out_param call_param1
+// CHECK:STDOUT:     %return: ref @F.%T.loc14_6.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc11_6.1: type) {
-// CHECK:STDOUT:   %T.loc11_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc11_6.2 [symbolic = %pattern_type (constants.%pattern_type.7dc)]
+// CHECK:STDOUT: generic fn @F(%T.loc14_6.1: type) {
+// CHECK:STDOUT:   %T.loc14_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_6.2 (constants.%T)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc14_6.2 [symbolic = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc11_6.2 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc14_6.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param: @F.%T.loc11_6.2 (%T)) -> @F.%T.loc11_6.2 (%T) {
+// CHECK:STDOUT:   fn(%n.param: @F.%T.loc14_6.2 (%T)) -> @F.%T.loc14_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %m.patt: @F.%pattern_type (%pattern_type.7dc) = binding_pattern m [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.ref: @F.%T.loc11_6.2 (%T) = name_ref n, %n
-// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %m: @F.%T.loc11_6.2 (%T) = bind_name m, %n.ref
-// CHECK:STDOUT:     %m.ref: @F.%T.loc11_6.2 (%T) = name_ref m, %m
+// CHECK:STDOUT:     %n.ref: @F.%T.loc14_6.2 (%T) = name_ref n, %n
+// CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc14_6.1 [symbolic = %T.loc14_6.2 (constants.%T)]
+// CHECK:STDOUT:     %m: @F.%T.loc14_6.2 (%T) = bind_name m, %n.ref
+// CHECK:STDOUT:     %m.ref: @F.%T.loc14_6.2 (%T) = name_ref m, %m
 // CHECK:STDOUT:     return %m.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc11_6.2 => constants.%T
+// CHECK:STDOUT:   %T.loc14_6.2 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
