@@ -429,20 +429,19 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
 
 template <typename... Types>
 auto Formatter::GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT* {
-  static constexpr auto Table = IdKind::MakeTable<FormatArgFnT*>(
-      {[](Formatter& formatter, int32_t arg) -> void {
-        auto typed_arg = SemIR::Inst::FromRaw<Types>(arg);
+  static constexpr std::array<FormatArgFnT*, IdKind::NumValues> Table = {
+      [](Formatter& formatter, int32_t arg) -> void {
+        auto typed_arg = Inst::FromRaw<Types>(arg);
         if constexpr (requires { formatter.FormatArg(typed_arg); }) {
           formatter.FormatArg(typed_arg);
         } else {
           CARBON_FATAL("Missing FormatArg for {0}", typeid(Types).name());
         }
-      }...},
-      /*invalid=*/
-      [](Formatter& /*formatter*/, int32_t /*arg*/) -> void {
-        CARBON_FATAL("Instruction has argument with invalid IdKind");
-      },
-      /*none=*/[](Formatter& /*formatter*/, int32_t /*arg*/) -> void {});
+      }...,
+      // Invalid and None handling (ordering-sensitive).
+      [](auto...) -> void { CARBON_FATAL("Unexpected invalid IdKind"); },
+      [](auto...) -> void {},
+  };
   return Table[id_kind.ToIndex()];
 }
 

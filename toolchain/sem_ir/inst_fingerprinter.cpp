@@ -317,15 +317,14 @@ struct Worklist {
   // Returns the arg handler for an `IdKind`.
   template <typename... Types>
   static auto GetAddFn(TypeEnum<Types...> id_kind) -> AddFnT* {
-    static constexpr auto Table = SemIR::IdKind::MakeTable<AddFnT*>(
-        {[](Worklist& worklist, int32_t arg) {
+    static constexpr std::array<AddFnT*, IdKind::NumValues> Table = {
+        [](Worklist& worklist, int32_t arg) {
           worklist.Add(Inst::FromRaw<Types>(arg));
-        }...},
-        /*invalid=*/
-        [](Worklist& /*worklist*/, int32_t /*arg*/) {
-          CARBON_FATAL("Unexpected invalid argument kind");
-        },
-        /*none=*/[](Worklist& /*worklist*/, int32_t /*arg*/) {});
+        }...,
+        // Invalid and None handling (ordering-sensitive).
+        [](auto...) { CARBON_FATAL("Unexpected invalid IdKind"); },
+        [](auto...) {},
+    };
     return Table[id_kind.ToIndex()];
   }
 

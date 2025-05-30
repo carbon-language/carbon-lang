@@ -65,21 +65,6 @@ class TypeEnum : public Printable<TypeEnum<Types...>> {
   template <typename Type>
   static constexpr bool Contains = For<Type, true>.is_valid();
 
-  // Takes the arguments and returns a full table for all values. Often used to
-  // produce dispatch tables.
-  template <typename ElementT>
-  static constexpr auto MakeTable(std::array<ElementT, NumTypes> types,
-                                  ElementT invalid, ElementT none)
-      -> std::array<ElementT, NumValues> {
-    std::array<ElementT, NumValues> table;
-    for (size_t i = 0; i < NumTypes; ++i) {
-      table[i] = types[i];
-    }
-    table[Invalid.ToIndex()] = invalid;
-    table[None.ToIndex()] = none;
-    return table;
-  }
-
   // Explicitly convert from the raw enum type.
   explicit constexpr TypeEnum(RawEnumType value) : value_(value) {}
 

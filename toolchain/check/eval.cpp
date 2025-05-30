@@ -672,26 +672,24 @@ using ArgHandlerFnT = auto(EvalContext& context, int32_t arg, Phase* phase)
 // Returns the arg handler for an `IdKind`.
 template <typename... Types>
 static auto GetArgHandlerFn(TypeEnum<Types...> id_kind) -> ArgHandlerFnT* {
-  static constexpr auto Table = SemIR::IdKind::MakeTable<ArgHandlerFnT*>(
-      {[](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
-        auto id = SemIR::Inst::FromRaw<Types>(arg);
-        if constexpr (HasGetConstantValueOverload<Types>) {
-          // If we have a custom `GetConstantValue` overload, call it.
-          return SemIR::Inst::ToRaw(GetConstantValue(eval_context, id, phase));
-        } else {
-          // Otherwise, we assume the value is already constant.
-          return arg;
-        }
-      }...},
-      /*invalid=*/
-      [](EvalContext& /*context*/, int32_t /*arg*/,
-         Phase* /*phase*/) -> int32_t {
-        CARBON_FATAL("Instruction has argument with invalid IdKind");
-      },
-      /*none=*/
-      [](EvalContext& /*context*/, int32_t arg, Phase* /*phase*/) -> int32_t {
-        return arg;
-      });
+  static constexpr std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> Table =
+      {
+          [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
+            auto id = SemIR::Inst::FromRaw<Types>(arg);
+            if constexpr (HasGetConstantValueOverload<Types>) {
+              // If we have a custom `GetConstantValue` overload, call it.
+              return SemIR::Inst::ToRaw(
+                  GetConstantValue(eval_context, id, phase));
+            } else {
+              // Otherwise, we assume the value is already constant.
+              return arg;
+            }
+          }...,
+          // Invalid and None handling (ordering-sensitive).
+          [](auto...) -> int32_t { CARBON_FATAL("Unexpected invalid IdKind"); },
+          [](EvalContext& /*context*/, int32_t arg,
+             Phase* /*phase*/) -> int32_t { return arg; },
+      };
   return Table[id_kind.ToIndex()];
 }
 
