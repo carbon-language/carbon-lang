@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/struct.carbon
@@ -78,16 +81,16 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT: fn @Main() -> %struct_type.a.ba9 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %.loc12_17.1: %struct_type.a.a6c = struct_literal (%int_3)
+// CHECK:STDOUT:   %.loc15_17.1: %struct_type.a.a6c = struct_literal (%int_3)
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc12_17.1: <bound method> = bound_method %int_3, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc15_17.1: <bound method> = bound_method %int_3, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_17.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc12_17.2(%int_3) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc12_17.2: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc12_17.3: %i32 = converted %int_3, %.loc12_17.2 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %struct: %struct_type.a.ba9 = struct_value (%.loc12_17.3) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc12_18: %struct_type.a.ba9 = converted %.loc12_17.1, %struct [concrete = constants.%struct]
-// CHECK:STDOUT:   return %.loc12_18
+// CHECK:STDOUT:   %bound_method.loc15_17.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc15_17.2(%int_3) [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc15_17.2: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc15_17.3: %i32 = converted %int_3, %.loc15_17.2 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %struct: %struct_type.a.ba9 = struct_value (%.loc15_17.3) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc15_18: %struct_type.a.ba9 = converted %.loc15_17.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   return %.loc15_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

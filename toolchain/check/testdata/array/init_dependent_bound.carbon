@@ -181,7 +181,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     %.loc11_36: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
 // CHECK:STDOUT:     assign %arr.var, <error>
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %arr: <error> = bind_name arr, <error>
+// CHECK:STDOUT:     %arr: <error> = bind_name arr, <error> [concrete = <error>]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

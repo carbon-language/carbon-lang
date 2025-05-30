@@ -161,7 +161,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc4_17.2: %tuple.type.85c = tuple_literal (%i32.loc4)
 // CHECK:STDOUT:     %.loc4_17.3: type = converted %.loc4_17.2, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ref: ref %tuple.type.a1c = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %a_ref: ref %tuple.type.a1c = bind_name a_ref, %a_ref.var [concrete = %a_ref.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_ref.patt: %pattern_type.811 = binding_pattern b_ref [concrete]
 // CHECK:STDOUT:     %b_ref.var_patt: %pattern_type.811 = var_pattern %b_ref.patt [concrete]
@@ -185,7 +185,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc5_38.5: type = converted %.loc5_37, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %.loc5_38.6: type = converted %.loc5_38.2, constants.%tuple.type.fc1 [concrete = constants.%tuple.type.fc1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b_ref: ref %tuple.type.fc1 = bind_name b_ref, %b_ref.var
+// CHECK:STDOUT:   %b_ref: ref %tuple.type.fc1 = bind_name b_ref, %b_ref.var [concrete = %b_ref.var]
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %X.patt: %pattern_type.511 = symbolic_binding_pattern X, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -336,6 +336,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple.type.dd4: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.2e8: type = pattern_type %tuple.type.dd4 [concrete]
+// CHECK:STDOUT:   %tuple.elem0.994: ref %i32 = tuple_access imports.%a_ref.var, element0 [concrete]
 // CHECK:STDOUT:   %tuple.type.8c7: type = tuple_type (%tuple.type.85c, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.58c: type = tuple_type (%tuple.type.8c7, %tuple.type.24b) [concrete]
@@ -343,11 +344,18 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %tuple.type.c2c: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.cfa: type = tuple_type (%tuple.type.154, %tuple.type.c2c) [concrete]
 // CHECK:STDOUT:   %pattern_type.ab9: type = pattern_type %tuple.type.cfa [concrete]
+// CHECK:STDOUT:   %tuple.elem0.693: ref %tuple.type.154 = tuple_access imports.%b_ref.var, element0 [concrete]
 // CHECK:STDOUT:   %tuple.elem0.76a: ref %tuple.type.154 = tuple_access file.%b.var, element0 [concrete]
+// CHECK:STDOUT:   %tuple.elem0.4c9: ref %tuple.type.dd4 = tuple_access %tuple.elem0.693, element0 [concrete]
 // CHECK:STDOUT:   %tuple.elem0.6fd: ref %tuple.type.dd4 = tuple_access %tuple.elem0.76a, element0 [concrete]
+// CHECK:STDOUT:   %tuple.elem0.390: ref %i32 = tuple_access %tuple.elem0.4c9, element0 [concrete]
+// CHECK:STDOUT:   %tuple.elem1.723: ref %i32 = tuple_access %tuple.elem0.693, element1 [concrete]
 // CHECK:STDOUT:   %tuple.elem1.ae3: ref %i32 = tuple_access %tuple.elem0.76a, element1 [concrete]
+// CHECK:STDOUT:   %tuple.elem1.92b: ref %tuple.type.c2c = tuple_access imports.%b_ref.var, element1 [concrete]
 // CHECK:STDOUT:   %tuple.elem1.4f3: ref %tuple.type.c2c = tuple_access file.%b.var, element1 [concrete]
+// CHECK:STDOUT:   %tuple.elem0.2ff: ref %i32 = tuple_access %tuple.elem1.92b, element0 [concrete]
 // CHECK:STDOUT:   %tuple.elem0.790: ref %i32 = tuple_access %tuple.elem1.4f3, element0 [concrete]
+// CHECK:STDOUT:   %tuple.elem1.282: ref %i32 = tuple_access %tuple.elem1.92b, element1 [concrete]
 // CHECK:STDOUT:   %tuple.elem1.822: ref %i32 = tuple_access %tuple.elem1.4f3, element1 [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
@@ -379,8 +387,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Implicit.a_ref: ref %tuple.type.dd4 = import_ref Implicit//default, a_ref, loaded
-// CHECK:STDOUT:   %Implicit.b_ref: ref %tuple.type.cfa = import_ref Implicit//default, b_ref, loaded
+// CHECK:STDOUT:   %Implicit.a_ref: ref %tuple.type.dd4 = import_ref Implicit//default, a_ref, loaded [concrete = %a_ref.var]
+// CHECK:STDOUT:   %Implicit.b_ref: ref %tuple.type.cfa = import_ref Implicit//default, b_ref, loaded [concrete = %b_ref.var]
 // CHECK:STDOUT:   %Implicit.C: %C.type = import_ref Implicit//default, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %Implicit.F: %F.type = import_ref Implicit//default, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
@@ -392,6 +400,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %Implicit.import_ref.773: @impl.a8d.%Convert.type (%Convert.type.9a6) = import_ref Implicit//default, inst119 [indirect], loaded [symbolic = @impl.a8d.%Convert (constants.%Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @impl.a8d [concrete]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %a_ref.patt: %pattern_type.2e8 = binding_pattern a_ref [concrete]
+// CHECK:STDOUT:   %a_ref.var_patt: %pattern_type.2e8 = var_pattern %a_ref.patt [concrete]
+// CHECK:STDOUT:   %a_ref.var: ref %tuple.type.dd4 = var %a_ref.var_patt [concrete]
+// CHECK:STDOUT:   %b_ref.patt: %pattern_type.ab9 = binding_pattern b_ref [concrete]
+// CHECK:STDOUT:   %b_ref.var_patt: %pattern_type.ab9 = var_pattern %b_ref.patt [concrete]
+// CHECK:STDOUT:   %b_ref.var: ref %tuple.type.cfa = var %b_ref.var_patt [concrete]
 // CHECK:STDOUT:   %Implicit.import_ref.48d: %tuple.type.c2c = import_ref Implicit//default, loc7_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Implicit.import_ref.964 = import_ref Implicit//default, inst1463 [no loc], unloaded
@@ -423,7 +437,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc4_13.2: %tuple.type.85c = tuple_literal (%i32.loc4)
 // CHECK:STDOUT:     %.loc4_13.3: type = converted %.loc4_13.2, constants.%tuple.type.dd4 [concrete = constants.%tuple.type.dd4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %tuple.type.dd4 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %tuple.type.dd4 = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.ab9 = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.ab9 = var_pattern %b.patt [concrete]
@@ -447,7 +461,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc5_34.5: type = converted %.loc5_33, constants.%tuple.type.c2c [concrete = constants.%tuple.type.c2c]
 // CHECK:STDOUT:     %.loc5_34.6: type = converted %.loc5_34.2, constants.%tuple.type.cfa [concrete = constants.%tuple.type.cfa]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %tuple.type.cfa = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %tuple.type.cfa = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7e2 = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.7e2 = var_pattern %c.patt [concrete]
@@ -476,7 +490,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc6_16.2: %tuple.type.c2c = converted %.loc6_15.1, %tuple [concrete = constants.%tuple]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple) [concrete = constants.%C.cf0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.cf0 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C.cf0 = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {
@@ -496,35 +510,35 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %tuple.type.dd4 = name_ref a_ref, imports.%Implicit.a_ref
-// CHECK:STDOUT:   %tuple.elem0.loc4: ref %i32 = tuple_access %a_ref.ref, element0
+// CHECK:STDOUT:   %a_ref.ref: ref %tuple.type.dd4 = name_ref a_ref, imports.%Implicit.a_ref [concrete = imports.%a_ref.var]
+// CHECK:STDOUT:   %tuple.elem0.loc4: ref %i32 = tuple_access %a_ref.ref, element0 [concrete = constants.%tuple.elem0.994]
 // CHECK:STDOUT:   %.loc4_17.1: %i32 = bind_value %tuple.elem0.loc4
 // CHECK:STDOUT:   %.loc4_17.2: init %tuple.type.dd4 = tuple_init (%.loc4_17.1) to file.%a.var
 // CHECK:STDOUT:   %.loc4_1: init %tuple.type.dd4 = converted %a_ref.ref, %.loc4_17.2
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_1
-// CHECK:STDOUT:   %b_ref.ref: ref %tuple.type.cfa = name_ref b_ref, imports.%Implicit.b_ref
-// CHECK:STDOUT:   %tuple.elem0.loc5_38.1: ref %tuple.type.154 = tuple_access %b_ref.ref, element0
-// CHECK:STDOUT:   %tuple.elem0.loc5_38.2: ref %tuple.type.dd4 = tuple_access %tuple.elem0.loc5_38.1, element0
-// CHECK:STDOUT:   %tuple.elem0.loc5_38.3: ref %i32 = tuple_access %tuple.elem0.loc5_38.2, element0
+// CHECK:STDOUT:   %b_ref.ref: ref %tuple.type.cfa = name_ref b_ref, imports.%Implicit.b_ref [concrete = imports.%b_ref.var]
+// CHECK:STDOUT:   %tuple.elem0.loc5_38.1: ref %tuple.type.154 = tuple_access %b_ref.ref, element0 [concrete = constants.%tuple.elem0.693]
+// CHECK:STDOUT:   %tuple.elem0.loc5_38.2: ref %tuple.type.dd4 = tuple_access %tuple.elem0.loc5_38.1, element0 [concrete = constants.%tuple.elem0.4c9]
+// CHECK:STDOUT:   %tuple.elem0.loc5_38.3: ref %i32 = tuple_access %tuple.elem0.loc5_38.2, element0 [concrete = constants.%tuple.elem0.390]
 // CHECK:STDOUT:   %.loc5_38.1: %i32 = bind_value %tuple.elem0.loc5_38.3
 // CHECK:STDOUT:   %tuple.elem0.loc5_38.4: ref %tuple.type.154 = tuple_access file.%b.var, element0 [concrete = constants.%tuple.elem0.76a]
 // CHECK:STDOUT:   %tuple.elem0.loc5_38.5: ref %tuple.type.dd4 = tuple_access %tuple.elem0.loc5_38.4, element0 [concrete = constants.%tuple.elem0.6fd]
 // CHECK:STDOUT:   %.loc5_38.2: init %tuple.type.dd4 = tuple_init (%.loc5_38.1) to %tuple.elem0.loc5_38.5
 // CHECK:STDOUT:   %.loc5_38.3: init %tuple.type.dd4 = converted %tuple.elem0.loc5_38.2, %.loc5_38.2
 // CHECK:STDOUT:   %.loc5_38.4: init %tuple.type.dd4 = initialize_from %.loc5_38.3 to %tuple.elem0.loc5_38.5
-// CHECK:STDOUT:   %tuple.elem1.loc5_38.1: ref %i32 = tuple_access %tuple.elem0.loc5_38.1, element1
+// CHECK:STDOUT:   %tuple.elem1.loc5_38.1: ref %i32 = tuple_access %tuple.elem0.loc5_38.1, element1 [concrete = constants.%tuple.elem1.723]
 // CHECK:STDOUT:   %.loc5_38.5: %i32 = bind_value %tuple.elem1.loc5_38.1
 // CHECK:STDOUT:   %tuple.elem1.loc5_38.2: ref %i32 = tuple_access %tuple.elem0.loc5_38.4, element1 [concrete = constants.%tuple.elem1.ae3]
 // CHECK:STDOUT:   %.loc5_38.6: init %i32 = initialize_from %.loc5_38.5 to %tuple.elem1.loc5_38.2
 // CHECK:STDOUT:   %.loc5_38.7: init %tuple.type.154 = tuple_init (%.loc5_38.4, %.loc5_38.6) to %tuple.elem0.loc5_38.4
 // CHECK:STDOUT:   %.loc5_38.8: init %tuple.type.154 = converted %tuple.elem0.loc5_38.1, %.loc5_38.7
-// CHECK:STDOUT:   %tuple.elem1.loc5_38.3: ref %tuple.type.c2c = tuple_access %b_ref.ref, element1
-// CHECK:STDOUT:   %tuple.elem0.loc5_38.6: ref %i32 = tuple_access %tuple.elem1.loc5_38.3, element0
+// CHECK:STDOUT:   %tuple.elem1.loc5_38.3: ref %tuple.type.c2c = tuple_access %b_ref.ref, element1 [concrete = constants.%tuple.elem1.92b]
+// CHECK:STDOUT:   %tuple.elem0.loc5_38.6: ref %i32 = tuple_access %tuple.elem1.loc5_38.3, element0 [concrete = constants.%tuple.elem0.2ff]
 // CHECK:STDOUT:   %.loc5_38.9: %i32 = bind_value %tuple.elem0.loc5_38.6
 // CHECK:STDOUT:   %tuple.elem1.loc5_38.4: ref %tuple.type.c2c = tuple_access file.%b.var, element1 [concrete = constants.%tuple.elem1.4f3]
 // CHECK:STDOUT:   %tuple.elem0.loc5_38.7: ref %i32 = tuple_access %tuple.elem1.loc5_38.4, element0 [concrete = constants.%tuple.elem0.790]
 // CHECK:STDOUT:   %.loc5_38.10: init %i32 = initialize_from %.loc5_38.9 to %tuple.elem0.loc5_38.7
-// CHECK:STDOUT:   %tuple.elem1.loc5_38.5: ref %i32 = tuple_access %tuple.elem1.loc5_38.3, element1
+// CHECK:STDOUT:   %tuple.elem1.loc5_38.5: ref %i32 = tuple_access %tuple.elem1.loc5_38.3, element1 [concrete = constants.%tuple.elem1.282]
 // CHECK:STDOUT:   %.loc5_38.11: %i32 = bind_value %tuple.elem1.loc5_38.5
 // CHECK:STDOUT:   %tuple.elem1.loc5_38.6: ref %i32 = tuple_access %tuple.elem1.loc5_38.4, element1 [concrete = constants.%tuple.elem1.822]
 // CHECK:STDOUT:   %.loc5_38.12: init %i32 = initialize_from %.loc5_38.11 to %tuple.elem1.loc5_38.6
@@ -611,7 +625,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     %.loc12: %tuple.type.37f = tuple_literal (%int_1, %int_2, %int_3)
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c_bad: <error> = bind_name c_bad, <error>
+// CHECK:STDOUT:   %c_bad: <error> = bind_name c_bad, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {
@@ -750,7 +764,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %.loc11_20.2: %tuple.type.c2c = converted %.loc11_19.1, %tuple [concrete = constants.%tuple.5de]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple.5de) [concrete = constants.%C.ed5]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c_bad: ref %C.ed5 = bind_name c_bad, %c_bad.var
+// CHECK:STDOUT:   %c_bad: ref %C.ed5 = bind_name c_bad, %c_bad.var [concrete = %c_bad.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.48d: %tuple.type.c2c) [from "implicit.carbon"] {

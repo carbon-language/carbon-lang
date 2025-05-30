@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/no_prelude/fail_nested_incomplete.carbon
@@ -42,21 +45,21 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %s.var_patt: <error> = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref <error> = var %s.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc20: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
-// CHECK:STDOUT:     %Incomplete.ref.loc20: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
+// CHECK:STDOUT:   %.loc23: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:     %Incomplete.ref.loc23: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %Incomplete} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: <error> = bind_name s, <error>
+// CHECK:STDOUT:   %s: <error> = bind_name s, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type = binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt [concrete]
-// CHECK:STDOUT:   %.loc22: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %Incomplete.ref.loc22: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc22 [concrete = constants.%ptr]
+// CHECK:STDOUT:   %.loc25: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %Incomplete.ref.loc25: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc25 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var [concrete = %p.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

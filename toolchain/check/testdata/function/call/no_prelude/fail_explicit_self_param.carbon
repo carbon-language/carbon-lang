@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/no_prelude/fail_explicit_self_param.carbon
@@ -40,9 +43,9 @@ fn Run() {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc15_13.1: type = splice_block %.loc15_13.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc15_13.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc15_13.3: type = converted %.loc15_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc18_13.1: type = splice_block %.loc18_13.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc18_13.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc18_13.3: type = converted %.loc18_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
 // CHECK:STDOUT:   }
@@ -54,10 +57,10 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc18_6.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc21_6.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc18_6.2: %empty_tuple.type = converted %.loc18_6.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc18_6.2)
+// CHECK:STDOUT:   %.loc21_6.2: %empty_tuple.type = converted %.loc21_6.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc21_6.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

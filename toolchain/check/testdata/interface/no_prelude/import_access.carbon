@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/import_access.carbon
@@ -260,7 +263,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -298,7 +301,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -368,7 +371,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -406,7 +409,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -440,7 +443,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = interface_decl @Forward [concrete = constants.%Forward.type] {} {}
 // CHECK:STDOUT: }
@@ -480,7 +483,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -518,7 +521,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

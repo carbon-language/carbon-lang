@@ -539,7 +539,7 @@ fn G() {
 // CHECK:STDOUT:       %.loc21_38.1: ref type = class_element_access %T.ref.loc21_37, element0 [symbolic = %.loc21_38.3 (constants.%.2fe)]
 // CHECK:STDOUT:       %.loc21_38.2: type = bind_value %.loc21_38.1
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
@@ -754,7 +754,7 @@ fn G() {
 // CHECK:STDOUT:       %.loc12_49.2: ref type = array_index %.loc12_49.1, %.loc12_48.2
 // CHECK:STDOUT:       %.loc12_49.3: type = bind_value %.loc12_49.2
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}

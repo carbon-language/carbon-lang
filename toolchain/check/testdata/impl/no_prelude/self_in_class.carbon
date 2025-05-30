@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/no_prelude/self_in_class.carbon
@@ -63,10 +66,10 @@ class A {
 // CHECK:STDOUT:     %return.param_patt: @Make.1.%pattern_type (%pattern_type.839) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %DefaultConstructible.type = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %Self.as_type.loc12_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %.loc12: type = converted %Self.ref, %Self.as_type.loc12_16.2 [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %return.param: ref @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = out_param call_param0
-// CHECK:STDOUT:     %return: ref @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = return_slot %return.param
+// CHECK:STDOUT:     %Self.as_type.loc15_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc15_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %.loc15: type = converted %Self.ref, %Self.as_type.loc15_16.2 [symbolic = %Self.as_type.loc15_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %return.param: ref @Make.1.%Self.as_type.loc15_16.1 (%Self.as_type) = out_param call_param0
+// CHECK:STDOUT:     %return: ref @Make.1.%Self.as_type.loc15_16.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %DefaultConstructible.assoc_type = assoc_entity element0, %Make.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -119,29 +122,29 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Make.1(@DefaultConstructible.%Self: %DefaultConstructible.type) {
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc12_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc12_16.1 [symbolic = %pattern_type (constants.%pattern_type.839)]
+// CHECK:STDOUT:   %Self.as_type.loc15_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc15_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc15_16.1 [symbolic = %pattern_type (constants.%pattern_type.839)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type);
+// CHECK:STDOUT:   fn() -> @Make.1.%Self.as_type.loc15_16.1 (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_33.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc21_34: init %C = converted %.loc21_33.1, %.loc21_33.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   return %.loc21_34 to %return
+// CHECK:STDOUT:   %.loc24_33.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc24_33.2: init %C = class_init (), %return [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc24_34: init %C = converted %.loc24_33.1, %.loc24_33.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   return %.loc24_34 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc15_16.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.839
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%DefaultConstructible.facet) {
 // CHECK:STDOUT:   %Self => constants.%DefaultConstructible.facet
-// CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%C
+// CHECK:STDOUT:   %Self.as_type.loc15_16.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

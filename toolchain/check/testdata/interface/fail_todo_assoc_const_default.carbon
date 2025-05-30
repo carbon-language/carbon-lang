@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/fail_todo_assoc_const_default.carbon
@@ -80,23 +83,23 @@ interface I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.826]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete = constants.%assoc0.cd1]
-// CHECK:STDOUT:     %int_32.loc16_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc16_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc16_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc16_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc16_35: %tuple.type.24b = tuple_literal (%i32.loc16_27, %i32.loc16_32)
-// CHECK:STDOUT:     %.loc16_36: type = converted %.loc16_35, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:     %int_32.loc19_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc19_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc19_35: %tuple.type.24b = tuple_literal (%i32.loc19_27, %i32.loc19_32)
+// CHECK:STDOUT:     %.loc19_36: type = converted %.loc19_35, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {
 // CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.%N [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:     %bound_method.loc21_27.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:     %bound_method.loc24_27.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc21_27.2: <bound method> = bound_method %int_42, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc21_27.2(%int_42) [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:     %.loc21_27.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:     %.loc21_27.2: %i32 = converted %int_42, %.loc21_27.1 [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:     %bound_method.loc24_27.2: <bound method> = bound_method %int_42, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc24_27.2(%int_42) [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:     %.loc24_27.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:     %.loc24_27.2: %i32 = converted %int_42, %.loc24_27.1 [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -109,13 +112,13 @@ interface I {
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   assoc_const T:! type = %.loc16_36;
+// CHECK:STDOUT:   assoc_const T:! type = %.loc19_36;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @N(@I.%Self: %I.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   assoc_const N:! %i32 = %.loc21_27.2;
+// CHECK:STDOUT:   assoc_const N:! %i32 = %.loc24_27.2;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self.826) {}

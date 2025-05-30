@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/basic.carbon
@@ -33,11 +36,11 @@ interface ForwardDeclared {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Empty = %Empty.decl
-// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc14
+// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc14: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc16: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc17: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc19: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
