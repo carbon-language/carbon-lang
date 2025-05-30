@@ -152,7 +152,7 @@ fn F() {
 //       This is not tested because template functions are not considered a single result when doing lookup.
 
 // ============================================================================
-// Struct declaration value param type
+// Forward-declared struct as parameter type
 // ============================================================================
 
 // --- struct_decl_value_param_type.h
@@ -180,7 +180,7 @@ fn F() {
 }
 
 // ============================================================================
-// Struct definition value param type
+// Defined struct as parameter type
 // ============================================================================
 
 // --- struct_definition_value_param_type.h
@@ -207,7 +207,7 @@ fn F() {
 }
 
 // ============================================================================
-// Struct declaration pointer param type
+// Pointer to forward-declared struct as parameter type
 // ============================================================================
 
 // --- struct_decl_pointer_param_type.h
@@ -241,7 +241,7 @@ fn F(s: Cpp.S*) {
 }
 
 // ============================================================================
-// Struct definition pointer param type
+// Pointer to defined struct as parameter type
 // ============================================================================
 
 // --- struct_definition_pointer_param_type.h
@@ -270,7 +270,7 @@ fn F(s: Cpp.S*) {
 // TODO: Add a test per unsupported param type. See https://github.com/carbon-language/carbon-lang/pull/5477/files/4321e21ed27d987fd71be182d292973fd9849df8#r2094655176
 
 // ============================================================================
-// Struct declaration value return type
+// Forward-declared struct as return type
 // ============================================================================
 
 // --- struct_decl_value_return_type.h
@@ -298,7 +298,7 @@ fn F() {
 }
 
 // ============================================================================
-// Struct definition value return type
+// Defined struct as return type
 // ============================================================================
 
 // --- struct_definition_value_return_type.h
@@ -325,7 +325,7 @@ fn F() {
 }
 
 // ============================================================================
-// Struct declaration pointer return type
+// Pointer to forward-declared struct as return type
 // ============================================================================
 
 // --- struct_decl_pointer_return_type.h
@@ -352,7 +352,7 @@ fn F() {
 }
 
 // ============================================================================
-// Struct definition pointer return type
+// Pointer to defined struct as return type
 // ============================================================================
 
 // --- struct_definition_pointer_return_type.h
