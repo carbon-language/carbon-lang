@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/import.carbon
@@ -82,15 +85,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Basic.decl: type = interface_decl @Basic [concrete = constants.%Basic.type] {} {}
 // CHECK:STDOUT:   %ForwardDeclared.decl: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f_ref.patt: %pattern_type = binding_pattern f_ref
-// CHECK:STDOUT:     %.loc20_1: %pattern_type = var_pattern %f_ref.patt
+// CHECK:STDOUT:     %f_ref.patt: %pattern_type = binding_pattern f_ref [concrete]
+// CHECK:STDOUT:     %f_ref.var_patt: %pattern_type = var_pattern %f_ref.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var f_ref
-// CHECK:STDOUT:   %.loc20_32: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
+// CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var %f_ref.var_patt [concrete]
+// CHECK:STDOUT:   %.loc20: type = splice_block %struct_type.f [concrete = constants.%struct_type.f] {
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f_ref: ref %struct_type.f = bind_name f_ref, %f_ref.var
+// CHECK:STDOUT:   %f_ref: ref %struct_type.f = bind_name f_ref, %f_ref.var [concrete = %f_ref.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -179,24 +182,34 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared.type [concrete]
 // CHECK:STDOUT:   %pattern_type.97e: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.e3b: type = pattern_type %struct_type.f [concrete]
+// CHECK:STDOUT:   %.7e4: ref %ForwardDeclared.type = struct_access imports.%f_ref.var, element0 [concrete]
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.7e4 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Empty: type = import_ref Main//a, Empty, loaded [concrete = constants.%Empty.type]
 // CHECK:STDOUT:   %Main.Basic: type = import_ref Main//a, Basic, loaded [concrete = constants.%Basic.type]
 // CHECK:STDOUT:   %Main.ForwardDeclared: type = import_ref Main//a, ForwardDeclared, loaded [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f = import_ref Main//a, f_ref, loaded
+// CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f = import_ref Main//a, f_ref, loaded [concrete = %f_ref.var]
 // CHECK:STDOUT:   %Main.import_ref.cc0 = import_ref Main//a, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst21 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst22 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.3d5: %Basic.assoc_type = import_ref Main//a, loc8_8, loaded [concrete = constants.%assoc0.fee]
 // CHECK:STDOUT:   %Main.import_ref.760: %Basic.assoc_type = import_ref Main//a, loc9_9, loaded [concrete = constants.%assoc1.4ea]
 // CHECK:STDOUT:   %Main.T.44f = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.eea = import_ref Main//a, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.52b = import_ref Main//a, inst35 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.52b = import_ref Main//a, inst37 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.ad1: %ForwardDeclared.assoc_type = import_ref Main//a, loc16_8, loaded [concrete = constants.%assoc0.d40]
 // CHECK:STDOUT:   %Main.import_ref.339: %ForwardDeclared.assoc_type = import_ref Main//a, loc17_9, loaded [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   %Main.T.6ee = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.5d0 = import_ref Main//a, F, unloaded
+// CHECK:STDOUT:   %Main.import_ref.a4a = import_ref Main//a, loc8_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.0be = import_ref Main//a, loc9_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.69a = import_ref Main//a, loc16_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.1cc = import_ref Main//a, loc17_9, unloaded
+// CHECK:STDOUT:   %f_ref.patt: %pattern_type.e3b = binding_pattern f_ref [concrete]
+// CHECK:STDOUT:   %f_ref.var_patt: %pattern_type.e3b = var_pattern %f_ref.patt [concrete]
+// CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var %f_ref.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -216,24 +229,24 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [concrete = constants.%UseEmpty] {
-// CHECK:STDOUT:     %e.patt: %pattern_type.6c3 = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %pattern_type.6c3 = value_param_pattern %e.patt, call_param0
+// CHECK:STDOUT:     %e.patt: %pattern_type.6c3 = binding_pattern e [concrete]
+// CHECK:STDOUT:     %e.param_patt: %pattern_type.6c3 = value_param_pattern %e.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Empty.type = value_param call_param0
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty.type]
 // CHECK:STDOUT:     %e: %Empty.type = bind_name e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [concrete = constants.%UseBasic] {
-// CHECK:STDOUT:     %e.patt: %pattern_type.d8e = binding_pattern e
-// CHECK:STDOUT:     %e.param_patt: %pattern_type.d8e = value_param_pattern %e.patt, call_param0
+// CHECK:STDOUT:     %e.patt: %pattern_type.d8e = binding_pattern e [concrete]
+// CHECK:STDOUT:     %e.param_patt: %pattern_type.d8e = value_param_pattern %e.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Basic.type = value_param call_param0
 // CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
 // CHECK:STDOUT:     %e: %Basic.type = bind_name e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [concrete = constants.%UseForwardDeclared] {
-// CHECK:STDOUT:     %f.patt: %pattern_type.fe1 = binding_pattern f
-// CHECK:STDOUT:     %f.param_patt: %pattern_type.fe1 = value_param_pattern %f.patt, call_param0
+// CHECK:STDOUT:     %f.patt: %pattern_type.fe1 = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.param_patt: %pattern_type.fe1 = value_param_pattern %f.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %f.param: %ForwardDeclared.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
@@ -252,15 +265,15 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %F.ref.loc14: %ForwardDeclared.assoc_type = name_ref F, imports.%Main.import_ref.339 [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   %UseForwardDeclaredF: %ForwardDeclared.assoc_type = bind_alias UseForwardDeclaredF, imports.%Main.import_ref.339 [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type.97e = binding_pattern f
-// CHECK:STDOUT:     %.loc16_1: %pattern_type.97e = var_pattern %f.patt
+// CHECK:STDOUT:     %f.patt: %pattern_type.97e = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type.97e = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %ptr = var f
-// CHECK:STDOUT:   %.loc16_23: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %f.var: ref %ptr = var %f.var_patt [concrete]
+// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty [from "a.carbon"] {
@@ -302,9 +315,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f = name_ref f_ref, imports.%Main.f_ref
-// CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc16
+// CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f = name_ref f_ref, imports.%Main.f_ref [concrete = imports.%f_ref.var]
+// CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0 [concrete = constants.%.7e4]
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc16 [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%f.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

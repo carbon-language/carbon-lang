@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -23,5 +23,31 @@ fn F(true_: True, false_: False) {
 }
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
+  //@dump-sem-ir-begin
   return Neq(a, b);
+  //@dump-sem-ir-end
 }
+
+// CHECK:STDOUT: --- int_neq.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Neq.type: type = fn_type @Neq [concrete]
+// CHECK:STDOUT:   %Neq: %Neq.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Neq.ref: %Neq.type = name_ref Neq, file.%Neq.decl [concrete = constants.%Neq]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.neq: init bool = call %Neq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc14_19.1: bool = value_of_initializer %int.neq
+// CHECK:STDOUT:   %.loc14_19.2: bool = converted %int.neq, %.loc14_19.1
+// CHECK:STDOUT:   return %.loc14_19.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

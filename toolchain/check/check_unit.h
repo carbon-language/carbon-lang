@@ -68,18 +68,17 @@ struct UnitAndImports {
     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
   };
 
-  explicit UnitAndImports(SemIR::CheckIRId check_ir_id, Unit& unit)
-      : check_ir_id(check_ir_id),
-        unit(&unit),
-        err_tracker(*unit.consumer),
-        emitter(&err_tracker, unit.tree_and_subtrees_getter) {}
+  explicit UnitAndImports(Unit* unit,
+                          Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter)
+      : unit(unit),
+        err_tracker(*unit->consumer),
+        emitter(&err_tracker, tree_and_subtrees_getter) {}
 
   auto parse_tree() -> const Parse::Tree& { return unit->sem_ir->parse_tree(); }
   auto source() -> const SourceBuffer& {
     return parse_tree().tokens().source();
   }
 
-  SemIR::CheckIRId check_ir_id;
   Unit* unit;
 
   // Emitter information.
@@ -125,7 +124,7 @@ class CheckUnit {
       UnitAndImports* unit_and_imports,
       llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-      llvm::raw_ostream* vlog_stream);
+      llvm::StringRef target, llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;
@@ -170,6 +169,9 @@ class CheckUnit {
   // same witnesses.
   auto CheckPoisonedConcreteImplLookupQueries() -> void;
 
+  // Look for `impl` declarations that are invalid.
+  auto CheckImpls() -> void;
+
   // Does work after processing the parse tree, such as finishing the IR and
   // checking for missing contents.
   auto FinishRun() -> void;
@@ -180,9 +182,11 @@ class CheckUnit {
   auto ProcessNodeIds() -> bool;
 
   UnitAndImports* unit_and_imports_;
+  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
   // The number of IRs being checked in total.
   int total_ir_count_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
+  llvm::StringRef target_;
   llvm::raw_ostream* vlog_stream_;
 
   DiagnosticEmitter emitter_;

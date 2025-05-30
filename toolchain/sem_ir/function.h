@@ -15,6 +15,9 @@ namespace Carbon::SemIR {
 
 // Function-specific fields.
 struct FunctionFields {
+  // Kinds of special functions.
+  enum class SpecialFunctionKind : uint8_t { None, Thunk };
+
   // Kinds of virtual modifiers that can apply to functions.
   enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
 
@@ -40,6 +43,11 @@ struct FunctionFields {
   // return type.
   InstId return_slot_pattern_id;
 
+  // Which kind of special function this is, if any. This is used in cases where
+  // a special function would otherwise be indistinguishable from a normal
+  // function.
+  SpecialFunctionKind special_function_kind = SpecialFunctionKind::None;
+
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
   VirtualModifier virtual_modifier;
@@ -48,8 +56,8 @@ struct FunctionFields {
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
   int32_t virtual_index = -1;
 
-  // The implicit self parameter, if any, in implicit_param_patterns_id from
-  // EntityWithParamsBase.
+  // The implicit self parameter pattern, if any, in
+  // implicit_param_patterns_id from EntityWithParamsBase.
   InstId self_param_id = InstId::None;
 
   // The following member is set on the first call to the function, or at the
@@ -68,11 +76,12 @@ struct FunctionFields {
   llvm::SmallVector<InstBlockId> body_block_ids = {};
 
   // If the function is imported from C++, points to the Clang declaration in
-  // the AST. Used for mangling. The AST is owned by `CompileSubcommand` so we
-  // expect it to be live from `Function` creation to mangling.
+  // the AST. Used for mangling and inline function definition code generation.
+  // The AST is owned by `CompileSubcommand` so we expect it to be live from
+  // `Function` creation to mangling.
   // TODO: #4666 Ensure we can easily serialize/deserialize this. Consider decl
   // ID to point into the AST.
-  const clang::NamedDecl* cpp_decl = nullptr;
+  clang::FunctionDecl* cpp_decl = nullptr;
 };
 
 // A function. See EntityWithParamsBase regarding the inheritance here.
@@ -124,7 +133,7 @@ struct Function : public EntityWithParamsBase,
 
 class File;
 
-struct CalleeFunction {
+struct CalleeFunction : public Printable<CalleeFunction> {
   // The function. `None` if not a function.
   FunctionId function_id;
   // The specific that contains the function.
@@ -138,6 +147,14 @@ struct CalleeFunction {
   InstId self_id;
   // True if an error instruction was found.
   bool is_error;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{function_id: " << function_id
+        << ", enclosing_specific_id: " << enclosing_specific_id
+        << ", resolved_specific_id: " << resolved_specific_id
+        << ", self_type_id: " << self_type_id << ", self_id: " << self_id
+        << ", is_error: " << is_error << "}";
+  }
 };
 
 // Returns information for the function corresponding to callee_id.

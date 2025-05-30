@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/generic.carbon
@@ -22,6 +25,8 @@ fn F() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.afe: type = pattern_type %ptr [symbolic]
@@ -34,6 +39,7 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,32 +54,32 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32 [symbolic = constants.%T]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.afe = binding_pattern p
-// CHECK:STDOUT:     %.loc13_3: %pattern_type.afe = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: %pattern_type.afe = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type.afe = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr = var p
-// CHECK:STDOUT:   %.loc13_11: type = splice_block %ptr [symbolic = constants.%ptr] {
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc13 [symbolic = constants.%ptr]
+// CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt
+// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [symbolic = constants.%ptr] {
+// CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc16 [symbolic = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7dc = binding_pattern a
-// CHECK:STDOUT:     %.loc14_3: %pattern_type.7dc = var_pattern %a.patt
+// CHECK:STDOUT:     %a.patt: %pattern_type.7dc = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.7dc = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %T = var a
+// CHECK:STDOUT:   %a.var: ref %T = var %a.var_patt
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p
-// CHECK:STDOUT:   %.loc14_15: %ptr = bind_value %p.ref
-// CHECK:STDOUT:   %.loc14_14.1: ref %T = deref %.loc14_15
-// CHECK:STDOUT:   %.loc14_14.2: %T = bind_value %.loc14_14.1
-// CHECK:STDOUT:   assign %a.var, %.loc14_14.2
-// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc17_15: %ptr = bind_value %p.ref
+// CHECK:STDOUT:   %.loc17_14.1: ref %T = deref %.loc17_15
+// CHECK:STDOUT:   %.loc17_14.2: %T = bind_value %.loc17_14.1
+// CHECK:STDOUT:   assign %a.var, %.loc17_14.2
+// CHECK:STDOUT:   %T.ref.loc17: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

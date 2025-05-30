@@ -14,7 +14,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/subpattern.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -44,10 +44,15 @@ enum class MatchKind : uint8_t {
 // The collected state of a pattern-matching operation.
 class MatchContext {
  public:
-  struct WorkItem {
+  struct WorkItem : Printable<WorkItem> {
     SemIR::InstId pattern_id;
     // `None` when processing the callee side.
     SemIR::InstId scrutinee_id;
+
+    auto Print(llvm::raw_ostream& out) const -> void {
+      out << "{pattern_id: " << pattern_id << ", scrutinee_id: " << scrutinee_id
+          << "}";
+    }
   };
 
   // Constructs a MatchContext. If `callee_specific_id` is not `None`, this
@@ -303,7 +308,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      CARBON_CHECK(!param_pattern.index.has_value());
+      CARBON_CHECK(!param_pattern.index.has_value(),
+                   "ValueParamPattern index set before callee pattern match");
       param_pattern.index = NextRuntimeIndex();
       ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::ValueParam>(

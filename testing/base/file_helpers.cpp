@@ -14,6 +14,14 @@
 
 namespace Carbon::Testing {
 
+auto GetTempDirectory() -> std::filesystem::path {
+  if (char* tmpdir_env = getenv("TEST_TMPDIR"); tmpdir_env != nullptr) {
+    return tmpdir_env;
+  } else {
+    return std::filesystem::temp_directory_path();
+  }
+}
+
 auto ReadFile(std::filesystem::path path) -> ErrorOr<std::string> {
   std::ifstream file_stream(path);
   if (file_stream.fail()) {
@@ -29,13 +37,7 @@ auto ReadFile(std::filesystem::path path) -> ErrorOr<std::string> {
 
 auto WriteTestFile(llvm::StringRef name, llvm::StringRef contents)
     -> ErrorOr<std::filesystem::path> {
-  std::filesystem::path test_tmpdir;
-  if (char* tmpdir_env = getenv("TEST_TMPDIR"); tmpdir_env != nullptr) {
-    test_tmpdir = std::string(tmpdir_env);
-  } else {
-    test_tmpdir = std::filesystem::temp_directory_path();
-  }
-
+  std::filesystem::path test_tmpdir = GetTempDirectory();
   const auto* unit_test = ::testing::UnitTest::GetInstance();
   const auto* test_info = unit_test->current_test_info();
   std::filesystem::path test_file =

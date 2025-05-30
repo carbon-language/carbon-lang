@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/overloaded/no_prelude/index.carbon
@@ -93,6 +96,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %IndexWith: type = class_type @IndexWith [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -102,6 +106,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
 // CHECK:STDOUT:     import Core//core_wrong_index_with
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.IndexWith: type = import_ref Core//core_wrong_index_with, IndexWith, loaded [concrete = constants.%IndexWith]
 // CHECK:STDOUT:   %Core.import_ref.8f2: <witness> = import_ref Core//core_wrong_index_with, loc4_18, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Core.import_ref.4c7 = import_ref Core//core_wrong_index_with, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -177,7 +182,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %IndexWith.decl: %IndexWith.type.68b = interface_decl @IndexWith [concrete = constants.%IndexWith.generic] {
-// CHECK:STDOUT:     %SubscriptType.patt: %pattern_type.98f = symbolic_binding_pattern SubscriptType, 0
+// CHECK:STDOUT:     %SubscriptType.patt: %pattern_type.98f = symbolic_binding_pattern SubscriptType, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %SubscriptType.loc4_21.1: type = bind_symbolic_name SubscriptType, 0 [symbolic = %SubscriptType.loc4_21.2 (constants.%SubscriptType)]
 // CHECK:STDOUT:   }
@@ -197,12 +202,12 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.b94) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %At.decl: @IndexWith.%At.type (%At.type) = fn_decl @At [symbolic = @IndexWith.%At (constants.%At)] {
-// CHECK:STDOUT:       %self.patt: @At.%pattern_type.loc5_9 (%pattern_type.2ad) = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: @At.%pattern_type.loc5_9 (%pattern_type.2ad) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:       %subscript.patt: @At.%pattern_type.loc5_21 (%pattern_type.7dc) = binding_pattern subscript
-// CHECK:STDOUT:       %subscript.param_patt: @At.%pattern_type.loc5_21 (%pattern_type.7dc) = value_param_pattern %subscript.patt, call_param1
-// CHECK:STDOUT:       %return.patt: %pattern_type.cb1 = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:       %self.patt: @At.%pattern_type.loc5_9 (%pattern_type.2ad) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @At.%pattern_type.loc5_9 (%pattern_type.2ad) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %subscript.patt: @At.%pattern_type.loc5_21 (%pattern_type.7dc) = binding_pattern subscript [concrete]
+// CHECK:STDOUT:       %subscript.param_patt: @At.%pattern_type.loc5_21 (%pattern_type.7dc) = value_param_pattern %subscript.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc5_51.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc5_51.2: type = converted %.loc5_51.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -254,10 +259,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %pattern_type.loc5_21 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@At.%SubscriptType) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(%SubscriptType.loc4_21.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- wrong_arg_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -269,10 +270,10 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Self.30a: %IndexWith.type.bd2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %At.type.cf4: type = fn_type @At.1, @IndexWith(%SubscriptType) [symbolic]
 // CHECK:STDOUT:   %At.281: %At.type.cf4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %SubscriptType [symbolic]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.30a [symbolic]
 // CHECK:STDOUT:   %pattern_type.e1a: type = pattern_type %Self.as_type [symbolic]
-// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %SubscriptType [symbolic]
 // CHECK:STDOUT:   %IndexWith.assoc_type.290: type = assoc_entity_type @IndexWith, @IndexWith(%SubscriptType) [symbolic]
 // CHECK:STDOUT:   %assoc0.af8: %IndexWith.assoc_type.290 = assoc_entity element0, imports.%Core.import_ref.e99 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.a51: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type)> [concrete]
@@ -306,6 +307,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//core_wrong_arg_count, loc4_21, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %Core.import_ref.fb5: @IndexWith.%IndexWith.type (%IndexWith.type.bd2) = import_ref Core//core_wrong_arg_count, inst25 [no loc], loaded [symbolic = @IndexWith.%Self (constants.%Self.30a)]
 // CHECK:STDOUT:   %Core.import_ref.e99: @IndexWith.%At.type (%At.type.cf4) = import_ref Core//core_wrong_arg_count, loc5_52, loaded [symbolic = @IndexWith.%At (constants.%At.281)]
+// CHECK:STDOUT:   %Core.import_ref.981 = import_ref Core//core_wrong_arg_count, loc5_52, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -349,12 +351,12 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc6_7.2 as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.486 = fn_decl @At.2 [concrete = constants.%At.7c4] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %subscript.patt: %pattern_type.cb1 = binding_pattern subscript
-// CHECK:STDOUT:     %subscript.param_patt: %pattern_type.cb1 = value_param_pattern %subscript.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %subscript.patt: %pattern_type.cb1 = binding_pattern subscript [concrete]
+// CHECK:STDOUT:     %subscript.param_patt: %pattern_type.cb1 = value_param_pattern %subscript.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7_40.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_40.2: type = converted %.loc7_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -412,10 +414,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(%SubscriptType) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith(@At.1.%SubscriptType) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%SubscriptType, constants.%Self.30a) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType

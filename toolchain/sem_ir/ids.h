@@ -69,6 +69,7 @@ constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 // construction, and this allows that check to be represented in the type
 // system.
 struct TypeInstId : public InstId {
+  static constexpr llvm::StringLiteral Label = "type_inst";
   static const TypeInstId None;
 
   using InstId::InstId;
@@ -96,6 +97,8 @@ constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
 // than substituting into it.
 class AbsoluteInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "absolute_inst";
+
   // Support implicit conversion from InstId so that InstId and AbsoluteInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -118,6 +121,8 @@ class AbsoluteInstId : public InstId {
 // an instruction.
 class DestInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "dest_inst";
+
   // Support implicit conversion from InstId so that InstId and DestInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -141,6 +146,8 @@ class DestInstId : public InstId {
 // has a non-constant value, the field is left unchanged by evaluation.
 class MetaInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "meta_inst";
+
   // Support implicit conversion from InstId so that InstId and MetaInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -272,8 +279,14 @@ struct FunctionId : public IdBase<FunctionId> {
 // check execution.
 struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
+
+  // Used when referring to the imported C++.
+  static const CheckIRId Cpp;
+
   using IdBase::IdBase;
 };
+
+constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a class.
 struct ClassId : public IdBase<ClassId> {
@@ -941,6 +954,9 @@ struct LocId : public IdBase<LocId> {
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
+  // Note that the returned `ImportIRInstId` only identifies a location; it is
+  // not correct to interpret it as the instruction from which another
+  // instruction was imported. Use `InstStore::GetImportSource` for that.
   auto import_ir_inst_id() const -> ImportIRInstId {
     if (!has_value()) {
       return ImportIRInstId::None;

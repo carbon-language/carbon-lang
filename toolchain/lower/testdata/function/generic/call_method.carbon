@@ -23,15 +23,15 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'call_method.carbon'
 // CHECK:STDOUT: source_filename = "call_method.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc18_3.2 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc18_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CCallF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc18_3.2, i64 0, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc18_3, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !8
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !8
 // CHECK:STDOUT:   %.loc20_14 = load i32, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   %F.call = call i32 @_CF.C.Main.b88d1103f417c6d4(ptr %c.var, i32 %.loc20_14), !dbg !10
@@ -44,7 +44,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.C.Main.b88d1103f417c6d4(ptr %self, i32 %x) !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.b88d1103f417c6d4(ptr %self, i32 %x) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !13
 // CHECK:STDOUT: }

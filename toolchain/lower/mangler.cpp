@@ -10,8 +10,16 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/pattern.h"
 
 namespace Carbon::Lower {
+
+auto Mangler::MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id)
+    -> void {
+  CARBON_CHECK(name_id.AsIdentifierId().has_value(),
+               "Mangling non-identifier name {0}", name_id);
+  os << names().GetAsStringIfIdentifier(name_id);
+}
 
 auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                                               SemIR::NameScopeId name_scope_id)
@@ -63,8 +71,9 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         names_to_render.push_back(
             {.name_scope_id = interface.scope_id, .prefix = ':'});
 
-        auto self_inst =
-            insts().Get(constant_values().GetConstantInstId(impl.self_id));
+        auto self_const_inst_id =
+            constant_values().GetConstantInstId(impl.self_id);
+        auto self_inst = insts().Get(self_const_inst_id);
         CARBON_KIND_SWITCH(self_inst) {
           case CARBON_KIND(SemIR::ClassType class_type): {
             auto next_name_scope_id =
@@ -96,9 +105,13 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                           .int_id);
             break;
           }
-          default:
-            CARBON_FATAL("Attempting to mangle unsupported SemIR.");
+          default: {
+            // Fall back to including a fingerprint.
+            llvm::write_hex(
+                os, fingerprinter_.GetOrCompute(&sem_ir(), self_const_inst_id),
+                llvm::HexPrintStyle::Lower, 16);
             break;
+          }
         }
         // Skip the tail of the loop that adds the parent name scope to the
         // stack - the scope in which the impl was defined is not part of the
@@ -107,13 +120,12 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         continue;
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
-        os << names().GetAsStringIfIdentifier(
-            sem_ir().classes().Get(class_decl.class_id).name_id);
+        MangleNameId(os, sem_ir().classes().Get(class_decl.class_id).name_id);
         break;
       }
       case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-        os << names().GetAsStringIfIdentifier(
-            sem_ir().interfaces().Get(interface_decl.interface_id).name_id);
+        MangleNameId(
+            os, sem_ir().interfaces().Get(interface_decl.interface_id).name_id);
         break;
       }
       case SemIR::Namespace::Kind: {
@@ -144,7 +156,16 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   RawStringOstream os;
   os << "_C";
 
-  os << names().GetAsStringIfIdentifier(function.name_id);
+  MangleNameId(os, function.name_id);
+
+  // For a special function, add a marker to disambiguate.
+  switch (function.special_function_kind) {
+    case SemIR::Function::SpecialFunctionKind::None:
+      break;
+    case SemIR::Function::SpecialFunctionKind::Thunk:
+      os << ":thunk";
+      break;
+  }
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 
@@ -163,6 +184,23 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   return os.TakeStr();
 }
 
+auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
+  // Use the name of the first binding in the variable as its mangled name.
+  auto var_name_id =
+      SemIR::GetFirstBindingNameFromPatternId(sem_ir(), pattern_id);
+  if (!var_name_id.has_value()) {
+    return std::string();
+  }
+
+  RawStringOstream os;
+  os << "_C";
+
+  auto var_name = sem_ir().entity_names().Get(var_name_id);
+  MangleNameId(os, var_name.name_id);
+  MangleInverseQualifiedNameScope(os, var_name.parent_scope_id);
+  return os.TakeStr();
+}
+
 auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
   CARBON_CHECK(
       cpp_mangle_context_,
@@ -178,8 +216,7 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info) -> std::string {
   RawStringOstream os;
   os << "_C";
 
-  os << names().GetAsStringIfIdentifier(class_info.name_id);
-
+  MangleNameId(os, class_info.name_id);
   MangleInverseQualifiedNameScope(os, class_info.parent_scope_id);
 
   os << ".$vtable";

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/no_prelude/fail_error_recovery.carbon
@@ -40,7 +43,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %N.patt: <error> = symbolic_binding_pattern N, 0
+// CHECK:STDOUT:     %N.patt: <error> = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %error_not_found.ref: <error> = name_ref error_not_found, <error> [concrete = <error>]
 // CHECK:STDOUT:     %N: <error> = bind_symbolic_name N, 0 [concrete = <error>]
@@ -52,12 +55,12 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Foo.decl: <error> = fn_decl @Foo [concrete = <error>] {
-// CHECK:STDOUT:       %self.patt: <error> = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: <error> = value_param_pattern %self.patt, call_param0
+// CHECK:STDOUT:       %self.patt: <error> = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: <error> = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: <error> = value_param call_param0
 // CHECK:STDOUT:       %Self.ref: <error> = name_ref Self, <error> [concrete = <error>]
-// CHECK:STDOUT:       %self: <error> = bind_name self, %self.param
+// CHECK:STDOUT:       %self: <error> = bind_name self, %self.param [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc9: <vtable> = vtable (%Foo.decl) [concrete = <error>]
 // CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]

@@ -4,7 +4,9 @@
 
 #include "toolchain/check/check_unit.h"
 
+#include <iterator>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -17,12 +19,14 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/impl_lookup.h"
+#include "toolchain/check/impl_validation.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_structure.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -51,18 +55,21 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
+      tree_and_subtrees_getter_(
+          tree_and_subtrees_getters
+              [unit_and_imports->unit->sem_ir->check_ir_id().index]),
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
+      target_(target),
       vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(&emitter_, unit_and_imports_->unit->tree_and_subtrees_getter,
-               unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports),
-               tree_and_subtrees_getters.size(), vlog_stream) {}
+      context_(
+          &emitter_, tree_and_subtrees_getter_, unit_and_imports_->unit->sem_ir,
+          GetImportedIRCount(unit_and_imports), total_ir_count_, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -150,7 +157,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
     CARBON_CHECK(!cpp_ast->get());
     *cpp_ast =
         ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                       cpp_import_names, fs_);
+                       cpp_import_names, fs_, target_);
   }
 }
 
@@ -366,7 +373,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    const auto& tree = unit_and_imports_->unit->tree_and_subtrees_getter();
+    const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
@@ -412,14 +419,11 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
   for (const auto& function : context_.functions().array_ref()) {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
-      auto function_loc_id =
-          context_.insts().GetCanonicalLocId(function.non_owning_decl_id);
-      CARBON_CHECK(function_loc_id.kind() ==
-                   SemIR::LocId::Kind::ImportIRInstId);
-      auto import_ir_id = context_.sem_ir()
-                              .import_ir_insts()
-                              .Get(function_loc_id.import_ir_inst_id())
-                              .ir_id();
+      auto function_import_id =
+          context_.insts().GetImportSource(function.non_owning_decl_id);
+      CARBON_CHECK(function_import_id.has_value());
+      auto import_ir_id =
+          context_.sem_ir().import_ir_insts().Get(function_import_id).ir_id();
       auto& import_ir = context_.import_irs().Get(import_ir_id);
       if (import_ir.sem_ir->package_id().has_value() !=
           context_.sem_ir().package_id().has_value()) {
@@ -570,10 +574,13 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   context_.inst_block_stack().PopAndDiscard();
 }
 
+auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
+
 auto CheckUnit::FinishRun() -> void {
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
+  CheckImpls();
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

@@ -7,7 +7,7 @@
 #include "common/vlog.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
-#include "toolchain/check/generic_region_stack.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -18,14 +18,13 @@ namespace Carbon::Check {
 // any applicable instruction lists.
 static auto FinishInst(Context& context, SemIR::InstId inst_id,
                        SemIR::Inst inst) -> void {
-  GenericRegionStack::DependencyKind dep_kind =
-      GenericRegionStack::DependencyKind::None;
+  DependentInst::Kind dep_kind = DependentInst::None;
 
   // If the instruction has a symbolic constant type, track that we need to
   // substitute into it.
   if (context.constant_values().DependsOnGenericParameter(
           context.types().GetConstantId(inst.type_id()))) {
-    dep_kind |= GenericRegionStack::DependencyKind::SymbolicType;
+    dep_kind |= DependentInst::SymbolicType;
   }
 
   // If the instruction has a constant value, compute it.
@@ -38,7 +37,7 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
     // If the constant value is symbolic, track that we need to substitute into
     // it.
     if (context.constant_values().DependsOnGenericParameter(const_id)) {
-      dep_kind |= GenericRegionStack::DependencyKind::SymbolicConstant;
+      dep_kind |= DependentInst::SymbolicConstant;
     }
   }
 
@@ -49,9 +48,9 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
       "Use AddDependentActionInst to add an action instruction");
 
   // Keep track of dependent instructions.
-  if (dep_kind != GenericRegionStack::DependencyKind::None) {
-    context.generic_region_stack().AddDependentInst(
-        {.inst_id = inst_id, .kind = dep_kind});
+  if (dep_kind != DependentInst::None) {
+    AttachDependentInstToCurrentGeneric(context,
+                                        {.inst_id = inst_id, .kind = dep_kind});
   }
 }
 
@@ -86,9 +85,8 @@ auto AddDependentActionInst(Context& context,
   context.constant_values().Set(inst_id, const_id);
 
   // Register the instruction to be added to the eval block.
-  context.generic_region_stack().AddDependentInst(
-      {.inst_id = inst_id,
-       .kind = GenericRegionStack::DependencyKind::Template});
+  AttachDependentInstToCurrentGeneric(
+      context, {.inst_id = inst_id, .kind = DependentInst::Template});
   return inst_id;
 }
 
@@ -232,10 +230,20 @@ auto ReplaceInstBeforeConstantUse(Context& context, SemIR::InstId inst_id,
 
 auto ReplaceInstPreservingConstantValue(Context& context, SemIR::InstId inst_id,
                                         SemIR::Inst inst) -> void {
-  auto old_const_id = context.constant_values().Get(inst_id);
+  // Check that the type didn't change: a change of type will change the
+  // constant value. Replace the type with the attached type.
+  auto old_type_id = context.insts().GetAttachedType(inst_id);
+  CARBON_CHECK(context.types().GetUnattachedType(old_type_id) == inst.type_id(),
+               "Given wrong type for replacement instruction");
+  inst.SetType(old_type_id);
+
+  // Update the instruction.
   context.sem_ir().insts().Set(inst_id, inst);
   CARBON_VLOG_TO(context.vlog_stream(), "ReplaceInst: {0} -> {1}\n", inst_id,
                  inst);
+
+  // Check the constant value didn't change.
+  auto old_const_id = context.constant_values().Get(inst_id);
   auto new_const_id = TryEvalInstUnsafe(context, inst_id, inst);
   CARBON_CHECK(old_const_id == new_const_id);
 }

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -31,7 +31,9 @@ fn F() {
 }
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
+  //@dump-sem-ir-begin
   return RightShift(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- u32.carbon
@@ -54,7 +56,9 @@ fn F() {
 }
 
 fn RuntimeCall(a: u32, b: i32) -> u32 {
+  //@dump-sem-ir-begin
   return RightShift(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- literal.carbon
@@ -127,3 +131,51 @@ let negative_lit: Core.IntLiteral() = RightShiftLit(1, -1);
 // CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
+
+// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %RightShift.type.050: type = fn_type @RightShift.1 [concrete]
+// CHECK:STDOUT:   %RightShift: %RightShift.type.050 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %RightShift.ref: %RightShift.type.050 = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.right_shift: init %i32 = call %RightShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc22_26.1: %i32 = value_of_initializer %int.right_shift
+// CHECK:STDOUT:   %.loc22_26.2: %i32 = converted %int.right_shift, %.loc22_26.1
+// CHECK:STDOUT:   return %.loc22_26.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- u32.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %RightShift.type.050: type = fn_type @RightShift.1 [concrete]
+// CHECK:STDOUT:   %RightShift: %RightShift.type.050 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32) -> %u32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %RightShift.ref: %RightShift.type.050 = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
+// CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %int.right_shift: init %u32 = call %RightShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc21_26.1: %u32 = value_of_initializer %int.right_shift
+// CHECK:STDOUT:   %.loc21_26.2: %u32 = converted %int.right_shift, %.loc21_26.1
+// CHECK:STDOUT:   return %.loc21_26.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

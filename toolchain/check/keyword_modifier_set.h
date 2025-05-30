@@ -54,7 +54,7 @@ class KeywordModifierSet {
     Method = Abstract | Impl | Virtual,
     ImplDecl = Extend | Final,
     Interface = Default | Final,
-    Decl = Class | Method | Impl | Interface | Export | Returned,
+    Decl = Class | Method | Interface | Export | Returned,
     None = 0,
 
     LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Returned)

@@ -2,8 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -59,14 +60,14 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %NS.patt: %pattern_type = binding_pattern NS
-// CHECK:STDOUT:     %.loc5_3.1: %pattern_type = var_pattern %NS.patt
+// CHECK:STDOUT:     %NS.patt: %pattern_type = binding_pattern NS [concrete]
+// CHECK:STDOUT:     %NS.var_patt: %pattern_type = var_pattern %NS.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NS.var: ref %empty_tuple.type = var NS
+// CHECK:STDOUT:   %NS.var: ref %empty_tuple.type = var %NS.var_patt
 // CHECK:STDOUT:   %.loc5_17.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_17.2: init %empty_tuple.type = tuple_init () to %NS.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_3.2: init %empty_tuple.type = converted %.loc5_17.1, %.loc5_17.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %NS.var, %.loc5_3.2
+// CHECK:STDOUT:   %.loc5_3: init %empty_tuple.type = converted %.loc5_17.1, %.loc5_17.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %NS.var, %.loc5_3
 // CHECK:STDOUT:   %.loc5_12.1: type = splice_block %.loc5_12.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_12.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc5_12.3: type = converted %.loc5_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -78,14 +79,14 @@ fn Main() {
 // CHECK:STDOUT:   %.loc6_6: init %empty_tuple.type = converted %.loc6_9.1, %.loc6_9.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %NS.ref, %.loc6_6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt.loc8: %pattern_type = binding_pattern x
-// CHECK:STDOUT:     %.loc8_3.1: %pattern_type = var_pattern %x.patt.loc8
+// CHECK:STDOUT:     %x.patt.loc8: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.var_patt.loc8: %pattern_type = var_pattern %x.patt.loc8 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var.loc8: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %x.var.loc8: ref %empty_tuple.type = var %x.var_patt.loc8
 // CHECK:STDOUT:   %.loc8_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc8_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc8 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_3.2: init %empty_tuple.type = converted %.loc8_16.1, %.loc8_16.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var.loc8, %.loc8_3.2
+// CHECK:STDOUT:   %.loc8_3: init %empty_tuple.type = converted %.loc8_16.1, %.loc8_16.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var.loc8, %.loc8_3
 // CHECK:STDOUT:   %.loc8_11.1: type = splice_block %.loc8_11.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc8_11.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_11.3: type = converted %.loc8_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -96,14 +97,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt.loc10: %pattern_type = binding_pattern x
-// CHECK:STDOUT:     %.loc10_5.1: %pattern_type = var_pattern %x.patt.loc10
+// CHECK:STDOUT:     %x.patt.loc10: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.var_patt.loc10: %pattern_type = var_pattern %x.patt.loc10 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var.loc10: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %x.var.loc10: ref %empty_tuple.type = var %x.var_patt.loc10
 // CHECK:STDOUT:   %.loc10_18.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_18.2: init %empty_tuple.type = tuple_init () to %x.var.loc10 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_5.2: init %empty_tuple.type = converted %.loc10_18.1, %.loc10_18.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var.loc10, %.loc10_5.2
+// CHECK:STDOUT:   %.loc10_5: init %empty_tuple.type = converted %.loc10_18.1, %.loc10_18.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var.loc10, %.loc10_5
 // CHECK:STDOUT:   %.loc10_13.1: type = splice_block %.loc10_13.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc10_13.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_13.3: type = converted %.loc10_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -118,11 +119,5 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

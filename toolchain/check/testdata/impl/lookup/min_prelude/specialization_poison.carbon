@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
-// EXTRA-ARGS: --no-dump-sem-ir --custom-core
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -169,62 +169,3 @@ fn G[X:! type](p: X*) -> (X*).(I.T) {
 final impl forall [V:! type] V* as I where .T = V {
   fn F[self: Self]() -> V { return *self; }
 }
-
-// --- todo_final_overlaps_earlier_non_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-impl forall [T:! Y] T as Z(T) {}
-
-// TODO: Diagnose overlap with previous impl (query of this matches that).
-final impl forall [T:! type] T as Z(T) {}
-
-// --- todo_final_overlaps_later_non_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-// TODO: Diagnose overlap with next impl (query of this matches that).
-final impl forall [T:! type] T as Z(T) {}
-
-impl forall [T:! Y] T as Z(T) {}
-
-// --- todo_final_overlaps_earlier_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-final impl forall [T:! Y] T as Z(T) {}
-
-// TODO: Diagnose overlap with previous impl (query of this matches that).
-final impl forall [T:! type] T as Z(T) {}
-
-// --- todo_final_overlaps_later_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-// TODO: Diagnose overlap with next impl (query of this matches that)
-final impl forall [T:! type] T as Z(T) {}
-
-final impl forall [T:! Y] T as Z(T) {}
-
-// --- todo_non_final_overlaps_non_final_impl.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T:! type) {}
-interface Y {}
-
-impl forall [T:! Y] T as Z(T) {}
-
-class C(T:! type) {}
-// No diagnosis here as the type structure is unique.
-impl forall [T:! type] T as Z(C(T)) {}
-
-// TODO: Diagnose overlap with first impl (same type structure).
-impl forall [T:! type] T as Z(T) {}

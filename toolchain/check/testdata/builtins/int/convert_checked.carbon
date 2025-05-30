@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -42,6 +42,17 @@ fn Uint32ToInt64(a: u32) -> i64 = "int.convert_checked";
 fn Uint32ToUint64(a: u32) -> u64 = "int.convert_checked";
 fn Int32ToIntLiteral(a: i32) -> IntLiteral() = "int.convert_checked";
 fn Uint32ToUintLiteral(a: u32) -> IntLiteral() = "int.convert_checked";
+
+// --- runtime_call.carbon
+
+library "[[@TEST_NAME]]";
+import library "int_ops";
+
+//@dump-sem-ir-begin
+let SizePreserving: u32 = Int32ToUint32(1);
+let Narrowing: i16 = Int32ToInt16(1);
+let Widening: i64 = Int32ToInt64(1);
+//@dump-sem-ir-end
 
 // --- identity.carbon
 
@@ -250,3 +261,119 @@ let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
+
+// CHECK:STDOUT: --- runtime_call.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.4a9: type = pattern_type %u32 [concrete]
+// CHECK:STDOUT:   %Int32ToUint32.type: type = fn_type @Int32ToUint32 [concrete]
+// CHECK:STDOUT:   %Int32ToUint32: %Int32ToUint32.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.9ba: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %Convert.type.6da: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.0b2: type = fn_type @Convert.2, @impl.c81(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.6d7: %Convert.type.0b2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.e34: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e36, @impl.c81(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.2, @impl.c81(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.e34) [concrete]
+// CHECK:STDOUT:   %.d6a: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.16d [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.16d, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_1.47b: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_1.c1d: %u32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %pattern_type.88f: type = pattern_type %i16 [concrete]
+// CHECK:STDOUT:   %Int32ToInt16.type: type = fn_type @Int32ToInt16 [concrete]
+// CHECK:STDOUT:   %Int32ToInt16: %Int32ToInt16.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_1.c22: %i16 = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
+// CHECK:STDOUT:   %pattern_type.a10: type = pattern_type %i64 [concrete]
+// CHECK:STDOUT:   %Int32ToInt64.type: type = fn_type @Int32ToInt64 [concrete]
+// CHECK:STDOUT:   %Int32ToInt64: %Int32ToInt64.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_1.a95: %i64 = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.Int32ToUint32: %Int32ToUint32.type = import_ref Main//int_ops, Int32ToUint32, loaded [concrete = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %Main.Int32ToInt16: %Int32ToInt16.type = import_ref Main//int_ops, Int32ToInt16, loaded [concrete = constants.%Int32ToInt16]
+// CHECK:STDOUT:   %Main.Int32ToInt64: %Int32ToInt64.type = import_ref Main//int_ops, Int32ToInt64, loaded [concrete = constants.%Int32ToInt64]
+// CHECK:STDOUT:   %Core.import_ref.a86: @impl.c81.%Convert.type (%Convert.type.0b2) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.c81.%Convert (constants.%Convert.6d7)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (%Core.import_ref.a86), @impl.c81 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %SizePreserving.patt: %pattern_type.4a9 = binding_pattern SizePreserving [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc6_21: type = splice_block %u32 [concrete = constants.%u32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc6_42.1: ref %u32 = temporary_storage
+// CHECK:STDOUT:   %.loc6_42.2: ref %u32 = temporary %.loc6_42.1, @__global_init.%int.convert_checked.loc6_42
+// CHECK:STDOUT:   %SizePreserving: ref %u32 = bind_name SizePreserving, %.loc6_42.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %Narrowing.patt: %pattern_type.88f = binding_pattern Narrowing [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7_16: type = splice_block %i16 [concrete = constants.%i16] {
+// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
+// CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7_36.1: ref %i16 = temporary_storage
+// CHECK:STDOUT:   %.loc7_36.2: ref %i16 = temporary %.loc7_36.1, @__global_init.%int.convert_checked.loc7_36
+// CHECK:STDOUT:   %Narrowing: ref %i16 = bind_name Narrowing, %.loc7_36.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %Widening.patt: %pattern_type.a10 = binding_pattern Widening [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_15: type = splice_block %i64 [concrete = constants.%i64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_35.1: ref %i64 = temporary_storage
+// CHECK:STDOUT:   %.loc8_35.2: ref %i64 = temporary %.loc8_35.1, @__global_init.%int.convert_checked.loc8_35
+// CHECK:STDOUT:   %Widening: ref %i64 = bind_name Widening, %.loc8_35.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Int32ToUint32.ref: %Int32ToUint32.type = name_ref Int32ToUint32, imports.%Main.Int32ToUint32 [concrete = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %int_1.loc6: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc6: %.d6a = impl_witness_access constants.%ImplicitAs.impl_witness.e34, element0 [concrete = constants.%Convert.16d]
+// CHECK:STDOUT:   %bound_method.loc6_41.1: <bound method> = bound_method %int_1.loc6, %impl.elem0.loc6 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc6_41.2: <bound method> = bound_method %int_1.loc6, %specific_fn.loc6 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked.loc6_41: init %i32 = call %bound_method.loc6_41.2(%int_1.loc6) [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc6_41.1: %i32 = value_of_initializer %int.convert_checked.loc6_41 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc6_41.2: %i32 = converted %int_1.loc6, %.loc6_41.1 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %int.convert_checked.loc6_42: init %u32 = call %Int32ToUint32.ref(%.loc6_41.2) [concrete = constants.%int_1.c1d]
+// CHECK:STDOUT:   %Int32ToInt16.ref: %Int32ToInt16.type = name_ref Int32ToInt16, imports.%Main.Int32ToInt16 [concrete = constants.%Int32ToInt16]
+// CHECK:STDOUT:   %int_1.loc7: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc7: %.d6a = impl_witness_access constants.%ImplicitAs.impl_witness.e34, element0 [concrete = constants.%Convert.16d]
+// CHECK:STDOUT:   %bound_method.loc7_35.1: <bound method> = bound_method %int_1.loc7, %impl.elem0.loc7 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc7_35.2: <bound method> = bound_method %int_1.loc7, %specific_fn.loc7 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked.loc7_35: init %i32 = call %bound_method.loc7_35.2(%int_1.loc7) [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc7_35.1: %i32 = value_of_initializer %int.convert_checked.loc7_35 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc7_35.2: %i32 = converted %int_1.loc7, %.loc7_35.1 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %int.convert_checked.loc7_36: init %i16 = call %Int32ToInt16.ref(%.loc7_35.2) [concrete = constants.%int_1.c22]
+// CHECK:STDOUT:   %Int32ToInt64.ref: %Int32ToInt64.type = name_ref Int32ToInt64, imports.%Main.Int32ToInt64 [concrete = constants.%Int32ToInt64]
+// CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc8: %.d6a = impl_witness_access constants.%ImplicitAs.impl_witness.e34, element0 [concrete = constants.%Convert.16d]
+// CHECK:STDOUT:   %bound_method.loc8_34.1: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_34.2: <bound method> = bound_method %int_1.loc8, %specific_fn.loc8 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked.loc8_34: init %i32 = call %bound_method.loc8_34.2(%int_1.loc8) [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc8_34.1: %i32 = value_of_initializer %int.convert_checked.loc8_34 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc8_34.2: %i32 = converted %int_1.loc8, %.loc8_34.1 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %int.convert_checked.loc8_35: init %i64 = call %Int32ToInt64.ref(%.loc8_34.2) [concrete = constants.%int_1.a95]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

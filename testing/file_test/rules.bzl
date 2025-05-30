@@ -8,6 +8,7 @@ file_test uses the tests_as_input_file rule to transform test dependencies into
 a file which can be accessed as a list. This avoids long argument parsing.
 """
 
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest", "manifest_as_cpp")
 
@@ -51,7 +52,7 @@ def file_test(
         )
         args = ["--explorer_test_targets_file=$(rootpath :{0})".format(tests_file)] + args
 
-        native.sh_test(
+        sh_test(
             name = name,
             srcs = srcs + [prebuilt_binary],
             deps = deps,

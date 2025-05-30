@@ -28,7 +28,7 @@ auto HandleFunctionDefinitionSuspend(Context& context,
 // Handle resuming the definition of a function, after a previous suspension.
 auto HandleFunctionDefinitionResume(Context& context,
                                     Parse::FunctionDefinitionStartId node_id,
-                                    SuspendedFunction suspended_fn) -> void;
+                                    SuspendedFunction&& suspended_fn) -> void;
 
 }  // namespace Carbon::Check
 

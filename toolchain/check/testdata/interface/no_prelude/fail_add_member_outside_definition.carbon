@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/no_prelude/fail_add_member_outside_definition.carbon
@@ -127,8 +130,6 @@ interface Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Self.277, constants.%Self.b60) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%Self.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.3(constants.%Self.277, constants.%Self.b60) {}
 // CHECK:STDOUT:

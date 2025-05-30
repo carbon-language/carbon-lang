@@ -17,7 +17,7 @@ var a: i32 = test_a();
 // CHECK:STDOUT: ; ModuleID = 'simple_with_fun.carbon'
 // CHECK:STDOUT: source_filename = "simple_with_fun.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = internal global i32 0
+// CHECK:STDOUT: @_Ca.Main = global i32 0
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_Ctest_a.Main() !dbg !4 {
@@ -28,12 +28,9 @@ var a: i32 = test_a();
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %test_a.call = call i32 @_Ctest_a.Main(), !dbg !9
-// CHECK:STDOUT:   store i32 %test_a.call, ptr @a, align 4, !dbg !10
+// CHECK:STDOUT:   store i32 %test_a.call, ptr @_Ca.Main, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 0, { 1, 0, 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

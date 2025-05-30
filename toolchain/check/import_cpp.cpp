@@ -179,7 +179,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 // TODO: Consider to always have a (non-null) AST.
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                        llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
+                        llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                        llvm::StringRef target)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
   // TODO: Use all import locations by referring each Clang diagnostic to the
   // relevant import.
@@ -190,9 +191,18 @@ static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
       GenerateCppIncludesHeaderCode(context, imports),
-      // Parse C++ (and not C)
-      {"-x", "c++"}, (importing_file_path + ".generated.cpp_imports.h").str(),
-      "clang-tool", std::make_shared<clang::PCHContainerOperations>(),
+      // Parse C++ (and not C).
+      {
+          "-x",
+          "c++",
+          // Propagate the target to Clang.
+          "-target",
+          target.str(),
+          // Require PIE. Note its default is configurable in Clang.
+          "-fPIE",
+      },
+      (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
+      std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
   // Remove link to the diagnostics consumer before its deletion.
@@ -235,8 +245,8 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 
 auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
-    -> std::unique_ptr<clang::ASTUnit> {
+                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                    llvm::StringRef target) -> std::unique_ptr<clang::ASTUnit> {
   if (imports.empty()) {
     return nullptr;
   }
@@ -244,7 +254,7 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   CARBON_CHECK(!context.sem_ir().cpp_ast());
 
   auto [generated_ast, ast_has_error] =
-      GenerateAst(context, importing_file_path, imports, fs);
+      GenerateAst(context, importing_file_path, imports, fs, target);
 
   PackageNameId package_id = imports.front().package_id;
   CARBON_CHECK(
@@ -310,13 +320,28 @@ static auto MakeIntType(Context& context, IntId size_id) -> TypeExpr {
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
-// Maps a C++ type to a Carbon type. Currently only 32-bit `int` is supported.
+// Maps a C++ type to a Carbon type.
 // TODO: Support more types.
 static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
   const auto* builtin_type = dyn_cast<clang::BuiltinType>(type);
-  if (builtin_type && builtin_type->getKind() == clang::BuiltinType::Int &&
-      context.ast_context().getTypeSize(type) == 32) {
-    return MakeIntType(context, context.ints().Add(32));
+  if (!builtin_type) {
+    return {.inst_id = SemIR::ErrorInst::TypeInstId,
+            .type_id = SemIR::ErrorInst::TypeId};
+  }
+  // TODO: Refactor to avoid duplication.
+  switch (builtin_type->getKind()) {
+    case clang::BuiltinType::Short:
+      if (context.ast_context().getTypeSize(type) == 16) {
+        return MakeIntType(context, context.ints().Add(16));
+      }
+      break;
+    case clang::BuiltinType::Int:
+      if (context.ast_context().getTypeSize(type) == 32) {
+        return MakeIntType(context, context.ints().Add(32));
+      }
+      break;
+    default:
+      break;
   }
   return {.inst_id = SemIR::ErrorInst::TypeInstId,
           .type_id = SemIR::ErrorInst::TypeId};
@@ -407,7 +432,7 @@ static auto GetReturnType(Context& context, SemIR::LocId loc_id,
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                SemIR::NameScopeId scope_id,
                                SemIR::NameId name_id,
-                               const clang::FunctionDecl* clang_decl)
+                               clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
@@ -588,7 +613,7 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
 static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
                            SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                            clang::NamedDecl* clang_decl) -> SemIR::InstId {
-  if (const auto* clang_function_decl =
+  if (auto* clang_function_decl =
           clang::dyn_cast<clang::FunctionDecl>(clang_decl)) {
     return ImportFunctionDecl(context, loc_id, scope_id, name_id,
                               clang_function_decl);
@@ -629,7 +654,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id,
                  llvm::formatv("Unsupported: Lookup succeeded but couldn't "
                                "find a single result; LookupResultKind: {0}",
-                               lookup->getResultKind())
+                               static_cast<int>(lookup->getResultKind()))
                      .str());
     return SemIR::ErrorInst::InstId;
   }

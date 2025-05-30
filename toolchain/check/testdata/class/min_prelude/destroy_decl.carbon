@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core --no-dump-sem-ir
+// EXTRA-ARGS: --dump-sem-ir-ranges=only
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -180,3 +180,16 @@ class C {
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn C.destroy.Foo() {}
+
+// --- fail_return_type_after_no_params.carbon
+
+library "[[@TEST_NAME]]";
+
+// Return type handling special-cases the "no params" case.
+class C {
+  // CHECK:STDERR: fail_return_type_after_no_params.carbon:[[@LINE+4]]:3: error: missing implicit `self` parameter [DestroyFunctionMissingSelf]
+  // CHECK:STDERR:   fn destroy -> ();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  fn destroy -> ();
+}

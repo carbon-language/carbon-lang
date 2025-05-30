@@ -279,14 +279,20 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     return EvalImplLookupResult::MakeNone();
   }
 
-  LoadImportRef(context, impl.witness_id);
+  bool is_effectively_final = query_is_concrete || impl.is_final;
+  auto witness_id = impl.witness_id;
+
+  // Note that this invalidates our `impl` reference. Don't use it again after
+  // this point.
+  LoadImportRef(context, witness_id);
+
   if (specific_id.has_value()) {
     // We need a definition of the specific `impl` so we can access its
     // witness.
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
-  if (query_is_concrete || impl.is_final) {
+  if (is_effectively_final) {
     // TODO: These final results should be cached somehow. Positive (non-None)
     // results could be cached globally, as they can not change. But
     // negative results can change after a final impl is written, so
@@ -294,7 +300,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     // be invalidated by writing a final impl that would match.
     return EvalImplLookupResult::MakeFinal(
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), specific_id, impl.witness_id)));
+            context.sem_ir(), specific_id, witness_id)));
   } else {
     return EvalImplLookupResult::MakeNonFinal();
   }
@@ -412,11 +418,11 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   for (auto import_ir : import_irs) {
     // TODO: Instead of importing all impls, only import ones that are in some
     // way connected to this query.
-    for (auto impl_index : llvm::seq(
-             context.import_irs().Get(import_ir).sem_ir->impls().size())) {
+    for (auto [import_impl_id, _] :
+         context.import_irs().Get(import_ir).sem_ir->impls().enumerate()) {
       // TODO: Track the relevant impls and only consider those ones and any
       // local impls, rather than looping over all impls below.
-      ImportImpl(context, import_ir, SemIR::ImplId(impl_index));
+      ImportImpl(context, import_ir, import_impl_id);
     }
   }
 
@@ -549,7 +555,9 @@ static auto CollectCandidateImplsForQuery(
     // TODO: We can skip the comparison here if the `impl_interface_const_id` is
     // not symbolic, since when the interface and specific ids match, and they
     // aren't symbolic, the structure will be identical.
-    if (!query_type_structure.IsCompatibleWith(type_structure)) {
+    if (!query_type_structure.CompareStructure(
+            TypeStructure::CompareTest::IsEqualToOrMoreSpecificThan,
+            type_structure)) {
       continue;
     }
 
@@ -682,6 +690,19 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   }
 
   return EvalImplLookupResult::MakeNone();
+}
+
+auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
+                       SemIR::ConstantId query_self_const_id,
+                       SemIR::SpecificInterface query_specific_interface,
+                       SemIR::ImplId target_impl) -> bool {
+  if (query_self_const_id == SemIR::ErrorInst::ConstantId) {
+    return false;
+  }
+  auto result = GetWitnessIdForImpl(
+      context, loc_id, /*query_is_concrete=*/false, query_self_const_id,
+      query_specific_interface, target_impl);
+  return result.has_value();
 }
 
 }  // namespace Carbon::Check

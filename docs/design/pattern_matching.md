@@ -22,21 +22,23 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`auto` and type deduction](#auto-and-type-deduction)
         -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
+        -   [Alternatives considered](#alternatives-considered-3)
     -   [Tuple patterns](#tuple-patterns)
     -   [Struct patterns](#struct-patterns)
-        -   [Alternatives considered](#alternatives-considered-3)
+        -   [Alternatives considered](#alternatives-considered-4)
     -   [Alternative patterns](#alternative-patterns)
     -   [Templates](#templates)
     -   [Refutability, overlap, usefulness, and exhaustiveness](#refutability-overlap-usefulness-and-exhaustiveness)
-        -   [Alternatives considered](#alternatives-considered-4)
+        -   [Alternatives considered](#alternatives-considered-5)
 -   [Pattern usage](#pattern-usage)
     -   [Pattern match control flow](#pattern-match-control-flow)
+        -   [Alternatives considered](#alternatives-considered-6)
         -   [Guards](#guards)
     -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
 -   [Open questions](#open-questions)
     -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
     -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
--   [Alternatives considered](#alternatives-considered-5)
+-   [Alternatives considered](#alternatives-considered-7)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -126,9 +128,28 @@ A name binding pattern is a pattern.
 -   _binding-pattern_ ::= _identifier_ `:` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
-The _identifier_ specifies the name of the _binding_. The type of the binding is
-specified by the _expression_. The scrutinee is implicitly converted to that
-type if necessary. The binding is then _bound_ to the converted value.
+A name binding pattern declares a _binding_ with a name specified by the
+_identifier_, which can be used as an expression. If the binding pattern is
+enclosed by a `var` pattern, it is a _reference binding pattern_, and the
+binding is a durable reference expression. Otherwise, it is a _value binding
+pattern_, and the binding is a value expression.
+
+A _variable binding pattern_ is a special kind of reference binding pattern,
+which is the immediate subpattern of its enclosing `var` pattern.
+
+> **TODO:** Specify the conditions under which a binding can be moved. This is
+> expected to be the only difference between variable binding patterns and other
+> reference binding patterns.
+
+The type of the binding is specified by the _expression_. If the pattern is a
+value binding pattern, the scrutinee is implicitly converted to a value
+expression of that type if necessary, and the binding is _bound_ to the
+converted value. If the pattern is a reference binding pattern, the enclosing
+`var` pattern will ensure that the scrutinee is already a durable reference
+expression with the specified type, and the binding is bound directly to it.
+
+A use of a value binding is a value expression of the declared type, and a use
+of a reference binding is a durable reference expression of the declared type.
 
 ```carbon
 fn F() -> i32 {
@@ -294,8 +315,8 @@ scrutinee.
 
 A `var` pattern matches when its nested pattern matches. The type of the storage
 is the resolved type of the nested _pattern_. Any binding patterns within the
-nested pattern refer to portions of the corresponding storage rather than to the
-scrutinee.
+nested pattern are reference binding patterns, and their bindings refer to
+portions of the corresponding storage rather than to the scrutinee.
 
 ```carbon
 fn F(p: i32*);
@@ -309,26 +330,15 @@ fn G() {
 }
 ```
 
-Pattern matching precedes the initialization of the storage for any `var`
-patterns. An introduced variable is only initialized if the complete pattern
-matches.
-
-```carbon
-class X {
-  destructor { Print("Destroyed!"); }
-}
-fn F(x: X) {
-  match ((x, 1 as i32)) {
-    case (var y: X, 0) => {}
-    case (var z: X, 1) => {}
-    // Prints "Destroyed!" only once, when `z` is destroyed.
-  }
-}
-```
-
 A `var` pattern cannot be nested within another `var` pattern. The declaration
 syntax `var` _pattern_ `=` _expresson_ `;` is equivalent to `let` `var`
 _pattern_ `=` _expression_ `;`.
+
+#### Alternatives considered
+
+-   [Treat all bindings under `var` as variable bindings](/proposals/p5164.md#treat-all-bindings-under-var-as-variable-bindings)
+-   [Make `var` a binding pattern modifier](/proposals/p5164.md#make-var-a-binding-pattern-modifier)
+-   [Initialize storage once pattern matching succeeds](/proposals/p5164.md#initialize-storage-once-pattern-matching-succeeds)
 
 ### Tuple patterns
 
@@ -643,12 +653,12 @@ We will diagnose the following situations:
 
 ## Pattern usage
 
-This section is a skeletal design, added to support [the overview](README.md).
-It should not be treated as accepted by the core team; rather, it is a
-placeholder until we have more time to examine this detail. Please feel welcome
-to rewrite and update as appropriate.
-
 ### Pattern match control flow
+
+`match` is a skeletal design, added to support [the overview](README.md). Aside
+from [guards](#guards), it should not be treated as accepted by the core team;
+rather, it is a placeholder until we have more time to examine this detail.
+Please feel welcome to rewrite and update as appropriate.
 
 The most powerful form and easiest to explain form of pattern matching is a
 dedicated control flow construct that subsumes the `switch` of C and C++ into
@@ -701,6 +711,33 @@ composed of the following:
 In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
+
+Any initializing expressions in the scrutinee of a `match` statement are
+[materialized](values.md#temporary-materialization) before pattern matching
+begins, so that the result can be reused by multiple `case`s. However, the
+objects created by `var` patterns are not reused by multiple `case`s:
+
+```carbon
+class X {
+  destructor { Print("Destroyed!"); }
+}
+fn F(x: X) {
+  match ((x, 1 as i32)) {
+    // Prints "Destroyed!" here, because `y` is initialized before we reach the
+    // expression pattern `0` and determine that this case doesn't match,
+    // so it must be destroyed.
+    case (var y: X, 0) => {}
+    case (var z: X, 1) => {
+      // Prints "Destroyed!" again at the end of the block here, when `z` goes
+      // out of scope.
+    }
+  }
+}
+```
+
+#### Alternatives considered
+
+-   [Allow variable binding patterns to alias across `case`s](/proposals/p5164.md#allow-variable-binding-patterns-to-alias-across-cases)
 
 #### Guards
 

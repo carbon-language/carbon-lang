@@ -113,23 +113,22 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
   }
 }
 
-auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
-    -> void {
+auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void {
   const auto& function = GetCurrentFunctionForReturn(context);
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
   if (return_type_id.has_value()) {
     CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error,
                       "missing return value");
-    auto diag = context.emitter().Build(node_id, ReturnStatementMissingExpr);
+    auto diag = context.emitter().Build(loc_id, ReturnStatementMissingExpr);
     NoteReturnType(context, diag, function);
     diag.Emit();
   }
 
-  AddInst<SemIR::Return>(context, node_id, {});
+  AddInst<SemIR::Return>(context, loc_id, {});
 }
 
-auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
+auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
                          SemIR::InstId expr_id) -> void {
   const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
@@ -141,7 +140,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     CARBON_DIAGNOSTIC(
         ReturnStatementDisallowExpr, Error,
         "no return expression should be provided in this context");
-    auto diag = context.emitter().Build(node_id, ReturnStatementDisallowExpr);
+    auto diag = context.emitter().Build(loc_id, ReturnStatementDisallowExpr);
     NoteNoReturnTypeProvided(diag, function);
     diag.Emit();
     expr_id = SemIR::ErrorInst::InstId;
@@ -149,7 +148,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     CARBON_DIAGNOSTIC(
         ReturnExprWithReturnedVar, Error,
         "can only `return var;` in the scope of a `returned var`");
-    auto diag = context.emitter().Build(node_id, ReturnExprWithReturnedVar);
+    auto diag = context.emitter().Build(loc_id, ReturnExprWithReturnedVar);
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
     expr_id = SemIR::ErrorInst::InstId;
@@ -161,13 +160,13 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     return_slot_id = GetCurrentReturnSlot(context);
     CARBON_CHECK(return_slot_id.has_value());
     // Note that this can import a function and invalidate `function`.
-    expr_id = Initialize(context, node_id, return_slot_id, expr_id);
+    expr_id = Initialize(context, loc_id, return_slot_id, expr_id);
   } else {
     expr_id =
-        ConvertToValueOfType(context, node_id, expr_id, return_info.type_id);
+        ConvertToValueOfType(context, loc_id, expr_id, return_info.type_id);
   }
 
-  AddInst<SemIR::ReturnExpr>(context, node_id,
+  AddInst<SemIR::ReturnExpr>(context, loc_id,
                              {.expr_id = expr_id, .dest_id = return_slot_id});
 }
 

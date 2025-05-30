@@ -480,10 +480,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       context.sem_ir(), inst.callee_id, context.specific_id());
   CARBON_CHECK(callee_function.function_id.has_value());
 
-  if (auto builtin_kind = context.sem_ir()
-                              .functions()
-                              .Get(callee_function.function_id)
-                              .builtin_function_kind;
+  const SemIR::Function& function =
+      context.sem_ir().functions().Get(callee_function.function_id);
+  context.AddCallToCurrentFingerprint(callee_function.function_id,
+                                      callee_function.resolved_specific_id);
+
+  if (auto builtin_kind = function.builtin_function_kind;
       builtin_kind != SemIR::BuiltinFunctionKind::None) {
     HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
     return;
@@ -508,8 +510,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   }
 
   llvm::CallInst* call;
-  const auto& function =
-      context.sem_ir().functions().Get(callee_function.function_id);
   if (function.virtual_index != -1) {
     CARBON_CHECK(!args.empty(),
                  "Virtual functions must have at least one parameter");

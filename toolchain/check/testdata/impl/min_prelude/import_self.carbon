@@ -2,8 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 // INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// EXTRA-ARGS: --custom-core
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -64,12 +65,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Op.decl: %Op.type = fn_decl @Op [concrete = constants.%Op] {
-// CHECK:STDOUT:     %self.patt: @Op.%pattern_type (%pattern_type) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @Op.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %other.patt: @Op.%pattern_type (%pattern_type) = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: @Op.%pattern_type (%pattern_type) = value_param_pattern %other.patt, call_param1
-// CHECK:STDOUT:     %return.patt: @Op.%pattern_type (%pattern_type) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Op.%pattern_type (%pattern_type) = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: @Op.%pattern_type (%pattern_type) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Op.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %other.patt: @Op.%pattern_type (%pattern_type) = binding_pattern other [concrete]
+// CHECK:STDOUT:     %other.param_patt: @Op.%pattern_type (%pattern_type) = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: @Op.%pattern_type (%pattern_type) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @Op.%pattern_type (%pattern_type) = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_37: type = facet_access_type %Self.ref.loc5_37 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
@@ -145,6 +146,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op: %Op.type.31b = import_ref Main//a, Op, loaded [concrete = constants.%Op.d59]
 // CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//a, inst19 [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.5a3: %Op.type.31b = import_ref Main//a, loc5_41, loaded [concrete = constants.%Op.d59]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -163,12 +165,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (@impl.%Op.decl), @impl [concrete]
 // CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness %Add.impl_witness_table [concrete = constants.%Add.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt, call_param0
-// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = binding_pattern y
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.cb1 = value_param_pattern %y.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.cb1 = value_param_pattern %y.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_24.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_24.2: type = converted %.loc10_24.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -198,12 +200,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc6_7.2 as %Add.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.adf = fn_decl @Op.2 [concrete = constants.%Op.489] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0
-// CHECK:STDOUT:     %other.patt: %pattern_type.cb1 = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: %pattern_type.cb1 = value_param_pattern %other.patt, call_param1
-// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2
+// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %other.patt: %pattern_type.cb1 = binding_pattern other [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.cb1 = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @impl.%.loc6_7.2 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
@@ -263,11 +265,5 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Self => constants.%Add.facet
 // CHECK:STDOUT:   %Self.as_type => constants.%empty_tuple.type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.cb1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- include_files/destroy.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
