@@ -41,6 +41,7 @@ class ValueStoreRange;
 //
 // IdT::ValueType must represent the type being indexed.
 template <typename IdT>
+  requires(Internal::IdHasValueType<IdT>)
 class ValueStore
     : public std::conditional<
           std::is_base_of_v<Printable<typename IdT::ValueType>,

@@ -19,21 +19,31 @@
 
 namespace Carbon::Internal {
 
+// Ids which are stored in a ValueStore have a ValueType which indicates the
+// type of value held in the ValueStore.
+template <class IdT>
+concept IdHasValueType = requires { typename IdT::ValueType; };
+
 // The max size of each chunk allocation for ValueStore. This is based on TLB
 // page sizes for the target platform.
 //
 // See https://docs.kernel.org/admin-guide/mm/hugetlbpage.html
 template <class IdT>
-  requires requires { typename IdT::ValueType; }
+  requires(IdHasValueType<IdT>)
 static constexpr auto PlatformChunkMaxAllocationBytes() -> int {
-#ifndef NDEBUG
-  // Use a small size in debug builds to ensure multiple chunks get used.
+#if (!defined(NDEBUG) || LLVM_ADDRESS_SANITIZER_BUILD)
+  // Use a small size in unoptimized builds to ensure multiple chunks get used.
+  // And do the same in ASAN builds to reduce bookkeeping overheads. Using large
+  // allocations (e.g. 1M+) incurs a 10x runtime cost for our tests under ASAN.
   return sizeof(typename IdT::ValueType) * 5;
 #else
   // TODO: Should ia64 use 1M or 4M? Should Windows and Mac use different sizes?
 
-  // Linux x64 uses 2M, as x64 CPUs support 4K and 2M page sizes.
-  return 2 * 1024 * 1024;
+  // x64 CPUs support 4K and 2M page sizes, but we see 1M is slower than 1K with
+  // tcmalloc in opt builds for our tests.
+  //
+  // FIXME: More benchmarking needed.
+  return 4 * 1024;
 #endif
 }
 
@@ -42,24 +52,20 @@ static constexpr auto PlatformChunkMaxAllocationBytes() -> int {
 // The number must be a power of two so that that there are no unused values in
 // bits indexing into the allocation.
 template <class IdT>
-  requires requires { typename IdT::ValueType; }
-static constexpr auto PlatformChunkCapacitySize() -> int {
+  requires(IdHasValueType<IdT>)
+static constexpr auto PlatformChunkCapacity() -> int {
   constexpr auto MaxElements =
       PlatformChunkMaxAllocationBytes<IdT>() / sizeof(typename IdT::ValueType);
-  constexpr auto Pow2MaxElements = std::bit_ceil(MaxElements);
-  if (Pow2MaxElements > MaxElements) {
-    return Pow2MaxElements / 2;
-  }
-  return Pow2MaxElements;
+  return std::bit_floor(MaxElements);
 }
 
 // The number of bits needed to index each element in a chunk allocation.
 template <class IdT>
-  requires requires { typename IdT::ValueType; }
+  requires(IdHasValueType<IdT>)
 static constexpr auto PlatformChunkCapacityBits() -> int {
-  static_assert(PlatformChunkCapacitySize<IdT>() > 1);
+  static_assert(PlatformChunkCapacity<IdT>() > 1);
   int bits = 0;
-  for (auto size = PlatformChunkCapacitySize<IdT>(); size > 1; size /= 2) {
+  for (auto size = PlatformChunkCapacity<IdT>(); size > 1; size /= 2) {
     ++bits;
   }
   return bits;
@@ -68,17 +74,17 @@ static constexpr auto PlatformChunkCapacityBits() -> int {
 // Converts an id into an index into the set of chunks, and an offset into that
 // specific chunk.
 template <typename IdT>
-  requires requires { typename IdT::ValueType; }
+  requires(IdHasValueType<IdT>)
 static constexpr auto IdToChunkIndices(IdT id) -> std::pair<int, int> {
   constexpr auto LowBits = PlatformChunkCapacityBits<IdT>();
 
   // Verify there are no unused bits when indexing up to the
-  // PlatformChunkCapacitySize(). This ensures that ids are contiguous values
+  // PlatformChunkCapacity(). This ensures that ids are contiguous values
   // from 0, as if the values were all stored in a single array, and allows
   // using the ids to index into other arrays.
-  static_assert((1 << LowBits) == PlatformChunkCapacitySize<IdT>());
+  static_assert((1 << LowBits) == PlatformChunkCapacity<IdT>());
   // Simple check to make sure nothing went wildly wrong with the
-  // PlatformChunkCapacitySize, and we have some room for a chunk index, and
+  // PlatformChunkCapacity, and we have some room for a chunk index, and
   // that shifting by the number of bits won't be UB in an int32_t.
   static_assert(LowBits < 24);
 
@@ -91,7 +97,7 @@ static constexpr auto IdToChunkIndices(IdT id) -> std::pair<int, int> {
 // Converts an index into the set of chunks, and an offset into that specific
 // chunk, into an id.
 template <typename IdT>
-  requires requires { typename IdT::ValueType; }
+  requires(IdHasValueType<IdT>)
 static constexpr auto ChunkIndicesToId(int chunk, int pos) -> IdT {
   constexpr auto LowBits = PlatformChunkCapacityBits<IdT>();
   // We can only use 31 bits in total because the sign bit is used for making
@@ -110,11 +116,12 @@ static constexpr auto ChunkIndicesToId(int chunk, int pos) -> IdT {
 template <typename IdT, class ValueType>
 struct ValueStoreChunk {
  public:
-  static constexpr auto Capacity = Internal::PlatformChunkCapacitySize<IdT>();
+  static constexpr auto Capacity = Internal::PlatformChunkCapacity<IdT>();
   static constexpr auto CapacityBytes = Capacity * sizeof(ValueType);
 
   ValueStoreChunk()
-      : buf(reinterpret_cast<ValueType*>(llvm::safe_malloc(CapacityBytes))) {}
+      : buf(reinterpret_cast<ValueType*>(
+            llvm::allocate_buffer(CapacityBytes, alignof(ValueType)))) {}
 
   ValueStoreChunk(ValueStoreChunk&& rhs) noexcept
       : buf(std::exchange(rhs.buf, nullptr)), num(rhs.num) {}
@@ -130,7 +137,7 @@ struct ValueStoreChunk {
       if constexpr (!std::is_trivially_destructible_v<ValueType>) {
         std::destroy_n(buf, num);
       }
-      free(buf);
+      llvm::deallocate_buffer(buf, CapacityBytes, alignof(ValueType));
     }
   }
 
