@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Member resolution](#member-resolution)
     -   [Package and namespace members](#package-and-namespace-members)
-    -   [Types and facets](#types-and-facets)
+    -   [Types, forms, and facets](#types-forms-and-facets)
     -   [Tuple indexing](#tuple-indexing)
     -   [Values](#values)
     -   [Facet binding](#facet-binding)
@@ -122,11 +122,16 @@ The process of _member resolution_ determines which member `M` a member access
 expression is referring to.
 
 For a simple member access, if the first operand is a type, facet, package, or
-namespace, a search for the member name is performed in the first operand.
-Otherwise, a search for the member name is performed in the type of the first
-operand. In either case, the search must succeed. In the latter case, if the
-result is an instance member, then [instance binding](#instance-binding) is
-performed on the first operand.
+namespace, a search for the member name is performed in the first operand. If
+the first operand is a form, the search is performed in its
+[type component](/docs/design/values.md#expression-forms). Otherwise, a search
+for the member name is performed in the type of the first operand. In either
+case, the search must succeed. In the latter case, if the result is an instance
+member, then [instance binding](#instance-binding) is performed on the first
+operand.
+
+Note that this means that forms never participate in simple member access,
+except through their type components.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
@@ -183,11 +188,13 @@ class Bar {
 }
 ```
 
-### Types and facets
+### Types, forms, and facets
 
-If the first operand is a type or facet, it must be a compile-time constant.
-This disallows member access into a type except during compile-time, see leads
-issue [#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
+If the first operand is a type, form, or facet, it must be a compile-time
+constant. This disallows member access into a type except during compile-time,
+see leads issue
+[#1293](https://github.com/carbon-language/carbon-lang/issues/1293). If the
+first operand is a form, lookup searches in its type component.
 
 Like the previous case, types (including
 [facet types](/docs/design/generics/terminology.md#facet-type)) have member
@@ -267,9 +274,9 @@ let n: i32 = p->(e);
 
 ### Values
 
-If the first operand is not a type, package, namespace, or facet, it does not
-have member names, and a search is performed into the type of the first operand
-instead.
+If the first operand is not a type, form, package, namespace, or facet, it does
+not have member names, and a search is performed into the type of the first
+operand instead.
 
 ```carbon
 interface Printable {
@@ -727,20 +734,24 @@ of `x` and instance binding is performed if an instance member is found.
 
 If instance binding is performed:
 
+-   For a field member of a struct form, `x` is required to have that struct
+    form. Then, the form of `x.f` is the value of the corresponding field of the
+    struct form, and `x.f` evaluates to the corresponding field of `x`.
 -   For a field member of a struct type, `x` is required to have that struct
     type, and it is converted to a
     [struct form](/docs/design/values.md#expression-forms) by applying
     [form decomposition](/docs/design/values.md#form-conversions) (if it doesn't
-    have a struct form already). Then, the form of `x.f` is the value of the
-    corresponding field of the struct form, and `x.f` evaluates to the
-    corresponding field of `x`.
+    have a struct form already). Then, instance binding proceeds as in the
+    previous case.
+-   For an element member of a tuple form, `x` is required to have that tuple
+    form. Then, the form of `x.f` is the value of the corresponding element of
+    the tuple form, and `x.f` evaluates to the corresponding element of `x`.
 -   For an element member of a tuple type, `x` is required to have that tuple
     type, and it is converted to a
     [tuple form](/docs/design/values.md#expression-forms) by applying
     [form decomposition](/docs/design/values.md#form-conversions) (if it doesn't
-    have a tuple form already). Then, the form of `x.f` is the value of the
-    corresponding element of the tuple form, and `x.f` evaluates to the
-    corresponding element of `x`.
+    have a tuple form already). Then, instance binding proceeds as in the
+    previous case.
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.
     If `x` is an

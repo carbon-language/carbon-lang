@@ -657,9 +657,15 @@ struct type can be thought of as a struct whose fields are types. The form of a
 struct literal is a struct form with the same field names, whose values are the
 forms of the corresponding fields of the struct literal.
 
-An expression with a composite form still has a well-defined type, phase, and
-(if the phase is not "runtime") constant value. However, it does not have a
-well-defined expression category.
+The _type component_ of a form is defined as follows:
+
+-   The type component of a primitive form `[T, C, P, V]` is `T`.
+-   The type component of a tuple form is a tuple of the type components of its
+    elements.
+-   The type component of a struct form is a struct of the type components of
+    its elements.
+
+The type of an expression is the type component of the expression's form.
 
 #### Form conversions
 
@@ -705,6 +711,12 @@ objects of the element types.
 In all of the above definitions, if `P` is runtime, the constant-value
 components are omitted.
 
+> **Note:** Form composition is always semantics-preserving, meaning that any
+> language rule that treats primitive and composite forms as separate cases will
+> nevertheless give the same result for the initial composite form as for the
+> resulting primitive form. Similarly, form decomposition is
+> semantics-preserving except when `C` is "initializing".
+
 #### Form semantics
 
 Almost all operations expect their expression operands to have a primitive form
@@ -721,7 +733,8 @@ type. Operands are converted to a suitable primitive form as follows:
    "symbolic", or else "template".
 4. The operand is converted to a primitive form by form composition.
 5. If the operand is expected to have a particular type, implicit type
-   conversions are applied as needed.
+   conversions are applied as needed. Note that this is the only step that can
+   change the type component of the form.
 6. If the target category was changed in step 1, the operand is converted to the
    original target category.
 7. If the operand is expected to have a particular phase, it is converted to
