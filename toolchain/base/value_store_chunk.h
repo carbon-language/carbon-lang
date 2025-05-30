@@ -7,12 +7,14 @@
 
 #include <bit>
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <type_traits>
 #include <utility>
 
 #include "common/check.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/MemAlloc.h"
 #include "toolchain/base/mem_usage.h"
 
 namespace Carbon::Internal {
@@ -106,70 +108,65 @@ static constexpr auto ChunkIndicesToId(int chunk, int pos) -> IdT {
 // A chunk of `ValueType`s which has a fixed capacity, but variable size, and is
 // an iterable range.
 template <typename IdT, class ValueType>
-class ValueStoreChunk {
+struct ValueStoreChunk {
  public:
   static constexpr auto Capacity = Internal::PlatformChunkCapacitySize<IdT>();
-  static constexpr auto CapacityBytes =
-      Capacity * sizeof(typename IdT::ValueType);
+  static constexpr auto CapacityBytes = Capacity * sizeof(ValueType);
 
   ValueStoreChunk()
-      : buf(reinterpret_cast<ValueType*>(new char[CapacityBytes])) {}
+      : buf(reinterpret_cast<ValueType*>(llvm::safe_malloc(CapacityBytes))) {}
 
   ValueStoreChunk(ValueStoreChunk&& rhs) noexcept
-      : buf(std::exchange(rhs.buf, nullptr)),
-        num_used(std::exchange(rhs.num_used, 0)) {}
+      : buf(std::exchange(rhs.buf, nullptr)), num(rhs.num) {}
+
   auto operator=(ValueStoreChunk&& rhs) noexcept -> ValueStoreChunk& {
     buf = std::exchange(rhs.buf, nullptr);
-    num_used = std::exchange(rhs.num_used, 0);
+    num = rhs.num;
     return *this;
   }
 
   ~ValueStoreChunk() {
-    if constexpr (!std::is_trivially_destructible_v<ValueType>) {
-      std::destroy_n(buf, num_used);
+    if (buf) {
+      if constexpr (!std::is_trivially_destructible_v<ValueType>) {
+        std::destroy_n(buf, num);
+      }
+      free(buf);
     }
-    delete[] reinterpret_cast<char*>(buf);
   }
-
-  // Collects memory usage of the values.
-  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-      -> void {
-    mem_usage.Add(label.str(), num_used * sizeof(ValueType), CapacityBytes);
-  }
-
-  // Get a reference to a value.
-  auto Get(size_t i) -> ValueType& {
-    CARBON_CHECK(i < num_used);
-    return buf[i];
-  }
-  auto Get(size_t i) const -> const ValueType& {
-    CARBON_CHECK(i < num_used);
-    return buf[i];
-  }
-
-  // Returns whether there is capacity left for adding `n` values to the chunk.
-  auto HasCapacity(size_t n) const -> bool {
-    return n <= Capacity && num_used <= Capacity - n;
-  }
-
-  // Add a new value to the back of the chunk.
-  auto Push(ValueType v) -> void {
-    CARBON_CHECK(HasCapacity(1));
-    std::construct_at(buf + num_used, std::move(v));
-    ++num_used;
-    CARBON_CHECK(num_used <= Capacity);
-  }
-
-  // The number of values added to the chunk.
-  auto Size() const -> size_t { return num_used; }
 
   // Allow the chunk to act as a range for being iterated.
-  auto begin() const -> const ValueType* { return buf; }
-  auto end() const -> const ValueType* { return buf + num_used; }
+  auto begin() const -> const ValueType* {
+    CARBON_DCHECK(buf, "iterating after moved-from");
+    return buf;
+  }
+  auto end() const -> const ValueType* {
+    CARBON_DCHECK(buf, "iterating after moved-from");
+    return buf + num;
+  }
+
+  // Verify using an `int32_t` for `num` is sound.
+  static_assert(Capacity <= std::numeric_limits<int32_t>::max());
+
+  auto at(int32_t i) -> ValueType& {
+    CARBON_CHECK(i < num, "{0}", i);
+    return buf[i];
+  }
+  auto at(int32_t i) const -> const ValueType& {
+    CARBON_CHECK(i < num, "{0}", i);
+    return buf[i];
+  }
+
+  auto push(ValueType&& value) -> void {
+    CARBON_CHECK(num < Capacity);
+    std::construct_at(buf + num, std::move(value));
+    ++num;
+  }
+
+  auto size() const -> int32_t { return num; }
 
  private:
   ValueType* buf;
-  size_t num_used = 0;
+  int32_t num = 0;
 };
 
 }  // namespace Carbon::Internal

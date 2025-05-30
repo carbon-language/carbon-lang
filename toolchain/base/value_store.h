@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 #include "common/check.h"
 #include "common/flatten.h"
@@ -59,65 +60,71 @@ class ValueStore
                          llvm::StringRef, const ValueType&>;
 
   ValueStore() = default;
-  ValueStore(ValueStore&& other) noexcept = default;
-  auto operator=(ValueStore&& other) noexcept -> ValueStore& = default;
-  ~ValueStore() = default;
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT {
-    if (chunk_.HasCapacity(1)) {
-      IdT id = Internal::ChunkIndicesToId<IdT>(0, chunk_.Size());
-      chunk_.Push(std::move(value));
-      return id;
-    }
+    auto id = IdT(size_);
+    auto [chunk_index, pos] = Internal::IdToChunkIndices(id);
+    ++size_;
 
-    // Find the first chunk with capacity. Reserve may have created empty chunks
-    // at the back of the vector. The index has one added to it to account for
-    // the base `chunk_`.
-    for (auto [index, chunk] : llvm::enumerate(more_chunks_)) {
-      if (chunk.HasCapacity(1)) {
-        IdT id = Internal::ChunkIndicesToId<IdT>(index + 1, chunk.Size());
-        chunk.Push(std::move(value));
-        return id;
+    if (chunk_index == 0) {
+      CARBON_DCHECK(pos == base_chunk_.size());
+      base_chunk_.push(std::move(value));
+    } else {
+      // The chunk index has one subtracted from it to account for the
+      // `base_chunk_`.
+      chunk_index -= 1;
+
+      CARBON_DCHECK(static_cast<size_t>(chunk_index) <= more_chunks_.size(),
+                    "{0} <= {1}", chunk_index, more_chunks_.size());
+      if (static_cast<size_t>(chunk_index) == more_chunks_.size()) {
+        more_chunks_.emplace_back();
       }
-    }
 
-    // Add a new empty chunk. The index has one added to it to account for the
-    // base `chunk_`.
-    IdT id = Internal::ChunkIndicesToId<IdT>(more_chunks_.size() + 1, 0);
-    more_chunks_.emplace_back();
-    more_chunks_.back().Push(std::move(value));
+      CARBON_DCHECK(pos == more_chunks_[chunk_index].size());
+      more_chunks_[chunk_index].push(std::move(value));
+    }
     return id;
   }
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
+    CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = Internal::IdToChunkIndices(id);
     if (chunk_index == 0) {
-      return chunk_.Get(pos);
+      return base_chunk_.at(pos);
     } else {
-      // The index has one subtracted from it to account for the base `chunk_`.
-      return more_chunks_[chunk_index - 1].Get(pos);
+      // The chunk index has one subtracted from it to account for the
+      // `base_chunk_`.
+      chunk_index -= 1;
+
+      return more_chunks_[chunk_index].at(pos);
     }
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
+    CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = Internal::IdToChunkIndices(id);
     if (chunk_index == 0) {
-      return chunk_.Get(pos);
+      return base_chunk_.at(pos);
     } else {
-      return more_chunks_[chunk_index - 1].Get(pos);
+      // The chunk index has one subtracted from it to account for the
+      // `base_chunk_`.
+      chunk_index -= 1;
+
+      return more_chunks_[chunk_index].at(pos);
     }
   }
 
   // Reserves space.
   auto Reserve(size_t size) -> void {
-    // The initial `chunk_` is always allocated and contributing to capacity, so
-    // is subtracted from `size`. Then we get the number of chunks needed to
-    // satisfy the remainder of `size`, rounding any partial result up.
+    // The initial `base_chunk_` is always allocated and contributing to
+    // capacity, so is subtracted from `size`. Then we get the number of chunks
+    // needed to satisfy the remainder of `size`, rounding any partial result
+    // up.
     size_t num_more_chunks =
         ((size - ChunkType::Capacity) + ChunkType::Capacity - 1) /
         ChunkType::Capacity;
@@ -141,17 +148,11 @@ class ValueStore
   // Collects memory usage of the values.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Collect(label.str(), chunk_);
-    mem_usage.Collect(label.str(), more_chunks_);
+    mem_usage.Add(label.str(), size_ * sizeof(ValueType),
+                  ChunkType::CapacityBytes * (1 + more_chunks_.size()));
   }
 
-  auto size() const -> size_t {
-    size_t size = chunk_.Size();
-    for (const auto& chunk : more_chunks_) {
-      size += chunk.Size();
-    }
-    return size;
-  }
+  auto size() const -> size_t { return size_; }
 
   // Makes an iterable range over references to all values in the ValueStore.
   auto values() const -> ValueStoreRange<IdT> {
@@ -179,16 +180,21 @@ class ValueStore
   friend class ValueStoreRange<IdT>;
 
   using ChunkType = Internal::ValueStoreChunk<IdT, ValueType>;
+
+  // Number of elements added to the store.
+  int32_t size_ = 0;
+
   // The base chunk, which is always allocated, and where initial values are
   // added. Once it's full, new values are added into `more_chunks_`. Accessing
   // values from this chunk only needs to go through a single indirection into
   // the chunk's array which optimizes the case where there are a small number
   // of values.
-  ChunkType chunk_;
-  // The dynamic set of chunks that hold values added after `chunk_` is full. As
-  // each chunk in the vector is filled, another chunk will be added. Accessing
-  // values from this chunk requires two indirections: one into the vector to
-  // choose a chunk, and another into the chunk's array.
+  ChunkType base_chunk_;
+
+  // The dynamic set of chunks that hold values added after `base_chunk_` is
+  // full. As each chunk in the vector is filled, another chunk will be added.
+  // Accessing values from this chunk requires two indirections: one into the
+  // vector to choose a chunk, and another into the chunk's array.
   llvm::SmallVector<ChunkType> more_chunks_;
 };
 
@@ -215,7 +221,7 @@ class ValueStoreRange {
 
   static auto MakeFlattenedRange(const ValueStore<IdT>& store) {
     auto chunks_range = llvm::concat<const ChunkType>(
-        OneChunkRange{&store.chunk_}, store.more_chunks_);
+        OneChunkRange{&store.base_chunk_}, store.more_chunks_);
     return Flatten(std::move(chunks_range));
   }
 
