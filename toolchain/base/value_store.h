@@ -187,7 +187,7 @@ class ValueStore
   // The base chunk, which is always allocated, and where initial values are
   // added. Once it's full, new values are added into `more_chunks_`. Accessing
   // values from this chunk only needs to go through a single indirection into
-  // the chunk's array which optimizes the case where there are a small number
+  // the chunk's array, which optimizes the case where there are a small number
   // of values.
   ChunkType base_chunk_;
 
