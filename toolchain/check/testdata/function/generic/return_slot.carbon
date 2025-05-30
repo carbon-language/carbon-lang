@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/return_slot.carbon
@@ -88,17 +91,17 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [concrete = constants.%Wrap.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc11_12.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc14_12.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_12.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Wrap(%T.loc11_12.1: type) {
-// CHECK:STDOUT:   %T.loc11_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc11_12.2 (constants.%T)]
+// CHECK:STDOUT: generic class @Wrap(%T.loc14_12.1: type) {
+// CHECK:STDOUT:   %T.loc14_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_12.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T.loc11_12.2) [symbolic = %Make.type (constants.%Make.type.652)]
+// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T.loc14_12.2) [symbolic = %Make.type (constants.%Make.type.652)]
 // CHECK:STDOUT:   %Make: @Wrap.%Make.type (%Make.type.652) = struct_value () [symbolic = %Make (constants.%Make.eb2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -106,7 +109,7 @@ fn G() {
 // CHECK:STDOUT:       %return.patt: @Make.%pattern_type (%pattern_type.7dc) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Make.%pattern_type (%pattern_type.7dc) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc11_12.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc14_12.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %return.param: ref @Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -126,17 +129,17 @@ fn G() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete = constants.%int_100]
 // CHECK:STDOUT:   %array_type: type = array_type %int_100, %i32 [concrete = constants.%array_type]
-// CHECK:STDOUT:   %.loc15: %C.elem = field_decl arr, element0 [concrete]
+// CHECK:STDOUT:   %.loc18: %C.elem = field_decl arr, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.arr: type = struct_type {.arr: %array_type} [concrete = constants.%struct_type.arr.5f2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr [concrete = constants.%complete_type.22a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .arr = %.loc15
+// CHECK:STDOUT:   .arr = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(@Wrap.%T.loc11_12.1: type) {
+// CHECK:STDOUT: generic fn @Make(@Wrap.%T.loc14_12.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
@@ -144,17 +147,17 @@ fn G() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T) [symbolic = %Make.type (constants.%Make.type.652)]
 // CHECK:STDOUT:   %Make: @Make.%Make.type (%Make.type.652) = struct_value () [symbolic = %Make (constants.%Make.eb2)]
-// CHECK:STDOUT:   %Make.specific_fn.loc12_27.2: <specific function> = specific_function %Make, @Make(%T) [symbolic = %Make.specific_fn.loc12_27.2 (constants.%Make.specific_fn.bf1)]
+// CHECK:STDOUT:   %Make.specific_fn.loc15_27.2: <specific function> = specific_function %Make, @Make(%T) [symbolic = %Make.specific_fn.loc15_27.2 (constants.%Make.specific_fn.bf1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.%T (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc12_27: @Make.%Make.type (%Make.type.652) = specific_constant @Wrap.%Make.decl, @Wrap(constants.%T) [symbolic = %Make (constants.%Make.eb2)]
-// CHECK:STDOUT:     %Make.ref: @Make.%Make.type (%Make.type.652) = name_ref Make, %.loc12_27 [symbolic = %Make (constants.%Make.eb2)]
-// CHECK:STDOUT:     %Make.specific_fn.loc12_27.1: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %Make.specific_fn.loc12_27.2 (constants.%Make.specific_fn.bf1)]
-// CHECK:STDOUT:     %Make.call: init @Make.%T (%T) = call %Make.specific_fn.loc12_27.1()
-// CHECK:STDOUT:     %.loc12_33.1: @Make.%T (%T) = value_of_initializer %Make.call
-// CHECK:STDOUT:     %.loc12_33.2: @Make.%T (%T) = converted %Make.call, %.loc12_33.1
-// CHECK:STDOUT:     return %.loc12_33.2
+// CHECK:STDOUT:     %.loc15_27: @Make.%Make.type (%Make.type.652) = specific_constant @Wrap.%Make.decl, @Wrap(constants.%T) [symbolic = %Make (constants.%Make.eb2)]
+// CHECK:STDOUT:     %Make.ref: @Make.%Make.type (%Make.type.652) = name_ref Make, %.loc15_27 [symbolic = %Make (constants.%Make.eb2)]
+// CHECK:STDOUT:     %Make.specific_fn.loc15_27.1: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %Make.specific_fn.loc15_27.2 (constants.%Make.specific_fn.bf1)]
+// CHECK:STDOUT:     %Make.call: init @Make.%T (%T) = call %Make.specific_fn.loc15_27.1()
+// CHECK:STDOUT:     %.loc15_33.1: @Make.%T (%T) = value_of_initializer %Make.call
+// CHECK:STDOUT:     %.loc15_33.2: @Make.%T (%T) = converted %Make.call, %.loc15_33.1
+// CHECK:STDOUT:     return %.loc15_33.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,18 +168,18 @@ fn G() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
-// CHECK:STDOUT:   %Wrap.ref.loc18: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
-// CHECK:STDOUT:   %int_32.loc18_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc18_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %Wrap.loc18: type = class_type @Wrap, @Wrap(constants.%i32) [concrete = constants.%Wrap.f84]
-// CHECK:STDOUT:   %.loc18_25: %Make.type.572 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%i32) [concrete = constants.%Make.2c5]
-// CHECK:STDOUT:   %Make.ref.loc18: %Make.type.572 = name_ref Make, %.loc18_25 [concrete = constants.%Make.2c5]
-// CHECK:STDOUT:   %Make.specific_fn.loc18: <specific function> = specific_function %Make.ref.loc18, @Make(constants.%i32) [concrete = constants.%Make.specific_fn.f29]
-// CHECK:STDOUT:   %Make.call.loc18: init %i32 = call %Make.specific_fn.loc18()
-// CHECK:STDOUT:   assign %a.var, %Make.call.loc18
-// CHECK:STDOUT:   %.loc18_10: type = splice_block %i32.loc18_10 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %int_32.loc18_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %Wrap.ref.loc21: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
+// CHECK:STDOUT:   %int_32.loc21_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc21_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %Wrap.loc21: type = class_type @Wrap, @Wrap(constants.%i32) [concrete = constants.%Wrap.f84]
+// CHECK:STDOUT:   %.loc21_25: %Make.type.572 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%i32) [concrete = constants.%Make.2c5]
+// CHECK:STDOUT:   %Make.ref.loc21: %Make.type.572 = name_ref Make, %.loc21_25 [concrete = constants.%Make.2c5]
+// CHECK:STDOUT:   %Make.specific_fn.loc21: <specific function> = specific_function %Make.ref.loc21, @Make(constants.%i32) [concrete = constants.%Make.specific_fn.f29]
+// CHECK:STDOUT:   %Make.call.loc21: init %i32 = call %Make.specific_fn.loc21()
+// CHECK:STDOUT:   assign %a.var, %Make.call.loc21
+// CHECK:STDOUT:   %.loc21_10: type = splice_block %i32.loc21_10 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc21_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc21_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -184,18 +187,18 @@ fn G() {
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.cb1 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt
-// CHECK:STDOUT:   %Wrap.ref.loc19: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
-// CHECK:STDOUT:   %.loc19_21: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc19_22: type = converted %.loc19_21, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %Wrap.loc19: type = class_type @Wrap, @Wrap(constants.%empty_tuple.type) [concrete = constants.%Wrap.1aa]
-// CHECK:STDOUT:   %.loc19_23: %Make.type.20e = specific_constant @Wrap.%Make.decl, @Wrap(constants.%empty_tuple.type) [concrete = constants.%Make.de0]
-// CHECK:STDOUT:   %Make.ref.loc19: %Make.type.20e = name_ref Make, %.loc19_23 [concrete = constants.%Make.de0]
-// CHECK:STDOUT:   %Make.specific_fn.loc19: <specific function> = specific_function %Make.ref.loc19, @Make(constants.%empty_tuple.type) [concrete = constants.%Make.specific_fn.e43]
-// CHECK:STDOUT:   %Make.call.loc19: init %empty_tuple.type = call %Make.specific_fn.loc19()
-// CHECK:STDOUT:   assign %b.var, %Make.call.loc19
-// CHECK:STDOUT:   %.loc19_11.1: type = splice_block %.loc19_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc19_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_11.3: type = converted %.loc19_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %Wrap.ref.loc22: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
+// CHECK:STDOUT:   %.loc22_21: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc22_22: type = converted %.loc22_21, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %Wrap.loc22: type = class_type @Wrap, @Wrap(constants.%empty_tuple.type) [concrete = constants.%Wrap.1aa]
+// CHECK:STDOUT:   %.loc22_23: %Make.type.20e = specific_constant @Wrap.%Make.decl, @Wrap(constants.%empty_tuple.type) [concrete = constants.%Make.de0]
+// CHECK:STDOUT:   %Make.ref.loc22: %Make.type.20e = name_ref Make, %.loc22_23 [concrete = constants.%Make.de0]
+// CHECK:STDOUT:   %Make.specific_fn.loc22: <specific function> = specific_function %Make.ref.loc22, @Make(constants.%empty_tuple.type) [concrete = constants.%Make.specific_fn.e43]
+// CHECK:STDOUT:   %Make.call.loc22: init %empty_tuple.type = call %Make.specific_fn.loc22()
+// CHECK:STDOUT:   assign %b.var, %Make.call.loc22
+// CHECK:STDOUT:   %.loc22_11.1: type = splice_block %.loc22_11.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc22_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc22_11.3: type = converted %.loc22_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -203,22 +206,22 @@ fn G() {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
-// CHECK:STDOUT:   %Wrap.ref.loc20: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
-// CHECK:STDOUT:   %C.ref.loc20_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %Wrap.loc20: type = class_type @Wrap, @Wrap(constants.%C) [concrete = constants.%Wrap.2eb]
-// CHECK:STDOUT:   %.loc20_21: %Make.type.708 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%C) [concrete = constants.%Make.e4b]
-// CHECK:STDOUT:   %Make.ref.loc20: %Make.type.708 = name_ref Make, %.loc20_21 [concrete = constants.%Make.e4b]
-// CHECK:STDOUT:   %Make.specific_fn.loc20: <specific function> = specific_function %Make.ref.loc20, @Make(constants.%C) [concrete = constants.%Make.specific_fn.834]
-// CHECK:STDOUT:   %.loc20_3: ref %C = splice_block %c.var {}
-// CHECK:STDOUT:   %Make.call.loc20: init %C = call %Make.specific_fn.loc20() to %.loc20_3
-// CHECK:STDOUT:   assign %c.var, %Make.call.loc20
-// CHECK:STDOUT:   %C.ref.loc20_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %Wrap.ref.loc23: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
+// CHECK:STDOUT:   %C.ref.loc23_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %Wrap.loc23: type = class_type @Wrap, @Wrap(constants.%C) [concrete = constants.%Wrap.2eb]
+// CHECK:STDOUT:   %.loc23_21: %Make.type.708 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%C) [concrete = constants.%Make.e4b]
+// CHECK:STDOUT:   %Make.ref.loc23: %Make.type.708 = name_ref Make, %.loc23_21 [concrete = constants.%Make.e4b]
+// CHECK:STDOUT:   %Make.specific_fn.loc23: <specific function> = specific_function %Make.ref.loc23, @Make(constants.%C) [concrete = constants.%Make.specific_fn.834]
+// CHECK:STDOUT:   %.loc23_3: ref %C = splice_block %c.var {}
+// CHECK:STDOUT:   %Make.call.loc23: init %C = call %Make.specific_fn.loc23() to %.loc23_3
+// CHECK:STDOUT:   assign %c.var, %Make.call.loc23
+// CHECK:STDOUT:   %C.ref.loc23_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%T) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
+// CHECK:STDOUT:   %T.loc14_12.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.652
@@ -233,11 +236,11 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.652
 // CHECK:STDOUT:   %Make => constants.%Make.eb2
-// CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.bf1
+// CHECK:STDOUT:   %Make.specific_fn.loc15_27.2 => constants.%Make.specific_fn.bf1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%i32) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%i32
+// CHECK:STDOUT:   %T.loc14_12.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.572
@@ -252,11 +255,11 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.572
 // CHECK:STDOUT:   %Make => constants.%Make.2c5
-// CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.f29
+// CHECK:STDOUT:   %Make.specific_fn.loc15_27.2 => constants.%Make.specific_fn.f29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%empty_tuple.type) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %T.loc14_12.2 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.20e
@@ -271,11 +274,11 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.782
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.20e
 // CHECK:STDOUT:   %Make => constants.%Make.de0
-// CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.e43
+// CHECK:STDOUT:   %Make.specific_fn.loc15_27.2 => constants.%Make.specific_fn.e43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%C) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%C
+// CHECK:STDOUT:   %T.loc14_12.2 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.708
@@ -290,6 +293,6 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.22a
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.708
 // CHECK:STDOUT:   %Make => constants.%Make.e4b
-// CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.834
+// CHECK:STDOUT:   %Make.specific_fn.loc15_27.2 => constants.%Make.specific_fn.834
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

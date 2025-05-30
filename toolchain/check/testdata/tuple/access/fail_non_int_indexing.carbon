@@ -90,7 +90,7 @@ var b: i32 = a.(2.6);
 // CHECK:STDOUT:     %.loc11_17.2: %tuple.type.24b = tuple_literal (%i32.loc11_9, %i32.loc11_14)
 // CHECK:STDOUT:     %.loc11_17.3: type = converted %.loc11_17.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %tuple.type.d07 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %tuple.type.d07 = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]
@@ -100,7 +100,7 @@ var b: i32 = a.(2.6);
 // CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -127,7 +127,7 @@ var b: i32 = a.(2.6);
 // CHECK:STDOUT:   %.loc11_27.6: init %tuple.type.d07 = tuple_init (%.loc11_27.3, %.loc11_27.5) to file.%a.var [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_1: init %tuple.type.d07 = converted %.loc11_27.1, %.loc11_27.6 [concrete = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_1
-// CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a
+// CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a [concrete = file.%a.var]
 // CHECK:STDOUT:   %float: f64 = float_literal 2.6000000000000001 [concrete = constants.%float]
 // CHECK:STDOUT:   %.loc19: Core.IntLiteral = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>

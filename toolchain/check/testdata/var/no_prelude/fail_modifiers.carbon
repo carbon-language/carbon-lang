@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_modifiers.carbon
@@ -61,40 +64,40 @@ abstract var e: ();
 // CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc15_19.1: type = splice_block %.loc15_19.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc15_19.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_19.3: type = converted %.loc15_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc18_19.1: type = splice_block %.loc18_19.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc18_19.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc18_19.3: type = converted %.loc18_19.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc24_27.1: type = splice_block %.loc24_27.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc24_27.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc24_27.3: type = converted %.loc24_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc27_27.1: type = splice_block %.loc27_27.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc27_27.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc27_27.3: type = converted %.loc27_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt [concrete]
-// CHECK:STDOUT:   %.loc37_29.1: type = splice_block %.loc37_29.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc37_29.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc37_29.3: type = converted %.loc37_29.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc40_29.1: type = splice_block %.loc40_29.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc40_29.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc40_29.3: type = converted %.loc40_29.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type = binding_pattern e [concrete]
 // CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var %e.var_patt [concrete]
-// CHECK:STDOUT:   %.loc43_18.1: type = splice_block %.loc43_18.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc43_18.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc43_18.3: type = converted %.loc43_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc46_18.1: type = splice_block %.loc46_18.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc46_18.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc46_18.3: type = converted %.loc46_18.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

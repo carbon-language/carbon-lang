@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_method.carbon
@@ -87,7 +90,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %Class = value_param call_param0
-// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc21: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -119,24 +122,24 @@ fn F(c: Class) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %Class) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref.loc19: %Class = name_ref c, %c
-// CHECK:STDOUT:   %NoSelf.ref.loc19: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [concrete = constants.%NoSelf]
-// CHECK:STDOUT:   %NoSelf.call.loc19: init %empty_tuple.type = call %NoSelf.ref.loc19()
-// CHECK:STDOUT:   %c.ref.loc20: %Class = name_ref c, %c
-// CHECK:STDOUT:   %WithSelf.ref.loc20: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [concrete = constants.%WithSelf]
-// CHECK:STDOUT:   %WithSelf.bound: <bound method> = bound_method %c.ref.loc20, %WithSelf.ref.loc20
-// CHECK:STDOUT:   %WithSelf.call.loc20: init %empty_tuple.type = call %WithSelf.bound(%c.ref.loc20)
-// CHECK:STDOUT:   %Class.ref.loc22: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %c.ref.loc22: %Class = name_ref c, %c
 // CHECK:STDOUT:   %NoSelf.ref.loc22: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [concrete = constants.%NoSelf]
 // CHECK:STDOUT:   %NoSelf.call.loc22: init %empty_tuple.type = call %NoSelf.ref.loc22()
-// CHECK:STDOUT:   %Class.ref.loc30: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %WithSelf.ref.loc30: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [concrete = constants.%WithSelf]
-// CHECK:STDOUT:   %WithSelf.call.loc30: init %empty_tuple.type = call %WithSelf.ref.loc30(<error>)
-// CHECK:STDOUT:   %Class.ref.loc38: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %WithSelf.ref.loc38: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [concrete = constants.%WithSelf]
-// CHECK:STDOUT:   %c.ref.loc38: %Class = name_ref c, %c
+// CHECK:STDOUT:   %c.ref.loc23: %Class = name_ref c, %c
+// CHECK:STDOUT:   %WithSelf.ref.loc23: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [concrete = constants.%WithSelf]
+// CHECK:STDOUT:   %WithSelf.bound: <bound method> = bound_method %c.ref.loc23, %WithSelf.ref.loc23
+// CHECK:STDOUT:   %WithSelf.call.loc23: init %empty_tuple.type = call %WithSelf.bound(%c.ref.loc23)
+// CHECK:STDOUT:   %Class.ref.loc25: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %NoSelf.ref.loc25: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [concrete = constants.%NoSelf]
+// CHECK:STDOUT:   %NoSelf.call.loc25: init %empty_tuple.type = call %NoSelf.ref.loc25()
+// CHECK:STDOUT:   %Class.ref.loc33: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %WithSelf.ref.loc33: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [concrete = constants.%WithSelf]
+// CHECK:STDOUT:   %WithSelf.call.loc33: init %empty_tuple.type = call %WithSelf.ref.loc33(<error>)
+// CHECK:STDOUT:   %Class.ref.loc41: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %WithSelf.ref.loc41: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [concrete = constants.%WithSelf]
+// CHECK:STDOUT:   %c.ref.loc41: %Class = name_ref c, %c
 // CHECK:STDOUT:   %A.ref: %WithSelf.type = name_ref A, file.%A [concrete = constants.%WithSelf]
-// CHECK:STDOUT:   %WithSelf.call.loc47: init %empty_tuple.type = call %A.ref(<error>)
+// CHECK:STDOUT:   %WithSelf.call.loc50: init %empty_tuple.type = call %A.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

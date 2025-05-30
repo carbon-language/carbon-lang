@@ -46,14 +46,14 @@ fn H() {
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main.47c020a542e13d96() !dbg !10 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.47c020a542e13d96() !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca i1, align 1, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %x.var), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main.a10ac7cbfa858009() !dbg !13 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.a10ac7cbfa858009() !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %x.var), !dbg !14

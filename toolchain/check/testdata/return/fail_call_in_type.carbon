@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_call_in_type.carbon
@@ -61,8 +64,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [concrete = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
-// CHECK:STDOUT:     %.loc18_24.1: type = value_of_initializer %ReturnType.call
-// CHECK:STDOUT:     %.loc18_24.2: type = converted %ReturnType.call, %.loc18_24.1
+// CHECK:STDOUT:     %.loc21_24.1: type = value_of_initializer %ReturnType.call
+// CHECK:STDOUT:     %.loc21_24.2: type = converted %ReturnType.call, %.loc21_24.1
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }

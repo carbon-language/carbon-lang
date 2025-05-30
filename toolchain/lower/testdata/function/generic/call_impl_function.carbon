@@ -69,7 +69,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 %x) !dbg !15 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 %x) !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc35_15 = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x), !dbg !16
 // CHECK:STDOUT:   ret i32 %.loc35_15, !dbg !17

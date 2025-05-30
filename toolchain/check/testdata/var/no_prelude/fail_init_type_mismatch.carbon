@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/no_prelude/fail_init_type_mismatch.carbon
@@ -32,19 +35,19 @@ var x: {} = ();
 // CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc15_9.1: type = splice_block %.loc15_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc15_9.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc15_9.3: type = converted %.loc15_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc18_9.1: type = splice_block %.loc18_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc18_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc18_9.3: type = converted %.loc18_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_14.2: %empty_tuple.type = converted %.loc15_14.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_1: %empty_struct_type = converted %.loc15_14.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc18_14.2: %empty_tuple.type = converted %.loc18_14.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_1: %empty_struct_type = converted %.loc18_14.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

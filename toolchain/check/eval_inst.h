@@ -107,13 +107,14 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
     case SemIR::InstConstantKind::InstAction:
     case SemIR::InstConstantKind::WheneverPossible:
     case SemIR::InstConstantKind::Always:
-    case SemIR::InstConstantKind::Unique:
+    case SemIR::InstConstantKind::AlwaysUnique:
       return false;
 
     case SemIR::InstConstantKind::Indirect:
     case SemIR::InstConstantKind::SymbolicOnly:
     case SemIR::InstConstantKind::SymbolicOrReference:
     case SemIR::InstConstantKind::Conditional:
+    case SemIR::InstConstantKind::ConditionalUnique:
       return true;
   }
 }
@@ -163,6 +164,7 @@ auto EvalConstantInst() -> void = delete;
 // - InstConstantKind::SymbolicOnly
 // - InstConstantKind::SymbolicOrReference
 // - InstConstantKind::Conditional
+// - InstConstantKind::ConditionalUnique
 //
 // ... except for cases where the result of evaluation depends on the evaluation
 // context itself. Those cases are handled by explicit specialization of

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/raw_self_type.carbon
@@ -63,12 +66,12 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %y.patt: %pattern_type.c06 = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.c06 = value_param_pattern %y.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc24: %MemberNamedSelf = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc24_25: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc24: %MemberNamedSelf = bind_name x, %x.param.loc24
-// CHECK:STDOUT:     %y.param.loc24: %Self = value_param call_param1
-// CHECK:STDOUT:     %Self.ref.loc24_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self]
-// CHECK:STDOUT:     %y.loc24: %Self = bind_name y, %y.param.loc24
+// CHECK:STDOUT:     %x.param.loc27: %MemberNamedSelf = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc27_25: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
+// CHECK:STDOUT:     %x.loc27: %MemberNamedSelf = bind_name x, %x.param.loc27
+// CHECK:STDOUT:     %y.param.loc27: %Self = value_param call_param1
+// CHECK:STDOUT:     %Self.ref.loc27_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self]
+// CHECK:STDOUT:     %y.loc27: %Self = bind_name y, %y.param.loc27
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -91,12 +94,12 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %y.patt: %pattern_type.c06 = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.c06 = value_param_pattern %y.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc21: %MemberNamedSelf = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc21_11: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc21: %MemberNamedSelf = bind_name x, %x.param.loc21
-// CHECK:STDOUT:     %y.param.loc21: %Self = value_param call_param1
-// CHECK:STDOUT:     %Self.ref.loc21_20: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self]
-// CHECK:STDOUT:     %y.loc21: %Self = bind_name y, %y.param.loc21
+// CHECK:STDOUT:     %x.param.loc24: %MemberNamedSelf = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc24_11: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
+// CHECK:STDOUT:     %x.loc24: %MemberNamedSelf = bind_name x, %x.param.loc24
+// CHECK:STDOUT:     %y.param.loc24: %Self = value_param call_param1
+// CHECK:STDOUT:     %Self.ref.loc24_20: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self]
+// CHECK:STDOUT:     %y.loc24: %Self = bind_name y, %y.param.loc24
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
@@ -124,9 +127,9 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %Self.var_patt: %pattern_type.796 = var_pattern %Self.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.var: ref %ptr.e71 = var %Self.var_patt
-// CHECK:STDOUT:   %.loc13: type = splice_block %ptr.loc13 [concrete = constants.%ptr.e71] {
-// CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %Self.ref.loc13 [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:   %.loc16: type = splice_block %ptr.loc16 [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %Self.ref.loc16 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self: ref %ptr.e71 = bind_name r#Self, %Self.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -134,18 +137,18 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.796 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.e71 = var %p.var_patt
-// CHECK:STDOUT:   %Self.ref.loc14_20: ref %ptr.e71 = name_ref r#Self, %Self
-// CHECK:STDOUT:   %.loc14_20: %ptr.e71 = bind_value %Self.ref.loc14_20
-// CHECK:STDOUT:   assign %p.var, %.loc14_20
-// CHECK:STDOUT:   %.loc14_16: type = splice_block %ptr.loc14 [concrete = constants.%ptr.e71] {
-// CHECK:STDOUT:     %Self.ref.loc14_12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %Self.ref.loc14_12 [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:   %Self.ref.loc17_20: ref %ptr.e71 = name_ref r#Self, %Self
+// CHECK:STDOUT:   %.loc17_20: %ptr.e71 = bind_value %Self.ref.loc17_20
+// CHECK:STDOUT:   assign %p.var, %.loc17_20
+// CHECK:STDOUT:   %.loc17_16: type = splice_block %ptr.loc17 [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:     %Self.ref.loc17_12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %ptr.loc17: type = ptr_type %Self.ref.loc17_12 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.e71 = bind_name p, %p.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%x.param.loc24: %MemberNamedSelf, %y.param.loc24: %Self) {
+// CHECK:STDOUT: fn @F.2(%x.param.loc27: %MemberNamedSelf, %y.param.loc27: %Self) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

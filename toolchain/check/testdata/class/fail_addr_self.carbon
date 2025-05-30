@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_addr_self.carbon
@@ -76,12 +79,12 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.796 = value_param_pattern %p.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %Class = value_param call_param0
-// CHECK:STDOUT:     %Class.ref.loc20_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %Class.ref.loc23_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:     %p.param: %ptr.e71 = value_param call_param1
-// CHECK:STDOUT:     %.loc20: type = splice_block %ptr [concrete = constants.%ptr.e71] {
-// CHECK:STDOUT:       %Class.ref.loc20_19: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc20_19 [concrete = constants.%ptr.e71]
+// CHECK:STDOUT:     %.loc23: type = splice_block %ptr [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:       %Class.ref.loc23_19: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc23_19 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.e71 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -91,10 +94,10 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.1 [concrete = constants.%F.1f2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.796 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.796 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc12_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %.loc15_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.e71 = value_param call_param0
-// CHECK:STDOUT:     %.loc12_24: type = splice_block %ptr [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:     %.loc15_24: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
@@ -125,28 +128,28 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c.param: %Class, %p.param: %ptr.e71) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref.loc28: %Class = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc28: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
-// CHECK:STDOUT:   %F.bound.loc28: <bound method> = bound_method %c.ref.loc28, %F.ref.loc28
-// CHECK:STDOUT:   %.loc28: ref %Class = temporary_storage
-// CHECK:STDOUT:   %addr.loc28: %ptr.e71 = addr_of %.loc28
-// CHECK:STDOUT:   %F.call.loc28: init %empty_tuple.type = call %F.bound.loc28(%addr.loc28)
-// CHECK:STDOUT:   %c.ref.loc30: %Class = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc30: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %G.bound.loc30: <bound method> = bound_method %c.ref.loc30, %G.ref.loc30
-// CHECK:STDOUT:   %G.call.loc30: init %empty_tuple.type = call %G.bound.loc30(%c.ref.loc30)
-// CHECK:STDOUT:   %p.ref.loc33: %ptr.e71 = name_ref p, %p
-// CHECK:STDOUT:   %.loc33: ref %Class = deref %p.ref.loc33
-// CHECK:STDOUT:   %F.ref.loc33: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
-// CHECK:STDOUT:   %F.bound.loc33: <bound method> = bound_method %.loc33, %F.ref.loc33
-// CHECK:STDOUT:   %addr.loc33: %ptr.e71 = addr_of %.loc33
-// CHECK:STDOUT:   %F.call.loc33: init %empty_tuple.type = call %F.bound.loc33(%addr.loc33)
-// CHECK:STDOUT:   %p.ref.loc35: %ptr.e71 = name_ref p, %p
-// CHECK:STDOUT:   %.loc35_4.1: ref %Class = deref %p.ref.loc35
-// CHECK:STDOUT:   %G.ref.loc35: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %G.bound.loc35: <bound method> = bound_method %.loc35_4.1, %G.ref.loc35
-// CHECK:STDOUT:   %.loc35_4.2: %Class = bind_value %.loc35_4.1
-// CHECK:STDOUT:   %G.call.loc35: init %empty_tuple.type = call %G.bound.loc35(%.loc35_4.2)
+// CHECK:STDOUT:   %c.ref.loc31: %Class = name_ref c, %c
+// CHECK:STDOUT:   %F.ref.loc31: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
+// CHECK:STDOUT:   %F.bound.loc31: <bound method> = bound_method %c.ref.loc31, %F.ref.loc31
+// CHECK:STDOUT:   %.loc31: ref %Class = temporary_storage
+// CHECK:STDOUT:   %addr.loc31: %ptr.e71 = addr_of %.loc31
+// CHECK:STDOUT:   %F.call.loc31: init %empty_tuple.type = call %F.bound.loc31(%addr.loc31)
+// CHECK:STDOUT:   %c.ref.loc33: %Class = name_ref c, %c
+// CHECK:STDOUT:   %G.ref.loc33: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
+// CHECK:STDOUT:   %G.bound.loc33: <bound method> = bound_method %c.ref.loc33, %G.ref.loc33
+// CHECK:STDOUT:   %G.call.loc33: init %empty_tuple.type = call %G.bound.loc33(%c.ref.loc33)
+// CHECK:STDOUT:   %p.ref.loc36: %ptr.e71 = name_ref p, %p
+// CHECK:STDOUT:   %.loc36: ref %Class = deref %p.ref.loc36
+// CHECK:STDOUT:   %F.ref.loc36: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
+// CHECK:STDOUT:   %F.bound.loc36: <bound method> = bound_method %.loc36, %F.ref.loc36
+// CHECK:STDOUT:   %addr.loc36: %ptr.e71 = addr_of %.loc36
+// CHECK:STDOUT:   %F.call.loc36: init %empty_tuple.type = call %F.bound.loc36(%addr.loc36)
+// CHECK:STDOUT:   %p.ref.loc38: %ptr.e71 = name_ref p, %p
+// CHECK:STDOUT:   %.loc38_4.1: ref %Class = deref %p.ref.loc38
+// CHECK:STDOUT:   %G.ref.loc38: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
+// CHECK:STDOUT:   %G.bound.loc38: <bound method> = bound_method %.loc38_4.1, %G.ref.loc38
+// CHECK:STDOUT:   %.loc38_4.2: %Class = bind_value %.loc38_4.1
+// CHECK:STDOUT:   %G.call.loc38: init %empty_tuple.type = call %G.bound.loc38(%.loc38_4.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

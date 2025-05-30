@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 // INCLUDE-FILE: toolchain/testing/min_prelude/convert.carbon
 //
 // AUTOUPDATE
@@ -68,13 +70,13 @@ fn F() {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:     %T.loc15_15.1: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc17_15.1: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:     %T.loc17_17.1: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_17.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc19_17.1: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc19_17.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
 // CHECK:STDOUT:   impl_decl @impl [concrete] {} {
@@ -108,8 +110,8 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @FeedAnimal(%T.loc15_15.1: %Animal.type) {
-// CHECK:STDOUT:   %T.loc15_15.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_15.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @FeedAnimal(%T.loc17_15.1: %Animal.type) {
+// CHECK:STDOUT:   %T.loc17_15.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_15.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -119,18 +121,18 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @HandleAnimal(%T.loc17_17.1: %Animal.type) {
-// CHECK:STDOUT:   %T.loc17_17.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_17.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @HandleAnimal(%T.loc19_17.1: %Animal.type) {
+// CHECK:STDOUT:   %T.loc19_17.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc19_17.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc17_31.2: <specific function> = specific_function constants.%FeedAnimal, @FeedAnimal(%T.loc17_17.2) [symbolic = %FeedAnimal.specific_fn.loc17_31.2 (constants.%FeedAnimal.specific_fn.ec8)]
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc19_31.2: <specific function> = specific_function constants.%FeedAnimal, @FeedAnimal(%T.loc19_17.2) [symbolic = %FeedAnimal.specific_fn.loc19_31.2 (constants.%FeedAnimal.specific_fn.ec8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %FeedAnimal.ref: %FeedAnimal.type = name_ref FeedAnimal, file.%FeedAnimal.decl [concrete = constants.%FeedAnimal]
-// CHECK:STDOUT:     %T.ref: %Animal.type = name_ref T, %T.loc17_17.1 [symbolic = %T.loc17_17.2 (constants.%T)]
-// CHECK:STDOUT:     %FeedAnimal.specific_fn.loc17_31.1: <specific function> = specific_function %FeedAnimal.ref, @FeedAnimal(constants.%T) [symbolic = %FeedAnimal.specific_fn.loc17_31.2 (constants.%FeedAnimal.specific_fn.ec8)]
-// CHECK:STDOUT:     %FeedAnimal.call: init %empty_tuple.type = call %FeedAnimal.specific_fn.loc17_31.1()
+// CHECK:STDOUT:     %T.ref: %Animal.type = name_ref T, %T.loc19_17.1 [symbolic = %T.loc19_17.2 (constants.%T)]
+// CHECK:STDOUT:     %FeedAnimal.specific_fn.loc19_31.1: <specific function> = specific_function %FeedAnimal.ref, @FeedAnimal(constants.%T) [symbolic = %FeedAnimal.specific_fn.loc19_31.2 (constants.%FeedAnimal.specific_fn.ec8)]
+// CHECK:STDOUT:     %FeedAnimal.call: init %empty_tuple.type = call %FeedAnimal.specific_fn.loc19_31.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -140,31 +142,31 @@ fn F() {
 // CHECK:STDOUT:   %HandleAnimal.ref: %HandleAnimal.type = name_ref HandleAnimal, file.%HandleAnimal.decl [concrete = constants.%HandleAnimal]
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc23: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
+// CHECK:STDOUT:   %.loc25: %Animal.type = converted %Goat.ref, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal.ref, @HandleAnimal(constants.%Animal.facet) [concrete = constants.%HandleAnimal.specific_fn]
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%T) {
-// CHECK:STDOUT:   %T.loc15_15.2 => constants.%T
+// CHECK:STDOUT:   %T.loc17_15.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T) {
-// CHECK:STDOUT:   %T.loc17_17.2 => constants.%T
+// CHECK:STDOUT:   %T.loc19_17.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%Animal.facet) {
-// CHECK:STDOUT:   %T.loc17_17.2 => constants.%Animal.facet
+// CHECK:STDOUT:   %T.loc19_17.2 => constants.%Animal.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc17_31.2 => constants.%FeedAnimal.specific_fn.82e
+// CHECK:STDOUT:   %FeedAnimal.specific_fn.loc19_31.2 => constants.%FeedAnimal.specific_fn.82e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedAnimal(constants.%Animal.facet) {
-// CHECK:STDOUT:   %T.loc15_15.2 => constants.%Animal.facet
+// CHECK:STDOUT:   %T.loc17_15.2 => constants.%Animal.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

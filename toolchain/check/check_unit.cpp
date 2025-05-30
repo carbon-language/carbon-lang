@@ -4,6 +4,7 @@
 
 #include "toolchain/check/check_unit.h"
 
+#include <iterator>
 #include <string>
 #include <tuple>
 #include <utility>

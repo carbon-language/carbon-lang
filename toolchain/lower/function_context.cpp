@@ -11,18 +11,19 @@
 
 namespace Carbon::Lower {
 
-FunctionContext::FunctionContext(FileContext& file_context,
-                                 llvm::Function* function,
-                                 SemIR::SpecificId specific_id,
-                                 llvm::DISubprogram* di_subprogram,
-                                 llvm::raw_ostream* vlog_stream)
+FunctionContext::FunctionContext(
+    FileContext& file_context, llvm::Function* function,
+    SemIR::SpecificId specific_id,
+    FileContext::SpecificFunctionFingerprint* function_fingerprint,
+    llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
       specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),
-      vlog_stream_(vlog_stream) {
+      vlog_stream_(vlog_stream),
+      function_fingerprint_(function_fingerprint) {
   function_->setSubprogram(di_subprogram_);
 }
 
@@ -77,7 +78,7 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
   } else if constexpr (InstT::Kind.constant_kind() ==
                            SemIR::InstConstantKind::Always ||
                        InstT::Kind.constant_kind() ==
-                           SemIR::InstConstantKind::Unique) {
+                           SemIR::InstConstantKind::AlwaysUnique) {
     CARBON_FATAL("Missing constant value for constant instruction {0}", inst);
   } else if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Always) {
     // For instructions that are always of type `type`, produce the trivial
@@ -141,6 +142,25 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
   auto* phi = llvm::PHINode::Create(GetType(type_id), NumReservedPredecessors);
   phi->insertInto(block, block->begin());
   return phi;
+}
+
+auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
+  // All builtins are types, with the same empty lowered value.
+  if (SemIR::IsSingletonInstId(inst_id)) {
+    return GetTypeAsValue();
+  }
+
+  if (auto result = locals_.Lookup(inst_id)) {
+    return result.value();
+  }
+
+  if (auto result = file_context_->global_variables().Lookup(inst_id)) {
+    return result.value();
+  }
+
+  auto* global = file_context_->GetGlobal(inst_id, specific_id_);
+  AddGlobalToCurrentFingerprint(global);
+  return global;
 }
 
 auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {
@@ -238,6 +258,61 @@ auto FunctionContext::Inserter::InsertHelper(
 
   IRBuilderDefaultInserter::InsertHelper(inst, base_name + separator + name,
                                          insert_pt);
+}
+
+auto FunctionContext::AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
+                                                  SemIR::SpecificId specific_id)
+    -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+
+  RawStringOstream os;
+  // TODO: Replace index with info that is translation unit independent.
+  // Using a string that includes the `FunctionId` string and the index to
+  // avoid possible collisions. This needs revisiting.
+  os << "function_id" << function_id.index << "\n";
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
+  // TODO: Replace index with info that is translation unit independent.
+  if (specific_id.has_value()) {
+    current_fingerprint_.specific_fingerprint.update(specific_id.index);
+    // TODO: Uses -1 as delimiter. This needs revisiting.
+    current_fingerprint_.specific_fingerprint.update(-1);
+    function_fingerprint_->calls.push_back(specific_id);
+  }
+}
+
+auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {
+  if (!function_fingerprint_ || !type) {
+    return;
+  }
+
+  RawStringOstream os;
+  type->print(os);
+  os << "\n";
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
+}
+
+auto FunctionContext::AddGlobalToCurrentFingerprint(llvm::Value* global)
+    -> void {
+  if (!function_fingerprint_ || !global) {
+    return;
+  }
+
+  RawStringOstream os;
+  global->print(os);
+  os << "\n";
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
+}
+
+auto FunctionContext::EmitFinalFingerprint() -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+  current_fingerprint_.common_fingerprint.final(
+      function_fingerprint_->common_fingerprint);
+  current_fingerprint_.specific_fingerprint.final(
+      function_fingerprint_->specific_fingerprint);
 }
 
 }  // namespace Carbon::Lower
