@@ -999,22 +999,9 @@ static auto GetLocalSpecificInterface(
   }
 }
 
-// Translates a NameScopeId from the import IR to a local NameScopeId. Adds
-// unresolved constants to the resolver's work stack.
-static auto GetLocalNameScopeId(ImportRefResolver& resolver,
-                                SemIR::NameScopeId name_scope_id)
+static auto GetLocalNameScopeIdImpl(ImportRefResolver& resolver,
+                                    SemIR::ConstantId const_id)
     -> SemIR::NameScopeId {
-  // Get the instruction that created the scope.
-  auto [inst_id, inst] =
-      resolver.import_name_scopes().GetInstIfValid(name_scope_id);
-  if (!inst) {
-    // Map scopes that aren't associated with an instruction to `None`. For now,
-    // such scopes aren't used, and we don't have a good way to remap them.
-    return SemIR::NameScopeId::None;
-  }
-
-  // Get the constant value for the scope.
-  auto const_id = GetLocalConstantId(resolver, inst_id);
   if (!const_id.has_value()) {
     return SemIR::NameScopeId::None;
   }
@@ -1067,6 +1054,28 @@ static auto GetLocalNameScopeId(ImportRefResolver& resolver,
   }
   CARBON_FATAL("Unexpected instruction kind for name scope: {0}",
                name_scope_inst);
+}
+
+// Translates a NameScopeId from the import IR to a local NameScopeId. Adds
+// unresolved constants to the resolver's work stack.
+static auto GetLocalNameScopeId(ImportRefResolver& resolver,
+                                SemIR::NameScopeId name_scope_id)
+    -> SemIR::NameScopeId {
+  // Get the instruction that created the scope.
+  auto [inst_id, inst] =
+      resolver.import_name_scopes().GetInstIfValid(name_scope_id);
+  if (!inst) {
+    // Map scopes that aren't associated with an instruction to `None`. For now,
+    // such scopes aren't used, and we don't have a good way to remap them.
+    return SemIR::NameScopeId::None;
+  }
+
+  // Get the constant value for the scope.
+  auto const_id = GetLocalConstantId(resolver, inst_id);
+  auto result = GetLocalNameScopeIdImpl(resolver, const_id);
+  CARBON_CHECK((name_scope_id.has_value() == result.has_value()) ||
+               resolver.HasNewWork());
+  return result;
 }
 
 // Given an imported entity base, returns an incomplete, local version of it.
