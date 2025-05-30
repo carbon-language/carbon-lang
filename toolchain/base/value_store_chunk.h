@@ -26,8 +26,8 @@ namespace Carbon::Internal {
 template <class IdT>
   requires requires { typename IdT::ValueType; }
 static constexpr auto PlatformChunkMaxAllocationBytes() -> int {
-#if !defined(NDEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-  // Use a small size in debug/fuzzer builds to ensure multiple chunks get used.
+#ifndef NDEBUG
+  // Use a small size in debug builds to ensure multiple chunks get used.
   return sizeof(typename IdT::ValueType) * 5;
 #else
   // TODO: Should ia64 use 1M or 4M? Should Windows and Mac use different sizes?
