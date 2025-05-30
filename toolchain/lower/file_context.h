@@ -8,13 +8,8 @@
 #include "clang/Basic/CodeGenOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Lex/PreprocessorOptions.h"
-#include "common/raw_string_ostream.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DIBuilder.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
 #include "llvm/Support/BLAKE3.h"
+#include "toolchain/lower/context.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -22,18 +17,9 @@
 
 namespace Carbon::Lower {
 
-// Context and shared functionality for lowering handlers.
+// Context and shared functionality for lowering within a SemIR file.
 class FileContext {
  public:
-  // Location information for use with DebugInfo. The line_number and
-  // column_number are >= 0, with 0 as unknown, so that they can be passed
-  // directly to DebugInfo.
-  struct LocForDI {
-    llvm::StringRef filename;
-    int32_t line_number;
-    int32_t column_number;
-  };
-
   // Describes a specific function's body fingerprint.
   struct SpecificFunctionFingerprint {
     // Fingerprint with all specific-dependent instructions, except specific
@@ -50,27 +36,24 @@ class FileContext {
     llvm::SmallVector<SemIR::SpecificId> calls;
   };
 
-  explicit FileContext(
-      llvm::LLVMContext& llvm_context,
-      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-      std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-          tree_and_subtrees_getters_for_debug_info,
-      llvm::StringRef module_name, const SemIR::File& sem_ir,
-      clang::ASTUnit* cpp_ast, const SemIR::InstNamer* inst_namer,
-      llvm::raw_ostream* vlog_stream);
-
-  // Lowers the SemIR::File to LLVM IR. Should only be called once, and handles
-  // the main execution loop.
-  auto Run() -> std::unique_ptr<llvm::Module>;
-
-  // Create the DICompileUnit metadata for this compilation.
-  auto BuildDICompileUnit(llvm::StringRef module_name,
-                          llvm::Module& llvm_module,
-                          llvm::DIBuilder& di_builder) -> llvm::DICompileUnit*;
+  explicit FileContext(Context& context, const SemIR::File& sem_ir,
+                       const SemIR::InstNamer* inst_namer,
+                       llvm::raw_ostream* vlog_stream);
 
   // Creates the Clang `CodeGenerator` to generate LLVM module from imported C++
   // code. Returns null when not importing C++.
   auto CreateCppCodeGenerator() -> std::unique_ptr<clang::CodeGenerator>;
+
+  // Prepares to lower code in this IR, by precomputing needed LLVM types,
+  // constants, declarations, etc. Should only be called once, before we lower
+  // anything in this file.
+  auto PrepareToLower() -> void;
+
+  // Lowers all the definitions provided by the SemIR::File to LLVM IR.
+  auto LowerDefinitions() -> void;
+
+  // Perform final cleanup tasks once all lowering has been completed.
+  auto Finalize() -> void;
 
   // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
@@ -92,17 +75,16 @@ class FileContext {
   }
 
   // Returns location information for use with DebugInfo.
-  auto GetLocForDI(SemIR::InstId inst_id) -> LocForDI;
+  auto GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Constant* {
-    return llvm::ConstantStruct::get(GetTypeType());
+    return context().GetTypeAsValue();
   }
 
   // Returns a lowered value to use for a value of int literal type.
   auto GetIntLiteralAsValue() -> llvm::Constant* {
-    // TODO: Consider adding a named struct type for integer literals.
-    return llvm::ConstantStruct::get(llvm::StructType::get(llvm_context()));
+    return context().GetIntLiteralAsValue();
   }
 
   // Returns a global value for the given instruction.
@@ -110,29 +92,22 @@ class FileContext {
       -> llvm::Value*;
 
   // Returns the empty LLVM struct type used to represent the type `type`.
-  auto GetTypeType() -> llvm::StructType* {
-    if (!type_type_) {
-      // `type` is lowered to an empty LLVM StructType.
-      type_type_ = llvm::StructType::create(*llvm_context_, {}, "type");
-    }
-    return type_type_;
-  }
+  auto GetTypeType() -> llvm::StructType* { return context().GetTypeType(); }
 
-  auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
-  auto llvm_module() -> llvm::Module& { return *llvm_module_; }
+  auto context() -> Context& { return *context_; }
+  auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
+  auto llvm_module() -> llvm::Module& { return context().llvm_module(); }
   auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
-  auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
+  auto cpp_ast() -> const clang::ASTUnit* { return sem_ir().cpp_ast(); }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
   }
   auto printf_int_format_string() -> llvm::Value* {
-    return printf_int_format_string_;
+    return context().printf_int_format_string();
   }
   auto SetPrintfIntFormatString(llvm::Value* printf_int_format_string) {
-    CARBON_CHECK(!printf_int_format_string_,
-                 "PrintInt formatting string already generated");
-    printf_int_format_string_ = printf_int_format_string;
+    context().SetPrintfIntFormatString(printf_int_format_string);
   }
 
   struct FunctionTypeInfo {
@@ -253,29 +228,11 @@ class FileContext {
       const Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
       -> bool;
 
-  // State for building the LLVM IR.
-  llvm::LLVMContext* llvm_context_;
-  std::unique_ptr<llvm::Module> llvm_module_;
-
-  // The filesystem for source code.
-  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
-
-  // State for building the LLVM IR debug info metadata.
-  llvm::DIBuilder di_builder_;
-
-  // The DICompileUnit, if any - null implies debug info is not being emitted.
-  llvm::DICompileUnit* di_compile_unit_;
-
-  // The trees are only provided when debug info should be emitted.
-  std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-      tree_and_subtrees_getters_for_debug_info_;
+  // The overall lowering context.
+  Context* context_;
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
-
-  // A mutable Clang AST is necessary for lowering since using the AST in lower
-  // modifies it.
-  clang::ASTUnit* cpp_ast_;
 
   // The options used to create the Clang Code Generator.
   clang::HeaderSearchOptions cpp_header_search_options_;
@@ -315,9 +272,6 @@ class FileContext {
   // resize this directly to the (often large) correct size.
   llvm::SmallVector<llvm::Type*, 0> types_;
 
-  // Lowered version of the builtin type `type`.
-  llvm::StructType* type_type_ = nullptr;
-
   // Maps constants to their lowered values.
   // Vector indexes correspond to `InstId` indexes for constant instructions. We
   // resize this directly to the (often large) correct size.
@@ -325,9 +279,6 @@ class FileContext {
 
   // Maps global variables to their lowered variant.
   Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
-
-  // Global format string for `printf.int.format` used by the PrintInt builtin.
-  llvm::Value* printf_int_format_string_ = nullptr;
 
   // For a generic function, keep track of the specifics for which LLVM
   // function declarations were created. Those can be retrieved then from

@@ -36,26 +36,11 @@
 
 namespace Carbon::Lower {
 
-FileContext::FileContext(
-    llvm::LLVMContext& llvm_context,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-        tree_and_subtrees_getters_for_debug_info,
-    llvm::StringRef module_name, const SemIR::File& sem_ir,
-    clang::ASTUnit* cpp_ast, const SemIR::InstNamer* inst_namer,
-    llvm::raw_ostream* vlog_stream)
-    : llvm_context_(&llvm_context),
-      llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
-      fs_(std::move(fs)),
-      di_builder_(*llvm_module_),
-      di_compile_unit_(
-          tree_and_subtrees_getters_for_debug_info
-              ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
-              : nullptr),
-      tree_and_subtrees_getters_for_debug_info_(
-          tree_and_subtrees_getters_for_debug_info),
+FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
+                         const SemIR::InstNamer* inst_namer,
+                         llvm::raw_ostream* vlog_stream)
+    : context_(&context),
       sem_ir_(&sem_ir),
-      cpp_ast_(cpp_ast),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
   // Initialization that relies on invariants of the class.
@@ -65,11 +50,12 @@ FileContext::FileContext(
 }
 
 // TODO: Move this to lower.cpp.
-auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
-  CARBON_CHECK(llvm_module_, "Run can only be called once.");
-
+auto FileContext::PrepareToLower() -> void {
   if (cpp_code_generator_) {
-    cpp_code_generator_->Initialize(cpp_ast()->getASTContext());
+    // Clang code generation should not actually modify the AST, but isn't
+    // const-correct.
+    cpp_code_generator_->Initialize(
+        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
   }
 
   // Lower all types that were required to be complete.
@@ -86,12 +72,6 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     functions_[id.index] = BuildFunctionDecl(id);
   }
 
-  for (const auto& class_info : sem_ir_->classes().array_ref()) {
-    if (auto* llvm_vtable = BuildVtable(class_info)) {
-      global_variables_.Insert(class_info.vtable_id, llvm_vtable);
-    }
-  }
-
   // Specific functions are lowered when we emit a reference to them.
   specific_functions_.resize(sem_ir_->specifics().size());
   // Additional data stored for specifics, for when attempting to coalesce.
@@ -106,6 +86,15 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   // Lower constants.
   constants_.resize(sem_ir_->insts().size());
   LowerConstants(*this, constants_);
+}
+
+// TODO: Move this to lower.cpp.
+auto FileContext::LowerDefinitions() -> void {
+  for (const auto& class_info : sem_ir_->classes().array_ref()) {
+    if (auto* llvm_vtable = BuildVtable(class_info)) {
+      global_variables_.Insert(class_info.vtable_id, llvm_vtable);
+    }
+  }
 
   // Lower global variable definitions.
   // TODO: Storing both a `constants_` array and a separate `global_variables_`
@@ -148,10 +137,6 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     BuildFunctionDefinition(function_id, specific_id);
   }
 
-  // Find equivalent specifics (from the same generic), replace all uses and
-  // remove duplicately lowered function definitions.
-  CoalesceEquivalentSpecifics();
-
   // Append `__global_init` to `llvm::global_ctors` to initialize global
   // variables.
   if (sem_ir().global_ctor_id().has_value()) {
@@ -161,15 +146,22 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   }
 
   if (cpp_code_generator_) {
-    cpp_code_generator_->HandleTranslationUnit(cpp_ast()->getASTContext());
+    // Clang code generation should not actually modify the AST, but isn't
+    // const-correct.
+    cpp_code_generator_->HandleTranslationUnit(
+        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
     bool link_error = llvm::Linker::linkModules(
-        /*Dest=*/*llvm_module_,
+        /*Dest=*/llvm_module(),
         /*Src=*/std::unique_ptr<llvm::Module>(
             cpp_code_generator_->ReleaseModule()));
     CARBON_CHECK(!link_error);
   }
+}
 
-  return std::move(llvm_module_);
+auto FileContext::Finalize() -> void {
+  // Find equivalent specifics (from the same generic), replace all uses and
+  // remove duplicately lowered function definitions.
+  CoalesceEquivalentSpecifics();
 }
 
 auto FileContext::InsertPair(
@@ -395,25 +387,6 @@ auto FileContext::AreFunctionBodiesEquivalent(
   return true;
 }
 
-auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
-                                     llvm::Module& llvm_module,
-                                     llvm::DIBuilder& di_builder)
-    -> llvm::DICompileUnit* {
-  llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
-  llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
-                            llvm::DEBUG_METADATA_VERSION);
-  // TODO: Include directory path in the compile_unit_file.
-  llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
-  // TODO: Introduce a new language code for Carbon. C works well for now since
-  // it's something debuggers will already know/have support for at least.
-  // Probably have to bump to C++ at some point for virtual functions,
-  // templates, etc.
-  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, compile_unit_file,
-                                      "carbon",
-                                      /*isOptimized=*/false, /*Flags=*/"",
-                                      /*RV=*/0);
-}
-
 auto FileContext::CreateCppCodeGenerator()
     -> std::unique_ptr<clang::CodeGenerator> {
   if (!cpp_ast()) {
@@ -421,15 +394,16 @@ auto FileContext::CreateCppCodeGenerator()
   }
 
   RawStringOstream clang_module_name_stream;
-  clang_module_name_stream << llvm_module_->getName() << ".clang";
+  clang_module_name_stream << llvm_module().getName() << ".clang";
 
   // Do not emit Clang's name and version as the creator of the output file.
   cpp_code_gen_options_.EmitVersionIdentMetadata = false;
 
   return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
       cpp_ast()->getASTContext().getDiagnostics(),
-      clang_module_name_stream.TakeStr(), fs_, cpp_header_search_options_,
-      cpp_preprocessor_options_, cpp_code_gen_options_, *llvm_context_));
+      clang_module_name_stream.TakeStr(), context().file_system(),
+      cpp_header_search_options_, cpp_preprocessor_options_,
+      cpp_code_gen_options_, llvm_context()));
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id,
@@ -858,7 +832,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
 auto FileContext::BuildDISubprogram(const SemIR::Function& function,
                                     const llvm::Function* llvm_function)
     -> llvm::DISubprogram* {
-  if (!di_compile_unit_) {
+  if (!context().di_compile_unit()) {
     return nullptr;
   }
   auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
@@ -867,12 +841,12 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   auto loc = GetLocForDI(function.definition_id);
   // TODO: Add more details here, including real subroutine type (once type
   // information is built), etc.
-  return di_builder_.createFunction(
-      di_compile_unit_, *name, llvm_function->getName(),
-      /*File=*/di_builder_.createFile(loc.filename, ""),
+  return context().di_builder().createFunction(
+      context().di_compile_unit(), *name, llvm_function->getName(),
+      /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number,
-      di_builder_.createSubroutineType(
-          di_builder_.getOrCreateTypeArray(std::nullopt)),
+      context().di_builder().createSubroutineType(
+          context().di_builder().getOrCreateTypeArray(std::nullopt)),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
 }
@@ -1079,25 +1053,9 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
                                   /*Initializer=*/nullptr, mangled_name);
 }
 
-auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  SemIR::AbsoluteNodeId resolved =
-      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
-  const auto& tree_and_subtrees =
-      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id()
-                                                       .index]();
-  const auto& tokens = tree_and_subtrees.tree().tokens();
-
-  if (resolved.node_id().has_value()) {
-    auto token =
-        tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id()).begin;
-    return {.filename = tokens.source().filename(),
-            .line_number = tokens.GetLineNumber(token),
-            .column_number = tokens.GetColumnNumber(token)};
-  } else {
-    return {.filename = tokens.source().filename(),
-            .line_number = 0,
-            .column_number = 0};
-  }
+auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
+  return context().GetLocForDI(
+      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back());
 }
 
 auto FileContext::BuildVtable(const SemIR::Class& class_info)
