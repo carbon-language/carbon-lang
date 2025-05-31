@@ -110,10 +110,14 @@ class FunctionContext {
   // Returns the type of the given instruction in the current specific.
   auto GetTypeOfInstInSpecific(SemIR::InstId inst_id) -> llvm::Type* {
     auto [type_file, type_id] = GetTypeIdOfInstInSpecific(inst_id);
-    return GetFileContext(type_file).GetType(type_id);
+    auto* type = GetFileContext(type_file).GetType(type_id);
+    AddTypeToCurrentFingerprint(type);
+    return type;
   }
 
   // Returns the type of the given instruction in the current specific.
+  // TODO: Each caller of this should add information to the fingerprint
+  // indicating what information they used from the type.
   auto GetTypeIdOfInstInSpecific(SemIR::InstId inst_id)
       -> std::pair<const SemIR::File*, SemIR::TypeId>;
 
