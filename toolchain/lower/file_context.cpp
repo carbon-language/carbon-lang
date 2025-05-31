@@ -612,6 +612,30 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
          .specific_id = specific_id});
   }
 
+  // If this is a C++ function, tell Clang that we referenced it.
+  if (auto* cpp_decl = sem_ir().functions().Get(function_id).cpp_decl) {
+    CARBON_CHECK(!specific_id.has_value(),
+                 "Specific functions cannot have C++ definitions");
+
+    // TODO: To support recursive inline functions, collect all calls to
+    // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
+    // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
+    // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
+    if (clang::FunctionDecl* cpp_def = cpp_decl->getDefinition()) {
+      // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`)
+      // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
+      // function name (`CodeGenModule::getMangledName()`), and will generate
+      // its definition.
+      llvm::Constant* function_address =
+          cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
+                                              /*isForDefinition=*/false);
+      CARBON_DCHECK(function_address);
+
+      // Emit the function code.
+      cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
+    }
+  }
+
   auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
 
   auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
@@ -716,30 +740,6 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // values derived from `definition_function` should use `definition_context`
   // instead of our context.
   const auto& definition_ir = definition_context.sem_ir();
-
-  if (definition_function.cpp_decl) {
-    // TODO: To support recursive inline functions, collect all calls to
-    // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
-    // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
-    // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
-    clang::FunctionDecl* cpp_def =
-        definition_function.cpp_decl->getDefinition();
-    CARBON_DCHECK(cpp_def, "No Clang function body found during lowering");
-
-    // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`) so
-    // that code generation (`CodeGenModule::EmitGlobal()`) would see this
-    // function name (`CodeGenModule::getMangledName()`), and will generate its
-    // definition.
-    llvm::Constant* function_address =
-        definition_context.cpp_code_generator_->GetAddrOfGlobal(
-            clang::GlobalDecl(cpp_def),
-            /*isForDefinition=*/false);
-    CARBON_DCHECK(function_address);
-
-    // Emit the function code.
-    cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
-    return;
-  }
 
   auto* llvm_function = GetFunction(function_id, specific_id);
   CARBON_CHECK(llvm_function,
