@@ -1072,9 +1072,11 @@ static auto GetLocalNameScopeId(ImportRefResolver& resolver,
 
   // Get the constant value for the scope.
   auto const_id = GetLocalConstantId(resolver, inst_id);
+  if (!const_id.has_value()) {
+    return SemIR::NameScopeId::None;
+  }
   auto result = GetLocalNameScopeIdImpl(resolver, const_id);
-  CARBON_CHECK((name_scope_id.has_value() == result.has_value()) ||
-               resolver.HasNewWork());
+  CARBON_CHECK(result.has_value());
   return result;
 }
 
