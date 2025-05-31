@@ -628,7 +628,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       // its definition.
       llvm::Constant* function_address =
           cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
-                                              /*isForDefinition=*/false);
+                                               /*isForDefinition=*/false);
       CARBON_DCHECK(function_address);
 
       // Emit the function code.

@@ -24,8 +24,7 @@ class FunctionContext {
   // be null (see members).
   explicit FunctionContext(
       FileContext& file_context, llvm::Function* function,
-      FileContext& specific_file_context,
-      SemIR::SpecificId specific_id,
+      FileContext& specific_file_context, SemIR::SpecificId specific_id,
       FileContext::SpecificFunctionFingerprint* function_fingerprint,
       llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream);
 
