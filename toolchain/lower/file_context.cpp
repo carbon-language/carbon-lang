@@ -144,7 +144,9 @@ auto FileContext::LowerDefinitions() -> void {
                               GetFunction(sem_ir().global_ctor_id()),
                               /*Priority=*/0);
   }
+}
 
+auto FileContext::Finalize() -> void {
   if (cpp_code_generator_) {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
@@ -156,9 +158,7 @@ auto FileContext::LowerDefinitions() -> void {
             cpp_code_generator_->ReleaseModule()));
     CARBON_CHECK(!link_error);
   }
-}
 
-auto FileContext::Finalize() -> void {
   // Find equivalent specifics (from the same generic), replace all uses and
   // remove duplicately lowered function definitions.
   CoalesceEquivalentSpecifics();
