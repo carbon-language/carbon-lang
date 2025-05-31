@@ -286,8 +286,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VarStorage /* inst */) -> void {
-  auto* type = context.GetType(SemIR::GetTypeOfInstInSpecific(
-      context.sem_ir(), context.specific_id(), inst_id));
+  auto* type = context.GetTypeOfInstInSpecific(inst_id);
   context.AddTypeToCurrentFingerprint(type);
 
   // Position the first alloca right before the start of the executable code in

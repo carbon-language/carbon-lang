@@ -34,6 +34,13 @@ class Context {
     int32_t column_number;
   };
 
+  // A specific function whose definition needs to be lowered.
+  struct PendingSpecificFunctionDefinition {
+    FileContext* context;
+    SemIR::FunctionId function_id;
+    SemIR::SpecificId specific_id;
+  };
+
   explicit Context(llvm::LLVMContext& llvm_context,
                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
@@ -47,6 +54,12 @@ class Context {
   auto GetFileContext(const SemIR::File* file,
                       const SemIR::InstNamer* inst_namer = nullptr)
       -> FileContext&;
+
+  // Registers a specific function definition to be lowered later.
+  auto AddPendingSpecificFunctionDefinition(
+      PendingSpecificFunctionDefinition pending) -> void {
+    specific_function_definitions_.push_back(pending);
+  }
 
   // Finishes lowering and takes ownership of the LLVM module. The context
   // cannot be used further after calling this.
@@ -98,6 +111,10 @@ class Context {
                           llvm::Module& llvm_module,
                           llvm::DIBuilder& di_builder) -> llvm::DICompileUnit*;
 
+  // Lower any definitions that have been registered for later lowering.
+  // Currently, this lowers specifics for generic functions.
+  auto LowerPendingDefinitions() -> void;
+
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;
@@ -126,6 +143,11 @@ class Context {
 
   // Global format string for `printf.int.format` used by the PrintInt builtin.
   llvm::Value* printf_int_format_string_ = nullptr;
+
+  // Tracks which specific functions need to have their definitions lowered.
+  // This list may grow while lowering generic definitions from this list.
+  llvm::SmallVector<PendingSpecificFunctionDefinition>
+      specific_function_definitions_;
 };
 
 }  // namespace Carbon::Lower
