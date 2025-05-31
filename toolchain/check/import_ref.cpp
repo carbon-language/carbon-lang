@@ -1593,6 +1593,14 @@ static auto MakeIncompleteClass(ImportContext& context,
   return {class_decl.class_id, self_const_id};
 }
 
+static auto InitializeNameScopeAndImportRefs(
+    ImportContext& context, const SemIR::NameScope& import_scope,
+    SemIR::NameScope& new_scope, SemIR::InstId decl_id, SemIR::NameId name_id,
+    SemIR::NameScopeId parent_scope_id) {
+  new_scope.Set(decl_id, name_id, parent_scope_id);
+  AddNameScopeImportRefs(context, import_scope, new_scope);
+}
+
 // Fills out the class definition for an incomplete class.
 static auto AddClassDefinition(ImportContext& context,
                                const SemIR::Class& import_class,
@@ -1610,9 +1618,9 @@ static auto AddClassDefinition(ImportContext& context,
 
   // Push a block so that we can add scoped instructions to it.
   context.local_context().inst_block_stack().Push();
-  new_scope.Set(new_class.first_owning_decl_id, SemIR::NameId::None,
-                new_class.parent_scope_id);
-  AddNameScopeImportRefs(context, import_scope, new_scope);
+  InitializeNameScopeAndImportRefs(
+      context, import_scope, new_scope, new_class.first_owning_decl_id,
+      SemIR::NameId::None, new_class.parent_scope_id);
   new_class.body_block_id = context.local_context().inst_block_stack().Pop();
 
   if (import_class.base_id.has_value()) {
@@ -1997,6 +2005,8 @@ static auto MakeImplDeclaration(ImportContext& context,
         .constraint_id = SemIR::TypeInstId::None,
         .interface = SemIR::SpecificInterface::None,
         .witness_id = witness_id,
+        .scope_id = import_impl.is_complete() ? AddPlaceholderNameScope(context)
+                                              : SemIR::NameScopeId::None,
         .is_final = import_impl.is_final}});
 
   // Write the impl ID into the ImplDecl.
@@ -2013,9 +2023,9 @@ static auto AddImplDefinition(ImportContext& context,
   new_impl.defined = true;
 
   if (import_impl.scope_id.has_value()) {
-    new_impl.scope_id = context.local_name_scopes().Add(
-        new_impl.first_owning_decl_id, SemIR::NameId::None,
-        new_impl.parent_scope_id);
+    auto& new_scope = context.local_name_scopes().Get(new_impl.scope_id);
+    new_scope.Set(new_impl.first_owning_decl_id, SemIR::NameId::None,
+                  new_impl.parent_scope_id);
     // Import the contents of the definition scope, if we might need it. Name
     // lookup is never performed into this scope by a user of the impl, so
     // this is only necessary in the same library that defined the impl, in
@@ -2024,7 +2034,6 @@ static auto AddImplDefinition(ImportContext& context,
     // TODO: Check to see if this impl is owned by the API file, rather than
     // merely being imported into it.
     if (context.import_ir_id() == SemIR::ImportIRId::ApiForImpl) {
-      auto& new_scope = context.local_name_scopes().Get(new_impl.scope_id);
       const auto& import_scope =
           context.import_name_scopes().Get(import_impl.scope_id);
 
@@ -2150,7 +2159,9 @@ static auto MakeInterfaceDecl(ImportContext& context,
   interface_decl.interface_id = context.local_interfaces().Add(
       {GetIncompleteLocalEntityBase(context, interface_decl_id,
                                     import_interface),
-       {}});
+       {.scope_id = import_interface.is_complete()
+                        ? AddPlaceholderNameScope(context)
+                        : SemIR::NameScopeId::None}});
 
   if (import_interface.has_parameters()) {
     interface_decl.type_id = GetGenericInterfaceType(
@@ -2170,17 +2181,16 @@ static auto AddInterfaceDefinition(ImportContext& context,
                                    const SemIR::Interface& import_interface,
                                    SemIR::Interface& new_interface,
                                    SemIR::InstId self_param_id) -> void {
-  new_interface.scope_id = context.local_name_scopes().Add(
-      new_interface.first_owning_decl_id, SemIR::NameId::None,
-      new_interface.parent_scope_id);
   auto& new_scope = context.local_name_scopes().Get(new_interface.scope_id);
-  new_scope.set_is_interface_definition();
   const auto& import_scope =
       context.import_name_scopes().Get(import_interface.scope_id);
 
   // Push a block so that we can add scoped instructions to it.
   context.local_context().inst_block_stack().Push();
-  AddNameScopeImportRefs(context, import_scope, new_scope);
+  new_scope.set_is_interface_definition();
+  InitializeNameScopeAndImportRefs(
+      context, import_scope, new_scope, new_interface.first_owning_decl_id,
+      SemIR::NameId::None, new_interface.parent_scope_id);
   new_interface.associated_entities_id = AddAssociatedEntities(
       context, new_interface.scope_id, import_interface.associated_entities_id);
   new_interface.body_block_id =
