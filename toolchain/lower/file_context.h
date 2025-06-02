@@ -149,6 +149,18 @@ class FileContext {
                                    : &functions_[function_id.index];
   }
 
+  // Notes that a C++ function has been referenced for the first time, so we
+  // should ask Clang to generate a definition for it if possible.
+  auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl) -> void;
+
+  // Notes that a specific function has been referenced for the first time.
+  // Updates the fingerprint to include the function's type, and adds the
+  // function to the list of specific functions whose definitions should be
+  // lowered.
+  auto HandleReferencedSpecificFunction(SemIR::FunctionId function_id,
+                                        SemIR::SpecificId specific_id,
+                                        llvm::Type* llvm_type) -> void;
+
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
   auto BuildFunctionDecl(SemIR::FunctionId function_id,

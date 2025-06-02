@@ -108,8 +108,8 @@ auto FileContext::LowerDefinitions() -> void {
       // constant unless the variable is unnamed, in which case we need to
       // create it now.
       llvm::GlobalVariable* llvm_var = nullptr;
-      auto const_id = sem_ir().constant_values().Get(inst_id);
-      if (const_id.is_constant()) {
+      if (auto const_id = sem_ir().constant_values().Get(inst_id);
+          const_id.is_constant()) {
         llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
       } else {
         llvm_var = BuildGlobalVariableDecl(*var);
@@ -580,6 +580,55 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
           .return_param_id = return_param_id};
 }
 
+auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
+    -> void {
+  // TODO: To support recursive inline functions, collect all calls to
+  // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
+  // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
+  // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
+  clang::FunctionDecl* cpp_def = cpp_decl->getDefinition();
+  if (!cpp_def) {
+    return;
+  }
+
+  // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`)
+  // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
+  // function name (`CodeGenModule::getMangledName()`), and will generate
+  // its definition.
+  llvm::Constant* function_address =
+      cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
+                                           /*isForDefinition=*/false);
+  CARBON_CHECK(function_address);
+
+  // Emit the function code.
+  cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
+}
+
+auto FileContext::HandleReferencedSpecificFunction(
+    SemIR::FunctionId function_id, SemIR::SpecificId specific_id,
+    llvm::Type* llvm_type) -> void {
+  CARBON_CHECK(specific_id.has_value());
+
+  // Add this specific function to a list of specific functions whose
+  // definitions we need to emit.
+  // TODO: Don't do this if we know this function is emitted as a
+  // non-discardable symbol in the IR for some other file.
+  context().AddPendingSpecificFunctionDefinition({.context = this,
+                                                  .function_id = function_id,
+                                                  .specific_id = specific_id});
+
+  // Create a unique fingerprint for the function type.
+  // For now, we compute the function type fingerprint only for specifics,
+  // though we might need it for all functions in order to create a canonical
+  // fingerprint across translation units.
+  llvm::BLAKE3 function_type_fingerprint;
+  RawStringOstream os;
+  llvm_type->print(os);
+  function_type_fingerprint.update(os.TakeStr());
+  function_type_fingerprint.final(
+      lowered_specifics_type_fingerprint_[specific_id.index]);
+}
+
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                                     SemIR::SpecificId specific_id)
     -> llvm::Function* {
@@ -599,45 +648,10 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // TODO: Consider tracking whether the function has been used, and only
   // lowering it if it's needed.
 
-  // For a specific function, add this function to a list of specific functions
-  // whose definitions we need to emit.
-  // TODO: Consider also doing this to generate an `available_externally`
-  // definition for inline functions.
-  // TODO: Don't do this if we know this function is emitted in the IR for some
-  // other file.
-  if (specific_id.has_value()) {
-    context().AddPendingSpecificFunctionDefinition(
-        {.context = this,
-         .function_id = function_id,
-         .specific_id = specific_id});
-  }
-
-  // If this is a C++ function, tell Clang that we referenced it.
-  if (auto* cpp_decl = sem_ir().functions().Get(function_id).cpp_decl) {
-    CARBON_CHECK(!specific_id.has_value(),
-                 "Specific functions cannot have C++ definitions");
-
-    // TODO: To support recursive inline functions, collect all calls to
-    // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
-    // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
-    // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
-    if (clang::FunctionDecl* cpp_def = cpp_decl->getDefinition()) {
-      // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`)
-      // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
-      // function name (`CodeGenModule::getMangledName()`), and will generate
-      // its definition.
-      llvm::Constant* function_address =
-          cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
-                                               /*isForDefinition=*/false);
-      CARBON_DCHECK(function_address);
-
-      // Emit the function code.
-      cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
-    }
-  }
-
   auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
 
+  // TODO: For an imported inline function, consider generating an
+  // `available_externally` definition.
   auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
                                          : llvm::Function::ExternalLinkage;
 
@@ -646,20 +660,29 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
     // We might have already lowered this function while lowering a different
     // file. That's OK.
+    // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
+    // produced by declarations of the same Carbon function. Name collisions
+    // between non-private members of the same library should have been
+    // diagnosed by check if detected, but it's not clear that check will always
+    // be able to see this problem. In theory, name collisions could also occur
+    // due to fingerprint collision.
     return existing;
   }
 
-  // Create a unique fingerprint for the function type.
-  // For now, compute the function type fingerprint only for specifics, though
-  // we might need it for all functions in order to create a canonical
-  // fingerprint across translation units.
+  // If this is a C++ function, tell Clang that we referenced it.
+  if (auto* cpp_decl = sem_ir().functions().Get(function_id).cpp_decl) {
+    CARBON_CHECK(!specific_id.has_value(),
+                 "Specific functions cannot have C++ definitions");
+    HandleReferencedCppFunction(cpp_decl);
+    // TODO: Check that the signature and mangling generated by Clang and the
+    // one we generated are the same.
+  }
+
+  // If this is a specific function, we may need to do additional work to emit
+  // its definition.
   if (specific_id.has_value()) {
-    llvm::BLAKE3 function_type_fingerprint;
-    RawStringOstream os;
-    function_type_info.type->print(os);
-    function_type_fingerprint.update(os.TakeStr());
-    function_type_fingerprint.final(
-        lowered_specifics_type_fingerprint_[specific_id.index]);
+    HandleReferencedSpecificFunction(function_id, specific_id,
+                                     function_type_info.type);
   }
 
   auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,

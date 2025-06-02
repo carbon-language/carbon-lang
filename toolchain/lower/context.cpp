@@ -45,7 +45,7 @@ auto Context::LowerPendingDefinitions() -> void {
   // Lower function definitions for generics.
   // This cannot be a range-based loop, as new definitions can be added
   // while building other definitions.
-  // NOLINTNEXTLINE
+  // NOLINTNEXTLINE(modernize-loop-convert)
   for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
     auto [file_context, function_id, specific_id] =
         specific_function_definitions_[i];
