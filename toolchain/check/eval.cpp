@@ -15,7 +15,6 @@
 #include "toolchain/check/eval_inst.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
-#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -207,8 +206,6 @@ class EvalContext {
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
   auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
-
-  auto has_specific() const -> bool { return specific_id_.has_value(); }
 
  private:
   // The type-checking context in which we're performing evaluation.
