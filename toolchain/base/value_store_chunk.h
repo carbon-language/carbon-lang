@@ -71,12 +71,8 @@ static constexpr auto PlatformChunkCapacity() -> int {
 template <class IdT>
   requires(IdHasValueType<IdT>)
 static constexpr auto PlatformChunkCapacityBits() -> int {
-  static_assert(PlatformChunkCapacity<IdT>() > 1);
-  int bits = 0;
-  for (auto size = PlatformChunkCapacity<IdT>(); size > 1; size /= 2) {
-    ++bits;
-  }
-  return bits;
+  static_assert(PlatformChunkCapacity<IdT>() > 0);
+  return std::bit_width(uint32_t{PlatformChunkCapacity<IdT>() - 1});
 }
 
 // Converts an id into an index into the set of chunks, and an offset into that
