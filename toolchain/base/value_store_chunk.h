@@ -49,8 +49,6 @@ static constexpr auto PlatformChunkMaxAllocationBytes() -> int32_t {
 
   // x64 CPUs support 4K and 2M page sizes, but we see 1M is slower than 1K with
   // tcmalloc in opt builds for our tests.
-  //
-  // FIXME: More benchmarking needed.
   return 4 * 1024;
 #endif
 }
