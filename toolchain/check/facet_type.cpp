@@ -514,9 +514,7 @@ class RewriteRulesFromImplWitness {
 
     lhs_inst_ids_ =
         context_.inst_blocks().Get(interface.associated_entities_id);
-    lhs_inst_ids_it_ = lhs_inst_ids_.begin();
     rhs_inst_ids_ = context.inst_blocks().Get(table.elements_id);
-    rhs_inst_ids_it_ = rhs_inst_ids_.begin();
   }
 
   auto Next() -> std::optional<RewriteRule> {
@@ -524,17 +522,17 @@ class RewriteRulesFromImplWitness {
       // The witness table (the RHS) may have fewer entries in it (or even zero
       // if there's no impl definition) than the interface (the LHS) has, but
       // they are in the same order for whatever is present.
-      if (lhs_inst_ids_it_ == lhs_inst_ids_.end()) {
+      if (lhs_inst_ids_.empty()) {
         return std::nullopt;
       }
-      if (rhs_inst_ids_it_ == rhs_inst_ids_.end()) {
+      if (rhs_inst_ids_.empty()) {
         return std::nullopt;
       }
 
-      auto lhs_inst_id = *lhs_inst_ids_it_;
-      ++lhs_inst_ids_it_;
-      auto rhs_inst_id = *rhs_inst_ids_it_;
-      ++rhs_inst_ids_it_;
+      auto lhs_inst_id = lhs_inst_ids_.front();
+      lhs_inst_ids_ = lhs_inst_ids_.drop_front();
+      auto rhs_inst_id = rhs_inst_ids_.front();
+      rhs_inst_ids_ = rhs_inst_ids_.drop_front();
 
       auto lhs_assoc_const_decl_id = SemIR::ConstantId::None;
       if (context_.insts().Is<SemIR::AssociatedConstantDecl>(lhs_inst_id)) {
@@ -592,9 +590,7 @@ class RewriteRulesFromImplWitness {
   SemIR::SpecificId impl_interface_specific_id_ = SemIR::SpecificId::None;
   SemIR::SpecificId witness_specific_id_ = SemIR::SpecificId::None;
   llvm::ArrayRef<SemIR::InstId> lhs_inst_ids_;
-  const SemIR::InstId* lhs_inst_ids_it_ = lhs_inst_ids_.end();
   llvm::ArrayRef<SemIR::InstId> rhs_inst_ids_;
-  const SemIR::InstId* rhs_inst_ids_it_ = rhs_inst_ids_.end();
 };
 
 auto CheckRewriteConstraintsMatchRequirements(
