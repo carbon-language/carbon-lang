@@ -153,7 +153,9 @@ class ValueStore
 
   using ChunkType = Internal::ValueStoreChunk<IdT, ValueType>;
 
-  // Number of elements added to the store.
+  // Number of elements added to the store. The number should never exceed what
+  // fits in an `int32_t`, which is checked in non-optimized builds in
+  // IdToChunkIndices().
   int32_t size_ = 0;
 
   // Storage for the `ValueType` objects, indexed by the id. We use a vector of
@@ -184,9 +186,11 @@ class ValueStoreRange {
   // Flattens the range of `ValueStoreChunk`s of `ValueType`s into a single
   // range of `ValueType`s.
   static auto MakeFlattenedRange(const ValueStore<IdT>& store) -> auto {
+    // Because indices into `ValueStore` are all sequential values from 0, we
+    // can use llvm::seq to walk all indices in the store.
     return llvm::map_range(llvm::seq(store.size_),
-                           [&](size_t i) -> ValueStore<IdT>::ConstRefType {
-                             return store.Get(IdT(static_cast<int32_t>(i)));
+                           [&](int32_t i) -> ValueStore<IdT>::ConstRefType {
+                             return store.Get(IdT(i));
                            });
   }
 
