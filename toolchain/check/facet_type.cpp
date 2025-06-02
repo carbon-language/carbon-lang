@@ -392,8 +392,8 @@ class AppliedRewriteRules {
     return values_.back();
   }
 
-  // Maps to an index in both of vectors below. Constants with the same index
-  // value are considered equivalent.
+  // Maps to an index in the vector below. Constants with the same index value
+  // are considered equivalent.
   Map<RewriteRule::AssociatedConstant, int> indexes_;
   llvm::SmallVector<Value> values_;
 };
