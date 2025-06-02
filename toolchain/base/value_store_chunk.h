@@ -32,6 +32,15 @@ concept IdHasValueType = requires { typename IdT::ValueType; };
 // A 4K chunk size outperforms a 1M chunk size on Linux-x64 and MacOS-arm64 in
 // benchmarks and when running file_test.
 //
+// Linux-x64: x64 CPUs support 4K and 2M page sizes, but we see 1M is slower
+// than 4K with tcmalloc in opt builds for our tests.
+//
+// Mac-arm64: arm64 CPUs support 4K, 8K, 64K, 256K, 1M, 4M and up. Like for
+// Linux-x64, 4K outperformed 1M. We didn't try other sizes yet.
+//
+// TODO: Is there a more optimize size for Mac-arm64? What should Linux-arm64
+// and Mac-x64 use? What should Windows use?
+//
 // TODO: The previous SmallVector<ValueType> seems to outperform 4K chunks (they
 // may be slower by up to 5%) in benchmarks. Find ways to make chunking faster.
 // Should successive chunks get larger in size? That will greatly complicate
@@ -45,10 +54,6 @@ static constexpr auto PlatformChunkMaxAllocationBytes() -> int32_t {
   // allocations (e.g. 1M+) incurs a 10x runtime cost for our tests under ASAN.
   return sizeof(typename IdT::ValueType) * 5;
 #else
-  // TODO: Should ia64 use 1M or 4M? Should Windows and Mac use different sizes?
-
-  // x64 CPUs support 4K and 2M page sizes, but we see 1M is slower than 4K with
-  // tcmalloc in opt builds for our tests.
   return 4 * 1024;
 #endif
 }
