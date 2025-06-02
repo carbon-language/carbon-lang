@@ -33,12 +33,12 @@ TEST(IdsTest, LocIdValues) {
               Eq(-(1 << 30) + 1));
 }
 
-// A standard parameterized test for (implicit, index).
+// A standard parameterized test for (is_desugared, index).
 class IdsTestWithParam
     : public testing::TestWithParam<std::tuple<bool, int32_t>> {
  public:
   explicit IdsTestWithParam() {
-    llvm::errs() << "implicit=" << is_implicit()
+    llvm::errs() << "is_desugared=" << is_desugared()
                  << ", index=" << std::get<1>(GetParam()) << "\n";
   }
 
@@ -46,16 +46,16 @@ class IdsTestWithParam
   // parameters.
   template <typename IdT>
   auto BuildIdAndLocId() -> std::pair<IdT, LocId> {
-    auto [implicit, index] = GetParam();
+    auto [is_desugared, index] = GetParam();
     IdT id(index);
     LocId loc_id(id);
-    if (implicit) {
-      loc_id = loc_id.ToImplicit();
+    if (is_desugared) {
+      loc_id = loc_id.AsDesugared();
     }
-    return {id, loc_id};
+    return {id, LocId(id)};
   }
 
-  auto is_implicit() -> bool { return std::get<0>(GetParam()); }
+  auto is_desugared() -> bool { return std::get<0>(GetParam()); }
 };
 
 // Returns a test case generator for edge-case values.
@@ -78,7 +78,7 @@ TEST_P(LocIdAsNoneTestWithParam, Test) {
   auto [_, loc_id] = BuildIdAndLocId<Parse::NodeId>();
   EXPECT_FALSE(loc_id.has_value());
   EXPECT_THAT(loc_id.kind(), Eq(LocId::Kind::None));
-  EXPECT_FALSE(loc_id.is_implicit());
+  EXPECT_FALSE(loc_id.is_desugared());
   EXPECT_THAT(loc_id.import_ir_inst_id(), Eq(ImportIRInstId::None));
   EXPECT_THAT(loc_id.inst_id(), Eq(InstId::None));
   EXPECT_THAT(loc_id.node_id(),
@@ -96,7 +96,7 @@ TEST_P(LocIdAsImportIRInstIdTest, Test) {
   EXPECT_TRUE(loc_id.has_value());
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::ImportIRInstId));
   EXPECT_THAT(loc_id.import_ir_inst_id(), import_ir_inst_id);
-  EXPECT_FALSE(loc_id.is_implicit());
+  EXPECT_FALSE(loc_id.is_desugared());
 }
 
 class LocIdAsInstIdTest : public IdsTestWithParam {};
@@ -111,7 +111,7 @@ TEST_P(LocIdAsInstIdTest, Test) {
   EXPECT_TRUE(loc_id.has_value());
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::InstId));
   EXPECT_THAT(loc_id.inst_id(), inst_id);
-  // Note that `is_implicit` is invalid to use with `InstId`.
+  // Note that `is_desugared` is invalid to use with `InstId`.
 }
 
 class LocIdAsNodeIdTest : public IdsTestWithParam {};
@@ -124,7 +124,7 @@ TEST_P(LocIdAsNodeIdTest, Test) {
   EXPECT_TRUE(loc_id.has_value());
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::NodeId));
   EXPECT_THAT(loc_id.node_id(), node_id);
-  EXPECT_THAT(loc_id.is_implicit(), Eq(is_implicit()));
+  EXPECT_THAT(loc_id.is_desugared(), Eq(is_desugared()));
 }
 
 }  // namespace

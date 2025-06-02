@@ -124,9 +124,9 @@ auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     return context.constant_values().GetInstId(const_id);
   };
 
-  // If the instruction is implicit, produce its constant value instead if
-  // possible.
-  if (loc_id_and_inst.loc_id.is_implicit()) {
+  // If the instruction is from desugaring, produce its constant value instead
+  // if possible.
+  if (loc_id_and_inst.loc_id.is_desugared()) {
     switch (loc_id_and_inst.inst.kind().constant_needs_inst_id()) {
       case SemIR::InstConstantNeedsInstIdKind::No: {
         // Evaluation doesn't need an InstId. Just do it.

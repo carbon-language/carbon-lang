@@ -860,14 +860,10 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //   values to 30 bits.
 //   - [-2 - (1 << 24), -(1 << 30))
 //
-// In addition, one bit is used for flags: `ImplicitBit`.
+// In addition, one bit is used for flags: `DesugaredBit`.
 // Note that this can only be used with negative, non-`InstId` values.
 //
-// Use `InstStore::GetCanonicalLocId()` to get a canonical `LocId` which will
-// not be backed by an `InstId`. Note that the canonical `LocId` may be `None`
-// even when the original `LocId` was not, so this operation needs to be done
-// before checking `has_value()`. Only canonical locations can be converted with
-// `ToImplicit()`.
+// For desugaring, use `InstStore::GetDesugaredLocId()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -896,18 +892,17 @@ struct LocId : public IdBase<LocId> {
   constexpr LocId(Parse::NodeId node_id)
       : IdBase(FirstNodeId - node_id.index) {}
 
-  // Forms an equivalent LocId for a desugared location. Requires a
-  // canonical location. See `InstStore::GetCanonicalLocId()`.
-  //
-  // TODO: Rename to something like `ToDesugared`.
-  auto ToImplicit() const -> LocId {
+  // Forms an equivalent LocId for a desugared location. Prefer calling
+  // `InstStore::GetDesugaredLocId`.
+  auto AsDesugared() const -> LocId {
+    LocId loc_id = *this;
     // This should only be called for NodeId or ImportIRInstId (i.e. canonical
     // locations), but we only set the flag for NodeId.
-    CARBON_CHECK(kind() != Kind::InstId);
+    CARBON_CHECK(kind() != Kind::InstId, "Use InstStore::GetDesugaredLocId");
     if (kind() == Kind::NodeId) {
-      return LocId(index & ~ImplicitBit);
+      return LocId(index & ~DesugaredBit);
     }
-    return *this;
+    return loc_id;
   }
 
   // Returns the kind of the `LocId`.
@@ -926,8 +921,8 @@ struct LocId : public IdBase<LocId> {
 
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
-  auto is_implicit() const -> bool {
-    return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
+  auto is_desugared() const -> bool {
+    return (kind() == Kind::NodeId) && (index & DesugaredBit) == 0;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
@@ -962,7 +957,7 @@ struct LocId : public IdBase<LocId> {
  private:
   // Whether a location corresponds to desugared instructions. This only applies
   // for `NodeId`.
-  static constexpr int32_t ImplicitBit = 1 << 30;
+  static constexpr int32_t DesugaredBit = 1 << 30;
 
   // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
   static constexpr int32_t FirstNodeId = NoneIndex - 1;
@@ -971,7 +966,7 @@ struct LocId : public IdBase<LocId> {
 
   auto index_without_flags() const -> int32_t {
     CARBON_DCHECK(index < NoneIndex, "Only for NodeId and ImportIRInstId");
-    return index | ImplicitBit;
+    return index | DesugaredBit;
   }
 };
 
