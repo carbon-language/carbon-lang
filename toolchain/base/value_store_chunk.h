@@ -110,8 +110,8 @@ inline auto IdToChunkIndices(IdT id) -> std::pair<int32_t, int32_t> {
   return {chunk, pos};
 }
 
-// A chunk of `ValueType`s which has a fixed capacity, but variable size, and is
-// an iterable range.
+// A chunk of `ValueType`s which has a fixed capacity, but variable size. Tracks
+// the size internally for verifying bounds.
 template <typename IdT, class ValueType>
 struct ValueStoreChunk {
  public:
@@ -142,19 +142,6 @@ struct ValueStoreChunk {
     }
   }
 
-  // Allow the chunk to act as a range for being iterated.
-  auto begin() const -> const ValueType* {
-    CARBON_DCHECK(buf_, "iterating after moved-from");
-    return buf_;
-  }
-  auto end() const -> const ValueType* {
-    CARBON_DCHECK(buf_, "iterating after moved-from");
-    return buf_ + num_;
-  }
-
-  // Verify using an `int32_t` for `num_` is sound.
-  static_assert(Capacity <= std::numeric_limits<int32_t>::max());
-
   auto at(int32_t i) -> ValueType& {
     CARBON_CHECK(i < num_, "{0}", i);
     return buf_[i];
@@ -173,6 +160,9 @@ struct ValueStoreChunk {
   auto size() const -> int32_t { return num_; }
 
  private:
+  // Verify using an `int32_t` for `num_` is sound.
+  static_assert(Capacity <= std::numeric_limits<int32_t>::max());
+
   ValueType* buf_;
   int32_t num_ = 0;
 };
