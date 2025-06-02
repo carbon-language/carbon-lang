@@ -19,12 +19,12 @@
 
 namespace Carbon::Internal {
 
-// Ids which are stored in a ValueStore have a ValueType which indicates the
-// type of value held in the ValueStore.
+// Ids which are stored in a `ValueStore` have a `ValueType` which indicates the
+// type of value held in the `ValueStore`.
 template <class IdT>
 concept IdHasValueType = requires { typename IdT::ValueType; };
 
-// The max size of each chunk allocation for ValueStore. This is based on TLB
+// The max size of each chunk allocation for `ValueStore`. This is based on TLB
 // page sizes for the target platform.
 //
 // See https://docs.kernel.org/admin-guide/mm/hugetlbpage.html
