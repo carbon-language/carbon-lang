@@ -70,17 +70,17 @@ static constexpr auto PlatformChunkCapacity() -> int32_t {
 // The number of bits needed to index each element in a chunk allocation.
 template <class IdT>
   requires(IdHasValueType<IdT>)
-static constexpr auto PlatformChunkCapacityBits() -> int32_t {
+static constexpr auto PlatformChunkIndexBits() -> int32_t {
   static_assert(PlatformChunkCapacity<IdT>() > 0);
   return std::bit_width(uint32_t{PlatformChunkCapacity<IdT>() - 1});
 }
 
 // Converts an id into an index into the set of chunks, and an offset into that
-// specific chunk.
+// specific chunk. Looks for index overflow in non-optimized builds.
 template <typename IdT>
   requires(IdHasValueType<IdT>)
 static constexpr auto IdToChunkIndices(IdT id) -> std::pair<int32_t, int32_t> {
-  constexpr auto LowBits = PlatformChunkCapacityBits<IdT>();
+  constexpr auto LowBits = PlatformChunkIndexBits<IdT>();
 
   // Verify there are no unused bits when indexing up to the
   // PlatformChunkCapacity(). This ensures that ids are contiguous values
@@ -92,27 +92,20 @@ static constexpr auto IdToChunkIndices(IdT id) -> std::pair<int32_t, int32_t> {
   // that shifting by the number of bits won't be UB in an int32_t.
   static_assert(LowBits < 30);
 
-  return {
-      id.index >> LowBits,
-      id.index & ((1 << LowBits) - 1),
-  };
-}
-
-// Converts an index into the set of chunks, and an offset into that specific
-// chunk, into an id.
-template <typename IdT>
-  requires(IdHasValueType<IdT>)
-static constexpr auto ChunkIndicesToId(int32_t chunk, int32_t pos) -> IdT {
-  constexpr auto LowBits = PlatformChunkCapacityBits<IdT>();
   // We can only use 31 bits in total because the sign bit is used for making
   // negative ids, which are not found in the ValueStore.
   constexpr auto HighBits = 31 - LowBits;
+
+  auto chunk = id.index >> LowBits;
+  auto pos = id.index & ((1 << LowBits) - 1);
+
   // This routine is especially hot and the check here relatively expensive for
   // the value provided, so only do this in debug builds to make tracking down
   // issues easier.
   CARBON_DCHECK(chunk < (1 << HighBits), "Id overflow (high bits)");
   CARBON_DCHECK(pos < (1 << LowBits), "Id overflow (low bits)");
-  return IdT((chunk << LowBits) + pos);
+
+  return {chunk, pos};
 }
 
 // A chunk of `ValueType`s which has a fixed capacity, but variable size, and is
