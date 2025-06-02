@@ -84,11 +84,11 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     info.FormatDiagnostic(message);
 
     RawStringOstream diagnostics_stream;
+    // TODO: Consider allowing setting `LangOptions` or use
+    // `ASTContext::getLangOptions()`.
+    clang::LangOptions lang_options;
     clang::TextDiagnostic text_diagnostic(
-        diagnostics_stream,
-        // TODO: Consider allowing setting `LangOptions` or use
-        // `ASTContext::getLangOptions()`.
-        clang::LangOptions(),
+        diagnostics_stream, lang_options,
         // TODO: Consider allowing setting `DiagnosticOptions` or use
         // `ASTUnit::getDiagnostics().::getLangOptions().getDiagnosticOptions()`.
         new clang::DiagnosticOptions());
