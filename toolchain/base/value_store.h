@@ -63,6 +63,11 @@ class ValueStore
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT {
+    // This routine is especially hot and the check here relatively expensive
+    // for the value provided, so only do this in non-optimized builds to make
+    // tracking down issues easier.
+    CARBON_DCHECK(size_ < std::numeric_limits<int32_t>::max(), "Id overflow");
+
     IdT id(size_);
     auto [chunk_index, pos] = Internal::IdToChunkIndices(id);
     ++size_;
@@ -155,8 +160,7 @@ class ValueStore
   using ChunkType = Internal::ValueStoreChunk<IdT, ValueType>;
 
   // Number of elements added to the store. The number should never exceed what
-  // fits in an `int32_t`, which is checked in non-optimized builds in
-  // IdToChunkIndices().
+  // fits in an `int32_t`, which is checked in non-optimized builds in Add().
   int32_t size_ = 0;
 
   // Storage for the `ValueType` objects, indexed by the id. We use a vector of

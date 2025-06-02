@@ -95,21 +95,10 @@ inline auto IdToChunkIndices(IdT id) -> std::pair<int32_t, int32_t> {
   // that shifting by the number of bits won't be UB in an int32_t.
   static_assert(LowBits < 30);
 
-  // We can only use 31 bits in total because the sign bit is used for making
-  // negative ids, which are not found in the ValueStore.
-  constexpr auto HighBits = 31 - LowBits;
-
   // The index of the chunk is the high bits.
   auto chunk = id.index >> LowBits;
   // The index into the chunk is the low bits.
   auto pos = id.index & ((1 << LowBits) - 1);
-
-  // This routine is especially hot and the check here relatively expensive for
-  // the value provided, so only do this in non-optimized builds to make
-  // tracking down issues easier.
-  CARBON_DCHECK(chunk < (1 << HighBits), "Id overflow (high bits)");
-  CARBON_DCHECK(pos < (1 << LowBits), "Id overflow (low bits)");
-
   return {chunk, pos};
 }
 
