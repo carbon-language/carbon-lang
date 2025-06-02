@@ -206,30 +206,19 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId query_self_const_id,
                                 const SemIR::SpecificInterface& interface,
                                 SemIR::ImplId impl_id) -> EvalImplLookupResult {
+  const SemIR::Impl& impl = context.impls().Get(impl_id);
+
   // The impl may have generic arguments, in which case we need to deduce them
   // to find what they are given the specific type and interface query. We use
   // that specific to map values in the impl to the deduced values.
   auto specific_id = SemIR::SpecificId::None;
-  {
-    // DeduceImplArguments can import new impls which can invalidate any
-    // pointers into `context.impls()`.
-    const SemIR::Impl& impl = context.impls().Get(impl_id);
-
-    if (impl.generic_id.has_value()) {
-      specific_id =
-          DeduceImplArguments(context, loc_id,
-                              {.self_id = impl.self_id,
-                               .generic_id = impl.generic_id,
-                               .specific_id = impl.interface.specific_id},
-                              query_self_const_id, interface.specific_id);
-      if (!specific_id.has_value()) {
-        return EvalImplLookupResult::MakeNone();
-      }
+  if (impl.generic_id.has_value()) {
+    specific_id = DeduceImplArguments(
+        context, loc_id, impl, query_self_const_id, interface.specific_id);
+    if (!specific_id.has_value()) {
+      return EvalImplLookupResult::MakeNone();
     }
   }
-
-  // Get a pointer again after DeduceImplArguments() is complete.
-  const SemIR::Impl& impl = context.impls().Get(impl_id);
 
   // The self type of the impl must match the type in the query, or this is an
   // `impl T as ...` for some other type `T` and should not be considered.
@@ -279,20 +268,14 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     return EvalImplLookupResult::MakeNone();
   }
 
-  bool is_effectively_final = query_is_concrete || impl.is_final;
-  auto witness_id = impl.witness_id;
-
-  // Note that this invalidates our `impl` reference. Don't use it again after
-  // this point.
-  LoadImportRef(context, witness_id);
-
+  LoadImportRef(context, impl.witness_id);
   if (specific_id.has_value()) {
     // We need a definition of the specific `impl` so we can access its
     // witness.
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
-  if (is_effectively_final) {
+  if (query_is_concrete || impl.is_final) {
     // TODO: These final results should be cached somehow. Positive (non-None)
     // results could be cached globally, as they can not change. But
     // negative results can change after a final impl is written, so
@@ -300,7 +283,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     // be invalidated by writing a final impl that would match.
     return EvalImplLookupResult::MakeFinal(
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), specific_id, witness_id)));
+            context.sem_ir(), specific_id, impl.witness_id)));
   } else {
     return EvalImplLookupResult::MakeNonFinal();
   }
@@ -583,11 +566,6 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::InstId non_canonical_query_self_inst_id,
                                  bool poison_concrete_results)
     -> EvalImplLookupResult {
-  // NOTE: Do not retain this reference to the SpecificInterface obtained from a
-  // value store by SpecificInterfaceId. Doing impl lookup does deduce which can
-  // do more impl lookups, and impl lookup can add a new SpecificInterface to
-  // the store which can reallocate and invalidate any references held here into
-  // the store.
   auto query_specific_interface =
       context.specific_interfaces().Get(eval_query.query_specific_interface_id);
 
@@ -656,8 +634,6 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       context.impl_lookup_stack().back().impl_loc = candidate.loc_inst_id;
     }
 
-    // NOTE: GetWitnessIdForImpl() does deduction, which can cause new impls
-    // to be imported, invalidating any pointer into `context.impls()`.
     auto result = GetWitnessIdForImpl(
         context, loc_id, query_is_concrete, query_self_const_id,
         query_specific_interface, candidate.impl_id);

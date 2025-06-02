@@ -151,9 +151,6 @@ class NameScope : public Printable<NameScope> {
   auto entries() const -> llvm::ArrayRef<Entry> { return names_; }
 
   // Get a specific Name entry based on an EntryId that return from a lookup.
-  //
-  // The Entry could become invalidated if the scope object is invalidated or if
-  // a name is added.
   auto GetEntry(EntryId entry_id) const -> const Entry& {
     return names_[entry_id.index];
   }
@@ -257,9 +254,6 @@ class NameScope : public Printable<NameScope> {
 
  private:
   // Names in the scope, including poisoned names.
-  //
-  // Entries could become invalidated if the scope object is invalidated or if a
-  // name is added.
   //
   // We store both an insertion-ordered vector for iterating
   // and a map from `NameId` to the index of that vector for name lookup.

@@ -352,29 +352,21 @@ static auto DiagnoseUnusedGenericBinding(Context& context,
                                          SemIR::ImplId impl_id) -> void {
   auto deduced_specific_id = SemIR::SpecificId::None;
 
-  {
-    auto& stored_impl_info = context.impls().Get(impl_id);
-    if (!stored_impl_info.generic_id.has_value() ||
-        stored_impl_info.witness_id == SemIR::ErrorInst::InstId) {
-      return;
-    }
-
-    // TODO: Deduce has side effects in the semir by generating `Converted`
-    // instructions which we will not use here. We should stop generating
-    // those when deducing for impl lookup, but for now we discard them by
-    // pushing an InstBlock on the stack and dropping it right after.
-    context.inst_block_stack().Push();
-    // Deduction can invalidate references to ValueStores; we can't use
-    // `stored_impl_info` after.
-    deduced_specific_id = DeduceImplArguments(
-        context, node_id,
-        DeduceImpl{.self_id = stored_impl_info.self_id,
-                   .generic_id = stored_impl_info.generic_id,
-                   .specific_id = stored_impl_info.interface.specific_id},
-        context.constant_values().Get(stored_impl_info.self_id),
-        stored_impl_info.interface.specific_id);
-    context.inst_block_stack().PopAndDiscard();
+  auto& impl = context.impls().Get(impl_id);
+  if (!impl.generic_id.has_value() ||
+      impl.witness_id == SemIR::ErrorInst::InstId) {
+    return;
   }
+
+  // TODO: Deduce has side effects in the semir by generating `Converted`
+  // instructions which we will not use here. We should stop generating
+  // those when deducing for impl lookup, but for now we discard them by
+  // pushing an InstBlock on the stack and dropping it right after.
+  context.inst_block_stack().Push();
+  deduced_specific_id = DeduceImplArguments(
+      context, node_id, impl, context.constant_values().Get(impl.self_id),
+      impl.interface.specific_id);
+  context.inst_block_stack().PopAndDiscard();
 
   if (deduced_specific_id.has_value()) {
     // Deduction succeeded, all bindings were used.

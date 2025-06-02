@@ -152,13 +152,13 @@ auto AddImportNamespaceToScope(
     SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
     llvm::function_ref<SemIR::InstId()> make_import_id)
     -> AddImportNamespaceToScopeResult {
-  auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
-  auto [inserted, entry_id] = parent_scope->LookupOrAdd(
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
+  auto [inserted, entry_id] = parent_scope.LookupOrAdd(
       name_id,
       // This InstId is temporary and would be overridden if used.
       SemIR::InstId::None, SemIR::AccessKind::Public);
   if (!inserted) {
-    const auto& prev_entry = parent_scope->GetEntry(entry_id);
+    const auto& prev_entry = parent_scope.GetEntry(entry_id);
     if (!prev_entry.result.is_poisoned()) {
       auto prev_inst_id = prev_entry.result.target_inst_id();
       if (auto namespace_inst =
@@ -186,14 +186,11 @@ auto AddImportNamespaceToScope(
                                        parent_scope_id, import_id),
       .is_duplicate_of_namespace_in_current_package = false};
 
-  // Note we have to get the parent scope freshly, creating the imported
-  // namespace may invalidate the pointer above.
-  parent_scope = &context.name_scopes().Get(parent_scope_id);
   // Diagnose if there's a name conflict, but still produce the namespace to
   // supersede the name conflict in order to avoid repeat diagnostics. Names
   // are poisoned optimistically by name lookup before checking for imports,
   // so we may be overwriting a poisoned entry here.
-  auto& lookup_result = parent_scope->GetEntry(entry_id).result;
+  auto& lookup_result = parent_scope.GetEntry(entry_id).result;
   if (!lookup_result.is_poisoned() && !inserted) {
     // TODO: Pass the import namespace name location instead of the namespace
     // id to get more accurate location.
