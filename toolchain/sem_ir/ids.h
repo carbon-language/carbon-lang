@@ -834,11 +834,9 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
   using ValueType = ImportIRInst;
 
-  // ImportIRInstId is restricted so that it can fit into LocId.
-  static constexpr int BitsWithNodeId = 30;
-
-  // The maximum ID, non-inclusive.
-  static constexpr int Max = (1 << BitsWithNodeId) - Parse::NodeId::Max - 2;
+  // The maximum ID, non-inclusive. This is constrained to fit inside LocId.
+  static constexpr int Max =
+      -(std::numeric_limits<int32_t>::min() + 2 * Parse::NodeId::Max + 1);
 
   constexpr explicit ImportIRInstId(int32_t index) : IdBase(index) {
     CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
@@ -856,12 +854,11 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //   - [0, 1 << 31)
 // - NodeId: negative values starting after None; the 24 bit NodeId range.
 //   - [-2, -2 - (1 << 24))
+// - Desugared NodeId: Another 24 bit NodeId range.
+//   - [-2 - (1 << 24), -2 - (1 << 25))
 // - ImportIRInstId: remaining negative values; after NodeId, fills out negative
-//   values to 30 bits.
-//   - [-2 - (1 << 24), -(1 << 30))
-//
-// In addition, one bit is used for flags: `DesugaredBit`.
-// Note that this can only be used with negative, non-`InstId` values.
+//   values.
+//   - [-2 - (1 << 25), -(1 << 31)]
 //
 // For desugaring, use `InstStore::GetLocIdForDesugaring()`.
 struct LocId : public IdBase<LocId> {
@@ -899,8 +896,8 @@ struct LocId : public IdBase<LocId> {
     // locations), but we only set the flag for NodeId.
     CARBON_CHECK(kind() != Kind::InstId,
                  "Use InstStore::GetLocIdForDesugaring");
-    if (kind() == Kind::NodeId) {
-      return LocId(index & ~DesugaredBit);
+    if (index <= FirstNodeId && index > FirstDesugaredNodeId) {
+      return LocId(index - Parse::NodeId::Max);
     }
     return *this;
   }
@@ -913,7 +910,7 @@ struct LocId : public IdBase<LocId> {
     if (index >= 0) {
       return Kind::InstId;
     }
-    if (index_without_flags() <= FirstImportIRInstId) {
+    if (index <= FirstImportIRInstId) {
       return Kind::ImportIRInstId;
     }
     return Kind::NodeId;
@@ -922,7 +919,7 @@ struct LocId : public IdBase<LocId> {
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
   auto is_desugared() const -> bool {
-    return (kind() == Kind::NodeId) && (index & DesugaredBit) == 0;
+    return index <= FirstDesugaredNodeId && index > FirstImportIRInstId;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
@@ -934,7 +931,7 @@ struct LocId : public IdBase<LocId> {
       return ImportIRInstId::None;
     }
     CARBON_CHECK(kind() == Kind::ImportIRInstId, "{0}", index);
-    return ImportIRInstId(FirstImportIRInstId - index_without_flags());
+    return ImportIRInstId(FirstImportIRInstId - index);
   }
 
   // Returns the equivalent `InstId` when `kind()` matches or is `None`.
@@ -949,25 +946,22 @@ struct LocId : public IdBase<LocId> {
       return Parse::NodeId::None;
     }
     CARBON_CHECK(kind() == Kind::NodeId, "{0}", index);
-    return Parse::NodeId(FirstNodeId - index_without_flags());
+    if (index <= FirstDesugaredNodeId) {
+      return Parse::NodeId(FirstDesugaredNodeId - index);
+    } else {
+      return Parse::NodeId(FirstNodeId - index);
+    }
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  // Whether a location corresponds to desugared instructions. This only applies
-  // for `NodeId`.
-  static constexpr int32_t DesugaredBit = 1 << 30;
-
   // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
   static constexpr int32_t FirstNodeId = NoneIndex - 1;
-  static constexpr int32_t FirstImportIRInstId =
+  static constexpr int32_t FirstDesugaredNodeId =
       FirstNodeId - Parse::NodeId::Max;
-
-  auto index_without_flags() const -> int32_t {
-    CARBON_DCHECK(index < NoneIndex, "Only for NodeId and ImportIRInstId");
-    return index | DesugaredBit;
-  }
+  static constexpr int32_t FirstImportIRInstId =
+      FirstDesugaredNodeId - Parse::NodeId::Max;
 };
 
 // Polymorphic id for fields in `Any[...]` typed instruction category. Used for

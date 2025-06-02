@@ -24,13 +24,17 @@ TEST(IdsTest, LocIdValues) {
       static_cast<LocId>(InstId(std::numeric_limits<int32_t>::max())).index,
       Eq(std::numeric_limits<int32_t>::max()));
 
-  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(0)).index, Eq(-2));
-  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1)).index,
-              Eq(-2 - (1 << 24) + 1));
+  auto min_node_id = static_cast<LocId>(Parse::NodeId(0));
+  EXPECT_THAT(min_node_id.index, Eq(-2));
+  EXPECT_THAT(min_node_id.AsDesugared().index, Eq(-2 - (1 << 24)));
 
-  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 24)));
+  auto max_node_id = static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1));
+  EXPECT_THAT(max_node_id.index, Eq(-2 - (1 << 24) + 1));
+  EXPECT_THAT(max_node_id.AsDesugared().index, Eq(-2 - (1 << 25) + 1));
+
+  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 25)));
   EXPECT_THAT(static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1)).index,
-              Eq(-(1 << 30) + 1));
+              Eq(std::numeric_limits<int32_t>::min()));
 }
 
 // A standard parameterized test for (is_desugared, index).
