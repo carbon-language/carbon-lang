@@ -39,7 +39,7 @@ concept IdHasValueType = requires { typename IdT::ValueType; };
 template <class IdT>
   requires(IdHasValueType<IdT>)
 static constexpr auto PlatformChunkMaxAllocationBytes() -> int32_t {
-#if (!defined(NDEBUG) || LLVM_ADDRESS_SANITIZER_BUILD)
+#if !defined(NDEBUG) || LLVM_ADDRESS_SANITIZER_BUILD
   // Use a small size in unoptimized builds to ensure multiple chunks get used.
   // And do the same in ASAN builds to reduce bookkeeping overheads. Using large
   // allocations (e.g. 1M+) incurs a 10x runtime cost for our tests under ASAN.
