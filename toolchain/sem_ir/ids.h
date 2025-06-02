@@ -860,7 +860,7 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //   values to 30 bits.
 //   - [-2 - (1 << 24), -(1 << 30))
 //
-// In addition, two bits are used for flags: `ImplicitBit`.
+// In addition, one bit is used for flags: `ImplicitBit`.
 // Note that this can only be used with negative, non-`InstId` values.
 //
 // Use `InstStore::GetCanonicalLocId()` to get a canonical `LocId` which will
