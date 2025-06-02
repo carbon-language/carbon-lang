@@ -32,10 +32,10 @@ concept IdHasValueType = requires { typename IdT::ValueType; };
 // A 4K chunk size outperforms a 1M chunk size on Linux-x64 and MacOS-arm64 in
 // benchmarks and when running file_test.
 //
-// TODO: The previous SmallVector<ValueType> outperforms 4K chunks (they are
-// slower by about 5%) in benchmarks. Find ways to make chunking faster. Should
-// successive chunks get larger in size? That will greatly complicate math for
-// choosing a chunk though.
+// TODO: The previous SmallVector<ValueType> seems to outperform 4K chunks (they
+// may be slower by up to 5%) in benchmarks. Find ways to make chunking faster.
+// Should successive chunks get larger in size? That will greatly complicate
+// math for choosing a chunk though.
 template <class IdT>
   requires(IdHasValueType<IdT>)
 static constexpr auto PlatformChunkMaxAllocationBytes() -> int32_t {
