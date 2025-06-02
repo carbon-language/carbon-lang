@@ -29,7 +29,7 @@ concept IdHasValueType = requires { typename IdT::ValueType; };
 //
 // See https://docs.kernel.org/admin-guide/mm/hugetlbpage.html
 //
-// A 4K chunk size outperforms a 1M chunk size on Linux and MacOS ARM in
+// A 4K chunk size outperforms a 1M chunk size on Linux-x64 and MacOS-arm64 in
 // benchmarks and when running file_test.
 //
 // TODO: The previous SmallVector<ValueType> outperforms 4K chunks (they are
