@@ -403,3 +403,49 @@ impl C as I where .X = () {}
 fn F() {
   C as (I where .X = ());
 }
+
+// --- todo_rewrite_value_in_class_param.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! type;
+}
+
+class C(T:! type);
+
+fn F(T:! I where .X = C(.Y)) {}
+
+fn G(T:! I where .X = C(()) and .Y = ()) {
+  // CHECK:STDERR: todo_rewrite_value_in_class_param.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = C(()) and .(I.Y) = ()` into type implementing `I where .(I.X) = C(.(I.Y))` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: todo_rewrite_value_in_class_param.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! I where .X = C(.Y)) {}
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR:
+  F(T);
+}
+
+// --- fail_wrong_rewrite_value_in_class_param.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! type;
+}
+
+class C(T:! type);
+
+fn F(T:! I where .X = C(.Y)) {}
+
+fn G(T:! I where .X = C(()) and .Y = {}) {
+  // CHECK:STDERR: fail_wrong_rewrite_value_in_class_param.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = C(()) and .(I.Y) = {}` into type implementing `I where .(I.X) = C(.(I.Y))` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_wrong_rewrite_value_in_class_param.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! I where .X = C(.Y)) {}
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR:
+  F(T);
+}
