@@ -96,12 +96,14 @@ inline auto IdToChunkIndices(IdT id) -> std::pair<int32_t, int32_t> {
   // negative ids, which are not found in the ValueStore.
   constexpr auto HighBits = 31 - LowBits;
 
+  // The index of the chunk is the high bits.
   auto chunk = id.index >> LowBits;
+  // The index into the chunk is the low bits.
   auto pos = id.index & ((1 << LowBits) - 1);
 
   // This routine is especially hot and the check here relatively expensive for
-  // the value provided, so only do this in debug builds to make tracking down
-  // issues easier.
+  // the value provided, so only do this in non-optimized builds to make
+  // tracking down issues easier.
   CARBON_DCHECK(chunk < (1 << HighBits), "Id overflow (high bits)");
   CARBON_DCHECK(pos < (1 << LowBits), "Id overflow (low bits)");
 
