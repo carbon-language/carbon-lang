@@ -894,8 +894,7 @@ struct LocId : public IdBase<LocId> {
   auto AsDesugared() const -> LocId {
     // This should only be called for NodeId or ImportIRInstId (i.e. canonical
     // locations), but we only set the flag for NodeId.
-    CARBON_CHECK(kind() != Kind::InstId,
-                 "Use InstStore::GetLocIdForDesugaring");
+    CARBON_CHECK(kind() != Kind::InstId, "Use InstStore::GetDesugaredLocId");
     if (index <= FirstNodeId && index > FirstDesugaredNodeId) {
       return LocId(index - Parse::NodeId::Max);
     }
