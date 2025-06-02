@@ -86,7 +86,7 @@ static constexpr auto IdToChunkIndices(IdT id) -> std::pair<int, int> {
   // Simple check to make sure nothing went wildly wrong with the
   // PlatformChunkCapacity, and we have some room for a chunk index, and
   // that shifting by the number of bits won't be UB in an int32_t.
-  static_assert(LowBits < 24);
+  static_assert(LowBits < 30);
 
   return {
       id.index >> LowBits,
@@ -101,7 +101,7 @@ template <typename IdT>
 static constexpr auto ChunkIndicesToId(int chunk, int pos) -> IdT {
   constexpr auto LowBits = PlatformChunkCapacityBits<IdT>();
   // We can only use 31 bits in total because the sign bit is used for making
-  // negative ids which are not found in the ValueStore.
+  // negative ids, which are not found in the ValueStore.
   constexpr auto HighBits = 31 - LowBits;
   // This routine is especially hot and the check here relatively expensive for
   // the value provided, so only do this in debug builds to make tracking down
@@ -119,61 +119,63 @@ struct ValueStoreChunk {
   static constexpr auto Capacity = Internal::PlatformChunkCapacity<IdT>();
   static constexpr auto CapacityBytes = Capacity * sizeof(ValueType);
 
-  ValueStoreChunk()
-      : buf(reinterpret_cast<ValueType*>(
+  explicit ValueStoreChunk()
+      : buf_(reinterpret_cast<ValueType*>(
             llvm::allocate_buffer(CapacityBytes, alignof(ValueType)))) {}
 
+  // Moving leaves nullptr behind in the moved-from object so that the
+  // destructor is a no-op (preventing double free).
   ValueStoreChunk(ValueStoreChunk&& rhs) noexcept
-      : buf(std::exchange(rhs.buf, nullptr)), num(rhs.num) {}
+      : buf_(std::exchange(rhs.buf_, nullptr)), num_(rhs.num_) {}
 
   auto operator=(ValueStoreChunk&& rhs) noexcept -> ValueStoreChunk& {
-    buf = std::exchange(rhs.buf, nullptr);
-    num = rhs.num;
+    buf_ = std::exchange(rhs.buf_, nullptr);
+    num_ = rhs.num_;
     return *this;
   }
 
   ~ValueStoreChunk() {
-    if (buf) {
+    if (buf_) {
       if constexpr (!std::is_trivially_destructible_v<ValueType>) {
-        std::destroy_n(buf, num);
+        std::destroy_n(buf_, num_);
       }
-      llvm::deallocate_buffer(buf, CapacityBytes, alignof(ValueType));
+      llvm::deallocate_buffer(buf_, CapacityBytes, alignof(ValueType));
     }
   }
 
   // Allow the chunk to act as a range for being iterated.
   auto begin() const -> const ValueType* {
-    CARBON_DCHECK(buf, "iterating after moved-from");
-    return buf;
+    CARBON_DCHECK(buf_, "iterating after moved-from");
+    return buf_;
   }
   auto end() const -> const ValueType* {
-    CARBON_DCHECK(buf, "iterating after moved-from");
-    return buf + num;
+    CARBON_DCHECK(buf_, "iterating after moved-from");
+    return buf_ + num_;
   }
 
-  // Verify using an `int32_t` for `num` is sound.
+  // Verify using an `int32_t` for `num_` is sound.
   static_assert(Capacity <= std::numeric_limits<int32_t>::max());
 
   auto at(int32_t i) -> ValueType& {
-    CARBON_CHECK(i < num, "{0}", i);
-    return buf[i];
+    CARBON_CHECK(i < num_, "{0}", i);
+    return buf_[i];
   }
   auto at(int32_t i) const -> const ValueType& {
-    CARBON_CHECK(i < num, "{0}", i);
-    return buf[i];
+    CARBON_CHECK(i < num_, "{0}", i);
+    return buf_[i];
   }
 
   auto push(ValueType&& value) -> void {
-    CARBON_CHECK(num < Capacity);
-    std::construct_at(buf + num, std::move(value));
-    ++num;
+    CARBON_CHECK(num_ < Capacity);
+    std::construct_at(buf_ + num_, std::move(value));
+    ++num_;
   }
 
-  auto size() const -> int32_t { return num; }
+  auto size() const -> int32_t { return num_; }
 
  private:
-  ValueType* buf;
-  int32_t num = 0;
+  ValueType* buf_;
+  int32_t num_ = 0;
 };
 
 }  // namespace Carbon::Internal
