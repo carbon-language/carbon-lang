@@ -38,7 +38,7 @@ concept IdHasValueType = requires { typename IdT::ValueType; };
 // choosing a chunk though.
 template <class IdT>
   requires(IdHasValueType<IdT>)
-static constexpr auto PlatformChunkMaxAllocationBytes() -> int {
+static constexpr auto PlatformChunkMaxAllocationBytes() -> int32_t {
 #if (!defined(NDEBUG) || LLVM_ADDRESS_SANITIZER_BUILD)
   // Use a small size in unoptimized builds to ensure multiple chunks get used.
   // And do the same in ASAN builds to reduce bookkeeping overheads. Using large
@@ -61,7 +61,7 @@ static constexpr auto PlatformChunkMaxAllocationBytes() -> int {
 // bits indexing into the allocation.
 template <class IdT>
   requires(IdHasValueType<IdT>)
-static constexpr auto PlatformChunkCapacity() -> int {
+static constexpr auto PlatformChunkCapacity() -> int32_t {
   constexpr auto MaxElements =
       PlatformChunkMaxAllocationBytes<IdT>() / sizeof(typename IdT::ValueType);
   return std::bit_floor(MaxElements);
@@ -70,7 +70,7 @@ static constexpr auto PlatformChunkCapacity() -> int {
 // The number of bits needed to index each element in a chunk allocation.
 template <class IdT>
   requires(IdHasValueType<IdT>)
-static constexpr auto PlatformChunkCapacityBits() -> int {
+static constexpr auto PlatformChunkCapacityBits() -> int32_t {
   static_assert(PlatformChunkCapacity<IdT>() > 0);
   return std::bit_width(uint32_t{PlatformChunkCapacity<IdT>() - 1});
 }
@@ -79,7 +79,7 @@ static constexpr auto PlatformChunkCapacityBits() -> int {
 // specific chunk.
 template <typename IdT>
   requires(IdHasValueType<IdT>)
-static constexpr auto IdToChunkIndices(IdT id) -> std::pair<int, int> {
+static constexpr auto IdToChunkIndices(IdT id) -> std::pair<int32_t, int32_t> {
   constexpr auto LowBits = PlatformChunkCapacityBits<IdT>();
 
   // Verify there are no unused bits when indexing up to the
@@ -102,7 +102,7 @@ static constexpr auto IdToChunkIndices(IdT id) -> std::pair<int, int> {
 // chunk, into an id.
 template <typename IdT>
   requires(IdHasValueType<IdT>)
-static constexpr auto ChunkIndicesToId(int chunk, int pos) -> IdT {
+static constexpr auto ChunkIndicesToId(int32_t chunk, int32_t pos) -> IdT {
   constexpr auto LowBits = PlatformChunkCapacityBits<IdT>();
   // We can only use 31 bits in total because the sign bit is used for making
   // negative ids, which are not found in the ValueStore.
