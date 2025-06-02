@@ -63,7 +63,7 @@ class ValueStore
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT {
-    auto id = IdT(size_);
+    IdT id(size_);
     auto [chunk_index, pos] = Internal::IdToChunkIndices(id);
     ++size_;
 
@@ -141,11 +141,12 @@ class ValueStore
   // for (auto [id, value] : store.enumerate()) { ... }
   // ```
   auto enumerate() const [[clang::lifetimebound]] -> auto {
-    auto index_to_id = [](auto pair) -> std::pair<IdT, ConstRefType> {
-      auto [index, value] = pair;
-      return std::pair<IdT, ConstRefType>(index, value);
+    auto index_to_id = [&](int32_t i) -> std::pair<IdT, ConstRefType> {
+      return std::pair<IdT, ConstRefType>(IdT(i), Get(IdT(i)));
     };
-    return llvm::map_range(llvm::enumerate(values()), index_to_id);
+    // Because indices into `ValueStore` are all sequential values from 0, we
+    // can use llvm::seq to walk all indices in the store.
+    return llvm::map_range(llvm::seq(size_), index_to_id);
   }
 
  private:
