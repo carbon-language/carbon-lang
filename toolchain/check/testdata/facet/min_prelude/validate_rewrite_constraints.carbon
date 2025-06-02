@@ -449,3 +449,51 @@ fn G(T:! I where .X = C(()) and .Y = {}) {
   // CHECK:STDERR:
   F(T);
 }
+
+// --- function_in_interface_ignored.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  fn F();
+}
+
+fn F(T:! I where .X = ()) {}
+
+fn G(T:! I where .X = ()) {
+  F(T);
+}
+
+// --- function_as_rewrite_value.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! X;
+  fn A();
+}
+
+fn F(T:! I where .Y = .A) {}
+
+fn G(T:! I where .Y = .A) {
+  F(T);
+}
+
+// --- todo_fail_wrong_function_as_rewrite_value.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  let Y:! X;
+  fn A();
+  fn B();
+}
+
+fn F(T:! I where .Y = .A) {}
+
+fn G(T:! I where .Y = .B) {
+  // TODO: This should be diagnosed as the wrong value being assigned to .Y for
+  // what F is expecting.
+  //
+  F(T);
+}
