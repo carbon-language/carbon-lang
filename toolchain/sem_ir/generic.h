@@ -136,11 +136,13 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto values() const -> ValueStoreRange<SpecificId> {
+  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<SpecificId> {
     return specifics_.values();
   }
   auto size() const -> size_t { return specifics_.size(); }
-  auto enumerate() const -> auto { return specifics_.enumerate(); }
+  auto enumerate() const [[clang::lifetimebound]] -> auto {
+    return specifics_.enumerate();
+  }
 
  private:
   // Context for hashing keys.

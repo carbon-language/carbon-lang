@@ -346,7 +346,9 @@ class IntStore {
   // into the ID space.
   auto OutputYaml() const -> Yaml::OutputMapping;
 
-  auto values() const -> auto { return values_.values(); }
+  auto values() const [[clang::lifetimebound]] -> auto {
+    return values_.values();
+  }
   auto size() const -> size_t { return values_.size(); }
 
   // Collects the memory usage of the separately stored integers.

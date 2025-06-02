@@ -530,9 +530,13 @@ class InstStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 
-  auto values() const -> ValueStoreRange<InstId> { return values_.values(); }
+  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<InstId> {
+    return values_.values();
+  }
   auto size() const -> int { return values_.size(); }
-  auto enumerate() const -> auto { return values_.enumerate(); }
+  auto enumerate() const [[clang::lifetimebound]] -> auto {
+    return values_.enumerate();
+  }
 
  private:
   // Given a symbolic type, get the corresponding unattached type.
