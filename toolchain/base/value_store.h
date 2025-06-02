@@ -10,7 +10,6 @@
 #include <utility>
 
 #include "common/check.h"
-#include "common/flatten.h"
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "common/set.h"
@@ -128,7 +127,7 @@ class ValueStore
   auto size() const -> size_t { return size_; }
 
   // Makes an iterable range over references to all values in the ValueStore.
-  auto values() const -> ValueStoreRange<IdT> {
+  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<IdT> {
     return ValueStoreRange<IdT>(*this);
   }
 
@@ -141,7 +140,7 @@ class ValueStore
   // ```
   // for (auto [id, value] : store.enumerate()) { ... }
   // ```
-  auto enumerate() const -> auto {
+  auto enumerate() const [[clang::lifetimebound]] -> auto {
     auto index_to_id = [](auto pair) -> std::pair<IdT, ConstRefType> {
       auto [index, value] = pair;
       return std::pair<IdT, ConstRefType>(index, value);
@@ -168,21 +167,27 @@ class ValueStore
 };
 
 // A range over references to the values in a ValueStore, returned from
-// `ValueStore::values()`.
+// `ValueStore::values()`. Hides the complex type name of the iterator
+// internally to provide a type name (`ValueStoreRange<IdT>`) that can be
+// referred to without auto and templates.
 template <class IdT>
 class ValueStoreRange {
  public:
-  explicit ValueStoreRange(const ValueStore<IdT>& store)
+  explicit ValueStoreRange(const ValueStore<IdT>& store
+                           [[clang::lifetimebound]])
       : flattened_range_(MakeFlattenedRange(store)) {}
 
   auto begin() const -> auto { return flattened_range_.begin(); }
   auto end() const -> auto { return flattened_range_.end(); }
 
  private:
-  using ChunkType = ValueStore<IdT>::ChunkType;
-
-  static auto MakeFlattenedRange(const ValueStore<IdT>& store) {
-    return Flatten(store.chunks_);
+  // Flattens the range of `ValueStoreChunk`s of `ValueType`s into a single
+  // range of `ValueType`s.
+  static auto MakeFlattenedRange(const ValueStore<IdT>& store) -> auto {
+    return llvm::map_range(llvm::seq(store.size_),
+                           [&](size_t i) -> ValueStore<IdT>::ConstRefType {
+                             return store.Get(IdT(static_cast<int32_t>(i)));
+                           });
   }
 
   using FlattenedRangeType =
@@ -219,7 +224,9 @@ class CanonicalValueStore {
     return values_.OutputYaml();
   }
 
-  auto values() const -> ValueStoreRange<IdT> { return values_.values(); }
+  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<IdT> {
+    return values_.values();
+  }
   auto size() const -> size_t { return values_.size(); }
 
   // Collects memory usage of the values and deduplication set.

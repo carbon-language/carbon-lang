@@ -94,7 +94,6 @@ cc_library(
         ":mem_usage",
         ":yaml",
         "//common:check",
-        "//common:flatten",
         "//common:hashtable_key_context",
         "//common:ostream",
         "//common:set",
