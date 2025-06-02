@@ -222,7 +222,8 @@ auto EvalOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
   }
 }
 
-auto AddInstWithoutEval(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+auto AddReducedConstantWithoutEval(Context& context,
+                                   SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::ConstantId {
   CARBON_CHECK(!loc_id_and_inst.inst.kind().has_cleanup());
   switch (loc_id_and_inst.inst.kind().constant_needs_inst_id()) {

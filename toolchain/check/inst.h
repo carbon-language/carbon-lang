@@ -100,18 +100,23 @@ auto EvalOrAddInst(Context& context, LocT loc, InstT inst)
 // Add an instruction and return its constant value by canonicalizing it but
 // without evaluating the instruction. The instruction will need to be evaluated
 // later to have any effect.
-auto AddInstWithoutEval(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
+//
+// The caller must provide a "reduced" instruction, that is an instruction which
+// will have its operands canonicalized but that it knows will otherwise be a
+// no-op during eval, producing the same instruction as the result.
+auto AddReducedConstantWithoutEval(Context& context,
+                                   SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::ConstantId;
 
-// Convenience for AddInstWithoutEval with typed nodes.
+// Convenience for AddReducedConstantWithoutEval with typed nodes.
 //
 // As a safety check, prevent use with storage insts (see `AddInstWithCleanup`).
 template <typename InstT, typename LocT>
   requires(!InstT::Kind.has_cleanup() &&
            std::convertible_to<LocT, SemIR::LocId>)
-auto AddInstWithoutEval(Context& context, LocT loc, InstT inst)
+auto AddReducedConstantWithoutEval(Context& context, LocT loc, InstT inst)
     -> SemIR::ConstantId {
-  return AddInstWithoutEval(context, SemIR::LocIdAndInst(loc, inst));
+  return AddReducedConstantWithoutEval(context, SemIR::LocIdAndInst(loc, inst));
 }
 
 // Adds an instruction and enqueues it to be added to the eval block of the

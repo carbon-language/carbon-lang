@@ -405,17 +405,20 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   // be made more specific (when applying a `SpecificId`).
   //
   // Since we already ran this query above (via `EvalLookupSingleImplWitness`)
-  // we want eval to not actually do another lookup here, but we must create the
-  // instruction through eval. It takes care to bypass running lookup again for
-  // this caller.
-  auto witness_const_id = AddInstWithoutEval<SemIR::LookupImplWitness>(
-      context, context.insts().GetCanonicalLocId(loc_id).ToImplicit(),
-      {
-          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-          .query_self_inst_id = canonical_self_inst_id,
-          .query_specific_interface_id =
-              context.specific_interfaces().Add(query_interface),
-      });
+  // we want eval to not actually do another lookup here. As we know the
+  // instruction would evaluate to itself in this case, it is a reduced constant
+  // instruction and we use `AddReducedConstantWithoutEval` to keep eval from
+  // performing a redundant impl lookup.
+  auto witness_const_id =
+      AddReducedConstantWithoutEval<SemIR::LookupImplWitness>(
+          context, context.insts().GetCanonicalLocId(loc_id).ToImplicit(),
+          {
+              .type_id =
+                  GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+              .query_self_inst_id = canonical_self_inst_id,
+              .query_specific_interface_id =
+                  context.specific_interfaces().Add(query_interface),
+          });
   return {.witness_id = context.constant_values().GetInstId(witness_const_id),
           .facet_type_id = lookup_result.facet_value_type()};
 }
