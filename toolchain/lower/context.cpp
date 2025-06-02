@@ -31,17 +31,17 @@ Context::Context(llvm::LLVMContext& llvm_context,
 
 auto Context::GetFileContext(const SemIR::File* file,
                              const SemIR::InstNamer* inst_namer)
-    -> FileContext* {
+    -> FileContext& {
   auto insert_result = file_contexts_.Insert(file->check_ir_id(), [&] {
     auto file_context =
         std::make_unique<FileContext>(*this, *file, inst_namer, vlog_stream_);
     file_context->PrepareToLower();
     return file_context;
   });
-  return insert_result.value().get();
+  return *insert_result.value();
 }
 
-auto Context::Finalize() -> std::unique_ptr<llvm::Module> {
+auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
   file_contexts_.ForEach(
       [](auto, auto& file_context) { file_context->Finalize(); });
   return std::move(llvm_module_);

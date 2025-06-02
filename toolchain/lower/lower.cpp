@@ -23,8 +23,8 @@ auto LowerToLLVM(llvm::LLVMContext& llvm_context,
   Context context(llvm_context, std::move(fs),
                   tree_and_subtrees_getters_for_debug_info, module_name,
                   vlog_stream);
-  context.GetFileContext(&sem_ir, inst_namer)->LowerDefinitions();
-  return context.Finalize();
+  context.GetFileContext(&sem_ir, inst_namer).LowerDefinitions();
+  return std::move(context).Finalize();
 }
 
 }  // namespace Carbon::Lower

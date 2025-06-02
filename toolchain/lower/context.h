@@ -46,11 +46,11 @@ class Context {
   // TODO: Consider building an InstNamer if we're not given one.
   auto GetFileContext(const SemIR::File* file,
                       const SemIR::InstNamer* inst_namer = nullptr)
-      -> FileContext*;
+      -> FileContext&;
 
   // Finishes lowering and takes ownership of the LLVM module. The context
   // cannot be used further after calling this.
-  auto Finalize() -> std::unique_ptr<llvm::Module>;
+  auto Finalize() && -> std::unique_ptr<llvm::Module>;
 
   // Returns location information for use with DebugInfo.
   auto GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI;
