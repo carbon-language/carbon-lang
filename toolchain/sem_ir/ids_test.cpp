@@ -38,24 +38,24 @@ class IdsTestWithParam
     : public testing::TestWithParam<std::tuple<bool, int32_t>> {
  public:
   explicit IdsTestWithParam() {
-    llvm::errs() << "is_desugared=" << is_desugared()
-                 << ", index=" << std::get<1>(GetParam()) << "\n";
+    llvm::errs() << "is_desugared=" << is_desugared() << ", index=" << index()
+                 << "\n";
   }
 
   // Returns IdT with its matching LocId form. Sets flags based on test
   // parameters.
   template <typename IdT>
   auto BuildIdAndLocId() -> std::pair<IdT, LocId> {
-    auto [is_desugared, index] = GetParam();
-    IdT id(index);
-    LocId loc_id(id);
-    if (is_desugared) {
-      loc_id = loc_id.AsDesugared();
+    IdT id(index());
+    if (is_desugared()) {
+      return {id, LocId(id).AsDesugared()};
+    } else {
+      return {id, LocId(id)};
     }
-    return {id, LocId(id)};
   }
 
   auto is_desugared() -> bool { return std::get<0>(GetParam()); }
+  auto index() -> int32_t { return std::get<1>(GetParam()); }
 };
 
 // Returns a test case generator for edge-case values.

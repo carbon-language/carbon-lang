@@ -895,14 +895,13 @@ struct LocId : public IdBase<LocId> {
   // Forms an equivalent LocId for a desugared location. Prefer calling
   // `InstStore::GetDesugaredLocId`.
   auto AsDesugared() const -> LocId {
-    LocId loc_id = *this;
     // This should only be called for NodeId or ImportIRInstId (i.e. canonical
     // locations), but we only set the flag for NodeId.
     CARBON_CHECK(kind() != Kind::InstId, "Use InstStore::GetDesugaredLocId");
     if (kind() == Kind::NodeId) {
       return LocId(index & ~DesugaredBit);
     }
-    return loc_id;
+    return *this;
   }
 
   // Returns the kind of the `LocId`.

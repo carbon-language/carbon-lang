@@ -178,6 +178,9 @@ auto LocId::Print(llvm::raw_ostream& out) const -> void {
       break;
     case Kind::NodeId:
       out << Label << "_" << node_id();
+      if (is_desugared()) {
+        out << "_desugared";
+      }
       break;
   }
 }
