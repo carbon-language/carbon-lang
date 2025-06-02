@@ -47,7 +47,7 @@ static constexpr auto PlatformChunkMaxAllocationBytes() -> int32_t {
 #else
   // TODO: Should ia64 use 1M or 4M? Should Windows and Mac use different sizes?
 
-  // x64 CPUs support 4K and 2M page sizes, but we see 1M is slower than 1K with
+  // x64 CPUs support 4K and 2M page sizes, but we see 1M is slower than 4K with
   // tcmalloc in opt builds for our tests.
   return 4 * 1024;
 #endif
