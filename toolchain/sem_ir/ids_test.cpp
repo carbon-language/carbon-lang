@@ -30,37 +30,32 @@ TEST(IdsTest, LocIdValues) {
 
   EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 24)));
   EXPECT_THAT(static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1)).index,
-              Eq(-(1 << 29) + 1));
+              Eq(-(1 << 30) + 1));
 }
 
-// A standard parameterized test for (implicit, token_only, index).
+// A standard parameterized test for (implicit, index).
 class IdsTestWithParam
-    : public testing::TestWithParam<std::tuple<bool, bool, int32_t>> {
+    : public testing::TestWithParam<std::tuple<bool, int32_t>> {
  public:
   explicit IdsTestWithParam() {
     llvm::errs() << "implicit=" << is_implicit()
-                 << ", token_only=" << is_token_only()
-                 << ", index=" << std::get<2>(GetParam()) << "\n";
+                 << ", index=" << std::get<1>(GetParam()) << "\n";
   }
 
   // Returns IdT with its matching LocId form. Sets flags based on test
   // parameters.
   template <typename IdT>
   auto BuildIdAndLocId() -> std::pair<IdT, LocId> {
-    auto [implicit, token_only, index] = GetParam();
+    auto [implicit, index] = GetParam();
     IdT id(index);
     LocId loc_id(id);
     if (implicit) {
       loc_id = loc_id.ToImplicit();
     }
-    if (token_only) {
-      loc_id = loc_id.ToTokenOnly();
-    }
     return {id, loc_id};
   }
 
   auto is_implicit() -> bool { return std::get<0>(GetParam()); }
-  auto is_token_only() -> bool { return std::get<1>(GetParam()); }
 };
 
 // Returns a test case generator for edge-case values.
@@ -70,7 +65,7 @@ static auto GetValueRange(int32_t max) -> auto {
 
 // Returns a test case generator for `IdsTestWithParam` uses.
 static auto CombineWithFlags(auto value_range) -> auto {
-  return testing::Combine(testing::Bool(), testing::Bool(), value_range);
+  return testing::Combine(testing::Bool(), value_range);
 }
 
 class LocIdAsNoneTestWithParam : public IdsTestWithParam {};
@@ -102,14 +97,13 @@ TEST_P(LocIdAsImportIRInstIdTest, Test) {
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::ImportIRInstId));
   EXPECT_THAT(loc_id.import_ir_inst_id(), import_ir_inst_id);
   EXPECT_FALSE(loc_id.is_implicit());
-  EXPECT_THAT(loc_id.is_token_only(), Eq(is_token_only()));
 }
 
 class LocIdAsInstIdTest : public IdsTestWithParam {};
 
 INSTANTIATE_TEST_SUITE_P(
     Test, LocIdAsInstIdTest,
-    testing::Combine(testing::Values(false), testing::Values(false),
+    testing::Combine(testing::Values(false),
                      GetValueRange(std::numeric_limits<int32_t>::max())));
 
 TEST_P(LocIdAsInstIdTest, Test) {
@@ -117,8 +111,7 @@ TEST_P(LocIdAsInstIdTest, Test) {
   EXPECT_TRUE(loc_id.has_value());
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::InstId));
   EXPECT_THAT(loc_id.inst_id(), inst_id);
-  // Note that `is_implicit` and `is_token_only` are invalid to use with
-  // `InstId`.
+  // Note that `is_implicit` is invalid to use with `InstId`.
 }
 
 class LocIdAsNodeIdTest : public IdsTestWithParam {};
@@ -132,7 +125,6 @@ TEST_P(LocIdAsNodeIdTest, Test) {
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::NodeId));
   EXPECT_THAT(loc_id.node_id(), node_id);
   EXPECT_THAT(loc_id.is_implicit(), Eq(is_implicit()));
-  EXPECT_THAT(loc_id.is_token_only(), Eq(is_token_only()));
 }
 
 }  // namespace

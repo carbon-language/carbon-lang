@@ -835,7 +835,7 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
   using ValueType = ImportIRInst;
 
   // ImportIRInstId is restricted so that it can fit into LocId.
-  static constexpr int32_t BitsWithNodeId = 29;
+  static constexpr int BitsWithNodeId = 30;
 
   // The maximum ID, non-inclusive.
   static constexpr int Max = (1 << BitsWithNodeId) - Parse::NodeId::Max - 2;
@@ -857,17 +857,17 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 // - NodeId: negative values starting after None; the 24 bit NodeId range.
 //   - [-2, -2 - (1 << 24))
 // - ImportIRInstId: remaining negative values; after NodeId, fills out negative
-//   values to 29 bits.
-//   - [-2 - (1 << 24), -(1 << 29))
+//   values to 30 bits.
+//   - [-2 - (1 << 24), -(1 << 30))
 //
-// In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
-// Note that these can only be used with negative, non-`InstId` values.
+// In addition, two bits are used for flags: `ImplicitBit`.
+// Note that this can only be used with negative, non-`InstId` values.
 //
 // Use `InstStore::GetCanonicalLocId()` to get a canonical `LocId` which will
 // not be backed by an `InstId`. Note that the canonical `LocId` may be `None`
 // even when the original `LocId` was not, so this operation needs to be done
 // before checking `has_value()`. Only canonical locations can be converted with
-// `ToImplicit()` or `ToTokenOnly()`.
+// `ToImplicit()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -910,20 +910,6 @@ struct LocId : public IdBase<LocId> {
     return *this;
   }
 
-  // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
-  // a canonical location. See `InstStore::GetCanonicalLocId()`.
-  //
-  // TODO: Consider making this a part of check/ diagnostics instead, as a free
-  // function operation on `LocIdForDiagnostics`?
-  // https://github.com/carbon-language/carbon-lang/pull/5355#discussion_r2064113186
-  auto ToTokenOnly() const -> LocId {
-    CARBON_CHECK(kind() != Kind::InstId);
-    if (has_value()) {
-      return LocId(index & ~TokenOnlyBit);
-    }
-    return *this;
-  }
-
   // Returns the kind of the `LocId`.
   auto kind() const -> Kind {
     if (!has_value()) {
@@ -942,15 +928,6 @@ struct LocId : public IdBase<LocId> {
   // Requires a non-`InstId` location.
   auto is_implicit() const -> bool {
     return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
-  }
-
-  // Returns true if the location is token-only for diagnostics.
-  //
-  // This means the displayed location will include only the location's specific
-  // parse node, instead of also including its descendants. As such, this can
-  // only be true for locations backed by a `NodeId`.
-  auto is_token_only() const -> bool {
-    return kind() != Kind::InstId && (index & TokenOnlyBit) == 0;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
@@ -987,10 +964,6 @@ struct LocId : public IdBase<LocId> {
   // for `NodeId`.
   static constexpr int32_t ImplicitBit = 1 << 30;
 
-  // See `is_token_only` for the use. This only applies for canonical locations
-  // (i.e. those containing `NodeId` or `ImportIRInstId`).
-  static constexpr int32_t TokenOnlyBit = 1 << 29;
-
   // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
   static constexpr int32_t FirstNodeId = NoneIndex - 1;
   static constexpr int32_t FirstImportIRInstId =
@@ -998,7 +971,7 @@ struct LocId : public IdBase<LocId> {
 
   auto index_without_flags() const -> int32_t {
     CARBON_DCHECK(index < NoneIndex, "Only for NodeId and ImportIRInstId");
-    return index | ImplicitBit | TokenOnlyBit;
+    return index | ImplicitBit;
   }
 };
 
