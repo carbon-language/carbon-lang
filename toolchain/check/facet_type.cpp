@@ -450,14 +450,9 @@ class RewriteRulesFromFacetType {
       auto rhs_id = it_->rhs_id;
       ++it_;
 
-      while (lhs_id == SemIR::ErrorInst::InstId ||
-             rhs_id == SemIR::ErrorInst::InstId) {
-        lhs_id = it_->lhs_id;
-        rhs_id = it_->rhs_id;
-        ++it_;
-        if (it_ == end_) {
-          return std::nullopt;
-        }
+      if (lhs_id == SemIR::ErrorInst::InstId ||
+          rhs_id == SemIR::ErrorInst::InstId) {
+        continue;
       }
 
       auto lhs_witness_access =
