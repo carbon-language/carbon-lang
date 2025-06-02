@@ -15,6 +15,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/Linker/Linker.h"
+#include "llvm/Support/BLAKE3.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/constant.h"
@@ -22,6 +24,7 @@
 #include "toolchain/lower/mangler.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/entry_point.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
@@ -33,26 +36,11 @@
 
 namespace Carbon::Lower {
 
-FileContext::FileContext(
-    llvm::LLVMContext& llvm_context,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-        tree_and_subtrees_getters_for_debug_info,
-    llvm::StringRef module_name, const SemIR::File& sem_ir,
-    clang::ASTUnit* cpp_ast, const SemIR::InstNamer* inst_namer,
-    llvm::raw_ostream* vlog_stream)
-    : llvm_context_(&llvm_context),
-      llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
-      fs_(std::move(fs)),
-      di_builder_(*llvm_module_),
-      di_compile_unit_(
-          tree_and_subtrees_getters_for_debug_info
-              ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
-              : nullptr),
-      tree_and_subtrees_getters_for_debug_info_(
-          tree_and_subtrees_getters_for_debug_info),
+FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
+                         const SemIR::InstNamer* inst_namer,
+                         llvm::raw_ostream* vlog_stream)
+    : context_(&context),
       sem_ir_(&sem_ir),
-      cpp_ast_(cpp_ast),
       inst_namer_(inst_namer),
       vlog_stream_(vlog_stream) {
   // Initialization that relies on invariants of the class.
@@ -62,11 +50,12 @@ FileContext::FileContext(
 }
 
 // TODO: Move this to lower.cpp.
-auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
-  CARBON_CHECK(llvm_module_, "Run can only be called once.");
-
+auto FileContext::PrepareToLower() -> void {
   if (cpp_code_generator_) {
-    cpp_code_generator_->Initialize(cpp_ast()->getASTContext());
+    // Clang code generation should not actually modify the AST, but isn't
+    // const-correct.
+    cpp_code_generator_->Initialize(
+        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
   }
 
   // Lower all types that were required to be complete.
@@ -83,16 +72,31 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     functions_[id.index] = BuildFunctionDecl(id);
   }
 
+  // Specific functions are lowered when we emit a reference to them.
+  specific_functions_.resize(sem_ir_->specifics().size());
+  // Additional data stored for specifics, for when attempting to coalesce.
+  // Indexed by `GenericId`.
+  lowered_specifics_.resize(sem_ir_->generics().size());
+  // Indexed by `SpecificId`.
+  lowered_specifics_type_fingerprint_.resize(sem_ir_->specifics().size());
+  lowered_specific_fingerprint_.resize(sem_ir_->specifics().size());
+  equivalent_specifics_.resize(sem_ir_->specifics().size(),
+                               SemIR::SpecificId::None);
+
+  // Lower constants.
+  constants_.resize(sem_ir_->insts().size());
+  LowerConstants(*this, constants_);
+}
+
+// TODO: Move this to lower.cpp.
+auto FileContext::LowerDefinitions() -> void {
   for (const auto& class_info : sem_ir_->classes().values()) {
     if (auto* llvm_vtable = BuildVtable(class_info)) {
       global_variables_.Insert(class_info.vtable_id, llvm_vtable);
     }
   }
 
-  // Specific functions are lowered when we emit a reference to them.
-  specific_functions_.resize(sem_ir_->specifics().size());
-
-  // Lower global variable declarations.
+  // Lower global variable definitions.
   // TODO: Storing both a `constants_` array and a separate `global_variables_`
   // map is redundant.
   for (auto inst_id :
@@ -100,17 +104,24 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
     // Only `VarStorage` indicates a global variable declaration in the
     // top instruction block.
     if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
-      auto* var_decl = BuildGlobalVariableDecl(*var);
-      global_variables_.Insert(inst_id, var_decl);
-      // Also store the global variable with the ID of the pattern so
-      // constant lowering can find it.
-      global_variables_.Insert(var->pattern_id, var_decl);
+      // Get the global variable declaration. We created this when lowering the
+      // constant unless the variable is unnamed, in which case we need to
+      // create it now.
+      llvm::GlobalVariable* llvm_var = nullptr;
+      if (sem_ir().constant_values().Get(inst_id).is_constant()) {
+        llvm_var = cast<llvm::GlobalVariable>(
+            GetGlobal(inst_id, SemIR::SpecificId::None));
+      } else {
+        llvm_var = BuildGlobalVariableDecl(*var);
+      }
+
+      // Convert the declaration of this variable into a definition by adding an
+      // initializer.
+      global_variables_.Insert(inst_id, llvm_var);
+      llvm_var->setInitializer(
+          llvm::Constant::getNullValue(llvm_var->getValueType()));
     }
   }
-
-  // Lower constants.
-  constants_.resize(sem_ir_->insts().size());
-  LowerConstants(*this, constants_);
 
   // Lower function definitions.
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
@@ -135,34 +146,245 @@ auto FileContext::Run() -> std::unique_ptr<llvm::Module> {
   }
 
   if (cpp_code_generator_) {
-    cpp_code_generator_->HandleTranslationUnit(cpp_ast()->getASTContext());
+    // Clang code generation should not actually modify the AST, but isn't
+    // const-correct.
+    cpp_code_generator_->HandleTranslationUnit(
+        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
     bool link_error = llvm::Linker::linkModules(
-        /*Dest=*/*llvm_module_,
+        /*Dest=*/llvm_module(),
         /*Src=*/std::unique_ptr<llvm::Module>(
             cpp_code_generator_->ReleaseModule()));
     CARBON_CHECK(!link_error);
   }
-
-  return std::move(llvm_module_);
 }
 
-auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
-                                     llvm::Module& llvm_module,
-                                     llvm::DIBuilder& di_builder)
-    -> llvm::DICompileUnit* {
-  llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
-  llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
-                            llvm::DEBUG_METADATA_VERSION);
-  // TODO: Include directory path in the compile_unit_file.
-  llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
-  // TODO: Introduce a new language code for Carbon. C works well for now since
-  // it's something debuggers will already know/have support for at least.
-  // Probably have to bump to C++ at some point for virtual functions,
-  // templates, etc.
-  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, compile_unit_file,
-                                      "carbon",
-                                      /*isOptimized=*/false, /*Flags=*/"",
-                                      /*RV=*/0);
+auto FileContext::Finalize() -> void {
+  // Find equivalent specifics (from the same generic), replace all uses and
+  // remove duplicately lowered function definitions.
+  CoalesceEquivalentSpecifics();
+}
+
+auto FileContext::InsertPair(
+    SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
+    Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
+    -> bool {
+  if (specific_id1.index > specific_id2.index) {
+    std::swap(specific_id1.index, specific_id2.index);
+  }
+  auto insert_result =
+      set_of_pairs.Insert(std::make_pair(specific_id1, specific_id2));
+  return insert_result.is_inserted();
+}
+
+auto FileContext::ContainsPair(
+    SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
+    const Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>& set_of_pairs)
+    -> bool {
+  if (specific_id1.index > specific_id2.index) {
+    std::swap(specific_id1.index, specific_id2.index);
+  }
+  return set_of_pairs.Contains(std::make_pair(specific_id1, specific_id2));
+}
+
+auto FileContext::CoalesceEquivalentSpecifics() -> void {
+  for (auto& specifics : lowered_specifics_) {
+    // i cannot be unsigned due to the comparison with a negative number when
+    // the specifics vector is empty.
+    for (int i = 0; i < static_cast<int>(specifics.size()) - 1; ++i) {
+      // This specific was already replaced, skip it.
+      if (equivalent_specifics_[specifics[i].index].has_value() &&
+          equivalent_specifics_[specifics[i].index] != specifics[i]) {
+        specifics[i] = specifics[specifics.size() - 1];
+        specifics.pop_back();
+        --i;
+        continue;
+      }
+      // TODO: Improve quadratic behavior by using a single hash based on
+      // `lowered_specifics_type_fingerprint_` and `common_fingerprint`.
+      for (int j = i + 1; j < static_cast<int>(specifics.size()); ++j) {
+        // When the specific was already replaced, skip it.
+        if (equivalent_specifics_[specifics[j].index].has_value() &&
+            equivalent_specifics_[specifics[j].index] != specifics[j]) {
+          specifics[j] = specifics[specifics.size() - 1];
+          specifics.pop_back();
+          --j;
+          continue;
+        }
+
+        // When the two specifics are not equivalent due to the function type
+        // info stored in lowered_specifics_types, mark non-equivalance. This
+        // can be reused to short-cut another path and continue the search for
+        // other equivalences.
+        if (!AreFunctionTypesEquivalent(specifics[i], specifics[j])) {
+          InsertPair(specifics[i], specifics[j], non_equivalent_specifics_);
+          continue;
+        }
+
+        Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>
+            visited_equivalent_specifics;
+        InsertPair(specifics[i], specifics[j], visited_equivalent_specifics);
+        // Function type information matches; check usages inside the function
+        // body that are dependent on the specific. This information has been
+        // stored in lowered_states while lowering each function body.
+        if (AreFunctionBodiesEquivalent(specifics[i], specifics[j],
+                                        visited_equivalent_specifics)) {
+          // When processing equivalences, we may change the canonical specific
+          // multiple times, so we don't delete replaced specifics until the
+          // end.
+          llvm::SmallVector<SemIR::SpecificId> specifics_to_delete;
+          visited_equivalent_specifics.ForEach(
+              [&](std::pair<SemIR::SpecificId, SemIR::SpecificId>
+                      equivalent_entry) {
+                CARBON_VLOG("Found equivalent specifics: {0}, {1}",
+                            equivalent_entry.first, equivalent_entry.second);
+                ProcessSpecificEquivalence(equivalent_entry,
+                                           specifics_to_delete);
+              });
+
+          // Delete function bodies for already replaced functions.
+          for (auto specific_id : specifics_to_delete) {
+            specific_functions_[specific_id.index]->eraseFromParent();
+            specific_functions_[specific_id.index] =
+                specific_functions_[equivalent_specifics_[specific_id.index]
+                                        .index];
+          }
+
+          // Removed the replaced specific from the list of emitted specifics.
+          // Only the top level, since the others are somewhere else in the
+          // vector, they will be found and removed during processing.
+          specifics[j] = specifics[specifics.size() - 1];
+          specifics.pop_back();
+          --j;
+        } else {
+          // Only mark non-equivalence based on state for starting specifics.
+          InsertPair(specifics[i], specifics[j], non_equivalent_specifics_);
+        }
+      }
+    }
+  }
+}
+
+auto FileContext::ProcessSpecificEquivalence(
+    std::pair<SemIR::SpecificId, SemIR::SpecificId> pair,
+    llvm::SmallVector<SemIR::SpecificId>& specifics_to_delete) -> void {
+  auto [specific_id1, specific_id2] = pair;
+  CARBON_CHECK(specific_id1.has_value() && specific_id2.has_value(),
+               "Expected values in equivalence check");
+
+  auto get_canon = [&](SemIR::SpecificId specific_id) {
+    return equivalent_specifics_[specific_id.index].has_value()
+               ? std::make_pair(
+                     equivalent_specifics_[specific_id.index],
+                     (equivalent_specifics_[specific_id.index] != specific_id))
+               : std::make_pair(specific_id, false);
+  };
+  auto [canon_id1, replaced_before1] = get_canon(specific_id1);
+  auto [canon_id2, replaced_before2] = get_canon(specific_id2);
+
+  if (canon_id1 == canon_id2) {
+    // Already equivalent, there was a previous replacement.
+    return;
+  }
+
+  if (canon_id1.index >= canon_id2.index) {
+    // Prefer the earlier index for canonical values.
+    std::swap(canon_id1, canon_id2);
+    std::swap(replaced_before1, replaced_before2);
+  }
+
+  // Update equivalent_specifics_ for all. This is used as an indicator that
+  // this specific_id may be the canonical one when reducing the equivalence
+  // chains in `IsKnownEquivalence`.
+  equivalent_specifics_[specific_id1.index] = canon_id1;
+  equivalent_specifics_[specific_id2.index] = canon_id1;
+  specific_functions_[canon_id2.index]->replaceAllUsesWith(
+      specific_functions_[canon_id1.index]);
+  if (!replaced_before2) {
+    specifics_to_delete.push_back(canon_id2);
+  }
+}
+
+auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific_id1,
+                                     SemIR::SpecificId specific_id2) -> bool {
+  if (!equivalent_specifics_[specific_id1.index].has_value() ||
+      !equivalent_specifics_[specific_id2.index].has_value()) {
+    return false;
+  }
+
+  auto update_equivalent_specific = [&](SemIR::SpecificId specific_id) {
+    llvm::SmallVector<SemIR::SpecificId> stack;
+    SemIR::SpecificId specific_to_update = specific_id;
+    while (equivalent_specifics_[equivalent_specifics_[specific_to_update.index]
+                                     .index] !=
+           equivalent_specifics_[specific_to_update.index]) {
+      stack.push_back(specific_to_update);
+      specific_to_update = equivalent_specifics_[specific_to_update.index];
+    }
+    for (auto specific : llvm::reverse(stack)) {
+      equivalent_specifics_[specific.index] =
+          equivalent_specifics_[equivalent_specifics_[specific.index].index];
+    }
+  };
+
+  update_equivalent_specific(specific_id1);
+  update_equivalent_specific(specific_id2);
+
+  return equivalent_specifics_[specific_id1.index] ==
+         equivalent_specifics_[specific_id2.index];
+}
+
+auto FileContext::AreFunctionTypesEquivalent(SemIR::SpecificId specific_id1,
+                                             SemIR::SpecificId specific_id2)
+    -> bool {
+  CARBON_CHECK(specific_id1.has_value() && specific_id2.has_value());
+  return lowered_specifics_type_fingerprint_[specific_id1.index] ==
+         lowered_specifics_type_fingerprint_[specific_id2.index];
+}
+
+auto FileContext::AreFunctionBodiesEquivalent(
+    SemIR::SpecificId specific_id1, SemIR::SpecificId specific_id2,
+    Set<std::pair<SemIR::SpecificId, SemIR::SpecificId>>&
+        visited_equivalent_specifics) -> bool {
+  llvm::SmallVector<std::pair<SemIR::SpecificId, SemIR::SpecificId>> worklist;
+  worklist.push_back({specific_id1, specific_id2});
+
+  while (!worklist.empty()) {
+    auto outer_pair = worklist.pop_back_val();
+    auto [specific_id1, specific_id2] = outer_pair;
+
+    auto state1 = lowered_specific_fingerprint_[specific_id1.index];
+    auto state2 = lowered_specific_fingerprint_[specific_id2.index];
+    if (state1.common_fingerprint != state2.common_fingerprint) {
+      InsertPair(specific_id1, specific_id2, non_equivalent_specifics_);
+      return false;
+    }
+    if (state1.specific_fingerprint == state2.specific_fingerprint) {
+      continue;
+    }
+
+    // A size difference should have been detected by the common fingerprint.
+    CARBON_CHECK(state1.calls.size() == state2.calls.size(),
+                 "Number of specific calls expected to be the same.");
+
+    for (auto [state1_call, state2_call] :
+         llvm::zip(state1.calls, state2.calls)) {
+      if (state1_call != state2_call) {
+        if (ContainsPair(state1_call, state2_call, non_equivalent_specifics_)) {
+          return false;
+        }
+        if (IsKnownEquivalence(state1_call, state2_call)) {
+          continue;
+        }
+        if (!InsertPair(state1_call, state2_call,
+                        visited_equivalent_specifics)) {
+          continue;
+        }
+        // Leave the added equivalence pair in place and continue.
+        worklist.push_back({state1_call, state2_call});
+      }
+    }
+  }
+  return true;
 }
 
 auto FileContext::CreateCppCodeGenerator()
@@ -172,15 +394,16 @@ auto FileContext::CreateCppCodeGenerator()
   }
 
   RawStringOstream clang_module_name_stream;
-  clang_module_name_stream << llvm_module_->getName() << ".clang";
+  clang_module_name_stream << llvm_module().getName() << ".clang";
 
   // Do not emit Clang's name and version as the creator of the output file.
   cpp_code_gen_options_.EmitVersionIdentMetadata = false;
 
   return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
       cpp_ast()->getASTContext().getDiagnostics(),
-      clang_module_name_stream.TakeStr(), fs_, cpp_header_search_options_,
-      cpp_preprocessor_options_, cpp_code_gen_options_, *llvm_context_));
+      clang_module_name_stream.TakeStr(), context().file_system(),
+      cpp_header_search_options_, cpp_preprocessor_options_,
+      cpp_code_gen_options_, llvm_context()));
 }
 
 auto FileContext::GetGlobal(SemIR::InstId inst_id,
@@ -189,12 +412,27 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
   CARBON_CHECK(const_id.is_concrete(), "Missing value: {0} {1} {2}", inst_id,
                specific_id, sem_ir().insts().Get(inst_id));
   auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
+  auto* const_value = constants_[const_inst_id.index];
 
   // For value expressions and initializing expressions, the value produced by
   // a constant instruction is a value representation of the constant. For
   // initializing expressions, `FinishInit` will perform a copy if needed.
-  // TODO: Handle reference expression constants.
-  auto* const_value = constants_[const_inst_id.index];
+  switch (auto cat = SemIR::GetExprCategory(sem_ir(), const_inst_id)) {
+    case SemIR::ExprCategory::Value:
+    case SemIR::ExprCategory::Initializing:
+      break;
+
+    case SemIR::ExprCategory::DurableRef:
+    case SemIR::ExprCategory::EphemeralRef:
+      // Constant reference expressions lower to an address.
+      return const_value;
+
+    case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Error:
+    case SemIR::ExprCategory::Mixed:
+      CARBON_FATAL("Unexpected category {0} for lowered constant {1}", cat,
+                   sem_ir().insts().Get(const_inst_id));
+  };
 
   auto value_rep = SemIR::ValueRepr::ForType(
       sem_ir(), sem_ir().insts().Get(const_inst_id).type_id());
@@ -202,6 +440,8 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
     return const_value;
   }
 
+  // The value representation is a pointer. Generate a variable to hold the
+  // value, or find and reuse an existing one.
   if (auto result = global_variables().Lookup(const_inst_id)) {
     return result.value();
   }
@@ -372,11 +612,26 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
 
+  auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
+                                         : llvm::Function::ExternalLinkage;
+
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
 
-  auto* llvm_function = llvm::Function::Create(function_type_info.type,
-                                               llvm::Function::ExternalLinkage,
+  // Create a unique fingerprint for the function type.
+  // For now, compute the function type fingerprint only for specifics, though
+  // we might need it for all functions in order to create a canonical
+  // fingerprint across translation units.
+  if (specific_id.has_value()) {
+    llvm::BLAKE3 function_type_fingerprint;
+    RawStringOstream os;
+    function_type_info.type->print(os);
+    function_type_fingerprint.update(os.TakeStr());
+    function_type_fingerprint.final(
+        lowered_specifics_type_fingerprint_[specific_id.index]);
+  }
+
+  auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
                                                mangled_name, llvm_module());
 
   CARBON_CHECK(llvm_function->getName() == mangled_name,
@@ -460,9 +715,16 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   CARBON_DCHECK(!body_block_ids.empty(),
                 "No function body blocks found during lowering.");
 
-  FunctionContext function_lowering(*this, llvm_function, specific_id,
-                                    BuildDISubprogram(function, llvm_function),
-                                    vlog_stream_);
+  // Store which specifics were already lowered (with definitions) for each
+  // generic.
+  if (function.generic_id.has_value() && specific_id.has_value()) {
+    AddLoweredSpecificForGeneric(function.generic_id, specific_id);
+  }
+
+  FunctionContext function_lowering(
+      *this, llvm_function, specific_id,
+      InitializeFingerprintForSpecific(specific_id),
+      BuildDISubprogram(function, llvm_function), vlog_stream_);
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
@@ -562,12 +824,15 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
         llvm_context(), "entry", llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);
   }
+
+  // Emit fingerprint accumulated inside the function context.
+  function_lowering.EmitFinalFingerprint();
 }
 
 auto FileContext::BuildDISubprogram(const SemIR::Function& function,
                                     const llvm::Function* llvm_function)
     -> llvm::DISubprogram* {
-  if (!di_compile_unit_) {
+  if (!context().di_compile_unit()) {
     return nullptr;
   }
   auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
@@ -576,12 +841,12 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   auto loc = GetLocForDI(function.definition_id);
   // TODO: Add more details here, including real subroutine type (once type
   // information is built), etc.
-  return di_builder_.createFunction(
-      di_compile_unit_, *name, llvm_function->getName(),
-      /*File=*/di_builder_.createFile(loc.filename, ""),
+  return context().di_builder().createFunction(
+      context().di_compile_unit(), *name, llvm_function->getName(),
+      /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number,
-      di_builder_.createSubroutineType(
-          di_builder_.getOrCreateTypeArray(std::nullopt)),
+      context().di_builder().createSubroutineType(
+          context().di_builder().getOrCreateTypeArray(std::nullopt)),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
 }
@@ -783,33 +1048,14 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   }
 
   auto* type = GetType(var_storage.type_id);
-  // TODO: Create a declaration instead of a definition if this variable was
-  // imported.
   return new llvm::GlobalVariable(llvm_module(), type,
                                   /*isConstant=*/false, linkage,
-                                  llvm::Constant::getNullValue(type),
-                                  mangled_name);
+                                  /*Initializer=*/nullptr, mangled_name);
 }
 
-auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  SemIR::AbsoluteNodeId resolved =
-      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back();
-  const auto& tree_and_subtrees =
-      (*tree_and_subtrees_getters_for_debug_info_)[resolved.check_ir_id()
-                                                       .index]();
-  const auto& tokens = tree_and_subtrees.tree().tokens();
-
-  if (resolved.node_id().has_value()) {
-    auto token =
-        tree_and_subtrees.GetSubtreeTokenRange(resolved.node_id()).begin;
-    return {.filename = tokens.source().filename(),
-            .line_number = tokens.GetLineNumber(token),
-            .column_number = tokens.GetColumnNumber(token)};
-  } else {
-    return {.filename = tokens.source().filename(),
-            .line_number = 0,
-            .column_number = 0};
-  }
+auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
+  return context().GetLocForDI(
+      GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back());
 }
 
 auto FileContext::BuildVtable(const SemIR::Class& class_info)

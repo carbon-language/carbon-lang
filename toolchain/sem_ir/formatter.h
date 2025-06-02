@@ -113,9 +113,8 @@ class Formatter {
   auto ShouldIncludeInstByIR(InstId inst_id) -> bool;
 
   // Determines whether the specified entity should be included in the formatted
-  // output. `is_definition_start` should indicate whether, if `decl_id`'s
-  // `LocId` is a `NodeId`, it is expected to be a `DefinitionStart` kind.
-  auto ShouldFormatEntity(InstId decl_id, bool is_definition_start) -> bool;
+  // output.
+  auto ShouldFormatEntity(InstId decl_id) -> bool;
 
   auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool;
 
@@ -287,15 +286,12 @@ class Formatter {
   auto FormatArg(RealId id) -> void;
   auto FormatArg(StringLiteralValueId id) -> void;
 
-  // For MakeFormatArgFnTable.
+  // A `FormatArg` wrapper for `FormatInstArgAndKind`.
   using FormatArgFnT = auto(Formatter& formatter, int32_t arg) -> void;
 
-  // Returns a lookup table to format arguments by their `IdKind`, for
-  // `FormatInstArgAndKind`. Requires a null IdKind as a parameter in order to
-  // get the type pack.
+  // Returns the `FormatArgFnT` for the given `IdKind`.
   template <typename... Types>
-  static constexpr auto MakeFormatArgFnTable(TypeEnum<Types...>* /*id_kind*/)
-      -> std::array<FormatArgFnT*, SemIR::IdKind::NumValues>;
+  static auto GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT*;
 
   // Calls `FormatArg` from an `ArgAndKind`.
   auto FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void;
@@ -431,26 +427,21 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
 }
 
 template <typename... Types>
-constexpr auto Formatter::MakeFormatArgFnTable(TypeEnum<Types...>* /*id_kind*/)
-    -> std::array<FormatArgFnT*, SemIR::IdKind::NumValues> {
-  std::array<FormatArgFnT*, SemIR::IdKind::NumValues> table = {};
-  ((table[SemIR::IdKind::template For<Types>.ToIndex()] =
-        [](Formatter& formatter, int32_t arg) -> void {
-     auto typed_arg = SemIR::Inst::FromRaw<Types>(arg);
-     if constexpr (requires { formatter.FormatArg(typed_arg); }) {
-       formatter.FormatArg(typed_arg);
-     } else {
-       CARBON_FATAL("Missing FormatArg for {0}", typeid(Types).name());
-     }
-   }),
-   ...);
-  table[SemIR::IdKind::Invalid.ToIndex()] = [](Formatter& /*formatter*/,
-                                               int32_t /*arg*/) -> void {
-    CARBON_FATAL("Instruction has argument with invalid IdKind");
+auto Formatter::GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT* {
+  static constexpr std::array<FormatArgFnT*, IdKind::NumValues> Table = {
+      [](Formatter& formatter, int32_t arg) -> void {
+        auto typed_arg = Inst::FromRaw<Types>(arg);
+        if constexpr (requires { formatter.FormatArg(typed_arg); }) {
+          formatter.FormatArg(typed_arg);
+        } else {
+          CARBON_FATAL("Missing FormatArg for {0}", typeid(Types).name());
+        }
+      }...,
+      // Invalid and None handling (ordering-sensitive).
+      [](auto...) -> void { CARBON_FATAL("Unexpected invalid IdKind"); },
+      [](auto...) -> void {},
   };
-  table[SemIR::IdKind::None.ToIndex()] = [](Formatter& /*formatter*/,
-                                            int32_t /*arg*/) -> void {};
-  return table;
+  return Table[id_kind.ToIndex()];
 }
 
 }  // namespace Carbon::SemIR

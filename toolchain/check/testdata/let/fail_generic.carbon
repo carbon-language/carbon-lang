@@ -114,8 +114,8 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc24_14.1: %ImplicitAs.assoc_type.ca0d85.2 = specific_constant imports.%Core.import_ref.492, @ImplicitAs(constants.%T) [symbolic = constants.%assoc0.9f5e6b.2]
 // CHECK:STDOUT:   %Convert.ref: %ImplicitAs.assoc_type.ca0d85.2 = name_ref Convert, %.loc24_14.1 [symbolic = constants.%assoc0.9f5e6b.2]
 // CHECK:STDOUT:   %.loc24_14.2: %T = converted %int_5, <error> [concrete = <error>]
-// CHECK:STDOUT:   %x: %T = bind_name x, <error>
-// CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
+// CHECK:STDOUT:   %x: %T = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x.ref: %T = name_ref x, %x [concrete = <error>]
 // CHECK:STDOUT:   %.loc32: %i32 = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

@@ -146,7 +146,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %MyInt32 = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %MyInt32.ref: type = name_ref MyInt32, %MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:   %v: ref %MyInt32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %MyInt32 = bind_name v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MyIntLiteral {

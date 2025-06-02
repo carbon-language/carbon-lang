@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/code_after_return_value.carbon
@@ -82,10 +85,10 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc11_9.1: type = splice_block %.loc11_9.3 [concrete = bool] {
+// CHECK:STDOUT:     %.loc14_9.1: type = splice_block %.loc14_9.3 [concrete = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc11_9.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc11_9.3: type = converted %bool.make_type, %.loc11_9.2 [concrete = bool]
+// CHECK:STDOUT:       %.loc14_9.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:       %.loc14_9.3: type = converted %bool.make_type, %.loc14_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
@@ -97,12 +100,12 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc12_11.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %bound_method.loc15_11.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound.d04]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_11.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.b6e]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc12_11.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc12_11.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc12_11.2: %i32 = converted %int_0, %.loc12_11.1 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc12_11.2
+// CHECK:STDOUT:   %bound_method.loc15_11.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.b6e]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc15_11.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc15_11.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc15_11.2: %i32 = converted %int_0, %.loc15_11.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   return %.loc15_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

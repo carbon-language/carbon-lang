@@ -482,6 +482,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   const SemIR::Function& function =
       context.sem_ir().functions().Get(callee_function.function_id);
+  context.AddCallToCurrentFingerprint(callee_function.function_id,
+                                      callee_function.resolved_specific_id);
 
   if (auto builtin_kind = function.builtin_function_kind;
       builtin_kind != SemIR::BuiltinFunctionKind::None) {

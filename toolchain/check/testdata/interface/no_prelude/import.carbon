@@ -93,7 +93,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f_ref: ref %struct_type.f = bind_name f_ref, %f_ref.var
+// CHECK:STDOUT:   %f_ref: ref %struct_type.f = bind_name f_ref, %f_ref.var [concrete = %f_ref.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -182,13 +182,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared.type [concrete]
 // CHECK:STDOUT:   %pattern_type.97e: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.e3b: type = pattern_type %struct_type.f [concrete]
+// CHECK:STDOUT:   %.7e4: ref %ForwardDeclared.type = struct_access imports.%f_ref.var, element0 [concrete]
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.7e4 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Empty: type = import_ref Main//a, Empty, loaded [concrete = constants.%Empty.type]
 // CHECK:STDOUT:   %Main.Basic: type = import_ref Main//a, Basic, loaded [concrete = constants.%Basic.type]
 // CHECK:STDOUT:   %Main.ForwardDeclared: type = import_ref Main//a, ForwardDeclared, loaded [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f = import_ref Main//a, f_ref, loaded
+// CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f = import_ref Main//a, f_ref, loaded [concrete = %f_ref.var]
 // CHECK:STDOUT:   %Main.import_ref.cc0 = import_ref Main//a, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst22 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.3d5: %Basic.assoc_type = import_ref Main//a, loc8_8, loaded [concrete = constants.%assoc0.fee]
@@ -204,6 +207,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Main.import_ref.0be = import_ref Main//a, loc9_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.69a = import_ref Main//a, loc16_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.1cc = import_ref Main//a, loc17_9, unloaded
+// CHECK:STDOUT:   %f_ref.patt: %pattern_type.e3b = binding_pattern f_ref [concrete]
+// CHECK:STDOUT:   %f_ref.var_patt: %pattern_type.e3b = var_pattern %f_ref.patt [concrete]
+// CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var %f_ref.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -267,7 +273,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty [from "a.carbon"] {
@@ -309,9 +315,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f = name_ref f_ref, imports.%Main.f_ref
-// CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc16
+// CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f = name_ref f_ref, imports.%Main.f_ref [concrete = imports.%f_ref.var]
+// CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0 [concrete = constants.%.7e4]
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc16 [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%f.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -51,12 +51,10 @@ Formatter::Formatter(const File* sem_ir,
   }
 
   // Create empty placeholder chunks for instructions that we output lazily.
-  for (auto lazy_insts :
-       {sem_ir_->constants().array_ref(),
-        sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs)}) {
-    for (auto inst_id : lazy_insts) {
-      tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
-    }
+  for (auto inst_id : llvm::concat<const InstId>(
+           sem_ir_->constants().array_ref(),
+           sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs))) {
+    tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
   }
 
   // Create a real chunk for the start of the output.
@@ -168,8 +166,23 @@ auto Formatter::ShouldIncludeInstByIR(InstId inst_id) -> bool {
   return include_ir_in_dumps_[import_ir->check_ir_id().index];
 }
 
-auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
-    -> bool {
+// Returns true for a `DefinitionStart` node.
+static auto IsDefinitionStart(Parse::NodeKind node_kind) -> bool {
+  switch (node_kind) {
+    case Parse::NodeKind::BuiltinFunctionDefinitionStart:
+    case Parse::NodeKind::ChoiceDefinitionStart:
+    case Parse::NodeKind::ClassDefinitionStart:
+    case Parse::NodeKind::FunctionDefinitionStart:
+    case Parse::NodeKind::ImplDefinitionStart:
+    case Parse::NodeKind::InterfaceDefinitionStart:
+    case Parse::NodeKind::NamedConstraintDefinitionStart:
+      return true;
+    default:
+      return false;
+  }
+}
+
+auto Formatter::ShouldFormatEntity(InstId decl_id) -> bool {
   if (!decl_id.has_value()) {
     return true;
   }
@@ -201,7 +214,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
   // to find the `Definition`, giving a range that includes the definition's
   // body.
   auto end_node_id = loc_id.node_id();
-  if (is_definition_start) {
+  if (IsDefinitionStart(sem_ir_->parse_tree().node_kind(end_node_id))) {
     end_node_id = node_parents_[end_node_id.index];
   }
 
@@ -212,8 +225,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id, bool is_definition_start)
 }
 
 auto Formatter::ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
-  return ShouldFormatEntity(entity.latest_decl_id(),
-                            entity.definition_id.has_value());
+  return ShouldFormatEntity(entity.latest_decl_id());
 }
 
 auto Formatter::ShouldFormatInst(InstId inst_id) -> bool {
@@ -379,8 +391,7 @@ auto Formatter::FormatInterface(InterfaceId id) -> void {
 auto Formatter::FormatAssociatedConstant(AssociatedConstantId id) -> void {
   const AssociatedConstant& assoc_const =
       sem_ir_->associated_constants().Get(id);
-  if (!ShouldFormatEntity(assoc_const.decl_id,
-                          /*is_definition_start=*/false)) {
+  if (!ShouldFormatEntity(assoc_const.decl_id)) {
     return;
   }
 
@@ -538,9 +549,7 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
 auto Formatter::FormatSpecific(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   const auto& generic = sem_ir_->generics().Get(specific.generic_id);
-  if (!ShouldFormatEntity(
-          generic.decl_id,
-          /*is_definition_start=*/generic.definition_block_id.has_value())) {
+  if (!ShouldFormatEntity(generic.decl_id)) {
     // Omit specifics if we also omitted the generic.
     return;
   }
@@ -897,9 +906,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
 }
 
 auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
-  static constexpr auto Table =
-      MakeFormatArgFnTable(static_cast<SemIR::IdKind*>(nullptr));
-  Table[arg_and_kind.kind().ToIndex()](*this, arg_and_kind.value());
+  GetFormatArgFn(arg_and_kind.kind())(*this, arg_and_kind.value());
 }
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {

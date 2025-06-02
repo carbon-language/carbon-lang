@@ -57,7 +57,7 @@ let b: B = C.base;
 // CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b: %B = bind_name b, <error>
+// CHECK:STDOUT:   %b: %B = bind_name b, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {

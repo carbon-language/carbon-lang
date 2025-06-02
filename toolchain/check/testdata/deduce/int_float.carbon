@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/deduce/int_float.carbon
@@ -237,7 +240,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %.loc9_44.1: type = value_of_initializer %float.make_type
 // CHECK:STDOUT:       %.loc9_44.2: type = converted %float.make_type, %.loc9_44.1
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: <error> = bind_name n, %n.param
+// CHECK:STDOUT:     %n: <error> = bind_name n, %n.param [concrete = <error>]
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }

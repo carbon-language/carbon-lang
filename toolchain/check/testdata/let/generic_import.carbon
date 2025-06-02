@@ -103,14 +103,14 @@ var b: T = *a;
 // CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, imports.%Implicit.T
-// CHECK:STDOUT:   %b: <error> = bind_name b, <error>
+// CHECK:STDOUT:   %b: <error> = bind_name b, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

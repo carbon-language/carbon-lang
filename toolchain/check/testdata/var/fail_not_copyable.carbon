@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/var/fail_not_copyable.carbon
@@ -61,7 +64,7 @@ fn F(x: X) {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.019 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %X = value_param call_param0
-// CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -92,7 +95,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   %y.var: ref %X = var %y.var_patt
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
-// CHECK:STDOUT:   %X.ref.loc28: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc31: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %y: ref %X = bind_name y, %y.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

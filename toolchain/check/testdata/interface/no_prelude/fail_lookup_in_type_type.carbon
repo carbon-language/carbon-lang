@@ -44,7 +44,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %T.patt: <error> = binding_pattern T [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %T: <error> = bind_name T, <error>
+// CHECK:STDOUT:   %T: <error> = bind_name T, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -76,7 +76,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %U: <error> = bind_name U, <error>
+// CHECK:STDOUT:   %U: <error> = bind_name U, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

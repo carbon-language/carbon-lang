@@ -122,7 +122,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
+// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl.loc23_27.2: %G.type.c9825d.2 = fn_decl @G.3 [concrete = constants.%G.e73e91.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7ce = binding_pattern self [concrete]

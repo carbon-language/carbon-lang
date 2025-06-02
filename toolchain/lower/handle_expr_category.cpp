@@ -25,6 +25,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::ValueRepr::Copy: {
       auto* type = context.GetType(SemIR::GetTypeOfInstInSpecific(
           context.sem_ir(), context.specific_id(), inst_id));
+      context.AddTypeToCurrentFingerprint(type);
       context.SetLocal(inst_id, context.builder().CreateLoad(
                                     type, context.GetValue(inst.value_id)));
     } break;
@@ -46,6 +47,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::TemporaryStorage /*inst*/) -> void {
   auto* type = context.GetType(SemIR::GetTypeOfInstInSpecific(
       context.sem_ir(), context.specific_id(), inst_id));
+  context.AddTypeToCurrentFingerprint(type);
   context.SetLocal(inst_id,
                    context.builder().CreateAlloca(type, nullptr, "temp"));
 }

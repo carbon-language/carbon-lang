@@ -50,7 +50,7 @@ fn G() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %m.var), !dbg !10
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %m.var, align 8, !dbg !10
 // CHECK:STDOUT:   call void @_CF.Main.15b1f98bd9cc0c5b(ptr %c.var), !dbg !11
-// CHECK:STDOUT:   call void @_CF.Main.2cc450fc05045897(ptr %d.var), !dbg !12
+// CHECK:STDOUT:   call void @_CF.Main.15b1f98bd9cc0c5b(ptr %d.var), !dbg !12
 // CHECK:STDOUT:   %.loc25 = load i32, ptr %n.var, align 4, !dbg !13
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc25), !dbg !14
 // CHECK:STDOUT:   %.loc26 = load double, ptr %m.var, align 8, !dbg !15
@@ -65,34 +65,30 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.15b1f98bd9cc0c5b(ptr %x) !dbg !19 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.15b1f98bd9cc0c5b(ptr %x) !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.2cc450fc05045897(ptr %x) !dbg !21 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.b88d1103f417c6d4(i32 %x) !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.b88d1103f417c6d4(i32 %x) !dbg !23 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.66be507887ceee78(double %x) !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.66be507887ceee78(double %x) !dbg !25 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.5754c7a55c7cbe4a(%type %x) !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !26
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main.5754c7a55c7cbe4a(%type %x) !dbg !27 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CF.Main.15b1f98bd9cc0c5b, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
@@ -121,11 +117,9 @@ fn G() {
 // CHECK:STDOUT: !18 = !DILocation(line: 17, column: 1, scope: !4)
 // CHECK:STDOUT: !19 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.15b1f98bd9cc0c5b", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !20 = !DILocation(line: 11, column: 1, scope: !19)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2cc450fc05045897", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !22 = !DILocation(line: 11, column: 1, scope: !21)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !24 = !DILocation(line: 11, column: 1, scope: !23)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !26 = !DILocation(line: 11, column: 1, scope: !25)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !28 = !DILocation(line: 11, column: 1, scope: !27)

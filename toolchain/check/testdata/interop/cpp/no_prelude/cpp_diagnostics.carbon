@@ -450,6 +450,47 @@ library "[[@TEST_NAME]]";  // Trailing comment
 // CHECK:STDERR:
 import Cpp library "one_warning.h";
 
+// ============================================================================
+// Diagnostic accesses LangOptions
+// ============================================================================
+
+// --- lang_options.h
+
+template <>
+// CHECK:STDERR: ./lang_options.h:[[@LINE+6]]: error: C++:
+// CHECK:STDERR: In file included from fail_import_lang_options.carbon.generated.cpp_imports.h:1:
+// CHECK:STDERR: ./lang_options.h:[[@LINE+4]]:6: error: no variable template matches specialization
+// CHECK:STDERR:     9 | auto foo<int> -> void;
+// CHECK:STDERR:       |      ^
+// CHECK:STDERR:  [CppInteropParseError]
+auto foo<int> -> void;
+
+// --- fail_import_lang_options.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_import_lang_options.carbon:[[@LINE+15]]:1: note: in `Cpp` import [InCppImport]
+// CHECK:STDERR: import Cpp library "lang_options.h";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: ./lang_options.h:9: error: C++:
+// CHECK:STDERR: In file included from fail_import_lang_options.carbon.generated.cpp_imports.h:1:
+// CHECK:STDERR: ./lang_options.h:9:14: error: expected ';' after top level declarator
+// CHECK:STDERR:     9 | auto foo<int> -> void;
+// CHECK:STDERR:       |              ^
+// CHECK:STDERR:       |              ;
+// CHECK:STDERR:  [CppInteropParseError]
+// CHECK:STDERR: fail_import_lang_options.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
+// CHECK:STDERR: import Cpp library "lang_options.h";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+import Cpp library "lang_options.h";
+
+fn F() {
+  Cpp.foo();
+}
+
+
 // CHECK:STDOUT: --- fail_import_cpp_file_with_one_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -643,5 +684,38 @@ import Cpp library "one_warning.h";
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
 // CHECK:STDOUT:     import Cpp "one_warning.h"
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_import_lang_options.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = <poisoned>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "lang_options.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -37,33 +37,24 @@ fn M() {
 // CHECK:STDOUT:   %F.call.loc20 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc20), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_f64.var), !dbg !8
 // CHECK:STDOUT:   %.loc22 = load ptr, ptr %ptr_f64.var, align 8, !dbg !12
-// CHECK:STDOUT:   %F.call.loc22 = call ptr @_CF.Main.04bf2edaaa84aa22(ptr %.loc22), !dbg !13
+// CHECK:STDOUT:   %F.call.loc22 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc22), !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i8.var), !dbg !9
 // CHECK:STDOUT:   %.loc24 = load ptr, ptr %ptr_i8.var, align 8, !dbg !14
-// CHECK:STDOUT:   %F.call.loc24 = call ptr @_CF.Main.bda010de15e6a5ad(ptr %.loc24), !dbg !15
+// CHECK:STDOUT:   %F.call.loc24 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc24), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.e8193710fd35b608(ptr %x) !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.e8193710fd35b608(ptr %x) !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.04bf2edaaa84aa22(ptr %x) !dbg !19 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr %x, !dbg !20
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CF.Main.bda010de15e6a5ad(ptr %x) !dbg !21 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr %x, !dbg !22
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CF.Main.e8193710fd35b608, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
@@ -89,7 +80,3 @@ fn M() {
 // CHECK:STDOUT: !16 = !DILocation(line: 15, column: 1, scope: !4)
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.e8193710fd35b608", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !18 = !DILocation(line: 12, column: 3, scope: !17)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.04bf2edaaa84aa22", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !20 = !DILocation(line: 12, column: 3, scope: !19)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.bda010de15e6a5ad", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 12, column: 3, scope: !21)

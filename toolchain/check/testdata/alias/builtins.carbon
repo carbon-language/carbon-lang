@@ -103,7 +103,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:     %.loc12_13.2: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc12_13.3: type = converted %bool.make_type, %.loc12_13.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error>
+// CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

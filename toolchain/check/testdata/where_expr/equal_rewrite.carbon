@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/where_expr/equal_rewrite.carbon
@@ -1602,7 +1605,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1.loc15, %.loc15_37.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %H: %E_where.type.82c = bind_name H, <error>
+// CHECK:STDOUT:   %H: %E_where.type.82c = bind_name H, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %J.patt: %pattern_type.562 = binding_pattern J [concrete]
 // CHECK:STDOUT:   }
@@ -1631,7 +1634,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1.loc21, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J: %E_where.type.a0d = bind_name J, <error>
+// CHECK:STDOUT:   %J: %E_where.type.a0d = bind_name J, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %K.patt: %pattern_type.e21 = binding_pattern K [concrete]
 // CHECK:STDOUT:   }
@@ -1652,7 +1655,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc27, %impl.elem1.loc27
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %K: %E_where.type.0ba = bind_name K, <error>
+// CHECK:STDOUT:   %K: %E_where.type.0ba = bind_name K, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @E {

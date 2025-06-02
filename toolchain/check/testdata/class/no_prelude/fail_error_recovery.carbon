@@ -60,7 +60,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: <error> = value_param call_param0
 // CHECK:STDOUT:       %Self.ref: <error> = name_ref Self, <error> [concrete = <error>]
-// CHECK:STDOUT:       %self: <error> = bind_name self, %self.param
+// CHECK:STDOUT:       %self: <error> = bind_name self, %self.param [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc9: <vtable> = vtable (%Foo.decl) [concrete = <error>]
 // CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]

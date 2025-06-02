@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_
 
 #include "common/map.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -18,10 +19,37 @@ namespace Carbon::Lower {
 // `llvm::Function` definition.
 class FunctionContext {
  public:
-  explicit FunctionContext(FileContext& file_context, llvm::Function* function,
-                           SemIR::SpecificId specific_id,
-                           llvm::DISubprogram* di_subprogram,
-                           llvm::raw_ostream* vlog_stream);
+  // `function` must not be null. `function_fingerprint` and `di_subprogram` may
+  // be null (see members).
+  explicit FunctionContext(
+      FileContext& file_context, llvm::Function* function,
+      SemIR::SpecificId specific_id,
+      FileContext::SpecificFunctionFingerprint* function_fingerprint,
+      llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream);
+
+  // Describes a function's body fingerprint while creating the function body.
+  // The final fingerprint is stored in the `FileContext` as a
+  // `SpecificFunctionFingerprint`.
+  //
+  // Create two function fingerprints, where both fingerprints include data
+  // that's evaluated (and hence lowered) differently based on the
+  // `SpecificId`. `common_fingerprint` includes global values, types
+  // and `FunctionId` for functions called inside the function body.
+  // `specific_fingerprint` includes `SpecificId`s for functions called.
+  //
+  // For two specifics of the same generic:
+  // - If `common_fingerprint` is different, the specifics cannot be coalesced.
+  // - If `common_fingerprint` and `specific_fingerprint` are the
+  //   same, the specifics can be coalesced without additional checks.
+  // - If `common_fingerprint` is the same but `specific_fingerprint` is
+  //   different, additional checks are needed, i.e. inspecting the non-hashed
+  //   `SpecificId`s.
+  //
+  // TODO: Consider optimizations for repeated entries in both fingerprints.
+  struct LoweringFunctionFingerprint {
+    llvm::BLAKE3 common_fingerprint;
+    llvm::BLAKE3 specific_fingerprint;
+  };
 
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
@@ -45,22 +73,7 @@ class FunctionContext {
       -> llvm::PHINode*;
 
   // Returns a value for the given instruction.
-  auto GetValue(SemIR::InstId inst_id) -> llvm::Value* {
-    // All builtins are types, with the same empty lowered value.
-    if (SemIR::IsSingletonInstId(inst_id)) {
-      return GetTypeAsValue();
-    }
-
-    if (auto result = locals_.Lookup(inst_id)) {
-      return result.value();
-    }
-
-    if (auto result = file_context_->global_variables().Lookup(inst_id)) {
-      return result.value();
-    }
-
-    return file_context_->GetGlobal(inst_id, specific_id_);
-  }
+  auto GetValue(SemIR::InstId inst_id) -> llvm::Value*;
 
   // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) -> void {
@@ -139,6 +152,18 @@ class FunctionContext {
   auto FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
                   SemIR::InstId source_id) -> void;
 
+  // When fingerprinting for a specific, adds the call, found in the function
+  // body, to <function_id, specific_id>.
+  auto AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
+                                   SemIR::SpecificId specific_id) -> void;
+
+  // When fingerprinting for a specific, adds the type.
+  auto AddTypeToCurrentFingerprint(llvm::Type* type) -> void;
+
+  // Emits the final function fingerprints. Only called when function lowering
+  // is complete.
+  auto EmitFinalFingerprint() -> void;
+
   auto llvm_context() -> llvm::LLVMContext& {
     return file_context_->llvm_context();
   }
@@ -194,6 +219,9 @@ class FunctionContext {
   auto CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
 
+  // When fingerprinting for a specific, adds the global.
+  auto AddGlobalToCurrentFingerprint(llvm::Value* global) -> void;
+
   // Context for the overall lowering process.
   FileContext* file_context_;
 
@@ -215,6 +243,15 @@ class FunctionContext {
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
+
+  // This is initialized and populated while lowering a specific function.
+  // When complete, this is used to complete the function_fingerprint_.
+  LoweringFunctionFingerprint current_fingerprint_;
+
+  // The accumulated fingerprint is owned by the FileContext and passed into
+  // the FunctionContext. The function fingerprint is currently only built for
+  // specific functions, otherwise, this will be nullptr.
+  FileContext::SpecificFunctionFingerprint* function_fingerprint_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
   Map<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;

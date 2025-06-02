@@ -259,7 +259,7 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %global_var.var: ref <error> = var %global_var.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %global_var: <error> = bind_name global_var, <error>
+// CHECK:STDOUT:   %global_var: <error> = bind_name global_var, <error> [concrete = <error>]
 // CHECK:STDOUT:   %ConvertFromStruct.decl: %ConvertFromStruct.type = fn_decl @ConvertFromStruct [concrete = constants.%ConvertFromStruct] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.761 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.761 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -443,7 +443,7 @@ class C {
 // CHECK:STDOUT:   %p.ref: %ptr.e71 = name_ref p, %p
 // CHECK:STDOUT:   %.loc85: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %Class.ref.loc85: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -689,7 +689,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %.loc22_16.1: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.bd9) = specific_constant imports.%Core.import_ref.492, @ImplicitAs(constants.%impl.elem0.284) [symbolic = %assoc0 (constants.%assoc0.428)]
 // CHECK:STDOUT:     %Convert.ref: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.bd9) = name_ref Convert, %.loc22_16.1 [symbolic = %assoc0 (constants.%assoc0.428)]
 // CHECK:STDOUT:     %.loc22_16.2: @F.%impl.elem0.loc22_11.2 (%impl.elem0.284) = converted %t.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:     %a: @F.%impl.elem0.loc22_11.2 (%impl.elem0.284) = bind_name a, <error>
+// CHECK:STDOUT:     %a: @F.%impl.elem0.loc22_11.2 (%impl.elem0.284) = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

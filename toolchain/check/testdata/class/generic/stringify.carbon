@@ -132,7 +132,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %NoParams = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %NoParams.ref: type = name_ref NoParams, %NoParams.decl [concrete = constants.%NoParams]
-// CHECK:STDOUT:   %v: ref %NoParams = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %NoParams = bind_name v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.71c = binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.71c = var_pattern %w.patt [concrete]
@@ -142,7 +142,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %EmptyParams.ref: %EmptyParams.type = name_ref EmptyParams, %EmptyParams.decl [concrete = constants.%EmptyParams.generic]
 // CHECK:STDOUT:     %EmptyParams: type = class_type @EmptyParams [concrete = constants.%EmptyParams]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %EmptyParams = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %EmptyParams = bind_name w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoParams {
@@ -165,7 +165,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %NoParams = name_ref v, file.%v
+// CHECK:STDOUT:   %v.ref: ref %NoParams = name_ref v, file.%v [concrete = file.%v.var]
 // CHECK:STDOUT:   %.loc15: %EmptyParams = converted %v.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%w.var, <error>
 // CHECK:STDOUT:   return
@@ -238,7 +238,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %.loc9_16 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %Outer.loc9: type = class_type @Outer, @Outer(constants.%ptr.c28) [concrete = constants.%Outer.614]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %Outer.614 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %Outer.614 = bind_name v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.5fa = binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.5fa = var_pattern %w.patt [concrete]
@@ -258,7 +258,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %ptr.loc19_34: type = ptr_type %struct_type.a [concrete = constants.%ptr.1bb]
 // CHECK:STDOUT:     %Inner: type = class_type @Inner, @Inner(constants.%ptr.c28, constants.%ptr.1bb) [concrete = constants.%Inner.277]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %Inner.277 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %Inner.277 = bind_name w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_13.1: type) {
@@ -301,7 +301,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %Outer.614 = name_ref v, file.%v
+// CHECK:STDOUT:   %v.ref: ref %Outer.614 = name_ref v, file.%v [concrete = file.%v.var]
 // CHECK:STDOUT:   %.loc19: %Inner.277 = converted %v.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%w.var, <error>
 // CHECK:STDOUT:   return
@@ -411,7 +411,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc13_13.3: %i32 = converted %int_123, %.loc13_13.2 [concrete = constants.%int_123.f7f]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_123.f7f) [concrete = constants.%C.4c3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %C.4c3 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %C.4c3 = bind_name v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%N.loc4_9.1: %i32) {
@@ -559,7 +559,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc25_26.1: ref %D = converted %.loc25_25.1, %.loc25_25.10
 // CHECK:STDOUT:     %.loc25_26.2: %D = bind_value %.loc25_26.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %g: <error> = bind_name g, <error>
+// CHECK:STDOUT:   %g: <error> = bind_name g, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {

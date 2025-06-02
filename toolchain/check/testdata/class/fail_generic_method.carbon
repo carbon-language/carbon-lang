@@ -94,10 +94,10 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %N.loc36_10.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc36_10.2 (constants.%N.51e)]
 // CHECK:STDOUT:     %self.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [concrete = <error>]
-// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
+// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param [concrete = <error>]
 // CHECK:STDOUT:     %n.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %n: <error> = bind_name n, %n.param
+// CHECK:STDOUT:     %n: <error> = bind_name n, %n.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

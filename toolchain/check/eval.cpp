@@ -669,34 +669,28 @@ static constexpr bool HasGetConstantValueOverload = requires {
 using ArgHandlerFnT = auto(EvalContext& context, int32_t arg, Phase* phase)
     -> int32_t;
 
-// Returns a lookup table to get constants by Id::Kind. Requires a null IdKind
-// as a parameter in order to get the type pack.
+// Returns the arg handler for an `IdKind`.
 template <typename... Types>
-static constexpr auto MakeArgHandlerTable(TypeEnum<Types...>* /*id_kind*/)
-    -> std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> {
-  std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> table = {};
-  ((table[SemIR::IdKind::template For<Types>.ToIndex()] =
-        [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
-     auto id = SemIR::Inst::FromRaw<Types>(arg);
-     if constexpr (HasGetConstantValueOverload<Types>) {
-       // If we have a custom `GetConstantValue` overload, call it.
-       return SemIR::Inst::ToRaw(GetConstantValue(eval_context, id, phase));
-     } else {
-       // Otherwise, we assume the value is already constant.
-       return arg;
-     }
-   }),
-   ...);
-  table[SemIR::IdKind::Invalid.ToIndex()] = [](EvalContext& /*context*/,
-                                               int32_t /*arg*/,
-                                               Phase* /*phase*/) -> int32_t {
-    CARBON_FATAL("Instruction has argument with invalid IdKind");
-  };
-  table[SemIR::IdKind::None.ToIndex()] =
-      [](EvalContext& /*context*/, int32_t arg, Phase* /*phase*/) -> int32_t {
-    return arg;
-  };
-  return table;
+static auto GetArgHandlerFn(TypeEnum<Types...> id_kind) -> ArgHandlerFnT* {
+  static constexpr std::array<ArgHandlerFnT*, SemIR::IdKind::NumValues> Table =
+      {
+          [](EvalContext& eval_context, int32_t arg, Phase* phase) -> int32_t {
+            auto id = SemIR::Inst::FromRaw<Types>(arg);
+            if constexpr (HasGetConstantValueOverload<Types>) {
+              // If we have a custom `GetConstantValue` overload, call it.
+              return SemIR::Inst::ToRaw(
+                  GetConstantValue(eval_context, id, phase));
+            } else {
+              // Otherwise, we assume the value is already constant.
+              return arg;
+            }
+          }...,
+          // Invalid and None handling (ordering-sensitive).
+          [](auto...) -> int32_t { CARBON_FATAL("Unexpected invalid IdKind"); },
+          [](EvalContext& /*context*/, int32_t arg,
+             Phase* /*phase*/) -> int32_t { return arg; },
+      };
+  return Table[id_kind.ToIndex()];
 }
 
 // Given the stored value `arg` of an instruction field and its corresponding
@@ -707,9 +701,7 @@ static constexpr auto MakeArgHandlerTable(TypeEnum<Types...>* /*id_kind*/)
 static auto GetConstantValueForArg(EvalContext& eval_context,
                                    SemIR::Inst::ArgAndKind arg_and_kind,
                                    Phase* phase) -> int32_t {
-  static constexpr auto Table =
-      MakeArgHandlerTable(static_cast<SemIR::IdKind*>(nullptr));
-  return Table[arg_and_kind.kind().ToIndex()](eval_context,
+  return GetArgHandlerFn(arg_and_kind.kind())(eval_context,
                                               arg_and_kind.value(), phase);
 }
 
@@ -1831,7 +1823,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
   constexpr auto ConstantKind = InstT::Kind.constant_kind();
   if constexpr (ConstantKind == SemIR::InstConstantKind::Never) {
     return SemIR::ConstantId::NotConstant;
-  } else if constexpr (ConstantKind == SemIR::InstConstantKind::Unique) {
+  } else if constexpr (ConstantKind == SemIR::InstConstantKind::AlwaysUnique) {
     CARBON_CHECK(inst_id.has_value());
     return SemIR::ConstantId::ForConcreteConstant(inst_id);
   } else {

@@ -854,7 +854,7 @@ interface J {
 // CHECK:STDOUT:     %Id.specific_fn: <specific function> = specific_function %Id.ref, @Id(constants.%I.assoc_type) [concrete = constants.%Id.specific_fn]
 // CHECK:STDOUT:     %Id.call: init %I.assoc_type = call %Id.specific_fn(%T.ref)
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
