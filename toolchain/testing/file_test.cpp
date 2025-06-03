@@ -193,10 +193,10 @@ auto ToolchainFileTest::GetDefaultArgs() const
     args.push_back("--dump-parse-tree");
   } else if (component_ == "check") {
     args.insert(args.end(), {"--dump-sem-ir", "--dump-sem-ir-ranges=only"});
-  } else if (component_ == "codegen") {
-    // codegen tests specify flags as needed.
   } else if (component_ == "lower") {
     args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
+  } else if (component_ == "codegen") {
+    // codegen tests specify flags as needed.
   } else {
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
   }
