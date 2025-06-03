@@ -545,9 +545,9 @@ referencing a constant referencing another constant.
 ##### Example uses
 
 The range markers can be placed anywhere in code, and formatting will try to
-print only the relevant SemIR. In the example below, the `fn Foo()` entity will
-be printed because it contains a range; its body will include
-`LogicUnderTest()`, but `SetUp()` and `TearDown()` will be omitted.
+print only the relevant SemIR. In the example below, the `Foo` entity will be
+printed because it contains a range; its body will include `LogicUnderTest()`,
+but `SetUp()` and `TearDown()` will be omitted.
 
 ```carbon
 fn Foo() {
@@ -575,9 +575,10 @@ class Bar {
 }
 ```
 
-Out-of-line definitions can be used to avoid printing the containing entity. In
-the example below, `Baz::Interesting` will be printed because of the range in
-its body; `Baz` will be omitted because its definition doesn't contain a range.
+Out-of-line definitions can be used to print a nested entity without printing
+the entity that contains it. In the example below, `Baz::Interesting` will be
+printed because of the range in its body; `Baz` will be omitted because its
+definition doesn't contain a range.
 
 ```
 class Baz {
