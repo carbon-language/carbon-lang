@@ -375,7 +375,7 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
                                       SemIR::SpecificInterface interface)
     -> SemIR::InstId {
   auto witness_const_id = EvalOrAddInst(
-      context, context.insts().GetDesugaredLocId(loc_id),
+      context, context.insts().GetLocIdForDesugaring(loc_id),
       SemIR::LookupImplWitness{
           .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
           .query_self_inst_id =

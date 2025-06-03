@@ -863,7 +863,7 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 // In addition, one bit is used for flags: `DesugaredBit`.
 // Note that this can only be used with negative, non-`InstId` values.
 //
-// For desugaring, use `InstStore::GetDesugaredLocId()`.
+// For desugaring, use `InstStore::GetLocIdForDesugaring()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -893,11 +893,12 @@ struct LocId : public IdBase<LocId> {
       : IdBase(FirstNodeId - node_id.index) {}
 
   // Forms an equivalent LocId for a desugared location. Prefer calling
-  // `InstStore::GetDesugaredLocId`.
+  // `InstStore::GetLocIdForDesugaring`.
   auto AsDesugared() const -> LocId {
     // This should only be called for NodeId or ImportIRInstId (i.e. canonical
     // locations), but we only set the flag for NodeId.
-    CARBON_CHECK(kind() != Kind::InstId, "Use InstStore::GetDesugaredLocId");
+    CARBON_CHECK(kind() != Kind::InstId,
+                 "Use InstStore::GetLocIdForDesugaring");
     if (kind() == Kind::NodeId) {
       return LocId(index & ~DesugaredBit);
     }

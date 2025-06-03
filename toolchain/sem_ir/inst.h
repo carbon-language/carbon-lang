@@ -495,10 +495,10 @@ class InstStore {
 
   // Works like `GetCanonicalLocId`, but called as part of desugaring. Marks the
   // returned location as desugared.
-  auto GetDesugaredLocId(LocId loc_id) const -> LocId {
+  auto GetLocIdForDesugaring(LocId loc_id) const -> LocId {
     return GetCanonicalLocId(loc_id).AsDesugared();
   }
-  auto GetDesugaredLocId(InstId inst_id) const -> LocId {
+  auto GetLocIdForDesugaring(InstId inst_id) const -> LocId {
     return GetCanonicalLocId(inst_id).AsDesugared();
   }
 
