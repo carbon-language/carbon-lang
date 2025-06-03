@@ -21,28 +21,29 @@ constexpr Kind Kinds[] = {
 
 constexpr Kind UntestedKinds[] = {
     // These exist only for unit tests.
-    Kind::TestDiagnostic,
-    Kind::TestDiagnosticNote,
+    Kind::TestDiagnostic, Kind::TestDiagnosticNote,
 
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.
-    Kind::CompilePreludeManifestError,
-    Kind::DriverInstallInvalid,
+    Kind::CompilePreludeManifestError, Kind::DriverInstallInvalid,
 
     // These diagnose filesystem issues that are hard to unit test.
-    Kind::ErrorReadingFile,
-    Kind::ErrorStattingFile,
-    Kind::FileTooLarge,
+    Kind::ErrorReadingFile, Kind::ErrorStattingFile, Kind::FileTooLarge,
 
     // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.
-    Kind::TooManyTokens,
-    Kind::UnsupportedCrLineEnding,
+    Kind::TooManyTokens, Kind::UnsupportedCrLineEnding,
     Kind::UnsupportedLfCrLineEnding,
 
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     Kind::TooManyDigits,
 
+    // TODO: This currently has coverage, but mainly due to incorrect behavior
+    // in C++ diagnostics. See
+    // language_server/testdata/text_document/open_with_cpp_nonexistent.carbon.
+    // Leaving this TODO here until it's more precisely tested, because the C++
+    // diagnostics should be fixed (removing coverage); see below TODO.
+    //
     // TODO: This can only fire if the first message in a diagnostic is rooted
     // in a file other than the file being compiled. The language server
     // currently only supports compiling one file at a time. Do one of:
@@ -50,7 +51,7 @@ constexpr Kind UntestedKinds[] = {
     //   in the current file.
     // - Require all diagnostics produced by compiling have their first location
     //   be in the file being compiled, never an import.
-    Kind::LanguageServerDiagnosticInWrongFile,
+    // Kind::LanguageServerDiagnosticInWrongFile,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.
