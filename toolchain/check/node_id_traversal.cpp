@@ -31,14 +31,17 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
     // should check, restore its suspended state, and add a corresponding
     // `Chunk` to the top of the chunk list.
     if (chunks_.back().checking_deferred_definitions) {
-      worklist_.Pop([&](DeferredDefinitionWorklist::Task&& task) {
-        std::visit(
-            [&](auto&& task) {
-              PerformTask(std::forward<decltype(task)>(task));
-            },
-            std::move(task));
-      });
-      continue;
+      if (chunks_.back().next_worklist_index < worklist_.size()) {
+        std::visit([&](auto& task) { PerformTask(std::move(task)); },
+                   worklist_[chunks_.back().next_worklist_index++]);
+        continue;
+      }
+
+      // Worklist is empty: discard the worklist items associated with this
+      // chunk, and leave the scope.
+      worklist_.truncate(chunks_.back().first_worklist_index);
+      context_->decl_name_stack().PopScope();
+      chunks_.back().checking_deferred_definitions = false;
     }
 
     // If we're not checking deferred definitions, produce the next parse node
@@ -143,23 +146,22 @@ auto NodeIdTraversal::Handle(Parse::NodeKind parse_kind) -> void {
     if (scope_kind ==
         DeferredDefinitionWorklist::FinishedScopeKind::NonNestedWithWork) {
       chunks_.back().checking_deferred_definitions = true;
+      chunks_.back().next_worklist_index = chunks_.back().first_worklist_index;
     }
   }
 }
 
 auto NodeIdTraversal::PerformTask(
-    DeferredDefinitionWorklist::EnterDeferredDefinitionScope&& enter) -> void {
+    DeferredDefinitionWorklist::EnterNestedDeferredDefinitionScope&& enter)
+    -> void {
   CARBON_CHECK(enter.suspended_name,
                "Entering a scope with no suspension information.");
   context_->decl_name_stack().Restore(std::move(*enter.suspended_name));
 }
 
 auto NodeIdTraversal::PerformTask(
-    DeferredDefinitionWorklist::LeaveDeferredDefinitionScope&& leave) -> void {
-  if (!leave.in_deferred_definition_scope) {
-    // We're done with checking deferred definitions.
-    chunks_.back().checking_deferred_definitions = false;
-  }
+    DeferredDefinitionWorklist::LeaveNestedDeferredDefinitionScope&& /*leave*/)
+    -> void {
   context_->decl_name_stack().PopScope();
 }
 
@@ -175,7 +177,10 @@ auto NodeIdTraversal::PerformTask(
       definition_info.start_id, definition_info.definition_id);
   chunks_.push_back({.it = range.begin() + 1,
                      .end = range.end(),
-                     .next_definition = next_deferred_definition_.index()});
+                     .next_definition = next_deferred_definition_.index(),
+                     .checking_deferred_definitions = false,
+                     .first_worklist_index = worklist_.size(),
+                     .next_worklist_index = worklist_.size()});
   ++definition_index.index;
   next_deferred_definition_.SkipTo(definition_index);
 }

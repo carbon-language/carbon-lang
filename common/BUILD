@@ -117,6 +117,21 @@ cc_library(
 )
 
 cc_library(
+    name = "emplace_result",
+    hdrs = ["emplace_result.h"],
+)
+
+cc_test(
+    name = "emplace_result_test",
+    srcs = ["emplace_result_test.cpp"],
+    deps = [
+        ":emplace_result",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "enum_base",
     hdrs = ["enum_base.h"],
     deps = [

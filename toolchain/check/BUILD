@@ -177,6 +177,7 @@ cc_library(
         ":diagnostic_emitter",
         ":dump",
         "//common:check",
+        "//common:emplace_result",
         "//common:error",
         "//common:find",
         "//common:map",

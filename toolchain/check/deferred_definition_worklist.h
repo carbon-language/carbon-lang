@@ -30,40 +30,35 @@ class DeferredDefinitionWorklist {
   };
 
   // A worklist task that indicates we should enter a nested deferred definition
-  // scope.
-  struct EnterDeferredDefinitionScope {
+  // scope. We delay processing the contents of nested deferred definition
+  // scopes until we reach the end of the parent scope. For example:
+  //
+  // ```
+  // class A {
+  //   class B {
+  //     fn F() -> A { return {}; }
+  //   }
+  // } // A.B.F is type-checked here, with A complete.
+  //
+  // fn F() {
+  //   class C {
+  //     fn G() {}
+  //   } // C.G is type-checked here.
+  // }
+  // ```
+  struct EnterNestedDeferredDefinitionScope {
     // The suspended scope. This is only set once we reach the end of the scope.
     std::optional<DeclNameStack::SuspendedName> suspended_name;
-    // Whether this scope is itself within an outer deferred definition scope.
-    // If so, we'll delay processing its contents until we reach the end of the
-    // parent scope. For example:
-    //
-    // ```
-    // class A {
-    //   class B {
-    //     fn F() -> A { return {}; }
-    //   }
-    // } // A.B.F is type-checked here, with A complete.
-    //
-    // fn F() {
-    //   class C {
-    //     fn G() {}
-    //   } // C.G is type-checked here.
-    // }
-    // ```
-    bool in_deferred_definition_scope;
   };
 
-  // A worklist task that indicates we should leave a deferred definition scope.
-  struct LeaveDeferredDefinitionScope {
-    // Whether this scope is within another deferred definition scope.
-    bool in_deferred_definition_scope;
-  };
+  // A worklist task that indicates we should leave a nested deferred definition
+  // scope.
+  struct LeaveNestedDeferredDefinitionScope {};
 
   // A pending type-checking task.
   using Task =
-      std::variant<CheckSkippedDefinition, EnterDeferredDefinitionScope,
-                   LeaveDeferredDefinitionScope>;
+      std::variant<CheckSkippedDefinition, EnterNestedDeferredDefinitionScope,
+                   LeaveNestedDeferredDefinitionScope>;
 
   explicit DeferredDefinitionWorklist(llvm::raw_ostream* vlog_stream);
 
@@ -94,8 +89,14 @@ class DeferredDefinitionWorklist {
   // deferred definitions should be type-checked immediately.
   auto SuspendFinishedScopeAndPush(Context& context) -> FinishedScopeKind;
 
-  // Pop and handle the next task on the worklist.
-  auto Pop(llvm::function_ref<auto(Task&&)->void> handle_fn) -> void;
+  // Returns the current size of the worklist.
+  auto size() const -> size_t { return worklist_.size(); }
+
+  // Truncates the worklist to the given size.
+  auto truncate(int new_size) -> void { worklist_.truncate(new_size); }
+
+  // Gets the given item on the worklist.
+  auto operator[](int index) -> Task& { return worklist_[index]; }
 
   // CHECK that the work list has no further work.
   auto VerifyEmpty() {
@@ -106,7 +107,11 @@ class DeferredDefinitionWorklist {
  private:
   // A deferred definition scope that is currently still open.
   struct EnteredScope {
-    // The index in worklist_ of the EnterDeferredDefinitionScope task.
+    // Whether this scope is nested immediately within the enclosing scope. If
+    // so, deferred definitions are not processed at the end of this scope.
+    bool nested;
+    // The index in worklist_ of the first task in this scope. For a nested
+    // scope, this is a EnterNestedDeferredDefinitionScope task.
     size_t worklist_start_index;
     // The corresponding lexical scope index.
     ScopeIndex scope_index;

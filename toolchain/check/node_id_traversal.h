@@ -62,15 +62,23 @@ class NodeIdTraversal {
     // them until we're done with this batch of deferred definitions. Otherwise,
     // we'll pull node IDs from `*it` until it reaches `end`.
     bool checking_deferred_definitions = false;
+    // If we're checking deferred definitions, the index of the first task to
+    // execute from `worklist`.
+    size_t first_worklist_index;
+    // If we're checking deferred definitions, the index of the next task to
+    // execute from `worklist`.
+    size_t next_worklist_index;
   };
 
   // Re-enter a nested deferred definition scope.
   auto PerformTask(
-      DeferredDefinitionWorklist::EnterDeferredDefinitionScope&& enter) -> void;
+      DeferredDefinitionWorklist::EnterNestedDeferredDefinitionScope&& enter)
+      -> void;
 
-  // Leave a nested or top-level deferred definition scope.
+  // Leave a nested deferred definition scope.
   auto PerformTask(
-      DeferredDefinitionWorklist::LeaveDeferredDefinitionScope&& leave) -> void;
+      DeferredDefinitionWorklist::LeaveNestedDeferredDefinitionScope&& leave)
+      -> void;
 
   // Resume checking a deferred definition.
   auto PerformTask(
