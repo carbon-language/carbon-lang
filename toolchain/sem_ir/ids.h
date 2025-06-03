@@ -850,13 +850,13 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //
 // The structure is:
 // - None: The standard NoneIndex for all Id types, -1.
-// - InstId: positive values including zero; a full 31 bits.
+// - InstId: Positive values including zero; a full 31 bits.
 //   - [0, 1 << 31)
-// - NodeId: negative values starting after None; the 24 bit NodeId range.
+// - NodeId: Negative values starting after None; the 24 bit NodeId range.
 //   - [-2, -2 - (1 << 24))
 // - Desugared NodeId: Another 24 bit NodeId range.
 //   - [-2 - (1 << 24), -2 - (1 << 25))
-// - ImportIRInstId: remaining negative values; after NodeId, fills out negative
+// - ImportIRInstId: Remaining negative values; after NodeId, fills out negative
 //   values.
 //   - [-2 - (1 << 25), -(1 << 31)]
 //
