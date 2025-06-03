@@ -140,15 +140,14 @@ fn F(T:! M & (L where .W = {}), a: T.W) {
   // the impl or `{}` from the facet type of T.
 
   let b: () = G(T, a);
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+10]]:15: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
+  // FIXME: This diagnostic sucks. Can we make the facet type's value take precidence over final, since that's what is written in the code and more likely to show up in diagnostics?
+  //
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   let c: {} = H(T, a);
   // CHECK:STDERR:               ^~~~~~~
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c: {} = H(T, a);
-  // CHECK:STDERR:               ^~~~~~~
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-12]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:      ^
   // CHECK:STDERR:
   let c: {} = H(T, a);
 }

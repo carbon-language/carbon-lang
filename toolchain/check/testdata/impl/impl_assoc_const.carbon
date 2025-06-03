@@ -337,6 +337,13 @@ impl CD as IF where .F = 0 {
   fn F() {}
 }
 
+// --- facet_type_in_assoc_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; }
+
+impl () as M where .X = (M where .X = (M where .X = {})) {}
+
 // CHECK:STDOUT: --- fail_many_different.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
