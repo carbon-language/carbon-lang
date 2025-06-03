@@ -110,8 +110,8 @@ auto ToolchainFileTest::GetArgReplacements() const
 }
 
 // Adds a file to the fs.
-static auto AddFile(llvm::vfs::InMemoryFileSystem& fs,
-                    llvm::StringRef path) -> ErrorOr<Success> {
+static auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
+    -> ErrorOr<Success> {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
       llvm::MemoryBuffer::getFile(path);
   if (file.getError()) {
