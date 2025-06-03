@@ -15,6 +15,10 @@ import sys
 import unittest
 
 
+def log(s: str) -> None:
+    print(s, file=sys.stderr)
+
+
 class LLVMSymlinksTest(unittest.TestCase):
     def setUp(self) -> None:
         # The install root is adjacent to the test script
@@ -86,13 +90,16 @@ class LLVMSymlinksTest(unittest.TestCase):
         # the test file and writing to stdout. We define a macro that we'll
         # check is expanded.
         bin = self.install_root / "lib/carbon/llvm/bin/clang-cpp"
-        run = subprocess.run(
-            [bin, "-D", "TEST=SUCCESS", text_file, "-"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-
+        try:
+            run = subprocess.run(
+                [bin, "-D", "TEST=SUCCESS", text_file, "-"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as err:
+            log(err.stderr)
+            raise
         self.assertEqual(run.stderr, "")
         self.assertRegex(run.stdout, r"(^|\n)SUCCESS\n")
 
