@@ -44,6 +44,8 @@ fn H(T:! type) {
 
 // --- dot_self_symbolic_in_impl_lookup.carbon
 
+library "[[@TEST_NAME]]";
+
 interface A(AA:! type) { let X:! type; }
 
 interface B(AA:! type) {}
