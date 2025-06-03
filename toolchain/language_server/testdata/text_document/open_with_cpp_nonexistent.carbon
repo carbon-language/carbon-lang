@@ -2,6 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: At present, this has a
+// "dropping diagnostic in /test.carbon.generated.cpp_imports.h". That should be
+// fixed to assign back to this file, but that may come from other fixes to C++
+// diagnostic output.
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/text_document/open_with_cpp.carbon
