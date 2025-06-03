@@ -286,17 +286,14 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   auto& class_info = context.classes().Get(class_id);
   class_info.complete_type_witness_id = choice_witness_id;
 
-  auto self_type_id = class_info.self_type_id;
-  auto name_scope_id = class_info.scope_id;
-
   auto self_struct_type_id = GetStructType(
       context, context.struct_type_fields().AddCanonical(struct_type_fields));
 
   for (auto [i, deferred_binding] :
        llvm::enumerate(context.choice_deferred_bindings())) {
     MakeLetBinding(context,
-                   ChoiceInfo{.self_type_id = self_type_id,
-                              .name_scope_id = name_scope_id,
+                   ChoiceInfo{.self_type_id = class_info.self_type_id,
+                              .name_scope_id = class_info.scope_id,
                               .self_struct_type_id = self_struct_type_id,
                               .discriminant_type_id = discriminant_type_id,
                               .num_alternative_bits = num_alternative_bits},
