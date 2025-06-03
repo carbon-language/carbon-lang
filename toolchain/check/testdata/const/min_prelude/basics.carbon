@@ -1,8 +1,6 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
 // INCLUDE-FILE: toolchain/testing/min_prelude/convert.carbon
 //
 // AUTOUPDATE
