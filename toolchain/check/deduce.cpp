@@ -523,9 +523,8 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // `DeductionInconsistent` diagnostic. If we defer that check until after
     // all conversions are done (after the code below) then we won't diagnose
     // that incorrectly.
-    auto arg_type_id = context().insts().Get(deduced_arg_id).type_id();
     auto binding_type_id = context().insts().Get(binding_id).type_id();
-    if (arg_type_id.is_concrete() && binding_type_id.is_symbolic()) {
+    if (binding_type_id.is_symbolic()) {
       auto param_type_const_id =
           SubstConstant(context(), SemIR::LocId(binding_id),
                         binding_type_id.AsConstantId(), substitutions_);
