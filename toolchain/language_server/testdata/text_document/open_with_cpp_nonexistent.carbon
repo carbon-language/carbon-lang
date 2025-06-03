@@ -9,9 +9,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/text_document/open_with_cpp.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/text_document/open_with_cpp_nonexistent.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/text_document/open_with_cpp.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/text_document/open_with_cpp_nonexistent.carbon
 
 // --- STDIN
 [[@LSP-CALL:initialize]]
