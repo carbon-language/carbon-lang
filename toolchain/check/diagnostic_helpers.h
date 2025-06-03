@@ -21,13 +21,9 @@ class LocIdForDiagnostics {
   // Constructs a token-only location for a diagnostic.
   //
   // This means the displayed location will include only the location's specific
-  // parse node, instead of also including its descendants. This will only have
-  // an effect for locations backed by a `NodeId`. A couple examples without a
-  // `NodeId` are an implicit package directive or C++ imports.
-  template <class LocT>
-    requires std::constructible_from<SemIR::LocId, LocT>
-  static auto TokenOnly(LocT loc_id) -> LocIdForDiagnostics {
-    return LocIdForDiagnostics(SemIR::LocId(loc_id), true);
+  // parse node, instead of also including its descendants.
+  static auto TokenOnly(Parse::NodeId node_id) -> LocIdForDiagnostics {
+    return LocIdForDiagnostics(SemIR::LocId(node_id), true);
   }
 
   template <class LocT>
