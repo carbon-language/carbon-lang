@@ -2187,10 +2187,10 @@ static auto AddInterfaceDefinition(ImportContext& context,
 
   // Push a block so that we can add scoped instructions to it.
   context.local_context().inst_block_stack().Push();
-  new_scope.set_is_interface_definition();
   InitializeNameScopeAndImportRefs(
       context, import_scope, new_scope, new_interface.first_owning_decl_id,
       SemIR::NameId::None, new_interface.parent_scope_id);
+  new_scope.set_is_interface_definition();
   new_interface.associated_entities_id = AddAssociatedEntities(
       context, new_interface.scope_id, import_interface.associated_entities_id);
   new_interface.body_block_id =
