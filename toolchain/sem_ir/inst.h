@@ -493,8 +493,8 @@ class InstStore {
     return GetCanonicalLocId(GetNonCanonicalLocId(inst_id));
   }
 
-  // Works like `GetCanonicalLocId`, but called as part of desugaring. Marks the
-  // returned location as desugared.
+  // Returns a virtual location to use for the desugaring of the code at the
+  // specified location.
   auto GetLocIdForDesugaring(LocId loc_id) const -> LocId {
     return GetCanonicalLocId(loc_id).AsDesugared();
   }
