@@ -87,11 +87,11 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     // TODO: Consider allowing setting `LangOptions` or use
     // `ASTContext::getLangOptions()`.
     clang::LangOptions lang_options;
-    clang::TextDiagnostic text_diagnostic(
-        diagnostics_stream, lang_options,
-        // TODO: Consider allowing setting `DiagnosticOptions` or use
-        // `ASTUnit::getDiagnostics().::getLangOptions().getDiagnosticOptions()`.
-        new clang::DiagnosticOptions());
+    // TODO: Consider allowing setting `DiagnosticOptions` or use
+    // `ASTUnit::getDiagnostics().getLangOptions().getDiagnosticOptions()`.
+    clang::DiagnosticOptions diagnostic_options;
+    clang::TextDiagnostic text_diagnostic(diagnostics_stream, lang_options,
+                                          diagnostic_options);
     text_diagnostic.emitDiagnostic(
         clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
         diag_level, message, info.getRanges(), info.getFixItHints());
