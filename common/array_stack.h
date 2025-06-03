@@ -41,6 +41,10 @@ class ArrayStack {
     values_.truncate(region);
   }
 
+  // Pops the top array from the stack, merging its contents into the next
+  // array.
+  auto PopAndMergeArray() -> void { (void)array_offsets_.pop_back_val(); }
+
   // Returns the top array from the stack.
   auto PeekArray() const -> llvm::ArrayRef<ValueT> {
     CARBON_CHECK(!array_offsets_.empty());

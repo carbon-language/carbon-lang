@@ -525,6 +525,14 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // that incorrectly.
     auto binding_type_id = context().insts().Get(binding_id).type_id();
     if (binding_type_id.is_symbolic()) {
+      // SubstConstant() creates new instructions from the substitutions, but if
+      // conversion fails we will not use those instructions. Avoid marking them
+      // as dependent instructions when convert fails so they will not be
+      // evaluated when the enclosing generic has a specific applied. This is
+      // particularly important for LookupImplWitness, which may be created in
+      // the process but will fail when being re-evaluated.
+      auto commit = context().generic_region_stack().BeginCommit();
+
       auto param_type_const_id = SubstConstant(
           context(), binding_type_id.AsConstantId(), substitutions_);
       CARBON_CHECK(param_type_const_id.has_value());
@@ -542,6 +550,11 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
                                            binding_type_id)
                     : TryConvertToValueOfType(context(), loc_id_,
                                               deduced_arg_id, binding_type_id);
+      if (converted_arg_id == SemIR::ErrorInst::InstId) {
+        std::move(commit).Discard();
+        return false;
+      }
+
       // Replace the deduced arg with its value converted to the parameter
       // type. The conversion of the argument type must produce a constant value
       // to be used in deduction.

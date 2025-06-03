@@ -60,6 +60,60 @@ class GenericRegionStack {
     pending_generic_ids_.back().generic_id = generic_id;
   }
 
+  // While held alive, instructions added as dependents or to the eval block are
+  // treated as part of a single commit. If `Discard` is called, then those
+  // instructions will all be dropped from the GenericRegionStack. Otherwise,
+  // they will be kept.
+  class [[nodiscard]] Commit {
+    friend GenericRegionStack;
+
+   public:
+    ~Commit() { std::move(*this).Keep(); }
+
+    auto Discard() && -> void {
+      if (stack_) {
+        stack_->dependent_inst_stack_.PopArray();
+        stack_->pending_eval_block_stack_.PopArray();
+        stack_->ongoing_commit_ = false;
+        stack_ = nullptr;
+      }
+    }
+
+    auto Keep() && -> void {
+      if (stack_) {
+        stack_->dependent_inst_stack_.PopAndMergeArray();
+        stack_->pending_eval_block_stack_.PopAndMergeArray();
+        stack_->ongoing_commit_ = false;
+        stack_ = nullptr;
+      }
+    }
+
+   private:
+    explicit Commit(GenericRegionStack* stack) : stack_(stack) {
+      if (stack_) {
+        stack_->dependent_inst_stack_.PushArray();
+        stack_->pending_eval_block_stack_.PushArray();
+        stack_->ongoing_commit_ = true;
+      }
+    }
+
+    // After move, ensure only one Commit will do cleanup.
+    Commit(Commit&& rhs) noexcept
+        : stack_(std::exchange(rhs.stack_, nullptr)) {}
+    auto operator=(Commit&& rhs) noexcept -> Commit& {
+      stack_ = std::exchange(rhs.stack_, nullptr);
+      return *this;
+    }
+
+    GenericRegionStack* stack_;
+  };
+
+  // Begin a commit, where instructions may be created but thrown away. At the
+  // end of the commit, the caller may choose to keep all instructions added as
+  // dependent or to the eval block, or to discard them all. If they are
+  // discarded, they must not be referenced afterward.
+  auto BeginCommit() -> Commit { return Commit(Empty() ? nullptr : this); }
+
   // Adds an instruction to the list of instructions whose type or value depends
   // on something in the current pending generic.
   auto AddDependentInst(SemIR::InstId inst_id) -> void {
@@ -119,6 +173,8 @@ class GenericRegionStack {
   // blocks for each enclosing generic. We reserve this to a suitable size in
   // the constructor.
   llvm::SmallVector<ConstantsInGenericMap, 0> constants_in_generic_stack_;
+
+  bool ongoing_commit_ = false;
 };
 
 }  // namespace Carbon::Check

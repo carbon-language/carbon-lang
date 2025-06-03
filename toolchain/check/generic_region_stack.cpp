@@ -7,6 +7,7 @@
 namespace Carbon::Check {
 
 auto GenericRegionStack::Push(PendingGeneric generic) -> void {
+  CARBON_CHECK(!ongoing_commit_, "New GenericRegion pushed during Commit");
   pending_generic_ids_.push_back(generic);
   pending_eval_block_stack_.PushArray();
   dependent_inst_stack_.PushArray();
@@ -14,6 +15,7 @@ auto GenericRegionStack::Push(PendingGeneric generic) -> void {
 }
 
 auto GenericRegionStack::Pop() -> void {
+  CARBON_CHECK(!ongoing_commit_, "GenericRegion popped during Commit");
   pending_generic_ids_.pop_back();
   pending_eval_block_stack_.PopArray();
   dependent_inst_stack_.PopArray();
