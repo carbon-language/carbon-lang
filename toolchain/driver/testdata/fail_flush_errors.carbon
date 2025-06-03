@@ -2,8 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// ARGS: --include-diagnostic-kind compile --custom-core %s
+// This test is validating that the delayed error flush doesn't break on string
+// lifetimes.
+//
+// ARGS: --include-diagnostic-kind compile --no-prelude-import %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

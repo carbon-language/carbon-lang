@@ -2,23 +2,36 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --no-prelude-import --phase=check --dump-raw-sem-ir --builtin-sem-ir %s
+// EXTRA-ARGS: --dump-raw-sem-ir --builtin-sem-ir
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/dump_raw_builtins.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/raw_sem_ir/builtins.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/dump_raw_builtins.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/raw_sem_ir/builtins.carbon
 
 // CHECK:STDOUT: ---
-// CHECK:STDOUT: filename:        dump_raw_builtins.carbon
+// CHECK:STDOUT: filename:        builtins.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     ir1:             {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     ir2:             {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir3:             {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir4:             {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir5:             {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir6:             {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir7:             {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir8:             {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir9:             {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir10:            {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir11:            {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir12:            {decl_id: inst15, is_export: false}
+// CHECK:STDOUT:     ir13:            {decl_id: inst15, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): inst16}}
+// CHECK:STDOUT:     name_scope1:     {inst: inst16, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
@@ -49,6 +62,8 @@
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
 // CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst15:          {kind: ImportDecl, arg0: name(Core)}
+// CHECK:STDOUT:     inst16:          {kind: Namespace, arg0: name_scope1, arg1: inst15, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     'inst(TypeType)':  concrete_constant(inst(TypeType))
 // CHECK:STDOUT:     'inst(AutoType)':  concrete_constant(inst(AutoType))
@@ -65,12 +80,16 @@
 // CHECK:STDOUT:     'inst(VtableType)': concrete_constant(inst(VtableType))
 // CHECK:STDOUT:     'inst(WitnessType)': concrete_constant(inst(WitnessType))
 // CHECK:STDOUT:     inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:     inst16:          concrete_constant(inst16)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:         {}
-// CHECK:STDOUT:     import_refs:     {}
+// CHECK:STDOUT:     import_refs:
+// CHECK:STDOUT:       0:               inst16
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:
 // CHECK:STDOUT:       0:               inst14
+// CHECK:STDOUT:       1:               inst15
 // CHECK:STDOUT: ...
+// CHECK:STDOUT:
