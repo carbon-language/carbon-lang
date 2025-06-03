@@ -1,0 +1,118 @@
+# Keep design documents current
+
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+
+<!-- toc -->
+
+## Table of contents
+
+-   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
+-   [Abstract](#abstract)
+-   [Problem](#problem)
+-   [Proposal](#proposal)
+-   [Details](#details)
+-   [Rationale](#rationale)
+-   [Alternatives considered](#alternatives-considered)
+    -   [Require documentation updates as part of the proposal](#require-documentation-updates-as-part-of-the-proposal)
+
+<!-- tocstop -->
+
+## TODO: Initial proposal setup
+
+> TIP: Run `./new_proposal.py "TITLE"` to do new proposal setup.
+
+1. Copy this template to `new.md`, and create a commit.
+2. Create a GitHub pull request, to get a pull request number.
+    - Add the `proposal draft` label to the pull request.
+3. Rename `new.md` to `/proposals/p####.md`, where `####` should be the pull
+   request number.
+4. Update the title of the proposal (the `TODO` on line 1).
+5. Update the link to the pull request (the `####` on line 11).
+6. Delete this section.
+
+TODOs indicate where content should be updated for a proposal. See
+[Carbon Governance and Evolution](/docs/project/evolution.md) for more details.
+
+## Abstract
+
+Require language design proposals to either update the design documents to
+reflect the proposed changes, or add "TODO" comments to mark where those changes
+will be needed, with links back to the proposal. This is intended to ensure that
+the design documentation accurately informs readers about the current language
+design, without excessively burdening the proposal process.
+
+## Problem
+
+The current evolution process allows us to adopt language design changes while
+deferring the corresponding changes in `/docs/design`. We have no process for
+ensuring that those follow-up changes actually happen, and in practice some
+adopted proposals have gone for well over a year without corresponding design
+document changes.
+
+This problem is not limited to proposals for new features, but also applies to
+proposals to change existing, documented features. As a result, the design
+documents are not merely incomplete, but in some cases actually misleading,
+which has led to miscommunication and wasted effort within the Carbon team.
+
+## Proposal
+
+This proposal modifies our evolution process to require proposals to either
+implement the corresponding changes to the design documents, or mark the places
+that will need to be changed with "TODO" comments that point back to the
+proposal. The presence of those comments should help ensure that readers are not
+misled by the design documentation, and the links to the proposals should help
+ensure readers can discover the actual design for a given feature with
+reasonable effort.
+
+The proposal PR also adds "TODO" comments to `/docs/design`, both as an
+illustration of what this policy asks for, and because the policy needs to be
+applied retroactively in order to actually solve the problem. However, these
+changes are necessarily best-effort, because it wasn't feasible for me to fully
+evaluate every proposal against the current state of the docs. In particular, I
+didn't look at proposals numbered below 2000, and I assumed that proposals fully
+updated `/docs/design` if they touched it at all. In addition, I did not add
+"TODO" comments for the terminology changes in [p2964](/proposals/p2964.md),
+because they would be pervasive, and probably add little value for the reader.
+Instead, I filed issue
+[#5599](https://github.com/carbon-language/carbon-lang/issues/5599) to track the
+task of making those changes.
+
+## Details
+
+See the changes in the proposal PR.
+
+## Rationale
+
+This proposal will help advance our goal of
+[promoting a healthy and vibrant community with an inclusive, welcoming, and pragmatic culture](/docs/project/goals.md#community-and-culture):
+in order to effectively participate in extending, implementing, or evaluating
+the design of Carbon, people need to be able to find accurate information about
+that design (and avoid inaccurate information) with reasonable effort.
+
+## Alternatives considered
+
+### Require documentation updates as part of the proposal
+
+We could require all language design proposals to implement the corresponding
+changes in `/docs/design`. This would more thoroughly address the risk of
+readers being misled, because you might mistakenly read documentation that's
+marked with a "TODO" comment, but you can't mistakenly read documentation that
+doesn't exist anymore.
+
+This would also push proposals to be more concrete, detailed, and fully
+integrated with the rest of the language. However, that's a double-edged sword:
+it could help us identify problems with a proposal before it's adopted, but it
+could also close off the option of deferring those problems to future work in
+order to make incremental progress. More mundanely, it would also increase both
+the up-front cost of creating a proposal, and the cost of iteratively changing
+it during review.
+
+The loss of agility from those factors is likely to outweigh the somewhat
+tenuous and speculative benefits of this approach, at least at this early stage
+of Carbon's development.

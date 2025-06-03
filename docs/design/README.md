@@ -865,6 +865,9 @@ or restrictions on casts between pointers and integers.
 
 ### Arrays and slices
 
+**TODO:** The provisional array syntax documented here has been superseded by
+[p4682](/proposals/p4682.md).
+
 The type of an array of holding 4 `i32` values is written `[i32; 4]`. There is
 an [implicit conversion](expressions/implicit_conversions.md) from tuples to
 arrays of the same length as long as every component of the tuple may be
