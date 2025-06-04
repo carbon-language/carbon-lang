@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // EXTRA-ARGS: foo
-// INCLUDE-FILE: testing/file_test/include_files/extra_args.carbon
+// INCLUDE-FILE: testing/file_test/testdata/include_files/extra_args.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
