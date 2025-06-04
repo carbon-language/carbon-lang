@@ -18,7 +18,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Name binding patterns](#name-binding-patterns)
         -   [Unused bindings](#unused-bindings)
             -   [Alternatives considered](#alternatives-considered-1)
-        -   [Compile-time bindings](#compile-time-bindings)
         -   [`auto` and type deduction](#auto-and-type-deduction)
         -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
@@ -126,6 +125,7 @@ fn F() {
 A name binding pattern is a pattern.
 
 -   _binding-pattern_ ::= _identifier_ `:` _expression_
+-   _binding-pattern_ ::= `template`? _identifier_ `:!` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
 A name binding pattern declares a _binding_ with a name specified by the
@@ -140,14 +140,25 @@ which is the immediate subpattern of its enclosing `var` pattern.
 > expected to be the only difference between variable binding patterns and other
 > reference binding patterns.
 
-The scrutinee is expected to be a runtime expression of the type specified by
-the _expression_. The scrutinee is expected to be a value expression if the
-pattern is a value binding pattern, or a durable reference expression if the
-pattern is a reference binding pattern. To match a binding pattern, the
-scrutinee is converted to the expected type, category, and phase, and then the
-binding is _bound_ to the converted expression. This makes the binding an alias
-for the converted expression, with the same [form](values.md#expression-forms)
-and value.
+If the pattern syntax uses `:` it is a _runtime binding pattern_. If it uses
+`:!`, it is a _compile-time binding pattern_, and it cannot appear inside a
+`var` pattern. A compile-time binding pattern is either a _symbolic binding
+pattern_ or a _template binding pattern_, depending on whether it is prefixed
+with `template`.
+
+The scrutinee expression is expected to have a
+[primitive form](values.md#expression-forms) with the following components, and
+its form is [converted](values.md#form-conversions) as needed to satisfy that
+expectation:
+
+-   The type is expected to be _expression_.
+-   The category is expected to be "value" if the pattern is a value binding
+    pattern, or "durable reference" if it's a reference binding pattern
+-   The phase is expected to be "runtime", "symbolic", or "template" depending
+    on whether the pattern is a runtime, symbolic, or template binding pattern.
+
+The binding is _bound_ to the converted scrutinee expression, which makes the
+binding an alias for it, with the same form and value.
 
 ```carbon
 fn F() -> i32 {
@@ -172,7 +183,9 @@ a compiler error will be shown to the user, instructing them to either remove
 the `unused` qualifier or remove the use.
 
 -   _binding-pattern_ ::= `_` `:` _expression_
+-   _binding-pattern_ ::= `template`? `_` `:!` _expression_
 -   _binding-pattern_ ::= `unused` _identifier_ `:` _expression_
+-   _binding-pattern_ ::= `unused` `template`? _identifier_ `:!` _expression_
 
 ```carbon
 fn F(n: i32) {
@@ -208,28 +221,6 @@ fn J(unused n: i32);
 -   [Named identifiers prefixed with `_`](/proposals/p2022.md#named-identifiers-prefixed-with-_)
 -   [Anonymous, named identifiers](/proposals/p2022.md#anonymous-named-identifiers)
 -   [Attributes](/proposals/p2022.md#attributes)
-
-#### Compile-time bindings
-
-A `:!` can be used in place of `:` for a binding that is usable at compile time.
-
--   _compile-time-pattern_ ::= `template`? _identifier_ `:!` _expression_
--   _compile-time-pattern_ ::= `template`? `_` `:!` _expression_
--   _compile-time-pattern_ ::= `unused` `template`? _identifier_ `:!`
-    _expression_
--   _proper-pattern_ ::= _compile-time-pattern_
-
-```carbon
-// ✅ `F` takes a symbolic facet parameter `T` and a parameter `x` of type `T`.
-fn F(T:! type, x: T) {
-  var v: T = x;
-}
-```
-
-A compile-time binding pattern behaves the same as a runtime binding pattern,
-except that the `template` version expects the scrutinee to have template phase,
-and the non-`template` version expects the scrutinee to have symbolic phase. A
-compile-time binding cannot appear inside a `var` pattern.
 
 #### `auto` and type deduction
 
