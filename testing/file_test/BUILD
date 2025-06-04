@@ -62,6 +62,7 @@ file_test(
     name = "file_test_base_test",
     size = "small",
     srcs = ["file_test_base_test.cpp"],
+    data = glob(["include_files/**"]),
     tests = glob(["testdata/**"]),
     deps = [
         ":file_test_base",
