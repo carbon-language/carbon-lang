@@ -15,10 +15,6 @@ import sys
 import unittest
 
 
-def log(s: str) -> None:
-    print(s, file=sys.stderr)
-
-
 class LLVMSymlinksTest(unittest.TestCase):
     def setUp(self) -> None:
         # The install root is adjacent to the test script
@@ -98,7 +94,7 @@ class LLVMSymlinksTest(unittest.TestCase):
                 text=True,
             )
         except subprocess.CalledProcessError as err:
-            log(err.stderr)
+            print(err.stderr, file=sys.stderr)
             raise
         self.assertEqual(run.stderr, "")
         self.assertRegex(run.stdout, r"(^|\n)SUCCESS\n")
