@@ -519,14 +519,21 @@ static auto FinishSplit(llvm::StringRef filename, bool is_include_file,
 }
 
 // Process CHECK lines when found. Returns true if the line is consumed.
+// `expected_stdout` and `expected_stderr` are null in included files, where
+// it's an error to use `CHECK`.
 static auto TryConsumeCheck(
     bool running_autoupdate, int line_index, llvm::StringRef line,
     llvm::StringRef line_trimmed,
-    llvm::SmallVector<testing::Matcher<std::string>>& expected_stdout,
-    llvm::SmallVector<testing::Matcher<std::string>>& expected_stderr)
+    llvm::SmallVector<testing::Matcher<std::string>>* expected_stdout,
+    llvm::SmallVector<testing::Matcher<std::string>>* expected_stderr)
     -> ErrorOr<bool> {
   if (!line_trimmed.consume_front("// CHECK")) {
     return false;
+  }
+
+  if (!expected_stdout) {
+    return ErrorBuilder() << "Included files can't add CHECKs: "
+                          << line_trimmed;
   }
 
   // Don't build expectations when doing an autoupdate. We don't want to
@@ -534,9 +541,9 @@ static auto TryConsumeCheck(
   if (!running_autoupdate) {
     llvm::SmallVector<Matcher<std::string>>* expected;
     if (line_trimmed.consume_front(":STDOUT:")) {
-      expected = &expected_stdout;
+      expected = expected_stdout;
     } else if (line_trimmed.consume_front(":STDERR:")) {
-      expected = &expected_stderr;
+      expected = expected_stderr;
     } else {
       return ErrorBuilder() << "Unexpected CHECK in input: " << line.str();
     }
@@ -612,7 +619,8 @@ static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
     return false;
   }
   if (!found_autoupdate) {
-    return ErrorBuilder() << line_trimmed << " cannot be set in included files";
+    return ErrorBuilder() << "Included files can't control autoupdate: "
+                          << line_trimmed;
   }
   if (*found_autoupdate) {
     return Error("Multiple AUTOUPDATE/NOAUTOUPDATE settings found");
@@ -633,7 +641,7 @@ static auto TryConsumeSetFlag(llvm::StringRef line_trimmed,
     return false;
   }
   if (!flag) {
-    return ErrorBuilder() << flag_name << " cannot be set in included files";
+    return ErrorBuilder() << "Included files can't set flag: " << line_trimmed;
   }
   if (*flag) {
     return ErrorBuilder() << flag_name << " was specified multiple times";
@@ -709,15 +717,16 @@ static auto ProcessFileContent(llvm::StringRef filename,
       continue;
     }
 
-    if (test_file) {
-      CARBON_ASSIGN_OR_RETURN(
-          is_consumed, TryConsumeCheck(running_autoupdate, line_index, line,
-                                       line_trimmed, test_file->expected_stdout,
-                                       test_file->expected_stderr));
-      if (is_consumed) {
-        continue;
-      }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeCheck(running_autoupdate, line_index, line, line_trimmed,
+                        test_file ? &test_file->expected_stdout : nullptr,
+                        test_file ? &test_file->expected_stderr : nullptr));
+    if (is_consumed) {
+      continue;
+    }
 
+    if (test_file) {
       // At this point, lines are retained as non-CHECK lines.
       test_file->non_check_lines.push_back(
           FileTestLine(split_state.file_index, line_index, line));
