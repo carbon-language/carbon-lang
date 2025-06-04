@@ -9,7 +9,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/deferred_definition_scope.h"
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
@@ -271,13 +271,13 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // Register the thunk to be defined when we reach the end of the enclosing
   // deferred definition scope, for example an `impl` or `class` definition, as
   // if the thunk's body were written inline in this location.
-  context.deferred_definition_scope_stack().AddPendingThunk({
-      .signature_id = signature_id,
-      .function_id = function_id,
-      .decl_id = thunk_id,
-      .callee_id = callee_id,
-      .scope = context.scope_stack().Suspend(),
-  });
+  context.deferred_definition_worklist().SuspendThunkAndPush(
+      context, {
+                   .signature_id = signature_id,
+                   .function_id = function_id,
+                   .decl_id = thunk_id,
+                   .callee_id = callee_id,
+               });
 
   return thunk_id;
 }
@@ -412,11 +412,13 @@ static auto BuildThunkDefinition(Context& context,
   FinishGenericDefinition(context, function.generic_id);
 }
 
-auto BuildThunkDefinition(Context& context, PendingThunk&& thunk) -> void {
-  context.scope_stack().Restore(std::move(thunk.scope));
+auto BuildThunkDefinition(Context& context,
+                          DeferredDefinitionWorklist::DefineThunk&& task)
+    -> void {
+  context.scope_stack().Restore(std::move(task.scope));
 
-  BuildThunkDefinition(context, thunk.signature_id, thunk.function_id,
-                       thunk.decl_id, thunk.callee_id);
+  BuildThunkDefinition(context, task.info.signature_id, task.info.function_id,
+                       task.info.decl_id, task.info.callee_id);
 
   context.scope_stack().Pop();
 }

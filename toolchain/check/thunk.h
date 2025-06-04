@@ -6,7 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_THUNK_H_
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/deferred_definition_scope.h"
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -20,7 +20,9 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
 
 // Builds the definition for a thunk whose definition was deferred until the end
 // of the enclosing scope.
-auto BuildThunkDefinition(Context& context, PendingThunk&& thunk) -> void;
+auto BuildThunkDefinition(Context& context,
+                          DeferredDefinitionWorklist::DefineThunk&& task)
+    -> void;
 
 }  // namespace Carbon::Check
 

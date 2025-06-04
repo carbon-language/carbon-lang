@@ -18,7 +18,7 @@ namespace Carbon::Check {
 class NodeIdTraversal {
  public:
   // `context` must not be null.
-  explicit NodeIdTraversal(Context* context, llvm::raw_ostream* vlog_stream);
+  explicit NodeIdTraversal(Context* context);
 
   // Finds the next `NodeId` to type-check. Returns nullopt if the traversal is
   // complete.
@@ -70,6 +70,8 @@ class NodeIdTraversal {
     size_t next_worklist_index;
   };
 
+  auto worklist() -> DeferredDefinitionWorklist& { return *worklist_; }
+
   // Re-enter a nested deferred definition scope.
   auto PerformTask(
       DeferredDefinitionWorklist::EnterNestedDeferredDefinitionScope&& enter)
@@ -85,9 +87,13 @@ class NodeIdTraversal {
       DeferredDefinitionWorklist::CheckSkippedDefinition&& parse_definition)
       -> void;
 
+  // Define a thunk.
+  auto PerformTask(DeferredDefinitionWorklist::DefineThunk&& define_thunk)
+      -> void;
+
   Context* context_;
   NextDeferredDefinitionCache next_deferred_definition_;
-  DeferredDefinitionWorklist worklist_;
+  DeferredDefinitionWorklist* worklist_;
   llvm::SmallVector<Chunk> chunks_;
 };
 

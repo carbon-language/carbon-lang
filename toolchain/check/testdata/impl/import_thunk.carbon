@@ -112,8 +112,8 @@ fn G() {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.13320f.2, (%I.impl_witness) [symbolic]
 // CHECK:STDOUT:   %F.type.0daaa1.2: type = fn_type @F.3, @impl(%Y) [symbolic]
 // CHECK:STDOUT:   %F.49c1ac.2: %F.type.0daaa1.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.49c1ac.1, @F.2(%Y) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.13320f.2 [symbolic]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.49c1ac.1, @F.2(%Y) [symbolic]
 // CHECK:STDOUT:   %C.val: %C.13320f.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

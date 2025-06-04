@@ -11,7 +11,6 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/function.h"
 #include "toolchain/parse/tree.h"
 
 namespace Carbon::Check {
@@ -20,13 +19,47 @@ namespace Carbon::Check {
 // in the right order.
 class DeferredDefinitionWorklist {
  public:
+  // State saved for a function definition that has been suspended after
+  // processing its declaration and before processing its body. This is used for
+  // inline method handling.
+  //
+  // This type is large, so moves of this type should be avoided.
+  struct SuspendedFunction : public MoveOnly<SuspendedFunction> {
+    // The function that was declared.
+    SemIR::FunctionId function_id;
+    // The instruction ID of the FunctionDecl instruction.
+    SemIR::InstId decl_id;
+    // The declaration name information of the function. This includes the scope
+    // information, such as parameter names.
+    DeclNameStack::SuspendedName saved_name_state;
+  };
+
   // A worklist task that indicates we should check a deferred function
   // definition that we previously skipped.
-  struct CheckSkippedDefinition {
+  //
+  // This type is large, so moves of this type should be avoided.
+  struct CheckSkippedDefinition : public MoveOnly<CheckSkippedDefinition> {
     // The definition that we skipped.
     Parse::DeferredDefinitionIndex definition_index;
     // The suspended function.
     SuspendedFunction suspended_fn;
+  };
+
+  // A description of a thunk.
+  struct ThunkInfo {
+    SemIR::FunctionId signature_id;
+    SemIR::FunctionId function_id;
+    SemIR::InstId decl_id;
+    SemIR::InstId callee_id;
+  };
+
+  // A worklist task that indicates we should define a thunk that was previously
+  // declared.
+  //
+  // This type is large, so moves of this type should be avoided.
+  struct DefineThunk : public MoveOnly<DefineThunk> {
+    ThunkInfo info;
+    ScopeStack::SuspendedScope scope;
   };
 
   // A worklist task that indicates we should enter a nested deferred definition
@@ -46,7 +79,10 @@ class DeferredDefinitionWorklist {
   //   } // C.G is type-checked here.
   // }
   // ```
-  struct EnterNestedDeferredDefinitionScope {
+  //
+  // This type is large, so moves of this type should be avoided.
+  struct EnterNestedDeferredDefinitionScope
+      : public MoveOnly<EnterNestedDeferredDefinitionScope> {
     // The suspended scope. This is only set once we reach the end of the scope.
     std::optional<DeclNameStack::SuspendedName> suspended_name;
   };
@@ -56,17 +92,21 @@ class DeferredDefinitionWorklist {
   struct LeaveNestedDeferredDefinitionScope {};
 
   // A pending type-checking task.
-  using Task =
-      std::variant<CheckSkippedDefinition, EnterNestedDeferredDefinitionScope,
-                   LeaveNestedDeferredDefinitionScope>;
+  using Task = std::variant<CheckSkippedDefinition, DefineThunk,
+                            EnterNestedDeferredDefinitionScope,
+                            LeaveNestedDeferredDefinitionScope>;
 
   explicit DeferredDefinitionWorklist(llvm::raw_ostream* vlog_stream);
 
-  // Suspends the current function definition and push a task onto the worklist
-  // to finish it later.
-  auto SuspendFunctionAndPush(Context& context,
-                              Parse::DeferredDefinitionIndex index,
-                              Parse::FunctionDefinitionStartId node_id) -> void;
+  // Suspends the current function definition and pushes a task onto the
+  // worklist to finish it later.
+  auto SuspendFunctionAndPush(
+      Parse::DeferredDefinitionIndex index,
+      llvm::function_ref<auto()->SuspendedFunction> suspend) -> void;
+
+  // Suspends the current thunk scope and pushes a task onto the worklist to
+  // define it later.
+  auto SuspendThunkAndPush(Context& context, ThunkInfo info) -> void;
 
   // Pushes a task to re-enter a function scope, so that functions defined
   // within it are type-checked in the right context. Returns whether a

@@ -11,7 +11,7 @@
 #include "common/emplace_by_calling.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/check/handle.h"
+#include "toolchain/check/context.h"
 
 namespace Carbon::Check {
 
@@ -25,15 +25,21 @@ DeferredDefinitionWorklist::DeferredDefinitionWorklist(
 }
 
 auto DeferredDefinitionWorklist::SuspendFunctionAndPush(
-    Context& context, Parse::DeferredDefinitionIndex index,
-    Parse::FunctionDefinitionStartId node_id) -> void {
-  // TODO: Investigate factoring out `HandleFunctionDefinitionSuspend` to make
-  // `DeferredDefinitionWorklist` reusable.
+    Parse::DeferredDefinitionIndex index,
+    llvm::function_ref<auto()->SuspendedFunction> suspend) -> void {
   worklist_.emplace_back(EmplaceByCalling([&] {
-    return CheckSkippedDefinition{
-        index, HandleFunctionDefinitionSuspend(context, node_id)};
+    return CheckSkippedDefinition{.definition_index = index,
+                                  .suspended_fn = suspend()};
   }));
   CARBON_VLOG("{0}Push CheckSkippedDefinition {1}\n", VlogPrefix, index.index);
+}
+
+auto DeferredDefinitionWorklist::SuspendThunkAndPush(Context& context,
+                                                     ThunkInfo info) -> void {
+  worklist_.emplace_back(EmplaceByCalling([&] {
+    return DefineThunk{.info = info, .scope = context.scope_stack().Suspend()};
+  }));
+  CARBON_VLOG("{0}Push DefineThunk {1}\n", VlogPrefix, info.function_id);
 }
 
 auto DeferredDefinitionWorklist::PushEnterDeferredDefinitionScope(
