@@ -451,7 +451,7 @@ library "[[@TEST_NAME]]";  // Trailing comment
 import Cpp library "one_warning.h";
 
 // ============================================================================
-// Diagnostic with fix it hints
+// Diagnostic with fix-it hints
 // ============================================================================
 
 // --- fix_it_hints.h
