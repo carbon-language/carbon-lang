@@ -30,10 +30,10 @@ class EmplaceResult {
   // function to construct the result. No implicit conversions are permitted
   // here, as that would mean we are not constructing the result in place.
   template <typename DestT>
-    requires std::same_as<DestT, std::invoke_result_t<MakeFnT>>
+    requires std::same_as<DestT, std::invoke_result_t<MakeFnT&&>>
   // NOLINTNEXTLINE(google-explicit-constructor)
   explicit(false) operator DestT() && {
-    return make_fn_();
+    return std::move(make_fn_)();
   }
 
  private:

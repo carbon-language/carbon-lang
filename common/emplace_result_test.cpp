@@ -48,7 +48,7 @@ class CopyCounter {
   int* counter_;
 };
 
-TEST(EnumBaseTest, NoCopies) {
+TEST(EmplaceResult, NoCopies) {
   std::vector<CopyCounter> vec;
   vec.reserve(10);
   int copies = 0;
