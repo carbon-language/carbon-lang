@@ -24,11 +24,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-**TODO:** Update this document to reflect the introduction of function values,
-function types, and the `Call` interface in [p2875](/proposals/p2875.md).
+> **TODO:** Update this document to reflect the introduction of function values,
+> function types, and the `Call` interface in
+> [p2875: Functions, function types, and function calls](/proposals/p2875.md).
 
-**TODO:** Update this document to reflect the changes to named functions in
-[p3848](/proposals/p3848.md).
+> **TODO:** Update this document to reflect the changes to named functions in
+> [p3848: Lambdas](/proposals/p3848.md).
 
 Functions are the core building block for applications. Carbon's basic function
 syntax is:

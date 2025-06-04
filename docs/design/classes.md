@@ -752,8 +752,9 @@ class GraphNode {
 **Open question:** What is specifically allowed and forbidden with an incomplete
 type has not yet been decided.
 
-**TODO:** Document that qualified names can be looked up in an incomplete type,
-as adopted in [p5087](/proposals/p5087.md).
+> **TODO:** Document that qualified names can be looked up in an incomplete
+> type, as adopted in
+> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
 
 ### `Self`
 
