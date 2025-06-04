@@ -600,36 +600,45 @@ static auto TryConsumeIncludeFile(llvm::StringRef line_trimmed,
 }
 
 // Processes AUTOUPDATE lines when found. Returns true if the line is consumed.
+// `found_autoupdate` and `autoupdate_line_number` are only provided for the
+// main file; it's an error to have autoupdate in included files.
 static auto TryConsumeAutoupdate(int line_index, llvm::StringRef line_trimmed,
-                                 bool& found_autoupdate,
-                                 std::optional<int>& autoupdate_line_number)
+                                 bool* found_autoupdate,
+                                 std::optional<int>* autoupdate_line_number)
     -> ErrorOr<bool> {
   static constexpr llvm::StringLiteral Autoupdate = "// AUTOUPDATE";
   static constexpr llvm::StringLiteral NoAutoupdate = "// NOAUTOUPDATE";
   if (line_trimmed != Autoupdate && line_trimmed != NoAutoupdate) {
     return false;
   }
-  if (found_autoupdate) {
+  if (!found_autoupdate) {
+    return ErrorBuilder() << line_trimmed << " cannot be set in included files";
+  }
+  if (*found_autoupdate) {
     return Error("Multiple AUTOUPDATE/NOAUTOUPDATE settings found");
   }
-  found_autoupdate = true;
+  *found_autoupdate = true;
   if (line_trimmed == Autoupdate) {
-    autoupdate_line_number = line_index;
+    *autoupdate_line_number = line_index;
   }
   return true;
 }
 
 // Processes SET-* lines when found. Returns true if the line is consumed.
+// If `flag` is null, we're in an included file where the flag can't be set.
 static auto TryConsumeSetFlag(llvm::StringRef line_trimmed,
-                              llvm::StringLiteral flag_name, bool& flag)
+                              llvm::StringLiteral flag_name, bool* flag)
     -> ErrorOr<bool> {
   if (!line_trimmed.consume_front("// ") || line_trimmed != flag_name) {
     return false;
   }
-  if (flag) {
+  if (!flag) {
+    return ErrorBuilder() << flag_name << " cannot be set in included files";
+  }
+  if (*flag) {
     return ErrorBuilder() << flag_name << " was specified multiple times";
   }
-  flag = true;
+  *flag = true;
   return true;
 }
 
@@ -668,14 +677,12 @@ static auto ProcessFileContent(llvm::StringRef filename,
 
     bool is_consumed = false;
 
-    if (test_file) {
-      CARBON_ASSIGN_OR_RETURN(
-          is_consumed,
-          TryConsumeConflictMarker(running_autoupdate, line, line_trimmed,
-                                   inside_conflict_marker));
-      if (is_consumed) {
-        continue;
-      }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeConflictMarker(running_autoupdate, line, line_trimmed,
+                                 inside_conflict_marker));
+    if (is_consumed) {
+      continue;
     }
 
     // At this point, remaining lines are part of the test input.
@@ -732,27 +739,28 @@ static auto ProcessFileContent(llvm::StringRef filename,
       continue;
     }
 
-    if (test_file) {
-      CARBON_ASSIGN_OR_RETURN(
-          is_consumed,
-          TryConsumeAutoupdate(line_index, line_trimmed, *found_autoupdate,
-                               test_file->autoupdate_line_number));
-      if (is_consumed) {
-        continue;
-      }
-      CARBON_ASSIGN_OR_RETURN(
-          is_consumed,
-          TryConsumeSetFlag(line_trimmed, "SET-CAPTURE-CONSOLE-OUTPUT",
-                            test_file->capture_console_output));
-      if (is_consumed) {
-        continue;
-      }
-      CARBON_ASSIGN_OR_RETURN(
-          is_consumed, TryConsumeSetFlag(line_trimmed, "SET-CHECK-SUBSET",
-                                         test_file->check_subset));
-      if (is_consumed) {
-        continue;
-      }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeAutoupdate(
+            line_index, line_trimmed, found_autoupdate,
+            test_file ? &test_file->autoupdate_line_number : nullptr));
+    if (is_consumed) {
+      continue;
+    }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeSetFlag(
+            line_trimmed, "SET-CAPTURE-CONSOLE-OUTPUT",
+            test_file ? &test_file->capture_console_output : nullptr));
+    if (is_consumed) {
+      continue;
+    }
+    CARBON_ASSIGN_OR_RETURN(
+        is_consumed,
+        TryConsumeSetFlag(line_trimmed, "SET-CHECK-SUBSET",
+                          test_file ? &test_file->check_subset : nullptr));
+    if (is_consumed) {
+      continue;
     }
   }
 
@@ -820,8 +828,9 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
   for (size_t i = 0; i < include_files.size(); ++i) {
     const auto& filename = include_files[i];
     CARBON_ASSIGN_OR_RETURN(std::string content, ReadFile(filename));
+    // Note autoupdate never touches included files.
     CARBON_RETURN_IF_ERROR(ProcessFileContent(
-        filename, content, running_autoupdate,
+        filename, content, /*running_autoupdate=*/false,
         /*test_file=*/nullptr,
         /*found_autoupdate=*/nullptr, test_file.test_args, test_file.extra_args,
         test_file.include_file_splits, include_files));
