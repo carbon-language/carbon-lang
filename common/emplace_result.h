@@ -20,6 +20,22 @@ namespace Carbon {
 // In this example, the result of `ConstructAWidget` will be constructed
 // directly into the new element of `my_widget_vec`, without performing a copy
 // or move.
+//
+// This works by providing a conversion function on `EmplaceResult` that
+// converts to the type `DestT` being emplaced. When an `emplace` function is
+// used to construct an object of type `DestT` from a value of type
+// `EmplaceResult` that converts to `DestT`, the conversion function is used
+// directly to initialize the `DestT` object without calling a `DestT`
+// constructor, per the C++17 guaranteed copy elision rules. Similarly, the
+// result of the conversion function is initialized directly by calling
+// `make_fn`, again relying on guaranteed copy elision.
+//
+// Because the make function is called from the conversion function,
+// `EmplaceResult` should only be used in contexts where it will be used to
+// initialize a `DestT` object exactly once. This is generally true of `emplace`
+// functions. Also, because the `make_fn` callback will be called after the
+// container has made space for the new element, it should not inspect or modify
+// the container that is being emplaced into.
 template <typename MakeFnT>
 class EmplaceResult {
  public:
