@@ -75,18 +75,18 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
   // Create the diagnostic options and parse arguments controlling them out of
   // our arguments.
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options =
+  std::unique_ptr<clang::DiagnosticOptions> diagnostic_options =
       clang::CreateAndPopulateDiagOpts(cstr_args);
 
   // TODO: We don't yet support serializing diagnostics the way the actual
   // `clang` command line does. Unclear if we need to or not, but it would need
   // a bit more logic here to set up chained consumers.
   clang::TextDiagnosticPrinter diagnostic_client(llvm::errs(),
-                                                 diagnostic_options.get());
+                                                 *diagnostic_options);
 
-  clang::DiagnosticsEngine diagnostics(
-      diagnostic_ids_, diagnostic_options.get(), &diagnostic_client,
-      /*ShouldOwnClient=*/false);
+  clang::DiagnosticsEngine diagnostics(diagnostic_ids_, *diagnostic_options,
+                                       &diagnostic_client,
+                                       /*ShouldOwnClient=*/false);
   clang::ProcessWarningOptions(diagnostics, *diagnostic_options, *fs_);
 
   clang::driver::Driver driver(clang_path, target_, diagnostics,

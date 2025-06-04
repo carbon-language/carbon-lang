@@ -451,40 +451,29 @@ library "[[@TEST_NAME]]";  // Trailing comment
 import Cpp library "one_warning.h";
 
 // ============================================================================
-// Diagnostic accesses LangOptions
+// Diagnostic with fix-it hints
 // ============================================================================
 
-// --- lang_options.h
+// --- fix_it_hints.h
 
-template <>
-// CHECK:STDERR: ./lang_options.h:[[@LINE+6]]: error: C++:
-// CHECK:STDERR: In file included from fail_import_lang_options.carbon.generated.cpp_imports.h:1:
-// CHECK:STDERR: ./lang_options.h:[[@LINE+4]]:6: error: no variable template matches specialization
-// CHECK:STDERR:     9 | auto foo<int> -> void;
-// CHECK:STDERR:       |      ^
+// CHECK:STDERR: ./fix_it_hints.h:[[@LINE+7]]: error: C++:
+// CHECK:STDERR: In file included from fail_import_fix_it_hints.carbon.generated.cpp_imports.h:1:
+// CHECK:STDERR: ./fix_it_hints.h:[[@LINE+5]]:19: error: expected ';' after top level declarator
+// CHECK:STDERR:     9 | double score = 0.1
+// CHECK:STDERR:       |                   ^
+// CHECK:STDERR:       |                   ;
 // CHECK:STDERR:  [CppInteropParseError]
-auto foo<int> -> void;
+double score = 0.1
 
-// --- fail_import_lang_options.carbon
+// --- fail_import_fix_it_hints.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_lang_options.carbon:[[@LINE+15]]:1: note: in `Cpp` import [InCppImport]
-// CHECK:STDERR: import Cpp library "lang_options.h";
+// CHECK:STDERR: fail_import_fix_it_hints.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
+// CHECK:STDERR: import Cpp library "fix_it_hints.h";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: ./lang_options.h:9: error: C++:
-// CHECK:STDERR: In file included from fail_import_lang_options.carbon.generated.cpp_imports.h:1:
-// CHECK:STDERR: ./lang_options.h:9:14: error: expected ';' after top level declarator
-// CHECK:STDERR:     9 | auto foo<int> -> void;
-// CHECK:STDERR:       |              ^
-// CHECK:STDERR:       |              ;
-// CHECK:STDERR:  [CppInteropParseError]
-// CHECK:STDERR: fail_import_lang_options.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
-// CHECK:STDERR: import Cpp library "lang_options.h";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-import Cpp library "lang_options.h";
+import Cpp library "fix_it_hints.h";
 
 fn F() {
   Cpp.foo();
@@ -686,7 +675,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_lang_options.carbon
+// CHECK:STDOUT: --- fail_import_fix_it_hints.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -707,7 +696,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "lang_options.h"
+// CHECK:STDOUT:     import Cpp "fix_it_hints.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }

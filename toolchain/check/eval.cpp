@@ -451,9 +451,14 @@ static auto GetConstantValue(EvalContext& /*eval_context*/,
 
 // Given an instruction whose type may refer to a generic parameter, returns the
 // corresponding type in the evaluation context.
+//
+// If the `InstId` is not provided, the instruction is assumed to be new and
+// therefore unattached, and the type of the given instruction is returned
+// unchanged, but the phase is still updated.
 static auto GetTypeOfInst(EvalContext& eval_context, SemIR::InstId inst_id,
-                          Phase* phase) -> SemIR::TypeId {
-  auto type_id = eval_context.GetTypeOfInst(inst_id);
+                          SemIR::Inst inst, Phase* phase) -> SemIR::TypeId {
+  auto type_id = inst_id.has_value() ? eval_context.GetTypeOfInst(inst_id)
+                                     : inst.type_id();
   *phase = LatestPhase(*phase,
                        GetPhase(eval_context.constant_values(),
                                 eval_context.types().GetConstantId(type_id)));
@@ -730,16 +735,11 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
 // Given an instruction and its ID, replaces its type with the corresponding
 // value in this evaluation context. Updates `*phase` to describe the phase of
 // the result, and returns whether `*phase` is a constant phase.
-//
-// If the `InstId` is not provided, the instruction is assumed to be new and
-// therefore unattached, so the type is not updated.
 static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          SemIR::InstId inst_id,
                                          SemIR::Inst* inst, Phase* phase)
     -> bool {
-  if (inst_id.has_value()) {
-    inst->SetType(GetTypeOfInst(eval_context, inst_id, phase));
-  }
+  inst->SetType(GetTypeOfInst(eval_context, inst_id, *inst, phase));
   return IsConstant(*phase);
 }
 
@@ -747,9 +747,7 @@ template <typename InstT>
 static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          SemIR::InstId inst_id, InstT* inst,
                                          Phase* phase) -> bool {
-  if (inst_id.has_value()) {
-    inst->type_id = GetTypeOfInst(eval_context, inst_id, phase);
-  }
+  inst->type_id = GetTypeOfInst(eval_context, inst_id, *inst, phase);
   return IsConstant(*phase);
 }
 

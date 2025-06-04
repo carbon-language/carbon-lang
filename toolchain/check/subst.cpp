@@ -345,8 +345,11 @@ namespace {
 class SubstConstantCallbacks final : public SubstInstCallbacks {
  public:
   // `context` must not be null.
-  SubstConstantCallbacks(Context* context, Substitutions substitutions)
-      : SubstInstCallbacks(context), substitutions_(substitutions) {}
+  SubstConstantCallbacks(Context* context, SemIR::LocId loc_id,
+                         Substitutions substitutions)
+      : SubstInstCallbacks(context),
+        loc_id_(loc_id),
+        substitutions_(substitutions) {}
 
   // Applies the given Substitutions to an instruction, in order to replace
   // BindSymbolicName instructions with the value of the binding.
@@ -388,12 +391,10 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   }
 
   // Rebuilds an instruction by building a new constant.
-  auto Rebuild(SemIR::InstId old_inst_id, SemIR::Inst new_inst) const
+  auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
     auto const_id = EvalOrAddInst(
-        context(),
-        SemIR::LocIdAndInst::UncheckedLoc(
-            context().insts().GetLocIdForDesugaring(old_inst_id), new_inst));
+        context(), SemIR::LocIdAndInst::UncheckedLoc(loc_id_, new_inst));
     CARBON_CHECK(const_id.has_value(),
                  "Substitution into constant produced non-constant");
     CARBON_CHECK(const_id.is_constant(),
@@ -402,12 +403,14 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   }
 
  private:
+  SemIR::LocId loc_id_;
   Substitutions substitutions_;
 };
 }  // namespace
 
-auto SubstConstant(Context& context, SemIR::ConstantId const_id,
-                   Substitutions substitutions) -> SemIR::ConstantId {
+auto SubstConstant(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConstantId const_id, Substitutions substitutions)
+    -> SemIR::ConstantId {
   CARBON_CHECK(const_id.is_constant(), "Substituting into non-constant");
 
   if (substitutions.empty()) {
@@ -422,7 +425,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
 
   auto subst_inst_id =
       SubstInst(context, context.constant_values().GetInstId(const_id),
-                SubstConstantCallbacks(&context, substitutions));
+                SubstConstantCallbacks(&context, loc_id, substitutions));
   return context.constant_values().Get(subst_inst_id);
 }
 
