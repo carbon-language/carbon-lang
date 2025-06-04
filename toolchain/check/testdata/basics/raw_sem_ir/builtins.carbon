@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --no-prelude-import --phase=check --dump-raw-sem-ir --builtin-sem-ir %s
+// EXTRA-ARGS: --no-prelude-import --dump-raw-sem-ir --builtin-sem-ir
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/dump_raw_builtins.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/raw_sem_ir/builtins.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/dump_raw_builtins.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/raw_sem_ir/builtins.carbon
 
 // CHECK:STDOUT: ---
-// CHECK:STDOUT: filename:        dump_raw_builtins.carbon
+// CHECK:STDOUT: filename:        builtins.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
@@ -74,3 +74,4 @@
 // CHECK:STDOUT:     inst_block4:
 // CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT: ...
+// CHECK:STDOUT:

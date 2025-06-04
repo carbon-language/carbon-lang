@@ -167,6 +167,8 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
       break;
   }
 
+  // TODO: If the function is private, also include the library name as part of
+  // the mangling.
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 
   // TODO: Add proper support for mangling generic entities. For now we use a
@@ -197,6 +199,8 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
 
   auto var_name = sem_ir().entity_names().Get(var_name_id);
   MangleNameId(os, var_name.name_id);
+  // TODO: If the variable is private, also include the library name as part of
+  // the mangling.
   MangleInverseQualifiedNameScope(os, var_name.parent_scope_id);
   return os.TakeStr();
 }
@@ -217,6 +221,8 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info) -> std::string {
   os << "_C";
 
   MangleNameId(os, class_info.name_id);
+  // TODO: If the class is private, also include the library name as part of the
+  // mangling.
   MangleInverseQualifiedNameScope(os, class_info.parent_scope_id);
 
   os << ".$vtable";

@@ -158,11 +158,27 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                 InstId inst_id) -> ConstantId;
 
+// Gets the substituted constant value of a potentially generic instruction
+// within a specific, where the generic instruction and the specific may be in
+// different files. Returns the file in which the constant value was found and
+// the constant ID in that file.
+auto GetConstantValueInSpecific(const File& specific_ir, SpecificId specific_id,
+                                const File& inst_ir, InstId inst_id)
+    -> std::pair<const File*, ConstantId>;
+
 // Gets the substituted type of an instruction within a specific. Note that this
 // does not perform substitution, and will return `None` if the substituted type
 // is not yet known.
 auto GetTypeOfInstInSpecific(const File& sem_ir, SpecificId specific_id,
                              InstId inst_id) -> TypeId;
+
+// Gets the substituted type of a potentially generic instruction within a
+// specific, where the generic instruction and the specific may be in different
+// files. Returns the file in which the type was found and the type ID in that
+// file.
+auto GetTypeOfInstInSpecific(const File& specific_ir, SpecificId specific_id,
+                             const File& inst_ir, InstId inst_id)
+    -> std::pair<const File*, TypeId>;
 
 }  // namespace Carbon::SemIR
 

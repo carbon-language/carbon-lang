@@ -108,9 +108,9 @@ auto FileContext::LowerDefinitions() -> void {
       // constant unless the variable is unnamed, in which case we need to
       // create it now.
       llvm::GlobalVariable* llvm_var = nullptr;
-      if (sem_ir().constant_values().Get(inst_id).is_constant()) {
-        llvm_var = cast<llvm::GlobalVariable>(
-            GetGlobal(inst_id, SemIR::SpecificId::None));
+      if (auto const_id = sem_ir().constant_values().Get(inst_id);
+          const_id.is_constant()) {
+        llvm_var = cast<llvm::GlobalVariable>(GetConstant(const_id, inst_id));
       } else {
         llvm_var = BuildGlobalVariableDecl(*var);
       }
@@ -124,27 +124,29 @@ auto FileContext::LowerDefinitions() -> void {
   }
 
   // Lower function definitions.
-  for (auto [id, _] : sem_ir_->functions().enumerate()) {
-    BuildFunctionDefinition(id);
-  }
-
-  // Lower function definitions for generics.
-  // This cannot be a range-based loop, as new definitions can be added
-  // while building other definitions.
-  // NOLINTNEXTLINE
-  for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
-    auto [function_id, specific_id] = specific_function_definitions_[i];
-    BuildFunctionDefinition(function_id, specific_id);
+  for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {
+    // If we created a declaration and the function definition is not imported,
+    // build a definition.
+    if (functions_[id.index] && fn_info.definition_id.has_value() &&
+        !sem_ir().insts().GetImportSource(fn_info.definition_id).has_value()) {
+      BuildFunctionDefinition(id);
+    }
   }
 
   // Append `__global_init` to `llvm::global_ctors` to initialize global
   // variables.
-  if (sem_ir().global_ctor_id().has_value()) {
+  if (auto global_ctor_id = sem_ir().global_ctor_id();
+      global_ctor_id.has_value()) {
+    const auto& global_ctor = sem_ir().functions().Get(global_ctor_id);
+    BuildFunctionBody(global_ctor_id, SemIR::SpecificId::None, global_ctor,
+                      *this, global_ctor);
     llvm::appendToGlobalCtors(llvm_module(),
                               GetFunction(sem_ir().global_ctor_id()),
                               /*Priority=*/0);
   }
+}
 
+auto FileContext::Finalize() -> void {
   if (cpp_code_generator_) {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
@@ -156,9 +158,7 @@ auto FileContext::LowerDefinitions() -> void {
             cpp_code_generator_->ReleaseModule()));
     CARBON_CHECK(!link_error);
   }
-}
 
-auto FileContext::Finalize() -> void {
   // Find equivalent specifics (from the same generic), replace all uses and
   // remove duplicately lowered function definitions.
   CoalesceEquivalentSpecifics();
@@ -406,11 +406,8 @@ auto FileContext::CreateCppCodeGenerator()
       cpp_code_gen_options_, llvm_context()));
 }
 
-auto FileContext::GetGlobal(SemIR::InstId inst_id,
-                            SemIR::SpecificId specific_id) -> llvm::Value* {
-  auto const_id = GetConstantValueInSpecific(sem_ir(), specific_id, inst_id);
-  CARBON_CHECK(const_id.is_concrete(), "Missing value: {0} {1} {2}", inst_id,
-               specific_id, sem_ir().insts().Get(inst_id));
+auto FileContext::GetConstant(SemIR::ConstantId const_id,
+                              SemIR::InstId use_inst_id) -> llvm::Value* {
   auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
   auto* const_value = constants_[const_inst_id.index];
 
@@ -452,7 +449,9 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
   llvm::StringRef use_name;
   if (inst_namer_) {
     const_name = inst_namer_->GetUnscopedNameFor(const_inst_id);
-    use_name = inst_namer_->GetUnscopedNameFor(inst_id);
+    if (use_inst_id.has_value()) {
+      use_name = inst_namer_->GetUnscopedNameFor(use_inst_id);
+    }
   }
 
   // We always need to give the global a name even if the instruction namer
@@ -477,22 +476,12 @@ auto FileContext::GetGlobal(SemIR::InstId inst_id,
 auto FileContext::GetOrCreateFunction(SemIR::FunctionId function_id,
                                       SemIR::SpecificId specific_id)
     -> llvm::Function* {
-  // Non-generic functions are declared eagerly.
-  if (!specific_id.has_value()) {
-    return GetFunction(function_id);
+  // If we have already lowered a declaration of this function, just return it.
+  auto** result = GetFunctionAddr(function_id, specific_id);
+  if (!*result) {
+    *result = BuildFunctionDecl(function_id, specific_id);
   }
-
-  if (auto* result = specific_functions_[specific_id.index]) {
-    return result;
-  }
-
-  auto* result = BuildFunctionDecl(function_id, specific_id);
-  // TODO: Add this function to a list of specific functions whose definitions
-  // we need to emit.
-  specific_functions_[specific_id.index] = result;
-  // TODO: Use this to generate definitions for these functions.
-  specific_function_definitions_.push_back({function_id, specific_id});
-  return result;
+  return *result;
 }
 
 auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
@@ -591,6 +580,55 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
           .return_param_id = return_param_id};
 }
 
+auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
+    -> void {
+  // TODO: To support recursive inline functions, collect all calls to
+  // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
+  // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
+  // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
+  clang::FunctionDecl* cpp_def = cpp_decl->getDefinition();
+  if (!cpp_def) {
+    return;
+  }
+
+  // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`)
+  // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
+  // function name (`CodeGenModule::getMangledName()`), and will generate
+  // its definition.
+  llvm::Constant* function_address =
+      cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
+                                           /*isForDefinition=*/false);
+  CARBON_CHECK(function_address);
+
+  // Emit the function code.
+  cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
+}
+
+auto FileContext::HandleReferencedSpecificFunction(
+    SemIR::FunctionId function_id, SemIR::SpecificId specific_id,
+    llvm::Type* llvm_type) -> void {
+  CARBON_CHECK(specific_id.has_value());
+
+  // Add this specific function to a list of specific functions whose
+  // definitions we need to emit.
+  // TODO: Don't do this if we know this function is emitted as a
+  // non-discardable symbol in the IR for some other file.
+  context().AddPendingSpecificFunctionDefinition({.context = this,
+                                                  .function_id = function_id,
+                                                  .specific_id = specific_id});
+
+  // Create a unique fingerprint for the function type.
+  // For now, we compute the function type fingerprint only for specifics,
+  // though we might need it for all functions in order to create a canonical
+  // fingerprint across translation units.
+  llvm::BLAKE3 function_type_fingerprint;
+  RawStringOstream os;
+  llvm_type->print(os);
+  function_type_fingerprint.update(os.TakeStr());
+  function_type_fingerprint.final(
+      lowered_specifics_type_fingerprint_[specific_id.index]);
+}
+
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                                     SemIR::SpecificId specific_id)
     -> llvm::Function* {
@@ -612,23 +650,39 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   auto function_type_info = BuildFunctionTypeInfo(function, specific_id);
 
+  // TODO: For an imported inline function, consider generating an
+  // `available_externally` definition.
   auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
                                          : llvm::Function::ExternalLinkage;
 
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
+  if (auto* existing = llvm_module().getFunction(mangled_name)) {
+    // We might have already lowered this function while lowering a different
+    // file. That's OK.
+    // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
+    // produced by declarations of the same Carbon function. Name collisions
+    // between non-private members of the same library should have been
+    // diagnosed by check if detected, but it's not clear that check will always
+    // be able to see this problem. In theory, name collisions could also occur
+    // due to fingerprint collision.
+    return existing;
+  }
 
-  // Create a unique fingerprint for the function type.
-  // For now, compute the function type fingerprint only for specifics, though
-  // we might need it for all functions in order to create a canonical
-  // fingerprint across translation units.
+  // If this is a C++ function, tell Clang that we referenced it.
+  if (auto* cpp_decl = sem_ir().functions().Get(function_id).cpp_decl) {
+    CARBON_CHECK(!specific_id.has_value(),
+                 "Specific functions cannot have C++ definitions");
+    HandleReferencedCppFunction(cpp_decl);
+    // TODO: Check that the signature and mangling generated by Clang and the
+    // one we generated are the same.
+  }
+
+  // If this is a specific function, we may need to do additional work to emit
+  // its definition.
   if (specific_id.has_value()) {
-    llvm::BLAKE3 function_type_fingerprint;
-    RawStringOstream os;
-    function_type_info.type->print(os);
-    function_type_fingerprint.update(os.TakeStr());
-    function_type_fingerprint.final(
-        lowered_specifics_type_fingerprint_[specific_id.index]);
+    HandleReferencedSpecificFunction(function_id, specific_id,
+                                     function_type_info.type);
   }
 
   auto* llvm_function = llvm::Function::Create(function_type_info.type, linkage,
@@ -654,84 +708,90 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   return llvm_function;
 }
 
+// Find the file and function ID describing the definition of a function.
+static auto GetFunctionDefinition(const SemIR::File* decl_ir,
+                                  SemIR::FunctionId function_id)
+    -> std::pair<const SemIR::File*, SemIR::FunctionId> {
+  // Find the file containing the definition.
+  auto decl_id = decl_ir->functions().Get(function_id).definition_id;
+  if (!decl_id.has_value()) {
+    // Function is not defined.
+    return {nullptr, SemIR::FunctionId::None};
+  }
+
+  // Find the function declaration this function was originally imported from.
+  while (true) {
+    auto import_inst_id = decl_ir->insts().GetImportSource(decl_id);
+    if (!import_inst_id.has_value()) {
+      break;
+    }
+    auto import_inst = decl_ir->import_ir_insts().Get(import_inst_id);
+    decl_ir = decl_ir->import_irs().Get(import_inst.ir_id()).sem_ir;
+    decl_id = import_inst.inst_id();
+  }
+
+  auto decl_ir_function_id =
+      decl_ir->insts().GetAs<SemIR::FunctionDecl>(decl_id).function_id;
+  return {decl_ir, decl_ir_function_id};
+}
+
 auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id,
                                           SemIR::SpecificId specific_id)
     -> void {
-  const auto& function = sem_ir().functions().Get(function_id);
-  const auto& body_block_ids = function.body_block_ids;
-  if (body_block_ids.empty() &&
-      (!function.cpp_decl || !function.cpp_decl->isDefined())) {
+  auto [definition_ir, definition_ir_function_id] =
+      GetFunctionDefinition(&sem_ir(), function_id);
+  if (!definition_ir) {
     // Function is probably defined in another file; not an error.
     return;
   }
 
-  llvm::Function* llvm_function;
-  if (specific_id.has_value()) {
-    llvm_function = specific_functions_[specific_id.index];
-  } else {
-    llvm_function = GetFunction(function_id);
-    if (!llvm_function) {
-      // We chose not to lower this function at all, for example because it's a
-      // generic function.
-      return;
-    }
-  }
-
-  // For non-generics we do not lower. For generics, the llvm function was
-  // created via GetOrCreateFunction prior to this when building the
-  // declaration.
-  BuildFunctionBody(function_id, function, llvm_function, specific_id);
+  const auto& definition_function =
+      definition_ir->functions().Get(definition_ir_function_id);
+  BuildFunctionBody(
+      function_id, specific_id, sem_ir().functions().Get(function_id),
+      context().GetFileContext(definition_ir), definition_function);
 }
 
 auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
-                                    const SemIR::Function& function,
-                                    llvm::Function* llvm_function,
-                                    SemIR::SpecificId specific_id) -> void {
-  const auto& body_block_ids = function.body_block_ids;
-  CARBON_DCHECK(llvm_function, "LLVM Function not found when lowering body.");
+                                    SemIR::SpecificId specific_id,
+                                    const SemIR::Function& declaration_function,
+                                    FileContext& definition_context,
+                                    const SemIR::Function& definition_function)
+    -> void {
+  // Note that `definition_function` is potentially from a different SemIR::File
+  // than the one that this file context represents. Any lowering done for
+  // values derived from `definition_function` should use `definition_context`
+  // instead of our context.
+  const auto& definition_ir = definition_context.sem_ir();
 
-  if (function.cpp_decl) {
-    // TODO: To support recursive inline functions, collect all calls to
-    // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
-    // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
-    // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
-    clang::FunctionDecl* cpp_def = function.cpp_decl->getDefinition();
-    CARBON_DCHECK(cpp_def, "No Clang function body found during lowering");
+  auto* llvm_function = GetFunction(function_id, specific_id);
+  CARBON_CHECK(llvm_function,
+               "Attempting to define function that was not declared");
 
-    // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`) so
-    // that code generation (`CodeGenModule::EmitGlobal()`) would see this
-    // function name (`CodeGenModule::getMangledName()`), and will generate its
-    // definition.
-    llvm::Constant* function_address =
-        cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
-                                             /*isForDefinition=*/false);
-    CARBON_DCHECK(function_address);
-
-    // Emit the function code.
-    cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
-    return;
-  }
-
+  const auto& body_block_ids = definition_function.body_block_ids;
   CARBON_DCHECK(!body_block_ids.empty(),
                 "No function body blocks found during lowering.");
 
   // Store which specifics were already lowered (with definitions) for each
   // generic.
-  if (function.generic_id.has_value() && specific_id.has_value()) {
-    AddLoweredSpecificForGeneric(function.generic_id, specific_id);
+  if (declaration_function.generic_id.has_value() && specific_id.has_value()) {
+    // TODO: We should track this in the definition context instead so that we
+    // can deduplicate specifics from different files.
+    AddLoweredSpecificForGeneric(declaration_function.generic_id, specific_id);
   }
 
   FunctionContext function_lowering(
-      *this, llvm_function, specific_id,
+      definition_context, llvm_function, *this, specific_id,
       InitializeFingerprintForSpecific(specific_id),
-      BuildDISubprogram(function, llvm_function), vlog_stream_);
+      definition_context.BuildDISubprogram(definition_function, llvm_function),
+      vlog_stream_);
 
   // Add parameters to locals.
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
   // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
-  auto call_param_ids =
-      sem_ir().inst_blocks().GetOrEmpty(function.call_params_id);
+  auto call_param_ids = definition_ir.inst_blocks().GetOrEmpty(
+      definition_function.call_params_id);
   int param_index = 0;
 
   // TODO: Find a way to ensure this code and the function-call lowering use
@@ -741,16 +801,16 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // parameter order.
   auto lower_param = [&](SemIR::InstId param_id) {
     // Get the value of the parameter from the function argument.
-    auto param_inst = sem_ir().insts().GetAs<SemIR::AnyParam>(param_id);
+    auto param_inst = definition_ir.insts().GetAs<SemIR::AnyParam>(param_id);
     llvm::Value* param_value;
 
-    if (SemIR::ValueRepr::ForType(sem_ir(), param_inst.type_id).kind !=
+    if (SemIR::ValueRepr::ForType(definition_ir, param_inst.type_id).kind !=
         SemIR::ValueRepr::None) {
       param_value = llvm_function->getArg(param_index);
       ++param_index;
     } else {
-      param_value = llvm::PoisonValue::get(GetType(
-          SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id, param_id)));
+      param_value = llvm::PoisonValue::get(
+          function_lowering.GetTypeOfInstInSpecific(param_id));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);
@@ -759,12 +819,13 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // The subset of call_param_ids that is already in the order that the LLVM
   // calling convention expects.
   llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
-  if (function.return_slot_pattern_id.has_value()) {
+  if (declaration_function.return_slot_pattern_id.has_value()) {
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
     // whereas `function.return_slot_pattern_id.has_value()` queries whether
     // there is a return slot at the SemIR level.
-    if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
+    if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), declaration_function,
+                                           specific_id)
             .has_return_slot()) {
       lower_param(call_param_ids.back());
     }
@@ -781,13 +842,13 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   if (function_id == sem_ir().global_ctor_id()) {
     decl_block_id = SemIR::InstBlockId::Empty;
   } else {
-    decl_block_id = sem_ir()
-                        .insts()
-                        .GetAs<SemIR::FunctionDecl>(function.latest_decl_id())
-                        .decl_block_id;
+    decl_block_id =
+        definition_ir.insts()
+            .GetAs<SemIR::FunctionDecl>(definition_function.latest_decl_id())
+            .decl_block_id;
   }
 
-  // Lowers the contents of block_id into the corresponding LLVM block,
+  // Lowers the contents of decl_block_id into the corresponding LLVM block,
   // creating it if it doesn't already exist.
   auto lower_block = [&](SemIR::InstBlockId block_id) {
     CARBON_VLOG("Lowering {0}\n", block_id);
@@ -1075,9 +1136,10 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info)
   Mangler m(*this);
   std::string mangled_name = m.MangleVTable(class_info);
 
-  auto first_owning_decl_loc =
-      sem_ir().insts().GetCanonicalLocId(class_info.first_owning_decl_id);
-  if (first_owning_decl_loc.kind() == SemIR::LocId::Kind::ImportIRInstId) {
+  if (sem_ir()
+          .insts()
+          .GetImportSource(class_info.first_owning_decl_id)
+          .has_value()) {
     // Emit a declaration of an imported vtable using a(n opaque) pointer type.
     // This doesn't have to match the definition that appears elsewhere, it'll
     // still get merged correctly.

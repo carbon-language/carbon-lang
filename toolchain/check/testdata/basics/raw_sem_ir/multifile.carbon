@@ -2,15 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --no-prelude-import --phase=check --dump-sem-ir --dump-raw-sem-ir %s
+// EXTRA-ARGS: --no-prelude-import --dump-raw-sem-ir --no-dump-sem-ir
 //
-// Check that we can combine textual IR and raw IR dumping in one compile.
+// Check that raw IR dumping works as expected.
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/multifile_raw_and_textual_ir.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/raw_sem_ir/multifile.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/multifile_raw_and_textual_ir.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/raw_sem_ir/multifile.carbon
 
 // --- a.carbon
 package A;
@@ -81,26 +81,6 @@ fn B() {
 // CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT:       1:               inst15
 // CHECK:STDOUT: ...
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- a.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
@@ -187,41 +167,3 @@ fn B() {
 // CHECK:STDOUT:       1:               inst15
 // CHECK:STDOUT:       2:               inst17
 // CHECK:STDOUT: ...
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %A: <namespace> = namespace file.%A.import, [concrete] {
-// CHECK:STDOUT:     .A = %A.A
-// CHECK:STDOUT:     import A//default
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.A: %A.type = import_ref A//default, A, loaded [concrete = constants.%A]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = imports.%A
-// CHECK:STDOUT:     .B = %B.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.import = import A
-// CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @B() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc6_3: <namespace> = name_ref A, imports.%A [concrete = imports.%A]
-// CHECK:STDOUT:   %A.ref.loc6_4: %A.type = name_ref A, imports.%A.A [concrete = constants.%A]
-// CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc6_4()
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A [from "a.carbon"];
-// CHECK:STDOUT:

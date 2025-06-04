@@ -41,7 +41,21 @@ auto Context::GetFileContext(const SemIR::File* file,
   return *insert_result.value();
 }
 
+auto Context::LowerPendingDefinitions() -> void {
+  // Lower function definitions for generics.
+  // This cannot be a range-based loop, as new definitions can be added
+  // while building other definitions.
+  // NOLINTNEXTLINE(modernize-loop-convert)
+  for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
+    auto [file_context, function_id, specific_id] =
+        specific_function_definitions_[i];
+    file_context->BuildFunctionDefinition(function_id, specific_id);
+  }
+}
+
 auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
+  LowerPendingDefinitions();
+
   file_contexts_.ForEach(
       [](auto, auto& file_context) { file_context->Finalize(); });
   return std::move(llvm_module_);

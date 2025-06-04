@@ -2,22 +2,22 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --no-prelude-import --phase=check --dump-raw-sem-ir %s
+// EXTRA-ARGS: --no-prelude-import --dump-raw-sem-ir --no-dump-sem-ir
 //
 // Check that raw IR dumping works as expected.
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/raw_ir.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/raw_sem_ir/one_file.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/raw_ir.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/raw_sem_ir/one_file.carbon
 
 fn Foo[T:! type](n: T) -> (T, ()) {
   return (n, ());
 }
 
 // CHECK:STDOUT: ---
-// CHECK:STDOUT: filename:        raw_ir.carbon
+// CHECK:STDOUT: filename:        one_file.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}

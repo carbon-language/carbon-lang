@@ -134,7 +134,7 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
       auto token = context.parse_tree().node_token(loc_id.node_id());
       auto line = context.tokens().GetLineNumber(token);
       auto col = context.tokens().GetColumnNumber(token);
-      const char* implicit = loc_id.is_implicit() ? " implicit" : "";
+      const char* implicit = loc_id.is_desugared() ? " implicit" : "";
       out << "LocId(" << FormatEscaped(context.sem_ir().filename()) << ":"
           << line << ":" << col << implicit << ")";
       break;

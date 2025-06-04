@@ -55,9 +55,12 @@ class FileContext {
   // Perform final cleanup tasks once all lowering has been completed.
   auto Finalize() -> void;
 
-  // Gets a callable's function. Returns nullptr for a builtin.
-  auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
-    return functions_[function_id.index];
+  // Gets a callable's function. Returns nullptr for a builtin or a function we
+  // have not lowered.
+  auto GetFunction(SemIR::FunctionId function_id,
+                   SemIR::SpecificId specific_id = SemIR::SpecificId::None)
+      -> llvm::Function* {
+    return *GetFunctionAddr(function_id, specific_id);
   }
 
   // Gets a or creates callable's function. Returns nullptr for a builtin.
@@ -87,8 +90,9 @@ class FileContext {
     return context().GetIntLiteralAsValue();
   }
 
-  // Returns a global value for the given instruction.
-  auto GetGlobal(SemIR::InstId inst_id, SemIR::SpecificId specific_id)
+  // Returns a value for the given constant. If specified, `use_inst_id` is the
+  // instruction that is using this constant.
+  auto GetConstant(SemIR::ConstantId const_id, SemIR::InstId use_inst_id)
       -> llvm::Value*;
 
   // Returns the empty LLVM struct type used to represent the type `type`.
@@ -129,13 +133,6 @@ class FileContext {
   auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
       -> llvm::GlobalVariable*;
 
- private:
-  // Builds the declaration for the given function, which should then be cached
-  // by the caller.
-  auto BuildFunctionDecl(SemIR::FunctionId function_id,
-                         SemIR::SpecificId specific_id =
-                             SemIR::SpecificId::None) -> llvm::Function*;
-
   // Builds the definition for the given function. If the function is only a
   // declaration with no definition, does nothing. If this is a generic it'll
   // only be lowered if the specific_id is specified. During this lowering of
@@ -144,11 +141,44 @@ class FileContext {
       SemIR::FunctionId function_id,
       SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
-  // Builds a functions body. Common functionality for all functions.
-  auto BuildFunctionBody(
-      SemIR::FunctionId function_id, const SemIR::Function& function,
-      llvm::Function* llvm_function,
-      SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
+ private:
+  // Gets the location in which a callable's function is stored.
+  auto GetFunctionAddr(SemIR::FunctionId function_id,
+                       SemIR::SpecificId specific_id) -> llvm::Function** {
+    return specific_id.has_value() ? &specific_functions_[specific_id.index]
+                                   : &functions_[function_id.index];
+  }
+
+  // Notes that a C++ function has been referenced for the first time, so we
+  // should ask Clang to generate a definition for it if possible.
+  auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl) -> void;
+
+  // Notes that a specific function has been referenced for the first time.
+  // Updates the fingerprint to include the function's type, and adds the
+  // function to the list of specific functions whose definitions should be
+  // lowered.
+  auto HandleReferencedSpecificFunction(SemIR::FunctionId function_id,
+                                        SemIR::SpecificId specific_id,
+                                        llvm::Type* llvm_type) -> void;
+
+  // Builds the declaration for the given function, which should then be cached
+  // by the caller.
+  auto BuildFunctionDecl(SemIR::FunctionId function_id,
+                         SemIR::SpecificId specific_id =
+                             SemIR::SpecificId::None) -> llvm::Function*;
+
+  // Builds a function's body. Common functionality for all functions.
+  //
+  // The `function_id` and `specific_id` identify the function within this
+  // context's file. If the function was defined in a different file,
+  // `definition_context` is a `FileContext` for that other file.
+  // `definition_function` is the `Function` object within the file that owns
+  // the definition.
+  auto BuildFunctionBody(SemIR::FunctionId function_id,
+                         SemIR::SpecificId specific_id,
+                         const SemIR::Function& declaration_function,
+                         FileContext& definition_context,
+                         const SemIR::Function& definition_function) -> void;
 
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
@@ -259,13 +289,6 @@ class FileContext {
   // Maps specific callables to lowered functions. Vector indexes correspond to
   // `SpecificId` indexes. We resize this directly to the correct size.
   llvm::SmallVector<llvm::Function*, 0> specific_functions_;
-
-  // Maps which specific functions are generics that need to have their
-  // definitions lowered after the lowering of other definitions.
-  // This list may grow while lowering generic definitions from this list.
-  // The list uses the `SpecificId` to index into specific_functions_.
-  llvm::SmallVector<std::pair<SemIR::FunctionId, SemIR::SpecificId>, 10>
-      specific_function_definitions_;
 
   // Provides lowered versions of types.
   // Vector indexes correspond to `TypeId` indexes for non-symbolic types. We

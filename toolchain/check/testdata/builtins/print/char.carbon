@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
-//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/print/char.carbon
@@ -73,27 +71,27 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %PrintChar.ref.loc19: %PrintChar.type.c95 = name_ref PrintChar, file.%PrintChar.decl [concrete = constants.%PrintChar.843]
+// CHECK:STDOUT:   %PrintChar.ref.loc17: %PrintChar.type.c95 = name_ref PrintChar, file.%PrintChar.decl [concrete = constants.%PrintChar.843]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc19: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc19_13.1: <bound method> = bound_method %int_1, %impl.elem0.loc19 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem0.loc19, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc19_13.2: <bound method> = bound_method %int_1, %specific_fn.loc19 [concrete = constants.%bound_method.9a1]
-// CHECK:STDOUT:   %int.convert_checked.loc19: init %i32 = call %bound_method.loc19_13.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc19_13.1: %i32 = value_of_initializer %int.convert_checked.loc19 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc19_13.2: %i32 = converted %int_1, %.loc19_13.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %print.char.loc19: init %i32 = call %PrintChar.ref.loc19(%.loc19_13.2)
+// CHECK:STDOUT:   %impl.elem0.loc17: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc17_13.1: <bound method> = bound_method %int_1, %impl.elem0.loc17 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc17_13.2: <bound method> = bound_method %int_1, %specific_fn.loc17 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc17: init %i32 = call %bound_method.loc17_13.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc17_13.1: %i32 = value_of_initializer %int.convert_checked.loc17 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc17_13.2: %i32 = converted %int_1, %.loc17_13.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %print.char.loc17: init %i32 = call %PrintChar.ref.loc17(%.loc17_13.2)
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %PrintChar.ref.loc20: %PrintChar.type.089 = name_ref PrintChar, imports.%Core.PrintChar [concrete = constants.%PrintChar.d75]
+// CHECK:STDOUT:   %PrintChar.ref.loc18: %PrintChar.type.089 = name_ref PrintChar, imports.%Core.PrintChar [concrete = constants.%PrintChar.d75]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc20: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc20_18.1: <bound method> = bound_method %int_2, %impl.elem0.loc20 [concrete = constants.%Convert.bound.ef9]
-// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_18.2: <bound method> = bound_method %int_2, %specific_fn.loc20 [concrete = constants.%bound_method.b92]
-// CHECK:STDOUT:   %int.convert_checked.loc20: init %i32 = call %bound_method.loc20_18.2(%int_2) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc20_18.1: %i32 = value_of_initializer %int.convert_checked.loc20 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc20_18.2: %i32 = converted %int_2, %.loc20_18.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %print.char.loc20: init %i32 = call %PrintChar.ref.loc20(%.loc20_18.2)
+// CHECK:STDOUT:   %impl.elem0.loc18: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc18_18.1: <bound method> = bound_method %int_2, %impl.elem0.loc18 [concrete = constants.%Convert.bound.ef9]
+// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_18.2: <bound method> = bound_method %int_2, %specific_fn.loc18 [concrete = constants.%bound_method.b92]
+// CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %bound_method.loc18_18.2(%int_2) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc18_18.1: %i32 = value_of_initializer %int.convert_checked.loc18 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc18_18.2: %i32 = converted %int_2, %.loc18_18.1 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %print.char.loc18: init %i32 = call %PrintChar.ref.loc18(%.loc18_18.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

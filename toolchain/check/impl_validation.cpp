@@ -22,15 +22,9 @@ namespace Carbon::Check {
 
 namespace {
 
-struct ImplAndInterface {
-  SemIR::ImplId impl_id;
-  SemIR::SpecificInterface interface;
-};
-
-// We avoid holding a reference into the ImplStore, as the act of verifying the
-// diagnostic checks can invalidate such a reference. We collect what we need to
-// know about the the `Impl` for validation into this struct.
+// All information about a `SemIR::Impl` needed for validation.
 struct ImplInfo {
+  SemIR::ImplId impl_id;
   bool is_final;
   SemIR::InstId witness_id;
   SemIR::TypeInstId self_id;
@@ -56,7 +50,8 @@ static auto GetIRId(Context& context, SemIR::InstId owning_inst_id)
 auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
   const auto& impl = context.impls().Get(impl_id);
   auto ir_id = GetIRId(context, impl.first_owning_decl_id);
-  return {.is_final = impl.is_final,
+  return {.impl_id = impl_id,
+          .is_final = impl.is_final,
           .witness_id = impl.witness_id,
           .self_id = impl.self_id,
           .latest_decl_id = impl.latest_decl_id(),
@@ -146,15 +141,15 @@ static auto DiagnoseNonFinalImplsWithSameTypeStructure(Context& context,
 // final impl.
 //
 // Returns true if an error was diagnosed.
-static auto DiagnoseUnmatchableNonFinalImplWithFinalImpl(
-    Context& context, SemIR::ImplId impl_a_id, const ImplInfo& impl_a,
-    SemIR::ImplId impl_b_id, const ImplInfo& impl_b) -> bool {
+static auto DiagnoseUnmatchableNonFinalImplWithFinalImpl(Context& context,
+                                                         const ImplInfo& impl_a,
+                                                         const ImplInfo& impl_b)
+    -> bool {
   auto diagnose_unmatchable_impl = [&](const ImplInfo& query_impl,
-                                       SemIR::ImplId final_impl_id,
                                        const ImplInfo& final_impl) -> bool {
     if (LookupMatchesImpl(context, SemIR::LocId(query_impl.latest_decl_id),
                           context.constant_values().Get(query_impl.self_id),
-                          query_impl.interface, final_impl_id)) {
+                          query_impl.interface, final_impl.impl_id)) {
       CARBON_DIAGNOSTIC(ImplFinalOverlapsNonFinal, Error,
                         "`impl` will never be used");
       auto builder = context.emitter().Build(query_impl.latest_decl_id,
@@ -172,9 +167,9 @@ static auto DiagnoseUnmatchableNonFinalImplWithFinalImpl(
   CARBON_CHECK(impl_a.is_final || impl_b.is_final);
 
   if (impl_b.is_final) {
-    return diagnose_unmatchable_impl(impl_a, impl_b_id, impl_b);
+    return diagnose_unmatchable_impl(impl_a, impl_b);
   } else {
-    return diagnose_unmatchable_impl(impl_b, impl_a_id, impl_a);
+    return diagnose_unmatchable_impl(impl_b, impl_a);
   }
 }
 
@@ -236,27 +231,17 @@ static auto DiagnoseFinalImplsOverlapOutsideMatchFirst(Context& context,
   return false;
 }
 
-static auto ValidateImplsForInterface(
-    Context& context, llvm::ArrayRef<ImplAndInterface> impls_and_interface)
-    -> void {
-  // Range over `SemIR::ImplId` only. Caller has ensured all of these are
-  // for the same interface.
-  auto impl_ids = llvm::map_range(impls_and_interface,
-                                  [=](ImplAndInterface impl_and_interface) {
-                                    return impl_and_interface.impl_id;
-                                  });
-
+static auto ValidateImplsForInterface(Context& context,
+                                      llvm::ArrayRef<ImplInfo> impls) -> void {
   // All `impl`s we look at here have the same `InterfaceId` (though different
   // `SpecificId`s in their `SpecificInterface`s). So we can grab the
   // `ImportIRId` for the interface a single time up front.
-  auto interface_decl_id =
-      context.interfaces()
-          .Get(impls_and_interface[0].interface.interface_id)
-          .first_owning_decl_id;
+  auto interface_decl_id = context.interfaces()
+                               .Get(impls[0].interface.interface_id)
+                               .first_owning_decl_id;
   auto interface_ir_id = GetIRId(context, interface_decl_id);
 
-  for (auto impl_id : impl_ids) {
-    auto impl = GetImplInfo(context, impl_id);
+  for (const auto& impl : impls) {
     if (impl.is_final && impl.is_local) {
       // =======================================================================
       /// Rules for an individual final impl.
@@ -273,11 +258,8 @@ static auto ValidateImplsForInterface(
   // For each impl, we compare it pair-wise which each impl found before it, so
   // that diagnostics are attached to the later impl, as the earlier impl on its
   // own does not generate a diagnostic.
-  size_t num_impl_ids = impls_and_interface.size();
-  for (auto [split_point, impl_b_id] :
-       llvm::drop_begin(llvm::enumerate(impl_ids))) {
-    auto impl_b = GetImplInfo(context, impl_b_id);
-
+  size_t num_impls = impls.size();
+  for (auto [split_point, impl_b] : llvm::drop_begin(llvm::enumerate(impls))) {
     // Prevent diagnosing the same error multiple times for the same `impl_b`
     // against different impls before it. But still ensure we do give one of
     // each diagnostic when they are different errors.
@@ -286,10 +268,8 @@ static auto ValidateImplsForInterface(
     bool did_diagnose_final_impls_overlap_in_different_files = false;
     bool did_diagnose_final_impls_overlap_outside_match_first = false;
 
-    auto impls_before = llvm::drop_end(impl_ids, num_impl_ids - split_point);
-    for (auto impl_a_id : impls_before) {
-      auto impl_a = GetImplInfo(context, impl_a_id);
-
+    auto impls_before = llvm::drop_end(impls, num_impls - split_point);
+    for (const auto& impl_a : impls_before) {
       // Only enforce rules when at least one of the impls was written in this
       // file.
       if (!impl_a.is_local && !impl_b.is_local) {
@@ -318,8 +298,8 @@ static auto ValidateImplsForInterface(
         // Rules between final impl and non-final impl.
         // =====================================================================
         if (!did_diagnose_unmatchable_non_final_impl_with_final_impl) {
-          if (DiagnoseUnmatchableNonFinalImplWithFinalImpl(
-                  context, impl_a_id, impl_a, impl_b_id, impl_b)) {
+          if (DiagnoseUnmatchableNonFinalImplWithFinalImpl(context, impl_a,
+                                                           impl_b)) {
             did_diagnose_unmatchable_non_final_impl_with_final_impl = true;
           }
         }
@@ -432,23 +412,18 @@ auto ValidateImplsInFile(Context& context) -> void {
   // about them anyhow. We also verify the impl has an `InterfaceId` since it
   // can be missing, in which case a diagnostic would have been generated
   // already as well.
-  //
-  // Don't hold Impl pointers here because the process of looking for
-  // diagnostics may cause imports and may invalidate pointers into the
-  // ImplStore.
-  llvm::SmallVector<ImplAndInterface> impl_ids_by_interface(llvm::map_range(
+  llvm::SmallVector<ImplInfo> impl_ids_by_interface(llvm::map_range(
       llvm::make_filter_range(
           context.impls().enumerate(),
           [](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
             return pair.second.witness_id != SemIR::ErrorInst::InstId &&
                    pair.second.interface.interface_id.has_value();
           }),
-      [](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
-        return ImplAndInterface{.impl_id = pair.first,
-                                .interface = pair.second.interface};
+      [&](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
+        return GetImplInfo(context, pair.first);
       }));
-  llvm::stable_sort(impl_ids_by_interface, [](const ImplAndInterface& lhs,
-                                              const ImplAndInterface& rhs) {
+  llvm::stable_sort(impl_ids_by_interface, [](const ImplInfo& lhs,
+                                              const ImplInfo& rhs) {
     return lhs.interface.interface_id.index < rhs.interface.interface_id.index;
   });
 

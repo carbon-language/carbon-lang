@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --no-prelude-import --target=x86_64-unknown-linux-gnu --output=%t %s
+// EXTRA-ARGS: --no-prelude-import --target=x86_64-unknown-linux-gnu --output=%t
 //
 // TODO: Add a way to write some basic tests for object file outputs.
 // AUTOUPDATE

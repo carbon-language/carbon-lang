@@ -2,22 +2,22 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --no-prelude-import --phase=check --dump-sem-ir --dump-raw-sem-ir %s
+// EXTRA-ARGS: --no-prelude-import --dump-raw-sem-ir --dump-sem-ir-ranges=if-present
 //
 // Check that we can combine textual IR and raw IR dumping in one compile.
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/raw_and_textual_ir.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/raw_sem_ir/one_file_with_textual_ir.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/raw_and_textual_ir.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/raw_sem_ir/one_file_with_textual_ir.carbon
 
 fn Foo(n: ()) -> ((), ()) {
   return (n, ());
 }
 
 // CHECK:STDOUT: ---
-// CHECK:STDOUT: filename:        raw_and_textual_ir.carbon
+// CHECK:STDOUT: filename:        one_file_with_textual_ir.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
@@ -186,7 +186,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       1:               inst36
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- raw_and_textual_ir.carbon
+// CHECK:STDOUT: --- one_file_with_textual_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

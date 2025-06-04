@@ -48,8 +48,8 @@ class DiagnosticEmitter : public DiagnosticEmitterBase {
 
  private:
   // Implements `ConvertLoc`, but without `last_token_` applied.
-  auto ConvertLocImpl(SemIR::LocId loc_id, ContextFnT context_fn) const
-      -> Diagnostics::ConvertedLoc;
+  auto ConvertLocImpl(SemIR::LocId loc_id, bool is_token_only,
+                      ContextFnT context_fn) const -> Diagnostics::ConvertedLoc;
 
   // Converts a node_id corresponding to a specific sem_ir to a diagnostic
   // location.

@@ -2,7 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
+// This tests `--dump-sem-ir-range=only` behavior, which is set implicitly by
+// file_test.
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
