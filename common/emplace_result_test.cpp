@@ -14,10 +14,10 @@ namespace {
 struct NoncopyableType {
   NoncopyableType() = default;
   NoncopyableType(const NoncopyableType&) = delete;
-  NoncopyableType& operator=(const NoncopyableType&) = delete;
+  auto operator=(const NoncopyableType&) -> NoncopyableType& = delete;
 };
 
-NoncopyableType Make() { return NoncopyableType(); }
+auto Make() -> NoncopyableType { return NoncopyableType(); }
 
 TEST(EmplaceResult, Noncopyable) {
   std::list<NoncopyableType> list;
