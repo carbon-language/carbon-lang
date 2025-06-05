@@ -139,7 +139,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
   AddImportNamespaceResult result = {
       .name_scope_id = SemIR::NameScopeId::None,
       .inst_id = AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc)};
-  context.import_ref_ids().push_back(result.inst_id);
+  context.imports().push_back(result.inst_id);
   namespace_inst.name_scope_id =
       context.name_scopes().Add(result.inst_id, name_id, parent_scope_id);
   result.name_scope_id = namespace_inst.name_scope_id;
@@ -236,7 +236,7 @@ static auto CopySingleNameScopeFromImportIR(
                      {.type_id = namespace_type_id,
                       .import_ir_inst_id = import_ir_inst_id,
                       .entity_name_id = entity_name_id}));
-    context.import_ref_ids().push_back(inst_id);
+    context.imports().push_back(inst_id);
     return inst_id;
   };
   AddImportNamespaceToScopeResult result = AddImportNamespaceToScope(

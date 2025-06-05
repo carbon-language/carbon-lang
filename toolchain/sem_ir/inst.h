@@ -573,8 +573,8 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
       : BaseType(allocator) {
     auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
-    auto import_refs_id = AddPlaceholder();
-    CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
+    auto imports_id = AddPlaceholder();
+    CARBON_CHECK(imports_id == InstBlockId::Imports);
     auto global_init_id = AddPlaceholder();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }

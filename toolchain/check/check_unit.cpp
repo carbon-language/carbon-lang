@@ -590,8 +590,8 @@ auto CheckUnit::FinishRun() -> void {
   context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,
                                             context_.exports());
   // Finalizes the ImportRef inst block.
-  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::ImportRefs,
-                                            context_.import_ref_ids());
+  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Imports,
+                                            context_.imports());
   // Finalizes __global_init.
   context_.global_init().Finalize();
 

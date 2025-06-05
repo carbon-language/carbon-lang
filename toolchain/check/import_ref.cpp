@@ -87,7 +87,7 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   // ImportRefs have a dedicated block because this may be called during
   // processing where the instruction shouldn't be inserted in the current inst
   // block.
-  context.import_ref_ids().push_back(import_ref_id);
+  context.imports().push_back(import_ref_id);
   return import_ref_id;
 }
 
@@ -104,7 +104,7 @@ static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
                                  .entity_name_id = SemIR::EntityNameId::None};
   auto inst_id = AddPlaceholderInstInNoBlock(
       context, MakeImportedLocIdAndInst(context, import_ir_inst_id, inst));
-  context.import_ref_ids().push_back(inst_id);
+  context.imports().push_back(inst_id);
 
   context.constant_values().Set(inst_id, const_id);
   context.import_ir_constant_values()[import_ir_inst.ir_id().index].Set(
@@ -674,7 +674,7 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
                  "AddPlaceholderImportedInst: {0}\n", inst);
   // Track the instruction in the imports block so that it's included in
   // formatted SemIR if it's referenced.
-  context.local_context().import_ref_ids().push_back(inst_id);
+  context.local_context().imports().push_back(inst_id);
   return inst_id;
 }
 

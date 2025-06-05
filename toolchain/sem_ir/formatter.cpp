@@ -53,7 +53,7 @@ Formatter::Formatter(const File* sem_ir,
   // Create empty placeholder chunks for instructions that we output lazily.
   for (auto inst_id : llvm::concat<const InstId>(
            sem_ir_->constants().array_ref(),
-           sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs))) {
+           sem_ir_->inst_blocks().Get(InstBlockId::Imports))) {
     tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
   }
 
@@ -67,8 +67,8 @@ auto Formatter::Format() -> void {
   FormatTopLevelScopeIfUsed(InstNamer::ScopeId::Constants,
                             sem_ir_->constants().array_ref(),
                             /*use_tentative_output_scopes=*/true);
-  FormatTopLevelScopeIfUsed(InstNamer::ScopeId::ImportRefs,
-                            sem_ir_->inst_blocks().Get(InstBlockId::ImportRefs),
+  FormatTopLevelScopeIfUsed(InstNamer::ScopeId::Imports,
+                            sem_ir_->inst_blocks().Get(InstBlockId::Imports),
                             /*use_tentative_output_scopes=*/true);
   FormatTopLevelScopeIfUsed(
       InstNamer::ScopeId::File,
