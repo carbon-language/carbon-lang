@@ -27,6 +27,7 @@ var str2: String = "ab'\"c";
 // CHECK:STDOUT:     real0:           10*10^-1
 // CHECK:STDOUT:     real1:           8*10^7
 // CHECK:STDOUT:     real2:           8*10^8
+// CHECK:STDOUT:   floats:          {}
 // CHECK:STDOUT:   identifiers:
 // CHECK:STDOUT:     identifier0:     int1
 // CHECK:STDOUT:     identifier1:     int2
