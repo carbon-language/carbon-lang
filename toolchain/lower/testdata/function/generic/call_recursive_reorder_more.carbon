@@ -227,7 +227,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 8, 7, 6, 5, 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CF.Main.7776e910959584d9, { 5, 7, 6, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CF.Main.7776e910959584d9, { 5, 7, 6, 4, 0, 1, 2, 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
