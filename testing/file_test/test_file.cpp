@@ -807,9 +807,10 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
                           << test_name;
   }
 
+  constexpr llvm::StringLiteral AutoupdateSplit = "AUTOUPDATE-SPLIT";
+
   // Validate AUTOUPDATE-SPLIT use, and remove it from test files if present.
   if (test_file.has_splits) {
-    constexpr llvm::StringLiteral AutoupdateSplit = "AUTOUPDATE-SPLIT";
     for (const auto& test_file :
          llvm::ArrayRef(test_file.file_splits).drop_back()) {
       if (test_file.filename == AutoupdateSplit) {
@@ -843,6 +844,12 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
         /*test_file=*/nullptr,
         /*found_autoupdate=*/nullptr, test_file.test_args, test_file.extra_args,
         test_file.include_file_splits, include_files));
+  }
+
+  for (const auto& split : test_file.include_file_splits) {
+    if (split.filename == AutoupdateSplit) {
+      return Error("AUTOUPDATE-SPLIT is disallowed in included files");
+    }
   }
 
   return std::move(test_file);
