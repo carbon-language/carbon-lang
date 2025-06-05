@@ -734,18 +734,12 @@ of `x` and instance binding is performed if an instance member is found.
 
 If instance binding is performed:
 
--   For a field member of a struct form, `x` is required to have that struct
-    form. Then, the form of `x.f` is the value of the corresponding field of the
-    struct form, and `x.f` evaluates to the corresponding field of `x`.
 -   For a field member of a struct type, `x` is required to have that struct
-    type, and it is converted to a
+    type, and it is converted to an expression with
     [struct form](/docs/design/values.md#expression-forms) by applying
     [form decomposition](/docs/design/values.md#form-conversions) (if it doesn't
     have a struct form already). Then, instance binding proceeds as in the
     previous case.
--   For an element member of a tuple form, `x` is required to have that tuple
-    form. Then, the form of `x.f` is the value of the corresponding element of
-    the tuple form, and `x.f` evaluates to the corresponding element of `x`.
 -   For an element member of a tuple type, `x` is required to have that tuple
     type, and it is converted to a
     [tuple form](/docs/design/values.md#expression-forms) by applying
