@@ -459,7 +459,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, SemIR::InstBlockId::Empty};
   auto decl_id =
-      AddPlaceholderInst(context, Parse::NodeId::None, function_decl);
+      AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
+  context.import_ref_ids().push_back(decl_id);
 
   auto function_info = SemIR::Function{
       {.name_id = name_id,
@@ -517,8 +518,9 @@ static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
                                      .class_id = SemIR::ClassId::None,
                                      .decl_block_id = SemIR::InstBlockId::None};
   // TODO: Consider setting a proper location.
-  auto class_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst::NoLoc(class_decl));
+  auto class_decl_id = AddPlaceholderInstInNoBlock(
+      context, SemIR::LocIdAndInst::NoLoc(class_decl));
+  context.import_ref_ids().push_back(class_decl_id);
 
   SemIR::Class class_info = {
       {.name_id = name_id,
