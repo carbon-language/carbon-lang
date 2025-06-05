@@ -69,7 +69,7 @@
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:         {}
-// CHECK:STDOUT:     import_refs:     {}
+// CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:
 // CHECK:STDOUT:       0:               inst14

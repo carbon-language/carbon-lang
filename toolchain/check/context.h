@@ -161,7 +161,7 @@ class Context {
 
   auto global_init() -> GlobalInit& { return global_init_; }
 
-  auto imports() -> llvm::SmallVector<SemIR::InstId>& { return imports; }
+  auto imports() -> llvm::SmallVector<SemIR::InstId>& { return imports_; }
 
   // Pre-computed parts of a binding pattern.
   // TODO: Consider putting this behind a narrower API to guard against emitting

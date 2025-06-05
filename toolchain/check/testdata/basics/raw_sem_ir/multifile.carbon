@@ -72,7 +72,7 @@ fn B() {
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst15
-// CHECK:STDOUT:     import_refs:     {}
+// CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:     {}
 // CHECK:STDOUT:     inst_block5:
@@ -151,7 +151,7 @@ fn B() {
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst17
-// CHECK:STDOUT:     import_refs:
+// CHECK:STDOUT:     imports:
 // CHECK:STDOUT:       0:               inst16
 // CHECK:STDOUT:       1:               inst22
 // CHECK:STDOUT:       2:               inst23
