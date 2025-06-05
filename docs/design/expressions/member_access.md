@@ -732,20 +732,23 @@ names, such as a namespace or a type, then `y` is looked up within `x`, and
 instance binding is not performed. Otherwise, `y` is looked up within the type
 of `x` and instance binding is performed if an instance member is found.
 
-If instance binding is to be performed, the result of instance binding depends on what instance member was found:
+If instance binding is to be performed, the result of instance binding depends
+on what instance member `M` was found:
 
 -   For a field member of a struct type, `x` is required to have that struct
     type, and it is converted to an expression with
     [struct form](/docs/design/values.md#expression-forms) by applying
     [form decomposition](/docs/design/values.md#form-conversions) (if it doesn't
-    have a struct form already). Then, instance binding proceeds as in the
-    previous case.
+    have a struct form already). Then, the form of `x.f` is the value of the
+    corresponding field of the struct form, and `x.f` evaluates to the
+    corresponding field of `x`.
 -   For an element member of a tuple type, `x` is required to have that tuple
     type, and it is converted to a
     [tuple form](/docs/design/values.md#expression-forms) by applying
     [form decomposition](/docs/design/values.md#form-conversions) (if it doesn't
-    have a tuple form already). Then, instance binding proceeds as in the
-    previous case.
+    have a tuple form already). Then, the form of `x.f` is the value of the
+    corresponding element of the tuple form, and `x.f` evaluates to the
+    corresponding element of `x`.
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.
     If `x` is an
