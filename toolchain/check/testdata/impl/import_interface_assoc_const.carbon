@@ -120,7 +120,7 @@ import library "interface";
 
 class C7 { }
 
-// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant T given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant `.(I.T)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl C7 as I where .T = {} and .T = () { }
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -993,7 +993,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%I.lookup_impl_witness) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type and %impl.elem0 = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = <error>> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1043,7 +1043,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
-// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {

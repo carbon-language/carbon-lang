@@ -58,6 +58,21 @@ auto AllocateFacetTypeImplWitness(Context& context,
                                   SemIR::InterfaceId interface_id,
                                   SemIR::InstBlockId witness_id) -> void;
 
+// Returns whether the constant or instruction is a `BindSymbolicName` referring
+// to `.Self`.
+//
+// Working with a `ConstantId` can be more efficient for this operation than
+// unconditionally unwrapping to the `InstId`.
+auto IsPeriodSelf(Context& context, SemIR::ConstantId const_id) -> bool;
+auto IsPeriodSelf(Context& context, SemIR::InstId inst_id) -> bool;
+
+// Perform rewrite constraint resolution for a facet type and canonicalize the
+// FacetTypeInfo. The FacetTypeInfo must not be modified after this operation.
+auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
+                                              SemIR::LocId loc_id,
+                                              SemIR::FacetTypeInfo& facet_type)
+    -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_

@@ -5,11 +5,13 @@
 #include "toolchain/check/facet_type.h"
 
 #include "toolchain/check/convert.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -164,24 +166,10 @@ auto InitialFacetTypeImplWitness(
       continue;
     }
 
-    if (table_entry != SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
-      if (table_entry != rewrite_inst_id) {
-        // TODO: Figure out how to print the two different values
-        // `const_id` & `rewrite_inst_id` in the diagnostic
-        // message.
-        CARBON_DIAGNOSTIC(
-            AssociatedConstantWithDifferentValues, Error,
-            "associated constant {0} given two different values {1} and {2}",
-            SemIR::NameId, InstIdAsConstant, InstIdAsConstant);
-        auto& assoc_const = context.associated_constants().Get(
-            assoc_constant_decl->assoc_const_id);
-        context.emitter().Emit(
-            facet_type_inst_id, AssociatedConstantWithDifferentValues,
-            assoc_const.name_id, table_entry, rewrite_inst_id);
-      }
-      table_entry = SemIR::ErrorInst::InstId;
-      continue;
-    }
+    // FacetTypes resolution disallows two rewrites to the same associated
+    // constant, so we won't ever have a facet write twice to the same position
+    // in the witness table.
+    CARBON_CHECK(table_entry == SemIR::ImplWitnessTablePlaceholder::TypeInstId);
 
     // If the associated constant has a symbolic type, convert the rewrite
     // value to that type now we know the value of `Self`.
@@ -261,6 +249,93 @@ auto AllocateFacetTypeImplWitness(Context& context,
   llvm::SmallVector<SemIR::InstId> empty_table(
       assoc_entities.size(), SemIR::ImplWitnessTablePlaceholder::TypeInstId);
   context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
+}
+
+auto IsPeriodSelf(Context& context, SemIR::ConstantId const_id) -> bool {
+  // This also rejects the singleton Error value as it's concrete.
+  if (!const_id.is_symbolic()) {
+    return false;
+  }
+  const auto& symbolic =
+      context.constant_values().GetSymbolicConstant(const_id);
+  // Fast early reject before doing more expensive operations.
+  if (symbolic.dependence != SemIR::ConstantDependence::PeriodSelf) {
+    return false;
+  }
+  return IsPeriodSelf(context, symbolic.inst_id);
+}
+
+auto IsPeriodSelf(Context& context, SemIR::InstId inst_id) -> bool {
+  // Unwrap the `FacetAccessType` instruction, which we get when the `.Self` is
+  // converted to `type`.
+  if (auto facet_access_type =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
+    inst_id = facet_access_type->facet_value_inst_id;
+  }
+  if (auto bind_symbolic_name =
+          context.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
+    const auto& bind_name =
+        context.entity_names().Get(bind_symbolic_name->entity_name_id);
+    return bind_name.name_id == SemIR::NameId::PeriodSelf;
+  }
+  return false;
+}
+
+auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
+                                              SemIR::LocId loc_id,
+                                              SemIR::FacetTypeInfo& facet_type)
+    -> void {
+  // This operation sorts and dedupes the rewrite constraints. They are sorted
+  // primarily by the `lhs_id`, then by the `rhs_id`.
+  facet_type.Canonicalize();
+
+  if (facet_type.rewrite_constraints.empty()) {
+    return;
+  }
+
+  for (size_t i :
+       llvm::seq<size_t>(facet_type.rewrite_constraints.size() - 1)) {
+    auto& constraint = facet_type.rewrite_constraints[i];
+    if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
+        constraint.rhs_id == SemIR::ErrorInst::InstId) {
+      continue;
+    }
+
+    if (!context.insts().Is<SemIR::ImplWitnessAccess>(constraint.lhs_id)) {
+      continue;
+    }
+    auto lhs_access =
+        context.insts().GetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
+    if (!context.insts().Is<SemIR::LookupImplWitness>(lhs_access.witness_id)) {
+      continue;
+    }
+    auto lhs_lookup =
+        context.insts().GetAs<SemIR::LookupImplWitness>(lhs_access.witness_id);
+    if (!IsPeriodSelf(context, lhs_lookup.query_self_inst_id)) {
+      continue;
+    }
+
+    auto& next = facet_type.rewrite_constraints[i + 1];
+    if (next.lhs_id != SemIR::ErrorInst::InstId &&
+        next.rhs_id != SemIR::ErrorInst::InstId) {
+      if (constraint.lhs_id == next.lhs_id) {
+        CARBON_DIAGNOSTIC(
+            AssociatedConstantWithDifferentValues, Error,
+            "associated constant {0} given two different values {1} and {2}",
+            InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
+        context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
+                               constraint.lhs_id, constraint.rhs_id,
+                               next.rhs_id);
+        constraint.rhs_id = SemIR::ErrorInst::InstId;
+        next.rhs_id = SemIR::ErrorInst::InstId;
+        continue;
+      }
+    }
+  }
+
+  // Canonicalize again, as we may have inserted errors into the rewrite
+  // constraints, and these could change sorting order.
+  facet_type.Canonicalize();
 }
 
 }  // namespace Carbon::Check
