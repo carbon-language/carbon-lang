@@ -732,7 +732,7 @@ names, such as a namespace or a type, then `y` is looked up within `x`, and
 instance binding is not performed. Otherwise, `y` is looked up within the type
 of `x` and instance binding is performed if an instance member is found.
 
-If instance binding is performed:
+If instance binding is to be performed, the result of instance binding depends on what instance member was found:
 
 -   For a field member of a struct type, `x` is required to have that struct
     type, and it is converted to an expression with
