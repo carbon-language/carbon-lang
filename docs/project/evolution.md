@@ -322,9 +322,16 @@ future changes will be needed (including adding new placeholder documents if
 needed), with links back to the proposal document. These comments should be kept
 close to the passages that need to be changed. This is intended to ensure that
 readers of the design documentation know when what they're reading is out of
-date, and can easily find out what has changed. See
-[#5606](https://github.com/carbon-language/carbon-lang/pull/5606) for examples
-of adding those comments.
+date, and can easily find out what has changed. For example:
+
+```md
+**TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
+[p5366](/proposals/p5366.md).
+```
+
+See the `docs/design` changes in
+[#5606: Keep design documents current](https://github.com/carbon-language/carbon-lang/pull/5606)
+for additional examples of adding those comments.
 
 #### Open questions
 
