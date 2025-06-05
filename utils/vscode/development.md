@@ -21,7 +21,7 @@ npm install -g vsce
     -   Locally:
 
         ```
-        npm install && vsce package -o carbon.vsix && code --install-extension carbon.vsix
+        npm install && /usr/local/lib/node_modules/vsce/vsce package -o carbon.vsix && code --install-extension carbon.vsix
         ```
 
     -   From a remote SSH host using VS Code Server:
