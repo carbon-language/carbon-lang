@@ -26,6 +26,18 @@ namespace Carbon::Lex {
 
 class TokenizedBuffer;
 
+struct LineInfo {
+  explicit LineInfo(int32_t start) : start(start), indent(0) {}
+
+  // Zero-based byte offset of the start of the line within the source buffer
+  // provided.
+  int32_t start;
+
+  // The byte offset from the start of the line of the first non-whitespace
+  // character.
+  int32_t indent;
+};
+
 // A lightweight handle to a lexed line in a `TokenizedBuffer`.
 //
 // `LineIndex` objects are designed to be passed by value, not reference or
@@ -38,6 +50,8 @@ class TokenizedBuffer;
 //
 // All other APIs to query a `LineIndex` are on the `TokenizedBuffer`.
 struct LineIndex : public IndexBase<LineIndex> {
+  using ValueType = LineInfo;
+
   static constexpr llvm::StringLiteral Label = "line";
   static const LineIndex None;
   using IndexBase::IndexBase;
@@ -45,8 +59,24 @@ struct LineIndex : public IndexBase<LineIndex> {
 
 constexpr LineIndex LineIndex::None(NoneIndex);
 
+// A comment, which can be a block of lines. These are tracked separately from
+// tokens because they don't affect parse; if they were part of tokens, we'd
+// need more general special-casing within token logic.
+//
+// Note that `CommentInfo` is used for an API to expose the comment.
+struct CommentData {
+  // Zero-based byte offset of the start of the comment within the source
+  // buffer provided.
+  int32_t start;
+
+  // The comment's length.
+  int32_t length;
+};
+
 // Indices for comments within the buffer.
 struct CommentIndex : public IndexBase<CommentIndex> {
+  using ValueType = CommentData;
+
   static constexpr llvm::StringLiteral Label = "comment";
   static const CommentIndex None;
   using IndexBase::IndexBase;
@@ -145,12 +175,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   // Returns the 1-based indentation column number.
   auto GetIndentColumnNumber(LineIndex line) const -> int;
-
-  // Returns the next line handle.
-  auto GetNextLine(LineIndex line) const -> LineIndex;
-
-  // Returns the previous line handle.
-  auto GetPrevLine(LineIndex line) const -> LineIndex;
 
   auto GetByteOffset(TokenIndex token) const -> int32_t {
     return GetTokenInfo(token).byte_offset();
@@ -436,32 +460,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   static_assert(sizeof(TokenInfo) == 8,
                 "Expected `TokenInfo` to pack to an 8-byte structure.");
 
-  // A comment, which can be a block of lines. These are tracked separately from
-  // tokens because they don't affect parse; if they were part of tokens, we'd
-  // need more general special-casing within token logic.
-  //
-  // Note that `CommentInfo` is used for an API to expose the comment.
-  struct CommentData {
-    // Zero-based byte offset of the start of the comment within the source
-    // buffer provided.
-    int32_t start;
-
-    // The comment's length.
-    int32_t length;
-  };
-
-  struct LineInfo {
-    explicit LineInfo(int32_t start) : start(start), indent(0) {}
-
-    // Zero-based byte offset of the start of the line within the source buffer
-    // provided.
-    int32_t start;
-
-    // The byte offset from the start of the line of the first non-whitespace
-    // character.
-    int32_t indent;
-  };
-
   // The constructor is merely responsible for trivial initialization of
   // members. A working object of this type is built with `Lex::Lex` so that its
   // return can indicate if an error was encountered while lexing.
@@ -471,9 +469,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
       : value_stores_(&value_stores), source_(&source) {}
 
   auto FindLineIndex(int32_t byte_offset) const -> LineIndex;
-  auto GetLineInfo(LineIndex line) -> LineInfo&;
-  auto GetLineInfo(LineIndex line) const -> const LineInfo&;
-  auto AddLine(LineInfo info) -> LineIndex;
   auto GetTokenInfo(TokenIndex token) -> TokenInfo&;
   auto GetTokenInfo(TokenIndex token) const -> const TokenInfo&;
   auto AddToken(TokenInfo info) -> TokenIndex;
@@ -493,10 +488,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   llvm::SmallVector<TokenInfo> token_infos_;
 
-  llvm::SmallVector<LineInfo> line_infos_;
+  ValueStore<LineIndex> line_infos_;
 
   // Comments in the file.
-  llvm::SmallVector<CommentData> comments_;
+  ValueStore<CommentIndex> comments_;
 
   // A range of tokens marked by `//@dump-semir-[begin|end]`.
   //

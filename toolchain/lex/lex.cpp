@@ -54,7 +54,6 @@ namespace Carbon::Lex {
 class [[clang::internal_linkage]] Lexer {
  public:
   using TokenInfo = TokenizedBuffer::TokenInfo;
-  using LineInfo = TokenizedBuffer::LineInfo;
 
   // Symbolic result of a lexing action. This indicates whether we successfully
   // lexed a token, or whether other lexing actions should be attempted.
@@ -96,18 +95,16 @@ class [[clang::internal_linkage]] Lexer {
   // But because it can, the compiler will flatten this otherwise.
   [[gnu::noinline]] auto MakeLines(llvm::StringRef source_text) -> void;
 
-  auto current_line() -> LineIndex { return LineIndex(line_index_); }
+  auto current_line() -> LineIndex { return line_index_; }
 
-  auto current_line_info() -> LineInfo* {
-    return &buffer_.line_infos_[line_index_];
+  auto current_line_info() -> LineInfo& {
+    return buffer_.line_infos_.Get(line_index_);
   }
 
-  auto next_line() -> LineIndex { return LineIndex(line_index_ + 1); }
+  auto next_line() -> LineIndex { return LineIndex(line_index_.index + 1); }
 
-  auto next_line_info() -> LineInfo* {
-    CARBON_CHECK(line_index_ + 1 <
-                 static_cast<ssize_t>(buffer_.line_infos_.size()));
-    return &buffer_.line_infos_[line_index_ + 1];
+  auto next_line_info() -> LineInfo& {
+    return buffer_.line_infos_.Get(next_line());
   }
 
   // Note when the lexer has encountered whitespace, and the next lexed token
@@ -147,7 +144,7 @@ class [[clang::internal_linkage]] Lexer {
 
   // Starts a new line, skipping whitespace and setting the indent.
   auto AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
-                     ssize_t to_line_index) -> void;
+                     LineIndex to_line_index) -> void;
 
   auto LexHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
@@ -231,7 +228,7 @@ class [[clang::internal_linkage]] Lexer {
 
   TokenizedBuffer buffer_;
 
-  ssize_t line_index_;
+  LineIndex line_index_ = LineIndex::None;
 
   // Tracks whether the lexer has encountered whitespace that will be leading
   // whitespace for the next lexed token. Reset after each token lexed.
@@ -781,8 +778,8 @@ auto Lexer::Lex() && -> TokenizedBuffer {
 auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   if (source_text.empty()) {
     // Construct a single line for empty input.
-    buffer_.AddLine(TokenizedBuffer::LineInfo(0));
-    line_index_ = 0;
+    buffer_.line_infos_.Add(LineInfo(0));
+    line_index_ = LineIndex(0);
     return;
   }
 
@@ -810,23 +807,23 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   while (const char* nl = reinterpret_cast<const char*>(
              memchr(&text[start], '\n', size - start))) {
     ssize_t nl_index = nl - text;
-    buffer_.AddLine(TokenizedBuffer::LineInfo(start));
+    buffer_.line_infos_.Add(LineInfo(start));
     start = nl_index + 1;
   }
   // The last line ends at the end of the file.
-  buffer_.AddLine(TokenizedBuffer::LineInfo(start));
+  buffer_.line_infos_.Add(LineInfo(start));
 
   // If the last line wasn't empty, the file ends with an unterminated line.
   // Add an extra blank line so that we never need to handle the special case
   // of being on the last line inside the lexer and needing to not increment
   // to the next line.
   if (start != size) {
-    buffer_.AddLine(TokenizedBuffer::LineInfo(size));
+    buffer_.line_infos_.Add(LineInfo(size));
   }
 
   // Now that all the infos are allocated, get a fresh pointer to the first
   // info for use while lexing.
-  line_index_ = 0;
+  line_index_ = LineIndex(0);
 }
 
 auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
@@ -842,14 +839,14 @@ auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
 }
 
 auto Lexer::AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
-                          ssize_t to_line_index) -> void {
+                          LineIndex to_line_index) -> void {
   CARBON_DCHECK(to_line_index >= line_index_);
   line_index_ = to_line_index;
-  auto* line_info = current_line_info();
-  ssize_t line_start = line_info->start;
+  auto& line_info = current_line_info();
+  ssize_t line_start = line_info.start;
   position = line_start;
   SkipHorizontalWhitespace(source_text, position);
-  line_info->indent = position - line_start;
+  line_info.indent = position - line_start;
 }
 
 auto Lexer::LexHorizontalWhitespace(llvm::StringRef source_text,
@@ -863,7 +860,7 @@ auto Lexer::LexHorizontalWhitespace(llvm::StringRef source_text,
 auto Lexer::LexVerticalWhitespace(llvm::StringRef source_text,
                                   ssize_t& position) -> void {
   NoteWhitespace();
-  AdvanceToLine(source_text, position, line_index_ + 1);
+  AdvanceToLine(source_text, position, next_line());
 }
 
 auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
@@ -958,8 +955,8 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   int32_t comment_start = position;
 
   // Any comment must be the only non-whitespace on the line.
-  const auto* line_info = current_line_info();
-  if (LLVM_UNLIKELY(position != line_info->start + line_info->indent)) {
+  const auto line_info = current_line_info();
+  if (LLVM_UNLIKELY(position != line_info.start + line_info.indent)) {
     CARBON_DIAGNOSTIC(TrailingComment, Error,
                       "trailing comments are not permitted");
 
@@ -970,7 +967,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     // whitespace, which already is designed to skip over any erroneous text at
     // the end of the line.
     LexVerticalWhitespace(source_text, position);
-    buffer_.AddComment(line_info->indent, comment_start, position);
+    buffer_.AddComment(line_info.indent, comment_start, position);
     return;
   }
 
@@ -981,12 +978,12 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     llvm::StringRef comment_text = source_text.substr(position);
     if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
       BeginDumpSemIRRange(comment_text.begin());
-      AdvanceToLine(source_text, position, line_index_ + 1);
+      AdvanceToLine(source_text, position, next_line());
       return;
     }
     if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
       EndDumpSemIRRange(comment_text.begin());
-      AdvanceToLine(source_text, position, line_index_ + 1);
+      AdvanceToLine(source_text, position, next_line());
       return;
     }
 
@@ -999,9 +996,8 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   }
 
   // Skip over this line.
-  ssize_t line_index = line_index_;
-  ++line_index;
-  position = buffer_.line_infos_[line_index].start;
+  LineIndex line_index = next_line();
+  position = buffer_.line_infos_.Get(line_index).start;
 
   // A very common pattern is a long block of comment lines all with the same
   // indent and comment start. We skip these comment blocks in bulk both for
@@ -1014,16 +1010,16 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   //
   // TODO: We should extend this to 32-byte SIMD on platforms with support.
   constexpr int MaxIndent = 13;
-  const int indent = line_info->indent;
-  const ssize_t first_line_start = line_info->start;
+  const int indent = line_info.indent;
+  const ssize_t first_line_start = line_info.start;
   ssize_t prefix_size = indent + (is_valid_after_slashes ? 3 : 2);
   auto skip_to_next_line = [this, indent, &line_index, &position] {
     // We're guaranteed to have a line here even on a comment on the last line
     // as we ensure there is an empty line structure at the end of every file.
-    ++line_index;
-    auto* next_line_info = &buffer_.line_infos_[line_index];
-    next_line_info->indent = indent;
-    position = next_line_info->start;
+    ++line_index.index;
+    auto& next_line_info = buffer_.line_infos_.Get(line_index);
+    next_line_info.indent = indent;
+    position = next_line_info.start;
   };
   if (CARBON_USE_SIMD &&
       position + 16 < static_cast<ssize_t>(source_text.size()) &&
@@ -1142,15 +1138,15 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
 
   // Capture the position before we step past the token.
   int32_t byte_offset = position;
-  int string_column = byte_offset - current_line_info()->start;
+  int string_column = byte_offset - current_line_info().start;
   ssize_t literal_size = literal->text().size();
   position += literal_size;
 
   // Update line and column information.
   if (literal->is_multi_line()) {
-    while (next_line_info()->start < position) {
-      ++line_index_;
-      current_line_info()->indent = string_column;
+    while (next_line_info().start < position) {
+      ++line_index_.index;
+      current_line_info().indent = string_column;
     }
     // Note that we've updated the current line at this point, but
     // `set_indent_` is already true from above. That remains correct as the
@@ -1458,8 +1454,8 @@ auto Lexer::LexFileStart(llvm::StringRef source_text, ssize_t& position)
 
   // Also skip any horizontal whitespace and record the indentation of the
   // first line.
-  CARBON_CHECK(current_line_info()->start == 0);
-  AdvanceToLine(source_text, position, /*to_line_index=*/0);
+  CARBON_CHECK(current_line_info().start == 0);
+  AdvanceToLine(source_text, position, /*to_line_index=*/LineIndex(0));
 }
 
 auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
@@ -1470,8 +1466,8 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
   // as separators in case of a missing newline on the last line. We do this
   // here instead of detecting this when we see the newline to avoid more
   // conditions along that fast path.
-  if (position == current_line_info()->start && line_index_ != 0) {
-    --line_index_;
+  if (position == current_line_info().start && line_index_.index != 0) {
+    --line_index_.index;
     --position;
   }
 
