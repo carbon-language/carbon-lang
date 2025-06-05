@@ -15,6 +15,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/name_ref.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pointer_dereference.h"
@@ -332,6 +333,12 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
                            SemIR::InstId callee_id) -> SemIR::InstId {
   auto loc_id = SemIR::LocId(callee_id);
   auto& function = context.functions().Get(function_id);
+
+  // Build a `NameRef` naming the callee, and a `SpecificConstant` if needed.
+  auto callee_type = context.types().GetAs<SemIR::FunctionType>(
+      context.insts().Get(callee_id).type_id());
+  callee_id = BuildNameRef(context, loc_id, function.name_id, callee_id,
+                           callee_type.specific_id);
 
   // If we have a self parameter, form `self.<callee_id>`.
   if (function.self_param_id.has_value()) {
