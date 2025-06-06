@@ -37,4 +37,3 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
 var v: e where .x = 3;
-
