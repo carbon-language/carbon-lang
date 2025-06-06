@@ -12,7 +12,6 @@ filegroup(
     srcs = [
         "//toolchain/check:testdata",
         "//toolchain/codegen:testdata",
-        "//toolchain/diagnostics:testdata",
         "//toolchain/driver:testdata",
         "//toolchain/format:testdata",
         "//toolchain/language_server:testdata",

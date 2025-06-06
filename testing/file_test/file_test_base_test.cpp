@@ -126,6 +126,19 @@ static auto TestCaptureConsoleOutput(TestParams& params)
   return {{.success = true}};
 }
 
+// Prints and returns expected results for escaping.carbon.
+static auto TestEscaping(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  params.error_stream << "carriage return\r\n"
+                         "{one brace}\n"
+                         "{{two braces}}\n"
+                         "[one bracket]\n"
+                         "[[two brackets]]\n"
+                         "end of line whitespace   \n"
+                         "\ttabs\t\n";
+  return {{.success = true}};
+}
+
 // Prints and returns expected results for example.carbon.
 static auto TestExample(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
@@ -186,19 +199,6 @@ static auto TestNoLineNumber(TestParams& params)
                           "b.carbon: msg3\n"
                           "msg4\n"
                           "a.carbon: msg5\n";
-  return {{.success = true}};
-}
-
-// Prints and returns expected results for escaping.carbon.
-static auto TestEscaping(TestParams& params)
-    -> ErrorOr<FileTestBaseTest::RunResult> {
-  params.error_stream << "carriage return\r\n"
-                         "{one brace}\n"
-                         "{{two braces}}\n"
-                         "[one bracket]\n"
-                         "[[two brackets]]\n"
-                         "end of line whitespace   \n"
-                         "\ttabs\t\n";
   return {{.success = true}};
 }
 
@@ -269,9 +269,11 @@ auto FileTestBaseTest::Run(
   PrintArgs(test_args, output_stream);
 
   auto filename = std::filesystem::path(test_name().str()).filename();
-  if (filename == "args.carbon" || filename == "include_file.carbon") {
-    // 'args.carbon' and 'include_file.carbon' have custom arguments, so don't
-    // do regular argument validation for them.
+  if (filename == "args.carbon" || filename == "include_args.carbon" ||
+      filename == "include_extra_args.carbon" ||
+      filename == "include_args_and_extra_args.carbon") {
+    // These files are testing argument behavior, which doesn't work with the
+    // default test logic.
     return {{.success = true}};
   }
 

@@ -713,8 +713,8 @@ auto CompilationUnit::RunLower() -> void {
       subtrees = cache_->tree_and_subtrees_getters();
     }
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs, subtrees,
-                                 input_filename_, *sem_ir_, sem_ir_->cpp_ast(),
-                                 &inst_namer, vlog_stream_);
+                                 input_filename_, *sem_ir_, &inst_namer,
+                                 vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");

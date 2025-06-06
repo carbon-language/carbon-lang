@@ -19,6 +19,20 @@ constexpr Kind Kinds[] = {
 #include "toolchain/diagnostics/diagnostic_kind.def"
 };
 
+// TODO: LanguageServerDiagnosticInWrongFile currently has coverage, but
+// mainly due to incorrect behavior in C++ diagnostics. See
+// language_server/testdata/text_document/open_with_cpp_nonexistent.carbon.
+// Leaving this TODO here until it's more precisely tested, because the C++
+// diagnostics should be fixed (removing coverage); see below TODO.
+//
+// TODO: This can only fire if the first message in a diagnostic is rooted
+// in a file other than the file being compiled. The language server
+// currently only supports compiling one file at a time. Do one of:
+// - When imports are supported, find a diagnostic whose first message isn't
+//   in the current file.
+// - Require all diagnostics produced by compiling have their first location
+//   be in the file being compiled, never an import.
+// Kind::LanguageServerDiagnosticInWrongFile,
 constexpr Kind UntestedKinds[] = {
     // These exist only for unit tests.
     Kind::TestDiagnostic,
@@ -42,15 +56,6 @@ constexpr Kind UntestedKinds[] = {
 
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     Kind::TooManyDigits,
-
-    // TODO: This can only fire if the first message in a diagnostic is rooted
-    // in a file other than the file being compiled. The language server
-    // currently only supports compiling one file at a time. Do one of:
-    // - When imports are supported, find a diagnostic whose first message isn't
-    //   in the current file.
-    // - Require all diagnostics produced by compiling have their first location
-    //   be in the file being compiled, never an import.
-    Kind::LanguageServerDiagnosticInWrongFile,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

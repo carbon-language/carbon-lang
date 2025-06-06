@@ -30,6 +30,7 @@ cc_library(
     srcs = [
         "constant.cpp",
         "constant.h",
+        "context.cpp",
         "file_context.cpp",
         "function_context.cpp",
         "mangler.cpp",
@@ -40,6 +41,7 @@ cc_library(
         "handle*.cpp",
     ]),
     hdrs = [
+        "context.h",
         "file_context.h",
         "function_context.h",
     ],

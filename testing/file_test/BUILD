@@ -62,7 +62,11 @@ file_test(
     name = "file_test_base_test",
     size = "small",
     srcs = ["file_test_base_test.cpp"],
-    tests = glob(["testdata/**"]),
+    data = glob(["testdata/include_files/**"]),
+    tests = glob(
+        ["testdata/**"],
+        exclude = ["testdata/include_files/**"],
+    ),
     deps = [
         ":file_test_base",
         "//common:ostream",

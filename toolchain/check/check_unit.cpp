@@ -213,7 +213,7 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
     bool is_export = results[direct_index].is_export;
 
     for (const auto& indirect_ir :
-         results[direct_index].sem_ir->import_irs().array_ref()) {
+         results[direct_index].sem_ir->import_irs().values()) {
       if (!indirect_ir.is_export) {
         continue;
       }
@@ -416,7 +416,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 }
 
 auto CheckUnit::CheckRequiredDeclarations() -> void {
-  for (const auto& function : context_.functions().array_ref()) {
+  for (const auto& function : context_.functions().values()) {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
       auto function_import_id =
@@ -590,8 +590,8 @@ auto CheckUnit::FinishRun() -> void {
   context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,
                                             context_.exports());
   // Finalizes the ImportRef inst block.
-  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::ImportRefs,
-                                            context_.import_ref_ids());
+  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Imports,
+                                            context_.imports());
   // Finalizes __global_init.
   context_.global_init().Finalize();
 

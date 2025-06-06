@@ -18,6 +18,6 @@ interface BitAnd {
   fn Op[self: Self](other: Self) -> Self;
 }
 
-impl forall [T:! type] T as BitAnd {
+impl type as BitAnd {
   fn Op[self: Self](other: Self) -> Self = "type.and";
 }

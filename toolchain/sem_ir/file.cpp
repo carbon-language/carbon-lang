@@ -62,7 +62,7 @@ auto File::Verify() const -> ErrorOr<Success> {
 
   // Check that every code block has a terminator sequence that appears at the
   // end of the block.
-  for (const Function& function : functions_.array_ref()) {
+  for (const Function& function : functions_.values()) {
     for (InstBlockId block_id : function.body_block_ids) {
       TerminatorKind prior_kind = TerminatorKind::NotTerminator;
       for (InstId inst_id : inst_blocks().Get(block_id)) {

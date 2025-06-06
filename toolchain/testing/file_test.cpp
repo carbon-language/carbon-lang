@@ -63,19 +63,14 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
-  // The prelude mode. For lex and parse, it's always `None`; we exclude it in
-  // order to focus errors. For check and lowering, it's set through
-  // `min_prelude` and `no_prelude` subdirectories.
+  // The prelude mode. For lex and parse, it's always `Default`. For check and
+  // lowering, it's set through `min_prelude` subdirectories.
+  // TODO: Remove `min_prelude` subdirectory support.
   enum Prelude {
     Default,
     Min,
-    None,
   };
   auto prelude() const -> Prelude {
-    if (component_ == "lex" || component_ == "parse" ||
-        test_name().find("/no_prelude/") != llvm::StringRef::npos) {
-      return Prelude::None;
-    }
     if (test_name().find("/min_prelude/") != llvm::StringRef::npos) {
       return Prelude::Min;
     }
@@ -134,9 +129,11 @@ auto ToolchainFileTest::Run(
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) const -> ErrorOr<RunResult> {
-  CARBON_ASSIGN_OR_RETURN(auto prelude_files,
-                          installation_.ReadPreludeManifest());
-  if (prelude() == Prelude::Default) {
+  llvm::SmallVector<std::string> prelude_files;
+  // Lex and parse shouldn't ever access the prelude.
+  if (component_ != "lex" && component_ != "parse") {
+    // TODO: Try providing the prelude as an overlay.
+    CARBON_ASSIGN_OR_RETURN(prelude_files, installation_.ReadPreludeManifest());
     for (const auto& file : prelude_files) {
       CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
     }
@@ -188,13 +185,16 @@ auto ToolchainFileTest::GetDefaultArgs() const
   args.insert(args.end(), {"compile", "--phase=" + component_.str()});
 
   if (component_ == "lex") {
-    args.insert(args.end(), {"--dump-tokens", "--omit-file-boundary-tokens"});
+    args.insert(args.end(), {"--no-prelude-import", "--dump-tokens",
+                             "--omit-file-boundary-tokens"});
   } else if (component_ == "parse") {
-    args.push_back("--dump-parse-tree");
+    args.insert(args.end(), {"--no-prelude-import", "--dump-parse-tree"});
   } else if (component_ == "check") {
-    args.push_back("--dump-sem-ir");
+    args.insert(args.end(), {"--dump-sem-ir", "--dump-sem-ir-ranges=only"});
   } else if (component_ == "lower") {
     args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
+  } else if (component_ == "codegen") {
+    // codegen tests specify flags as needed.
   } else {
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
   }
@@ -211,10 +211,6 @@ auto ToolchainFileTest::GetDefaultArgs() const
       // exclude min_prelude files that way.
       args.insert(args.end(), {"--custom-core",
                                "--exclude-dump-file-prefix=include_files/"});
-      break;
-
-    case Prelude::None:
-      args.push_back("--no-prelude-import");
       break;
   }
 

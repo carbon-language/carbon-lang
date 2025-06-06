@@ -86,14 +86,14 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     info.FormatDiagnostic(message);
 
     RawStringOstream diagnostics_stream;
-    clang::TextDiagnostic text_diagnostic(
-        diagnostics_stream,
-        // TODO: Consider allowing setting `LangOptions` or use
-        // `ASTContext::getLangOptions()`.
-        clang::LangOptions(),
-        // TODO: Consider allowing setting `DiagnosticOptions` or use
-        // `ASTUnit::getDiagnostics().::getLangOptions().getDiagnosticOptions()`.
-        new clang::DiagnosticOptions());
+    // TODO: Consider allowing setting `LangOptions` or use
+    // `ASTContext::getLangOptions()`.
+    clang::LangOptions lang_options;
+    // TODO: Consider allowing setting `DiagnosticOptions` or use
+    // `ASTUnit::getDiagnostics().getLangOptions().getDiagnosticOptions()`.
+    clang::DiagnosticOptions diagnostic_options;
+    clang::TextDiagnostic text_diagnostic(diagnostics_stream, lang_options,
+                                          diagnostic_options);
     text_diagnostic.emitDiagnostic(
         clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
         diag_level, message, info.getRanges(), info.getFixItHints());
@@ -511,7 +511,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
   auto decl_id =
-      AddPlaceholderInst(context, Parse::NodeId::None, function_decl);
+      AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
+  context.imports().push_back(decl_id);
 
   auto function_info = SemIR::Function{
       {.name_id = name_id,
@@ -569,8 +570,9 @@ static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
                                      .class_id = SemIR::ClassId::None,
                                      .decl_block_id = SemIR::InstBlockId::None};
   // TODO: Consider setting a proper location.
-  auto class_decl_id =
-      AddPlaceholderInst(context, SemIR::LocIdAndInst::NoLoc(class_decl));
+  auto class_decl_id = AddPlaceholderInstInNoBlock(
+      context, SemIR::LocIdAndInst::NoLoc(class_decl));
+  context.imports().push_back(class_decl_id);
 
   SemIR::Class class_info = {
       {.name_id = name_id,

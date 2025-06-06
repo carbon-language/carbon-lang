@@ -24,10 +24,13 @@ class Mangler {
   // specified `FileContext`.
   explicit Mangler(FileContext& file_context)
       : file_context_(file_context),
-        cpp_mangle_context_(
-            file_context.cpp_ast()
-                ? file_context.cpp_ast()->getASTContext().createMangleContext()
-                : nullptr) {}
+        cpp_mangle_context_(file_context.cpp_ast()
+                                // Clang's createMangleContext is not
+                                // const-correct, but doesn't modify the AST.
+                                ? const_cast<clang::ASTContext&>(
+                                      file_context.cpp_ast()->getASTContext())
+                                      .createMangleContext()
+                                : nullptr) {}
 
   // Produce a deterministically unique mangled name for the function specified
   // by `function_id` and `specific_id`.

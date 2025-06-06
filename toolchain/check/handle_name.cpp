@@ -55,7 +55,7 @@ auto HandleParseNode(Context& context, Parse::PointerMemberAccessExprId node_id)
                       SemIR::TypeId);
 
     auto builder =
-        context.emitter().Build(SemIR::LocId(node_id).ToTokenOnly(),
+        context.emitter().Build(LocIdForDiagnostics::TokenOnly(node_id),
                                 ArrowOperatorOfNonPointer, not_pointer_type_id);
     builder.Emit();
   };

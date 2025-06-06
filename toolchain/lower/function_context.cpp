@@ -13,11 +13,12 @@ namespace Carbon::Lower {
 
 FunctionContext::FunctionContext(
     FileContext& file_context, llvm::Function* function,
-    SemIR::SpecificId specific_id,
+    FileContext& specific_file_context, SemIR::SpecificId specific_id,
     FileContext::SpecificFunctionFingerprint* function_fingerprint,
     llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
+      specific_file_context_(&specific_file_context),
       specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
@@ -158,7 +159,16 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
     return result.value();
   }
 
-  auto* global = file_context_->GetGlobal(inst_id, specific_id_);
+  auto [const_ir, const_id] = GetConstantValueInSpecific(
+      specific_sem_ir(), specific_id_, sem_ir(), inst_id);
+  CARBON_CHECK(const_ir == &sem_ir() || const_ir == &specific_sem_ir());
+  CARBON_CHECK(const_id.is_concrete(),
+               "Missing value: {0} {1} in {2} has non-concrete value {3}",
+               inst_id, sem_ir().insts().Get(inst_id), specific_id_, const_id);
+  // We can only pass on the InstId if it refers to the file in which the
+  // constant value was provided.
+  auto* global = GetFileContext(const_ir).GetConstant(
+      const_id, const_ir == &sem_ir() ? inst_id : SemIR::InstId::None);
   AddGlobalToCurrentFingerprint(global);
   return global;
 }
@@ -208,8 +218,10 @@ auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
   }
 }
 
-auto FunctionContext::GetTypeOfInst(SemIR::InstId inst_id) -> SemIR::TypeId {
-  return SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id(), inst_id);
+auto FunctionContext::GetTypeIdOfInstInSpecific(SemIR::InstId inst_id)
+    -> std::pair<const SemIR::File*, SemIR::TypeId> {
+  return SemIR::GetTypeOfInstInSpecific(specific_sem_ir(), specific_id(),
+                                        sem_ir(), inst_id);
 }
 
 auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
@@ -260,7 +272,8 @@ auto FunctionContext::Inserter::InsertHelper(
                                          insert_pt);
 }
 
-auto FunctionContext::AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
+auto FunctionContext::AddCallToCurrentFingerprint(SemIR::CheckIRId file_id,
+                                                  SemIR::FunctionId function_id,
                                                   SemIR::SpecificId specific_id)
     -> void {
   if (!function_fingerprint_) {
@@ -268,9 +281,10 @@ auto FunctionContext::AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
   }
 
   RawStringOstream os;
-  // TODO: Replace index with info that is translation unit independent.
+  // TODO: Replace indexes with info that is translation unit independent.
   // Using a string that includes the `FunctionId` string and the index to
   // avoid possible collisions. This needs revisiting.
+  os << "file_id" << file_id.index << "\n";
   os << "function_id" << function_id.index << "\n";
   current_fingerprint_.common_fingerprint.update(os.TakeStr());
   // TODO: Replace index with info that is translation unit independent.

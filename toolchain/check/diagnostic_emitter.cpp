@@ -19,7 +19,7 @@ auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
   auto converted =
-      ConvertLocImpl(static_cast<SemIR::LocId>(loc_id), context_fn);
+      ConvertLocImpl(loc_id.loc_id(), loc_id.is_token_only(), context_fn);
 
   // Use the token when possible, but -1 is the default value.
   auto last_offset = -1;
@@ -39,13 +39,11 @@ auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
   return converted;
 }
 
-auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id,
+auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id, bool is_token_only,
                                        ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
   llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
       SemIR::GetAbsoluteNodeId(sem_ir_, loc_id);
-  bool token_only =
-      loc_id.kind() != SemIR::LocId::Kind::InstId && loc_id.is_token_only();
 
   auto final_node_id = absolute_node_ids.pop_back_val();
   for (const auto& absolute_node_id : absolute_node_ids) {
@@ -55,12 +53,13 @@ auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id,
       continue;
     }
     // TODO: Include the name of the imported library in the diagnostic.
-    auto diag_loc = ConvertLocInFile(absolute_node_id, token_only, context_fn);
+    auto diag_loc =
+        ConvertLocInFile(absolute_node_id, is_token_only, context_fn);
     CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
     context_fn(diag_loc.loc, InImport);
   }
 
-  return ConvertLocInFile(final_node_id, token_only, context_fn);
+  return ConvertLocInFile(final_node_id, is_token_only, context_fn);
 }
 
 auto DiagnosticEmitter::ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id,

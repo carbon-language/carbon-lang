@@ -64,7 +64,8 @@ static auto GetBuiltinFCmpPredicate(SemIR::BuiltinFunctionKind builtin_kind)
 // Returns whether the specified instruction has a signed integer type.
 static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
     -> bool {
-  return context.sem_ir().types().IsSignedInt(context.GetTypeOfInst(int_id));
+  auto [file, type_id] = context.GetTypeIdOfInstInSpecific(int_id);
+  return file->types().IsSignedInt(type_id);
 }
 
 // Creates a zext or sext instruction depending on the signedness of the
@@ -225,12 +226,13 @@ static auto CreateBinaryOperatorForBuiltin(
       // arithmetic or logical shift.
       auto lhs_id = context.sem_ir().inst_blocks().Get(
           context.sem_ir().insts().GetAs<SemIR::Call>(inst_id).args_id)[0];
-      auto lhs_type_id = context.GetTypeOfInst(lhs_id);
+      auto [lhs_type_file, lhs_type_id] =
+          context.GetTypeIdOfInstInSpecific(lhs_id);
       if (builtin_kind == SemIR::BuiltinFunctionKind::IntRightShiftAssign) {
-        lhs_type_id = context.sem_ir().GetPointeeType(lhs_type_id);
+        lhs_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
       }
       return CreateIntShift(context,
-                            context.sem_ir().types().IsSignedInt(lhs_type_id)
+                            lhs_type_file->types().IsSignedInt(lhs_type_id)
                                 ? llvm::Instruction::AShr
                                 : llvm::Instruction::LShr,
                             lhs, rhs);
@@ -390,19 +392,21 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntLeftShiftAssign:
     case SemIR::BuiltinFunctionKind::IntRightShiftAssign: {
       auto* lhs_ptr = context.GetValue(arg_ids[0]);
-      auto lhs_type_id = context.GetTypeOfInst(arg_ids[0]);
-      auto pointee_type_id = context.sem_ir().GetPointeeType(lhs_type_id);
+      auto [lhs_type_file, lhs_type_id] =
+          context.GetTypeIdOfInstInSpecific(arg_ids[0]);
+      auto pointee_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
       // TODO: Factor out the code to create loads and stores, and include alias
       // and alignment information.
       auto* lhs_value = context.builder().CreateLoad(
-          context.GetType(pointee_type_id), lhs_ptr);
+          context.GetFileContext(lhs_type_file).GetType(pointee_type_id),
+          lhs_ptr);
       auto* result = CreateBinaryOperatorForBuiltin(
           context, inst_id, builtin_kind, lhs_value,
           context.GetValue(arg_ids[1]));
       context.builder().CreateStore(result, lhs_ptr);
       // TODO: Add a helper to get a "no value representation" value.
-      context.SetLocal(inst_id, llvm::PoisonValue::get(context.GetType(
-                                    context.GetTypeOfInst(inst_id))));
+      context.SetLocal(inst_id, llvm::PoisonValue::get(
+                                    context.GetTypeOfInstInSpecific(inst_id)));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntEq:
@@ -476,13 +480,36 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  auto callee_function = SemIR::GetCalleeFunction(
-      context.sem_ir(), inst.callee_id, context.specific_id());
+  // TODO: This duplicates the SpecificId handling in `GetCalleeFunction`.
+
+  // TODO: Should the `bound_method` be removed when forming the `call`
+  // instruction? The `self` parameter is transferred into the call argument
+  // list.
+  auto callee_id = inst.callee_id;
+  if (auto bound_method =
+          context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
+    callee_id = bound_method->function_decl_id;
+  }
+
+  // Map to the callee in the specific. This might be in a different file than
+  // the one we're currently lowering.
+  const auto* callee_file = &context.sem_ir();
+  if (context.specific_id().has_value()) {
+    auto [const_file, const_id] = GetConstantValueInSpecific(
+        context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
+        callee_id);
+    callee_file = const_file;
+    callee_id = const_file->constant_values().GetInstIdIfValid(const_id);
+    CARBON_CHECK(callee_id.has_value());
+  }
+
+  auto callee_function = SemIR::GetCalleeFunction(*callee_file, callee_id);
   CARBON_CHECK(callee_function.function_id.has_value());
 
   const SemIR::Function& function =
-      context.sem_ir().functions().Get(callee_function.function_id);
-  context.AddCallToCurrentFingerprint(callee_function.function_id,
+      callee_file->functions().Get(callee_function.function_id);
+  context.AddCallToCurrentFingerprint(callee_file->check_ir_id(),
+                                      callee_function.function_id,
                                       callee_function.resolved_specific_id);
 
   if (auto builtin_kind = function.builtin_function_kind;
@@ -493,17 +520,19 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
 
-  auto inst_type_id = context.GetTypeOfInst(inst_id);
+  auto [inst_type_file, inst_type_id] =
+      context.GetTypeIdOfInstInSpecific(inst_id);
 
-  if (SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst_type_id)
+  if (SemIR::ReturnTypeInfo::ForType(*inst_type_file, inst_type_id)
           .has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
 
   for (auto arg_id : arg_ids) {
-    auto arg_type_id = context.GetTypeOfInst(arg_id);
-    if (SemIR::ValueRepr::ForType(context.sem_ir(), arg_type_id).kind !=
+    auto [arg_type_file, arg_type_id] =
+        context.GetTypeIdOfInstInSpecific(arg_id);
+    if (SemIR::ValueRepr::ForType(*arg_type_file, arg_type_id).kind !=
         SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));
     }
@@ -521,8 +550,10 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     auto* vtable =
         context.builder().CreateLoad(ptr_type, args.front(), "vtable");
     auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
-    auto function_type_info = context.BuildFunctionTypeInfo(
-        function, callee_function.resolved_specific_id);
+    auto function_type_info =
+        context.GetFileContext(callee_file)
+            .BuildFunctionTypeInfo(function,
+                                   callee_function.resolved_specific_id);
     call = context.builder().CreateCall(
         function_type_info.type,
         context.builder().CreateCall(
@@ -535,8 +566,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
         args);
   } else {
     call = context.builder().CreateCall(
-        context.GetOrCreateFunction(callee_function.function_id,
-                                    callee_function.resolved_specific_id),
+        context.GetFileContext(callee_file)
+            .GetOrCreateFunction(callee_function.function_id,
+                                 callee_function.resolved_specific_id),
         args);
   }
 

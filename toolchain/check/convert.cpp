@@ -567,21 +567,13 @@ static auto ConvertStructToClass(
     SemIR::InstId value_id, ConversionTarget target,
     SemIR::InstId dest_vtable_id = SemIR::InstId::None) -> SemIR::InstId {
   PendingBlock target_block(&context);
-  auto object_repr_id = SemIR::TypeId::None;
-
-  {
-    auto& dest_class_info = context.classes().Get(dest_type.class_id);
-    CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
-    if (!dest_vtable_id.has_value()) {
-      dest_vtable_id = dest_class_info.vtable_id;
-    }
-    object_repr_id =
-        dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
-    if (object_repr_id == SemIR::ErrorInst::TypeId) {
-      return SemIR::ErrorInst::InstId;
-    }
+  auto& dest_class_info = context.classes().Get(dest_type.class_id);
+  CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
+  auto object_repr_id =
+      dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
+  if (object_repr_id == SemIR::ErrorInst::TypeId) {
+    return SemIR::ErrorInst::InstId;
   }
-
   auto dest_struct_type =
       context.types().GetAs<SemIR::StructType>(object_repr_id);
 
@@ -596,7 +588,8 @@ static auto ConvertStructToClass(
   }
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
-      context, src_type, dest_struct_type, value_id, target, dest_vtable_id);
+      context, src_type, dest_struct_type, value_id, target,
+      dest_vtable_id.has_value() ? dest_vtable_id : dest_class_info.vtable_id);
 
   if (need_temporary) {
     target_block.InsertHere();
@@ -1461,9 +1454,6 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId {
-  // The callee reference can be invalidated by conversions, so ensure all reads
-  // from it are done before conversion calls.
-  auto callee_decl_id = callee.latest_decl_id();
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_slot_pattern_id = callee.return_slot_pattern_id;
@@ -1477,7 +1467,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
     context.emitter()
         .Build(call_loc_id, MissingObjectInMethodCall)
-        .Note(callee_decl_id, InCallToFunction)
+        .Note(callee.latest_decl_id(), InCallToFunction)
         .Emit();
     self_id = SemIR::ErrorInst::InstId;
   }

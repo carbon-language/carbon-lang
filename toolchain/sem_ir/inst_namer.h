@@ -23,7 +23,7 @@ class InstNamer {
     None = -1,
     // The three top-level scopes.
     File = 0,
-    ImportRefs = 1,
+    Imports = 1,
     Constants = 2,
     // The first entity scope; see entities in `ScopeIdTypeEnum`.
     FirstEntityScope = 3,

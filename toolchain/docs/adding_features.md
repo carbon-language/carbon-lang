@@ -21,10 +21,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Running tests](#running-tests)
     -   [Updating tests](#updating-tests)
         -   [Reviewing test deltas](#reviewing-test-deltas)
-    -   [Minimal Core prelude](#minimal-core-prelude)
-    -   [Verbose output](#verbose-output)
-    -   [Stack traces](#stack-traces)
-    -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
+    -   [Test patterns](#test-patterns)
+        -   [Minimal Core prelude](#minimal-core-prelude)
+        -   [SemIR dumps and ranges](#semir-dumps-and-ranges)
+            -   [Example uses](#example-uses)
+    -   [Debugging errors](#debugging-errors)
+        -   [Verbose output](#verbose-output)
+        -   [Stack traces](#stack-traces)
+        -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
 
 <!-- tocstop -->
 
@@ -487,7 +491,9 @@ Using `autoupdate_testdata.py` can be useful to produce deltas during the
 development process because it allows `git status` and `git diff` to be used to
 examine what changed.
 
-### Minimal Core prelude
+### Test patterns
+
+#### Minimal Core prelude
 
 For most file tests in `check/`, very little of the `Core` package is used, and
 the test is not intentionally testing the `Core` package itself. Compiling the
@@ -508,20 +514,105 @@ We have a set of minimal `Core` preludes for testing different compiler feature
 areas in `//toolchain/testing/min_prelude/`. Each file begins with the line
 `package Core library "prelude";` to make it provide a prelude.
 
-### Verbose output
+#### SemIR dumps and ranges
+
+In `check/` tests, we use ranges to help reduce SemIR output in golden files and
+focus on the most interesting parts. This is done with special
+`//@dump-sem-ir-begin` and `//@dump-sem-ir-end` markers; note these are not
+valid comments because they have no space after `//`. As rules of thumb:
+
+-   Put ranges around code relevant to the feature under test.
+-   When testing similar code in multiple different ways, focus on what's
+    expected to be unique.
+-   Try to keep ranges small.
+    -   We try to structure tests to use type checking to validate correctness;
+        extra code for type checking might be possible to put outside a range.
+    -   For example, when passing an argument to a function call, think about
+        whether the function call needs to be included, or if a range can focus
+        on the argument.
+-   Don't put markers around most failures.
+    -   A lot of failures will print similar SemIR; we're trying to balance
+        review costs with the value of SemIR in golden files.
+
+When a range is printed, referenced constants and import_refs will be
+automatically included as well. A small amount of SemIR may include a number of
+related instructions, such as an in-range instruction referencing an import_ref
+referencing a constant referencing another constant.
+
+> NOTE: In a test, if full SemIR is desired for files, add
+> `// EXTRA-ARGS: --dump-sem-ir-ranges=if-present` with an explanation why.
+
+##### Example uses
+
+The range markers can be placed anywhere in code, and formatting will try to
+print only the relevant SemIR. In the example below, the `Foo` entity will be
+printed because it contains a range; its body will include `LogicUnderTest()`,
+but `SetUp()` and `TearDown()` will be omitted.
+
+```carbon
+fn Foo() {
+  SetUp();
+  //@dump-sem-ir-begin
+  LogicUnderTest();
+  //@dump-sem-ir-end
+  TearDown();
+}
+```
+
+The ranges are token-based, and entity declarations with an overlapping range
+should be included. Ranges can span entity declarations in order to have only
+part of an entity included in output. In the example below, `Bar` and
+`Bar::ImportantCall` will be printed, but `Bar::UnimportantCall` will be
+omitted.
+
+```
+//@dump-sem-ir-begin
+class Bar {
+  fn ImportantCall[self: Self] { ... }
+  //@dump-sem-ir-end
+
+  fn UnimportantCall[self: Self]() { ... }
+}
+```
+
+Out-of-line definitions can be used to print a nested entity without printing
+the entity that contains it. In the example below, `Baz::Interesting` will be
+printed because of the range in its body; `Baz` will be omitted because its
+definition doesn't contain a range.
+
+```
+class Baz {
+  fn Interesting();
+}
+
+fn Baz::Interesting() {
+  //@dump-sem-ir-begin
+  ...
+  //@dump-sem-ir-end
+}
+```
+
+Normally, files with no range markers will be excluded from output. For example,
+we'll often exclude failing tests from output: passing SemIR is typically more
+interesting, and failing tests only need to fail gracefully. However, sometimes
+output can help check that an error is correctly propagated in SemIR.
+
+### Debugging errors
+
+#### Verbose output
 
 The `-v` flag can be passed to trace state, and should be specified before the
 subcommand name: `carbon -v compile ...`. `CARBON_VLOG` is used to print output
 in this mode. There is currently no control over the degree of verbosity.
 
-### Stack traces
+#### Stack traces
 
 While the iterative processing pattern means function stack traces will have
 minimal context for how the current function is reached, we use LLVM's
 `PrettyStackTrace` to include details about the state stack. The state stack
 will be above the function stack in crash output.
 
-### Dumping objects in interactive debuggers
+#### Dumping objects in interactive debuggers
 
 We provide namespace-scoped `Dump` functions in several components, such as
 [check/dump.cpp](/toolchain/check/dump.cpp). These `Dump` functions will print

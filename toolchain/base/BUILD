@@ -86,7 +86,10 @@ cc_library(
 
 cc_library(
     name = "value_store",
-    hdrs = ["value_store.h"],
+    hdrs = [
+        "value_store.h",
+        "value_store_chunk.h",
+    ],
     deps = [
         ":mem_usage",
         ":yaml",

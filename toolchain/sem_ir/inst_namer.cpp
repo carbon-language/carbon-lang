@@ -86,9 +86,9 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   // Build the constants scope.
   CollectNamesInBlock(ScopeId::Constants, sem_ir->constants().array_ref());
 
-  // Build the ImportRef scope.
-  CollectNamesInBlock(ScopeId::ImportRefs,
-                      sem_ir->inst_blocks().Get(InstBlockId::ImportRefs));
+  // Build the imports scope.
+  CollectNamesInBlock(ScopeId::Imports,
+                      sem_ir->inst_blocks().Get(InstBlockId::Imports));
 
   // Build the file scope.
   CollectNamesInBlock(ScopeId::File, sem_ir->top_inst_block_id());
@@ -213,7 +213,7 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
     // These are treated as SemIR keywords.
     case ScopeId::File:
       return "file";
-    case ScopeId::ImportRefs:
+    case ScopeId::Imports:
       return "imports";
     case ScopeId::Constants:
       return "constants";
@@ -533,7 +533,7 @@ auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
   ScopeId old_scope_id = inst_namer_->insts_[inst_id_.index].first;
   if (old_scope_id == ScopeId::None) {
     std::variant<LocId, uint64_t> loc_id_or_fingerprint = LocId::None;
-    if (scope_id_ == ScopeId::Constants || scope_id_ == ScopeId::ImportRefs) {
+    if (scope_id_ == ScopeId::Constants || scope_id_ == ScopeId::Imports) {
       loc_id_or_fingerprint =
           inst_namer_->fingerprinter_.GetOrCompute(&sem_ir(), inst_id_);
     } else {
@@ -855,7 +855,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       if (const_id.has_value() && const_id.is_concrete()) {
         auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
         if (!inst_namer_->insts_[const_inst_id.index].second) {
-          inst_namer_->QueueBlockInsts(*queue_, ScopeId::ImportRefs,
+          inst_namer_->QueueBlockInsts(*queue_, ScopeId::Imports,
                                        llvm::ArrayRef(const_inst_id));
         }
       }
