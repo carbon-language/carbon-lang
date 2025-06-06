@@ -454,9 +454,9 @@ struct FunctionParams {
 };
 }  // namespace
 
-// Returns parameter patterns block id, the return slot pattern id and the
-// call parameters block id for the given function declaration.
-// Returns false if the function declaration has an unsupported parameter type.
+// Returns the function parameters for the given function declaration. Returns
+// `std::nullopt` if the function declaration has an unsupported parameter
+// type.
 static auto GetFunctionParams(Context& context, SemIR::LocId loc_id,
                               const clang::FunctionDecl* clang_decl)
     -> std::optional<FunctionParams> {
