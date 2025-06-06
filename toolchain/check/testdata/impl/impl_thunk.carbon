@@ -359,7 +359,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%y.param: %struct_type.b.a.40c) -> %return.param: %struct_type.d.c.b36;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%x.param: %struct_type.a.b.391) -> %return.param: %struct_type.c.d.15a {
+// CHECK:STDOUT: fn @F.3(%x.param: %struct_type.a.b.391) -> %return.param: %struct_type.c.d.15a [thunk @impl.%F.decl.loc10_48.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc10_48.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:   <elided>
@@ -440,7 +440,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %ptr.6db, %other.param: %ptr.6db) -> %ptr.019;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 {
+// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 [thunk @impl.%F.decl.loc14_39.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc14_39.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
@@ -497,7 +497,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %A, %other.param: %A);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %B, %other.param: %B) {
+// CHECK:STDOUT: fn @F.3(%self.param: %B, %other.param: %B) [thunk @impl.%F.decl.loc13_26.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc13_26.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
@@ -567,7 +567,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %ptr.6db, %other.param: %ptr.6db) -> %ptr.019;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 {
+// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 [thunk @impl.%F.decl.loc14_39.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc14_39.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
@@ -618,9 +618,10 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return.param: %B;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() -> %return.param: %A {
+// CHECK:STDOUT: fn @F.3() -> %return.param: %A [thunk @impl.%F.decl.loc20_14.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.b24d6f.1 = name_ref F, @impl.%F.decl.loc20_14.1 [concrete = constants.%F.77e9d5.1]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc20_14.1: ref %B = temporary_storage
 // CHECK:STDOUT:   %F.call: init %B = call %F.ref() to %.loc20_14.1
 // CHECK:STDOUT:   %.loc20_14.2: ref %B = temporary %.loc20_14.1, %F.call
@@ -696,7 +697,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.specific_fn.loc10_29.2: <specific function> = specific_function constants.%F.c04b92.1, @F.2(%ptr) [symbolic = %F.specific_fn.loc10_29.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) {
+// CHECK:STDOUT:   fn(%x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) [thunk @impl.%F.decl.loc10_29.1] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc10_29.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:     <elided>
@@ -799,7 +800,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) {
+// CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) [thunk @impl.%F.decl.loc19_39.1] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc19_39.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:     <elided>
@@ -859,9 +860,10 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return.param: %struct_type.b.a.1b0;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() -> %return.param: %struct_type.a.b.f95 {
+// CHECK:STDOUT: fn @F.3() -> %return.param: %struct_type.a.b.f95 [thunk @impl.%F.decl.loc10_29.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.29ab63.1 = name_ref F, @impl.%F.decl.loc10_29.1 [concrete = constants.%F.975709.1]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc10_29.1: ref %struct_type.b.a.1b0 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %struct_type.b.a.1b0 = call %F.ref() to %.loc10_29.1
 // CHECK:STDOUT:   %.loc10_29.2: ref %struct_type.b.a.1b0 = temporary %.loc10_29.1, %F.call

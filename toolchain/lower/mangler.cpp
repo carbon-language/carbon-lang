@@ -163,6 +163,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   switch (function.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::None:
       break;
+    case SemIR::Function::SpecialFunctionKind::Builtin:
+      CARBON_FATAL("Attempting to mangle declaration of builtin function {0}",
+                   function.builtin_function_kind());
     case SemIR::Function::SpecialFunctionKind::Thunk:
       os << ":thunk";
       break;

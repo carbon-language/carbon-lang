@@ -16,7 +16,7 @@ namespace Carbon::SemIR {
 // Function-specific fields.
 struct FunctionFields {
   // Kinds of special functions.
-  enum class SpecialFunctionKind : uint8_t { None, Thunk };
+  enum class SpecialFunctionKind : uint8_t { None, Builtin, Thunk };
 
   // Kinds of virtual modifiers that can apply to functions.
   enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
@@ -60,13 +60,15 @@ struct FunctionFields {
   // implicit_param_patterns_id from EntityWithParamsBase.
   InstId self_param_id = InstId::None;
 
-  // The following member is set on the first call to the function, or at the
-  // point where the function is defined.
+  union SpecialFunctionKindInfo {
+    // If special_function_kind is Builtin, the corresponding builtin kind.
+    // This member is set at the end of a builtin function definition.
+    BuiltinFunctionKind builtin_function_kind;
 
-  // The following members are set at the end of a builtin function definition.
-
-  // If this is a builtin function, the corresponding builtin kind.
-  BuiltinFunctionKind builtin_function_kind = BuiltinFunctionKind::None;
+    // If special_function_kind is Thunk, the declaration that this is a thunk
+    // for. This member is set when a thunk is declared.
+    InstId thunk_decl_id = InstId::None;
+  } special_function_kind_info;
 
   // The following members are accumulated throughout the function definition.
 
@@ -107,6 +109,36 @@ struct Function : public EntityWithParamsBase,
           llvm::make_range(body_block_ids.begin(), body_block_ids.end()));
     }
     out << "}";
+  }
+
+  // Returns the builtin function kind for this function, or None if this is not
+  // a builtin function.
+  auto builtin_function_kind() const -> BuiltinFunctionKind {
+    return special_function_kind == SpecialFunctionKind::Builtin
+               ? special_function_kind_info.builtin_function_kind
+               : BuiltinFunctionKind::None;
+  }
+
+  // Sets that this function is a builtin function.
+  auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::Builtin;
+    special_function_kind_info.builtin_function_kind = kind;
+  }
+
+  // Returns the declaration that this is a thunk for, or None if this function
+  // is not a thunk.
+  auto thunk_decl_id() const -> InstId {
+    return special_function_kind == SpecialFunctionKind::Thunk
+               ? special_function_kind_info.thunk_decl_id
+               : InstId::None;
+  }
+
+  // Sets that this function is a thunk.
+  auto SetThunk(InstId decl_id) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::Thunk;
+    special_function_kind_info.thunk_decl_id = decl_id;
   }
 
   // Given the ID of an instruction from `param_patterns_id` or

@@ -240,7 +240,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%c.param: %C.6fb);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.4(%c.param: %C.d88) {
+// CHECK:STDOUT: fn @F.4(%c.param: %C.d88) [thunk @impl.a9a.%F.decl.loc42_18.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.066a53.1 = name_ref F, @impl.a9a.%F.decl.loc42_18.1 [concrete = constants.%F.9ec58f.1]
 // CHECK:STDOUT:   %c.ref: %C.d88 = name_ref c, %c.param

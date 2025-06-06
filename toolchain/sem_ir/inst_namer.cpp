@@ -662,10 +662,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
       const auto& function =
           sem_ir().functions().Get(callee_function.function_id);
       // Name the call's result based on the callee.
-      if (function.builtin_function_kind != BuiltinFunctionKind::None) {
+      if (function.builtin_function_kind() != BuiltinFunctionKind::None) {
         // For a builtin, use the builtin name. Otherwise, we'd typically pick
         // the name `Op` below, which is probably not very useful.
-        AddInstName(function.builtin_function_kind.name().str());
+        AddInstName(function.builtin_function_kind().name().str());
         return;
       }
 

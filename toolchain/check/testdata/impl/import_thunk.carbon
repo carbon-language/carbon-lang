@@ -247,7 +247,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %C.val: @F.3.%C (%C.13320f.2) = struct_value () [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: %empty_struct_type) {
+// CHECK:STDOUT:   fn(%x.param: %empty_struct_type) [thunk @impl.%F.decl.loc8_17.1] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8: @F.3.%F.type (%F.type.0daaa1.1) = specific_constant @impl.%F.decl.loc8_17.1, @impl(constants.%Y) [symbolic = %F (constants.%F.49c1ac.1)]
 // CHECK:STDOUT:     %F.ref: @F.3.%F.type (%F.type.0daaa1.1) = name_ref F, %.loc8 [symbolic = %F (constants.%F.49c1ac.1)]
@@ -352,7 +352,7 @@ fn G() {
 // CHECK:STDOUT:   %Main.import_ref.572 = import_ref Main//b, inst29 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//a, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c44: %I.assoc_type = import_ref Main//a, loc5_14, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.F = import_ref Main//a, F, unloaded
+// CHECK:STDOUT:   %Main.F.8b9 = import_ref Main//a, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e03: %F.type.cf0 = import_ref Main//a, loc5_14, loaded [concrete = constants.%F.bc6]
 // CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//a, inst17 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.f89: <witness> = import_ref Main//b, loc7_32, loaded [symbolic = @impl.%I.impl_witness (constants.%I.impl_witness.7d9)]
@@ -363,6 +363,7 @@ fn G() {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.047), @impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.3: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @impl.%Y (constants.%Y)]
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.4: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @impl.%Y (constants.%Y)]
+// CHECK:STDOUT:   %Main.F.5a8: @impl.%F.type.1 (%F.type.0daaa1.1) = import_ref Main//b, F, loaded [symbolic = @impl.%F.1 (constants.%F.49c1ac.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -379,7 +380,7 @@ fn G() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e5d
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.c44
-// CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:   witness = (imports.%Main.F.8b9)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(imports.%Main.import_ref.eb1c17.2: %empty_tuple.type) [from "b.carbon"] {
@@ -420,17 +421,25 @@ fn G() {
 // CHECK:STDOUT:   %.loc7_7: %empty_tuple.type = converted %.loc7_6, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%empty_tuple) [concrete = constants.%C.607]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
-// CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.c44 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref.loc7_11: %I.assoc_type = name_ref F, imports.%Main.import_ref.c44 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value constants.%C.607, (constants.%I.impl_witness.02b) [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %.loc7_8: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %impl.elem0: %.885 = impl_witness_access constants.%I.impl_witness.02b, element0 [concrete = constants.%F.5fa954.2]
 // CHECK:STDOUT:   %.loc7_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %empty_struct.loc7_16.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_17: %empty_struct_type = converted %.loc7_16.1, %empty_struct.loc7_16.1 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc7_17.1: %empty_struct_type = converted %.loc7_16.1, %empty_struct.loc7_16.1 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.3(constants.%empty_tuple) [concrete = constants.%F.specific_fn.4832e8.1]
 // CHECK:STDOUT:   %empty_struct.loc7_16.2: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_16.2: %empty_struct_type = converted %.loc7_16.1, %empty_struct.loc7_16.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %specific_fn(%.loc7_16.2)
+// CHECK:STDOUT:   %.loc7_17.2: %F.type.af4856.1 = specific_constant imports.%Main.F.5a8, @impl(constants.%empty_tuple) [concrete = constants.%F.5fa954.1]
+// CHECK:STDOUT:   %F.ref.loc7_17: %F.type.af4856.1 = name_ref F, %.loc7_17.2 [concrete = constants.%F.5fa954.1]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref.loc7_17, @F.2(constants.%empty_tuple) [concrete = constants.%F.specific_fn.4832e8.2]
+// CHECK:STDOUT:   %.loc7_16.3: ref %C.607 = temporary_storage
+// CHECK:STDOUT:   %.loc7_16.4: init %C.607 = class_init (), %.loc7_16.3 [concrete = constants.%C.val.12f]
+// CHECK:STDOUT:   %.loc7_16.5: ref %C.607 = temporary %.loc7_16.3, %.loc7_16.4
+// CHECK:STDOUT:   %.loc7_16.6: ref %C.607 = converted %.loc7_16.2, %.loc7_16.5
+// CHECK:STDOUT:   %.loc7_16.7: %C.607 = bind_value %.loc7_16.6
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc7_16.7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -459,7 +468,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %C.val: @F.3.%C (%C.13320f.2) = struct_value () [symbolic = %C.val (constants.%C.val.56a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn;
+// CHECK:STDOUT:   fn [thunk imports.%Main.F.5a8];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {

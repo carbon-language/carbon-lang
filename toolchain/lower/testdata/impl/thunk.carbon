@@ -111,8 +111,14 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTest.Main(ptr sret({ i32 }) %return, ptr %a) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF:thunk.61ea2aba74ab3bf1:I.Main"(ptr %return, ptr %a), !dbg !22
-// CHECK:STDOUT:   ret void, !dbg !23
+// CHECK:STDOUT:   %.loc24_20.1.temp = alloca { i32 }, align 8, !dbg !22
+// CHECK:STDOUT:   %.loc24_20.2.temp = alloca { i32 }, align 8, !dbg !22
+// CHECK:STDOUT:   %.loc24_19.1.temp = alloca { i32 }, align 8, !dbg !23
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc24_19.1.temp, ptr %a), !dbg !23
+// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc24_20.2.temp, ptr %.loc24_19.1.temp), !dbg !22
+// CHECK:STDOUT:   %.loc24_21.1.temp = alloca { i32 }, align 8, !dbg !24
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc24_21.1.temp, ptr %.loc24_20.2.temp), !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -141,7 +147,8 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !20 = !DILocation(line: 16, column: 8, scope: !18)
 // CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !22 = !DILocation(line: 24, column: 10, scope: !21)
-// CHECK:STDOUT: !23 = !DILocation(line: 24, column: 3, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 24, column: 19, scope: !21)
+// CHECK:STDOUT: !24 = !DILocation(line: 24, column: 3, scope: !21)
 // CHECK:STDOUT: ; ModuleID = 'generic_thunk.carbon'
 // CHECK:STDOUT: source_filename = "generic_thunk.carbon"
 // CHECK:STDOUT:
@@ -156,30 +163,31 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCall.Main(ptr sret({}) %return, ptr %c, ptr %b) !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF:thunk.C.Main:I.Main.e43630e9a6c38c3f"(ptr %return, ptr %c, ptr %b), !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   %.loc22_23.1.temp = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   %.loc22_23.3.temp = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc22_23.3.temp, ptr %b), !dbg !9
+// CHECK:STDOUT:   %.loc22_23.7.temp = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   %.loc22_22.1.temp = alloca {}, align 8, !dbg !10
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc22_22.1.temp, ptr %b), !dbg !10
+// CHECK:STDOUT:   call void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr %.loc22_23.7.temp, ptr %c, ptr %.loc22_22.1.temp), !dbg !9
+// CHECK:STDOUT:   %.loc22_24.1.temp = alloca {}, align 8, !dbg !11
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc22_24.1.temp, ptr %.loc22_23.7.temp), !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CCallCallGeneric.Main(ptr sret({}) %return, ptr %c, ptr %b) !dbg !11 {
+// CHECK:STDOUT: define void @_CCallCallGeneric.Main(ptr sret({}) %return, ptr %c, ptr %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CCallGeneric.Main.9ef6968dffa77413(ptr %return, ptr %c, ptr %b), !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   call void @_CCallGeneric.Main.9ef6968dffa77413(ptr %return, ptr %c, ptr %b), !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @"_CF:thunk.C.Main:I.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) !dbg !14 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_31.2.temp = alloca {}, align 8, !dbg !15
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc18_31.2.temp, ptr %x), !dbg !15
-// CHECK:STDOUT:   %.loc18_31.6.temp = alloca {}, align 8, !dbg !15
-// CHECK:STDOUT:   %.loc12_21.1.temp = alloca {}, align 8, !dbg !16
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc12_21.1.temp, ptr %x), !dbg !16
-// CHECK:STDOUT:   call void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr %.loc18_31.6.temp, ptr %self, ptr %.loc12_21.1.temp), !dbg !15
-// CHECK:STDOUT:   %.loc18_31.7.temp = alloca {}, align 8, !dbg !15
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc18_31.7.temp, ptr %.loc18_31.6.temp), !dbg !15
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc18_42, i64 0, i1 false), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CCallGeneric.Main.9ef6968dffa77413(ptr sret({}) %return, ptr %c, ptr %b) !dbg !17 {
@@ -188,9 +196,16 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) !dbg !20 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF:thunk.C.Main:I.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc18_42, i64 0, i1 false), !dbg !21
+// CHECK:STDOUT:   %.loc18_31.2.temp = alloca {}, align 8, !dbg !21
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc18_31.2.temp, ptr %x), !dbg !21
+// CHECK:STDOUT:   %.loc18_31.6.temp = alloca {}, align 8, !dbg !21
+// CHECK:STDOUT:   %.loc12_21.1.temp = alloca {}, align 8, !dbg !22
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc12_21.1.temp, ptr %x), !dbg !22
+// CHECK:STDOUT:   call void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr %.loc18_31.6.temp, ptr %self, ptr %.loc12_21.1.temp), !dbg !21
+// CHECK:STDOUT:   %.loc18_31.7.temp = alloca {}, align 8, !dbg !21
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc18_31.7.temp, ptr %.loc18_31.6.temp), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -209,15 +224,16 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 37, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 22, column: 10, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 3, scope: !8)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CallCallGeneric", linkageName: "_CCallCallGeneric.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 30, column: 10, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 30, column: 3, scope: !11)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk.C.Main:I.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !15 = !DILocation(line: 18, column: 3, scope: !14)
-// CHECK:STDOUT: !16 = !DILocation(line: 12, column: 20, scope: !14)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 22, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !8)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "CallCallGeneric", linkageName: "_CCallCallGeneric.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 30, column: 10, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 30, column: 3, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main:I.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 33, scope: !15)
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main.9ef6968dffa77413", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !18 = !DILocation(line: 26, column: 10, scope: !17)
 // CHECK:STDOUT: !19 = !DILocation(line: 26, column: 3, scope: !17)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main:I.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 33, scope: !20)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk.C.Main:I.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 3, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 12, column: 20, scope: !20)

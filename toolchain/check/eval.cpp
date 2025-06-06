@@ -1717,7 +1717,7 @@ static auto MakeConstantForCall(EvalContext& eval_context,
     // Calls to builtins might be constant.
     builtin_kind = eval_context.functions()
                        .Get(callee_function.function_id)
-                       .builtin_function_kind;
+                       .builtin_function_kind();
     if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
       // TODO: Eventually we'll want to treat some kinds of non-builtin
       // functions as producing constants.
