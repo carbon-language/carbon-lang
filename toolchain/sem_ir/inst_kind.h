@@ -73,9 +73,9 @@ enum class InstConstantKind : int8_t {
   // constants. Constant evaluation support for types with this constant kind is
   // provided automatically.
   WheneverPossible,
-  // This instruction always represents a constant value. This is the same as
-  // `WheneverPossible`, except that the operands are known in advance to always
-  // be constant. For example, `IntValue`.
+  // This instruction always has a constant value of the same kind. This is the
+  // same as `WheneverPossible`, except that the operands are known in advance
+  // to always be constant. For example, `IntValue`.
   Always,
   // This instruction always represents a unique constant value, meaning that if
   // two instructions of this kind have different IDs, they represent different
