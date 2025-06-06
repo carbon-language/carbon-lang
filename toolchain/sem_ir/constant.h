@@ -33,15 +33,20 @@ enum class ConstantDependence : uint8_t {
 // Information about a symbolic constant value. These are indexed by
 // `ConstantId`s for which `is_symbolic` is true.
 //
-// A constant value is represented by a fully-evaluated inst, called a "constant
-// inst", which may depend on other constant insts. That constant inst fully
-// represents the constant value in itself, but for symbolic constant values we
-// sometimes need efficient access to metadata about the mapping between the
-// constant and corresponding constants in specifics of its enclosing generic.
-// As a result, the ID of a concrete constant directly encodes the ID of the
-// constant inst, but the ID of a symbolic constant is an index into a table of
-// `SymbolicConstant` entries containing that metadata, as well as the constant
-// inst ID.
+// A constant value is defined by the canonical ID of a fully-evaluated inst,
+// called a "constant inst", which may depend on the canonical IDs of other
+// constant insts. "Canonical" here means that it is chosen such that equal
+// constants will have equal canonical IDs. This is typically achieved by
+// deduplication in `ConstantStore`, but certain kinds of constant insts are
+// canonicalized in other ways.
+//
+// That constant inst ID fully defines the constant value in itself, but for
+// symbolic constant values we sometimes need efficient access to metadata about
+// the mapping between the constant and corresponding constants in specifics of
+// its enclosing generic. As a result, the ID of a concrete constant directly
+// encodes the ID of the constant inst, but the ID of a symbolic constant is an
+// index into a table of `SymbolicConstant` entries containing that metadata, as
+// well as the constant inst ID.
 //
 // The price of this optimization is that the constant value's ID depends on the
 // enclosing generic, which isn't semantically relevant unless we're
@@ -65,10 +70,7 @@ enum class ConstantDependence : uint8_t {
 // a `GenericId`/`ConstantId` pair, so that each constant has a single
 // `ConstantId`, rather than separate attached and unattached IDs.
 struct SymbolicConstant : Printable<SymbolicConstant> {
-  // The canonical ID of the underlying constant inst. "Canonical" here means
-  // that it is chosen such that equal constants will have equal canonical IDs.
-  // This is typically achieved by deduplication in `ConstantStore`, but certain
-  // kinds of constant insts are canonicalized in other ways.
+  // The canonical ID of the inst that defines this constant.
   InstId inst_id;
   // The generic that this constant is attached to, or `None` if this is an
   // unattached constant.

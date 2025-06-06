@@ -32,58 +32,60 @@ enum class InstValueKind : int8_t {
   Typed,
 };
 
-// Whether an instruction can be evaluated to a constant value at compile time,
-// and whether it can itself represent a fully-evaluated constant value.
+// Whether an instruction can have a constant value, and whether it can be a
+// constant inst (i.e. an inst whose canonical ID defines a constant value; see
+// constant.h).
 //
 // This specifies whether an instruction of this kind can have a corresponding
 // constant value in the `constant_values()` list, and whether an instruction of
 // this kind can be added to the `constants()` list.
 enum class InstConstantKind : int8_t {
-  // This instruction is never constant. Its constant value is always
-  // `NotConstant`. This is also used for instructions that don't produce a
-  // value at all and aren't used as constants.
+  // This instruction never has a constant value, and is never a constant inst.
+  // This is also used for instructions that don't produce a value at all and
+  // aren't used as constants.
   Never,
-  // This instruction never represents a constant value, but may evaluate to a
+  // This instruction is never a constant inst, but can evaluate to a
   // constant value of a different kind. For example, `UnaryOperatorNot` never
   // defines a constant value; if its operand is a concrete constant, its
   // constant value will instead be a `BoolLiteral`, and if its operand is not a
   // concrete constant, the result is non-constant. This is the default.
   Indirect,
-  // This instruction may represent a symbolic constant, depending on its
-  // operands, but never a concrete constant. For example, a `Call` instruction
-  // can represent a symbolic constant but never a concrete constant. The
-  // instruction may have a concrete constant value of a different kind.
+  // This instruction can be a symbolic constant inst, depending on its
+  // operands, but never a concrete constant inst. For example, a `Call`
+  // instruction can define a symbolic constant but never a concrete constant.
+  // The instruction may have a concrete constant value of a different kind.
   SymbolicOnly,
   // This instruction is a metaprogramming or template instantiation action that
-  // generates an instruction. Like `SymbolicOnly`, it may represent a symbolic
-  // constant, depending on its operands, but never represents a concrete
-  // constant. The instruction may have a concrete constant value that is a
-  // generated instruction. Constant evaluation support for types with this
-  // constant kind is provided automatically, by calling `PerformDelayedAction`.
+  // generates an instruction. Like `SymbolicOnly`, it may be a symbolic
+  // constant
+  // inst depending on its operands, but never a concrete constant inst.
+  // The instruction may have a concrete constant value that is a generated
+  // instruction. Constant evaluation support for types with this constant kind
+  // is provided automatically, by calling `PerformDelayedAction`.
   InstAction,
-  // This instruction can represent a symbolic or concrete constant, but might
-  // not have a constant value, might have a constant value that is not defined
-  // by itself, or might result in a compile-time error, depending on its
-  // operands. For example, `ArrayType` is a compile-time constant if its
-  // operands are constant and its array bound is within a valid range.
+  // This instruction's operands determine whether it has a constant value,
+  // whether it is a constant inst, and/or whether it results in a compile-time
+  // error, in ways not expressed by the other InstConstantKinds. For example,
+  // `ArrayType` is a compile-time constant if its operands are constant and its
+  // array bound is within a valid range, and `ConstType` is a constant inst if
+  // its operand is the canonical ID of a constant inst that isn't a
+  // `ConstType`.
   Conditional,
-  // This instruction represents a symbolic or concrete constant whenever its
-  // operands are constant. Otherwise, it is non-constant. For example, a
-  // `TupleValue` represents a constant if and only if its operands represent
-  // constants. Constant evaluation support for types with this constant kind is
-  // provided automatically.
+  // This instruction is a constant inst if and only if its operands are all the
+  // canonical IDs of constant insts, and it has a constant value if and only if
+  // its operands all have constant values. For example, a `TupleValue` is a
+  // constant inst if and only if its operands are all the canonical IDs of
+  // constant insts. Constant evaluation support for types with this constant
+  // kind is provided automatically.
   WheneverPossible,
-  // This instruction always has a constant value of the same kind. This is the
-  // same as `WheneverPossible`, except that the operands are known in advance
-  // to always be constant. For example, `IntValue`.
+  // The same as `WheneverPossible`, except that the operands are known in
+  // advance to always have a constant value. For example, `IntValue`.
   Always,
-  // This instruction always represents a unique constant value, meaning that if
-  // two instructions of this kind have different IDs, they represent different
-  // constant values, even if they have the same arguments. This is used for
-  // declarations whose constant identity is simply themselves. The `ConstantId`
-  // for this instruction will always be a concrete constant whose `InstId`
-  // refers directly back to the instruction, rather than to a separate
-  // instruction in the constants block.
+  // This instruction is itself a unique constant, and its ID is always
+  // canonical. This is used for declarations whose constant identity is simply
+  // themselves. The `ConstantId` for this instruction will always be a concrete
+  // constant whose `InstId` refers directly back to the instruction, rather
+  // than to a separate instruction in the constants block.
   // TODO: Decide if this is the model we want for these cases.
   Unique,
 };
