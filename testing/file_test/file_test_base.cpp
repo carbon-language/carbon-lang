@@ -405,6 +405,7 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
     }
 
     if (single_threaded) {
+      llvm::errs() << "\nTEST: " << test.test_name << ' ';
       RunSingleTestHelper(test, *test_instance);
     } else {
       // Use a crash recovery context to try to get a stack trace when
