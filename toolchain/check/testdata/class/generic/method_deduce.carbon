@@ -50,7 +50,15 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce.c9a: %GetNoDeduce.type.766 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.fe1: <witness> = require_complete_type %tuple.type.30b [symbolic]
 // CHECK:STDOUT:   %Get.specific_fn.f73: <specific function> = specific_function %Get.cf9, @Get(%T, %U) [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type.30b, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.1c6: %Destroy.type = facet_value %tuple.type.30b, (%Destroy.lookup_impl_witness) [symbolic]
+// CHECK:STDOUT:   %.1e9: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.1c6 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.1e9 = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.536: <specific function> = specific_function %GetNoDeduce.c9a, @GetNoDeduce(%T, %U) [symbolic]
 // CHECK:STDOUT:   %Class.480: type = class_type @Class, @Class(%A) [concrete]
 // CHECK:STDOUT:   %pattern_type.827: type = pattern_type %Class.480 [concrete]
@@ -63,19 +71,33 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce.type.5d6: type = fn_type @GetNoDeduce, @Class(%A) [concrete]
 // CHECK:STDOUT:   %GetNoDeduce.162: %GetNoDeduce.type.5d6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Get.specific_fn.213: <specific function> = specific_function %Get.f37, @Get(%A, %B) [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.ae3: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%tuple.type.cc6) [concrete]
+// CHECK:STDOUT:   %Op.type.87c: type = fn_type @Op.2, @impl(%tuple.type.cc6) [concrete]
+// CHECK:STDOUT:   %Op.f13: %Op.type.87c = struct_value () [concrete]
+// CHECK:STDOUT:   %complete_type.56a: <witness> = complete_type_witness %tuple.type.cc6 [concrete]
+// CHECK:STDOUT:   %Destroy.facet.fae: %Destroy.type = facet_value %tuple.type.cc6, (%Destroy.impl_witness.ae3) [concrete]
+// CHECK:STDOUT:   %.c9f: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.fae [concrete]
 // CHECK:STDOUT:   %CallGenericMethodWithNonDeducedParam.type: type = fn_type @CallGenericMethodWithNonDeducedParam [concrete]
 // CHECK:STDOUT:   %CallGenericMethodWithNonDeducedParam: %CallGenericMethodWithNonDeducedParam.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.438: <specific function> = specific_function %GetNoDeduce.162, @GetNoDeduce(%A, %B) [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.b6e: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%A) [concrete]
+// CHECK:STDOUT:   %Op.type.b96: type = fn_type @Op.2, @impl(%A) [concrete]
+// CHECK:STDOUT:   %Op.885: %Op.type.b96 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet.4a1: %Destroy.type = facet_value %A, (%Destroy.impl_witness.b6e) [concrete]
+// CHECK:STDOUT:   %.af1: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.4a1 [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
-// CHECK:STDOUT:   %complete_type.56a: <witness> = complete_type_witness %tuple.type.cc6 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -219,6 +241,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Class(%T) [symbolic = %Get.type (constants.%Get.type.fd9)]
 // CHECK:STDOUT:   %Get: @Get.%Get.type (%Get.type.fd9) = struct_value () [symbolic = %Get (constants.%Get.cf9)]
 // CHECK:STDOUT:   %Get.specific_fn.loc18_39.2: <specific function> = specific_function %Get, @Get(%T, %U.loc18_10.1) [symbolic = %Get.specific_fn.loc18_39.2 (constants.%Get.specific_fn.f73)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.1c6)]
+// CHECK:STDOUT:   %.loc18_44: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc18_44 (constants.%.1e9)]
+// CHECK:STDOUT:   %impl.elem0.loc18_44.2: @Get.%.loc18_44 (%.1e9) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_44.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @Get.%tuple.type (%tuple.type.30b) {
 // CHECK:STDOUT:   !entry:
@@ -227,6 +253,8 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %U.ref.loc18_43: type = name_ref U, %U.loc18_10.2 [symbolic = %U.loc18_10.1 (constants.%U)]
 // CHECK:STDOUT:     %Get.specific_fn.loc18_39.1: <specific function> = specific_function %Get.ref, @Get(constants.%T, constants.%U) [symbolic = %Get.specific_fn.loc18_39.2 (constants.%Get.specific_fn.f73)]
 // CHECK:STDOUT:     %.loc18_20: ref @Get.%tuple.type (%tuple.type.30b) = splice_block %return {}
+// CHECK:STDOUT:     %impl.elem0.loc18_44.1: @Get.%.loc18_44 (%.1e9) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_44.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc18_20, %impl.elem0.loc18_44.1
 // CHECK:STDOUT:     %Get.call: init @Get.%tuple.type (%tuple.type.30b) = call %Get.specific_fn.loc18_39.1() to %.loc18_20
 // CHECK:STDOUT:     return %Get.call to %return
 // CHECK:STDOUT:   }
@@ -244,6 +272,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce.type: type = fn_type @GetNoDeduce, @Class(%T) [symbolic = %GetNoDeduce.type (constants.%GetNoDeduce.type.766)]
 // CHECK:STDOUT:   %GetNoDeduce: @GetNoDeduce.%GetNoDeduce.type (%GetNoDeduce.type.766) = struct_value () [symbolic = %GetNoDeduce (constants.%GetNoDeduce.c9a)]
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.loc19_53.2: <specific function> = specific_function %GetNoDeduce, @GetNoDeduce(%T, %U.loc19_24.1) [symbolic = %GetNoDeduce.specific_fn.loc19_53.2 (constants.%GetNoDeduce.specific_fn.536)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.1c6)]
+// CHECK:STDOUT:   %.loc19_69: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc19_69 (constants.%.1e9)]
+// CHECK:STDOUT:   %impl.elem0.loc19_69.2: @GetNoDeduce.%.loc19_69 (%.1e9) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc19_69.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %require_complete.loc19_70: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc19_70 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @GetNoDeduce.%T (%T)) -> %return.param: @GetNoDeduce.%tuple.type (%tuple.type.30b) {
@@ -254,6 +286,8 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %U.ref.loc19_68: type = name_ref U, %U.loc19_24.2 [symbolic = %U.loc19_24.1 (constants.%U)]
 // CHECK:STDOUT:     %GetNoDeduce.specific_fn.loc19_53.1: <specific function> = specific_function %GetNoDeduce.ref, @GetNoDeduce(constants.%T, constants.%U) [symbolic = %GetNoDeduce.specific_fn.loc19_53.2 (constants.%GetNoDeduce.specific_fn.536)]
 // CHECK:STDOUT:     %.loc19_34: ref @GetNoDeduce.%tuple.type (%tuple.type.30b) = splice_block %return {}
+// CHECK:STDOUT:     %impl.elem0.loc19_69.1: @GetNoDeduce.%.loc19_69 (%.1e9) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc19_69.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc19_34, %impl.elem0.loc19_69.1
 // CHECK:STDOUT:     %GetNoDeduce.call: init @GetNoDeduce.%tuple.type (%tuple.type.30b) = call %GetNoDeduce.specific_fn.loc19_53.1(%x.ref) to %.loc19_34
 // CHECK:STDOUT:     return %GetNoDeduce.call to %return
 // CHECK:STDOUT:   }
@@ -267,6 +301,8 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %B.ref.loc23: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.ref, @Get(constants.%A, constants.%B) [concrete = constants.%Get.specific_fn.213]
 // CHECK:STDOUT:   %.loc22_35: ref %tuple.type.cc6 = splice_block %return {}
+// CHECK:STDOUT:   %impl.elem0: %.c9f = impl_witness_access constants.%Destroy.impl_witness.ae3, element0 [concrete = constants.%Op.f13]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc22_35, %impl.elem0
 // CHECK:STDOUT:   %Get.call: init %tuple.type.cc6 = call %Get.specific_fn() to %.loc22_35
 // CHECK:STDOUT:   return %Get.call to %return
 // CHECK:STDOUT: }
@@ -280,6 +316,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %B.ref.loc27: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn: <specific function> = specific_function %GetNoDeduce.ref, @GetNoDeduce(constants.%A, constants.%B) [concrete = constants.%GetNoDeduce.specific_fn.438]
 // CHECK:STDOUT:   %.loc26_54: ref %tuple.type.cc6 = splice_block %return {}
+// CHECK:STDOUT:   %impl.elem0.loc27_29: %.c9f = impl_witness_access constants.%Destroy.impl_witness.ae3, element0 [concrete = constants.%Op.f13]
+// CHECK:STDOUT:   %bound_method.loc27_29: <bound method> = bound_method %.loc26_54, %impl.elem0.loc27_29
+// CHECK:STDOUT:   %impl.elem0.loc27_25: %.af1 = impl_witness_access constants.%Destroy.impl_witness.b6e, element0 [concrete = constants.%Op.885]
+// CHECK:STDOUT:   %bound_method.loc27_25: <bound method> = bound_method %.loc27_25.2, %impl.elem0.loc27_25
 // CHECK:STDOUT:   %.loc27_25.2: ref %A = temporary_storage
 // CHECK:STDOUT:   %.loc27_25.3: init %A = class_init (), %.loc27_25.2 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc27_25.4: ref %A = temporary %.loc27_25.2, %.loc27_25.3
@@ -310,6 +350,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.fd9
 // CHECK:STDOUT:   %Get => constants.%Get.cf9
 // CHECK:STDOUT:   %Get.specific_fn.loc18_39.2 => constants.%Get.specific_fn.f73
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.lookup_impl_witness
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.1c6
+// CHECK:STDOUT:   %.loc18_44 => constants.%.1e9
+// CHECK:STDOUT:   %impl.elem0.loc18_44.2 => constants.%impl.elem0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetNoDeduce(constants.%T, constants.%U) {
@@ -324,6 +368,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce.type => constants.%GetNoDeduce.type.766
 // CHECK:STDOUT:   %GetNoDeduce => constants.%GetNoDeduce.c9a
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.loc19_53.2 => constants.%GetNoDeduce.specific_fn.536
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.lookup_impl_witness
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.1c6
+// CHECK:STDOUT:   %.loc19_69 => constants.%.1e9
+// CHECK:STDOUT:   %impl.elem0.loc19_69.2 => constants.%impl.elem0
 // CHECK:STDOUT:   %require_complete.loc19_70 => constants.%require_complete.fe1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -348,6 +396,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.501
 // CHECK:STDOUT:   %Get => constants.%Get.f37
 // CHECK:STDOUT:   %Get.specific_fn.loc18_39.2 => constants.%Get.specific_fn.213
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.impl_witness.ae3
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.fae
+// CHECK:STDOUT:   %.loc18_44 => constants.%.c9f
+// CHECK:STDOUT:   %impl.elem0.loc18_44.2 => constants.%Op.f13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetNoDeduce(constants.%A, constants.%B) {
@@ -362,6 +414,10 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %GetNoDeduce.type => constants.%GetNoDeduce.type.5d6
 // CHECK:STDOUT:   %GetNoDeduce => constants.%GetNoDeduce.162
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.loc19_53.2 => constants.%GetNoDeduce.specific_fn.438
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.impl_witness.ae3
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.fae
+// CHECK:STDOUT:   %.loc19_69 => constants.%.c9f
+// CHECK:STDOUT:   %impl.elem0.loc19_69.2 => constants.%Op.f13
 // CHECK:STDOUT:   %require_complete.loc19_70 => constants.%complete_type.56a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

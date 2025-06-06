@@ -352,9 +352,21 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.088: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%tuple.type.a1c) [concrete]
+// CHECK:STDOUT:   %Op.type.438: type = fn_type @Op.2, @impl.49c(%tuple.type.a1c) [concrete]
+// CHECK:STDOUT:   %Op.c8e: %Op.type.438 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type.a1c, (%Destroy.impl_witness.088) [concrete]
+// CHECK:STDOUT:   %.6a9: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> %i32 {
@@ -363,6 +375,8 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %F.call: init %tuple.type.a1c = call %F.ref()
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc7_12.1: ref %tuple.type.a1c = temporary_storage
+// CHECK:STDOUT:   %impl.elem0: %.6a9 = impl_witness_access constants.%Destroy.impl_witness.088, element0 [concrete = constants.%Op.c8e]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc7_12.1, %impl.elem0
 // CHECK:STDOUT:   %.loc7_12.2: ref %tuple.type.a1c = temporary %.loc7_12.1, %F.call
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc7_12.2, element0
 // CHECK:STDOUT:   %.loc7_13: %i32 = bind_value %tuple.elem0

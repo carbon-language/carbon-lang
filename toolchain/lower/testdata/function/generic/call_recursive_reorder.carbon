@@ -43,6 +43,9 @@ fn M() {
 // CHECK:STDOUT:   %.loc26_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !13
 // CHECK:STDOUT:   %.loc26_14 = load ptr, ptr %ptr_bool.var, align 8, !dbg !14
 // CHECK:STDOUT:   %F.call.loc26 = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %.loc26_5, ptr %.loc26_14, i32 0), !dbg !15
+// CHECK:STDOUT:   %.loc23_3 = load ptr, ptr %ptr_bool.var, align 8, !dbg !9
+// CHECK:STDOUT:   %.loc22_3 = load ptr, ptr %ptr_f64.var, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc21_3 = load ptr, ptr %ptr_i32.var, align 8, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

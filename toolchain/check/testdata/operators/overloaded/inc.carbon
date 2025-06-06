@@ -50,10 +50,10 @@ fn TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %impl.elem0: %.bc7 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%Op.0c9]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
+// CHECK:STDOUT:   %impl.elem0.loc27: %.bc7 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%Op.0c9]
+// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %c.ref, %impl.elem0.loc27
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c.ref
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method.loc27(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

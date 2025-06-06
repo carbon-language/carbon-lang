@@ -48,6 +48,8 @@ fn M() {
 // CHECK:STDOUT:   %.loc33 = load i32, ptr %n.var, align 4, !dbg !11
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %.loc33), !dbg !12
 // CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !13
+// CHECK:STDOUT:   %.loc30_3 = load i32, ptr %m.var, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc29_3.2 = load i32, ptr %n.var, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

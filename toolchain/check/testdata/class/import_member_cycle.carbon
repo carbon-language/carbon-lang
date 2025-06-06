@@ -73,23 +73,39 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Cycle [concrete]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %ptr} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %ptr.257: type = ptr_type %Cycle [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %ptr.257} [concrete]
+// CHECK:STDOUT:   %complete_type.e4b: <witness> = complete_type_witness %struct_type.a [concrete]
+// CHECK:STDOUT:   %pattern_type.d3d: type = pattern_type %ptr.257 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.2ce: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%ptr.257) [concrete]
+// CHECK:STDOUT:   %Op.type.a45: type = fn_type @Op.2, @impl(%ptr.257) [concrete]
+// CHECK:STDOUT:   %Op.109: %Op.type.a45 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.257, (%Destroy.impl_witness.2ce) [concrete]
+// CHECK:STDOUT:   %.dff: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.109, @Op.2(%ptr.257) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Cycle: type = import_ref Main//a, Cycle, loaded [concrete = constants.%Cycle]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.72d: <witness> = import_ref Main//a, loc6_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.72d: <witness> = import_ref Main//a, loc6_1, loaded [concrete = constants.%complete_type.e4b]
 // CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -114,15 +130,21 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d3d = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.d3d = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %ptr = var %a.var_patt
-// CHECK:STDOUT:   %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %a.var: ref %ptr.257 = var %a.var_patt
+// CHECK:STDOUT:   %impl.elem0: %.dff = impl_witness_access constants.%Destroy.impl_witness.2ce, element0 [concrete = constants.%Op.109]
+// CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %a.var, %impl.elem0
+// CHECK:STDOUT:   %.loc7_15: type = splice_block %ptr [concrete = constants.%ptr.257] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, imports.%Main.Cycle [concrete = constants.%Cycle]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %ptr.257 = bind_name a, %a.var
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%ptr.257) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %a.var, %specific_fn
+// CHECK:STDOUT:   %.loc7_3: %ptr.257 = bind_value %a.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc7_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

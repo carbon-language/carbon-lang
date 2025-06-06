@@ -59,6 +59,32 @@ fn F() {
 // CHECK:STDOUT:   %tuple.loc16_108 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc16_10, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   store ptr %tuple.loc16_9, ptr %tuple.loc16_108, align 8, !dbg !11
 // CHECK:STDOUT:   call void @_CG.Main(ptr %tuple.loc16_10), !dbg !12
+// CHECK:STDOUT:   %tuple.elem0.loc15.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc15_3.1 = load i32, ptr %tuple.elem0.loc15.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.elem1.loc15.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   %.loc15_3.2 = load i32, ptr %tuple.elem1.loc15.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.elem2.loc15.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 2, !dbg !8
+// CHECK:STDOUT:   %.loc15_3.3 = load i32, ptr %tuple.elem2.loc15.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.loc15 = alloca { i32, i32, i32 }, align 8, !dbg !8
+// CHECK:STDOUT:   %tuple.loc159 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc15, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   store i32 %.loc15_3.1, ptr %tuple.loc159, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.loc1510 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc15, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   store i32 %.loc15_3.2, ptr %tuple.loc1510, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.loc1511 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc15, i32 0, i32 2, !dbg !8
+// CHECK:STDOUT:   store i32 %.loc15_3.3, ptr %tuple.loc1511, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.elem0.loc14.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %.loc14_3.1 = load i32, ptr %tuple.elem0.loc14.tuple.elem, align 4, !dbg !7
+// CHECK:STDOUT:   %tuple.elem1.loc14.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !7
+// CHECK:STDOUT:   %.loc14_3.2 = load i32, ptr %tuple.elem1.loc14.tuple.elem, align 4, !dbg !7
+// CHECK:STDOUT:   %tuple.elem2.loc14.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !7
+// CHECK:STDOUT:   %.loc14_3.3 = load i32, ptr %tuple.elem2.loc14.tuple.elem, align 4, !dbg !7
+// CHECK:STDOUT:   %tuple.loc14 = alloca { i32, i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %tuple.loc1412 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc14, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   store i32 %.loc14_3.1, ptr %tuple.loc1412, align 4, !dbg !7
+// CHECK:STDOUT:   %tuple.loc1413 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc14, i32 0, i32 1, !dbg !7
+// CHECK:STDOUT:   store i32 %.loc14_3.2, ptr %tuple.loc1413, align 4, !dbg !7
+// CHECK:STDOUT:   %tuple.loc1414 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc14, i32 0, i32 2, !dbg !7
+// CHECK:STDOUT:   store i32 %.loc14_3.3, ptr %tuple.loc1414, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

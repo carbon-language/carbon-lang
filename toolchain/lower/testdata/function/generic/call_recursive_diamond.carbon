@@ -79,6 +79,10 @@ fn M() {
 // CHECK:STDOUT:   %A.call.loc53 = call ptr @_CA.Main.e8193710fd35b608(ptr %.loc53_5, i32 0), !dbg !16
 // CHECK:STDOUT:   %.loc54_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !17
 // CHECK:STDOUT:   %A.call.loc54 = call ptr @_CA.Main.e8193710fd35b608(ptr %.loc54_5, i32 0), !dbg !18
+// CHECK:STDOUT:   %.loc49_3 = load ptr, ptr %ptr_f64.var, align 8, !dbg !10
+// CHECK:STDOUT:   %.loc48_3 = load ptr, ptr %ptr_i32.var, align 8, !dbg !9
+// CHECK:STDOUT:   %.loc47_3 = load double, ptr %m.var, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc46_3.2 = load i32, ptr %n.var, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

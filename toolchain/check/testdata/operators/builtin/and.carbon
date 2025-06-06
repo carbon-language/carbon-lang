@@ -46,8 +46,25 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [concrete]
 // CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.862: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(bool) [concrete]
+// CHECK:STDOUT:   %Op.type.655: type = fn_type @Op.2, @impl(bool) [concrete]
+// CHECK:STDOUT:   %Op.8b7: %Op.type.655 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet.2aa: %Destroy.type = facet_value bool, (%Destroy.impl_witness.862) [concrete]
+// CHECK:STDOUT:   %.0d4: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.2aa [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.1dc: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet.926: %Destroy.type = facet_value %empty_tuple.type, (%Destroy.impl_witness.1dc) [concrete]
+// CHECK:STDOUT:   %.346: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.926 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.393: <specific function> = specific_function %Op.ea3, @Op.2(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.c3f: <specific function> = specific_function %Op.8b7, @Op.2(bool) [concrete]
 // CHECK:STDOUT:   %PartialConstant.type: type = fn_type @PartialConstant [concrete]
 // CHECK:STDOUT:   %PartialConstant: %PartialConstant.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -55,10 +72,14 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Bool = %Core.Bool
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -156,6 +177,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.831 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref bool = var %a.var_patt
+// CHECK:STDOUT:   %impl.elem0.loc22: %.0d4 = impl_witness_access constants.%Destroy.impl_witness.862, element0 [concrete = constants.%Op.8b7]
+// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %a.var, %impl.elem0.loc22
 // CHECK:STDOUT:   %true.loc22_47: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   assign %a.var, %true.loc22_47
 // CHECK:STDOUT:   br !.loc22_13
@@ -195,10 +218,12 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.cb1 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt
+// CHECK:STDOUT:   %impl.elem0.loc23: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
+// CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %b.var, %impl.elem0.loc23
 // CHECK:STDOUT:   %.loc23_49.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc23_49.2: init %empty_tuple.type = tuple_init () to %b.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23_3: init %empty_tuple.type = converted %.loc23_49.1, %.loc23_49.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %b.var, %.loc23_3
+// CHECK:STDOUT:   %.loc23_3.1: init %empty_tuple.type = converted %.loc23_49.1, %.loc23_49.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %b.var, %.loc23_3.1
 // CHECK:STDOUT:   br !.loc23_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc23_13:
@@ -236,10 +261,12 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.cb1 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt
+// CHECK:STDOUT:   %impl.elem0.loc24: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
+// CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %c.var, %impl.elem0.loc24
 // CHECK:STDOUT:   %.loc24_49.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc24_49.2: init %empty_tuple.type = tuple_init () to %c.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc24_3: init %empty_tuple.type = converted %.loc24_49.1, %.loc24_49.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %c.var, %.loc24_3
+// CHECK:STDOUT:   %.loc24_3.1: init %empty_tuple.type = converted %.loc24_49.1, %.loc24_49.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %c.var, %.loc24_3.1
 // CHECK:STDOUT:   br !.loc24_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc24_13:
@@ -277,10 +304,12 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt
+// CHECK:STDOUT:   %impl.elem0.loc25: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
+// CHECK:STDOUT:   %bound_method.loc25: <bound method> = bound_method %d.var, %impl.elem0.loc25
 // CHECK:STDOUT:   %.loc25_50.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc25_50.2: init %empty_tuple.type = tuple_init () to %d.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc25_3: init %empty_tuple.type = converted %.loc25_50.1, %.loc25_50.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %d.var, %.loc25_3
+// CHECK:STDOUT:   %.loc25_3.1: init %empty_tuple.type = converted %.loc25_50.1, %.loc25_50.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %d.var, %.loc25_3.1
 // CHECK:STDOUT:   br !.loc25_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc25_13:
@@ -313,6 +342,25 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc25_7:
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %specific_fn.loc25: <specific function> = specific_function %impl.elem0.loc25, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn.393]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %d.var, %specific_fn.loc25
+// CHECK:STDOUT:   %tuple.loc25: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc25_3.2: %empty_tuple.type = converted %d.var, %tuple.loc25 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc25_3.2)
+// CHECK:STDOUT:   %specific_fn.loc24: <specific function> = specific_function %impl.elem0.loc24, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn.393]
+// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %c.var, %specific_fn.loc24
+// CHECK:STDOUT:   %tuple.loc24: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc24_3.2: %empty_tuple.type = converted %c.var, %tuple.loc24 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc24_3.2)
+// CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn.393]
+// CHECK:STDOUT:   %bound_method.3: <bound method> = bound_method %b.var, %specific_fn.loc23
+// CHECK:STDOUT:   %tuple.loc23: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc23_3.2: %empty_tuple.type = converted %b.var, %tuple.loc23 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %no_op.3: init %empty_tuple.type = call %bound_method.3(%.loc23_3.2)
+// CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Op.2(bool) [concrete = constants.%Op.specific_fn.c3f]
+// CHECK:STDOUT:   %bound_method.4: <bound method> = bound_method %a.var, %specific_fn.loc22
+// CHECK:STDOUT:   %.loc22_3: bool = bind_value %a.var
+// CHECK:STDOUT:   %no_op.4: init %empty_tuple.type = call %bound_method.4(%.loc22_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,10 +371,12 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
+// CHECK:STDOUT:   %impl.elem0: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
+// CHECK:STDOUT:   %bound_method.loc29: <bound method> = bound_method %a.var, %impl.elem0
 // CHECK:STDOUT:   %.loc29_46.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc29_46.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc29_3: init %empty_tuple.type = converted %.loc29_46.1, %.loc29_46.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %a.var, %.loc29_3
+// CHECK:STDOUT:   %.loc29_3.1: init %empty_tuple.type = converted %.loc29_46.1, %.loc29_46.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %a.var, %.loc29_3.1
 // CHECK:STDOUT:   br !.loc29_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc29_13:
@@ -359,6 +409,11 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc29_7:
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn.393]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %a.var, %specific_fn
+// CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc29_3.2: %empty_tuple.type = converted %a.var, %tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc29_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

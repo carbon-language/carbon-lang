@@ -50,6 +50,7 @@ fn H() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca i1, align 1, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %x.var), !dbg !11
+// CHECK:STDOUT:   %.loc21_3.1 = load i1, ptr %x.var, align 1, !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,6 +58,7 @@ fn H() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %x.var), !dbg !14
+// CHECK:STDOUT:   %.loc21_3.1 = load i32, ptr %x.var, align 4, !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

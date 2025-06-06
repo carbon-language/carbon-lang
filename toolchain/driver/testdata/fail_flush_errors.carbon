@@ -33,7 +33,7 @@ fn F() {
   undeclared2;
 
   // Add the name into the string table via a declaration rather than an expression.
-  if (true) { var undeclared3: () = (); }
+  if (true) { let undeclared3:! () = (); }
   // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: error: name `undeclared3` not found [NameNotFound]
   // CHECK:STDERR:   undeclared3;
   // CHECK:STDERR:   ^~~~~~~~~~~

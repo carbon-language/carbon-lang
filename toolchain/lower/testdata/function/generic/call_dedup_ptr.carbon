@@ -41,6 +41,9 @@ fn M() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i8.var), !dbg !9
 // CHECK:STDOUT:   %.loc24 = load ptr, ptr %ptr_i8.var, align 8, !dbg !14
 // CHECK:STDOUT:   %F.call.loc24 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc24), !dbg !15
+// CHECK:STDOUT:   %.loc23_3 = load ptr, ptr %ptr_i8.var, align 8, !dbg !9
+// CHECK:STDOUT:   %.loc21_3 = load ptr, ptr %ptr_f64.var, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc19_3 = load ptr, ptr %ptr_i32.var, align 8, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

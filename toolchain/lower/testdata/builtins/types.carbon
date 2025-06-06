@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-prelude-import
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -36,6 +36,9 @@ fn F() {
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %f.var, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %b.var), !dbg !9
 // CHECK:STDOUT:   store i1 false, ptr %b.var, align 1, !dbg !9
+// CHECK:STDOUT:   %.loc22_3 = load i1, ptr %b.var, align 1, !dbg !9
+// CHECK:STDOUT:   %.loc21_3 = load double, ptr %f.var, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc20_3 = load i32, ptr %i.var, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

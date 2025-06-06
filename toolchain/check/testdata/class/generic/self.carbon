@@ -28,6 +28,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %pattern_type.3c1: type = pattern_type %Class [symbolic]
@@ -39,17 +40,26 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class [symbolic]
+// CHECK:STDOUT:   %require_complete.4f8: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.val: %Class = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class, (%Destroy.lookup_impl_witness) [symbolic]
+// CHECK:STDOUT:   %.d76: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.d76 = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %MakeSelf.specific_fn: <specific function> = specific_function %MakeSelf, @MakeSelf(%T) [symbolic]
 // CHECK:STDOUT:   %MakeClass.specific_fn: <specific function> = specific_function %MakeClass, @MakeClass(%T) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Op.1(%Destroy.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -117,7 +127,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class [symbolic = %pattern_type (constants.%pattern_type.3c1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class [symbolic = %require_complete (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %Class.val: @MakeSelf.%Class (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @MakeSelf.%Class (%Class) {
@@ -135,7 +145,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc18_28.1 [symbolic = %pattern_type (constants.%pattern_type.3c1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc18_28.1 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc18_28.1 [symbolic = %require_complete (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %Class.val: @MakeClass.%Class.loc18_28.1 (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @MakeClass.%Class.loc18_28.1 (%Class) {
@@ -151,14 +161,19 @@ class Class(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class.loc20_19.2: type = class_type @Class, @Class(%T) [symbolic = %Class.loc20_19.2 (constants.%Class)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc20_19.2 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc20_19.2 [symbolic = %require_complete (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc20_19.2 [symbolic = %pattern_type (constants.%pattern_type.3c1)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class.loc20_19.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc20_19.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
+// CHECK:STDOUT:   %.loc20_5.4: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc20_5.4 (constants.%.d76)]
+// CHECK:STDOUT:   %impl.elem0.loc20_5.2: @F.%.loc20_5.4 (%.d76) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_5.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %MakeSelf.type: type = fn_type @MakeSelf, @Class(%T) [symbolic = %MakeSelf.type (constants.%MakeSelf.type)]
 // CHECK:STDOUT:   %MakeSelf: @F.%MakeSelf.type (%MakeSelf.type) = struct_value () [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:   %MakeSelf.specific_fn.loc20_23.2: <specific function> = specific_function %MakeSelf, @MakeSelf(%T) [symbolic = %MakeSelf.specific_fn.loc20_23.2 (constants.%MakeSelf.specific_fn)]
 // CHECK:STDOUT:   %MakeClass.type: type = fn_type @MakeClass, @Class(%T) [symbolic = %MakeClass.type (constants.%MakeClass.type)]
 // CHECK:STDOUT:   %MakeClass: @F.%MakeClass.type (%MakeClass.type) = struct_value () [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:   %MakeClass.specific_fn.loc21_19.2: <specific function> = specific_function %MakeClass, @MakeClass(%T) [symbolic = %MakeClass.specific_fn.loc21_19.2 (constants.%MakeClass.specific_fn)]
+// CHECK:STDOUT:   %specific_impl_fn.loc21_29.2: <specific function> = specific_impl_function %impl.elem0.loc20_5.2, @Op.1(%Destroy.facet) [symbolic = %specific_impl_fn.loc21_29.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -167,11 +182,15 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %c.var_patt: @F.%pattern_type (%pattern_type.3c1) = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref @F.%Class.loc20_19.2 (%Class) = var %c.var_patt
+// CHECK:STDOUT:     %impl.elem0.loc20_5.1: @F.%.loc20_5.4 (%.d76) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_5.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc20_5: <bound method> = bound_method %c.var, %impl.elem0.loc20_5.1
 // CHECK:STDOUT:     %.loc20_23: @F.%MakeSelf.type (%MakeSelf.type) = specific_constant @Class.%MakeSelf.decl, @Class(constants.%T) [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:     %MakeSelf.ref: @F.%MakeSelf.type (%MakeSelf.type) = name_ref MakeSelf, %.loc20_23 [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:     %MakeSelf.specific_fn.loc20_23.1: <specific function> = specific_function %MakeSelf.ref, @MakeSelf(constants.%T) [symbolic = %MakeSelf.specific_fn.loc20_23.2 (constants.%MakeSelf.specific_fn)]
-// CHECK:STDOUT:     %.loc20_5: ref @F.%Class.loc20_19.2 (%Class) = splice_block %c.var {}
-// CHECK:STDOUT:     %MakeSelf.call: init @F.%Class.loc20_19.2 (%Class) = call %MakeSelf.specific_fn.loc20_23.1() to %.loc20_5
+// CHECK:STDOUT:     %.loc20_5.1: ref @F.%Class.loc20_19.2 (%Class) = splice_block %c.var {}
+// CHECK:STDOUT:     %impl.elem0.loc20_32: @F.%.loc20_5.4 (%.d76) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_5.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc20_32: <bound method> = bound_method %.loc20_5.1, %impl.elem0.loc20_32
+// CHECK:STDOUT:     %MakeSelf.call: init @F.%Class.loc20_19.2 (%Class) = call %MakeSelf.specific_fn.loc20_23.1() to %.loc20_5.1
 // CHECK:STDOUT:     assign %c.var, %MakeSelf.call
 // CHECK:STDOUT:     %.loc20_19: type = splice_block %Class.loc20_19.1 [symbolic = %Class.loc20_19.2 (constants.%Class)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
@@ -184,17 +203,37 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %s.var_patt: @F.%pattern_type (%pattern_type.3c1) = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s.var: ref @F.%Class.loc20_19.2 (%Class) = var %s.var_patt
+// CHECK:STDOUT:     %impl.elem0.loc21_5: @F.%.loc20_5.4 (%.d76) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_5.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc21_5: <bound method> = bound_method %s.var, %impl.elem0.loc21_5
 // CHECK:STDOUT:     %.loc21_19: @F.%MakeClass.type (%MakeClass.type) = specific_constant @Class.%MakeClass.decl, @Class(constants.%T) [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:     %MakeClass.ref: @F.%MakeClass.type (%MakeClass.type) = name_ref MakeClass, %.loc21_19 [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:     %MakeClass.specific_fn.loc21_19.1: <specific function> = specific_function %MakeClass.ref, @MakeClass(constants.%T) [symbolic = %MakeClass.specific_fn.loc21_19.2 (constants.%MakeClass.specific_fn)]
-// CHECK:STDOUT:     %.loc21_5: ref @F.%Class.loc20_19.2 (%Class) = splice_block %s.var {}
-// CHECK:STDOUT:     %MakeClass.call: init @F.%Class.loc20_19.2 (%Class) = call %MakeClass.specific_fn.loc21_19.1() to %.loc21_5
+// CHECK:STDOUT:     %.loc21_5.1: ref @F.%Class.loc20_19.2 (%Class) = splice_block %s.var {}
+// CHECK:STDOUT:     %impl.elem0.loc21_29: @F.%.loc20_5.4 (%.d76) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_5.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc21_29: <bound method> = bound_method %.loc21_5.1, %impl.elem0.loc21_29
+// CHECK:STDOUT:     %MakeClass.call: init @F.%Class.loc20_19.2 (%Class) = call %MakeClass.specific_fn.loc21_19.1() to %.loc21_5.1
 // CHECK:STDOUT:     assign %s.var, %MakeClass.call
 // CHECK:STDOUT:     %.loc21_12.1: type = splice_block %Self.ref [symbolic = %Class.loc20_19.2 (constants.%Class)] {
 // CHECK:STDOUT:       %.loc21_12.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc20_19.2 (constants.%Class)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc21_12.2 [symbolic = %Class.loc20_19.2 (constants.%Class)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: ref @F.%Class.loc20_19.2 (%Class) = bind_name s, %s.var
+// CHECK:STDOUT:     %specific_impl_fn.loc21_29.1: <specific function> = specific_impl_function %impl.elem0.loc21_29, @Op.1(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc21_29.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.1: <bound method> = bound_method %.loc21_5.1, %specific_impl_fn.loc21_29.1
+// CHECK:STDOUT:     %.loc21_5.2: @F.%Class.loc20_19.2 (%Class) = bind_value %.loc21_5.1
+// CHECK:STDOUT:     %.1: init %empty_tuple.type = call %bound_method.1(%.loc21_5.2)
+// CHECK:STDOUT:     %specific_impl_fn.loc21_5: <specific function> = specific_impl_function %impl.elem0.loc21_5, @Op.1(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc21_29.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.2: <bound method> = bound_method %s.var, %specific_impl_fn.loc21_5
+// CHECK:STDOUT:     %.loc21_5.3: @F.%Class.loc20_19.2 (%Class) = bind_value %s.var
+// CHECK:STDOUT:     %.2: init %empty_tuple.type = call %bound_method.2(%.loc21_5.3)
+// CHECK:STDOUT:     %specific_impl_fn.loc20_32: <specific function> = specific_impl_function %impl.elem0.loc20_32, @Op.1(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc21_29.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.3: <bound method> = bound_method %.loc20_5.1, %specific_impl_fn.loc20_32
+// CHECK:STDOUT:     %.loc20_5.2: @F.%Class.loc20_19.2 (%Class) = bind_value %.loc20_5.1
+// CHECK:STDOUT:     %.3: init %empty_tuple.type = call %bound_method.3(%.loc20_5.2)
+// CHECK:STDOUT:     %specific_impl_fn.loc20_5: <specific function> = specific_impl_function %impl.elem0.loc20_5.1, @Op.1(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc21_29.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.4: <bound method> = bound_method %c.var, %specific_impl_fn.loc20_5
+// CHECK:STDOUT:     %.loc20_5.3: @F.%Class.loc20_19.2 (%Class) = bind_value %c.var
+// CHECK:STDOUT:     %.4: init %empty_tuple.type = call %bound_method.4(%.loc20_5.3)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -217,7 +256,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3c1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.4f8
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -227,7 +266,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3c1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.4f8
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

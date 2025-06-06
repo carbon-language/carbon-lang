@@ -30,6 +30,7 @@ fn Main() {
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc15 = load i32, ptr %a.var, align 4, !dbg !10
 // CHECK:STDOUT:   call void @_CDoNothing.Main(i32 %.loc15), !dbg !11
+// CHECK:STDOUT:   %.loc14_3.2 = load i32, ptr %a.var, align 4, !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

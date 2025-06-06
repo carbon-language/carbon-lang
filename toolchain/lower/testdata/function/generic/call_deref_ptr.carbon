@@ -54,6 +54,8 @@ fn M() {
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(ptr %.loc37), !dbg !10
 // CHECK:STDOUT:   %.loc38 = load ptr, ptr %ptr_f64.var, align 8, !dbg !11
 // CHECK:STDOUT:   call void @_CF.Main.66be507887ceee78(ptr %.loc38), !dbg !12
+// CHECK:STDOUT:   %.loc35_3 = load ptr, ptr %ptr_f64.var, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc34_3 = load ptr, ptr %ptr_i32.var, align 8, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
