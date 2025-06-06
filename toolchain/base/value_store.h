@@ -30,10 +30,28 @@ namespace Internal {
 // Used as a parent class for non-printable types. This is just for
 // std::conditional, not as an API.
 class ValueStoreNotPrintable {};
+
 }  // namespace Internal
 
 template <class IdT>
 class ValueStoreRange;
+
+// Common calculation for ValueStore types.
+template <typename IdT, typename ValueT = IdT::ValueType>
+class ValueStoreTypes {
+ public:
+  using ValueType = std::decay_t<ValueT>;
+
+  // Typically we want to use `ValueType&` and `const ValueType& to avoid
+  // copies, but when the value type is a `StringRef`, we assume external
+  // storage for the string data and both our value type and ref type will be
+  // `StringRef`. This will preclude mutation of the string data.
+  using RefType = std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
+                                     llvm::StringRef, ValueType&>;
+  using ConstRefType =
+      std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
+                         llvm::StringRef, const ValueType&>;
+};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
@@ -47,17 +65,9 @@ class ValueStore
                             typename IdT::ValueType>,
           Yaml::Printable<ValueStore<IdT>>, Internal::ValueStoreNotPrintable> {
  public:
-  using ValueType = std::decay_t<typename IdT::ValueType>;
-
-  // Typically we want to use `ValueType&` and `const ValueType& to avoid
-  // copies, but when the value type is a `StringRef`, we assume external
-  // storage for the string data and both our value type and ref type will be
-  // `StringRef`. This will preclude mutation of the string data.
-  using RefType = std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
-                                     llvm::StringRef, ValueType&>;
-  using ConstRefType =
-      std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
-                         llvm::StringRef, const ValueType&>;
+  using ValueType = ValueStoreTypes<IdT>::ValueType;
+  using RefType = ValueStoreTypes<IdT>::RefType;
+  using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
 
   ValueStore() = default;
 
@@ -211,9 +221,9 @@ class ValueStoreRange {
 template <typename IdT>
 class CanonicalValueStore {
  public:
-  using ValueType = typename IdT::ValueType;
-  using RefType = typename ValueStore<IdT>::RefType;
-  using ConstRefType = typename ValueStore<IdT>::ConstRefType;
+  using ValueType = ValueStoreTypes<IdT>::ValueType;
+  using RefType = ValueStoreTypes<IdT>::RefType;
+  using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
 
   // Stores a canonical copy of the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT;
@@ -313,8 +323,8 @@ auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
 template <typename RelatedIdT, typename IdT>
 class RelationalValueStore {
  public:
-  using ValueType = IdT::ValueType;
-  using ConstRefType = ValueStore<IdT>::ConstRefType;
+  using ValueType = ValueStoreTypes<IdT>::ValueType;
+  using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
 
   // Given the related ID and a value, stores the value and returns a mapped ID
   // to reference it in the store.

@@ -11,6 +11,7 @@
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -40,12 +41,10 @@ Formatter::Formatter(const File* sem_ir,
       inst_namer_(sem_ir_),
       get_tree_and_subtrees_(get_tree_and_subtrees),
       include_ir_in_dumps_(include_ir_in_dumps),
-      use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges) {
-  // Create a placeholder visible chunk and assign it to all instructions that
-  // don't have a chunk of their own.
-  auto first_chunk = AddChunkNoFlush(true);
-  tentative_inst_chunks_.resize(sem_ir_->insts().size(), first_chunk);
-
+      use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges),
+      // Create a placeholder visible chunk and assign it to all instructions
+      // that don't have a chunk of their own.
+      tentative_inst_chunks_(sem_ir_->insts().size(), AddChunkNoFlush(true)) {
   if (use_dump_sem_ir_ranges_) {
     ComputeNodeParents();
   }
@@ -54,7 +53,7 @@ Formatter::Formatter(const File* sem_ir,
   for (auto inst_id : llvm::concat<const InstId>(
            sem_ir_->constants().array_ref(),
            sem_ir_->inst_blocks().Get(InstBlockId::Imports))) {
-    tentative_inst_chunks_[inst_id.index] = AddChunkNoFlush(false);
+    tentative_inst_chunks_.Set(inst_id, AddChunkNoFlush(false));
   }
 
   // Create a real chunk for the start of the output.
@@ -103,11 +102,12 @@ auto Formatter::Format() -> void {
 }
 
 auto Formatter::ComputeNodeParents() -> void {
-  CARBON_CHECK(node_parents_.empty());
-  node_parents_.resize(sem_ir_->parse_tree().size(), Parse::NodeId::None);
+  CARBON_CHECK(!node_parents_);
+  node_parents_ =
+      NodeParentStore(sem_ir_->parse_tree().size(), Parse::NodeId::None);
   for (auto n : sem_ir_->parse_tree().postorder()) {
     for (auto child : get_tree_and_subtrees_().children(n)) {
-      node_parents_[child.index] = n;
+      node_parents_->Set(child, n);
     }
   }
 }
@@ -215,7 +215,7 @@ auto Formatter::ShouldFormatEntity(InstId decl_id) -> bool {
   // body.
   auto end_node_id = loc_id.node_id();
   if (IsDefinitionStart(sem_ir_->parse_tree().node_kind(end_node_id))) {
-    end_node_id = node_parents_[end_node_id.index];
+    end_node_id = node_parents_->Get(end_node_id);
   }
 
   Lex::InclusiveTokenRange range = {
@@ -313,7 +313,7 @@ auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
     if (use_tentative_output_scopes) {
       // This is for constants and imports. These use tentative logic to
       // determine whether an instruction is printed.
-      TentativeOutputScope scope(*this, tentative_inst_chunks_[inst_id.index]);
+      TentativeOutputScope scope(*this, tentative_inst_chunks_.Get(inst_id));
       FormatInst(inst_id);
     } else if (ShouldFormatInst(inst_id)) {
       // This is for the file scope. It uses only the range-based filtering.
@@ -1336,7 +1336,7 @@ auto Formatter::FormatName(NameId id) -> void {
 
 auto Formatter::FormatName(InstId id) -> void {
   if (id.has_value()) {
-    IncludeChunkInOutput(tentative_inst_chunks_[id.index]);
+    IncludeChunkInOutput(tentative_inst_chunks_.Get(id));
   }
   out_ << inst_namer_.GetNameFor(scope_, id);
 }

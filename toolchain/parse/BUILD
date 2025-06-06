@@ -156,6 +156,7 @@ cc_library(
         "//common:find",
         "//common:ostream",
         "//common:struct_reflection",
+        "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:value_store",
         "//toolchain/lex:token_index",
         "//toolchain/lex:tokenized_buffer",
