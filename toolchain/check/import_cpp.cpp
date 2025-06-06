@@ -384,7 +384,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 
     llvm::StringRef param_name = param->getName();
     SemIR::NameId name_id =
-        (param_name.empty())
+        param_name.empty()
             // Translate an unnamed parameter to an underscore to
             // match Carbon's naming of unnamed/unused function params.
             ? SemIR::NameId::Underscore
@@ -444,26 +444,36 @@ static auto GetReturnType(Context& context, SemIR::LocId loc_id,
   return param_pattern_id;
 }
 
-// Returns parameter patterns block id, the return slot pattern id, and the
+namespace {
+// Represents the parameter patterns block id, the return slot pattern id and
+// the call parameters block id for a function declaration.
+struct FunctionParams {
+  SemIR::InstBlockId param_patterns_id;
+  SemIR::InstId return_slot_pattern_id;
+  SemIR::InstBlockId call_params_id;
+};
+}  // namespace
+
+// Returns parameter patterns block id, the return slot pattern id and the
 // call parameters block id for the given function declaration.
 // Returns false if the function declaration has an unsupported parameter type.
 static auto GetFunctionParams(Context& context, SemIR::LocId loc_id,
-                              clang::FunctionDecl* clang_decl,
-                              SemIR::InstBlockId& param_patterns_id,
-                              SemIR::InstId& return_slot_pattern_id,
-                              SemIR::InstBlockId& call_params_id) -> bool {
-  param_patterns_id = MakeParamPatternsBlockId(context, loc_id, *clang_decl);
+                              const clang::FunctionDecl* clang_decl)
+    -> std::optional<FunctionParams> {
+  auto param_patterns_id =
+      MakeParamPatternsBlockId(context, loc_id, *clang_decl);
   if (!param_patterns_id.has_value()) {
-    return false;
+    return std::nullopt;
   }
-  return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
+  auto return_slot_pattern_id = GetReturnType(context, loc_id, clang_decl);
   if (SemIR::ErrorInst::InstId == return_slot_pattern_id) {
-    return false;
+    return std::nullopt;
   }
-  call_params_id =
+  auto call_params_id =
       CalleePatternMatch(context, SemIR::InstBlockId::None, param_patterns_id,
                          return_slot_pattern_id);
-  return true;
+  return FunctionParams{param_patterns_id, return_slot_pattern_id,
+                        call_params_id};
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
@@ -489,19 +499,15 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   context.inst_block_stack().Push();
   context.pattern_block_stack().Push();
 
-  auto param_patterns_id = SemIR::InstBlockId::Empty;
-  auto return_slot_pattern_id = SemIR::InstId::None;
-  auto call_params_id = SemIR::InstBlockId::Empty;
-  auto success =
-      GetFunctionParams(context, loc_id, clang_decl, param_patterns_id,
-                        return_slot_pattern_id, call_params_id);
+  auto function_params = GetFunctionParams(context, loc_id, clang_decl);
 
-  auto decl_block_id = context.inst_block_stack().Pop();
   auto pattern_block_id = context.pattern_block_stack().Pop();
+  auto decl_block_id = context.inst_block_stack().Pop();
 
-  if (!success) {
+  if (!function_params.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
+
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
   auto decl_id =
@@ -515,14 +521,14 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .last_param_node_id = Parse::NodeId::None,
        .pattern_block_id = pattern_block_id,
        .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
-       .param_patterns_id = param_patterns_id,
+       .param_patterns_id = function_params->param_patterns_id,
        .is_extern = false,
        .extern_library_id = SemIR::LibraryNameId::None,
        .non_owning_decl_id = SemIR::InstId::None,
        .first_owning_decl_id = decl_id,
        .definition_id = SemIR::InstId::None},
-      {.call_params_id = call_params_id,
-       .return_slot_pattern_id = return_slot_pattern_id,
+      {.call_params_id = function_params->call_params_id,
+       .return_slot_pattern_id = function_params->return_slot_pattern_id,
        .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
        .self_param_id = SemIR::InstId::None,
        .cpp_decl = clang_decl}};
