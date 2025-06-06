@@ -900,11 +900,18 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     driver_env.consumer.Flush();
   });
 
+  std::string phase;
+  std::string filename;
   PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
+    out << "Phase: " << phase << '\n';
+    constexpr int Indent = 10;
+    out.indent(Indent);
+    out << "Filename: " << filename << '\n';
     // When crashing, flush diagnostics. If sorting diagnostics, they can be
     // redirected to the crash stream; if streaming, the original stream is
     // flushed.
     // TODO: Eventually we'll want to limit the count.
+    out.indent(Indent);
     if (options_.stream_errors) {
       out << "Flushing diagnostics\n";
     } else {
@@ -930,8 +937,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return result;
   };
 
+  phase = "lex";
   // Lex.
   for (auto& unit : units) {
+    filename = unit->input_filename();
     unit->RunLex();
   }
   if (options_.phase == CompileOptions::Phase::Lex) {
@@ -941,8 +950,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // lex failed, but not if source doesn't exist. Later steps are skipped if
   // anything failed, so don't need this.
 
+  phase = "parse";
   // Parse.
   for (auto& unit : units) {
+    filename = unit->input_filename();
     if (unit->has_source()) {
       unit->RunParse();
     }
@@ -968,7 +979,9 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
                          driver_env.vlog_stream, driver_env.fuzzing);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");
+  phase = "post-check";
   for (auto& unit : units) {
+    filename = unit->input_filename();
     if (unit->has_source()) {
       unit->PostCheck();
     }
@@ -985,7 +998,9 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Lower.
+  phase = "lower";
   for (const auto& unit : units) {
+    filename = unit->input_filename();
     unit->RunLower();
   }
   if (options_.phase == CompileOptions::Phase::Lower) {
