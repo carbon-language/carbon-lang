@@ -14,11 +14,8 @@ NodeJS is required to build the extension. You will also need to install `vsce`:
 npm install -g vsce
 ```
 
-Add vsce to your path:
-
-```
-export PATH=$PATH:/usr/local/lib/node_modules/vsce
-```
+This installs `vsce` to `/usr/local/bin/vsce`. Ensure that `/usr/local/bin` is
+in your `$PATH` environment variable to use it.
 
 ## Common operations
 
