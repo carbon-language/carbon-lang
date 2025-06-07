@@ -475,13 +475,14 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%x.param: %struct_type.a.b.391) -> %return.param: %struct_type.c.d.15a {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc9_48.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:   %x.ref: %struct_type.a.b.391 = name_ref x, %x.param
 // CHECK:STDOUT:   %.loc9_48.1: ref %struct_type.d.c.b36 = temporary_storage
 // CHECK:STDOUT:   %.loc5_9.1: %empty_struct_type = struct_access %x.ref, element1
 // CHECK:STDOUT:   %.loc5_9.2: %empty_tuple.type = struct_access %x.ref, element0
 // CHECK:STDOUT:   %struct: %struct_type.b.a.40c = struct_value (%.loc5_9.1, %.loc5_9.2)
 // CHECK:STDOUT:   %.loc5_9.3: %struct_type.b.a.40c = converted %x.ref, %struct
-// CHECK:STDOUT:   %F.call: init %struct_type.d.c.b36 = call @impl.%F.decl.loc9_48.1(%.loc5_9.3) to %.loc9_48.1
+// CHECK:STDOUT:   %F.call: init %struct_type.d.c.b36 = call %F.ref(%.loc5_9.3) to %.loc9_48.1
 // CHECK:STDOUT:   %.loc9_48.2: ref %struct_type.d.c.b36 = temporary %.loc9_48.1, %F.call
 // CHECK:STDOUT:   %.loc9_48.3: ref %empty_tuple.type = struct_access %.loc9_48.2, element1
 // CHECK:STDOUT:   %.loc9_48.4: ref %empty_tuple.type = struct_access %return, element1
@@ -700,9 +701,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc13_39.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   %self.ref: %ptr.e79 = name_ref self, %self.param
 // CHECK:STDOUT:   %.loc9_17.1: ref %B = deref %self.ref
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc9_17.1, @impl.%F.decl.loc13_39.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc9_17.1, %F.ref
 // CHECK:STDOUT:   %other.ref: %ptr.e79 = name_ref other, %other.param
 // CHECK:STDOUT:   %addr.loc9_17.1: %ptr.e79 = addr_of %.loc9_17.1
 // CHECK:STDOUT:   %.loc9_17.2: ref %B = deref %addr.loc9_17.1
@@ -881,8 +883,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%self.param: %B, %other.param: %B) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc12_26.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self.param
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, @impl.%F.decl.loc12_26.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %other.ref: %B = name_ref other, %other.param
 // CHECK:STDOUT:   %.loc8_12.1: ref %A = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc8_12.2: ref %A = converted %self.ref, %.loc8_12.1
@@ -1106,9 +1109,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc13_39.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   %self.ref: %ptr.e79 = name_ref self, %self.param
 // CHECK:STDOUT:   %.loc9_17.1: ref %B = deref %self.ref
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc9_17.1, @impl.%F.decl.loc13_39.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc9_17.1, %F.ref
 // CHECK:STDOUT:   %other.ref: %ptr.e79 = name_ref other, %other.param
 // CHECK:STDOUT:   %addr.loc9_17.1: %ptr.e79 = addr_of %.loc9_17.1
 // CHECK:STDOUT:   %.loc9_17.2: ref %B = deref %addr.loc9_17.1
@@ -1266,8 +1270,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3() -> %return.param: %A {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.b24d6f.1 = name_ref F, @impl.%F.decl.loc19_14.1 [concrete = constants.%F.77e9d5.1]
 // CHECK:STDOUT:   %.loc19_14.1: ref %B = temporary_storage
-// CHECK:STDOUT:   %F.call: init %B = call @impl.%F.decl.loc19_14.1() to %.loc19_14.1
+// CHECK:STDOUT:   %F.call: init %B = call %F.ref() to %.loc19_14.1
 // CHECK:STDOUT:   %.loc19_14.2: ref %B = temporary %.loc19_14.1, %F.call
 // CHECK:STDOUT:   %.loc19_14.3: ref %A = class_element_access %.loc19_14.2, element0
 // CHECK:STDOUT:   %.loc19_14.4: ref %A = converted %F.call, %.loc19_14.3
@@ -1405,9 +1410,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%a.param: %A) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.2ae1ef.1 = name_ref F, @impl.%F.decl.loc22_13.1 [concrete = constants.%F.2a7aab.1]
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a.param
 // CHECK:STDOUT:   %.loc8: %B = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call @impl.%F.decl.loc22_13.1(<error>)
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1538,8 +1544,9 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3() -> %return.param: %A {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.2ae1ef.1 = name_ref F, @impl.%F.decl.loc19_14.1 [concrete = constants.%F.2a7aab.1]
 // CHECK:STDOUT:   %.loc19_14.1: ref %B = temporary_storage
-// CHECK:STDOUT:   %F.call: init %B = call @impl.%F.decl.loc19_14.1() to %.loc19_14.1
+// CHECK:STDOUT:   %F.call: init %B = call %F.ref() to %.loc19_14.1
 // CHECK:STDOUT:   %.loc19_14.2: %A = converted %F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
@@ -1688,7 +1695,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HasReturn.3() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %HasReturn.call: init %empty_tuple.type = call @impl.%HasReturn.decl.loc12_17.1()
+// CHECK:STDOUT:   %HasReturn.ref: %HasReturn.type.c73908.1 = name_ref HasReturn, @impl.%HasReturn.decl.loc12_17.1 [concrete = constants.%HasReturn.424378.1]
+// CHECK:STDOUT:   %HasReturn.call: init %empty_tuple.type = call %HasReturn.ref()
 // CHECK:STDOUT:   %.loc12_17.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc12_17.2: ref %empty_tuple.type = temporary %.loc12_17.1, %HasReturn.call
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
@@ -1698,7 +1706,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @EmptyTupleReturn.3() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %EmptyTupleReturn.call: init %empty_tuple.type = call @impl.%EmptyTupleReturn.decl.loc18_24.1()
+// CHECK:STDOUT:   %EmptyTupleReturn.ref: %EmptyTupleReturn.type.9ea74f.1 = name_ref EmptyTupleReturn, @impl.%EmptyTupleReturn.decl.loc18_24.1 [concrete = constants.%EmptyTupleReturn.282179.1]
+// CHECK:STDOUT:   %EmptyTupleReturn.call: init %empty_tuple.type = call %EmptyTupleReturn.ref()
 // CHECK:STDOUT:   %.loc18_24.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc18_24.2: ref %empty_tuple.type = temporary %.loc18_24.1, %EmptyTupleReturn.call
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
@@ -1976,9 +1985,10 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%a.param: %B) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.17e183.1 = name_ref F, @impl.%F.decl.loc32_15.1 [concrete = constants.%F.4f1533.1]
 // CHECK:STDOUT:   %a.ref: %B = name_ref a, %a.param
 // CHECK:STDOUT:   %.loc8: %C = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call @impl.%F.decl.loc32_15.1(<error>)
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
