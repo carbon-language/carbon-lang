@@ -21,14 +21,16 @@ namespace Carbon {
 // directly into the new element of `my_widget_vec`, without performing a copy
 // or move.
 //
-// This works by providing a conversion function on `EmplaceResult` that
-// converts to the type `DestT` being emplaced. When an `emplace` function is
-// used to construct an object of type `DestT` from a value of type
-// `EmplaceResult` that converts to `DestT`, the conversion function is used
-// directly to initialize the `DestT` object without calling a `DestT`
-// constructor, per the C++17 guaranteed copy elision rules. Similarly, the
-// result of the conversion function is initialized directly by calling
-// `make_fn`, again relying on guaranteed copy elision.
+// Note that the type of the argument to `emplace_back` is an `EmplaceResult`
+// instance, not the type `DestT` stored in the container. When the `DestT`
+// instance is eventually initialized directly from the `EmplaceResult`, a
+// conversion function on `EmplaceResult` is used that converts to the type
+// `DestT` being emplaced. This `DestT` initialization does not call an
+// additional `DestT` copy or move constructor to initialize the result, and
+// instead initializes it in-place in the container's storage, per the C++17
+// guaranteed copy elision rules. Similarly, within the conversion function, the
+// result is initialized directly by calling `make_fn`, again relying on
+// guaranteed copy elision.
 //
 // Because the make function is called from the conversion function,
 // `EmplaceResult` should only be used in contexts where it will be used to
