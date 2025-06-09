@@ -314,14 +314,19 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
       continue;
     }
 
-    for (auto j : llvm::seq(i + 1, facet_type.rewrite_constraints.size())) {
-      auto& next = facet_type.rewrite_constraints[j];
+    // This loop moves `i` to the last position with the same LHS value, so that
+    // we don't diagnose more than once within the same contiguous range of
+    // assignments to a single LHS value.
+    for (; i < facet_type.rewrite_constraints.size() - 1; ++i) {
+      auto& next = facet_type.rewrite_constraints[i + 1];
       if (constraint.lhs_id != next.lhs_id) {
         break;
       }
+      // `constraint.lhs_id == next.lhs_id` so only check for `ErrorInst` in the
+      // RHS. On the first error, `constraint.rhs_id` is set to `ErrorInst`
+      // which prevents further diagnostics for the same LHS value due to this
+      // condition.
       if (constraint.rhs_id != SemIR::ErrorInst::InstId &&
-          // `constraint.lhs_id == next.lhs_id` so only check for `ErrorInst` in
-          // one of them.
           next.rhs_id != SemIR::ErrorInst::InstId) {
         CARBON_DIAGNOSTIC(
             AssociatedConstantWithDifferentValues, Error,
@@ -334,14 +339,9 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
         context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
                                constraint.lhs_id, constraint.rhs_id,
                                next.rhs_id);
-        constraint.rhs_id = SemIR::ErrorInst::InstId;
-        next.rhs_id = SemIR::ErrorInst::InstId;
       }
-
-      // Move `i` to the last position with the same `lhs`, so that we don't
-      // diagnose more than once within the same contiguous range of assignments
-      // to a single `lhs` value.
-      i = j;
+      constraint.rhs_id = SemIR::ErrorInst::InstId;
+      next.rhs_id = SemIR::ErrorInst::InstId;
     }
   }
 

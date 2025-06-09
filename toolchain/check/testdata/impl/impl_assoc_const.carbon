@@ -193,11 +193,16 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
+// The facet type should have a single rewrite with `<error>` in the RHS (they
+// are all errors, and they get deduped).
+//
+//@dump-sem-ir-begin
 // CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:12: error: associated constant `.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {}) {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {}) {}
+//@dump-sem-ir-end
 
 // --- repeated.carbon
 library "[[@TEST_NAME]]";
@@ -303,3 +308,98 @@ class CD { }
 impl CD as IF where .F = 0 {
   fn F() {}
 }
+
+// CHECK:STDOUT: --- fail_many_different.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %L.type: type = facet_type <@L> [concrete]
+// CHECK:STDOUT:   %L.assoc_type: type = assoc_entity_type @L [concrete]
+// CHECK:STDOUT:   %assoc0: %L.assoc_type = assoc_entity element0, @L.%W [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.Self: %L.type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
+// CHECK:STDOUT:   %L.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @L [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %L.lookup_impl_witness, element0 [symbolic_self]
+// CHECK:STDOUT:   %tuple.type.2d5: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %tuple.type.e5a: type = tuple_type (%empty_struct_type, %empty_tuple.type, %empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %tuple.type.d7e: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %tuple.type.bd8: type = tuple_type (%empty_struct_type, %empty_tuple.type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %L_where.type: type = facet_type <@L where %impl.elem0 = <error>> [concrete]
+// CHECK:STDOUT:   %L.impl_witness: <witness> = impl_witness file.%L.impl_witness_table [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %L.ref: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.Self.ref.loc13_20: %L.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %W.ref.loc13_20: %L.assoc_type = name_ref W, @W.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_type.loc13_20: type = facet_access_type %.Self.ref.loc13_20 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc13_20: type = converted %.Self.ref.loc13_20, %.Self.as_type.loc13_20 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %impl.elem0.loc13_20: type = impl_witness_access constants.%L.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc13_27: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_31: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_35: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_36.1: %tuple.type.2d5 = tuple_literal (%.loc13_27, %.loc13_31, %.loc13_35)
+// CHECK:STDOUT:     %.loc13_36.2: type = converted %.loc13_27, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_36.3: type = converted %.loc13_31, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_36.4: type = converted %.loc13_35, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_36.5: type = converted %.loc13_36.1, constants.%tuple.type.2d5 [concrete = constants.%tuple.type.2d5]
+// CHECK:STDOUT:     %.Self.ref.loc13_42: %L.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %W.ref.loc13_42: %L.assoc_type = name_ref W, @W.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_type.loc13_42: type = facet_access_type %.Self.ref.loc13_42 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc13_42: type = converted %.Self.ref.loc13_42, %.Self.as_type.loc13_42 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %impl.elem0.loc13_42: type = impl_witness_access constants.%L.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc13_49: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc13_53: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_57: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_58.1: %tuple.type.e5a = tuple_literal (%.loc13_49, %.loc13_53, %.loc13_57)
+// CHECK:STDOUT:     %.loc13_58.2: type = converted %.loc13_49, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc13_58.3: type = converted %.loc13_53, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_58.4: type = converted %.loc13_57, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_58.5: type = converted %.loc13_58.1, constants.%tuple.type.e5a [concrete = constants.%tuple.type.e5a]
+// CHECK:STDOUT:     %.Self.ref.loc13_64: %L.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %W.ref.loc13_64: %L.assoc_type = name_ref W, @W.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_type.loc13_64: type = facet_access_type %.Self.ref.loc13_64 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc13_64: type = converted %.Self.ref.loc13_64, %.Self.as_type.loc13_64 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %impl.elem0.loc13_64: type = impl_witness_access constants.%L.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc13_71: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc13_75: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc13_79: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_80.1: %tuple.type.d7e = tuple_literal (%.loc13_71, %.loc13_75, %.loc13_79)
+// CHECK:STDOUT:     %.loc13_80.2: type = converted %.loc13_71, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc13_80.3: type = converted %.loc13_75, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc13_80.4: type = converted %.loc13_79, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_80.5: type = converted %.loc13_80.1, constants.%tuple.type.d7e [concrete = constants.%tuple.type.d7e]
+// CHECK:STDOUT:     %.Self.ref.loc13_86: %L.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %W.ref.loc13_86: %L.assoc_type = name_ref W, @W.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_type.loc13_86: type = facet_access_type %.Self.ref.loc13_86 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc13_86: type = converted %.Self.ref.loc13_86, %.Self.as_type.loc13_86 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %impl.elem0.loc13_86: type = impl_witness_access constants.%L.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc13_93: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc13_97: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_101: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc13_102.1: %tuple.type.bd8 = tuple_literal (%.loc13_93, %.loc13_97, %.loc13_101)
+// CHECK:STDOUT:     %.loc13_102.2: type = converted %.loc13_93, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc13_102.3: type = converted %.loc13_97, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_102.4: type = converted %.loc13_101, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc13_102.5: type = converted %.loc13_102.1, constants.%tuple.type.bd8 [concrete = constants.%tuple.type.bd8]
+// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = constants.%L_where.type] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_20, %.loc13_36.5
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_42, %.loc13_58.5
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_64, %.loc13_80.5
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_86, %.loc13_102.5
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %L.impl_witness_table = impl_witness_table (<error>), @impl [concrete]
+// CHECK:STDOUT:   %L.impl_witness: <witness> = impl_witness %L.impl_witness_table [concrete = constants.%L.impl_witness]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %.loc13_7.2 as %.loc13_14 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = file.%L.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
