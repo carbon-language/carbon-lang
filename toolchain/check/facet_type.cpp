@@ -338,9 +338,9 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
         next.rhs_id = SemIR::ErrorInst::InstId;
       }
 
-      // Move `i` to the last position where the `lhs` match, so that we don't
-      // diagnose more than once within the same contiguous range of a single
-      // `lhs` value.
+      // Move `i` to the last position with the same `lhs`, so that we don't
+      // diagnose more than once within the same contiguous range of assignments
+      // to a single `lhs` value.
       i = j;
     }
   }

@@ -292,4 +292,3 @@ class CD { }
 impl CD as IF where .F = 0 {
   fn F() {}
 }
-
