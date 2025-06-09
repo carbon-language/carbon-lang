@@ -292,11 +292,12 @@ class FileContext {
   // Maps specific callables to lowered functions.
   FixedSizeValueStore<SemIR::SpecificId, llvm::Function*> specific_functions_;
 
-  // Provides lowered versions of types.
+  // Provides lowered versions of types. Entries are non-symbolic types.
   using LoweredTypeStore = FixedSizeValueStore<SemIR::TypeId, llvm::Type*>;
   LoweredTypeStore types_;
 
-  // Maps constants to their lowered values.
+  // Maps constants to their lowered values. Indexes are the `InstId` for
+  // constant instructions.
   LoweredConstantStore constants_;
 
   // Maps global variables to their lowered variant.

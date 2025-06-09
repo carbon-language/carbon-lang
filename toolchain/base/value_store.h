@@ -222,7 +222,6 @@ class ValueStoreRange {
 template <typename IdT>
 class CanonicalValueStore {
  public:
-  using IdType = IdT;
   using ValueType = ValueStoreTypes<IdT>::ValueType;
   using RefType = ValueStoreTypes<IdT>::RefType;
   using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
@@ -325,7 +324,6 @@ auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
 template <typename RelatedIdT, typename IdT>
 class RelationalValueStore {
  public:
-  using IdType = IdT;
   using ValueType = ValueStoreTypes<IdT>::ValueType;
   using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
 
