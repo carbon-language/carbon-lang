@@ -13,7 +13,8 @@
 
 namespace Carbon::Lex {
 
-// Storage for the information about a specific token in the buffer.
+// Storage for the information about a specific token, as an implementation
+// detail of `TokenizedBuffer`.
 //
 // This provides a friendly accessor API to the carefully space-optimized
 // storage model of the information we associated with each token.
