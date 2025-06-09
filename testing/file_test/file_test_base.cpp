@@ -386,6 +386,9 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
   if (absl::GetFlag(FLAGS_dump_output)) {
     std::unique_lock<std::mutex> lock(output_mutex);
     llvm::errs() << "\n--- Dumping: " << test.test_name << "\n\n";
+  } else if (single_threaded) {
+    std::unique_lock<std::mutex> lock(output_mutex);
+    llvm::errs() << "\nTEST: " << test.test_name << ' ';
   }
 
   // Load expected output.
@@ -405,7 +408,6 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
     }
 
     if (single_threaded) {
-      llvm::errs() << "\nTEST: " << test.test_name << ' ';
       RunSingleTestHelper(test, *test_instance);
     } else {
       // Use a crash recovery context to try to get a stack trace when
