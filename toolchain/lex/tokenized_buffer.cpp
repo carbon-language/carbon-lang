@@ -24,7 +24,7 @@
 namespace Carbon::Lex {
 
 auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
-  return FindLineIndex(GetTokenInfo(token).byte_offset());
+  return FindLineIndex(token_infos_.Get(token).byte_offset());
 }
 
 auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
@@ -32,7 +32,7 @@ auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
 }
 
 auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
-  const auto& token_info = GetTokenInfo(token);
+  const auto& token_info = token_infos_.Get(token);
   const auto& line_info =
       line_infos_.Get(FindLineIndex(token_info.byte_offset()));
   return token_info.byte_offset() - line_info.start + 1;
@@ -58,7 +58,7 @@ auto TokenizedBuffer::GetEndLoc(TokenIndex token) const
 }
 
 auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
-  const auto& token_info = GetTokenInfo(token);
+  const auto& token_info = token_infos_.Get(token);
   llvm::StringRef fixed_spelling = token_info.kind().fixed_spelling();
   if (!fixed_spelling.empty()) {
     return fixed_spelling;
@@ -109,21 +109,21 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
 }
 
 auto TokenizedBuffer::GetIdentifier(TokenIndex token) const -> IdentifierId {
-  const auto& token_info = GetTokenInfo(token);
+  const auto& token_info = token_infos_.Get(token);
   CARBON_CHECK(token_info.kind() == TokenKind::Identifier, "{0}",
                token_info.kind());
   return token_info.ident_id();
 }
 
 auto TokenizedBuffer::GetIntLiteral(TokenIndex token) const -> IntId {
-  const auto& token_info = GetTokenInfo(token);
+  const auto& token_info = token_infos_.Get(token);
   CARBON_CHECK(token_info.kind() == TokenKind::IntLiteral, "{0}",
                token_info.kind());
   return token_info.int_id();
 }
 
 auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
-  const auto& token_info = GetTokenInfo(token);
+  const auto& token_info = token_infos_.Get(token);
   CARBON_CHECK(token_info.kind() == TokenKind::RealLiteral, "{0}",
                token_info.kind());
   return token_info.real_id();
@@ -131,14 +131,14 @@ auto TokenizedBuffer::GetRealLiteral(TokenIndex token) const -> RealId {
 
 auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
     -> StringLiteralValueId {
-  const auto& token_info = GetTokenInfo(token);
+  const auto& token_info = token_infos_.Get(token);
   CARBON_CHECK(token_info.kind() == TokenKind::StringLiteral, "{0}",
                token_info.kind());
   return token_info.string_literal_id();
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
-  const auto& token_info = GetTokenInfo(token);
+  const auto& token_info = token_infos_.Get(token);
   CARBON_CHECK(token_info.kind().is_sized_type_literal(), "{0}",
                token_info.kind());
   return token_info.int_id();
@@ -146,7 +146,7 @@ auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
 
 auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
     -> TokenIndex {
-  const auto& opening_token_info = GetTokenInfo(opening_token);
+  const auto& opening_token_info = token_infos_.Get(opening_token);
   CARBON_CHECK(opening_token_info.kind().is_opening_symbol(), "{0}",
                opening_token_info.kind());
   return opening_token_info.closing_token_index();
@@ -154,7 +154,7 @@ auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
 
 auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
     -> TokenIndex {
-  const auto& closing_token_info = GetTokenInfo(closing_token);
+  const auto& closing_token_info = token_infos_.Get(closing_token);
   CARBON_CHECK(closing_token_info.kind().is_closing_symbol(), "{0}",
                closing_token_info.kind());
   return closing_token_info.opening_token_index();
@@ -246,7 +246,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
     -> void {
   widths.Widen(GetTokenPrintWidths(token));
   int token_index = token.index;
-  const auto& token_info = GetTokenInfo(token);
+  const auto& token_info = token_infos_.Get(token);
   LineIndex line_index = FindLineIndex(token_info.byte_offset());
   llvm::StringRef token_text = GetTokenText(token);
 
@@ -338,7 +338,7 @@ auto TokenizedBuffer::FindLineIndex(int32_t byte_offset) const -> LineIndex {
 auto TokenizedBuffer::IsAfterComment(TokenIndex token,
                                      CommentIndex comment_index) const -> bool {
   const auto& comment_data = comments_.Get(comment_index);
-  return GetTokenInfo(token).byte_offset() > comment_data.start;
+  return token_infos_.Get(token).byte_offset() > comment_data.start;
 }
 
 auto TokenizedBuffer::GetCommentText(CommentIndex comment_index) const
@@ -411,7 +411,7 @@ auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
     -> Diagnostics::ConvertedLoc {
   // Map the token location into a position within the source buffer.
   const char* token_start =
-      source_->text().begin() + GetTokenInfo(token).byte_offset();
+      source_->text().begin() + token_infos_.Get(token).byte_offset();
 
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token

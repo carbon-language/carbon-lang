@@ -156,7 +156,10 @@ class ValueStore
   // for (auto [id, value] : store.enumerate()) { ... }
   // ```
   auto enumerate() const [[clang::lifetimebound]] -> auto {
-    auto index_to_id = [&](int32_t i) -> std::pair<IdT, ConstRefType> {
+    // For `it->val`, Writing `const std::pair` is required; otherwise
+    // `mapped_iterator` incorrectly infers the pointer type for `PointerProxy`.
+    // NOLINTNEXTLINE(readability-const-return-type)
+    auto index_to_id = [&](int32_t i) -> const std::pair<IdT, ConstRefType> {
       return std::pair<IdT, ConstRefType>(IdT(i), Get(IdT(i)));
     };
     // Because indices into `ValueStore` are all sequential values from 0, we

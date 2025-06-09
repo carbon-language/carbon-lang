@@ -53,8 +53,6 @@ namespace Carbon::Lex {
 // `TokenizedBuffer` or undermining the performance constraints of the lexer.
 class [[clang::internal_linkage]] Lexer {
  public:
-  using TokenInfo = TokenizedBuffer::TokenInfo;
-
   // Symbolic result of a lexing action. This indicates whether we successfully
   // lexed a token, or whether other lexing actions should be attempted.
   //
@@ -1225,10 +1223,10 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   TokenIndex token =
       LexTokenWithPayload(kind, opening_token.index, byte_offset);
 
-  auto& opening_token_info = buffer_.GetTokenInfo(opening_token);
+  auto& opening_token_info = buffer_.token_infos_.Get(opening_token);
   if (LLVM_UNLIKELY(opening_token_info.kind() != kind.opening_symbol())) {
     has_mismatched_brackets_ = true;
-    buffer_.GetTokenInfo(token).set_opening_token_index(TokenIndex::None);
+    buffer_.token_infos_.Get(token).set_opening_token_index(TokenIndex::None);
     return token;
   }
 
@@ -1376,7 +1374,8 @@ auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
 
   // Look for the `r` token. Note that this is always in bounds because we
   // create a start of file token.
-  auto& prev_token_info = buffer_.token_infos_.back();
+  auto& prev_token_info =
+      buffer_.token_infos_.Get(TokenIndex(buffer_.token_infos_.size() - 1));
 
   // If the previous token isn't the identifier `r`, or the character after `#`
   // isn't the start of an identifier, this is not a raw identifier.
@@ -1534,7 +1533,7 @@ class Lexer::ErrorRecoveryBuffer {
     // Find the end of the token before the target token, and add the new token
     // there.
     TokenIndex insert_after(insert_before.index - 1);
-    const auto& prev_info = buffer_->GetTokenInfo(insert_after);
+    const auto& prev_info = buffer_->token_infos_.Get(insert_after);
     int32_t byte_offset =
         prev_info.byte_offset() + buffer_->GetTokenText(insert_after).size();
     new_tokens_.push_back(
@@ -1544,7 +1543,7 @@ class Lexer::ErrorRecoveryBuffer {
   // Replace the given token with an error token. We do this immediately,
   // because we don't benefit from buffering it.
   auto ReplaceWithError(TokenIndex token) -> void {
-    auto& token_info = buffer_->GetTokenInfo(token);
+    auto& token_info = buffer_->token_infos_.Get(token);
     int error_length = buffer_->GetTokenText(token).size();
     token_info.ResetAsError(error_length);
     any_error_tokens_ = true;
@@ -1552,22 +1551,24 @@ class Lexer::ErrorRecoveryBuffer {
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
-    auto old_tokens = std::move(buffer_->token_infos_);
-    buffer_->token_infos_.clear();
+    ValueStore<TokenIndex> old_tokens =
+        std::exchange(buffer_->token_infos_, {});
     int new_size = old_tokens.size() + new_tokens_.size();
-    buffer_->token_infos_.reserve(new_size);
+    buffer_->token_infos_.Reserve(new_size);
     buffer_->recovery_tokens_.resize(new_size);
 
-    int old_tokens_offset = 0;
+    auto old_tokens_range = old_tokens.enumerate();
+    auto old_tokens_it = old_tokens_range.begin();
     for (auto [next_offset, info] : new_tokens_) {
-      buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                   old_tokens.begin() + next_offset.index);
+      for (; old_tokens_it->first < next_offset; ++old_tokens_it) {
+        buffer_->token_infos_.Add(old_tokens_it->second);
+      }
       buffer_->AddToken(info);
       buffer_->recovery_tokens_.set(next_offset.index);
-      old_tokens_offset = next_offset.index;
     }
-    buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
-                                 old_tokens.end());
+    for (; old_tokens_it != old_tokens_range.end(); ++old_tokens_it) {
+      buffer_->token_infos_.Add(old_tokens_it->second);
+    }
   }
 
   // Perform bracket matching to fix cross-references between tokens. This must
@@ -1583,12 +1584,12 @@ class Lexer::ErrorRecoveryBuffer {
         CARBON_CHECK(!open_groups.empty(), "Failed to balance brackets");
         auto opening_token = open_groups.pop_back_val();
 
-        CARBON_CHECK(
-            kind ==
-                buffer_->GetTokenInfo(opening_token).kind().closing_symbol(),
-            "Failed to balance brackets");
-        auto& opening_token_info = buffer_->GetTokenInfo(opening_token);
-        auto& closing_token_info = buffer_->GetTokenInfo(token);
+        CARBON_CHECK(kind == buffer_->token_infos_.Get(opening_token)
+                                 .kind()
+                                 .closing_symbol(),
+                     "Failed to balance brackets");
+        auto& opening_token_info = buffer_->token_infos_.Get(opening_token);
+        auto& closing_token_info = buffer_->token_infos_.Get(token);
         opening_token_info.set_closing_token_index(token);
         closing_token_info.set_opening_token_index(opening_token);
       }
@@ -1601,8 +1602,7 @@ class Lexer::ErrorRecoveryBuffer {
   // A list of tokens to insert into the token stream to fix mismatched
   // brackets. The first element in each pair is the original token index to
   // insert the new token before.
-  llvm::SmallVector<std::pair<TokenIndex, TokenizedBuffer::TokenInfo>>
-      new_tokens_;
+  llvm::SmallVector<std::pair<TokenIndex, TokenInfo>> new_tokens_;
 
   // Whether we have changed any tokens into error tokens.
   bool any_error_tokens_ = false;
@@ -1652,8 +1652,9 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
     // Find the innermost matching opening symbol.
     auto opening_it = llvm::find_if(
         llvm::reverse(open_groups_), [&](TokenIndex opening_token) {
-          return buffer_.GetTokenInfo(opening_token).kind().closing_symbol() ==
-                 kind;
+          return buffer_.token_infos_.Get(opening_token)
+                     .kind()
+                     .closing_symbol() == kind;
         });
     if (opening_it == open_groups_.rend()) {
       CARBON_DIAGNOSTIC(
