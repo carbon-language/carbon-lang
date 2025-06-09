@@ -40,6 +40,11 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
       // Worklist is empty: discard the worklist items associated with this
       // chunk, and leave the scope.
       worklist_.truncate(chunks_.back().first_worklist_index);
+      // We reach here when
+      // `DeferredDefinitionScope::SuspendFinishedScopeAndPush` returns
+      // `NonNestedWithWork`. In this case it's our responsibility to pop the
+      // scope left behind by the `Handle*Definition` function for the
+      // non-nested definition.
       context_->decl_name_stack().PopScope();
       chunks_.back().checking_deferred_definitions = false;
     }

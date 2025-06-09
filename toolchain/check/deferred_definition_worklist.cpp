@@ -90,7 +90,8 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
         get<EnterNestedDeferredDefinitionScope>(worklist_[start_index]);
     // This is a nested deferred definition scope. Suspend the inner scope so we
     // can restore it when we come to type-check the deferred definitions.
-    enter_scope.suspended_name = context.decl_name_stack().Suspend();
+    enter_scope.suspended_name.emplace(
+        EmplaceByCalling([&] { return context.decl_name_stack().Suspend(); }));
 
     // Enqueue a task to leave the nested scope.
     worklist_.emplace_back(LeaveNestedDeferredDefinitionScope{});
