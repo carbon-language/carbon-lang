@@ -218,6 +218,17 @@ interface M { let X:! type; let Y:! type; }
 
 impl () as M where .X = .Y and .X = .Y and .Y = () {}
 
+// --- fail_repeated_and_different.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; }
+
+// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:12: error: associated constant `.(M.X)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: impl () as M where .X = {} and .X = () and .X = {} {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as M where .X = {} and .X = () and .X = {} {}
+
 // --- todo_fail_cycle_single.carbon
 library "[[@TEST_NAME]]";
 

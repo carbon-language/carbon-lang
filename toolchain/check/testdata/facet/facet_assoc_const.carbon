@@ -185,6 +185,17 @@ fn G(T:! M where .X = () and .Y = ()) {
   F(T);
 }
 
+// --- fail_repeated_and_different.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; }
+
+// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(T:! M where .X = {} and .X = () and .X = {}) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! M where .X = {} and .X = () and .X = {}) {}
+
 // --- todo_fail_cycle_single.carbon
 library "[[@TEST_NAME]]";
 
