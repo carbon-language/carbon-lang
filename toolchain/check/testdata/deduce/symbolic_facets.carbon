@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // EXTRA-ARGS: --dump-sem-ir-ranges=only
-// INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

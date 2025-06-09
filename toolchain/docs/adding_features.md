@@ -507,12 +507,12 @@ minimal `Core` package and `prelude` library to the file test with the
 `check/testdata/facet_types/min_prelude/my_test.carbon` might contain:
 
 ```
-// INCLUDE-FILE: toolchain/testing/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
 ```
 
 We have a set of minimal `Core` preludes for testing different compiler feature
-areas in `//toolchain/testing/min_prelude/`. Each file begins with the line
-`package Core library "prelude";` to make it provide a prelude.
+areas in `//toolchain/testing/testdata/min_prelude/`. Each file begins with the
+line `package Core library "prelude";` to make it provide a prelude.
 
 #### SemIR dumps and ranges
 

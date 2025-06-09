@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // EXTRA-ARGS: --custom-core --exclude-dump-file-prefix=min_prelude/
-// INCLUDE-FILE: toolchain/testing/min_prelude/parts/as.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
 
 // --- min_prelude/facet_types.carbon
 
