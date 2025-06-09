@@ -8,7 +8,7 @@
 #include <optional>
 #include <variant>
 
-#include "common/emplace_result.h"
+#include "common/emplace_by_calling.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/handle.h"
@@ -29,7 +29,7 @@ auto DeferredDefinitionWorklist::SuspendFunctionAndPush(
     Parse::FunctionDefinitionStartId node_id) -> void {
   // TODO: Investigate factoring out `HandleFunctionDefinitionSuspend` to make
   // `DeferredDefinitionWorklist` reusable.
-  worklist_.emplace_back(EmplaceResult([&] {
+  worklist_.emplace_back(EmplaceByCalling([&] {
     return CheckSkippedDefinition{
         index, HandleFunctionDefinitionSuspend(context, node_id)};
   }));
@@ -45,7 +45,7 @@ auto DeferredDefinitionWorklist::PushEnterDeferredDefinitionScope(
                              .worklist_start_index = worklist_.size(),
                              .scope_index = context.scope_stack().PeekIndex()});
   if (nested) {
-    worklist_.emplace_back(EmplaceResult([&] {
+    worklist_.emplace_back(EmplaceByCalling([&] {
       return EnterNestedDeferredDefinitionScope{.suspended_name = std::nullopt};
     }));
     CARBON_VLOG("{0}Push EnterDeferredDefinitionScope (nested)\n", VlogPrefix);
@@ -63,17 +63,19 @@ auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
     -> FinishedScopeKind {
   auto [nested, start_index, _] = entered_scopes_.pop_back_val();
 
-  // If we've not found any deferred definitions in this scope, clean up the
-  // stack.
-  if (start_index == worklist_.size()) {
+  // If we've not found any tasks to perform in this scope, clean up the stack.
+  // For non-nested scope, there will be no tasks on the worklist for this scope
+  // in this case; for a nested scope, there will just be a task to re-enter the
+  // nested scope.
+  if (!nested && start_index == worklist_.size()) {
     context.decl_name_stack().PopScope();
     CARBON_VLOG("{0}Left non-nested empty deferred definition scope\n",
                 VlogPrefix);
     return FinishedScopeKind::NonNestedEmpty;
   }
-  if (start_index == worklist_.size() - 1 &&
-      std::holds_alternative<EnterNestedDeferredDefinitionScope>(
-          worklist_.back())) {
+  if (nested && start_index == worklist_.size() - 1) {
+    CARBON_CHECK(std::holds_alternative<EnterNestedDeferredDefinitionScope>(
+        worklist_.back()));
     worklist_.pop_back();
     context.decl_name_stack().PopScope();
     CARBON_VLOG("{0}Pop EnterNestedDeferredDefinitionScope (empty)\n",

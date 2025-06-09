@@ -117,15 +117,15 @@ cc_library(
 )
 
 cc_library(
-    name = "emplace_result",
-    hdrs = ["emplace_result.h"],
+    name = "emplace_by_calling",
+    hdrs = ["emplace_by_calling.h"],
 )
 
 cc_test(
-    name = "emplace_result_test",
-    srcs = ["emplace_result_test.cpp"],
+    name = "emplace_by_calling_test",
+    srcs = ["emplace_by_calling_test.cpp"],
     deps = [
-        ":emplace_result",
+        ":emplace_by_calling",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
     ],

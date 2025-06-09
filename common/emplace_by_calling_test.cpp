@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "common/emplace_result.h"
+#include "common/emplace_by_calling.h"
 
 #include <gtest/gtest.h>
 
@@ -19,13 +19,13 @@ struct NoncopyableType {
 
 auto Make() -> NoncopyableType { return NoncopyableType(); }
 
-TEST(EmplaceResult, Noncopyable) {
+TEST(EmplaceByCalling, Noncopyable) {
   std::list<NoncopyableType> list;
   // This should compile.
-  list.emplace_back(EmplaceResult(Make));
+  list.emplace_back(EmplaceByCalling(Make));
 }
 
-TEST(EmplaceResult, NoncopyableInAggregate) {
+TEST(EmplaceByCalling, NoncopyableInAggregate) {
   struct Aggregate {
     int a, b, c;
     NoncopyableType noncopyable;
@@ -33,7 +33,7 @@ TEST(EmplaceResult, NoncopyableInAggregate) {
 
   std::list<Aggregate> list;
   // This should compile.
-  list.emplace_back(EmplaceResult(
+  list.emplace_back(EmplaceByCalling(
       [] { return Aggregate{.a = 1, .b = 2, .c = 3, .noncopyable = Make()}; }));
 }
 
@@ -48,12 +48,12 @@ class CopyCounter {
   int* counter_;
 };
 
-TEST(EmplaceResult, NoCopies) {
+TEST(EmplaceByCalling, NoCopies) {
   std::vector<CopyCounter> vec;
   vec.reserve(10);
   int copies = 0;
   for (int i = 0; i != 10; ++i) {
-    vec.emplace_back(EmplaceResult([&] { return CopyCounter(&copies); }));
+    vec.emplace_back(EmplaceByCalling([&] { return CopyCounter(&copies); }));
   }
   EXPECT_EQ(0, copies);
 }
