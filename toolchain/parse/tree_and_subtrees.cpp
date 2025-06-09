@@ -16,7 +16,8 @@ TreeAndSubtrees::TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
                                  const Tree& tree)
     : tokens_(&tokens),
       tree_(&tree),
-      subtree_sizes_(SubtreeSizeStore::MakeForOverwrite(tree_->size())) {
+      subtree_sizes_(
+          SubtreeSizeStore::MakeForOverwriteWithExplicitSize(tree_->size())) {
   // A stack of nodes which haven't yet been used as children.
   llvm::SmallVector<NodeId> size_stack;
   for (auto n : tree.postorder()) {

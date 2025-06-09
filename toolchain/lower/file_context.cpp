@@ -42,7 +42,17 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
     : context_(&context),
       sem_ir_(&sem_ir),
       inst_namer_(inst_namer),
-      vlog_stream_(vlog_stream) {
+      vlog_stream_(vlog_stream),
+      functions_(LoweredFunctionStore::MakeForOverwrite(sem_ir.functions())),
+      specific_functions_(sem_ir.specifics(), nullptr),
+      types_(LoweredTypeStore::MakeWithExplicitSize(sem_ir.insts().size(),
+                                                    nullptr)),
+      constants_(LoweredConstantStore::MakeWithExplicitSize(
+          sem_ir.insts().size(), nullptr)),
+      lowered_specifics_(sem_ir.generics(), {}),
+      lowered_specifics_type_fingerprint_(sem_ir.specifics(), {}),
+      lowered_specific_fingerprint_(sem_ir.specifics(), {}),
+      equivalent_specifics_(sem_ir.specifics(), SemIR::SpecificId::None) {
   // Initialization that relies on invariants of the class.
   cpp_code_generator_ = CreateCppCodeGenerator();
   CARBON_CHECK(!sem_ir.has_errors(),
@@ -59,32 +69,18 @@ auto FileContext::PrepareToLower() -> void {
   }
 
   // Lower all types that were required to be complete.
-  types_.resize(sem_ir_->insts().size());
   for (auto type_id : sem_ir_->types().complete_types()) {
     if (type_id.index >= 0) {
-      types_[type_id.index] = BuildType(sem_ir_->types().GetInstId(type_id));
+      types_.Set(type_id, BuildType(sem_ir_->types().GetInstId(type_id)));
     }
   }
 
   // Lower function declarations.
-  functions_.resize_for_overwrite(sem_ir_->functions().size());
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
-    functions_[id.index] = BuildFunctionDecl(id);
+    functions_.Set(id, BuildFunctionDecl(id));
   }
 
-  // Specific functions are lowered when we emit a reference to them.
-  specific_functions_.resize(sem_ir_->specifics().size());
-  // Additional data stored for specifics, for when attempting to coalesce.
-  // Indexed by `GenericId`.
-  lowered_specifics_.resize(sem_ir_->generics().size());
-  // Indexed by `SpecificId`.
-  lowered_specifics_type_fingerprint_.resize(sem_ir_->specifics().size());
-  lowered_specific_fingerprint_.resize(sem_ir_->specifics().size());
-  equivalent_specifics_.resize(sem_ir_->specifics().size(),
-                               SemIR::SpecificId::None);
-
   // Lower constants.
-  constants_.resize(sem_ir_->insts().size());
   LowerConstants(*this, constants_);
 }
 
@@ -127,7 +123,7 @@ auto FileContext::LowerDefinitions() -> void {
   for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {
     // If we created a declaration and the function definition is not imported,
     // build a definition.
-    if (functions_[id.index] && fn_info.definition_id.has_value() &&
+    if (functions_.Get(id) && fn_info.definition_id.has_value() &&
         !sem_ir().insts().GetImportSource(fn_info.definition_id).has_value()) {
       BuildFunctionDefinition(id);
     }
@@ -187,13 +183,13 @@ auto FileContext::ContainsPair(
 }
 
 auto FileContext::CoalesceEquivalentSpecifics() -> void {
-  for (auto& specifics : lowered_specifics_) {
+  for (auto& specifics : lowered_specifics_.values()) {
     // i cannot be unsigned due to the comparison with a negative number when
     // the specifics vector is empty.
     for (int i = 0; i < static_cast<int>(specifics.size()) - 1; ++i) {
       // This specific was already replaced, skip it.
-      if (equivalent_specifics_[specifics[i].index].has_value() &&
-          equivalent_specifics_[specifics[i].index] != specifics[i]) {
+      if (equivalent_specifics_.Get(specifics[i]).has_value() &&
+          equivalent_specifics_.Get(specifics[i]) != specifics[i]) {
         specifics[i] = specifics[specifics.size() - 1];
         specifics.pop_back();
         --i;
@@ -203,8 +199,8 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
       // `lowered_specifics_type_fingerprint_` and `common_fingerprint`.
       for (int j = i + 1; j < static_cast<int>(specifics.size()); ++j) {
         // When the specific was already replaced, skip it.
-        if (equivalent_specifics_[specifics[j].index].has_value() &&
-            equivalent_specifics_[specifics[j].index] != specifics[j]) {
+        if (equivalent_specifics_.Get(specifics[j]).has_value() &&
+            equivalent_specifics_.Get(specifics[j]) != specifics[j]) {
           specifics[j] = specifics[specifics.size() - 1];
           specifics.pop_back();
           --j;
@@ -243,10 +239,9 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
 
           // Delete function bodies for already replaced functions.
           for (auto specific_id : specifics_to_delete) {
-            specific_functions_[specific_id.index]->eraseFromParent();
-            specific_functions_[specific_id.index] =
-                specific_functions_[equivalent_specifics_[specific_id.index]
-                                        .index];
+            specific_functions_.Get(specific_id)->eraseFromParent();
+            specific_functions_.Get(specific_id) =
+                specific_functions_.Get(equivalent_specifics_.Get(specific_id));
           }
 
           // Removed the replaced specific from the list of emitted specifics.
@@ -272,10 +267,10 @@ auto FileContext::ProcessSpecificEquivalence(
                "Expected values in equivalence check");
 
   auto get_canon = [&](SemIR::SpecificId specific_id) {
-    return equivalent_specifics_[specific_id.index].has_value()
+    return equivalent_specifics_.Get(specific_id).has_value()
                ? std::make_pair(
-                     equivalent_specifics_[specific_id.index],
-                     (equivalent_specifics_[specific_id.index] != specific_id))
+                     equivalent_specifics_.Get(specific_id),
+                     (equivalent_specifics_.Get(specific_id) != specific_id))
                : std::make_pair(specific_id, false);
   };
   auto [canon_id1, replaced_before1] = get_canon(specific_id1);
@@ -295,10 +290,10 @@ auto FileContext::ProcessSpecificEquivalence(
   // Update equivalent_specifics_ for all. This is used as an indicator that
   // this specific_id may be the canonical one when reducing the equivalence
   // chains in `IsKnownEquivalence`.
-  equivalent_specifics_[specific_id1.index] = canon_id1;
-  equivalent_specifics_[specific_id2.index] = canon_id1;
-  specific_functions_[canon_id2.index]->replaceAllUsesWith(
-      specific_functions_[canon_id1.index]);
+  equivalent_specifics_.Set(specific_id1, canon_id1);
+  equivalent_specifics_.Set(specific_id2, canon_id1);
+  specific_functions_.Get(canon_id2)->replaceAllUsesWith(
+      specific_functions_.Get(canon_id1));
   if (!replaced_before2) {
     specifics_to_delete.push_back(canon_id2);
   }
@@ -306,39 +301,40 @@ auto FileContext::ProcessSpecificEquivalence(
 
 auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific_id1,
                                      SemIR::SpecificId specific_id2) -> bool {
-  if (!equivalent_specifics_[specific_id1.index].has_value() ||
-      !equivalent_specifics_[specific_id2.index].has_value()) {
+  if (!equivalent_specifics_.Get(specific_id1).has_value() ||
+      !equivalent_specifics_.Get(specific_id2).has_value()) {
     return false;
   }
 
   auto update_equivalent_specific = [&](SemIR::SpecificId specific_id) {
     llvm::SmallVector<SemIR::SpecificId> stack;
     SemIR::SpecificId specific_to_update = specific_id;
-    while (equivalent_specifics_[equivalent_specifics_[specific_to_update.index]
-                                     .index] !=
-           equivalent_specifics_[specific_to_update.index]) {
+    while (equivalent_specifics_.Get(
+               equivalent_specifics_.Get(specific_to_update)) !=
+           equivalent_specifics_.Get(specific_to_update)) {
       stack.push_back(specific_to_update);
-      specific_to_update = equivalent_specifics_[specific_to_update.index];
+      specific_to_update = equivalent_specifics_.Get(specific_to_update);
     }
     for (auto specific : llvm::reverse(stack)) {
-      equivalent_specifics_[specific.index] =
-          equivalent_specifics_[equivalent_specifics_[specific.index].index];
+      equivalent_specifics_.Set(
+          specific,
+          equivalent_specifics_.Get(equivalent_specifics_.Get(specific)));
     }
   };
 
   update_equivalent_specific(specific_id1);
   update_equivalent_specific(specific_id2);
 
-  return equivalent_specifics_[specific_id1.index] ==
-         equivalent_specifics_[specific_id2.index];
+  return equivalent_specifics_.Get(specific_id1) ==
+         equivalent_specifics_.Get(specific_id2);
 }
 
 auto FileContext::AreFunctionTypesEquivalent(SemIR::SpecificId specific_id1,
                                              SemIR::SpecificId specific_id2)
     -> bool {
   CARBON_CHECK(specific_id1.has_value() && specific_id2.has_value());
-  return lowered_specifics_type_fingerprint_[specific_id1.index] ==
-         lowered_specifics_type_fingerprint_[specific_id2.index];
+  return lowered_specifics_type_fingerprint_.Get(specific_id1) ==
+         lowered_specifics_type_fingerprint_.Get(specific_id2);
 }
 
 auto FileContext::AreFunctionBodiesEquivalent(
@@ -352,8 +348,8 @@ auto FileContext::AreFunctionBodiesEquivalent(
     auto outer_pair = worklist.pop_back_val();
     auto [specific_id1, specific_id2] = outer_pair;
 
-    auto state1 = lowered_specific_fingerprint_[specific_id1.index];
-    auto state2 = lowered_specific_fingerprint_[specific_id2.index];
+    auto state1 = lowered_specific_fingerprint_.Get(specific_id1);
+    auto state2 = lowered_specific_fingerprint_.Get(specific_id2);
     if (state1.common_fingerprint != state2.common_fingerprint) {
       InsertPair(specific_id1, specific_id2, non_equivalent_specifics_);
       return false;
@@ -409,7 +405,7 @@ auto FileContext::CreateCppCodeGenerator()
 auto FileContext::GetConstant(SemIR::ConstantId const_id,
                               SemIR::InstId use_inst_id) -> llvm::Value* {
   auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
-  auto* const_value = constants_[const_inst_id.index];
+  auto* const_value = constants_.Get(const_inst_id);
 
   // For value expressions and initializing expressions, the value produced by
   // a constant instruction is a value representation of the constant. For
@@ -626,7 +622,7 @@ auto FileContext::HandleReferencedSpecificFunction(
   llvm_type->print(os);
   function_type_fingerprint.update(os.TakeStr());
   function_type_fingerprint.final(
-      lowered_specifics_type_fingerprint_[specific_id.index]);
+      lowered_specifics_type_fingerprint_.Get(specific_id));
 }
 
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,

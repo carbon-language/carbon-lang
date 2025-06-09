@@ -50,6 +50,7 @@ cc_library(
         "//common:map",
         "//common:raw_string_ostream",
         "//common:vlog",
+        "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:absolute_node_id",
