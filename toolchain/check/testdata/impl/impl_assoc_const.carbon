@@ -188,6 +188,17 @@ interface L4 { let W4:! type; }
 // CHECK:STDERR:
 impl () as L4 where .W4 = BAD7 and .W4 = BAD8 {}
 
+// --- fail_many_different.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let W:! type; }
+
+// CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:12: error: associated constant `.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: impl () as L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {}) {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {}) {}
+
 // --- repeated.carbon
 library "[[@TEST_NAME]]";
 
