@@ -293,7 +293,7 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
     return;
   }
 
-  for (int i : llvm::seq(facet_type.rewrite_constraints.size() - 1)) {
+  for (size_t i = 0; i < facet_type.rewrite_constraints.size() - 1; ++i) {
     auto& constraint = facet_type.rewrite_constraints[i];
     if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
         constraint.rhs_id == SemIR::ErrorInst::InstId) {
@@ -314,23 +314,34 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
       continue;
     }
 
-    auto& next = facet_type.rewrite_constraints[i + 1];
-    if (constraint.lhs_id == next.lhs_id &&
-        // `constraint.lhs_id` is already checked for ErrorInst.
-        next.rhs_id != SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(
-          AssociatedConstantWithDifferentValues, Error,
-          "associated constant {0} given two different values {1} and {2}",
-          InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
-      // TODO: It would be nice to note the places where the values are assigned
-      // but rewrite constraint instructions are from canonical constant values,
-      // and have no locations. We'd need to store a location along with them in
-      // the rewrite constraints.
-      context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
-                             constraint.lhs_id, constraint.rhs_id, next.rhs_id);
-      constraint.rhs_id = SemIR::ErrorInst::InstId;
-      next.rhs_id = SemIR::ErrorInst::InstId;
-      continue;
+    for (auto j : llvm::seq(i + 1, facet_type.rewrite_constraints.size())) {
+      auto& next = facet_type.rewrite_constraints[j];
+      if (constraint.lhs_id != next.lhs_id) {
+        break;
+      }
+      if (constraint.rhs_id != SemIR::ErrorInst::InstId &&
+          // `constraint.lhs_id == next.lhs_id` so only check for `ErrorInst` in
+          // one of them.
+          next.rhs_id != SemIR::ErrorInst::InstId) {
+        CARBON_DIAGNOSTIC(
+            AssociatedConstantWithDifferentValues, Error,
+            "associated constant {0} given two different values {1} and {2}",
+            InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
+        // TODO: It would be nice to note the places where the values are
+        // assigned but rewrite constraint instructions are from canonical
+        // constant values, and have no locations. We'd need to store a location
+        // along with them in the rewrite constraints.
+        context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
+                               constraint.lhs_id, constraint.rhs_id,
+                               next.rhs_id);
+        constraint.rhs_id = SemIR::ErrorInst::InstId;
+        next.rhs_id = SemIR::ErrorInst::InstId;
+      }
+
+      // Move `i` to the last position where the `lhs` match, so that we don't
+      // diagnose more than once within the same contiguous range of a single
+      // `lhs` value.
+      i = j;
     }
   }
 
