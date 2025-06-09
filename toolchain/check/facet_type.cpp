@@ -293,43 +293,44 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
     return;
   }
 
-  for (size_t i :
-       llvm::seq<size_t>(facet_type.rewrite_constraints.size() - 1)) {
+  for (int i : llvm::seq(facet_type.rewrite_constraints.size() - 1)) {
     auto& constraint = facet_type.rewrite_constraints[i];
     if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
         constraint.rhs_id == SemIR::ErrorInst::InstId) {
       continue;
     }
 
-    if (!context.insts().Is<SemIR::ImplWitnessAccess>(constraint.lhs_id)) {
-      continue;
-    }
     auto lhs_access =
-        context.insts().GetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
-    if (!context.insts().Is<SemIR::LookupImplWitness>(lhs_access.witness_id)) {
+        context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
+    if (!lhs_access) {
       continue;
     }
-    auto lhs_lookup =
-        context.insts().GetAs<SemIR::LookupImplWitness>(lhs_access.witness_id);
-    if (!IsPeriodSelf(context, lhs_lookup.query_self_inst_id)) {
+    auto lhs_lookup = context.insts().TryGetAs<SemIR::LookupImplWitness>(
+        lhs_access->witness_id);
+    if (!lhs_lookup) {
+      continue;
+    }
+    if (!IsPeriodSelf(context, lhs_lookup->query_self_inst_id)) {
       continue;
     }
 
     auto& next = facet_type.rewrite_constraints[i + 1];
-    if (next.lhs_id != SemIR::ErrorInst::InstId &&
+    if (constraint.lhs_id == next.lhs_id &&
+        // `constraint.lhs_id` is already checked for ErrorInst.
         next.rhs_id != SemIR::ErrorInst::InstId) {
-      if (constraint.lhs_id == next.lhs_id) {
-        CARBON_DIAGNOSTIC(
-            AssociatedConstantWithDifferentValues, Error,
-            "associated constant {0} given two different values {1} and {2}",
-            InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
-        context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
-                               constraint.lhs_id, constraint.rhs_id,
-                               next.rhs_id);
-        constraint.rhs_id = SemIR::ErrorInst::InstId;
-        next.rhs_id = SemIR::ErrorInst::InstId;
-        continue;
-      }
+      CARBON_DIAGNOSTIC(
+          AssociatedConstantWithDifferentValues, Error,
+          "associated constant {0} given two different values {1} and {2}",
+          InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
+      // TODO: It would be nice to note the places where the values are assigned
+      // but rewrite constraint instructions are from canonical constant values,
+      // and have no locations. We'd need to store a location along with them in
+      // the rewrite constraints.
+      context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
+                             constraint.lhs_id, constraint.rhs_id, next.rhs_id);
+      constraint.rhs_id = SemIR::ErrorInst::InstId;
+      next.rhs_id = SemIR::ErrorInst::InstId;
+      continue;
     }
   }
 
