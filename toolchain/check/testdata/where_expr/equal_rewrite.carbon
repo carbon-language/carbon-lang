@@ -352,8 +352,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %RepeatedRewrite.type: type = fn_type @RepeatedRewrite [concrete]
 // CHECK:STDOUT:   %RepeatedRewrite: %RepeatedRewrite.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I: %E_where.type = bind_symbolic_name I, 0 [symbolic]
-// CHECK:STDOUT:   %OneRewriteAgain.type: type = fn_type @OneRewriteAgain [concrete]
-// CHECK:STDOUT:   %OneRewriteAgain: %OneRewriteAgain.type = struct_value () [concrete]
 // CHECK:STDOUT:   %OneRewrite.specific_fn.7fa5d5.2: <specific function> = specific_function %OneRewrite, @OneRewrite(%I) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -407,25 +405,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %H.loc11_20.1: %E_where.type = bind_symbolic_name H, 0 [symbolic = %H.loc11_20.2 (constants.%H)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %OneRewriteAgain.decl: %OneRewriteAgain.type = fn_decl @OneRewriteAgain [concrete = constants.%OneRewriteAgain] {
-// CHECK:STDOUT:     %I.patt: %pattern_type.c64 = symbolic_binding_pattern I, 0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc17_26.1: type = splice_block %.loc17_26.2 [concrete = constants.%E_where.type] {
-// CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
-// CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref: %E.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %F.ref: %E.assoc_type = name_ref F, @F.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc17_32: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%E.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc17_26.2: type = where_expr %.Self [concrete = constants.%E_where.type] {
-// CHECK:STDOUT:         requirement_rewrite %impl.elem0, %i32
-// CHECK:STDOUT:       }
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %I.loc17_20.1: %E_where.type = bind_symbolic_name I, 0 [symbolic = %I.loc17_20.2 (constants.%I)]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @OneRewrite(%G.loc9_15.1: %E_where.type) {
@@ -451,18 +430,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @OneRewriteAgain(%I.loc17_20.1: %E_where.type) {
-// CHECK:STDOUT:   %I.loc17_20.2: %E_where.type = bind_symbolic_name I, 0 [symbolic = %I.loc17_20.2 (constants.%I)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn() {
-// CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%G) {
 // CHECK:STDOUT:   %G.loc9_15.2 => constants.%G
 // CHECK:STDOUT: }
@@ -475,10 +442,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %G.loc9_15.2 => constants.%H
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @OneRewriteAgain(constants.%I) {
-// CHECK:STDOUT:   %I.loc17_20.2 => constants.%I
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RepeatedRewrite(constants.%I) {
