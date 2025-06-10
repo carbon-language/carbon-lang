@@ -331,8 +331,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
@@ -368,8 +367,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
@@ -397,31 +395,10 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "public_static_member_function.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Bar {
-// CHECK:STDOUT:   complete_type_witness = @MyF.%complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Bar
-// CHECK:STDOUT:   .foo = imports.%foo.decl
-// CHECK:STDOUT:   import Cpp//...
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
@@ -446,31 +423,10 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "private_static_member_function.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Bar {
-// CHECK:STDOUT:   complete_type_witness = @MyF.%complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Bar
-// CHECK:STDOUT:   .foo = imports.%foo.decl
-// CHECK:STDOUT:   import Cpp//...
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
@@ -503,8 +459,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr.f68] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:     }
@@ -541,15 +496,14 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc18_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Bar.ref.loc18_26: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:   %Cpp.ref.loc19_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Bar.ref.loc19_26: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc18: type = splice_block %ptr [concrete = constants.%ptr.f68] {
-// CHECK:STDOUT:     %Cpp.ref.loc18_12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:     %Bar.ref.loc18_15: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc18_15 [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:   %.loc19: type = splice_block %ptr [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:     %Cpp.ref.loc19_12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %Bar.ref.loc19_15: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc19_15 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar: %ptr.f68 = bind_name bar, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
@@ -579,12 +533,11 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
-// CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6 [concrete = constants.%ptr.f68] {
-// CHECK:STDOUT:       %Cpp.ref.loc6: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:       %Bar.ref.loc6: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr.loc6: type = ptr_type %Bar.ref.loc6 [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:       %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %Bar.ref.loc7: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:       %ptr.loc7: type = ptr_type %Bar.ref.loc7 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
 // CHECK:STDOUT:   }
@@ -598,10 +551,10 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc19_30: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc18_23: type = splice_block %ptr.loc18 [concrete = constants.%ptr.f68] {
-// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Bar.ref.loc18: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Bar.ref.loc18 [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:   %.loc19_23: type = splice_block %ptr.loc19 [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Bar.ref.loc19: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:     %ptr.loc19: type = ptr_type %Bar.ref.loc19 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_bar: %ptr.f68 = bind_name foo_bar, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
@@ -638,10 +591,9 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:   %.loc7: %Derived.elem = base_decl %Bar.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Bar.ref, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Bar} [concrete = constants.%struct_type.base.36d]
 // CHECK:STDOUT:   %complete_type.loc9: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.fff]
 // CHECK:STDOUT:   complete_type_witness = %complete_type.loc9
@@ -652,15 +604,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .foo = <poisoned>
 // CHECK:STDOUT:   extend %Bar.ref
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Bar {
-// CHECK:STDOUT:   complete_type_witness = @Derived.%complete_type.1
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Bar
-// CHECK:STDOUT:   .foo = imports.%foo.decl
-// CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {

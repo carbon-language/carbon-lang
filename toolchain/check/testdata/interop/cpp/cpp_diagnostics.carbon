@@ -23,6 +23,7 @@
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 // CHECK:STDERR: fail_import_cpp_file_with_one_error.carbon:[[@LINE+7]]:1: in import [InImport]
 // CHECK:STDERR: ./one_error.h:2: error: In file included from fail_import_cpp_file_with_one_error.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./one_error.h:2:2: error: "error1"
@@ -46,6 +47,7 @@ import Cpp library "one_error.h";
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+14]]:1: in import [InImport]
 // CHECK:STDERR: ./multiple_errors.h:2: error: In file included from fail_import_cpp_file_with_multiple_errors.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./multiple_errors.h:2:2: error: "error1"
@@ -75,6 +77,7 @@ import Cpp library "multiple_errors.h";
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 // CHECK:STDERR: import_cpp_file_with_one_warning.carbon:[[@LINE+7]]:1: in import [InImport]
 // CHECK:STDERR: ./one_warning.h:2: warning: In file included from import_cpp_file_with_one_warning.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1"
@@ -99,6 +102,7 @@ import Cpp library "one_warning.h";
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 // CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+21]]:1: in import [InImport]
 // CHECK:STDERR: ./multiple_warnings.h:2: warning: In file included from import_cpp_file_with_multiple_warnings.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./multiple_warnings.h:2:2: warning: "warning1"
@@ -136,6 +140,7 @@ import Cpp library "multiple_warnings.h";
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 // CHECK:STDERR: fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+14]]:1: in import [InImport]
 // CHECK:STDERR: ./one_error_and_one_warning.h:2: error: In file included from fail_import_cpp_file_with_one_error_and_one_warning.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1"
@@ -169,6 +174,7 @@ import Cpp library "one_error_and_one_warning.h";
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 // CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+35]]:1: in import [InImport]
 // CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2: error: In file included from fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2:2: error: "error1"
@@ -215,6 +221,7 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 // CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+28]]:1: in import [InImport]
 // CHECK:STDERR: ./one_warning.h:2: warning: In file included from import_multiple_cpp_files_with_warnings.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1"
@@ -255,6 +262,7 @@ import Cpp library "multiple_warnings.h";
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 // CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+49]]:1: in import [InImport]
 // CHECK:STDERR: ./one_error_and_one_warning.h:2: error: In file included from fail_import_multiple_cpp_files_with_errors_and_warnings.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1"
@@ -322,6 +330,7 @@ library "[[@TEST_NAME]]";
 
 // TODO: The `In file included from` line should not be prefixed. See
 // https://github.com/carbon-language/carbon-lang/pull/5614#pullrequestreview-2900939411
+//@dump-sem-ir-begin
 // CHECK:STDERR: fail_todo_import_indirect_error.carbon:[[@LINE+8]]:1: in import [InImport]
 // CHECK:STDERR: ./one_error.h:2: error: In file included from fail_todo_import_indirect_error.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: In file included from ./indirect_error.h:2:
@@ -347,6 +356,7 @@ library "[[@TEST_NAME]]";
 
 // TODO: The `In file included from` line should not be prefixed. See
 // https://github.com/carbon-language/carbon-lang/pull/5614#pullrequestreview-2900939411
+//@dump-sem-ir-begin
 // CHECK:STDERR: todo_import_indirect_warning.carbon:[[@LINE+8]]:1: in import [InImport]
 // CHECK:STDERR: ./one_warning.h:2: warning: In file included from todo_import_indirect_warning.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: In file included from ./indirect_warning.h:2:
@@ -375,7 +385,7 @@ library "[[@TEST_NAME]]";  // Trailing comment
 // CHECK:STDERR:       |  ^
 // CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE-10]]:44: error: trailing comments are not permitted [TrailingComment]
+// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE-11]]:44: error: trailing comments are not permitted [TrailingComment]
 // CHECK:STDERR: library "import_cpp_library_lexer_error";  // Trailing comment
 // CHECK:STDERR:                                            ^
 // CHECK:STDERR:
@@ -404,6 +414,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 import Cpp library "fix_it_hints.h";
 
+//@dump-sem-ir-begin
 fn F() {
   Cpp.foo();
 }
@@ -548,9 +559,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "fix_it_hints.h"
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
