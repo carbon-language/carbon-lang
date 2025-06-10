@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind --fuzzing compile --no-prelude-import --phase=check %s
+// ARGS: --include-diagnostic-kind --fuzzing compile --no-prelude-import --dump-sem-ir-ranges=only --phase=check %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
