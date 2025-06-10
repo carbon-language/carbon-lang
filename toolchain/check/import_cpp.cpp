@@ -476,11 +476,12 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
   // TODO: Add support for implicit parameters.
-  auto call_params_id =
-      CalleePatternMatch(context, SemIR::InstBlockId::None, param_patterns_id,
-                         return_slot_pattern_id);
-  return FunctionParamsInsts{param_patterns_id, return_slot_pattern_id,
-                             call_params_id};
+  auto call_params_id = CalleePatternMatch(
+      context, /*implicit_param_patterns_id=*/SemIR::InstBlockId::None,
+      param_patterns_id, return_slot_pattern_id);
+  return {{.param_patterns_id = param_patterns_id,
+           .return_slot_pattern_id = return_slot_pattern_id,
+           .call_params_id = call_params_id}};
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
