@@ -47,6 +47,7 @@ cc_library(
     ],
     deps = [
         "//common:check",
+        "//common:growing_range",
         "//common:map",
         "//common:raw_string_ostream",
         "//common:vlog",

@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "common/growing_range.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
@@ -454,11 +455,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
 auto CheckUnit::CheckRequiredDefinitions() -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
-
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != context_.definitions_required_by_decl().size(); ++i) {
-    SemIR::InstId decl_inst_id = context_.definitions_required_by_decl()[i];
+  for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -497,12 +494,10 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
     }
   }
 
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != context_.definitions_required_by_use().size(); ++i) {
+  for (auto [loc, specific_id] :
+       GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    auto [loc, specific_id] = context_.definitions_required_by_use()[i];
     if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
       CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                         "use of undefined generic function");

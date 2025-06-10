@@ -222,6 +222,22 @@ cc_test(
 )
 
 cc_library(
+    name = "growing_range",
+    hdrs = ["growing_range.h"],
+)
+
+cc_test(
+    name = "growing_range_test",
+    size = "small",
+    srcs = ["growing_range_test.cpp"],
+    deps = [
+        ":growing_range",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "hashing",
     srcs = ["hashing.cpp"],
     hdrs = ["hashing.h"],
