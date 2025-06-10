@@ -51,14 +51,14 @@ class DiagnosticEmitter : public DiagnosticEmitterBase {
   auto ConvertLocImpl(SemIR::LocId loc_id, bool is_token_only,
                       ContextFnT context_fn) const -> Diagnostics::ConvertedLoc;
 
-  // Converts an `absolute_node_id` import from C++ or corresponding to a
-  // specific sem_ir to a diagnostic location.
+  // Converts an `absolute_node_id` in either a Carbon file or C++ import to a
+  // diagnostic location.
   auto ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id, bool token_only,
                         ContextFnT context_fn) const
       -> Diagnostics::ConvertedLoc;
 
   // Converts a `node_id` corresponding to a specific sem_ir to a diagnostic
-  // location. `check_ir_id` must not be `Cpp`.
+  // location.
   auto ConvertLocInCarbonFile(SemIR::CheckIRId check_ir_id,
                               Parse::NodeId node_id, bool token_only) const
       -> Diagnostics::ConvertedLoc;
