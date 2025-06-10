@@ -150,8 +150,9 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.3(%self.param: %i32) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %G.ref: %G.type.c9825d.1 = name_ref G, @impl.006.%G.decl.loc23_27.1 [concrete = constants.%G.e73e91.1]
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self.param
-// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %self.ref, @impl.006.%G.decl.loc23_27.1
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %self.ref, %G.ref
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

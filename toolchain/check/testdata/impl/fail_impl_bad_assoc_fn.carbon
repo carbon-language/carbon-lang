@@ -1201,6 +1201,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.44ef8c.1 = name_ref F, @impl.ddd.%F.decl.loc68_18.1 [concrete = constants.%F.424e9e.1]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1208,7 +1209,8 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.5() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call @impl.698.%F.decl.loc84_23.1(<error>)
+// CHECK:STDOUT:   %F.ref: %F.type.e1abdd.1 = name_ref F, @impl.698.%F.decl.loc84_23.1 [concrete = constants.%F.6ff574.1]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1222,8 +1224,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.9(%self.param: bool, %b.param: bool) -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.69596c.1 = name_ref F, @impl.5cf.%F.decl.loc116_31.1 [concrete = constants.%F.738f31.1]
 // CHECK:STDOUT:   %self.ref: bool = name_ref self, %self.param
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, @impl.5cf.%F.decl.loc116_31.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b.param
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -1232,9 +1235,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.11(%self.param: bool, %b.param: bool) -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.d97cef.1 = name_ref F, @impl.bac.%F.decl.loc129_26.1 [concrete = constants.%F.01de92.1]
 // CHECK:STDOUT:   %self.ref: bool = name_ref self, %self.param
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b.param
-// CHECK:STDOUT:   %F.call: init bool = call @impl.bac.%F.decl.loc129_26.1(%b.ref)
+// CHECK:STDOUT:   %F.call: init bool = call %F.ref(%b.ref)
 // CHECK:STDOUT:   %.loc129_26.1: bool = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc129_26.2: bool = converted %F.call, %.loc129_26.1
 // CHECK:STDOUT:   return %.loc129_26.2
@@ -1244,8 +1248,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.13(%self.param: bool, %b.param: bool) -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.123d7a.1 = name_ref F, @impl.1a7.%F.decl.loc151_30.1 [concrete = constants.%F.c7d02d.1]
 // CHECK:STDOUT:   %self.ref: bool = name_ref self, %self.param
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, @impl.1a7.%F.decl.loc151_30.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b.param
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(%self.ref, %b.ref)
 // CHECK:STDOUT:   %.loc151: bool = converted %F.call, <error> [concrete = <error>]
@@ -1256,8 +1261,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.15(%self.param: bool, %b.param: bool) -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.6b537d.1 = name_ref F, @impl.f2b.%F.decl.loc170_38.1 [concrete = constants.%F.04313a.1]
 // CHECK:STDOUT:   %self.ref: bool = name_ref self, %self.param
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, @impl.f2b.%F.decl.loc170_38.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b.param
 // CHECK:STDOUT:   %.loc102: %FDifferentParamType = converted %b.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init bool = call %F.bound(%self.ref, <error>)
@@ -1270,8 +1276,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.17(%self.param: bool, %b.param: bool) -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.d6232a.1 = name_ref F, @impl.db4.%F.decl.loc183_38.1 [concrete = constants.%F.886f70.1]
 // CHECK:STDOUT:   %self.ref: bool = name_ref self, %self.param
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, @impl.db4.%F.decl.loc183_38.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b.param
 // CHECK:STDOUT:   %.loc102: %FDifferentImplicitParamType = converted %self.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init bool = call %F.bound(<error>, %b.ref)
@@ -1284,8 +1291,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.19(%self.param: bool, %b.param: bool) -> bool {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.d3b58f.1 = name_ref F, @impl.fcc.%F.decl.loc199_38.1 [concrete = constants.%F.be86c9.1]
 // CHECK:STDOUT:   %self.ref: bool = name_ref self, %self.param
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, @impl.fcc.%F.decl.loc199_38.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b.param
 // CHECK:STDOUT:   %.loc199_38.1: ref %FDifferentReturnType = temporary_storage
 // CHECK:STDOUT:   %F.call: init %FDifferentReturnType = call %F.bound(%self.ref, %b.ref) to %.loc199_38.1
@@ -1310,13 +1318,14 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.22(%x.param: %tuple.type.9c9) -> %return.param: %array_type.a41 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.f90165.1 = name_ref F, @impl.6a5.%F.decl.loc222_87.1 [concrete = constants.%F.fa8d04.1]
 // CHECK:STDOUT:   %x.ref: %tuple.type.9c9 = name_ref x, %x.param
 // CHECK:STDOUT:   %.loc210_41: ref %array_type.a41 = splice_block %return {}
 // CHECK:STDOUT:   %tuple.elem0: %ptr.4cd = tuple_access %x.ref, element0
 // CHECK:STDOUT:   %tuple.elem1: %struct_type.x.y.a89 = tuple_access %x.ref, element1
 // CHECK:STDOUT:   %.loc210_9.1: %SelfNestedBadParam = struct_access %tuple.elem1, element0
 // CHECK:STDOUT:   %.loc210_9.2: %i32 = converted %.loc210_9.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %F.call: init %array_type.a41 = call @impl.6a5.%F.decl.loc222_87.1(<error>) to %.loc210_41
+// CHECK:STDOUT:   %F.call: init %array_type.a41 = call %F.ref(<error>) to %.loc210_41
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1324,9 +1333,10 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.24(%x.param: %tuple.type.eb9) -> %return.param: %array_type.126 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.0e7d1d.1 = name_ref F, @impl.bfc.%F.decl.loc238_112.1 [concrete = constants.%F.0bc78a.1]
 // CHECK:STDOUT:   %x.ref: %tuple.type.eb9 = name_ref x, %x.param
 // CHECK:STDOUT:   %.loc238_112.1: ref %array_type.a41 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %array_type.a41 = call @impl.bfc.%F.decl.loc238_112.1(%x.ref) to %.loc238_112.1
+// CHECK:STDOUT:   %F.call: init %array_type.a41 = call %F.ref(%x.ref) to %.loc238_112.1
 // CHECK:STDOUT:   %.loc238_112.2: %array_type.126 = converted %F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }

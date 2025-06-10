@@ -249,8 +249,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: %empty_struct_type) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc8: @F.3.%F.type (%F.type.0daaa1.1) = specific_constant @impl.%F.decl.loc8_17.1, @impl(constants.%Y) [symbolic = %F (constants.%F.49c1ac.1)]
+// CHECK:STDOUT:     %F.ref: @F.3.%F.type (%F.type.0daaa1.1) = name_ref F, %.loc8 [symbolic = %F (constants.%F.49c1ac.1)]
 // CHECK:STDOUT:     %x.ref: %empty_struct_type = name_ref x, %x.param
-// CHECK:STDOUT:     %F.specific_fn.loc8_17.1: <specific function> = specific_function @impl.%F.decl.loc8_17.1, @F.2(constants.%Y) [symbolic = %F.specific_fn.loc8_17.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %F.specific_fn.loc8_17.1: <specific function> = specific_function %F.ref, @F.2(constants.%Y) [symbolic = %F.specific_fn.loc8_17.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %.1: ref @F.3.%C (%C.13320f.2) = temporary_storage
 // CHECK:STDOUT:     %.2: init @F.3.%C (%C.13320f.2) = class_init (), %.1 [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:     %.3: ref @F.3.%C (%C.13320f.2) = temporary %.1, %.2
