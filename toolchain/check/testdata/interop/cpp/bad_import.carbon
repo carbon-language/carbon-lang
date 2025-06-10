@@ -14,31 +14,26 @@
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-begin
 // CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp;
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp;
-//@dump-sem-ir-end
 
 // --- fail_import_cpp_library_empty.carbon
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-begin
 // CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp library "";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 import Cpp library "";
-//@dump-sem-ir-end
 
 // --- fail_import_cpp_library_file_with_quotes.carbon
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-begin
 // CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+6]]:1: in import [InImport]
 // CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1: error: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:10: fatal error: '\"foo.h\"' file not found
 // CHECK:STDERR:     1 | #include "\"foo.h\""
@@ -46,20 +41,3 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";
-//@dump-sem-ir-end
-
-// CHECK:STDOUT: --- fail_import_cpp.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_cpp_library_empty.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_cpp_library_file_with_quotes.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "\"foo.h\""
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:

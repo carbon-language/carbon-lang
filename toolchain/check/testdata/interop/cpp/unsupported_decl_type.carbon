@@ -14,7 +14,7 @@
 
 typedef int foo;
 
-// --- fail_import_unsupported_decl.carbon
+// --- fail_todo_import_unsupported_decl.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -22,14 +22,14 @@ import Cpp library "unsupported_decl.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_unsupported_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Declaration type Typedef` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_unsupported_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Declaration type Typedef` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_unsupported_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_unsupported_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_import_unsupported_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -37,7 +37,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_import_unsupported_decl.carbon
+// CHECK:STDOUT: --- fail_todo_import_unsupported_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }

@@ -14,7 +14,6 @@
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-begin
 // CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+6]]:1: in import [InImport]
 // CHECK:STDERR: fail_cpp_file_not_found.carbon.generated.cpp_imports.h:1: error: fail_cpp_file_not_found.carbon.generated.cpp_imports.h:1:10: fatal error: 'not_found.h' file not found
 // CHECK:STDERR:     1 | #include "not_found.h"
@@ -22,16 +21,3 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "not_found.h";
-//@dump-sem-ir-end
-
-// CHECK:STDOUT: --- fail_cpp_file_not_found.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "not_found.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:

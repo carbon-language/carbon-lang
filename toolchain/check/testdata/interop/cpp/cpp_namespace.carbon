@@ -18,16 +18,14 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-//@dump-sem-ir-begin
 // CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+7]]:11: error: duplicate name `Cpp` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace Cpp;
 // CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE-6]]:1: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: import Cpp library "header.h";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 namespace Cpp;
-//@dump-sem-ir-end
 
 // --- cpp_in_inner_namespace.carbon
 
@@ -56,16 +54,14 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-//@dump-sem-ir-begin
 // CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+7]]:7: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
 // CHECK:STDERR: class Cpp.C {};
 // CHECK:STDERR:       ^~~
-// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE-6]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
+// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: import Cpp library "header.h";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 class Cpp.C {};
-//@dump-sem-ir-end
 
 // --- api_and_impl.carbon
 
@@ -83,17 +79,6 @@ impl library "[[@TEST_NAME]]";
 import Cpp library "header.h";
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_duplicate_cpp_name.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- cpp_in_inner_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,30 +102,6 @@ import Cpp library "header.h";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %MyCpp: <namespace> = bind_alias MyCpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_add_name_to_cpp_namespace.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- api_and_impl.carbon

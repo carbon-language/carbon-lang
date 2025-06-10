@@ -45,7 +45,7 @@ fn F() {
 
 auto foo(int a, float b) -> void;
 
-// --- fail_import_unsupported_primitive_type_among_params.carbon
+// --- fail_todo_import_unsupported_primitive_type_among_params.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -53,10 +53,10 @@ import Cpp library "unsupported_primitive_type_among_params.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: float` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: float` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1, 2.0);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo(1, 2.0);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -85,7 +85,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_unsupported_primitive_type_among_params.carbon
+// CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type_among_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
