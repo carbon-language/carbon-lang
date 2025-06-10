@@ -32,10 +32,10 @@ class GrowingRange {
     // Dereferences the iterator. These intentionally don't return by reference,
     // to avoid handing out a reference that would be invalidated when the
     // container grows during the traversal.
-    auto operator*() { return (*container_)[index_]; }
-    auto operator*() const { return (*container_)[index_]; }
+    auto operator*() -> auto { return (*container_)[index_]; }
+    auto operator*() const -> auto { return (*container_)[index_]; }
 
-    friend auto operator!=(Iterator it, End /*end*/) {
+    friend auto operator!=(Iterator it, End /*end*/) -> bool {
       return it.index_ != it.container_->size();
     }
 
