@@ -49,9 +49,7 @@ fn RepeatedRewrite(H:! E where .F = i32 and .F = i32) {
   OneRewrite(H);
 }
 
-//@dump-sem-ir-begin
 fn OneRewriteAgain(I:! E where .F = i32) {
-  //@dump-sem-ir-end
   RepeatedRewrite(I);
 }
 
