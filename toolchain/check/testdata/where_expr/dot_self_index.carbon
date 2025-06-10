@@ -17,9 +17,9 @@ interface Empty(W:! type) {
 // V has index 1, does not match .Self
 //@dump-sem-ir-begin
 fn H(T:! type, U: Empty(T) where .A = T*, V:! type) {}
+//@dump-sem-ir-end
 
 fn G(U: Empty(i32) where .A = i32*) {
-  //@dump-sem-ir-end
   H(i32, U, bool);
 }
 
