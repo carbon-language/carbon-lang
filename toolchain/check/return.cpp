@@ -159,7 +159,6 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
   } else if (return_info.has_return_slot()) {
     return_slot_id = GetCurrentReturnSlot(context);
     CARBON_CHECK(return_slot_id.has_value());
-    // Note that this can import a function and invalidate `function`.
     expr_id = Initialize(context, loc_id, return_slot_id, expr_id);
   } else {
     expr_id =

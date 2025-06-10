@@ -102,8 +102,8 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
   // Process arguments.
   if (test_file.test_args.empty()) {
     test_file.test_args = test_base.GetDefaultArgs();
-    test_file.test_args.append(test_file.extra_args);
   }
+  test_file.test_args.append(test_file.extra_args);
   CARBON_RETURN_IF_ERROR(DoArgReplacements(
       test_file.test_args, test_base.GetArgReplacements(), all_splits));
 

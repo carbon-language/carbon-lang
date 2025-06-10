@@ -161,18 +161,16 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   StartGenericDecl(context);
 
-  // Clone the signature. Note that we re-get the function after each of these,
-  // because they might trigger imports that invalidate the function.
+  const auto& signature = context.functions().Get(signature_id);
+
+  // Clone the signature.
   context.pattern_block_stack().Push();
   auto implicit_param_patterns_id = ClonePatternBlock(
-      context, signature_specific_id,
-      context.functions().Get(signature_id).implicit_param_patterns_id);
-  auto param_patterns_id = ClonePatternBlock(
-      context, signature_specific_id,
-      context.functions().Get(signature_id).param_patterns_id);
-  auto return_slot_pattern_id = ClonePattern(
-      context, signature_specific_id,
-      context.functions().Get(signature_id).return_slot_pattern_id);
+      context, signature_specific_id, signature.implicit_param_patterns_id);
+  auto param_patterns_id = ClonePatternBlock(context, signature_specific_id,
+                                             signature.param_patterns_id);
+  auto return_slot_pattern_id = ClonePattern(context, signature_specific_id,
+                                             signature.return_slot_pattern_id);
   auto self_param_id = FindSelfPattern(context, implicit_param_patterns_id);
   auto pattern_block_id = context.pattern_block_stack().Pop();
 
@@ -191,7 +189,6 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   auto generic_id = BuildGenericDecl(context, decl_id);
 
   // Create the `Function` object.
-  auto& signature = context.functions().Get(signature_id);
   auto& callee = context.functions().Get(callee_id);
   function_decl.function_id = context.functions().Add(SemIR::Function{
       {.name_id = signature.name_id,

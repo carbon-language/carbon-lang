@@ -31,9 +31,6 @@ class ToolchainFileTest : public FileTestBase {
   explicit ToolchainFileTest(llvm::StringRef exe_path,
                              llvm::StringRef test_name);
 
-  // Adds a replacement for `core_package_dir`.
-  auto GetArgReplacements() const -> llvm::StringMap<std::string> override;
-
   // Loads files into the VFS and runs the driver.
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
@@ -63,25 +60,6 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
-  // The prelude mode. For lex and parse, it's always `None`; we exclude it in
-  // order to focus errors. For check and lowering, it's set through
-  // `min_prelude` and `no_prelude` subdirectories.
-  enum Prelude {
-    Default,
-    Min,
-    None,
-  };
-  auto prelude() const -> Prelude {
-    if (component_ == "lex" || component_ == "parse" ||
-        test_name().find("/no_prelude/") != llvm::StringRef::npos) {
-      return Prelude::None;
-    }
-    if (test_name().find("/min_prelude/") != llvm::StringRef::npos) {
-      return Prelude::Min;
-    }
-    return Prelude::Default;
-  }
-
   // The toolchain component subdirectory, such as `lex` or `language_server`.
   const llvm::StringRef component_;
   // The toolchain install information.
@@ -109,11 +87,6 @@ ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
       component_(GetComponent(test_name)),
       installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 
-auto ToolchainFileTest::GetArgReplacements() const
-    -> llvm::StringMap<std::string> {
-  return {{"core_package_dir", installation_.core_package()}};
-}
-
 // Adds a file to the fs.
 static auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
     -> ErrorOr<Success> {
@@ -134,9 +107,11 @@ auto ToolchainFileTest::Run(
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) const -> ErrorOr<RunResult> {
-  CARBON_ASSIGN_OR_RETURN(auto prelude_files,
-                          installation_.ReadPreludeManifest());
-  if (prelude() == Prelude::Default) {
+  llvm::SmallVector<std::string> prelude_files;
+  // Lex and parse shouldn't ever access the prelude.
+  if (component_ != "lex" && component_ != "parse") {
+    // TODO: Try providing the prelude as an overlay.
+    CARBON_ASSIGN_OR_RETURN(prelude_files, installation_.ReadPreludeManifest());
     for (const auto& file : prelude_files) {
       CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
     }
@@ -185,37 +160,27 @@ auto ToolchainFileTest::GetDefaultArgs() const
     return args;
   }
 
-  args.insert(args.end(), {"compile", "--phase=" + component_.str()});
+  args.insert(args.end(),
+              {
+                  "compile",
+                  "--phase=" + component_.str(),
+                  // Use the install path to exclude prelude files.
+                  "--exclude-dump-file-prefix=" + installation_.core_package(),
+              });
 
   if (component_ == "lex") {
-    args.insert(args.end(), {"--dump-tokens", "--omit-file-boundary-tokens"});
+    args.insert(args.end(), {"--no-prelude-import", "--dump-tokens",
+                             "--omit-file-boundary-tokens"});
   } else if (component_ == "parse") {
-    args.push_back("--dump-parse-tree");
+    args.insert(args.end(), {"--no-prelude-import", "--dump-parse-tree"});
   } else if (component_ == "check") {
-    args.push_back("--dump-sem-ir");
+    args.insert(args.end(), {"--dump-sem-ir", "--dump-sem-ir-ranges=only"});
   } else if (component_ == "lower") {
     args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
+  } else if (component_ == "codegen") {
+    // codegen tests specify flags as needed.
   } else {
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
-  }
-
-  switch (prelude()) {
-    case Prelude::Default:
-      // Use the install path to exclude prelude files.
-      args.push_back("--exclude-dump-file-prefix=" +
-                     installation_.core_package());
-      break;
-
-    case Prelude::Min:
-      // Included files all show up under the `include_files/` prefix, so
-      // exclude min_prelude files that way.
-      args.insert(args.end(), {"--custom-core",
-                               "--exclude-dump-file-prefix=include_files/"});
-      break;
-
-    case Prelude::None:
-      args.push_back("--no-prelude-import");
-      break;
   }
 
   args.push_back("%s");

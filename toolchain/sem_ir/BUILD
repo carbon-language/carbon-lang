@@ -184,6 +184,7 @@ cc_library(
         ":typed_insts",
         "//common:concepts",
         "//common:ostream",
+        "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/lex:tokenized_buffer",

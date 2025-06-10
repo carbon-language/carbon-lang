@@ -128,18 +128,6 @@ struct AnyFloat {
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::TypeInstId>;
 
-// Constraint that requires the type to be a type value, whose type is type
-// type. Also accepts symbolic constant value types.
-struct AnyType {
-  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
-      -> bool {
-    if (BuiltinType<TypeType::TypeInstId>::Check(sem_ir, state, type_id)) {
-      return true;
-    }
-    return sem_ir.types().GetAsInst(type_id).type_id() == TypeType::TypeId;
-  }
-};
-
 // Checks that the specified type matches the given type constraint.
 template <typename TypeConstraint>
 auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
@@ -513,8 +501,8 @@ constexpr BuiltinInfo BoolNeq = {"bool.neq",
                                  ValidateSignature<auto(Bool, Bool)->Bool>};
 
 // "type.and": facet type combination.
-constexpr BuiltinInfo TypeAnd = {
-    "type.and", ValidateSignature<auto(AnyType, AnyType)->AnyType>};
+constexpr BuiltinInfo TypeAnd = {"type.and",
+                                 ValidateSignature<auto(Type, Type)->Type>};
 
 }  // namespace BuiltinFunctionInfo
 

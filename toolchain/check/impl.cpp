@@ -164,9 +164,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
 // Adds functions to the witness that the specified impl implements the given
 // interface.
 auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
-  // Make a copy of the impl. We're going to reference it a lot, and `impl`s
-  // could get invalidated by some of the things we do.
-  const auto impl = context.impls().Get(impl_id);
+  const auto& impl = context.impls().Get(impl_id);
 
   CARBON_CHECK(impl.is_being_defined());
   CARBON_CHECK(impl.witness_id.has_value());

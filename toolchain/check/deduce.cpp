@@ -523,11 +523,11 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // `DeductionInconsistent` diagnostic. If we defer that check until after
     // all conversions are done (after the code below) then we won't diagnose
     // that incorrectly.
-    auto arg_type_id = context().insts().Get(deduced_arg_id).type_id();
     auto binding_type_id = context().insts().Get(binding_id).type_id();
-    if (arg_type_id.is_concrete() && binding_type_id.is_symbolic()) {
-      auto param_type_const_id = SubstConstant(
-          context(), binding_type_id.AsConstantId(), substitutions_);
+    if (binding_type_id.is_symbolic()) {
+      auto param_type_const_id =
+          SubstConstant(context(), SemIR::LocId(binding_id),
+                        binding_type_id.AsConstantId(), substitutions_);
       CARBON_CHECK(param_type_const_id.has_value());
       binding_type_id =
           context().types().GetTypeIdForTypeConstantId(param_type_const_id);
@@ -602,8 +602,8 @@ auto DeduceGenericCallArguments(
   return deduction.MakeSpecific();
 }
 
-auto DeduceImplArguments(Context& context, SemIR::LocId loc_id, DeduceImpl impl,
-                         SemIR::ConstantId self_id,
+auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
+                         const SemIR::Impl& impl, SemIR::ConstantId self_id,
                          SemIR::SpecificId constraint_specific_id)
     -> SemIR::SpecificId {
   DeductionContext deduction(&context, loc_id, impl.generic_id,
@@ -613,7 +613,7 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id, DeduceImpl impl,
 
   // Prepare to perform deduction of the type and interface.
   deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id));
-  deduction.Add(impl.specific_id, constraint_specific_id);
+  deduction.Add(impl.interface.specific_id, constraint_specific_id);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::None;

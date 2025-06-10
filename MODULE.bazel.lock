@@ -238,7 +238,7 @@
     },
     "//bazel/llvm_project:llvm_project.bzl%llvm_project": {
       "general": {
-        "bzlTransitiveDigest": "rcy/svHRSqNzj8OWh9jv2HJTFjx48QySkI1dT+UlaTI=",
+        "bzlTransitiveDigest": "WeP75HuuSuHfiMXYgJJVbnizIcDpw7xlAckhEp137z0=",
         "usagesDigest": "uwwVdRj/NhFVoOIaadPP393kgC/Uu3/nTX9ln69oWp4=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},

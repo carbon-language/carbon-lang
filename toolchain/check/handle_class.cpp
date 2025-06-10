@@ -366,9 +366,10 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto adapt_id = context.classes().Get(parent_class_decl->class_id).adapt_id;
-  if (adapt_id.has_value()) {
-    DiagnoseClassSpecificDeclRepeated(context, node_id, SemIR::LocId(adapt_id),
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
+  if (class_info.adapt_id.has_value()) {
+    DiagnoseClassSpecificDeclRepeated(context, node_id,
+                                      SemIR::LocId(class_info.adapt_id),
                                       Lex::TokenKind::Adapt);
     return true;
   }
@@ -395,10 +396,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   }
 
   // Build a SemIR representation for the declaration.
-  adapt_id = AddInst<SemIR::AdaptDecl>(
+  class_info.adapt_id = AddInst<SemIR::AdaptDecl>(
       context, node_id, {.adapted_type_inst_id = adapted_type_inst_id});
-  auto& class_info = context.classes().Get(parent_class_decl->class_id);
-  class_info.adapt_id = adapt_id;
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
@@ -502,9 +501,10 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
     return true;
   }
 
-  auto base_id = context.classes().Get(parent_class_decl->class_id).base_id;
-  if (base_id.has_value()) {
-    DiagnoseClassSpecificDeclRepeated(context, node_id, SemIR::LocId(base_id),
+  auto& class_info = context.classes().Get(parent_class_decl->class_id);
+  if (class_info.base_id.has_value()) {
+    DiagnoseClassSpecificDeclRepeated(context, node_id,
+                                      SemIR::LocId(class_info.base_id),
                                       Lex::TokenKind::Base);
     return true;
   }
@@ -525,16 +525,13 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   // The `base` value in the class scope has an unbound element type. Instance
   // binding will be performed when it's found by name lookup into an instance.
   auto field_type_id = GetUnboundElementType(
-      context,
-      context.types().GetInstId(
-          context.classes().Get(parent_class_decl->class_id).self_type_id),
+      context, context.types().GetInstId(class_info.self_type_id),
       base_info.inst_id);
-  base_id = AddInst<SemIR::BaseDecl>(context, node_id,
-                                     {.type_id = field_type_id,
-                                      .base_type_inst_id = base_info.inst_id,
-                                      .index = SemIR::ElementIndex::None});
-  auto& class_info = context.classes().Get(parent_class_decl->class_id);
-  class_info.base_id = base_id;
+  class_info.base_id =
+      AddInst<SemIR::BaseDecl>(context, node_id,
+                               {.type_id = field_type_id,
+                                .base_type_inst_id = base_info.inst_id,
+                                .index = SemIR::ElementIndex::None});
 
   if (base_info.type_id != SemIR::ErrorInst::TypeId) {
     auto base_class_info = context.classes().Get(

@@ -845,6 +845,9 @@ auto CompilationUnit::GetParseTreeAndSubtrees()
 auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
                               llvm::StringLiteral timing_label,
                               llvm::function_ref<auto()->void> fn) -> void {
+  PrettyStackTraceFunction trace_file([&](llvm::raw_ostream& out) {
+    out << "filename: " << input_filename_ << "\n";
+  });
   CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
   Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
   fn();
