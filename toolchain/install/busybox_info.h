@@ -11,6 +11,7 @@
 #include <string>
 
 #include "common/error.h"
+#include "common/exe_path.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
@@ -24,6 +25,15 @@ struct BusyboxInfo {
   std::optional<std::string> mode;
 };
 
+// The mode is set to the initial filename used for `argv[0]`.
+static auto GetMode(const char* argv0) -> std::optional<std::string> {
+  std::string filename = std::filesystem::path(argv0).filename();
+  if (filename != "carbon" && filename != "carbon-busybox") {
+    return filename;
+  }
+  return std::nullopt;
+}
+
 // Returns the busybox information, given argv[0].
 //
 // Extracts the desired mode for the busybox from the initial command name.
@@ -33,26 +43,31 @@ struct BusyboxInfo {
 // `lib/carbon/carbon-busybox` within that install.
 //
 // If unable to locate a plausible busybox binary, returns an error instead.
-inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
+inline auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
   // Check for an override of `argv[0]` from the environment and apply it.
   if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
     argv0 = argv0_override;
   }
 
-  BusyboxInfo info = {.bin_path = argv0.str(), .mode = std::nullopt};
-  std::filesystem::path filename = info.bin_path.filename();
-  // The mode is set to the initial filename used for `argv[0]`.
-  if (filename != "carbon" && filename != "carbon-busybox") {
-    info.mode = filename;
+  BusyboxInfo info = {.bin_path = FindExecutablePath(argv0),
+                      .mode = GetMode(argv0)};
+
+  if (info.bin_path.filename() == "carbon-busybox") {
+    // Check for bazel structure. For example, this makes work:
+    //   /bin/sh -c "exec -a carbon ./bazel-bin/toolchain/carbon"
+    //   /bin/sh -c "exec -a llvm-symbolizer ./bazel-bin/toolchain/carbon"
+    if (std::filesystem::exists(info.bin_path.string() + ".runfiles")) {
+      std::string prefix_root = info.bin_path.parent_path().string() +
+                                "/prefix_root/lib/carbon/carbon-busybox";
+      if (std::filesystem::exists(prefix_root)) {
+        info.bin_path = prefix_root;
+      }
+    }
+    return info;
   }
 
   // Now search through any symlinks to locate the installed busybox binary.
   while (true) {
-    filename = info.bin_path.filename();
-    if (filename == "carbon-busybox") {
-      return info;
-    }
-
     // If we've not already reached the busybox, look for it relative to the
     // current binary path. This can help more immediately locate an
     // installation tree, and avoids walking through a final layer of symlinks
@@ -72,7 +87,7 @@ inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
       parent_path = parent_path.parent_path();
     }
     if (parent_path.filename() == "bin") {
-      auto lib_path = filename == "carbon"
+      auto lib_path = info.bin_path.filename() == "carbon"
                           ? parent_path / ".." / "lib" / "carbon"
                           : parent_path / ".." / "..";
       auto busybox_path = lib_path / "carbon-busybox";
@@ -94,6 +109,9 @@ inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
 
     // Do a path join, to handle relative symlinks.
     info.bin_path = parent_path / symlink_target;
+    if (info.bin_path.filename() == "carbon-busybox") {
+      return info;
+    }
   }
 }
 

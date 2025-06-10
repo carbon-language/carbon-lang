@@ -81,6 +81,7 @@ cc_library(
     hdrs = ["busybox_info.h"],
     deps = [
         "//common:error",
+        "//common:exe_path",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -10,11 +10,12 @@
 namespace Carbon {
 
 // Computes the executable path for the given `argv[0]` value form `main`.
+// `argv0` is required to be null-terminated.
 //
 // A simplistic approach -- if the provided string isn't already a valid path,
 // we look it up in the PATH environment variable. Doesn't resolve any symlinks
 // and if it fails, simply returns the provided `argv0`.
-auto FindExecutablePath(llvm::StringRef argv0) -> std::string;
+auto FindExecutablePath(const char* argv0) -> std::string;
 
 }  // namespace Carbon
 
