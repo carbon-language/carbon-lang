@@ -37,6 +37,8 @@ TEST(GrowingRangeTest, TestGrowWithRealloc) {
 
 TEST(GrowingRangeTest, TestNoReference) {
   std::vector<int> v;
+  // Use `decltype(auto)` to capture the type of the element including whether
+  // it's a reference.
   for (decltype(auto) elem : GrowingRange(v)) {
     // The type of `elem` should be `int`, not `int&`.
     static_assert(std::same_as<decltype(elem), int>);
