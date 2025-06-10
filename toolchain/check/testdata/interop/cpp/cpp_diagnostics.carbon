@@ -308,12 +308,14 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 
 #include "one_error.h"
 
-// --- fail_import_indirect_error.carbon
+// --- fail_todo_import_indirect_error.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_indirect_error.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: ./one_error.h:2: error: In file included from fail_import_indirect_error.carbon.generated.cpp_imports.h:1:
+// TODO: The `In file included from` line should not be prefixed. See
+// https://github.com/carbon-language/carbon-lang/pull/5614#pullrequestreview-2900939411
+// CHECK:STDERR: fail_todo_import_indirect_error.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: ./one_error.h:2: error: In file included from fail_todo_import_indirect_error.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: In file included from ./indirect_error.h:2:
 // CHECK:STDERR: ./one_error.h:2:2: error: "error1"
 // CHECK:STDERR:     2 | #error "error1"
@@ -330,12 +332,14 @@ import Cpp library "indirect_error.h";
 
 #include "one_warning.h"
 
-// --- import_indirect_warning.carbon
+// --- todo_import_indirect_warning.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: import_indirect_warning.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: ./one_warning.h:2: warning: In file included from import_indirect_warning.carbon.generated.cpp_imports.h:1:
+// TODO: The `In file included from` line should not be prefixed. See
+// https://github.com/carbon-language/carbon-lang/pull/5614#pullrequestreview-2900939411
+// CHECK:STDERR: todo_import_indirect_warning.carbon:[[@LINE+8]]:1: in import [InImport]
+// CHECK:STDERR: ./one_warning.h:2: warning: In file included from todo_import_indirect_warning.carbon.generated.cpp_imports.h:1:
 // CHECK:STDERR: In file included from ./indirect_warning.h:2:
 // CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1"
 // CHECK:STDERR:     2 | #warning "warning1"
@@ -536,7 +540,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_indirect_error.carbon
+// CHECK:STDOUT: --- fail_todo_import_indirect_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
@@ -554,7 +558,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_indirect_warning.carbon
+// CHECK:STDOUT: --- todo_import_indirect_warning.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
