@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -586,6 +587,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      const SemIR::FacetTypeInfo& orig,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
   SemIR::FacetTypeInfo info;
+
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& interface : orig.extend_constraints) {
     info.extend_constraints.push_back(
@@ -593,6 +595,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
          .specific_id =
              GetConstantValue(eval_context, interface.specific_id, phase)});
   }
+
   info.self_impls_constraints.reserve(orig.self_impls_constraints.size());
   for (const auto& interface : orig.self_impls_constraints) {
     info.self_impls_constraints.push_back(
@@ -600,25 +603,29 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
          .specific_id =
              GetConstantValue(eval_context, interface.specific_id, phase)});
   }
-  info.rewrite_constraints.reserve(orig.rewrite_constraints.size());
-  for (const auto& rewrite : orig.rewrite_constraints) {
+
+  // Rewrite constraints are resolved first before evaluation, so that we can
+  // work with the `ImplWitnessAccess` references to `.Self` without them
+  // evaluating to a value. It also ensures that any errors inserted during
+  // resolution will be seen by GetConstantValueIgnoringPeriodSelf() which will
+  // update the phase accordingly.
+  info.rewrite_constraints = orig.rewrite_constraints;
+  ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
+                                     info.rewrite_constraints);
+
+  for (auto& rewrite : info.rewrite_constraints) {
     // `where` requirements using `.Self` should not be considered symbolic.
     auto lhs_id =
         GetConstantValueIgnoringPeriodSelf(eval_context, rewrite.lhs_id, phase);
     auto rhs_id =
         GetConstantValueIgnoringPeriodSelf(eval_context, rewrite.rhs_id, phase);
-    info.rewrite_constraints.push_back({.lhs_id = lhs_id, .rhs_id = rhs_id});
+    rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
+
   // TODO: Process other requirements.
   info.other_requirements = orig.other_requirements;
 
-  if (!ResolveRewriteConstraintsAndCanonicalize(eval_context.context(), loc_id,
-                                                info)) {
-    // TODO: Should ResolveRewriteConstraintsAndCanonicalize() move into
-    // eval.cpp so it can set the Phase directly?
-    *phase = Phase::UnknownDueToError;
-  }
-
+  info.Canonicalize();
   return info;
 }
 

@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 #define CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 
+#include <compare>
+
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -58,22 +60,27 @@ auto AllocateFacetTypeImplWitness(Context& context,
                                   SemIR::InterfaceId interface_id,
                                   SemIR::InstBlockId witness_id) -> void;
 
-// Returns whether the constant or instruction is a `BindSymbolicName` referring
-// to `.Self`.
+// Perform rewrite constraint resolution for a facet type. The rewrite
+// constraints resolution is described here:
+// https://docs.carbon-lang.dev/docs/design/generics/appendix-rewrite-constraints.html#rewrite-constraint-resolution
 //
-// Working with a `ConstantId` can be more efficient for this operation than
-// unconditionally unwrapping to the `InstId`.
-auto IsPeriodSelf(Context& context, SemIR::ConstantId const_id) -> bool;
-auto IsPeriodSelf(Context& context, SemIR::InstId inst_id) -> bool;
-
-// Perform rewrite constraint resolution for a facet type and canonicalize the
-// FacetTypeInfo. The FacetTypeInfo must not be modified after this operation.
+// This function:
+// * Replaces the RHS of rewrite rules referring to `.Self` with the value
+//   coming from other rewrite rules. For example in `.X = () and .Y = .X` the
+//   result is `.X = () and .Y = ()`.
+// * Discards duplicate assignments to the same associated constant, such as in
+//   `.X = () and .X = ()` which becomes just `.X = ()`.
+// * Diagnoses multiple assignments of different values to the same associated
+//   constant such as `.X = () and .X = .Y`.
+// * Diagnoses cycles between rewrite rules such as `.X = .Y and .Y = .X` or
+//   even `.X = .X`.
 //
-// Returns false if an error was inserted into `facet_type`.
-auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
-                                              SemIR::LocId loc_id,
-                                              SemIR::FacetTypeInfo& facet_type)
-    -> bool;
+// The rewrite constraints in `rewrites` are modified in place and may be
+// reordered, with `ErrorInst` inserted when diagnosing errors.
+auto ResolveFacetTypeRewriteConstraints(
+    Context& context, SemIR::LocId loc_id,
+    llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
+    -> void;
 
 }  // namespace Carbon::Check
 
