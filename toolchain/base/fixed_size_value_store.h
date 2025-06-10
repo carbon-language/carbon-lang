@@ -17,7 +17,7 @@ namespace Carbon {
 
 // A value store with a predetermined size.
 template <typename IdT, typename ValueT>
-class FixedSizeValueStore : public MoveOnly<FixedSizeValueStore<IdT, ValueT>> {
+class FixedSizeValueStore {
  public:
   using IdType = IdT;
   using ValueType = ValueStoreTypes<IdT, ValueT>::ValueType;
@@ -61,6 +61,11 @@ class FixedSizeValueStore : public MoveOnly<FixedSizeValueStore<IdT, ValueT>> {
                                ValueT default_value) {
     values_.resize(size_source.size(), default_value);
   }
+
+  // Move-only.
+  FixedSizeValueStore(FixedSizeValueStore&&) noexcept = default;
+  auto operator=(FixedSizeValueStore&&) noexcept
+      -> FixedSizeValueStore& = default;
 
   // Sets the value for an ID.
   auto Set(IdT id, ValueType value) -> void {

@@ -18,7 +18,7 @@ namespace Carbon::Lower {
 class ConstantContext {
  public:
   explicit ConstantContext(FileContext& file_context,
-                           FileContext::LoweredConstantStore* constants)
+                           const FileContext::LoweredConstantStore* constants)
       : file_context_(&file_context), constants_(constants) {}
 
   // Gets the lowered constant value for an instruction, which must have a
@@ -90,7 +90,7 @@ class ConstantContext {
 
  private:
   FileContext* file_context_;
-  FileContext::LoweredConstantStore* constants_;
+  const FileContext::LoweredConstantStore* constants_;
   int32_t last_lowered_constant_index_ = -1;
 };
 
