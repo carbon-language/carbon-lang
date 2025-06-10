@@ -196,23 +196,31 @@ interface M { let X:! type; }
 // CHECK:STDERR:
 fn F(T:! M where .X = {} and .X = () and .X = {}) {}
 
-// --- todo_fail_cycle_single.carbon
+// --- fail_cycle_single.carbon
 library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
-// TODO: This should fail, as it resolves to `.X = .X` which is cyclical.
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fn F(T:! M where .X = .X) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(T:! M where .X = .X) {}
 
-// --- todo_fail_cycle.carbon
+// --- fail_cycle.carbon
 library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// TODO: This should fail, as it resolves to `.X = .X` which is cyclical.
+// This fails because it resolves to `.X = .X` which is cyclical.
+//
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fn F(T:! M where .X = .Y and .Y = .X) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(T:! M where .X = .Y and .Y = .X) {}
 
-// --- todo_fail_cycle_between_interfaces.carbon
+// --- fail_cycle_between_interfaces.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -223,10 +231,15 @@ interface J {
   let X3:! type;
 }
 
-// TODO: This should fail, as it resolves to `.X1 = .X1` which is cyclical.
+// This fails because it resolves to `.X1 = .X1` which is cyclical.
+//
+// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
 
-// --- todo_fail_indirect_cycle.carbon
+// --- fail_indirect_cycle.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -234,15 +247,24 @@ interface I {
   let X2:! type;
 }
 
-// TODO: This should fail, as it resolves to `.X1 = .X1**` which is cyclical.
+// This fails because it resolves to `.X1 = .X1**` which is cyclical.
+//
+// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fn F(T:! I where .X1 = .X2* and .X2 = .X1*);
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(T:! I where .X1 = .X2* and .X2 = .X1*);
 
 class C(T:! type);
-// TODO: This should fail, as it resolves to `.X1 = C(C(.X1))` which is
-// cyclical.
+// This fails because it resolves to `.X1 = C(C(.X1))` which is cyclical.
+//
+// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fn G(T:! I where .X1 = C(.X2) and .X2 = C(.X1));
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(T:! I where .X1 = C(.X2) and .X2 = C(.X1));
 
-// --- todo_fail_complex_indirect_cycle.carbon
+// --- fail_complex_indirect_cycle.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -255,6 +277,10 @@ class C(T:! type, U:! type);
 
 // TODO: This should fail, as it resolves to `.X1 = C(C(.X3, .X1), .X3)` which
 // is cyclical.
+// CHECK:STDERR: fail_complex_indirect_cycle.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fn F(T:! I where .X1 = C(.X2, .X3) and .X2 = C(.X3, .X1));
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(T:! I where .X1 = C(.X2, .X3) and .X2 = C(.X3, .X1));
 
 // --- non-type.carbon

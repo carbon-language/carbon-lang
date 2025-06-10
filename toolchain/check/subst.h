@@ -45,6 +45,11 @@ class SubstInstCallbacks {
     return orig_inst_id;
   }
 
+  // A helper for implementing `Rebuild` that constructs and returns an `InstId`
+  // for the `new_inst`.
+  auto RebuildNewInst(SemIR::LocId loc_id, SemIR::Inst new_inst) const
+      -> SemIR::InstId;
+
  private:
   Context* context_;
 };

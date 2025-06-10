@@ -229,20 +229,30 @@ interface M { let X:! type; }
 // CHECK:STDERR:
 impl () as M where .X = {} and .X = () and .X = {} {}
 
-// --- todo_fail_cycle_single.carbon
+// --- fail_cycle_single.carbon
 library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
-// TODO: This should fail, as it resolves to `.X = .X` which is cyclical.
+// This fails because it resolves to `.X = .X` which is cyclical.
+//
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:12: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: impl () as M where .X = .X {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as M where .X = .X {}
 
-// --- todo_fail_cycle.carbon
+// --- fail_cycle.carbon
 library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// TODO: This should fail, as it resolves to `.X = .X` which is cyclical.
+// This fails because it resolves to `.X = .X` which is cyclical.
+//
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:12: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: impl () as M where .X = .Y and .Y = .X {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as M where .X = .Y and .Y = .X {}
 
 // --- fail_todo_cycle_between_interfaces.carbon
@@ -256,7 +266,7 @@ interface J {
   let X3:! type;
 }
 
-// TODO: This should fail, due to a cyclic definition of each value. But right
+// TODO: This should fail due to a cyclic definition of each value. But right
 // now it's failing due to compound member access in a rewrite constraint not
 // working.
 //
