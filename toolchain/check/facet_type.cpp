@@ -5,6 +5,7 @@
 #include "toolchain/check/facet_type.h"
 
 #include "toolchain/check/convert.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -350,11 +351,6 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     // However that would probably require heap allocations which may be worse
     // overall since the number of rewrite constraints is generally low.
     for (const auto& search_constraint : facet_type().rewrite_constraints) {
-      if (search_constraint.lhs_id == SemIR::ErrorInst::InstId ||
-          search_constraint.rhs_id == SemIR::ErrorInst::InstId) {
-        continue;
-      }
-
       auto search_lhs_access = TryGetImplWitnessAccessOfPeriodSelf(
           context(), search_constraint.lhs_id);
       if (!search_lhs_access) {
@@ -364,8 +360,19 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       if (search_lhs_access->witness_id == rhs_access->witness_id &&
           search_lhs_access->index == rhs_access->index) {
         if (IsCurrentConstraint(search_constraint)) {
-          context().TODO(loc_id_, "cycle in rewrite constraints");
-          rhs_inst_id = SemIR::ErrorInst::InstId;
+          if (search_constraint.rhs_id != SemIR::ErrorInst::InstId) {
+            CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
+                              "found cycle in facet type constraint for {0}",
+                              InstIdAsConstant);
+            // TODO: It would be nice to note the places where the values are
+            // assigned but rewrite constraint instructions are from canonical
+            // constant values, and have no locations. We'd need to store a
+            // location along with them in the rewrite constraints, and track
+            // propagation of locations here, which may imply heap allocations.
+            context().emitter().Emit(loc_id_, FacetTypeConstraintCycle,
+                                     current_constraint_->lhs_id);
+            rhs_inst_id = SemIR::ErrorInst::InstId;
+          }
         } else {
           rhs_inst_id = search_constraint.rhs_id;
         }

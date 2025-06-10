@@ -482,6 +482,7 @@ CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(RewriteForAssociatedFunction)
+CARBON_DIAGNOSTIC_KIND(FacetTypeConstraintCycle)
 
 // Facet type combination.
 CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)

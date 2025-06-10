@@ -236,7 +236,7 @@ interface M { let X:! type; }
 
 // This fails because it resolves to `.X = .X` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:12: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: impl () as M where .X = .X {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -249,7 +249,7 @@ interface M { let X:! type; let Y:! type; }
 
 // This fails because it resolves to `.X = .X` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:12: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: impl () as M where .X = .Y and .Y = .X {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

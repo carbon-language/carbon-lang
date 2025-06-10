@@ -201,7 +201,7 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
-// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! M where .X = .X) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -214,7 +214,7 @@ interface M { let X:! type; let Y:! type; }
 
 // This fails because it resolves to `.X = .X` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! M where .X = .Y and .Y = .X) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -233,7 +233,7 @@ interface J {
 
 // This fails because it resolves to `.X1 = .X1` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -249,7 +249,7 @@ interface I {
 
 // This fails because it resolves to `.X1 = .X1**` which is cyclical.
 //
-// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! I where .X1 = .X2* and .X2 = .X1*);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -258,7 +258,7 @@ fn F(T:! I where .X1 = .X2* and .X2 = .X1*);
 class C(T:! type);
 // This fails because it resolves to `.X1 = C(C(.X1))` which is cyclical.
 //
-// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! I where .X1 = C(.X2) and .X2 = C(.X1));
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -277,7 +277,7 @@ class C(T:! type, U:! type);
 
 // TODO: This should fail, as it resolves to `.X1 = C(C(.X3, .X1), .X3)` which
 // is cyclical.
-// CHECK:STDERR: fail_complex_indirect_cycle.carbon:[[@LINE+4]]:10: error: semantics TODO: `cycle in rewrite constraints` [SemanticsTodo]
+// CHECK:STDERR: fail_complex_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! I where .X1 = C(.X2, .X3) and .X2 = C(.X3, .X1));
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
