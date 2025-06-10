@@ -308,7 +308,7 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
     auto lhs_lookup = context.insts().TryGetAs<SemIR::LookupImplWitness>(
         lhs_access->witness_id);
     if (!lhs_lookup) {
-      continue;
+      continue;  //
     }
     if (!IsPeriodSelf(context, lhs_lookup->query_self_inst_id)) {
       continue;
