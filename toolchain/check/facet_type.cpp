@@ -329,17 +329,17 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   // The `facet_type_info` is for the facet whose rewrite constraints are being
   // substituted, and where it looks for rewritten values to substitute from.
   //
-  // The `substituting_constaint` is the rewrite constraint for which the RHS is
-  // being substituted with the value from another rewrite constraint, if
+  // The `substituting_constraint` is the rewrite constraint for which the RHS
+  // is being substituted with the value from another rewrite constraint, if
   // possible. That is, `.Y = .X` in the example in the class docs.
   explicit SubstImplWitnessAccessCallbacks(
       Context* context, SemIR::LocId loc_id,
       const SemIR::FacetTypeInfo* facet_type_info,
-      const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constaint)
+      const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint)
       : SubstInstCallbacks(context),
         loc_id_(loc_id),
         facet_type_info_(facet_type_info),
-        substituting_constaint_(substituting_constaint) {}
+        substituting_constraint_(substituting_constraint) {}
 
   auto Subst(SemIR::InstId& rhs_inst_id) const -> bool override {
     if (context().constant_values().Get(rhs_inst_id).is_concrete()) {
@@ -366,7 +366,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
       if (search_lhs_access->witness_id == rhs_access->witness_id &&
           search_lhs_access->index == rhs_access->index) {
-        if (&search_constraint == substituting_constaint_) {
+        if (&search_constraint == substituting_constraint_) {
           if (search_constraint.rhs_id != SemIR::ErrorInst::InstId) {
             CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
                               "found cycle in facet type constraint for {0}",
@@ -377,7 +377,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
             // location along with them in the rewrite constraints, and track
             // propagation of locations here, which may imply heap allocations.
             context().emitter().Emit(loc_id_, FacetTypeConstraintCycle,
-                                     substituting_constaint_->lhs_id);
+                                     substituting_constraint_->lhs_id);
             rhs_inst_id = SemIR::ErrorInst::InstId;
           }
         } else {
@@ -402,7 +402,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
   SemIR::LocId loc_id_;
   const SemIR::FacetTypeInfo* facet_type_info_;
-  const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constaint_;
+  const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint_;
 };
 
 auto ResolveRewriteConstraintsAndCanonicalize(
