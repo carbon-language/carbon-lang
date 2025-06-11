@@ -341,6 +341,8 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   return PerformCall(context, loc_id, callee_id, args);
 }
 
+// Build a call to a function that forwards the arguments of the enclosing
+// function, for use when constructing a thunk.
 static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
                            SemIR::InstId callee_id) -> SemIR::InstId {
   auto& function = context.functions().Get(function_id);

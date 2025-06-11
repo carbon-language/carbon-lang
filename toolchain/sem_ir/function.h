@@ -119,26 +119,12 @@ struct Function : public EntityWithParamsBase,
                : BuiltinFunctionKind::None;
   }
 
-  // Sets that this function is a builtin function.
-  auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
-    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
-    special_function_kind = SpecialFunctionKind::Builtin;
-    special_function_kind_info.builtin_function_kind = kind;
-  }
-
   // Returns the declaration that this is a thunk for, or None if this function
   // is not a thunk.
   auto thunk_decl_id() const -> InstId {
     return special_function_kind == SpecialFunctionKind::Thunk
                ? special_function_kind_info.thunk_decl_id
                : InstId::None;
-  }
-
-  // Sets that this function is a thunk.
-  auto SetThunk(InstId decl_id) -> void {
-    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
-    special_function_kind = SpecialFunctionKind::Thunk;
-    special_function_kind_info.thunk_decl_id = decl_id;
   }
 
   // Given the ID of an instruction from `param_patterns_id` or
@@ -159,6 +145,20 @@ struct Function : public EntityWithParamsBase,
   auto GetDeclaredReturnType(const File& file,
                              SpecificId specific_id = SpecificId::None) const
       -> TypeId;
+
+  // Sets that this function is a builtin function.
+  auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::Builtin;
+    special_function_kind_info.builtin_function_kind = kind;
+  }
+
+  // Sets that this function is a thunk.
+  auto SetThunk(InstId decl_id) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::Thunk;
+    special_function_kind_info.thunk_decl_id = decl_id;
+  }
 };
 
 class File;
