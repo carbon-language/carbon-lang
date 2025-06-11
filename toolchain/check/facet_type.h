@@ -68,10 +68,12 @@ auto IsPeriodSelf(Context& context, SemIR::InstId inst_id) -> bool;
 
 // Perform rewrite constraint resolution for a facet type and canonicalize the
 // FacetTypeInfo. The FacetTypeInfo must not be modified after this operation.
+//
+// Returns false if an error was inserted into `facet_type`.
 auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
                                               SemIR::LocId loc_id,
                                               SemIR::FacetTypeInfo& facet_type)
-    -> void;
+    -> bool;
 
 }  // namespace Carbon::Check
 

@@ -612,8 +612,13 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   // TODO: Process other requirements.
   info.other_requirements = orig.other_requirements;
 
-  ResolveRewriteConstraintsAndCanonicalize(eval_context.context(), loc_id,
-                                           info);
+  if (!ResolveRewriteConstraintsAndCanonicalize(eval_context.context(), loc_id,
+                                                info)) {
+    // TODO: Should ResolveRewriteConstraintsAndCanonicalize() move into
+    // eval.cpp so it can set the Phase directly?
+    *phase = Phase::UnknownDueToError;
+  }
+
   return info;
 }
 

@@ -402,13 +402,15 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
 auto ResolveRewriteConstraintsAndCanonicalize(
     Context& context, SemIR::LocId loc_id,
-    SemIR::FacetTypeInfo& facet_type_info) -> void {
+    SemIR::FacetTypeInfo& facet_type_info) -> bool {
   // This operation sorts and dedupes the rewrite constraints. They are sorted
   // primarily by the `lhs_id`, then by the `rhs_id`.
   facet_type_info.Canonicalize();
 
+  bool success = true;
+
   if (facet_type_info.rewrite_constraints.empty()) {
-    return;
+    return success;
   }
 
   for (size_t i = 0; i < facet_type_info.rewrite_constraints.size() - 1; ++i) {
@@ -452,6 +454,7 @@ auto ResolveRewriteConstraintsAndCanonicalize(
       }
       constraint.rhs_id = SemIR::ErrorInst::InstId;
       next.rhs_id = SemIR::ErrorInst::InstId;
+      success = false;
     }
   }
 
@@ -495,6 +498,8 @@ auto ResolveRewriteConstraintsAndCanonicalize(
   // Canonicalize again, as we may have inserted errors into the rewrite
   // constraints, and these could change sorting order and need to be deduped.
   facet_type_info.Canonicalize();
+
+  return success;
 }
 
 }  // namespace Carbon::Check

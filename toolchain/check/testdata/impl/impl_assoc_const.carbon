@@ -120,16 +120,9 @@ library "[[@TEST_NAME]]";
 
 interface L2 { let W2:! type; let X2:! type; }
 
-// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+11]]:12: error: associated constant `.(L2.W2)` given two different values `()` and `.(L2.X2)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:12: error: associated constant `.(L2.W2)` given two different values `()` and `.(L2.X2)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L2 where .W2 = .X2 and .W2 = () {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+7]]:1: error: associated constant X2 not given a value in impl of interface L2 [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl () as L2 where .W2 = .X2 and .W2 = () {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE-9]]:35: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR: interface L2 { let W2:! type; let X2:! type; }
-// CHECK:STDERR:                                   ^~~~~~~~~
 // CHECK:STDERR:
 impl () as L2 where .W2 = .X2 and .W2 = () {}
 
@@ -138,16 +131,9 @@ library "[[@TEST_NAME]]";
 
 interface L2 { let W2:! type; let X2:! type; }
 
-// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+11]]:12: error: associated constant `.(L2.W2)` given two different values `()` and `.(L2.X2)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:12: error: associated constant `.(L2.W2)` given two different values `()` and `.(L2.X2)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L2 where .W2 = () and .W2 = .X2 {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+7]]:1: error: associated constant X2 not given a value in impl of interface L2 [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl () as L2 where .W2 = () and .W2 = .X2 {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE-9]]:35: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR: interface L2 { let W2:! type; let X2:! type; }
-// CHECK:STDERR:                                   ^~~~~~~~~
 // CHECK:STDERR:
 impl () as L2 where .W2 = () and .W2 = .X2 {}
 
@@ -349,8 +335,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %tuple.type.e5a: type = tuple_type (%empty_struct_type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %tuple.type.d7e: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %tuple.type.bd8: type = tuple_type (%empty_struct_type, %empty_tuple.type, %empty_struct_type) [concrete]
-// CHECK:STDOUT:   %L_where.type: type = facet_type <@L where %impl.elem0 = <error>> [concrete]
-// CHECK:STDOUT:   %L.impl_witness: <witness> = impl_witness file.%L.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -411,20 +395,18 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %.loc13_102.3: type = converted %.loc13_97, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc13_102.4: type = converted %.loc13_101, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc13_102.5: type = converted %.loc13_102.1, constants.%tuple.type.bd8 [concrete = constants.%tuple.type.bd8]
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = constants.%L_where.type] {
+// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_20, %.loc13_36.5
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_42, %.loc13_58.5
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_64, %.loc13_80.5
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_86, %.loc13_102.5
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %L.impl_witness_table = impl_witness_table (<error>), @impl [concrete]
-// CHECK:STDOUT:   %L.impl_witness: <witness> = impl_witness %L.impl_witness_table [concrete = constants.%L.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc13_7.2 as %.loc13_14 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%L.impl_witness
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_cycle.carbon
