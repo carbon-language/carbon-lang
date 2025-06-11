@@ -27,12 +27,14 @@ cc_library(
     hdrs = [
         "id_kind.h",
         "ids.h",
+        "inst_categories.h",
         "inst_kind.h",
         "singleton_insts.h",
         "typed_insts.h",
     ],
     textual_hdrs = ["inst_kind.def"],
     deps = [
+        ":inst",
         "//common:check",
         "//common:enum_base",
         "//common:ostream",

@@ -24,12 +24,14 @@
 
 namespace Carbon::SemIR {
 
+template <typename... TypedInsts>
+struct CategoryOf;
+
 // InstLikeTypeInfo is an implementation detail, and not public API.
 namespace Internal {
 
 // Information about an instruction-like type, which is a type that an Inst can
-// be converted to and from. The `Enabled` parameter is used to check
-// requirements on the type in the specializations of this template.
+// be converted to and from.
 template <typename InstLikeType>
 struct InstLikeTypeInfo;
 
@@ -72,15 +74,61 @@ struct InstLikeTypeInfo<TypedInst> : InstLikeTypeInfoBase<TypedInst> {
   static auto DebugName() -> InstKind { return TypedInst::Kind; }
 };
 
+// If `TypedInst` has an Nth field, validates that `CategoryInst` has a
+// corresponding field with a compatible type.
+template <typename CategoryInst, typename TypedInst, size_t N>
+static consteval auto ValidateCategoryFieldForTypedInst() -> void {
+  if constexpr (InstLikeTypeInfoBase<TypedInst>::NumArgs > N) {
+    if constexpr (!std::is_same_v<typename InstLikeTypeInfoBase<
+                                      CategoryInst>::template ArgType<N>,
+                                  AnyRawId>) {
+      static_assert(
+          std::is_same_v<
+              typename InstLikeTypeInfoBase<CategoryInst>::template ArgType<N>,
+              typename InstLikeTypeInfoBase<TypedInst>::template ArgType<N>>,
+          "Inst category field should be the same type as the "
+          "corresponding fields of its typed insts, or AnyRawId if "
+          "they have different types");
+    }
+  }
+}
+
+// Validates that `CategoryInst` is compatible with `TypedInst`
+template <typename CategoryInst, typename TypedInst>
+static consteval auto ValidateCategoryForTypedInst() -> void {
+  static_assert(Internal::HasKindMemberAsField<CategoryInst>,
+                "Inst category should have an `InstKind` field");
+  if constexpr (HasTypeIdMember<TypedInst>) {
+    static_assert(HasTypeIdMember<CategoryInst>,
+                  "Inst category should have a `TypeId` field if any of its "
+                  "typed insts do");
+  }
+
+  static_assert(InstLikeTypeInfoBase<CategoryInst>::NumArgs >=
+                    InstLikeTypeInfoBase<TypedInst>::NumArgs,
+                "Inst category should have as many fields as any of its typed "
+                "insts");
+
+  ValidateCategoryFieldForTypedInst<CategoryInst, TypedInst, 0>();
+  ValidateCategoryFieldForTypedInst<CategoryInst, TypedInst, 1>();
+}
+
+// Validates that `CategoryInst` is compatible with all of `TypedInsts`.
+template <typename CategoryInst, typename... TypedInsts>
+static consteval auto ValidateCategory(
+    CategoryOf<TypedInsts...> /*category_info*/) {
+  (ValidateCategoryForTypedInst<CategoryInst, TypedInsts>(), ...);
+  return 0;
+}
+
 // An instruction category is instruction-like.
 template <typename InstCat>
-  requires std::same_as<const InstKind&, decltype(InstCat::Kinds[0])>
+  requires std::same_as<const InstKind&,
+                        decltype(InstCat::CategoryInfo::Kinds[0])>
 struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
-  static_assert(HasKindMemberAsField<InstCat>,
-                "Instruction category should have a kind field");
   static auto GetKind(InstCat cat) -> InstKind { return cat.kind; }
   static auto IsKind(InstKind kind) -> bool {
-    for (InstKind k : InstCat::Kinds) {
+    for (InstKind k : InstCat::CategoryInfo::Kinds) {
       if (k == kind) {
         return true;
       }
@@ -92,12 +140,17 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
     RawStringOstream out;
     out << "{";
     llvm::ListSeparator sep;
-    for (auto kind : InstCat::Kinds) {
+    for (auto kind : InstCat::CategoryInfo::Kinds) {
       out << sep << kind;
     }
     out << "}";
     return out.TakeStr();
   }
+
+ private:
+  // Trigger validation of `InstCat`.
+  static constexpr auto IgnoreThis =
+      ValidateCategory<InstCat>(typename InstCat::CategoryInfo());
 };
 
 // A type is InstLike if InstLikeTypeInfo is defined for it.
@@ -543,6 +596,21 @@ inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
   hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
+
+// Declares a category consisting of `TypedInsts...`, which is a list of typed
+// insts (not kinds). Should only be used to define a public type alias member
+// of a category inst type:
+//
+// struct MyCategory {
+//   using CategoryInfo = CategoryOf<X, Y, Z>;
+//   InstKind kind;
+//   ...
+// }
+template <typename... TypedInsts>
+struct CategoryOf {
+  // The InstKinds that belong to the category.
+  static constexpr InstKind Kinds[] = {TypedInsts::Kind...};
+};
 
 }  // namespace Carbon::SemIR
 
