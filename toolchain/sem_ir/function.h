@@ -75,13 +75,11 @@ struct FunctionFields {
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
 
-  // If the function is imported from C++, points to the Clang declaration in
-  // the AST. Used for mangling and inline function definition code generation.
-  // The AST is owned by `CompileSubcommand` so we expect it to be live from
-  // `Function` creation to mangling.
-  // TODO: #4666 Ensure we can easily serialize/deserialize this. Consider decl
-  // ID to point into the AST.
-  clang::FunctionDecl* cpp_decl = nullptr;
+  // If the function is imported from C++, the Clang function declaration. Used
+  // for mangling and inline function definition code generation. The AST is
+  // owned by `CompileSubcommand` so we expect it to be live from `Function`
+  // creation to mangling.
+  ClangDeclId clang_decl_id = ClangDeclId::None;
 };
 
 // A function. See EntityWithParamsBase regarding the inheritance here.

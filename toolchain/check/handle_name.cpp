@@ -9,6 +9,7 @@
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_ref.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
 #include "toolchain/lex/token_kind.h"
@@ -109,26 +110,8 @@ static auto GetIdentifierAsNameId(
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> SemIR::InstId {
   auto result = LookupUnqualifiedName(context, node_id, name_id);
-  SemIR::InstId inst_id = result.scope_result.target_inst_id();
-  auto type_id = SemIR::GetTypeOfInstInSpecific(context.sem_ir(),
-                                                result.specific_id, inst_id);
-  CARBON_CHECK(type_id.has_value(), "Missing type for {0}",
-               context.insts().Get(inst_id));
-
-  // If the named entity has a constant value that depends on its specific,
-  // store the specific too.
-  if (result.specific_id.has_value() &&
-      context.constant_values().Get(inst_id).is_symbolic()) {
-    inst_id =
-        AddInst<SemIR::SpecificConstant>(context, node_id,
-                                         {.type_id = type_id,
-                                          .inst_id = inst_id,
-                                          .specific_id = result.specific_id});
-  }
-
-  return AddInst<SemIR::NameRef>(
-      context, node_id,
-      {.type_id = type_id, .name_id = name_id, .value_id = inst_id});
+  return BuildNameRef(context, node_id, name_id,
+                      result.scope_result.target_inst_id(), result.specific_id);
 }
 
 auto HandleParseNode(Context& context,

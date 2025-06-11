@@ -65,6 +65,7 @@ class ValueStore
                             typename IdT::ValueType>,
           Yaml::Printable<ValueStore<IdT>>, Internal::ValueStoreNotPrintable> {
  public:
+  using IdType = IdT;
   using ValueType = ValueStoreTypes<IdT>::ValueType;
   using RefType = ValueStoreTypes<IdT>::RefType;
   using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;

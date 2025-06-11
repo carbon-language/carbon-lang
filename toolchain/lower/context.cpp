@@ -5,6 +5,7 @@
 #include "toolchain/lower/context.h"
 
 #include "common/check.h"
+#include "common/growing_range.h"
 #include "common/vlog.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
@@ -43,12 +44,8 @@ auto Context::GetFileContext(const SemIR::File* file,
 
 auto Context::LowerPendingDefinitions() -> void {
   // Lower function definitions for generics.
-  // This cannot be a range-based loop, as new definitions can be added
-  // while building other definitions.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
-    auto [file_context, function_id, specific_id] =
-        specific_function_definitions_[i];
+  for (auto [file_context, function_id, specific_id] :
+       GrowingRange(specific_function_definitions_)) {
     file_context->BuildFunctionDefinition(function_id, specific_id);
   }
 }

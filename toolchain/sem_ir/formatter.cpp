@@ -44,7 +44,7 @@ Formatter::Formatter(const File* sem_ir,
       use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges),
       // Create a placeholder visible chunk and assign it to all instructions
       // that don't have a chunk of their own.
-      tentative_inst_chunks_(sem_ir_->insts().size(), AddChunkNoFlush(true)) {
+      tentative_inst_chunks_(sem_ir_->insts(), AddChunkNoFlush(true)) {
   if (use_dump_sem_ir_ranges_) {
     ComputeNodeParents();
   }
@@ -103,8 +103,8 @@ auto Formatter::Format() -> void {
 
 auto Formatter::ComputeNodeParents() -> void {
   CARBON_CHECK(!node_parents_);
-  node_parents_ =
-      NodeParentStore(sem_ir_->parse_tree().size(), Parse::NodeId::None);
+  node_parents_ = NodeParentStore::MakeWithExplicitSize(
+      sem_ir_->parse_tree().size(), Parse::NodeId::None);
   for (auto n : sem_ir_->parse_tree().postorder()) {
     for (auto child : get_tree_and_subtrees_().children(n)) {
       node_parents_->Set(child, n);

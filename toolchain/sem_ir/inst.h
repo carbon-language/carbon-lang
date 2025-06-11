@@ -389,6 +389,8 @@ struct LocIdAndInst {
 // Provides a ValueStore wrapper for an API specific to instructions.
 class InstStore {
  public:
+  using IdType = InstId;
+
   explicit InstStore(File* file) : file_(file) {}
 
   // Adds an instruction to the instruction list, returning an ID to reference

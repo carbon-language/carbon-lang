@@ -112,8 +112,8 @@ fn G() {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.13320f.2, (%I.impl_witness) [symbolic]
 // CHECK:STDOUT:   %F.type.0daaa1.2: type = fn_type @F.3, @impl(%Y) [symbolic]
 // CHECK:STDOUT:   %F.49c1ac.2: %F.type.0daaa1.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.49c1ac.1, @F.2(%Y) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.13320f.2 [symbolic]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.49c1ac.1, @F.2(%Y) [symbolic]
 // CHECK:STDOUT:   %C.val: %C.13320f.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -249,8 +249,10 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: %empty_struct_type) {
 // CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc8: @F.3.%F.type (%F.type.0daaa1.1) = specific_constant @impl.%F.decl.loc8_17.1, @impl(constants.%Y) [symbolic = %F (constants.%F.49c1ac.1)]
+// CHECK:STDOUT:     %F.ref: @F.3.%F.type (%F.type.0daaa1.1) = name_ref F, %.loc8 [symbolic = %F (constants.%F.49c1ac.1)]
 // CHECK:STDOUT:     %x.ref: %empty_struct_type = name_ref x, %x.param
-// CHECK:STDOUT:     %F.specific_fn.loc8_17.1: <specific function> = specific_function @impl.%F.decl.loc8_17.1, @F.2(constants.%Y) [symbolic = %F.specific_fn.loc8_17.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %F.specific_fn.loc8_17.1: <specific function> = specific_function %F.ref, @F.2(constants.%Y) [symbolic = %F.specific_fn.loc8_17.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %.1: ref @F.3.%C (%C.13320f.2) = temporary_storage
 // CHECK:STDOUT:     %.2: init @F.3.%C (%C.13320f.2) = class_init (), %.1 [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:     %.3: ref @F.3.%C (%C.13320f.2) = temporary %.1, %.2

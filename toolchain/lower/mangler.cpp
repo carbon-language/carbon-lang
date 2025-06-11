@@ -150,8 +150,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
     return "main";
   }
-  if (function.cpp_decl) {
-    return MangleCppClang(function.cpp_decl);
+  if (function.clang_decl_id.has_value()) {
+    return MangleCppClang(llvm::dyn_cast<clang::NamedDecl>(
+        sem_ir().clang_decls().Get(function.clang_decl_id)));
   }
   RawStringOstream os;
   os << "_C";

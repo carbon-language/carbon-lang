@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/growing_range.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
@@ -3278,9 +3279,8 @@ auto ImportRefResolver::PerformPendingWork() -> void {
     // state.
     // TODO: Import the generic eval block rather than calling
     // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
-    // NOLINTNEXTLINE(modernize-loop-convert)
-    for (size_t i = 0; i != pending_generics().size(); ++i) {
-      FinishPendingGeneric(*this, pending_generics()[i]);
+    for (auto generic_id : GrowingRange(pending_generics())) {
+      FinishPendingGeneric(*this, generic_id);
     }
     pending_generics().clear();
 

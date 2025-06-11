@@ -2422,8 +2422,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%u.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.b842fd.1 = name_ref F, @impl.%F.decl.loc24_21.1 [concrete = constants.%F.b07d12.1]
 // CHECK:STDOUT:   %u.ref: %i32 = name_ref u, %u.param
-// CHECK:STDOUT:   %F.call: init <error> = call @impl.%F.decl.loc24_21.1(<error>)
+// CHECK:STDOUT:   %F.call: init <error> = call %F.ref(<error>)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2689,6 +2690,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%self.param: %empty_tuple.type, %.param: <error>) -> <error> {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.f405c5.1 = name_ref F, @impl.4e9.%F.decl.loc30_33.1 [concrete = constants.%F.214a71.1]
 // CHECK:STDOUT:   %self.ref: %empty_tuple.type = name_ref self, %self.param
 // CHECK:STDOUT:   %.ref: <error> = name_ref <none>, %.param [concrete = <error>]
 // CHECK:STDOUT:   return <error>
@@ -2702,8 +2704,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.5(%self.param: %C2, %.param: <error>) -> <error> {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.05d6a0.1 = name_ref F, @impl.8b3.%F.decl.loc39_33.1 [concrete = constants.%F.bfa759.1]
 // CHECK:STDOUT:   %self.ref: %C2 = name_ref self, %self.param
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, @impl.8b3.%F.decl.loc39_33.1
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %.ref: <error> = name_ref <none>, %.param [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %C2 = call %F.bound(%self.ref, <error>)
 // CHECK:STDOUT:   return <error>
@@ -2912,6 +2915,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%self.param: %empty_tuple.type, %v.param: %struct_type.a) -> %struct_type.a {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type.c5249c.1 = name_ref F, @impl.%F.decl.loc16_45.1 [concrete = constants.%F.5eb4dd.1]
 // CHECK:STDOUT:   %self.ref: %empty_tuple.type = name_ref self, %self.param
 // CHECK:STDOUT:   %v.ref: %struct_type.a = name_ref v, %v.param
 // CHECK:STDOUT:   return <error>

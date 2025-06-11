@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "toolchain/check/deferred_definition_worklist.h"
 
 namespace Carbon::Check {
 
@@ -26,6 +27,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
       args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_),
+      deferred_definition_worklist_(vlog_stream),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       global_init_(this),
       region_stack_([this](SemIR::LocId loc_id, std::string label) {

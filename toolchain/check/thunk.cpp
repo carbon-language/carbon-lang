@@ -9,12 +9,13 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/deferred_definition_scope.h"
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/name_ref.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/pointer_dereference.h"
@@ -271,13 +272,13 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
   // Register the thunk to be defined when we reach the end of the enclosing
   // deferred definition scope, for example an `impl` or `class` definition, as
   // if the thunk's body were written inline in this location.
-  context.deferred_definition_scope_stack().AddPendingThunk({
-      .signature_id = signature_id,
-      .function_id = function_id,
-      .decl_id = thunk_id,
-      .callee_id = callee_id,
-      .scope = context.scope_stack().Suspend(),
-  });
+  context.deferred_definition_worklist().SuspendThunkAndPush(
+      context, {
+                   .signature_id = signature_id,
+                   .function_id = function_id,
+                   .decl_id = thunk_id,
+                   .callee_id = callee_id,
+               });
 
   return thunk_id;
 }
@@ -332,6 +333,12 @@ static auto BuildThunkCall(Context& context, SemIR::FunctionId function_id,
                            SemIR::InstId callee_id) -> SemIR::InstId {
   auto loc_id = SemIR::LocId(callee_id);
   auto& function = context.functions().Get(function_id);
+
+  // Build a `NameRef` naming the callee, and a `SpecificConstant` if needed.
+  auto callee_type = context.types().GetAs<SemIR::FunctionType>(
+      context.insts().Get(callee_id).type_id());
+  callee_id = BuildNameRef(context, loc_id, function.name_id, callee_id,
+                           callee_type.specific_id);
 
   // If we have a self parameter, form `self.<callee_id>`.
   if (function.self_param_id.has_value()) {
@@ -412,11 +419,13 @@ static auto BuildThunkDefinition(Context& context,
   FinishGenericDefinition(context, function.generic_id);
 }
 
-auto BuildThunkDefinition(Context& context, PendingThunk&& thunk) -> void {
-  context.scope_stack().Restore(std::move(thunk.scope));
+auto BuildThunkDefinition(Context& context,
+                          DeferredDefinitionWorklist::DefineThunk&& task)
+    -> void {
+  context.scope_stack().Restore(std::move(task.scope));
 
-  BuildThunkDefinition(context, thunk.signature_id, thunk.function_id,
-                       thunk.decl_id, thunk.callee_id);
+  BuildThunkDefinition(context, task.info.signature_id, task.info.function_id,
+                       task.info.decl_id, task.info.callee_id);
 
   context.scope_stack().Pop();
 }

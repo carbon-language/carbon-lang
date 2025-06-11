@@ -18,6 +18,7 @@
 namespace clang {
 
 // Forward declare indexed types, for integration with ValueStore.
+class Decl;
 class SourceLocation;
 
 }  // namespace clang
@@ -785,6 +786,17 @@ struct TypeId : public IdBase<TypeId> {
   auto is_concrete() const -> bool { return AsConstantId().is_concrete(); }
 
   auto Print(llvm::raw_ostream& out) const -> void;
+};
+
+// The ID of a Clang `Decl` pointer, pointing to the Clang AST.
+struct ClangDeclId : public IdBase<ClangDeclId> {
+  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+
+  // TODO: Ensure we can easily serialize/deserialize this. Consider
+  // `clang::LazyDeclPtr`.
+  using ValueType = clang::Decl*;
+
+  using IdBase::IdBase;
 };
 
 // The ID of a Clang Source Location.

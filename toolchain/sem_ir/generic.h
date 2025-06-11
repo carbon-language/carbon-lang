@@ -104,6 +104,8 @@ struct Specific : Printable<Specific> {
 // their associated generic argument list.
 class SpecificStore : public Yaml::Printable<SpecificStore> {
  public:
+  using IdType = SpecificId;
+
   // Adds a new specific, or gets the existing specific for a specified generic
   // and argument list. Returns the ID of the specific. The argument IDs must be
   // for instructions in the constant block, and must be a canonical instruction

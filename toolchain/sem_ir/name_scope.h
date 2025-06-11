@@ -216,15 +216,16 @@ class NameScope : public Printable<NameScope> {
     is_closed_import_ = is_closed_import;
   }
 
-  auto is_cpp_scope() const -> bool { return cpp_decl_context(); }
-
-  auto cpp_decl_context() const -> const clang::DeclContext* {
-    return cpp_decl_context_;
+  auto is_cpp_scope() const -> bool {
+    return clang_decl_context_id().has_value();
   }
-  auto cpp_decl_context() -> clang::DeclContext* { return cpp_decl_context_; }
 
-  auto set_cpp_decl_context(clang::DeclContext* cpp_decl_context) -> void {
-    cpp_decl_context_ = cpp_decl_context;
+  auto clang_decl_context_id() const -> ClangDeclId {
+    return clang_decl_context_id_;
+  }
+
+  auto set_clang_decl_context_id(ClangDeclId clang_decl_context_id) -> void {
+    clang_decl_context_id_ = clang_decl_context_id;
   }
 
   // Returns true if this name scope describes an imported package.
@@ -295,12 +296,8 @@ class NameScope : public Printable<NameScope> {
   bool is_closed_import_ = false;
 
   // Set if this is the `Cpp` scope or a scope inside `Cpp`. Points to the
-  // matching Clang declaration context to look for names. This is mutable since
-  // `clang::Sema::LookupQualifiedName()` requires a mutable `DeclContext`.
-  // TODO: Ensure we can easily serialize/deserialize this. Consider decl ID to
-  // point into the AST. This is related to:
-  // https://github.com/carbon-language/carbon-lang/issues/4666.
-  clang::DeclContext* cpp_decl_context_ = nullptr;
+  // matching Clang declaration context to look for names.
+  ClangDeclId clang_decl_context_id_ = ClangDeclId::None;
 
   // True if this is the scope of an interface definition, where associated
   // entities will be bound to the interface's `Self` symbolic type.
