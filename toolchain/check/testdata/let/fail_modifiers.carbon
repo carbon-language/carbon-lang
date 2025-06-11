@@ -101,15 +101,15 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.3, @impl.4f9(%To.c80) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.3, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
-// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.921: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
+// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.921 [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.3(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT: }
@@ -149,7 +149,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc18: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc18_24.1: <bound method> = bound_method @__global_init.%int_1.loc18, %impl.elem0.loc18 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_24.2: <bound method> = bound_method @__global_init.%int_1.loc18, %specific_fn.loc18 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %bound_method.loc18_24.2(@__global_init.%int_1.loc18) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc18_24.1: %i32 = value_of_initializer %int.convert_checked.loc18 [concrete = constants.%int_1.5d2]
@@ -164,7 +164,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc24: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc24_22.1: <bound method> = bound_method @__global_init.%int_1.loc24, %impl.elem0.loc24 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc24: <specific function> = specific_function %impl.elem0.loc24, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc24: <specific function> = specific_function %impl.elem0.loc24, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc24_22.2: <bound method> = bound_method @__global_init.%int_1.loc24, %specific_fn.loc24 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked.loc24: init %i32 = call %bound_method.loc24_22.2(@__global_init.%int_1.loc24) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc24_22.1: %i32 = value_of_initializer %int.convert_checked.loc24 [concrete = constants.%int_1.5d2]
@@ -179,7 +179,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc30: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc30_20.1: <bound method> = bound_method @__global_init.%int_1.loc30, %impl.elem0.loc30 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc30_20.2: <bound method> = bound_method @__global_init.%int_1.loc30, %specific_fn.loc30 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked.loc30: init %i32 = call %bound_method.loc30_20.2(@__global_init.%int_1.loc30) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc30_20.1: %i32 = value_of_initializer %int.convert_checked.loc30 [concrete = constants.%int_1.5d2]
@@ -194,7 +194,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc36: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc36_22.1: <bound method> = bound_method @__global_init.%int_1.loc36, %impl.elem0.loc36 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc36: <specific function> = specific_function %impl.elem0.loc36, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc36: <specific function> = specific_function %impl.elem0.loc36, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc36_22.2: <bound method> = bound_method @__global_init.%int_1.loc36, %specific_fn.loc36 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked.loc36: init %i32 = call %bound_method.loc36_22.2(@__global_init.%int_1.loc36) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc36_22.1: %i32 = value_of_initializer %int.convert_checked.loc36 [concrete = constants.%int_1.5d2]
@@ -209,7 +209,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc49: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc49_28.1: <bound method> = bound_method @__global_init.%int_1.loc49, %impl.elem0.loc49 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc49: <specific function> = specific_function %impl.elem0.loc49, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc49: <specific function> = specific_function %impl.elem0.loc49, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc49_28.2: <bound method> = bound_method @__global_init.%int_1.loc49, %specific_fn.loc49 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked.loc49: init %i32 = call %bound_method.loc49_28.2(@__global_init.%int_1.loc49) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc49_28.1: %i32 = value_of_initializer %int.convert_checked.loc49 [concrete = constants.%int_1.5d2]
@@ -224,7 +224,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc62: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc62_30.1: <bound method> = bound_method @__global_init.%int_1.loc62, %impl.elem0.loc62 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc62: <specific function> = specific_function %impl.elem0.loc62, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc62: <specific function> = specific_function %impl.elem0.loc62, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc62_30.2: <bound method> = bound_method @__global_init.%int_1.loc62, %specific_fn.loc62 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked.loc62: init %i32 = call %bound_method.loc62_30.2(@__global_init.%int_1.loc62) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc62_30.1: %i32 = value_of_initializer %int.convert_checked.loc62 [concrete = constants.%int_1.5d2]
@@ -239,7 +239,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc75: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc75_32.1: <bound method> = bound_method @__global_init.%int_1.loc75, %impl.elem0.loc75 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc75: <specific function> = specific_function %impl.elem0.loc75, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc75: <specific function> = specific_function %impl.elem0.loc75, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc75_32.2: <bound method> = bound_method @__global_init.%int_1.loc75, %specific_fn.loc75 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked.loc75: init %i32 = call %bound_method.loc75_32.2(@__global_init.%int_1.loc75) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc75_32.1: %i32 = value_of_initializer %int.convert_checked.loc75 [concrete = constants.%int_1.5d2]
@@ -254,7 +254,7 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc88: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc88_34.1: <bound method> = bound_method @__global_init.%int_1.loc88, %impl.elem0.loc88 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc88: <specific function> = specific_function %impl.elem0.loc88, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc88: <specific function> = specific_function %impl.elem0.loc88, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc88_34.2: <bound method> = bound_method @__global_init.%int_1.loc88, %specific_fn.loc88 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked.loc88: init %i32 = call %bound_method.loc88_34.2(@__global_init.%int_1.loc88) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc88_34.1: %i32 = value_of_initializer %int.convert_checked.loc88 [concrete = constants.%int_1.5d2]
