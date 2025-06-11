@@ -4,6 +4,7 @@
 
 #include "common/exe_path.h"
 
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -12,6 +13,18 @@
 #include "llvm/Support/Program.h"
 
 namespace Carbon {
+
+// Returns true if a found path resolves to the actual executable path.
+static auto RealPathMatches(const char* found_path, llvm::StringRef exe_path)
+    -> bool {
+  char* buffer = realpath(found_path, nullptr);
+  if (!buffer) {
+    return false;
+  }
+  bool matches = exe_path == buffer;
+  free(buffer);
+  return matches;
+}
 
 auto FindExecutablePath(const char* argv0) -> std::string {
   static int static_for_main_addr;
@@ -24,12 +37,9 @@ auto FindExecutablePath(const char* argv0) -> std::string {
 
   llvm::StringRef argv0_ref = argv0;
 
-  char realpath_buf[PATH_MAX];
-
   // If `argv[0]` is path-like and points at the executable, use the form in
   // `argv[0]`.
-  if (argv0_ref.contains('/') && realpath(argv0, realpath_buf) &&
-      realpath_buf == exe_path) {
+  if (argv0_ref.contains('/') && RealPathMatches(argv0, exe_path)) {
     return argv0_ref.str();
   }
 
@@ -40,8 +50,7 @@ auto FindExecutablePath(const char* argv0) -> std::string {
   // `llvm-symbolizer` in `$PATH` is a different binary, that can lead to
   // problems -- which is why we verify the match.
   if (llvm::ErrorOr<std::string> path = llvm::sys::findProgramByName(argv0_ref);
-      path && realpath(path->c_str(), realpath_buf) &&
-      realpath_buf == exe_path) {
+      path && RealPathMatches(path->c_str(), exe_path)) {
     return std::move(*path);
   }
 
