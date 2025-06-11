@@ -338,7 +338,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint)
       : SubstInstCallbacks(context),
         loc_id_(loc_id),
-        facet_type_info_(facet_type_info),
+        facet_type_info_(*facet_type_info),
         substituting_constraint_(substituting_constraint) {}
 
   auto Subst(SemIR::InstId& rhs_inst_id) const -> bool override {
@@ -356,8 +356,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     // algorithm with something more efficient for searching, such as a map.
     // However that would probably require heap allocations which may be worse
     // overall since the number of rewrite constraints is generally low.
-    for (const auto& search_constraint :
-         facet_type_info().rewrite_constraints) {
+    for (const auto& search_constraint : facet_type_info_.rewrite_constraints) {
       auto search_lhs_access = TryGetImplWitnessAccessOfPeriodSelf(
           context(), search_constraint.lhs_id);
       if (!search_lhs_access) {
@@ -396,12 +395,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   }
 
  private:
-  auto facet_type_info() const -> const SemIR::FacetTypeInfo& {
-    return *facet_type_info_;
-  }
-
   SemIR::LocId loc_id_;
-  const SemIR::FacetTypeInfo* facet_type_info_;
+  const SemIR::FacetTypeInfo& facet_type_info_;
   const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint_;
 };
 
