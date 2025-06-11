@@ -20,15 +20,15 @@ auto foo(short a) -> void;
 
 // --- import_short.carbon
 
-//@dump-sem-ir-begin
 library "[[@TEST_NAME]]";
 
 import Cpp library "short.h";
 
 fn F() {
+  //@dump-sem-ir-begin
   Cpp.foo(1 as i16);
+  //@dump-sem-ir-end
 }
-//@dump-sem-ir-end
 
 // --- import_short_max.carbon
 
@@ -322,9 +322,7 @@ fn F() {
 // CHECK:STDOUT: --- import_short.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
@@ -356,13 +354,6 @@ fn F() {
 // CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "short.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -379,7 +370,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_13.1: %i16 = value_of_initializer %int.convert_checked [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.2: %i16 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%.loc8_13.2)
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_short_max.carbon
