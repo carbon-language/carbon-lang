@@ -17,6 +17,10 @@ def _run_tool_impl(ctx):
         DefaultInfo(
             runfiles = ctx.runfiles(files = ctx.files.data),
         ),
+        RunEnvironmentInfo(
+            environment = ctx.attr.env |
+                          {"CARBON_ARGV0_OVERRIDE": tool_files[0].short_path},
+        ),
     ]
 
 run_tool = rule(
