@@ -112,11 +112,13 @@ static consteval auto ValidateCategoryForTypedInst() -> void {
 }
 
 // Validates that `CategoryInst` is compatible with all of `TypedInsts`.
+// Always returns true; validation failure will cause build errors when
+// instantiating the function.
 template <typename CategoryInst, typename... TypedInsts>
 static consteval auto ValidateCategory(
-    CategoryOf<TypedInsts...> /*category_info*/) {
+    CategoryOf<TypedInsts...> /*category_info*/) -> bool {
   (ValidateCategoryForTypedInst<CategoryInst, TypedInsts>(), ...);
-  return 0;
+  return true;
 }
 
 // An instruction category is instruction-like.
@@ -146,8 +148,7 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
 
  private:
   // Trigger validation of `InstCat`.
-  static constexpr auto IgnoreThis =
-      ValidateCategory<InstCat>(typename InstCat::CategoryInfo());
+  static_assert(ValidateCategory<InstCat>(typename InstCat::CategoryInfo()));
 };
 
 // A type is InstLike if InstLikeTypeInfo is defined for it.
@@ -593,21 +594,6 @@ inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
   hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
-
-// Declares a category consisting of `TypedInsts...`, which is a list of typed
-// insts (not kinds). Should only be used to define a public type alias member
-// of a category inst type:
-//
-// struct MyCategory {
-//   using CategoryInfo = CategoryOf<X, Y, Z>;
-//   InstKind kind;
-//   ...
-// }
-template <typename... TypedInsts>
-struct CategoryOf {
-  // The InstKinds that belong to the category.
-  static constexpr InstKind Kinds[] = {TypedInsts::Kind...};
-};
 
 }  // namespace Carbon::SemIR
 

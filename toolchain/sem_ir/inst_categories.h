@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_SEM_IR_INST_CATEGORIES_H_
 
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -16,6 +15,21 @@
 // is used to declare the typed insts that belong to the category.
 
 namespace Carbon::SemIR {
+
+// Declares a category consisting of `TypedInsts...`, which is a list of typed
+// insts (not kinds). Should only be used to define a public type alias member
+// of a category inst type:
+//
+// struct MyCategory {
+//   using CategoryInfo = CategoryOf<X, Y, Z>;
+//   InstKind kind;
+//   ...
+// }
+template <typename... TypedInsts>
+struct CategoryOf {
+  // The InstKinds that belong to the category.
+  static constexpr InstKind Kinds[] = {TypedInsts::Kind...};
+};
 
 // Common representation for aggregate access nodes, which access a fixed
 // element of an aggregate.

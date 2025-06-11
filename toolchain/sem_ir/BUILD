@@ -34,7 +34,6 @@ cc_library(
     ],
     textual_hdrs = ["inst_kind.def"],
     deps = [
-        ":inst",
         "//common:check",
         "//common:enum_base",
         "//common:ostream",
