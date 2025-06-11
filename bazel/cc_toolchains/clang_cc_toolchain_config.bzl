@@ -671,7 +671,6 @@ def _impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            "-fuse-ld=lld",
                             "-stdlib=libc++",
                             "-unwindlib=libunwind",
                             # Force the C++ standard library and runtime
@@ -724,6 +723,35 @@ def _impl(ctx):
                         expand_if_available = "force_pic",
                     ),
                 ],
+            ),
+        ],
+    )
+
+    linux_lld_feature = feature(
+        name = "linux_lld",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = ([flag_group(flags = [
+                    "-fuse-ld=lld",
+                ])]),
+                with_features = [
+                    with_feature_set(not_features = ["linux_mold"]),
+                ],
+            ),
+        ],
+    )
+
+    linux_mold_feature = feature(
+        name = "linux_mold",
+        enabled = False,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = ([flag_group(flags = [
+                    "-fuse-ld=mold",
+                ])]),
             ),
         ],
     )
@@ -1149,6 +1177,8 @@ def _impl(ctx):
     if ctx.attr.target_os == "linux":
         features.append(sanitizer_static_lib_flags)
         features.append(linux_flags_feature)
+        features.append(linux_lld_feature)
+        features.append(linux_mold_feature)
         sysroot = None
     elif ctx.attr.target_os == "windows":
         # TODO: Need to figure out if we need to add windows specific features

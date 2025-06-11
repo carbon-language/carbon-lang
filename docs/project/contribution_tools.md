@@ -24,6 +24,7 @@ contributions.
     -   [Optional tools](#optional-tools)
         -   [Using LLDB with VS Code](#using-lldb-with-vs-code)
         -   [Using GDB with VS Code](#using-gdb-with-vs-code)
+        -   [Using mold linker](#using-mold-linker)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
     -   [`bazel clean`](#bazel-clean)
@@ -272,6 +273,20 @@ A typical debug session looks like:
    Code.
 3. Go to the "Run and debug" panel in VS Code.
 4. Select and run the `file_test (gdb)` configuration.
+
+#### Using mold linker
+
+The [mold](https://github.com/rui314/mold) linker is a drop-in replacement for
+unix linkers. By default we use `lld` to link in the toolchain build, but you
+can choose to use `mold` on Linux. You can expect `mold` to reduce linking times
+by about 1/2 (for example, linking debug `file_test` from 21s to 12s).
+
+To use mold, install it and ensure `mold` is in your path, then add this to your
+`user.bazelrc` in the root of the Carbon git repository:
+
+```
+build --features=linux_mold
+```
 
 ### Manually building Clang and LLVM (not recommended)
 
