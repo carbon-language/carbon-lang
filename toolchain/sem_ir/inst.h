@@ -98,11 +98,9 @@ template <typename CategoryInst, typename TypedInst>
 static consteval auto ValidateCategoryForTypedInst() -> void {
   static_assert(Internal::HasKindMemberAsField<CategoryInst>,
                 "Inst category should have an `InstKind` field");
-  if constexpr (HasTypeIdMember<TypedInst>) {
-    static_assert(HasTypeIdMember<CategoryInst>,
-                  "Inst category should have a `TypeId` field if any of its "
-                  "typed insts do");
-  }
+  static_assert(!HasTypeIdMember<TypedInst> || HasTypeIdMember<CategoryInst>,
+                "Inst category should have a `TypeId` field if any of its "
+                "typed insts do");
 
   static_assert(InstLikeTypeInfoBase<CategoryInst>::NumArgs >=
                     InstLikeTypeInfoBase<TypedInst>::NumArgs,
@@ -123,8 +121,7 @@ static consteval auto ValidateCategory(
 
 // An instruction category is instruction-like.
 template <typename InstCat>
-  requires std::same_as<const InstKind&,
-                        decltype(InstCat::CategoryInfo::Kinds[0])>
+  requires requires { typename InstCat::CategoryInfo; }
 struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
   static auto GetKind(InstCat cat) -> InstKind { return cat.kind; }
   static auto IsKind(InstKind kind) -> bool {
