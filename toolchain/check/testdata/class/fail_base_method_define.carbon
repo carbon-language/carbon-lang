@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_base_method_define.carbon
@@ -69,8 +72,8 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %F.decl.loc27: %F.type.31906b.1 = fn_decl @F.3 [concrete = constants.%F.34b733.1] {} {}
-// CHECK:STDOUT:   %F.decl.loc33: %F.type.31906b.2 = fn_decl @F.4 [concrete = constants.%F.34b733.2] {} {}
+// CHECK:STDOUT:   %F.decl.loc30: %F.type.31906b.1 = fn_decl @F.3 [concrete = constants.%F.34b733.1] {} {}
+// CHECK:STDOUT:   %F.decl.loc36: %F.type.31906b.2 = fn_decl @F.4 [concrete = constants.%F.34b733.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -99,7 +102,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc20: %D.elem = base_decl %B.ref, element0 [concrete]
+// CHECK:STDOUT:   %.loc23: %D.elem = base_decl %B.ref, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [concrete = constants.%struct_type.base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -107,8 +110,8 @@ fn D.C.F() {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .B = <poisoned>
-// CHECK:STDOUT:   .base = %.loc20
-// CHECK:STDOUT:   .F = file.%F.decl.loc27
+// CHECK:STDOUT:   .base = %.loc23
+// CHECK:STDOUT:   .F = file.%F.decl.loc30
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

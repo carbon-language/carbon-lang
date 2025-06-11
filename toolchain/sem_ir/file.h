@@ -203,6 +203,12 @@ class File : public Printable<File> {
   // pointer in the constructor and remove this function. This is part of
   // https://github.com/carbon-language/carbon-lang/issues/4666
   auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
+  auto clang_decls() -> CanonicalValueStore<ClangDeclId>& {
+    return clang_decls_;
+  }
+  auto clang_decls() const -> const CanonicalValueStore<ClangDeclId>& {
+    return clang_decls_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -329,9 +335,12 @@ class File : public Printable<File> {
   // `Cpp` imports.
   clang::ASTUnit* cpp_ast_ = nullptr;
 
+  // Clang AST declarations pointing to the AST.
+  CanonicalValueStore<ClangDeclId> clang_decls_;
+
   // All instructions. The first entries will always be the singleton
   // instructions.
-  InstStore insts_;
+  InstStore insts_ = InstStore(this);
 
   // Storage for name scopes.
   NameScopeStore name_scopes_ = NameScopeStore(this);

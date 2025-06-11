@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/where_expr/equal_rewrite.carbon
@@ -600,8 +603,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @OneRewrite(@RepeatedRewrite.%H.loc10_20.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewriteAgain(constants.%I) {
 // CHECK:STDOUT:   %I.loc14_20.2 => constants.%I
 // CHECK:STDOUT: }
@@ -612,8 +613,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OneRewrite.specific_fn.loc11_3.2 => constants.%OneRewrite.specific_fn.7fa5d5.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @RepeatedRewrite(@OneRewriteAgain.%I.loc14_20.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {
 // CHECK:STDOUT:   %G.loc8_15.2 => constants.%I
@@ -798,8 +797,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Alphabetical(@Reversed.%N.loc11_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_rewrites_mismatch_right.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -962,8 +959,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithInteger(@WithBool.%facet_value.loc12_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_rewrites_mismatch_left.carbon
 // CHECK:STDOUT:
@@ -1130,8 +1125,6 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithT(@WithU.%facet_value.loc13_10.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_rewrites.carbon
 // CHECK:STDOUT:
@@ -1612,7 +1605,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1.loc15, %.loc15_37.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %H: %E_where.type.82c = bind_name H, <error>
+// CHECK:STDOUT:   %H: %E_where.type.82c = bind_name H, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %J.patt: %pattern_type.562 = binding_pattern J [concrete]
 // CHECK:STDOUT:   }
@@ -1641,7 +1634,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1.loc21, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J: %E_where.type.a0d = bind_name J, <error>
+// CHECK:STDOUT:   %J: %E_where.type.a0d = bind_name J, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %K.patt: %pattern_type.e21 = binding_pattern K [concrete]
 // CHECK:STDOUT:   }
@@ -1662,7 +1655,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc27, %impl.elem1.loc27
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %K: %E_where.type.0ba = bind_name K, <error>
+// CHECK:STDOUT:   %K: %E_where.type.0ba = bind_name K, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @E {

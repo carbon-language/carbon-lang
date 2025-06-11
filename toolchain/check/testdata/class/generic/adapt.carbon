@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/generic/adapt.carbon
@@ -246,8 +249,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc4_9.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%i32
 // CHECK:STDOUT:
@@ -388,8 +389,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.c07
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_extend_adapt_specific_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -515,8 +514,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc4_9.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%i32
 // CHECK:STDOUT:
@@ -619,8 +616,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_9.2 => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc7_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
 // CHECK:STDOUT:   %T.loc7_9.2 => constants.%i32
@@ -758,8 +753,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.767
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.c07
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt_generic_type.carbon
 // CHECK:STDOUT:

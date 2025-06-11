@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/generic/dependent_param.carbon
@@ -98,14 +101,14 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
-// CHECK:STDOUT:     %.loc10_1: %pattern_type.7ce = var_pattern %n.patt [concrete]
+// CHECK:STDOUT:     %n.var_patt: %pattern_type.7ce = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref %i32 = var n
-// CHECK:STDOUT:   %.loc10_8: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt [concrete]
+// CHECK:STDOUT:   %.loc10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
+// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var [concrete = %n.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_13.1: type) {
@@ -225,10 +228,6 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T, %U.loc5_15.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32

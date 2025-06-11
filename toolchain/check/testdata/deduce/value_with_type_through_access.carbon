@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/deduce/value_with_type_through_access.carbon
@@ -267,8 +270,6 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc8_37 => constants.%pattern_type.08e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc8_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%tuple) {
 // CHECK:STDOUT:   %T.loc4_17.2 => constants.%tuple
 // CHECK:STDOUT:
@@ -448,8 +449,6 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc8_39 => constants.%pattern_type.9f0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc8_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%struct) {
 // CHECK:STDOUT:   %T.loc4_17.2 => constants.%struct
 // CHECK:STDOUT:
@@ -543,7 +542,7 @@ fn G() {
 // CHECK:STDOUT:       %.loc21_38.1: ref type = class_element_access %T.ref.loc21_37, element0 [symbolic = %.loc21_38.3 (constants.%.2fe)]
 // CHECK:STDOUT:       %.loc21_38.2: type = bind_value %.loc21_38.1
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
@@ -640,8 +639,6 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.937
 // CHECK:STDOUT:   %.loc21_38.3 => constants.%.2fe
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc21_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%c) {
 // CHECK:STDOUT:   %T.loc8_17.2 => constants.%c
@@ -760,7 +757,7 @@ fn G() {
 // CHECK:STDOUT:       %.loc12_49.2: ref type = array_index %.loc12_49.1, %.loc12_48.2
 // CHECK:STDOUT:       %.loc12_49.3: type = bind_value %.loc12_49.2
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param
+// CHECK:STDOUT:     %a: <error> = bind_name a, %a.param [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
@@ -836,6 +833,4 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.loc12_40.2 => constants.%HoldsType
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.142
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(@F.%T.loc12_6.2) {}
 // CHECK:STDOUT:

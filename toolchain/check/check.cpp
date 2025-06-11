@@ -322,19 +322,19 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
-auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream, bool fuzzing) -> void {
+auto CheckParseTrees(
+    llvm::MutableArrayRef<Unit> units,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    bool prelude_import, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::StringRef target, llvm::raw_ostream* vlog_stream, bool fuzzing)
+    -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
-  llvm::SmallVector<UnitAndImports, 0> unit_infos;
-  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
-  unit_infos.reserve(units.size());
-  tree_and_subtrees_getters.reserve(units.size());
-  for (auto [i, unit] : llvm::enumerate(units)) {
-    unit_infos.emplace_back(SemIR::CheckIRId(i), unit);
-    tree_and_subtrees_getters.push_back(unit.tree_and_subtrees_getter);
-  }
+  llvm::SmallVector<UnitAndImports, 0> unit_infos(
+      llvm::map_range(units, [&](Unit& unit) {
+        return UnitAndImports(
+            &unit, tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index]);
+      }));
 
   Map<ImportKey, UnitAndImports*> api_map =
       BuildApiMapAndDiagnosePackaging(unit_infos);
@@ -381,7 +381,8 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
+    CheckUnit(unit_info, tree_and_subtrees_getters, fs, target, vlog_stream)
+        .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -428,7 +429,9 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
+        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, target,
+                  vlog_stream)
+            .Run();
       }
     }
   }

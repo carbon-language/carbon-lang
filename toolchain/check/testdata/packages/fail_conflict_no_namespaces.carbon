@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/packages/fail_conflict_no_namespaces.carbon
@@ -88,14 +91,14 @@ import library "var";
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Foo.patt: %pattern_type.7ce = binding_pattern Foo [concrete]
-// CHECK:STDOUT:     %.loc4_1: %pattern_type.7ce = var_pattern %Foo.patt [concrete]
+// CHECK:STDOUT:     %Foo.var_patt: %pattern_type.7ce = var_pattern %Foo.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.var: ref %i32 = var Foo
-// CHECK:STDOUT:   %.loc4_10: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %Foo.var: ref %i32 = var %Foo.var_patt [concrete]
+// CHECK:STDOUT:   %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo: ref %i32 = bind_name Foo, %Foo.var
+// CHECK:STDOUT:   %Foo: ref %i32 = bind_name Foo, %Foo.var [concrete = %Foo.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon

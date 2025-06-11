@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_PARSE_TREE_AND_SUBTREES_H_
 
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/parse/tree.h"
 
@@ -17,12 +18,6 @@ namespace Carbon::Parse {
 // This requires a complete tree.
 class TreeAndSubtrees {
  public:
-  // A range of tokens, returned by GetSubtreeTokenRange.
-  struct TokenRange {
-    Lex::TokenIndex begin;
-    Lex::TokenIndex end;
-  };
-
   class SiblingIterator;
 
   explicit TreeAndSubtrees(const Lex::TokenizedBuffer& tokens,
@@ -115,7 +110,7 @@ class TreeAndSubtrees {
       -> void;
 
   // Returns the range of tokens in the node's subtree.
-  auto GetSubtreeTokenRange(NodeId node_id) const -> TokenRange;
+  auto GetSubtreeTokenRange(NodeId node_id) const -> Lex::InclusiveTokenRange;
 
   // Converts the node to a diagnostic location, covering either the full
   // subtree or only the token.
@@ -190,7 +185,8 @@ class TreeAndSubtrees {
   // first child of its parent, this will be an offset to the node's parent's
   // next sibling, or if it the parent is also a first child, the grandparent's
   // next sibling, and so on.
-  llvm::SmallVector<int32_t> subtree_sizes_;
+  using SubtreeSizeStore = FixedSizeValueStore<NodeId, int32_t>;
+  SubtreeSizeStore subtree_sizes_;
 };
 
 // A standard signature for a callback to support lazy construction.
@@ -224,7 +220,7 @@ class TreeAndSubtrees::SiblingIterator
 
   using iterator_facade_base::operator++;
   auto operator++() -> SiblingIterator& {
-    node_.index -= tree_->subtree_sizes_[node_.index];
+    node_.index -= tree_->subtree_sizes_.Get(node_);
     return *this;
   }
 

@@ -164,7 +164,7 @@ auto HandleParseNode(Context& context,
   auto self_specific_id =
       context.generics().GetSelfSpecific(interface_info.generic_id);
 
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, interface_info.generic_id);
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, interface_id);

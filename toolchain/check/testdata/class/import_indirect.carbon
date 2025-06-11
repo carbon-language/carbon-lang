@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/import_indirect.carbon
@@ -143,6 +146,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%b_val.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -169,21 +173,21 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_val.patt: %pattern_type.c48 = binding_pattern b_val [concrete]
-// CHECK:STDOUT:     %.loc8: %pattern_type.c48 = var_pattern %b_val.patt [concrete]
+// CHECK:STDOUT:     %b_val.var_patt: %pattern_type.c48 = var_pattern %b_val.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b_val.var: ref %C = var b_val
+// CHECK:STDOUT:   %b_val.var: ref %C = var %b_val.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var
+// CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var [concrete = %b_val.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_ptr.patt: %pattern_type.44a = binding_pattern b_ptr [concrete]
-// CHECK:STDOUT:     %.loc9_1: %pattern_type.44a = var_pattern %b_ptr.patt [concrete]
+// CHECK:STDOUT:     %b_ptr.var_patt: %pattern_type.44a = var_pattern %b_ptr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b_ptr.var: ref %ptr.019 = var b_ptr
-// CHECK:STDOUT:   %.loc9_13: type = splice_block %ptr [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:   %b_ptr.var: ref %ptr.019 = var %b_ptr.var_patt [concrete]
+// CHECK:STDOUT:   %.loc9: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, %D [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b_ptr: ref %ptr.019 = bind_name b_ptr, %b_ptr.var
+// CHECK:STDOUT:   %b_ptr: ref %ptr.019 = bind_name b_ptr, %b_ptr.var [concrete = %b_ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -199,8 +203,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc8_17.2: init %C = class_init (), file.%b_val.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_1: init %C = converted %.loc8_17.1, %.loc8_17.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc8_1
-// CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %b_val.ref
+// CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val [concrete = file.%b_val.var]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %b_val.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%b_ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -215,6 +219,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%c_val.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -241,21 +246,21 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %E: type = bind_alias E, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c_val.patt: %pattern_type.c48 = binding_pattern c_val [concrete]
-// CHECK:STDOUT:     %.loc8: %pattern_type.c48 = var_pattern %c_val.patt [concrete]
+// CHECK:STDOUT:     %c_val.var_patt: %pattern_type.c48 = var_pattern %c_val.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c_val.var: ref %C = var c_val
+// CHECK:STDOUT:   %c_val.var: ref %C = var %c_val.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var
+// CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var [concrete = %c_val.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c_ptr.patt: %pattern_type.44a = binding_pattern c_ptr [concrete]
-// CHECK:STDOUT:     %.loc9_1: %pattern_type.44a = var_pattern %c_ptr.patt [concrete]
+// CHECK:STDOUT:     %c_ptr.var_patt: %pattern_type.44a = var_pattern %c_ptr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c_ptr.var: ref %ptr.019 = var c_ptr
-// CHECK:STDOUT:   %.loc9_13: type = splice_block %ptr [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:   %c_ptr.var: ref %ptr.019 = var %c_ptr.var_patt [concrete]
+// CHECK:STDOUT:   %.loc9: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:     %E.ref: type = name_ref E, %E [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr: type = ptr_type %E.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c_ptr: ref %ptr.019 = bind_name c_ptr, %c_ptr.var
+// CHECK:STDOUT:   %c_ptr: ref %ptr.019 = bind_name c_ptr, %c_ptr.var [concrete = %c_ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -271,8 +276,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc8_17.2: init %C = class_init (), file.%c_val.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_1: init %C = converted %.loc8_17.1, %.loc8_17.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_1
-// CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c_val.ref
+// CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val [concrete = file.%c_val.var]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c_val.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%c_ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -287,6 +292,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%val.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -316,21 +322,21 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %val.patt: %pattern_type.c48 = binding_pattern val [concrete]
-// CHECK:STDOUT:     %.loc7: %pattern_type.c48 = var_pattern %val.patt [concrete]
+// CHECK:STDOUT:     %val.var_patt: %pattern_type.c48 = var_pattern %val.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %val.var: ref %C = var val
+// CHECK:STDOUT:   %val.var: ref %C = var %val.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
+// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var [concrete = %val.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ptr.patt: %pattern_type.44a = binding_pattern ptr [concrete]
-// CHECK:STDOUT:     %.loc8_1: %pattern_type.44a = var_pattern %ptr.patt [concrete]
+// CHECK:STDOUT:     %ptr.var_patt: %pattern_type.44a = var_pattern %ptr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.var: ref %ptr.019 = var ptr
-// CHECK:STDOUT:   %.loc8_11: type = splice_block %ptr.loc8_11 [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:   %ptr.var: ref %ptr.019 = var %ptr.var_patt [concrete]
+// CHECK:STDOUT:   %.loc8: type = splice_block %ptr.loc8_11 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var [concrete = %ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -346,8 +352,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_1
-// CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %val.ref
+// CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val [concrete = file.%val.var]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %val.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -362,6 +368,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%val.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -391,21 +398,21 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %val.patt: %pattern_type.c48 = binding_pattern val [concrete]
-// CHECK:STDOUT:     %.loc7: %pattern_type.c48 = var_pattern %val.patt [concrete]
+// CHECK:STDOUT:     %val.var_patt: %pattern_type.c48 = var_pattern %val.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %val.var: ref %C = var val
+// CHECK:STDOUT:   %val.var: ref %C = var %val.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
+// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var [concrete = %val.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ptr.patt: %pattern_type.44a = binding_pattern ptr [concrete]
-// CHECK:STDOUT:     %.loc8_1: %pattern_type.44a = var_pattern %ptr.patt [concrete]
+// CHECK:STDOUT:     %ptr.var_patt: %pattern_type.44a = var_pattern %ptr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.var: ref %ptr.019 = var ptr
-// CHECK:STDOUT:   %.loc8_11: type = splice_block %ptr.loc8_11 [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:   %ptr.var: ref %ptr.019 = var %ptr.var_patt [concrete]
+// CHECK:STDOUT:   %.loc8: type = splice_block %ptr.loc8_11 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var [concrete = %ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -421,8 +428,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_1
-// CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %val.ref
+// CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val [concrete = file.%val.var]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %val.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -437,6 +444,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%val.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -470,21 +478,21 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %val.patt: %pattern_type.c48 = binding_pattern val [concrete]
-// CHECK:STDOUT:     %.loc7: %pattern_type.c48 = var_pattern %val.patt [concrete]
+// CHECK:STDOUT:     %val.var_patt: %pattern_type.c48 = var_pattern %val.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %val.var: ref %C = var val
+// CHECK:STDOUT:   %val.var: ref %C = var %val.var_patt [concrete]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
-// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
+// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var [concrete = %val.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ptr.patt: %pattern_type.44a = binding_pattern ptr [concrete]
-// CHECK:STDOUT:     %.loc8_1: %pattern_type.44a = var_pattern %ptr.patt [concrete]
+// CHECK:STDOUT:     %ptr.var_patt: %pattern_type.44a = var_pattern %ptr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.var: ref %ptr.019 = var ptr
-// CHECK:STDOUT:   %.loc8_11: type = splice_block %ptr.loc8_11 [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:   %ptr.var: ref %ptr.019 = var %ptr.var_patt [concrete]
+// CHECK:STDOUT:   %.loc8: type = splice_block %ptr.loc8_11 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:     %E.ref: type = name_ref E, imports.%Main.E [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %E.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var [concrete = %ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {
@@ -500,8 +508,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_1
-// CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %val.ref
+// CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val [concrete = file.%val.var]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %val.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -516,6 +524,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%val.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -549,21 +558,21 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %val.patt: %pattern_type.c48 = binding_pattern val [concrete]
-// CHECK:STDOUT:     %.loc7: %pattern_type.c48 = var_pattern %val.patt [concrete]
+// CHECK:STDOUT:     %val.var_patt: %pattern_type.c48 = var_pattern %val.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %val.var: ref %C = var val
+// CHECK:STDOUT:   %val.var: ref %C = var %val.var_patt [concrete]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
-// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
+// CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var [concrete = %val.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %ptr.patt: %pattern_type.44a = binding_pattern ptr [concrete]
-// CHECK:STDOUT:     %.loc8_1: %pattern_type.44a = var_pattern %ptr.patt [concrete]
+// CHECK:STDOUT:     %ptr.var_patt: %pattern_type.44a = var_pattern %ptr.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.var: ref %ptr.019 = var ptr
-// CHECK:STDOUT:   %.loc8_11: type = splice_block %ptr.loc8_11 [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:   %ptr.var: ref %ptr.019 = var %ptr.var_patt [concrete]
+// CHECK:STDOUT:   %.loc8: type = splice_block %ptr.loc8_11 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:     %E.ref: type = name_ref E, imports.%Main.E [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %E.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var [concrete = %ptr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {
@@ -579,8 +588,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_1
-// CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %val.ref
+// CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val [concrete = file.%val.var]
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %val.ref [concrete = constants.%addr]
 // CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

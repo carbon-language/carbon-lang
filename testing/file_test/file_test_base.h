@@ -107,7 +107,16 @@ class FileTestBase {
   // run.
   virtual auto AllowParallelRun() const -> bool { return true; }
 
-  // Returns the name of the test (relative to the repo root).
+  // Modes for GetBazelCommand.
+  enum class BazelMode : uint8_t {
+    Autoupdate,
+    Dump,
+    Test,
+  };
+
+  // Returns the requested bazel command string for the given execution mode.
+  auto GetBazelCommand(BazelMode mode) -> std::string;
+
   auto test_name() const -> llvm::StringRef { return test_name_; }
 
  private:
@@ -120,8 +129,8 @@ struct FileTestFactory {
   const char* name;
 
   // A factory function for tests.
-  std::function<
-      auto(llvm::StringRef exe_path, llvm::StringRef test_name)->FileTestBase*>
+  std::function<auto(llvm::StringRef exe_path, llvm::StringRef test_name)
+                    ->std::unique_ptr<FileTestBase>>
       factory_fn;
 };
 
@@ -139,7 +148,7 @@ extern auto GetFileTestFactory() -> FileTestFactory;
 #define CARBON_FILE_TEST_FACTORY(Name)                                       \
   auto GetFileTestFactory() -> FileTestFactory {                             \
     return {#Name, [](llvm::StringRef exe_path, llvm::StringRef test_name) { \
-              return new Name(exe_path, test_name);                          \
+              return std::make_unique<Name>(exe_path, test_name);            \
             }};                                                              \
   }
 

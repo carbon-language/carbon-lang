@@ -318,7 +318,8 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
 
         // Witness that `T` implements the `assoc_interface`.
         auto lookup_result = LookupImplWitness(
-            context, loc_id, context.constant_values().Get(base_id),
+            context, loc_id,
+            context.constant_values().Get(base_as_type.inst_id),
             EvalOrAddInst(
                 context, loc_id,
                 FacetTypeFromInterface(context, assoc_interface.interface_id,
@@ -616,14 +617,13 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
 
 auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
-                        SemIR::InstId assoc_entity_inst_id,
+                        SemIR::ConstantId assoc_entity_const_id,
                         SemIR::SpecificInterface interface) -> SemIR::InstId {
   // TODO: This function shares a code with PerformCompoundMemberAccess(),
   // it would be nice to reduce the duplication.
 
   auto value_inst_id =
-      context.constant_values().GetConstantInstId(assoc_entity_inst_id);
-  CARBON_CHECK(value_inst_id.has_value());
+      context.constant_values().GetInstId(assoc_entity_const_id);
   auto assoc_entity =
       context.insts().GetAs<SemIR::AssociatedEntity>(value_inst_id);
   auto decl_id = assoc_entity.decl_id;

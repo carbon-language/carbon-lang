@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/adapter/init_adapt.carbon
@@ -217,18 +220,18 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.a1a = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc23: %pattern_type.a1a = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.a1a = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %AdaptC = var d
+// CHECK:STDOUT:   %d.var: ref %AdaptC = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %AdaptC.ref.loc23: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %d: ref %AdaptC = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %AdaptC = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.c48 = binding_pattern e [concrete]
-// CHECK:STDOUT:     %.loc25: %pattern_type.c48 = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type.c48 = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e.var: ref %C = var e
+// CHECK:STDOUT:   %e.var: ref %C = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var
+// CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -277,14 +280,14 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc17_14.1: ref %C = as_compatible %b.ref
 // CHECK:STDOUT:   %.loc17_14.2: ref %C = converted %b.ref, %.loc17_14.1
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [concrete = constants.%MakeC]
-// CHECK:STDOUT:   %.loc23_1: ref %AdaptC = splice_block file.%d.var {}
+// CHECK:STDOUT:   %.loc23_1: ref %AdaptC = splice_block file.%d.var [concrete = file.%d.var] {}
 // CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc23_1
 // CHECK:STDOUT:   %AdaptC.ref.loc23: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %.loc23_25.1: init %AdaptC = as_compatible %MakeC.call
 // CHECK:STDOUT:   %.loc23_25.2: init %AdaptC = converted %MakeC.call, %.loc23_25.1
 // CHECK:STDOUT:   assign file.%d.var, %.loc23_25.2
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [concrete = constants.%MakeAdaptC]
-// CHECK:STDOUT:   %.loc25_1: ref %C = splice_block file.%e.var {}
+// CHECK:STDOUT:   %.loc25_1: ref %C = splice_block file.%e.var [concrete = file.%e.var] {}
 // CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc25_1
 // CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc25_25.1: init %C = as_compatible %MakeAdaptC.call
@@ -395,13 +398,13 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AdaptC.ref.loc24: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %.loc24: %AdaptC = converted @__global_init.%a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error>
+// CHECK:STDOUT:   %b: %AdaptC = bind_name b, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref.loc33: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc33: %C = converted @__global_init.%b.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %c: %C = bind_name c, <error>
+// CHECK:STDOUT:   %c: %C = bind_name c, <error> [concrete = <error>]
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -420,18 +423,18 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.a1a = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc46: %pattern_type.a1a = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.a1a = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %AdaptC = var d
+// CHECK:STDOUT:   %d.var: ref %AdaptC = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %AdaptC.ref.loc46: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %d: ref %AdaptC = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %AdaptC = bind_name d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.c48 = binding_pattern e [concrete]
-// CHECK:STDOUT:     %.loc55: %pattern_type.c48 = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type.c48 = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e.var: ref %C = var e
+// CHECK:STDOUT:   %e.var: ref %C = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc55: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var
+// CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -472,7 +475,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc13: %struct_type.a.b.cfd = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, file.%a
-// CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, file.%b
+// CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, file.%b [concrete = <error>]
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [concrete = constants.%MakeC]
 // CHECK:STDOUT:   %.loc46_23: ref %C = temporary_storage
 // CHECK:STDOUT:   %MakeC.call: init %C = call %MakeC.ref() to %.loc46_23

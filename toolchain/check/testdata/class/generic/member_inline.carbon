@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/generic/member_inline.carbon
@@ -201,10 +204,6 @@ class C(T:! type) {
 // CHECK:STDOUT:   %pattern_type.loc9_22 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_member_inline.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -290,8 +289,4 @@ class C(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc4_9.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%T) {}
 // CHECK:STDOUT:

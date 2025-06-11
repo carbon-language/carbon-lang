@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/namespace/alias.carbon
@@ -79,7 +82,7 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, %NS [concrete = %NS]
+// CHECK:STDOUT:   %NS.ref.loc16: <namespace> = name_ref NS, %NS [concrete = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [concrete = %NS]
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
@@ -99,7 +102,7 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NS.ref.loc19: <namespace> = name_ref NS, %NS [concrete = %NS]
+// CHECK:STDOUT:   %NS.ref.loc22: <namespace> = name_ref NS, %NS [concrete = %NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %C: %A.type = bind_alias C, %A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [concrete = constants.%D] {
@@ -117,13 +120,13 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc15_28.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc18_28.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc15_28.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc15_28.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc15_28.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc15_28.2: %i32 = converted %int_0, %.loc15_28.1 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc15_28.2
+// CHECK:STDOUT:   %bound_method.loc18_28.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc18_28.2(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc18_28.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc18_28.2: %i32 = converted %int_0, %.loc18_28.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   return %.loc18_28.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> %i32 {
@@ -131,17 +134,17 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   %ns.ref: <namespace> = name_ref ns, file.%ns [concrete = file.%NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc17_30.1: %i32 = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc17_30.2: %i32 = converted %A.call, %.loc17_30.1
-// CHECK:STDOUT:   return %.loc17_30.2
+// CHECK:STDOUT:   %.loc20_30.1: %i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc20_30.2: %i32 = converted %A.call, %.loc20_30.1
+// CHECK:STDOUT:   return %.loc20_30.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: %A.type = name_ref C, file.%C [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %C.ref()
-// CHECK:STDOUT:   %.loc21_27.1: %i32 = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc21_27.2: %i32 = converted %A.call, %.loc21_27.1
-// CHECK:STDOUT:   return %.loc21_27.2
+// CHECK:STDOUT:   %.loc24_27.1: %i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc24_27.2: %i32 = converted %A.call, %.loc24_27.1
+// CHECK:STDOUT:   return %.loc24_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

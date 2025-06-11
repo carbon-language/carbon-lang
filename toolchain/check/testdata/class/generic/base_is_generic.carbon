@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/generic/base_is_generic.carbon
@@ -232,8 +235,6 @@ fn H() {
 // CHECK:STDOUT:   %T.loc4_17.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(%T.loc4_17.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%Param) {
 // CHECK:STDOUT:   %T.loc4_17.2 => constants.%Param
 // CHECK:STDOUT:
@@ -293,7 +294,7 @@ fn H() {
 // CHECK:STDOUT:   %Main.import_ref.8e0 = import_ref Main//extend_generic_base, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.7f7: @Base.%Base.elem (%Base.elem.9af) = import_ref Main//extend_generic_base, loc5_8, loaded [concrete = %.e66]
 // CHECK:STDOUT:   %Main.import_ref.bd0: <witness> = import_ref Main//extend_generic_base, loc14_1, loaded [concrete = constants.%complete_type.b07]
-// CHECK:STDOUT:   %Main.import_ref.f6c = import_ref Main//extend_generic_base, inst77 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f6c = import_ref Main//extend_generic_base, inst76 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.d24 = import_ref Main//extend_generic_base, loc13_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.77a301.2: type = import_ref Main//extend_generic_base, loc13_26, loaded [concrete = constants.%Base.7a8]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
@@ -392,8 +393,6 @@ fn H() {
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.975
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.db3
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Base(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_extend_symbolic_base.carbon
 // CHECK:STDOUT:
@@ -692,12 +691,6 @@ fn H() {
 // CHECK:STDOUT:   %G.specific_fn.loc5_24.2 => constants.%G.specific_fn.169
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(%U.loc4_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(@G.%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(%U) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_9.2 => constants.%T
 // CHECK:STDOUT: }
@@ -709,10 +702,6 @@ fn H() {
 // CHECK:STDOUT:   %G.type => constants.%G.type.56f312.2
 // CHECK:STDOUT:   %G => constants.%G.b504c4.2
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(@C.%T.loc8_9.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc8_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
 // CHECK:STDOUT:   %T.loc8_9.2 => constants.%i32
@@ -915,12 +904,6 @@ fn H() {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(@C.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
@@ -931,10 +914,6 @@ fn H() {
 // CHECK:STDOUT:   %G => constants.%G.b504c4.1
 // CHECK:STDOUT:   %G.specific_fn => constants.%G.specific_fn.169
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(@G.%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
 // CHECK:STDOUT:   %T => constants.%i32

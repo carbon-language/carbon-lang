@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/builtin/fail_and_or_partial_constant.carbon
@@ -90,9 +93,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc9_3: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   br !.loc9_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_13:
@@ -124,12 +127,12 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc9_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_7:
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc14_3: <error> = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref <error> = var b
+// CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
 // CHECK:STDOUT:   br !.loc14_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_13:
@@ -162,7 +165,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc14_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_7:
-// CHECK:STDOUT:   %b: <error> = bind_name b, <error>
+// CHECK:STDOUT:   %b: <error> = bind_name b, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -212,9 +215,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc11_3: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref <error> = var c
+// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   br !.loc11_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11_13:
@@ -246,12 +249,12 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc11_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11_7:
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: <error> = binding_pattern d [concrete]
-// CHECK:STDOUT:     %.loc16_3: <error> = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.var_patt: <error> = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref <error> = var d
+// CHECK:STDOUT:   %d.var: ref <error> = var %d.var_patt [concrete = <error>]
 // CHECK:STDOUT:   br !.loc16_13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_13:
@@ -284,7 +287,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc16_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_7:
-// CHECK:STDOUT:   %d: <error> = bind_name d, <error>
+// CHECK:STDOUT:   %d: <error> = bind_name d, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

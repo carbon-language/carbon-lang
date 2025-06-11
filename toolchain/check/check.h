@@ -15,28 +15,30 @@
 
 namespace Carbon::Check {
 
-// Checking information that's tracked per file.
+// Checking information that's tracked per file. All members are caller-owned.
+// Other than `timings`, members must be non-null.
 struct Unit {
   Diagnostics::Consumer* consumer;
   SharedValueStores* value_stores;
   // The `timings` may be null if nothing is to be recorded.
   Timings* timings;
 
-  // Returns a lazily constructed TreeAndSubtrees.
-  Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter;
-
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
 
-  // The Clang AST owned by `CompileSubcommand`.
-  std::unique_ptr<clang::ASTUnit>* cpp_ast = nullptr;
+  // Storage for the unit's Clang AST. The unique_ptr should start empty, and
+  // can be assigned as part of checking.
+  std::unique_ptr<clang::ASTUnit>* cpp_ast;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
-auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream, bool fuzzing) -> void;
+auto CheckParseTrees(
+    llvm::MutableArrayRef<Unit> units,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    bool prelude_import, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::StringRef target, llvm::raw_ostream* vlog_stream, bool fuzzing)
+    -> void;
 
 }  // namespace Carbon::Check
 

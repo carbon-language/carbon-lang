@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/generic/complete_type.carbon
@@ -178,8 +181,6 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(%T.loc6_9.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%B) {
 // CHECK:STDOUT:   %T.loc6_9.2 => constants.%B
 // CHECK:STDOUT:
@@ -255,9 +256,9 @@ fn G() { F(B); }
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.7dc) = binding_pattern v [concrete]
-// CHECK:STDOUT:       %.loc7: @F.%pattern_type (%pattern_type.7dc) = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:       %v.var_patt: @F.%pattern_type (%pattern_type.7dc) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @F.%T.loc6_6.2 (%T) = var v
+// CHECK:STDOUT:     %v.var: ref @F.%T.loc6_6.2 (%T) = var %v.var_patt
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %v: ref @F.%T.loc6_6.2 (%T) = bind_name v, %v.var
 // CHECK:STDOUT:     return
@@ -339,9 +340,9 @@ fn G() { F(B); }
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.7dc) = binding_pattern v [concrete]
-// CHECK:STDOUT:       %.loc13: @F.%pattern_type (%pattern_type.7dc) = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:       %v.var_patt: @F.%pattern_type (%pattern_type.7dc) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @F.%T.loc6_6.2 (%T) = var v
+// CHECK:STDOUT:     %v.var: ref @F.%T.loc6_6.2 (%T) = var %v.var_patt
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %v: ref @F.%T.loc6_6.2 (%T) = bind_name v, %v.var
 // CHECK:STDOUT:     return

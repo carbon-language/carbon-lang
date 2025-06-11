@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/generic/stringify.carbon
@@ -125,21 +128,21 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %EmptyParams.decl: %EmptyParams.type = class_decl @EmptyParams [concrete = constants.%EmptyParams.generic] {} {}
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.32d = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc7: %pattern_type.32d = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.32d = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %NoParams = var v
+// CHECK:STDOUT:   %v.var: ref %NoParams = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %NoParams.ref: type = name_ref NoParams, %NoParams.decl [concrete = constants.%NoParams]
-// CHECK:STDOUT:   %v: ref %NoParams = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %NoParams = bind_name v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.71c = binding_pattern w [concrete]
-// CHECK:STDOUT:     %.loc15_1: %pattern_type.71c = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.71c = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %EmptyParams = var w
-// CHECK:STDOUT:   %.loc15_20: type = splice_block %EmptyParams [concrete = constants.%EmptyParams] {
+// CHECK:STDOUT:   %w.var: ref %EmptyParams = var %w.var_patt [concrete]
+// CHECK:STDOUT:   %.loc15: type = splice_block %EmptyParams [concrete = constants.%EmptyParams] {
 // CHECK:STDOUT:     %EmptyParams.ref: %EmptyParams.type = name_ref EmptyParams, %EmptyParams.decl [concrete = constants.%EmptyParams.generic]
 // CHECK:STDOUT:     %EmptyParams: type = class_type @EmptyParams [concrete = constants.%EmptyParams]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %EmptyParams = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %EmptyParams = bind_name w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoParams {
@@ -162,7 +165,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %NoParams = name_ref v, file.%v
+// CHECK:STDOUT:   %v.ref: ref %NoParams = name_ref v, file.%v [concrete = file.%v.var]
 // CHECK:STDOUT:   %.loc15: %EmptyParams = converted %v.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%w.var, <error>
 // CHECK:STDOUT:   return
@@ -225,9 +228,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.828 = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc9_1: %pattern_type.828 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.828 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %Outer.614 = var v
+// CHECK:STDOUT:   %v.var: ref %Outer.614 = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %.loc9_17: type = splice_block %Outer.loc9 [concrete = constants.%Outer.614] {
 // CHECK:STDOUT:     %Outer.ref.loc9: %Outer.type = name_ref Outer, %Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:     %.loc9_15: %empty_struct_type = struct_literal ()
@@ -235,12 +238,12 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %.loc9_16 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %Outer.loc9: type = class_type @Outer, @Outer(constants.%ptr.c28) [concrete = constants.%Outer.614]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %Outer.614 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %Outer.614 = bind_name v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.5fa = binding_pattern w [concrete]
-// CHECK:STDOUT:     %.loc19_1: %pattern_type.5fa = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.var_patt: %pattern_type.5fa = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref %Inner.277 = var w
+// CHECK:STDOUT:   %w.var: ref %Inner.277 = var %w.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19_35: type = splice_block %Inner [concrete = constants.%Inner.277] {
 // CHECK:STDOUT:     %Outer.ref.loc19: %Outer.type = name_ref Outer, %Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:     %.loc19_15: %empty_struct_type = struct_literal ()
@@ -255,7 +258,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %ptr.loc19_34: type = ptr_type %struct_type.a [concrete = constants.%ptr.1bb]
 // CHECK:STDOUT:     %Inner: type = class_type @Inner, @Inner(constants.%ptr.c28, constants.%ptr.1bb) [concrete = constants.%Inner.277]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %Inner.277 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %Inner.277 = bind_name w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_13.1: type) {
@@ -298,7 +301,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v.ref: ref %Outer.614 = name_ref v, file.%v
+// CHECK:STDOUT:   %v.ref: ref %Outer.614 = name_ref v, file.%v [concrete = file.%v.var]
 // CHECK:STDOUT:   %.loc19: %Inner.277 = converted %v.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%w.var, <error>
 // CHECK:STDOUT:   return
@@ -311,8 +314,6 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U.loc5_15.2 => constants.%U
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%ptr.c28) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.c28
@@ -395,9 +396,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.1b4 = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc13_1: %pattern_type.1b4 = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.1b4 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref %C.4c3 = var v
+// CHECK:STDOUT:   %v.var: ref %C.4c3 = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %.loc13_13.1: type = splice_block %C [concrete = constants.%C.4c3] {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
@@ -410,7 +411,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc13_13.3: %i32 = converted %int_123, %.loc13_13.2 [concrete = constants.%int_123.f7f]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_123.f7f) [concrete = constants.%C.4c3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %C.4c3 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %C.4c3 = bind_name v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%N.loc4_9.1: %i32) {
@@ -528,9 +529,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %g.patt: <error> = binding_pattern g [concrete]
-// CHECK:STDOUT:     %.loc25_1: <error> = var_pattern %g.patt [concrete]
+// CHECK:STDOUT:     %g.var_patt: <error> = var_pattern %g.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %g.var: ref <error> = var g
+// CHECK:STDOUT:   %g.var: ref <error> = var %g.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %E.ref: %E.type = name_ref E, %E.decl [concrete = constants.%E.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -558,7 +559,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc25_26.1: ref %D = converted %.loc25_25.1, %.loc25_25.10
 // CHECK:STDOUT:     %.loc25_26.2: %D = bind_value %.loc25_26.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %g: <error> = bind_name g, <error>
+// CHECK:STDOUT:   %g: <error> = bind_name g, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {

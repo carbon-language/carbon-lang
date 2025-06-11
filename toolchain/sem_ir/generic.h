@@ -56,7 +56,7 @@ struct Generic : public Printable<Generic> {
 class GenericStore : public ValueStore<GenericId> {
  public:
   // Get the self specific for a generic, or `None` if the `id` is `None`.
-  auto GetSelfSpecific(GenericId id) -> SpecificId {
+  auto GetSelfSpecific(GenericId id) const -> SpecificId {
     return id.has_value() ? Get(id).self_specific_id : SpecificId::None;
   }
 };
@@ -69,6 +69,11 @@ struct Specific : Printable<Specific> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{generic: " << generic_id << ", args: " << args_id << "}";
   }
+
+  // Returns true if this specific has never been resolved. Such specifics are
+  // used to track non-canonical argument values, for example in a non-canonical
+  // `ClassType` that describes how the arguments to the class were written.
+  auto IsUnresolved() const -> bool { return !decl_block_id.has_value(); }
 
   // Returns the value block for this region of the specific. This is a block
   // containing values and instructions produced by evaluating the corresponding
@@ -99,6 +104,8 @@ struct Specific : Printable<Specific> {
 // their associated generic argument list.
 class SpecificStore : public Yaml::Printable<SpecificStore> {
  public:
+  using IdType = SpecificId;
+
   // Adds a new specific, or gets the existing specific for a specified generic
   // and argument list. Returns the ID of the specific. The argument IDs must be
   // for instructions in the constant block, and must be a canonical instruction
@@ -131,11 +138,13 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto array_ref() const -> llvm::ArrayRef<Specific> {
-    return specifics_.array_ref();
+  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<SpecificId> {
+    return specifics_.values();
   }
   auto size() const -> size_t { return specifics_.size(); }
-  auto enumerate() const -> auto { return specifics_.enumerate(); }
+  auto enumerate() const [[clang::lifetimebound]] -> auto {
+    return specifics_.enumerate();
+  }
 
  private:
   // Context for hashing keys.
@@ -145,23 +154,33 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   Carbon::Set<SpecificId, 0, KeyContext> lookup_table_;
 };
 
-// Gets the substituted value of a potentially generic constant within a
-// specific. Note that this does not perform substitution, and will return
-// `None` if the substituted constant value is not yet known.
-auto GetConstantInSpecific(const File& sem_ir, SpecificId specific_id,
-                           ConstantId const_id) -> ConstantId;
-
 // Gets the substituted constant value of a potentially generic instruction
 // within a specific. Note that this does not perform substitution, and will
 // return `None` if the substituted constant value is not yet known.
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                 InstId inst_id) -> ConstantId;
 
+// Gets the substituted constant value of a potentially generic instruction
+// within a specific, where the generic instruction and the specific may be in
+// different files. Returns the file in which the constant value was found and
+// the constant ID in that file.
+auto GetConstantValueInSpecific(const File& specific_ir, SpecificId specific_id,
+                                const File& inst_ir, InstId inst_id)
+    -> std::pair<const File*, ConstantId>;
+
 // Gets the substituted type of an instruction within a specific. Note that this
 // does not perform substitution, and will return `None` if the substituted type
 // is not yet known.
 auto GetTypeOfInstInSpecific(const File& sem_ir, SpecificId specific_id,
                              InstId inst_id) -> TypeId;
+
+// Gets the substituted type of a potentially generic instruction within a
+// specific, where the generic instruction and the specific may be in different
+// files. Returns the file in which the type was found and the type ID in that
+// file.
+auto GetTypeOfInstInSpecific(const File& specific_ir, SpecificId specific_id,
+                             const File& inst_ir, InstId inst_id)
+    -> std::pair<const File*, TypeId>;
 
 }  // namespace Carbon::SemIR
 

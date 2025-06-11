@@ -25,11 +25,10 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                          SemIR::InstId bind_id) -> void;
 
 // Checks and builds SemIR for a `return;` statement.
-auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
-    -> void;
+auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void;
 
 // Checks and builds SemIR for a `return <expression>;` statement.
-auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
+auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
                          SemIR::InstId expr_id) -> void;
 
 // Checks and builds SemIR for a `return var;` statement.

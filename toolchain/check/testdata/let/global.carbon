@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/let/global.carbon
@@ -64,18 +67,18 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_8: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc14_8: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc11_14.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc14_14.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_14.2: <bound method> = bound_method @__global_init.%int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc11_14.2(@__global_init.%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11_14.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11_14.2: %i32 = converted @__global_init.%int_1, %.loc11_14.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc11_14.2
+// CHECK:STDOUT:   %bound_method.loc14_14.2: <bound method> = bound_method @__global_init.%int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc14_14.2(@__global_init.%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc14_14.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc14_14.2: %i32 = converted @__global_init.%int_1, %.loc14_14.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc14_14.2
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]

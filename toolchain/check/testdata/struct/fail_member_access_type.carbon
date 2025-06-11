@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/fail_member_access_type.carbon
@@ -52,37 +55,37 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d08 = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc11_1: %pattern_type.d08 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.d08 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
-// CHECK:STDOUT:   %.loc11_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:   %x.var: ref %struct_type.a = var %x.var_patt [concrete]
+// CHECK:STDOUT:   %.loc14_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc11_13.2: type = converted %float.make_type, %.loc11_13.1 [concrete = f64]
+// CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %float.make_type [concrete = f64]
+// CHECK:STDOUT:     %.loc14_13.2: type = converted %float.make_type, %.loc14_13.1 [concrete = f64]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: f64} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y [concrete]
-// CHECK:STDOUT:     %.loc16_1: %pattern_type.7ce = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.7ce = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %i32 = var y
-// CHECK:STDOUT:   %.loc16_8: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt [concrete]
+// CHECK:STDOUT:   %.loc19: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
+// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: f64 = float_literal 4 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc11_29.1: %struct_type.a = struct_literal (%float)
-// CHECK:STDOUT:   %.loc11_29.2: init %struct_type.a = struct_init (%float) to file.%x.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc11_1: init %struct_type.a = converted %.loc11_29.1, %.loc11_29.2 [concrete = constants.%struct]
-// CHECK:STDOUT:   assign file.%x.var, %.loc11_1
-// CHECK:STDOUT:   %x.ref: ref %struct_type.a = name_ref x, file.%x
+// CHECK:STDOUT:   %.loc14_29.1: %struct_type.a = struct_literal (%float)
+// CHECK:STDOUT:   %.loc14_29.2: init %struct_type.a = struct_init (%float) to file.%x.var [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc14_1: init %struct_type.a = converted %.loc14_29.1, %.loc14_29.2 [concrete = constants.%struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc14_1
+// CHECK:STDOUT:   %x.ref: ref %struct_type.a = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -33,7 +33,9 @@ bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "google_benchmark", version = "1.8.5")
 bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
+bazel_dep(name = "rules_cc", version = "0.1.1")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "rules_shell", version = "0.4.1")
 bazel_dep(name = "tree-sitter-bazel", version = "0.24.4")
 
 # The registry only has an old version. We use that here to avoid a miss but
@@ -65,8 +67,6 @@ git_override(
     commit = "d02a005a369252a4f239b36cc698daf7f87ba648",
     remote = "https://github.com/google/tcmalloc.git",
 )
-
-bazel_dep(name = "rules_cc", version = "0.1.1")
 
 bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
 git_override(
@@ -113,8 +113,8 @@ bazel_dep(name = "zstd", version = "1.5.6", repo_name = "llvm_zstd")
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-# HEAD as of 2025-04-17.
-llvm_project_version = "feb1fb5f0473eb949b35fb25e15c4d32465cd6d7"
+# HEAD as of 2025-05-28.
+llvm_project_version = "7b074fc9362a4a6a5f172dd8936a22fb25eff96b"
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
@@ -126,7 +126,7 @@ http_archive(
         "@carbon//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
         "@carbon//bazel/llvm_project:0003_Comment_out_unloaded_proto_library_dependencies.patch",
     ],
-    sha256 = "3d3621c8462e79713d0000778f1dc352c8596d904419c6a33a93a82e6dbe8b58",
+    sha256 = "07f80f32e81ac5dc19c5e49830f6d4a2e6208adb7d875ac3d1e8d043a602d9e4",
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],
 )

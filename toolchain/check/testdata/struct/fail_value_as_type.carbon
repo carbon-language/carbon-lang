@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/fail_value_as_type.carbon
@@ -43,14 +46,14 @@ var x: {.a = 1};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc18_1: <error> = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref <error> = var x
+// CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %.loc18_15.1: %struct_type.a = struct_literal (%int_1)
-// CHECK:STDOUT:     %.loc18_15.2: type = converted %.loc18_15.1, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc21_15.1: %struct_type.a = struct_literal (%int_1)
+// CHECK:STDOUT:     %.loc21_15.2: type = converted %.loc21_15.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: <error> = bind_name x, <error>
+// CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

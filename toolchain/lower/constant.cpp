@@ -18,7 +18,7 @@ namespace Carbon::Lower {
 class ConstantContext {
  public:
   explicit ConstantContext(FileContext& file_context,
-                           llvm::MutableArrayRef<llvm::Constant*> constants)
+                           const FileContext::LoweredConstantStore* constants)
       : file_context_(&file_context), constants_(constants) {}
 
   // Gets the lowered constant value for an instruction, which must have a
@@ -40,8 +40,7 @@ class ConstantContext {
       // This constant hasn't been lowered.
       return nullptr;
     }
-    CARBON_CHECK(inst_id.index >= 0);
-    return constants_[inst_id.index];
+    return constants_->Get(inst_id);
   }
 
   // Returns a constant for the case of a value that should never be used.
@@ -70,6 +69,11 @@ class ConstantContext {
     return file_context_->GetTypeAsValue();
   }
 
+  // Returns a lowered global variable declaration.
+  auto BuildGlobalVariableDecl(SemIR::VarStorage inst) -> llvm::Constant* {
+    return file_context_->BuildGlobalVariableDecl(inst);
+  }
+
   // Sets the index of the constant we most recently lowered. This is used to
   // check we don't look at constants that we've not lowered yet.
   auto SetLastLoweredConstantIndex(int32_t index) -> void {
@@ -86,7 +90,7 @@ class ConstantContext {
 
  private:
   FileContext* file_context_;
-  llvm::MutableArrayRef<llvm::Constant*> constants_;
+  const FileContext::LoweredConstantStore* constants_;
   int32_t last_lowered_constant_index_ = -1;
 };
 
@@ -140,11 +144,39 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::TupleValue inst)
       cast<llvm::StructType>(context.GetType(inst.type_id)));
 }
 
-static auto EmitAsConstant(ConstantContext& /*context*/, SemIR::AddrOf /*inst*/)
+static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOf inst)
     -> llvm::Constant* {
-  // TODO: Constant lvalue support. For now we have no constant lvalues, so we
-  // should never form a constant AddrOf.
-  CARBON_FATAL("AddrOf constants not supported yet");
+  // A constant reference expression is lowered as a pointer, so `AddrOf` is a
+  // no-op.
+  return context.GetConstant(inst.lvalue_id);
+}
+
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::AnyAggregateAccess inst) -> llvm::Constant* {
+  auto* aggr_addr = context.GetConstant(inst.aggregate_id);
+  auto* aggr_type = context.GetType(
+      context.sem_ir().insts().Get(inst.aggregate_id).type_id());
+
+  auto* i32_type = llvm::Type::getInt32Ty(context.llvm_context());
+  // For now, we rely on the LLVM type's GEP indexes matching the SemIR
+  // aggregate element indexes.
+  llvm::Constant* indexes[2] = {
+      llvm::ConstantInt::get(i32_type, 0),
+      llvm::ConstantInt::get(i32_type, inst.index.index),
+  };
+  auto no_wrap_flags =
+      llvm::GEPNoWrapFlags::inBounds() | llvm::GEPNoWrapFlags::noUnsignedWrap();
+  return llvm::ConstantExpr::getGetElementPtr(aggr_type, aggr_addr, indexes,
+                                              no_wrap_flags);
+}
+
+template <typename InstT>
+  requires(SemIR::Internal::InstLikeTypeInfo<SemIR::AnyAggregateAccess>::IsKind(
+      InstT::Kind))
+static auto EmitAsConstant(ConstantContext& context, InstT inst)
+    -> llvm::Constant* {
+  return EmitAsConstant(context,
+                        SemIR::Inst(inst).As<SemIR::AnyAggregateAccess>());
 }
 
 static auto EmitAsConstant(ConstantContext& context,
@@ -219,6 +251,12 @@ static auto EmitAsConstant(ConstantContext& /*context*/,
   CARBON_FATAL("TODO: Add support: {0}", inst);
 }
 
+static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
+    -> llvm::Constant* {
+  // Create the corresponding global variable declaration.
+  return context.BuildGlobalVariableDecl(inst);
+}
+
 // Tries to emit an LLVM constant value for this constant instruction. Centrally
 // handles some common cases and then dispatches to the relevant EmitAsConstant
 // overload based on the type of the instruction for the remaining cases.
@@ -244,8 +282,8 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
 }
 
 auto LowerConstants(FileContext& file_context,
-                    llvm::MutableArrayRef<llvm::Constant*> constants) -> void {
-  ConstantContext context(file_context, constants);
+                    FileContext::LoweredConstantStore& constants) -> void {
+  ConstantContext context(file_context, &constants);
   // Lower each constant in InstId order. This guarantees we lower the
   // dependencies of a constant before we lower the constant itself.
   for (auto [inst_id, const_id] :
@@ -278,7 +316,7 @@ auto LowerConstants(FileContext& file_context,
 #include "toolchain/sem_ir/inst_kind.def"
     }
 
-    constants[inst_id.index] = value;
+    constants.Set(inst_id, value);
     context.SetLastLoweredConstantIndex(inst_id.index);
   }
 }

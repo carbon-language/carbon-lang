@@ -7,7 +7,9 @@
 
 #include <concepts>
 
+#include "common/concepts.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -17,42 +19,60 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
-  // A callback that indicates whether a specific entity, identified by its
-  // declaration, should be included in the output.
-  using ShouldFormatEntityFn =
-      llvm::function_ref<auto(InstId decl_inst_id)->bool>;
-
   explicit Formatter(const File* sem_ir,
-                     ShouldFormatEntityFn should_format_entity,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees);
+                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+                     llvm::ArrayRef<bool> include_ir_in_dumps,
+                     bool use_dump_sem_ir_ranges);
 
-  // Prints the SemIR into an internal buffer.
+  // Prints the SemIR into an internal buffer. Must only be called once.
   //
-  // Constants are printed first and may be referenced by later sections,
-  // including file-scoped instructions. The file scope may contain entity
-  // declarations which are defined later, such as classes.
+  // We first print top-level scopes (constants, imports, and file) then
+  // entities (types and functions). The ordering is based on references:
+  //
+  // - constants can have internal references.
+  // - imports can refer to constants.
+  // - file can refer to constants and imports, and also entities.
+  // - Entities are difficult to order (forward declarations may lead to
+  //   circular references), and so are simply grouped by type.
+  //
+  // When formatting constants and imports, we use `OutputChunks` to only print
+  // entities which are referenced. For example, imports speculatively create
+  // constants which may never be referenced, or for which the referencing
+  // instruction may be hidden and we normally hide those. See `OutputChunk` for
+  // additional information.
+  //
+  // Beyond `OutputChunk`, `ShouldFormatEntity` and `ShouldFormatInst` can also
+  // hide instructions. These interact because an hidden instruction means its
+  // references are unused for `OutputChunk` visibility.
   auto Format() -> void;
 
-  // Write buffered output to the given stream.
+  // Write buffered output to the given stream. `Format` must be called first.
   auto Write(llvm::raw_ostream& out) -> void;
 
  private:
   enum class AddSpace : bool { Before, After };
 
-  // A chunk of the buffered output. Chunks of the output, such as constant
-  // values, are buffered until we reach the end of formatting so that we can
-  // decide whether to include them based on whether they are referenced.
+  // A chunk of the buffered output. Constants and imports are buffered as
+  // `OutputChunk`s until we reach the end of formatting so that we can decide
+  // whether to include them based on whether they are referenced.
+  //
+  // When `FormatName` is called for an instruction, it's considered referenced;
+  // if that instruction is in an `OutputChunk`, it and all of its dependencies
+  // will be marked for printing by `Write`. If that doesn't occur by the end,
+  // it will be omitted.
   struct OutputChunk {
     // Whether this chunk is known to be included in the output.
     bool include_in_output;
     // The textual contents of this chunk.
     std::string chunk = std::string();
-    // Chunks that should be included in the output if this one is.
+    // Indices in `ouput_chunks_` that should be included in the output if this
+    // one is.
     llvm::SmallVector<size_t> dependencies = {};
   };
 
-  // A scope in which output should be buffered because we don't yet know
-  // whether to include it in the final formatted SemIR.
+  // All formatted output within the scope of this object is redirected to a
+  // new tentative `OutputChunk`. The new chunk will depend on
+  // `parent_chunk_index`.
   struct TentativeOutputScope {
     explicit TentativeOutputScope(Formatter& f, size_t parent_chunk_index)
         : formatter(f) {
@@ -71,6 +91,10 @@ class Formatter {
     size_t index;
   };
 
+  // Fills `node_parents_` with parent information. Called at most once during
+  // construction.
+  auto ComputeNodeParents() -> void;
+
   // Flushes the buffered output to the current chunk.
   auto FlushChunk() -> void;
 
@@ -85,19 +109,19 @@ class Formatter {
   // is.
   auto IncludeChunkInOutput(size_t chunk) -> void;
 
-  // Returns true if the node subtree for the instruction or body overlaps with
-  // a dump range, or if there are no ranges.
-  auto OverlapsWithDumpSemIRRange(InstId inst_id,
-                                  llvm::ArrayRef<InstBlockId> body_block_ids)
-      -> bool;
+  // Returns true if the instruction should be included according to its
+  // originating IR. Typically `ShouldFormatEntity` should be used instead.
+  auto ShouldIncludeInstByIR(InstId inst_id) -> bool;
 
   // Determines whether the specified entity should be included in the formatted
   // output.
-  auto ShouldFormatEntity(InstId decl_id,
-                          llvm::ArrayRef<InstBlockId> body_block_ids) -> bool;
+  auto ShouldFormatEntity(InstId decl_id) -> bool;
 
-  auto ShouldFormatEntity(const EntityWithParamsBase& entity,
-                          llvm::ArrayRef<InstBlockId> body_block_ids) -> bool;
+  auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool;
+
+  // Determines whether a single instruction should be included in the
+  // formatted output.
+  auto ShouldFormatInst(InstId inst_id) -> bool;
 
   // Begins a braced block. Writes an open brace, and prepares to insert a
   // newline after it if the braced block is non-empty.
@@ -119,8 +143,9 @@ class Formatter {
 
   // Formats a top-level scope, and any of the instructions in that scope that
   // are used.
-  auto FormatScopeIfUsed(InstNamer::ScopeId scope_id,
-                         llvm::ArrayRef<InstId> block) -> void;
+  auto FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
+                                 llvm::ArrayRef<InstId> block,
+                                 bool use_tentative_output_scopes) -> void;
 
   // Formats a full class.
   auto FormatClass(ClassId id) -> void;
@@ -178,16 +203,13 @@ class Formatter {
   // Prints the contents of a name scope, with an optional label.
   auto FormatNameScope(NameScopeId id, llvm::StringRef label = "") -> void;
 
-  auto FormatInst(InstId inst_id, Inst inst) -> void;
-
-  // Don't print a constant for ImportRefUnloaded.
-  auto FormatInst(InstId inst_id, ImportRefUnloaded inst) -> void;
-
-  // Prints a single instruction.
+  // Prints a single instruction. This typically formats as:
+  //   `FormatInstLhs()` `<ir_name>` `FormatInstRhs()` `<constant>`
+  //
+  // Some instruction kinds are special-cased here. However, it's more common to
+  // provide special-casing of `FormatInstRhs`, for custom argument
+  // formatting.
   auto FormatInst(InstId inst_id) -> void;
-
-  template <typename InstT>
-  auto FormatInst(InstId inst_id, InstT inst) -> void;
 
   // If there is a pending library name that the current instruction was
   // imported from, print it now and clear it out.
@@ -199,68 +221,37 @@ class Formatter {
   // no such arguments.
   auto FormatPendingConstantValue(AddSpace space_where) -> void;
 
+  // Formats `<name>[: <type>] = `. Skips unnamed instructions (according to
+  // `inst_namer_`). Typed instructions must be named.
   auto FormatInstLhs(InstId inst_id, Inst inst) -> void;
 
-  // Format ImportCppDecl name.
-  auto FormatInstLhs(InstId inst_id, ImportCppDecl inst) -> void;
+  // Formats arguments to an instruction. This will typically look like "
+  // <arg0>, <arg1>".
+  auto FormatInstRhs(Inst inst) -> void;
 
-  // Format ImportDecl with its name.
-  auto FormatInstLhs(InstId inst_id, ImportDecl inst) -> void;
+  // Formats the default case for `FormatInstRhs`.
+  auto FormatInstRhsDefault(Inst inst) -> void;
 
-  // Print ImportRefUnloaded with type-like semantics even though it lacks a
-  // type_id.
-  auto FormatInstLhs(InstId inst_id, ImportRefUnloaded inst) -> void;
+  // Formats arguments as " <callee>(<args>) -> <return>".
+  auto FormatCallRhs(Call inst) -> void;
 
-  // Format ImplWitnessTable with its name even though it lacks a type_id.
-  auto FormatInstLhs(InstId inst_id, ImplWitnessTable inst) -> void;
-
-  template <typename InstT>
-  auto FormatInstRhs(InstT inst) -> void;
-
-  auto FormatInstRhs(BindSymbolicName inst) -> void;
-
-  auto FormatInstRhs(BlockArg inst) -> void;
-  auto FormatInstRhs(Namespace inst) -> void;
-
-  auto FormatInst(InstId inst_id, BranchIf inst) -> void;
-  auto FormatInst(InstId inst_id, BranchWithArg inst) -> void;
-  auto FormatInst(InstId inst_id, Branch inst) -> void;
-
-  auto FormatInstRhs(Call inst) -> void;
-  auto FormatInstRhs(ArrayInit inst) -> void;
-  auto FormatInstRhs(InitializeFrom inst) -> void;
-  auto FormatInstRhs(ValueParam inst) -> void;
-  auto FormatInstRhs(RefParam inst) -> void;
-  auto FormatInstRhs(OutParam inst) -> void;
-  auto FormatInstRhs(ReturnExpr ret) -> void;
-  auto FormatInstRhs(ReturnSlot inst) -> void;
-  auto FormatInstRhs(ReturnSlotPattern inst) -> void;
-  auto FormatInstRhs(StructInit init) -> void;
-  auto FormatInstRhs(TupleInit init) -> void;
-  auto FormatInstRhs(FunctionDecl inst) -> void;
-  auto FormatInstRhs(ClassDecl inst) -> void;
-  auto FormatInstRhs(ImplDecl inst) -> void;
-  auto FormatInstRhs(InterfaceDecl inst) -> void;
-  auto FormatInstRhs(AssociatedConstantDecl inst) -> void;
-  auto FormatInstRhs(IntValue inst) -> void;
-  auto FormatInstRhs(FloatLiteral inst) -> void;
+  // Standard formatting for a declaration instruction's arguments.
+  template <typename IdT>
+  auto FormatDeclRhs(IdT decl_id, InstBlockId pattern_block_id,
+                     InstBlockId decl_block_id) {
+    FormatArgs(decl_id);
+    llvm::SaveAndRestore scope(scope_, inst_namer_.GetScopeFor(decl_id));
+    FormatTrailingBlock(pattern_block_id);
+    FormatTrailingBlock(decl_block_id);
+  }
 
   // Format the metadata in File for `import Cpp`.
-  auto FormatInstRhs(ImportCppDecl inst) -> void;
+  auto FormatImportCppDeclRhs() -> void;
 
-  auto FormatImportRefRhs(ImportIRInstId import_ir_inst_id,
-                          EntityNameId entity_name_id,
-                          llvm::StringLiteral loaded_label) -> void;
-
-  auto FormatInstRhs(ImportRefLoaded inst) -> void;
-  auto FormatInstRhs(ImportRefUnloaded inst) -> void;
-  auto FormatInstRhs(InstValue inst) -> void;
-  auto FormatInstRhs(NameBindingDecl inst) -> void;
-  auto FormatInstRhs(SpliceBlock inst) -> void;
-  auto FormatInstRhs(WhereExpr inst) -> void;
-  auto FormatInstRhs(StructType inst) -> void;
-
-  auto FormatArgs() -> void {}
+  // Formats an import ref. In an ideal case, this looks like " <ir>, <entity
+  // name>, <loaded|unloaded>". However, if the entity name isn't present, this
+  // may fall back to printing location information from the import source.
+  auto FormatImportRefRhs(AnyImportRef inst) -> void;
 
   template <typename... Args>
   auto FormatArgs(Args... args) -> void {
@@ -273,6 +264,10 @@ class Formatter {
   // provide equivalent behavior with `FormatName`, so we provide that as the
   // default.
   template <typename IdT>
+    requires(
+        InstNamer::ScopeIdTypeEnum::Contains<IdT> ||
+        SameAsOneOf<IdT, GenericId, NameId, SpecificId, SpecificInterfaceId> ||
+        std::derived_from<IdT, InstId>)
   auto FormatArg(IdT id) -> void {
     FormatName(id);
   }
@@ -292,14 +287,24 @@ class Formatter {
   auto FormatArg(RealId id) -> void;
   auto FormatArg(StringLiteralValueId id) -> void;
 
+  // A `FormatArg` wrapper for `FormatInstArgAndKind`.
+  using FormatArgFnT = auto(Formatter& formatter, int32_t arg) -> void;
+
+  // Returns the `FormatArgFnT` for the given `IdKind`.
+  template <typename... Types>
+  static auto GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT*;
+
+  // Calls `FormatArg` from an `ArgAndKind`.
+  auto FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void;
+
   auto FormatReturnSlotArg(InstId dest_id) -> void;
 
   // `FormatName` is used when we need the name from an id. Most id types use
   // equivalent name formatting from InstNamer, although there are a few special
   // formats below.
   template <typename IdT>
-  // Force `InstId` children to use the `InstId` overload.
-    requires(!std::derived_from<IdT, InstId>)
+    requires(InstNamer::ScopeIdTypeEnum::Contains<IdT> ||
+             std::same_as<IdT, GenericId>)
   auto FormatName(IdT id) -> void {
     out_ << inst_namer_.GetNameFor(id);
   }
@@ -322,8 +327,13 @@ class Formatter {
 
   const File* sem_ir_;
   InstNamer inst_namer_;
-  ShouldFormatEntityFn should_format_entity_;
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
+
+  // For each CheckIRId, whether entities from it should be formatted.
+  llvm::ArrayRef<bool> include_ir_in_dumps_;
+
+  // Whether to use ranges when dumping, or to dump the full SemIR.
+  bool use_dump_sem_ir_ranges_;
 
   // The output stream buffer.
   std::string buffer_;
@@ -366,9 +376,13 @@ class Formatter {
   llvm::StringRef pending_imported_from_;
 
   // Indexes of chunks of output that should be included when an instruction is
-  // referenced, indexed by the instruction's index. This is resized in advance
-  // to the correct size.
-  llvm::SmallVector<size_t, 0> tentative_inst_chunks_;
+  // referenced, indexed by the instruction's index.
+  FixedSizeValueStore<InstId, size_t> tentative_inst_chunks_;
+
+  // Maps nodes to their parents. Only set when dump ranges are in use, because
+  // the parents aren't used otherwise.
+  using NodeParentStore = FixedSizeValueStore<Parse::NodeId, Parse::NodeId>;
+  std::optional<NodeParentStore> node_parents_;
 };
 
 template <typename IdT>
@@ -378,10 +392,11 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
   // If this entity was imported from a different IR, annotate the name of
   // that IR in the output before the `{` or `;`.
   if (first_owning_decl_id.has_value()) {
-    auto loc_id = sem_ir_->insts().GetCanonicalLocId(first_owning_decl_id);
-    if (loc_id.kind() == LocId::Kind::ImportIRInstId) {
+    auto import_ir_inst_id =
+        sem_ir_->insts().GetImportSource(first_owning_decl_id);
+    if (import_ir_inst_id.has_value()) {
       auto import_ir_id =
-          sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
+          sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
       const auto* import_file = sem_ir_->import_irs().Get(import_ir_id).sem_ir;
       pending_imported_from_ = import_file->filename();
     }
@@ -412,40 +427,22 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                     entity_id);
 }
 
-template <typename InstT>
-auto Formatter::FormatInst(InstId inst_id, InstT inst) -> void {
-  Indent();
-  FormatInstLhs(inst_id, inst);
-  out_ << InstT::Kind.ir_name();
-  pending_constant_value_ = sem_ir_->constant_values().Get(inst_id);
-  pending_constant_value_is_self_ = sem_ir_->constant_values().GetInstIdIfValid(
-                                        pending_constant_value_) == inst_id;
-  FormatInstRhs(inst);
-  FormatPendingConstantValue(AddSpace::Before);
-  out_ << "\n";
-}
-
-template <typename InstT>
-auto Formatter::FormatInstRhs(InstT inst) -> void {
-  // By default, an instruction has a comma-separated argument list.
-  using Info = Internal::InstLikeTypeInfo<InstT>;
-  if constexpr (Info::NumArgs == 2) {
-    // Several instructions have a second operand that's a specific ID. We
-    // don't include it in the argument list if there is no corresponding
-    // specific, that is, when we're not in a generic context.
-    if constexpr (std::is_same_v<typename Info::template ArgType<1>,
-                                 SpecificId>) {
-      if (!Info::template Get<1>(inst).has_value()) {
-        FormatArgs(Info::template Get<0>(inst));
-        return;
-      }
-    }
-    FormatArgs(Info::template Get<0>(inst), Info::template Get<1>(inst));
-  } else if constexpr (Info::NumArgs == 1) {
-    FormatArgs(Info::template Get<0>(inst));
-  } else {
-    FormatArgs();
-  }
+template <typename... Types>
+auto Formatter::GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT* {
+  static constexpr std::array<FormatArgFnT*, IdKind::NumValues> Table = {
+      [](Formatter& formatter, int32_t arg) -> void {
+        auto typed_arg = Inst::FromRaw<Types>(arg);
+        if constexpr (requires { formatter.FormatArg(typed_arg); }) {
+          formatter.FormatArg(typed_arg);
+        } else {
+          CARBON_FATAL("Missing FormatArg for {0}", typeid(Types).name());
+        }
+      }...,
+      // Invalid and None handling (ordering-sensitive).
+      [](auto...) -> void { CARBON_FATAL("Unexpected invalid IdKind"); },
+      [](auto...) -> void {},
+  };
+  return Table[id_kind.ToIndex()];
 }
 
 }  // namespace Carbon::SemIR

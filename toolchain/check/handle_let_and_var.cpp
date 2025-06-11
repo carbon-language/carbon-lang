@@ -14,13 +14,14 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/keyword_modifier_set.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/return.h"
-#include "toolchain/check/subpattern.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -43,12 +44,12 @@ static auto StartAssociatedConstant(Context& context) -> void {
 // called at the `=` or the `;` of the declaration, whichever comes first.
 static auto EndAssociatedConstantDeclRegion(Context& context,
                                             SemIR::InterfaceId interface_id)
-    -> void {
+    -> SemIR::GenericId {
   // TODO: Stop special-casing tuple patterns once they behave like other
   // patterns.
   if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
     DiscardGenericDecl(context);
-    return;
+    return SemIR::GenericId::None;
   }
 
   // Peek the pattern. For a valid associated constant, the corresponding
@@ -60,7 +61,7 @@ static auto EndAssociatedConstantDeclRegion(Context& context,
     // The pattern wasn't suitable for an associated constant. We'll detect
     // and diagnose this later. For now, just clean up the generic stack.
     DiscardGenericDecl(context);
-    return;
+    return SemIR::GenericId::None;
   }
 
   // Finish the declaration region of this generic.
@@ -80,6 +81,7 @@ static auto EndAssociatedConstantDeclRegion(Context& context,
                          .modifier_set.GetAccessKind();
   context.decl_name_stack().AddNameOrDiagnose(name_context, assoc_id,
                                               access_kind);
+  return assoc_const.generic_id;
 }
 
 template <Lex::TokenKind::RawEnumType Kind>
@@ -132,18 +134,20 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
 
   return AddInstWithCleanup(
       context, pattern.loc_id,
-      SemIR::VarStorage{
-          .type_id =
-              ExtractScrutineeType(context.sem_ir(), pattern.inst.type_id()),
-          .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
-              context.sem_ir(),
-              pattern.inst.As<SemIR::VarPattern>().subpattern_id)});
+      SemIR::VarStorage{.type_id = ExtractScrutineeType(context.sem_ir(),
+                                                        pattern.inst.type_id()),
+                        .pattern_id = var_pattern_id});
 }
 
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
   auto subpattern_id = context.node_stack().PopPattern();
   auto type_id = context.insts().Get(subpattern_id).type_id();
+
+  if (subpattern_id == SemIR::ErrorInst::InstId) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    return true;
+  }
 
   // In a parameter list, a `var` pattern is always a single `Call` parameter,
   // even if it contains multiple binding patterns.
@@ -206,10 +210,11 @@ auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
     -> bool {
   if (auto interface_decl =
           context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+    auto generic_id =
+        EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
 
     // Start building the definition region of the constant.
-    StartGenericDefinition(context);
+    StartGenericDefinition(context, generic_id);
   }
 
   return HandleInitializer(context, node_id);
@@ -364,13 +369,14 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
         "expected `=`; `let` declaration must have an initializer");
-    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+    context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                            ExpectedInitializerAfterLet);
   }
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::VariableDeclId /*node_id*/)
+    -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
                  Parse::NodeKind::VariableInitializer>(context);
@@ -378,13 +384,6 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   LimitModifiersOnDecl(
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
-
-  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
-                      "`var` declaration in interface");
-    context.emitter().Emit(node_id, VarInInterfaceDecl);
-    return true;
-  }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   return true;

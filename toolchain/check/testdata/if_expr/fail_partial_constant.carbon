@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/if_expr/fail_partial_constant.carbon
@@ -90,9 +93,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc12_3: <error> = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref <error> = var v
+// CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   br !.loc12_13
@@ -112,11 +115,11 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !if.expr.result(%i32.loc12_29)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc12_10: type = block_arg !if.expr.result
+// CHECK:STDOUT:   %.loc12: type = block_arg !if.expr.result
 // CHECK:STDOUT:   br !.loc12_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc12_7:
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -163,9 +166,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc9_3: <error> = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref <error> = var v
+// CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   br !.loc9_13
@@ -184,16 +187,16 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !if.expr.result.loc9(%i32.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
-// CHECK:STDOUT:   %.loc9_10: type = block_arg !if.expr.result.loc9
+// CHECK:STDOUT:   %.loc9: type = block_arg !if.expr.result.loc9
 // CHECK:STDOUT:   br !.loc9_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_7:
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: <error> = binding_pattern w [concrete]
-// CHECK:STDOUT:     %.loc14_3: <error> = var_pattern %w.patt [concrete]
+// CHECK:STDOUT:     %w.var_patt: <error> = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w.var: ref <error> = var w
+// CHECK:STDOUT:   %w.var: ref <error> = var %w.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %w.var, <error>
 // CHECK:STDOUT:   br !.loc14_13
@@ -212,11 +215,11 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !if.expr.result.loc14(%t.ref.loc14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc14:
-// CHECK:STDOUT:   %.loc14_10: type = block_arg !if.expr.result.loc14
+// CHECK:STDOUT:   %.loc14: type = block_arg !if.expr.result.loc14
 // CHECK:STDOUT:   br !.loc14_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_7:
-// CHECK:STDOUT:   %w: <error> = bind_name w, <error>
+// CHECK:STDOUT:   %w: <error> = bind_name w, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

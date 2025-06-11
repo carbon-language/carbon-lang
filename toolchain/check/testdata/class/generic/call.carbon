@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/generic/call.carbon
@@ -165,9 +168,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d51 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc6_1: %pattern_type.d51 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.d51 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %Class.f29 = var a
+// CHECK:STDOUT:   %a.var: ref %Class.f29 = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_21.1: type = splice_block %Class.loc6 [concrete = constants.%Class.f29] {
 // CHECK:STDOUT:     %Class.ref.loc6: %Class.type = name_ref Class, %Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -183,12 +186,12 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc6_21.3: %i32 = converted %int_5, %.loc6_21.2 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:     %Class.loc6: type = class_type @Class, @Class(constants.%ptr.235, constants.%int_5.0f6) [concrete = constants.%Class.f29]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Class.f29 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %Class.f29 = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.c73 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %.loc9_1: %pattern_type.c73 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.c73 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %Class.dd4 = var b
+// CHECK:STDOUT:   %b.var: ref %Class.dd4 = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc9_19.1: type = splice_block %Class.loc9 [concrete = constants.%Class.dd4] {
 // CHECK:STDOUT:     %Class.ref.loc9: %Class.type = name_ref Class, %Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:     %.loc9_15: %empty_tuple.type = tuple_literal ()
@@ -203,7 +206,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc9_19.4: %i32 = converted %int_0, %.loc9_19.3 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:     %Class.loc9: type = class_type @Class, @Class(constants.%empty_tuple.type, constants.%int_0.6a9) [concrete = constants.%Class.dd4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %Class.dd4 = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %Class.dd4 = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.1: type, %N.loc4_23.1: %i32) {
@@ -289,16 +292,16 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc13: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, %Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.1: type, %N.loc4_23.1: %i32) {
@@ -372,9 +375,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc13: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, %Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -383,7 +386,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.1: type, %N.loc4_23.1: %i32) {
@@ -460,18 +463,18 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
-// CHECK:STDOUT:     %.loc16_1: <error> = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref <error> = var a
+// CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, %Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
-// CHECK:STDOUT:     %.loc16_21: type = converted %int_5, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc16: type = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.1: type, %N.loc4_23.1: %i32) {
@@ -768,8 +771,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@A.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%U) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%U
 // CHECK:STDOUT:
@@ -783,8 +784,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Outer.loc7_22.1 => constants.%Outer.99f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.089
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@B.%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%T) {
 // CHECK:STDOUT:   %U.loc3_15.2 => constants.%T
@@ -809,10 +808,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@C.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@C.%T, @C.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.eae
@@ -821,12 +816,4 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.loc13_22.1 => constants.%Inner.c71
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.372
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@D.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@D.%T, @D.%U) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T, %U.loc3_15.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc2_13.2) {}
 // CHECK:STDOUT:

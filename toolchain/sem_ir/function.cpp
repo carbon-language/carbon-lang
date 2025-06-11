@@ -70,23 +70,16 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   auto inst_id = pattern_id;
   auto inst = sem_ir.insts().Get(inst_id);
 
-  if (auto addr_pattern = inst.TryAs<AddrPattern>()) {
-    inst_id = addr_pattern->inner_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  auto param_pattern_inst = inst.TryAs<AnyParamPattern>();
-  if (!param_pattern_inst) {
+  sem_ir.insts().TryUnwrap(inst, inst_id, &AddrPattern::inner_id);
+  auto [param_pattern, param_pattern_id] =
+      sem_ir.insts().TryUnwrap(inst, inst_id, &AnyParamPattern::subpattern_id);
+  if (!param_pattern) {
     return std::nullopt;
   }
-  auto param_pattern_id = inst_id;
-
-  inst_id = param_pattern_inst->subpattern_id;
-  inst = sem_ir.insts().Get(inst_id);
 
   auto binding_pattern = inst.As<AnyBindingPattern>();
   return {{.inst_id = param_pattern_id,
-           .inst = *param_pattern_inst,
+           .inst = *param_pattern,
            .entity_name_id = binding_pattern.entity_name_id}};
 }
 

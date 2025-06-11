@@ -13,6 +13,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
@@ -128,6 +129,10 @@ class Context {
     return scope_stack_.full_pattern_stack();
   }
 
+  auto deferred_definition_worklist() -> DeferredDefinitionWorklist& {
+    return deferred_definition_worklist_;
+  }
+
   auto generic_region_stack() -> GenericRegionStack& {
     return generic_region_stack_;
   }
@@ -156,9 +161,7 @@ class Context {
 
   auto global_init() -> GlobalInit& { return global_init_; }
 
-  auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
-    return import_ref_ids_;
-  }
+  auto imports() -> llvm::SmallVector<SemIR::InstId>& { return imports_; }
 
   // Pre-computed parts of a binding pattern.
   // TODO: Consider putting this behind a narrower API to guard against emitting
@@ -337,6 +340,10 @@ class Context {
   // The stack of scopes we are currently within.
   ScopeStack scope_stack_;
 
+  // The worklist of deferred definition tasks to perform at the end of the
+  // enclosing deferred definition scope.
+  DeferredDefinitionWorklist deferred_definition_worklist_;
+
   // The stack of generic regions we are currently within.
   GenericRegionStack generic_region_stack_;
 
@@ -344,7 +351,8 @@ class Context {
   // defined, regardless of whether the class can have virtual functions.
   InstBlockStack vtable_stack_;
 
-  // The list which will form NodeBlockId::Exports.
+  // Instructions which are operands to an `export` directive. This becomes
+  // `InstBlockId::Exports`.
   llvm::SmallVector<SemIR::InstId> exports_;
 
   // Maps CheckIRId to ImportIRId.
@@ -369,14 +377,14 @@ class Context {
   // State for global initialization.
   GlobalInit global_init_;
 
-  // A list of import refs which can't be inserted into their current context.
-  // They're typically added during name lookup or import ref resolution, where
-  // the current block on inst_block_stack_ is unrelated.
+  // Instructions which are generated as a result of imports; both `ImportRef`s
+  // and instructions they generate. For example, when a name reference resolves
+  // an imported function, the `ImportRefLoaded` results in a `FunctionDecl`,
+  // and both end up here. The `FunctionDecl` shouldn't use the current block on
+  // inst_block_stack_ because it's not tied to the referencing scope.
   //
-  // These are instead added here because they're referenced by other
-  // instructions and needs to be visible in textual IR.
-  // FinalizeImportRefBlock() will produce an inst block for them.
-  llvm::SmallVector<SemIR::InstId> import_ref_ids_;
+  // This becomes `InstBlockId::Imports`.
+  llvm::SmallVector<SemIR::InstId> imports_;
 
   // Map from an AnyBindingPattern inst to precomputed parts of the
   // pattern-match SemIR for it.

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/generic/member_type.carbon
@@ -231,9 +234,9 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c22 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc13_3.1: %pattern_type.c22 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.c22 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %Inner.721 = var c
+// CHECK:STDOUT:   %c.var: ref %Inner.721 = var %c.var_patt
 // CHECK:STDOUT:   %Outer.ref.loc13_29: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:   %int_32.loc13_35: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13_35: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -242,7 +245,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %F.ref: %F.type.9d7 = name_ref F, %.loc13_39 [concrete = constants.%F.c88]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%i32) [concrete = constants.%F.specific_fn]
-// CHECK:STDOUT:   %.loc13_3.2: ref %Inner.721 = splice_block %c.var {}
+// CHECK:STDOUT:   %.loc13_3: ref %Inner.721 = splice_block %c.var {}
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc13_42.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
@@ -250,7 +253,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc13_42.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_42.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_42.2: %i32 = converted %int_1, %.loc13_42.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %F.call: init %Inner.721 = call %F.specific_fn(%.loc13_42.2) to %.loc13_3.2
+// CHECK:STDOUT:   %F.call: init %Inner.721 = call %F.specific_fn(%.loc13_42.2) to %.loc13_3
 // CHECK:STDOUT:   assign %c.var, %F.call
 // CHECK:STDOUT:   %.loc13_20.1: type = splice_block %Inner.ref [concrete = constants.%Inner.721] {
 // CHECK:STDOUT:     %Outer.ref.loc13_10: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
@@ -287,20 +290,12 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %complete_type.loc7_3.2 => constants.%complete_type.84b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %pattern_type.loc9_8 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT:   %Inner => constants.%Inner.51b
 // CHECK:STDOUT:   %pattern_type.loc9_14 => constants.%pattern_type.253
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@F.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@Outer.%T.loc4_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32
@@ -656,13 +651,13 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.de9 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %.loc23_3.1: %pattern_type.de9 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.de9 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %C.70f = var c
+// CHECK:STDOUT:   %c.var: ref %C.70f = var %c.var_patt
 // CHECK:STDOUT:   %.loc23_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc23_26.2: init %C.70f = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc23_3.2: init %C.70f = converted %.loc23_26.1, %.loc23_26.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc23_3.2
+// CHECK:STDOUT:   %.loc23_3: init %C.70f = converted %.loc23_26.1, %.loc23_26.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc23_3
 // CHECK:STDOUT:   %.loc23_20.1: type = splice_block %C.ref [concrete = constants.%C.70f] {
 // CHECK:STDOUT:     %Outer.ref.loc23: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:     %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -720,10 +715,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc6_24 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@F.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -740,20 +731,12 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %F => constants.%F.ed9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.eed.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@impl.eed.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.eed(%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %C => constants.%C.390
 // CHECK:STDOUT:   %pattern_type.loc11_12 => constants.%pattern_type.e59
 // CHECK:STDOUT:   %pattern_type.loc11_23 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Inner.facet.9a3) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -764,10 +747,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc6_24 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@Outer.%T.loc4_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@Outer.%T.loc4_13.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Inner.facet.c18) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.392
@@ -776,10 +755,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc6_10 => constants.%pattern_type.e59
 // CHECK:STDOUT:   %pattern_type.loc6_24 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@F.2.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@F.2.%T, @F.2.%Inner.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32

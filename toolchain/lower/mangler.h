@@ -24,21 +24,33 @@ class Mangler {
   // specified `FileContext`.
   explicit Mangler(FileContext& file_context)
       : file_context_(file_context),
-        cpp_mangle_context_(
-            file_context.cpp_ast()
-                ? file_context.cpp_ast()->getASTContext().createMangleContext()
-                : nullptr) {}
+        cpp_mangle_context_(file_context.cpp_ast()
+                                // Clang's createMangleContext is not
+                                // const-correct, but doesn't modify the AST.
+                                ? const_cast<clang::ASTContext&>(
+                                      file_context.cpp_ast()->getASTContext())
+                                      .createMangleContext()
+                                : nullptr) {}
 
   // Produce a deterministically unique mangled name for the function specified
   // by `function_id` and `specific_id`.
   auto Mangle(SemIR::FunctionId function_id, SemIR::SpecificId specific_id)
       -> std::string;
 
+  // Produce a deterministically unique mangled name for the given global
+  // variable pattern, or an empty string if the variable doesn't bind any
+  // names, in which case it can't be referenced from another file and should be
+  // given internal linkage.
+  auto MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string;
+
   // Produce a deterministically unique mangled name for the specified class's
   // vtable.
   auto MangleVTable(const SemIR::Class& class_info) -> std::string;
 
  private:
+  // Mangle this `NameId` as an individual name component.
+  auto MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id) -> void;
+
   // Mangle this qualified name with inner scope first, working outwards. This
   // may reduce the incidence of common prefixes in the name mangling. (i.e.:
   // every standard library name won't have a common prefix that has to be

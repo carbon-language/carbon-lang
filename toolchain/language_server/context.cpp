@@ -10,6 +10,7 @@
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
+#include "llvm/TargetParser/Host.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/check.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -139,20 +140,24 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
 
   SemIR::File sem_ir(tree_.get(), SemIR::CheckIRId(0), tree_->packaging_decl(),
                      *value_stores_, uri_.file().str());
+  std::unique_ptr<clang::ASTUnit> cpp_ast;
+  // TODO: Support cross-file checking when multiple files have edits.
+  llvm::SmallVector<Check::Unit> units = {{{.consumer = &consumer,
+                                            .value_stores = value_stores_.get(),
+                                            .timings = nullptr,
+                                            .sem_ir = &sem_ir,
+                                            .cpp_ast = &cpp_ast}}};
+
   auto getter = [this]() -> const Parse::TreeAndSubtrees& {
     return *tree_and_subtrees_;
   };
-  // TODO: Support cross-file checking when multiple files have edits.
-  llvm::SmallVector<Check::Unit> units = {{.consumer = &consumer,
-                                           .value_stores = value_stores_.get(),
-                                           .timings = nullptr,
-                                           .tree_and_subtrees_getter = getter,
-                                           .sem_ir = &sem_ir}};
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   // TODO: Include the prelude.
-  Check::CheckParseTrees(units, /*prelude_import=*/false, fs,
-                         context.vlog_stream(), /*fuzzing=*/false);
+  Check::CheckParseTrees(
+      units, llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
+      /*prelude_import=*/false, fs, llvm::sys::getDefaultTargetTriple(),
+      context.vlog_stream(), /*fuzzing=*/false);
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

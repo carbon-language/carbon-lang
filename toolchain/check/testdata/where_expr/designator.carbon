@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/where_expr/designator.carbon
@@ -337,9 +340,9 @@ class D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
-// CHECK:STDOUT:     %.loc5_3: %pattern_type = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var %x.var_patt
 // CHECK:STDOUT:   %.loc5_11.1: type = splice_block %.loc5_11.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_11.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc5_11.3: type = converted %.loc5_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]

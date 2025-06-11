@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
-//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/int/make_type_signed.carbon
@@ -23,11 +21,19 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn F(n: Int(64)) -> Int(64) {
+fn F(n: Int(64)) ->
+    //@dump-sem-ir-begin
+    Int(64)
+    //@dump-sem-ir-end
+    {
   return n;
 }
 
-fn G(n: Int(13)) -> Int(13) {
+fn G(n: Int(13)) ->
+    //@dump-sem-ir-begin
+    Int(13)
+    //@dump-sem-ir-end
+    {
   return n;
 }
 
@@ -91,3 +97,26 @@ import library "types";
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var m: Int(1000000000);
+
+// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %i64.builtin: type = int_type signed, %int_64 [concrete]
+// CHECK:STDOUT:   %int_13: Core.IntLiteral = int_value 13 [concrete]
+// CHECK:STDOUT:   %i13.builtin: type = int_type signed, %int_13 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%n.param: %i64.builtin) -> %i64.builtin {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G(%n.param: %i13.builtin) -> %i13.builtin {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

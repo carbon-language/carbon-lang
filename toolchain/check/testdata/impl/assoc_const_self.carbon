@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/assoc_const_self.carbon
@@ -694,10 +697,6 @@ fn CallF() {
 // CHECK:STDOUT:   %array_type => constants.%array_type
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@V.%N) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%N.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%int_-1) {
 // CHECK:STDOUT:   %N.loc4_13.2 => constants.%int_-1

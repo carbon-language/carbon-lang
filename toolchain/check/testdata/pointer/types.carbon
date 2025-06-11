@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/types.carbon
@@ -56,14 +59,14 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %return.patt: %pattern_type.fe8 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.fe8 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc11_23: type = ptr_type %i32.loc11_20 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %int_32.loc14_20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc14_23: type = ptr_type %i32.loc14_20 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:     %p.param: %ptr.235 = value_param call_param0
-// CHECK:STDOUT:     %.loc11: type = splice_block %ptr.loc11_14 [concrete = constants.%ptr.235] {
-// CHECK:STDOUT:       %int_32.loc11_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc11_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %ptr.loc11_14: type = ptr_type %i32.loc11_11 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %.loc14: type = splice_block %ptr.loc14_14 [concrete = constants.%ptr.235] {
+// CHECK:STDOUT:       %int_32.loc14_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc14_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %ptr.loc14_14: type = ptr_type %i32.loc14_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.235 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param call_param1
@@ -75,16 +78,16 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %return.patt: %pattern_type.bff = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.bff = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc15_38: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15_38: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %const.loc15_32: type = const_type %i32.loc15_38 [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr.loc15_42: type = ptr_type %const.loc15_32 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:     %int_32.loc18_38: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_38: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %const.loc18_32: type = const_type %i32.loc18_38 [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr.loc18_42: type = ptr_type %const.loc18_32 [concrete = constants.%ptr.36b]
 // CHECK:STDOUT:     %p.param: %ptr.36b = value_param call_param0
-// CHECK:STDOUT:     %.loc15: type = splice_block %ptr.loc15_25 [concrete = constants.%ptr.36b] {
-// CHECK:STDOUT:       %int_32.loc15_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %const.loc15_16: type = const_type %i32.loc15_22 [concrete = constants.%const]
-// CHECK:STDOUT:       %ptr.loc15_25: type = ptr_type %const.loc15_16 [concrete = constants.%ptr.36b]
+// CHECK:STDOUT:     %.loc18: type = splice_block %ptr.loc18_25 [concrete = constants.%ptr.36b] {
+// CHECK:STDOUT:       %int_32.loc18_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc18_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:       %const.loc18_16: type = const_type %i32.loc18_22 [concrete = constants.%const]
+// CHECK:STDOUT:       %ptr.loc18_25: type = ptr_type %const.loc18_16 [concrete = constants.%ptr.36b]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.36b = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.36b = out_param call_param1

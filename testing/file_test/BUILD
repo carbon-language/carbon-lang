@@ -19,6 +19,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//testing/base:file_helpers",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:string_view",
         "@llvm-project//llvm:Support",
@@ -40,6 +41,7 @@ cc_library(
     deps = [
         ":autoupdate",
         ":manifest",
+        "//common:build_data",
         "//common:check",
         "//common:error",
         "//common:exe_path",
@@ -60,7 +62,11 @@ file_test(
     name = "file_test_base_test",
     size = "small",
     srcs = ["file_test_base_test.cpp"],
-    tests = glob(["testdata/**"]),
+    data = glob(["testdata/include_files/**"]),
+    tests = glob(
+        ["testdata/**"],
+        exclude = ["testdata/include_files/**"],
+    ),
     deps = [
         ":file_test_base",
         "//common:ostream",

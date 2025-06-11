@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/prefer_unqualified_lookup.carbon
@@ -87,7 +90,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %F.loc5_13.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc5_13.2 (constants.%F.8b3)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: @Inner.%G.type (%G.type) = fn_decl @G [symbolic = constants.%G] {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [symbolic = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -212,12 +215,4 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%F.8b3) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%F.loc8_19.1) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@Class.%F.loc5_13.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@G.%F.loc13_46.1) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@G.%F.loc13_46.1) {}
 // CHECK:STDOUT:

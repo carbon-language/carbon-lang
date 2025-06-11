@@ -4,9 +4,12 @@
 
 #include "toolchain/check/check_unit.h"
 
+#include <iterator>
 #include <string>
+#include <tuple>
 #include <utility>
 
+#include "common/growing_range.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
@@ -17,12 +20,14 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/impl_lookup.h"
+#include "toolchain/check/impl_validation.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_structure.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -51,18 +56,21 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
+      tree_and_subtrees_getter_(
+          tree_and_subtrees_getters
+              [unit_and_imports->unit->sem_ir->check_ir_id().index]),
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
+      target_(target),
       vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(&emitter_, unit_and_imports_->unit->tree_and_subtrees_getter,
-               unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports),
-               tree_and_subtrees_getters.size(), vlog_stream) {}
+      context_(
+          &emitter_, tree_and_subtrees_getter_, unit_and_imports_->unit->sem_ir,
+          GetImportedIRCount(unit_and_imports), total_ir_count_, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -150,7 +158,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
     CARBON_CHECK(!cpp_ast->get());
     *cpp_ast =
         ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                       cpp_import_names, fs_);
+                       cpp_import_names, fs_, target_);
   }
 }
 
@@ -206,7 +214,7 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
     bool is_export = results[direct_index].is_export;
 
     for (const auto& indirect_ir :
-         results[direct_index].sem_ir->import_irs().array_ref()) {
+         results[direct_index].sem_ir->import_irs().values()) {
       if (!indirect_ir.is_export) {
         continue;
       }
@@ -360,13 +368,13 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 auto CheckUnit::ProcessNodeIds() -> bool {
-  NodeIdTraversal traversal(&context_, vlog_stream_);
+  NodeIdTraversal traversal(&context_);
 
   Parse::NodeId node_id = Parse::NodeId::None;
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    const auto& tree = unit_and_imports_->unit->tree_and_subtrees_getter();
+    const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
     output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
@@ -409,17 +417,14 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 }
 
 auto CheckUnit::CheckRequiredDeclarations() -> void {
-  for (const auto& function : context_.functions().array_ref()) {
+  for (const auto& function : context_.functions().values()) {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
-      auto function_loc_id =
-          context_.insts().GetCanonicalLocId(function.non_owning_decl_id);
-      CARBON_CHECK(function_loc_id.kind() ==
-                   SemIR::LocId::Kind::ImportIRInstId);
-      auto import_ir_id = context_.sem_ir()
-                              .import_ir_insts()
-                              .Get(function_loc_id.import_ir_inst_id())
-                              .ir_id();
+      auto function_import_id =
+          context_.insts().GetImportSource(function.non_owning_decl_id);
+      CARBON_CHECK(function_import_id.has_value());
+      auto import_ir_id =
+          context_.sem_ir().import_ir_insts().Get(function_import_id).ir_id();
       auto& import_ir = context_.import_irs().Get(import_ir_id);
       if (import_ir.sem_ir->package_id().has_value() !=
           context_.sem_ir().package_id().has_value()) {
@@ -450,11 +455,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
 auto CheckUnit::CheckRequiredDefinitions() -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
-
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != context_.definitions_required_by_decl().size(); ++i) {
-    SemIR::InstId decl_inst_id = context_.definitions_required_by_decl()[i];
+  for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -493,12 +494,10 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
     }
   }
 
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != context_.definitions_required_by_use().size(); ++i) {
+  for (auto [loc, specific_id] :
+       GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    auto [loc, specific_id] = context_.definitions_required_by_use()[i];
     if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
       CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                         "use of undefined generic function");
@@ -570,10 +569,13 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   context_.inst_block_stack().PopAndDiscard();
 }
 
+auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
+
 auto CheckUnit::FinishRun() -> void {
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
+  CheckImpls();
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
@@ -583,8 +585,8 @@ auto CheckUnit::FinishRun() -> void {
   context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,
                                             context_.exports());
   // Finalizes the ImportRef inst block.
-  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::ImportRefs,
-                                            context_.import_ref_ids());
+  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Imports,
+                                            context_.imports());
   // Finalizes __global_init.
   context_.global_init().Finalize();
 

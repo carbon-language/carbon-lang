@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/lookup/generic.carbon
@@ -288,8 +291,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F => constants.%F.c98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
@@ -506,8 +507,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.3fd
 // CHECK:STDOUT:   %F => constants.%F.c98
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -740,17 +739,11 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F => constants.%F.92a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc10_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc10_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %C => constants.%C.f2e
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e5e
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%HasF.facet.766) {
 // CHECK:STDOUT:   %Self => constants.%HasF.facet.766
@@ -984,10 +977,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dfb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@F.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(%T.loc4_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
 // CHECK:STDOUT:   %HasF.type.loc8_36.2 => constants.%HasF.type.901
@@ -998,10 +987,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.6c8
 // CHECK:STDOUT:   %F => constants.%F.008
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@impl.%T.loc8_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
@@ -1195,8 +1180,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.56e
 // CHECK:STDOUT:   %F => constants.%F.9b8
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc12_14.2, %U.loc12_24.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1417,10 +1400,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dfb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@F.1.%T) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(%T.loc4_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
 // CHECK:STDOUT:   %HasF.type.loc8_35.2 => constants.%HasF.type.901
@@ -1431,10 +1410,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.912
 // CHECK:STDOUT:   %F => constants.%F.f30
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(@impl.%T.loc8_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

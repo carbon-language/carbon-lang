@@ -18,6 +18,7 @@
 namespace clang {
 
 // Forward declare indexed types, for integration with ValueStore.
+class Decl;
 class SourceLocation;
 
 }  // namespace clang
@@ -69,6 +70,7 @@ constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 // construction, and this allows that check to be represented in the type
 // system.
 struct TypeInstId : public InstId {
+  static constexpr llvm::StringLiteral Label = "type_inst";
   static const TypeInstId None;
 
   using InstId::InstId;
@@ -96,6 +98,8 @@ constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
 // than substituting into it.
 class AbsoluteInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "absolute_inst";
+
   // Support implicit conversion from InstId so that InstId and AbsoluteInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -118,6 +122,8 @@ class AbsoluteInstId : public InstId {
 // an instruction.
 class DestInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "dest_inst";
+
   // Support implicit conversion from InstId so that InstId and DestInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -141,6 +147,8 @@ class DestInstId : public InstId {
 // has a non-constant value, the field is left unchanged by evaluation.
 class MetaInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "meta_inst";
+
   // Support implicit conversion from InstId so that InstId and MetaInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -272,8 +280,14 @@ struct FunctionId : public IdBase<FunctionId> {
 // check execution.
 struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
+
+  // Used when referring to the imported C++.
+  static const CheckIRId Cpp;
+
   using IdBase::IdBase;
 };
+
+constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a class.
 struct ClassId : public IdBase<ClassId> {
@@ -609,9 +623,9 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // state is in the Check::Context.
   static const InstBlockId Exports;
 
-  // ImportRef instructions. Empty until the File is fully checked; intermediate
-  // state is in the Check::Context.
-  static const InstBlockId ImportRefs;
+  // Instructions produced through import logic. Empty until the File is fully
+  // checked; intermediate state is in the Check::Context.
+  static const InstBlockId Imports;
 
   // Global declaration initialization instructions. Empty if none are present.
   // Otherwise, __global_init function will be generated and this block will
@@ -627,7 +641,7 @@ struct InstBlockId : public IdBase<InstBlockId> {
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
+constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
 constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 
@@ -774,6 +788,17 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
+// The ID of a Clang `Decl` pointer, pointing to the Clang AST.
+struct ClangDeclId : public IdBase<ClangDeclId> {
+  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+
+  // TODO: Ensure we can easily serialize/deserialize this. Consider
+  // `clang::LazyDeclPtr`.
+  using ValueType = clang::Decl*;
+
+  using IdBase::IdBase;
+};
+
 // The ID of a Clang Source Location.
 struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   static constexpr llvm::StringLiteral Label = "clang_source_loc";
@@ -821,11 +846,9 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
   using ValueType = ImportIRInst;
 
-  // ImportIRInstId is restricted so that it can fit into LocId.
-  static constexpr int32_t BitsWithNodeId = 29;
-
-  // The maximum ID, non-inclusive.
-  static constexpr int Max = (1 << BitsWithNodeId) - Parse::NodeId::Max - 2;
+  // The maximum ID, non-inclusive. This is constrained to fit inside LocId.
+  static constexpr int Max =
+      -(std::numeric_limits<int32_t>::min() + 2 * Parse::NodeId::Max + 1);
 
   constexpr explicit ImportIRInstId(int32_t index) : IdBase(index) {
     CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
@@ -839,22 +862,17 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //
 // The structure is:
 // - None: The standard NoneIndex for all Id types, -1.
-// - InstId: positive values including zero; a full 31 bits.
+// - InstId: Positive values including zero; a full 31 bits.
 //   - [0, 1 << 31)
-// - NodeId: negative values starting after None; the 24 bit NodeId range.
+// - NodeId: Negative values starting after None; the 24 bit NodeId range.
 //   - [-2, -2 - (1 << 24))
-// - ImportIRInstId: remaining negative values; after NodeId, fills out negative
-//   values to 29 bits.
-//   - [-2 - (1 << 24), -(1 << 29))
+// - Desugared NodeId: Another 24 bit NodeId range.
+//   - [-2 - (1 << 24), -2 - (1 << 25))
+// - ImportIRInstId: Remaining negative values; after NodeId, fills out negative
+//   values.
+//   - [-2 - (1 << 25), -(1 << 31)]
 //
-// In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
-// Note that these can only be used with negative, non-`InstId` values.
-//
-// Use `InstStore::GetCanonicalLocId()` to get a canonical `LocId` which will
-// not be backed by an `InstId`. Note that the canonical `LocId` may be `None`
-// even when the original `LocId` was not, so this operation needs to be done
-// before checking `has_value()`. Only canonical locations can be converted with
-// `ToImplicit()` or `ToTokenOnly()`.
+// For desugaring, use `InstStore::GetLocIdForDesugaring()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -883,30 +901,14 @@ struct LocId : public IdBase<LocId> {
   constexpr LocId(Parse::NodeId node_id)
       : IdBase(FirstNodeId - node_id.index) {}
 
-  // Forms an equivalent LocId for a desugared location. Requires a
-  // canonical location. See `InstStore::GetCanonicalLocId()`.
-  //
-  // TODO: Rename to something like `ToDesugared`.
-  auto ToImplicit() const -> LocId {
+  // Forms an equivalent LocId for a desugared location. Prefer calling
+  // `InstStore::GetLocIdForDesugaring`.
+  auto AsDesugared() const -> LocId {
     // This should only be called for NodeId or ImportIRInstId (i.e. canonical
     // locations), but we only set the flag for NodeId.
-    CARBON_CHECK(kind() != Kind::InstId);
-    if (kind() == Kind::NodeId) {
-      return LocId(index & ~ImplicitBit);
-    }
-    return *this;
-  }
-
-  // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
-  // a canonical location. See `InstStore::GetCanonicalLocId()`.
-  //
-  // TODO: Consider making this a part of check/ diagnostics instead, as a free
-  // function operation on `LocIdForDiagnostics`?
-  // https://github.com/carbon-language/carbon-lang/pull/5355#discussion_r2064113186
-  auto ToTokenOnly() const -> LocId {
-    CARBON_CHECK(kind() != Kind::InstId);
-    if (has_value()) {
-      return LocId(index & ~TokenOnlyBit);
+    CARBON_CHECK(kind() != Kind::InstId, "Use InstStore::GetDesugaredLocId");
+    if (index <= FirstNodeId && index > FirstDesugaredNodeId) {
+      return LocId(index - Parse::NodeId::Max);
     }
     return *this;
   }
@@ -919,7 +921,7 @@ struct LocId : public IdBase<LocId> {
     if (index >= 0) {
       return Kind::InstId;
     }
-    if (index_without_flags() <= FirstImportIRInstId) {
+    if (index <= FirstImportIRInstId) {
       return Kind::ImportIRInstId;
     }
     return Kind::NodeId;
@@ -927,26 +929,20 @@ struct LocId : public IdBase<LocId> {
 
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
-  auto is_implicit() const -> bool {
-    return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
-  }
-
-  // Returns true if the location is token-only for diagnostics.
-  //
-  // This means the displayed location will include only the location's specific
-  // parse node, instead of also including its descendants. As such, this can
-  // only be true for locations backed by a `NodeId`.
-  auto is_token_only() const -> bool {
-    return kind() != Kind::InstId && (index & TokenOnlyBit) == 0;
+  auto is_desugared() const -> bool {
+    return index <= FirstDesugaredNodeId && index > FirstImportIRInstId;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
+  // Note that the returned `ImportIRInstId` only identifies a location; it is
+  // not correct to interpret it as the instruction from which another
+  // instruction was imported. Use `InstStore::GetImportSource` for that.
   auto import_ir_inst_id() const -> ImportIRInstId {
     if (!has_value()) {
       return ImportIRInstId::None;
     }
     CARBON_CHECK(kind() == Kind::ImportIRInstId, "{0}", index);
-    return ImportIRInstId(FirstImportIRInstId - index_without_flags());
+    return ImportIRInstId(FirstImportIRInstId - index);
   }
 
   // Returns the equivalent `InstId` when `kind()` matches or is `None`.
@@ -961,29 +957,22 @@ struct LocId : public IdBase<LocId> {
       return Parse::NodeId::None;
     }
     CARBON_CHECK(kind() == Kind::NodeId, "{0}", index);
-    return Parse::NodeId(FirstNodeId - index_without_flags());
+    if (index <= FirstDesugaredNodeId) {
+      return Parse::NodeId(FirstDesugaredNodeId - index);
+    } else {
+      return Parse::NodeId(FirstNodeId - index);
+    }
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  // Whether a location corresponds to desugared instructions. This only applies
-  // for `NodeId`.
-  static constexpr int32_t ImplicitBit = 1 << 30;
-
-  // See `is_token_only` for the use. This only applies for canonical locations
-  // (i.e. those containing `NodeId` or `ImportIRInstId`).
-  static constexpr int32_t TokenOnlyBit = 1 << 29;
-
   // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
   static constexpr int32_t FirstNodeId = NoneIndex - 1;
-  static constexpr int32_t FirstImportIRInstId =
+  static constexpr int32_t FirstDesugaredNodeId =
       FirstNodeId - Parse::NodeId::Max;
-
-  auto index_without_flags() const -> int32_t {
-    CARBON_DCHECK(index < NoneIndex, "Only for NodeId and ImportIRInstId");
-    return index | ImplicitBit | TokenOnlyBit;
-  }
+  static constexpr int32_t FirstImportIRInstId =
+      FirstDesugaredNodeId - Parse::NodeId::Max;
 };
 
 // Polymorphic id for fields in `Any[...]` typed instruction category. Used for

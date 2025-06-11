@@ -1454,9 +1454,6 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id)
     -> SemIR::InstBlockId {
-  // The callee reference can be invalidated by conversions, so ensure all reads
-  // from it are done before conversion calls.
-  auto callee_decl_id = callee.latest_decl_id();
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_slot_pattern_id = callee.return_slot_pattern_id;
@@ -1470,7 +1467,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     CARBON_DIAGNOSTIC(InCallToFunction, Note, "calling function declared here");
     context.emitter()
         .Build(call_loc_id, MissingObjectInMethodCall)
-        .Note(callee_decl_id, InCallToFunction)
+        .Note(callee.latest_decl_id(), InCallToFunction)
         .Emit();
     self_id = SemIR::ErrorInst::InstId;
   }
@@ -1502,6 +1499,16 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
 
   return {.inst_id = context.types().GetAsTypeInstId(type_inst_id),
           .type_id = context.types().GetTypeIdForTypeConstantId(type_const_id)};
+}
+
+auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void {
+  // If we discard an initializing expression, convert it to a value or
+  // reference so that it has something to initialize.
+  auto expr = context.insts().Get(expr_id);
+  Convert(context, SemIR::LocId(expr_id), expr_id,
+          {.kind = ConversionTarget::Discarded, .type_id = expr.type_id()});
+
+  // TODO: This will eventually need to do some "do not discard" analysis.
 }
 
 }  // namespace Carbon::Check

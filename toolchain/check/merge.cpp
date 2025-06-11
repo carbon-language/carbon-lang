@@ -203,13 +203,10 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
 // to provide a diagnostic.
 static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              int32_t param_index,
-                             SemIR::InstId new_param_pattern_id,
-                             SemIR::InstId prev_param_pattern_id,
+                             SemIR::InstId orig_new_param_pattern_id,
+                             SemIR::InstId orig_prev_param_pattern_id,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
-                             bool check_self) -> bool {
-  auto orig_new_param_pattern_id = new_param_pattern_id;
-  auto orig_prev_param_pattern_id = prev_param_pattern_id;
-
+                             bool check_syntax, bool check_self) -> bool {
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
@@ -232,78 +229,101 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         .Emit();
   };
 
-  auto new_param_pattern = context.insts().Get(new_param_pattern_id);
-  auto prev_param_pattern = context.insts().Get(prev_param_pattern_id);
-  if (new_param_pattern.kind() != prev_param_pattern.kind()) {
-    emit_diagnostic();
-    return false;
-  }
+  struct PatternPair {
+    SemIR::InstId prev_id;
+    SemIR::InstId new_id;
+  };
 
-  if (new_param_pattern.Is<SemIR::AddrPattern>()) {
-    new_param_pattern_id = new_param_pattern.As<SemIR::AddrPattern>().inner_id;
-    new_param_pattern = context.insts().Get(new_param_pattern_id);
-    prev_param_pattern_id =
-        prev_param_pattern.As<SemIR::AddrPattern>().inner_id;
-    prev_param_pattern = context.insts().Get(prev_param_pattern_id);
+  llvm::SmallVector<PatternPair, 1> pattern_stack;
+
+  pattern_stack.push_back({.prev_id = orig_prev_param_pattern_id,
+                           .new_id = orig_new_param_pattern_id});
+
+  do {
+    auto patterns = pattern_stack.pop_back_val();
+    auto new_param_pattern = context.insts().Get(patterns.new_id);
+    auto prev_param_pattern = context.insts().Get(patterns.prev_id);
     if (new_param_pattern.kind() != prev_param_pattern.kind()) {
       emit_diagnostic();
       return false;
     }
-  }
 
-  if (new_param_pattern.Is<SemIR::AnyParamPattern>()) {
-    new_param_pattern_id =
-        new_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id;
-    new_param_pattern = context.insts().Get(new_param_pattern_id);
-    prev_param_pattern_id =
-        prev_param_pattern.As<SemIR::ValueParamPattern>().subpattern_id;
-    prev_param_pattern = context.insts().Get(prev_param_pattern_id);
-    if (new_param_pattern.kind() != prev_param_pattern.kind()) {
-      emit_diagnostic();
-      return false;
+    switch (new_param_pattern.kind()) {
+      case SemIR::AddrPattern::Kind: {
+        pattern_stack.push_back(
+            {.prev_id = prev_param_pattern.As<SemIR::AddrPattern>().inner_id,
+             .new_id = new_param_pattern.As<SemIR::AddrPattern>().inner_id});
+        break;
+      }
+      case SemIR::OutParamPattern::Kind:
+      case SemIR::RefParamPattern::Kind:
+      case SemIR::ValueParamPattern::Kind: {
+        pattern_stack.push_back(
+            {.prev_id =
+                 prev_param_pattern.As<SemIR::AnyParamPattern>().subpattern_id,
+             .new_id =
+                 new_param_pattern.As<SemIR::AnyParamPattern>().subpattern_id});
+        break;
+      }
+      case SemIR::VarPattern::Kind:
+        pattern_stack.push_back(
+            {.prev_id =
+                 prev_param_pattern.As<SemIR::VarPattern>().subpattern_id,
+             .new_id =
+                 new_param_pattern.As<SemIR::VarPattern>().subpattern_id});
+        break;
+      case SemIR::BindingPattern::Kind:
+      case SemIR::SymbolicBindingPattern::Kind: {
+        auto new_name_id =
+            context.entity_names()
+                .Get(new_param_pattern.As<SemIR::AnyBindingPattern>()
+                         .entity_name_id)
+                .name_id;
+        auto prev_name_id =
+            context.entity_names()
+                .Get(prev_param_pattern.As<SemIR::AnyBindingPattern>()
+                         .entity_name_id)
+                .name_id;
+
+        if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
+            prev_name_id == SemIR::NameId::SelfValue) {
+          break;
+        }
+
+        auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
+            context.sem_ir(), prev_specific_id, patterns.prev_id);
+        if (!context.types().AreEqualAcrossDeclarations(
+                new_param_pattern.type_id(), prev_param_type_id)) {
+          if (!diagnose) {
+            return false;
+          }
+          CARBON_DIAGNOSTIC(
+              RedeclParamDiffersType, Error,
+              "type {3} of {0:implicit |}parameter {1} in "
+              "redeclaration differs from previous parameter type {2}",
+              Diagnostics::BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
+          context.emitter()
+              .Build(orig_new_param_pattern_id, RedeclParamDiffersType,
+                     is_implicit_param, param_index + 1, prev_param_type_id,
+                     new_param_pattern.type_id())
+              .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
+                    is_implicit_param)
+              .Emit();
+          return false;
+        }
+
+        if (check_syntax && new_name_id != prev_name_id) {
+          emit_diagnostic();
+          return false;
+        }
+        break;
+      }
+      default: {
+        CARBON_FATAL("Unexpected inst kind in parameter pattern: {0}",
+                     new_param_pattern.kind());
+      }
     }
-  }
-
-  auto new_name_id =
-      context.entity_names()
-          .Get(new_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id)
-          .name_id;
-  auto prev_name_id =
-      context.entity_names()
-          .Get(prev_param_pattern.As<SemIR::AnyBindingPattern>().entity_name_id)
-          .name_id;
-
-  if (!check_self && new_name_id == SemIR::NameId::SelfValue &&
-      prev_name_id == SemIR::NameId::SelfValue) {
-    return true;
-  }
-
-  auto prev_param_type_id = SemIR::GetTypeOfInstInSpecific(
-      context.sem_ir(), prev_specific_id, prev_param_pattern_id);
-  if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
-                                                  prev_param_type_id)) {
-    if (!diagnose) {
-      return false;
-    }
-    CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
-                      "type {3} of {0:implicit |}parameter {1} in "
-                      "redeclaration differs from previous parameter type {2}",
-                      Diagnostics::BoolAsSelect, int32_t, SemIR::TypeId,
-                      SemIR::TypeId);
-    context.emitter()
-        .Build(orig_new_param_pattern_id, RedeclParamDiffersType,
-               is_implicit_param, param_index + 1, prev_param_type_id,
-               new_param_pattern.type_id())
-        .Note(orig_prev_param_pattern_id, RedeclParamPrevious,
-              is_implicit_param)
-        .Emit();
-    return false;
-  }
-
-  if (new_name_id != prev_name_id) {
-    emit_diagnostic();
-    return false;
-  }
+  } while (!pattern_stack.empty());
 
   return true;
 }
@@ -315,7 +335,7 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
                               SemIR::InstBlockId prev_param_patterns_id,
                               bool is_implicit_param,
                               SemIR::SpecificId prev_specific_id, bool diagnose,
-                              bool check_self) -> bool {
+                              bool check_syntax, bool check_self) -> bool {
   // This will often occur for empty params.
   if (new_param_patterns_id == prev_param_patterns_id) {
     return true;
@@ -373,7 +393,8 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
        llvm::enumerate(new_param_pattern_ids, prev_param_pattern_ids)) {
     if (!CheckRedeclParam(context, is_implicit_param, index,
                           new_param_pattern_id, prev_param_pattern_id,
-                          prev_specific_id, diagnose, check_self)) {
+                          prev_specific_id, diagnose, check_syntax,
+                          check_self)) {
       return false;
     }
   }
@@ -493,7 +514,8 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
   if (!CheckRedeclParams(
           context, new_entity.loc_id, new_entity.implicit_param_patterns_id,
           prev_entity.loc_id, prev_entity.implicit_param_patterns_id,
-          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_self)) {
+          /*is_implicit_param=*/true, prev_specific_id, diagnose, check_syntax,
+          check_self)) {
     return false;
   }
   // Don't forward `check_self` here because it's extra cost, and `self` is only
@@ -502,7 +524,7 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
                          new_entity.param_patterns_id, prev_entity.loc_id,
                          prev_entity.param_patterns_id,
                          /*is_implicit_param=*/false, prev_specific_id,
-                         diagnose, /*check_self=*/true)) {
+                         diagnose, check_syntax, /*check_self=*/true)) {
     return false;
   }
   if (check_syntax &&

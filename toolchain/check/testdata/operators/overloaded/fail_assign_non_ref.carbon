@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/overloaded/fail_assign_non_ref.carbon
@@ -121,10 +124,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.c48 = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc36_27: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %C = value_param call_param1
-// CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc36_33: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %b: %C = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -133,10 +136,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op.decl: %Op.type.73a = fn_decl @Op.2 [concrete = constants.%Op.0c9] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc16_9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %.loc19_9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
-// CHECK:STDOUT:     %.loc16_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:     %.loc19_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
@@ -153,18 +156,18 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op.decl: %Op.type.0b8 = fn_decl @Op.4 [concrete = constants.%Op.d8e] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc19_9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %.loc22_9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
 // CHECK:STDOUT:     %other.param_patt: %pattern_type.c48 = value_param_pattern %other.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
-// CHECK:STDOUT:     %.loc19_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
-// CHECK:STDOUT:       %C.ref.loc19_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc19_20 [concrete = constants.%ptr.019]
+// CHECK:STDOUT:     %.loc22_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:       %C.ref.loc22_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc22_20 [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.019 = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param call_param1
-// CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc22_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -192,8 +195,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0: %.bc7 = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%Op.0c9]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc30: ref %C = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc30
+// CHECK:STDOUT:   %.loc33: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc33
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -204,8 +207,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.6d3 = impl_witness_access constants.%AddAssign.impl_witness, element0 [concrete = constants.%Op.d8e]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc41: ref %C = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc41
+// CHECK:STDOUT:   %.loc44: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc44
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

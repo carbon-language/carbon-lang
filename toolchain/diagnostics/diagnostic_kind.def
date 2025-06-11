@@ -161,7 +161,6 @@ CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)
 CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 // Location context.
-CARBON_DIAGNOSTIC_KIND(InCppImport)
 CARBON_DIAGNOSTIC_KIND(InImport)
 CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 
@@ -240,6 +239,8 @@ CARBON_DIAGNOSTIC_KIND(InvalidMainRunSignature)
 CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
 CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
+CARBON_DIAGNOSTIC_KIND(ThunkSignature)
+CARBON_DIAGNOSTIC_KIND(ThunkCallee)
 
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionOutsideClass)
 CARBON_DIAGNOSTIC_KIND(DestroyFunctionMissingSelf)
@@ -286,7 +287,6 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 // Interface checking.
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceIncompleteWithinDefinition)
-CARBON_DIAGNOSTIC_KIND(VarInInterfaceDecl)
 
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
@@ -311,13 +311,22 @@ CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
 CARBON_DIAGNOSTIC_KIND(ImplOfNotOneInterface)
 CARBON_DIAGNOSTIC_KIND(ImplUnusedBinding)
+CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResult)
+CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResultNoteBadImpl)
+CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResultNotePreviousImpl)
+CARBON_DIAGNOSTIC_KIND(ImplFinalOverlapsNonFinal)
+CARBON_DIAGNOSTIC_KIND(ImplFinalOverlapsNonFinalNote)
+CARBON_DIAGNOSTIC_KIND(ImplNonFinalSameTypeStructure)
+CARBON_DIAGNOSTIC_KIND(ImplNonFinalSameTypeStructureNote)
+CARBON_DIAGNOSTIC_KIND(FinalImplInvalidFile)
+CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsSameFile)
+CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsSameFileNote)
+CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFile)
+CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFileNote)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
-CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResult)
-CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResultNoteBadImpl)
-CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResultNotePreviousImpl)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
@@ -473,6 +482,7 @@ CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(RewriteForAssociatedFunction)
+CARBON_DIAGNOSTIC_KIND(FacetTypeConstraintCycle)
 
 // Facet type combination.
 CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/where_expr/constraints.carbon
@@ -603,7 +606,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8fd = import_ref Main//state_constraints, inst19 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//state_constraints, inst23 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//state_constraints, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.ce7 = import_ref Main//state_constraints, loc7_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.731 = import_ref Main//state_constraints, loc8_13, unloaded
 // CHECK:STDOUT:   %Main.Member = import_ref Main//state_constraints, Member, unloaded

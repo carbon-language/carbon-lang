@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/struct/fail_keyword_name.carbon
@@ -25,6 +28,4 @@ fn F() -> {.class: i32};
 fn G() { return {.return = 5}; };
 
 // CHECK:STDOUT: --- fail_keyword_name.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
 // CHECK:STDOUT:

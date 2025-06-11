@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/return/fail_returned_var_type.carbon
@@ -69,19 +72,19 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.3de = binding_pattern v [concrete]
-// CHECK:STDOUT:     %.loc19_12: %pattern_type.3de = var_pattern %v.patt [concrete]
+// CHECK:STDOUT:     %v.var_patt: %pattern_type.3de = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v.var: ref f64 = var v
+// CHECK:STDOUT:   %v.var: ref f64 = var %v.var_patt
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]
 // CHECK:STDOUT:   assign %v.var, %float
-// CHECK:STDOUT:   %.loc19_19.1: type = splice_block %.loc19_19.3 [concrete = f64] {
+// CHECK:STDOUT:   %.loc22_19.1: type = splice_block %.loc22_19.3 [concrete = f64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc19_19.2: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc19_19.3: type = converted %float.make_type, %.loc19_19.2 [concrete = f64]
+// CHECK:STDOUT:     %.loc22_19.2: type = value_of_initializer %float.make_type [concrete = f64]
+// CHECK:STDOUT:     %.loc22_19.3: type = converted %float.make_type, %.loc22_19.2 [concrete = f64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref f64 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc19_16: f64 = bind_value %v
-// CHECK:STDOUT:   return %.loc19_16
+// CHECK:STDOUT:   %.loc22_16: f64 = bind_value %v
+// CHECK:STDOUT:   return %.loc22_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

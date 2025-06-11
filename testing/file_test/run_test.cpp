@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "testing/base/file_helpers.h"
 #include "testing/file_test/file_test_base.h"
 #include "testing/file_test/test_file.h"
 
@@ -62,8 +63,7 @@ static auto DoArgReplacements(llvm::SmallVector<std::string>& test_args,
         break;
       }
       case 't': {
-        char* tmpdir = getenv("TEST_TMPDIR");
-        CARBON_CHECK(tmpdir != nullptr);
+        std::filesystem::path tmpdir = GetTempDirectory();
         it->replace(percent, 2, llvm::formatv("{0}/temp_file", tmpdir));
         break;
       }
@@ -102,8 +102,8 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
   // Process arguments.
   if (test_file.test_args.empty()) {
     test_file.test_args = test_base.GetDefaultArgs();
-    test_file.test_args.append(test_file.extra_args);
   }
+  test_file.test_args.append(test_file.extra_args);
   CARBON_RETURN_IF_ERROR(DoArgReplacements(
       test_file.test_args, test_base.GetArgReplacements(), all_splits));
 

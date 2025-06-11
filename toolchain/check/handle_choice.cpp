@@ -118,7 +118,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   //  that here. Either remove the need for a token or find a token (a new
   //  introducer?) for the alternative to name.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
-  StartGenericDefinition(context);
+  StartGenericDefinition(context, class_info.generic_id);
 
   context.name_scopes().AddRequiredName(
       class_info.scope_id, SemIR::NameId::SelfType,
@@ -283,12 +283,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
           .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
           .object_repr_type_inst_id =
               context.types().GetInstId(GetStructType(context, fields_id))});
-  // Note: avoid storing a reference to the returned Class, since it may be
-  // invalidated by other type constructions.
-  context.classes().Get(class_id).complete_type_witness_id = choice_witness_id;
-
-  auto self_type_id = context.classes().Get(class_id).self_type_id;
-  auto name_scope_id = context.classes().Get(class_id).scope_id;
+  auto& class_info = context.classes().Get(class_id);
+  class_info.complete_type_witness_id = choice_witness_id;
 
   auto self_struct_type_id = GetStructType(
       context, context.struct_type_fields().AddCanonical(struct_type_fields));
@@ -296,8 +292,8 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   for (auto [i, deferred_binding] :
        llvm::enumerate(context.choice_deferred_bindings())) {
     MakeLetBinding(context,
-                   ChoiceInfo{.self_type_id = self_type_id,
-                              .name_scope_id = name_scope_id,
+                   ChoiceInfo{.self_type_id = class_info.self_type_id,
+                              .name_scope_id = class_info.scope_id,
                               .self_struct_type_id = self_struct_type_id,
                               .discriminant_type_id = discriminant_type_id,
                               .num_alternative_bits = num_alternative_bits},
@@ -310,7 +306,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   context.scope_stack().Pop();
   context.decl_name_stack().PopScope();
 
-  FinishGenericDefinition(context, context.classes().Get(class_id).generic_id);
+  FinishGenericDefinition(context, class_info.generic_id);
 
   context.choice_deferred_bindings().clear();
   return true;

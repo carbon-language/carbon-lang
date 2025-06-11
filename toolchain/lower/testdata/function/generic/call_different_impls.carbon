@@ -57,13 +57,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main.2c436a64dfc3fd29() !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.2c436a64dfc3fd29() !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main.c124d41ebc08c32b() !dbg !19 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.c124d41ebc08c32b() !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21

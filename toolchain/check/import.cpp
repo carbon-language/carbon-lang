@@ -103,11 +103,16 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
     return SemIR::LocIdAndInst::NoLoc(namespace_inst);
   }
 
+  // If the import was itself imported, use its location.
+  if (auto import_ir_inst_id = context.insts().GetImportSource(import_id);
+      import_ir_inst_id.has_value()) {
+    return MakeImportedLocIdAndInst(context, import_ir_inst_id, namespace_inst);
+  }
+
+  // Otherwise we should have a node location for some kind of namespace
+  // declaration in the current file.
   SemIR::LocId import_loc_id = context.insts().GetCanonicalLocId(import_id);
   switch (import_loc_id.kind()) {
-    case SemIR::LocId::Kind::ImportIRInstId:
-      return MakeImportedLocIdAndInst(
-          context, import_loc_id.import_ir_inst_id(), namespace_inst);
     case SemIR::LocId::Kind::NodeId:
       return SemIR::LocIdAndInst(context.parse_tree().As<Parse::AnyNamespaceId>(
                                      import_loc_id.node_id()),
@@ -115,6 +120,7 @@ static auto MakeImportedNamespaceLocIdAndInst(Context& context,
     case SemIR::LocId::Kind::None:
       // TODO: Either document the use-case for this, or require a location.
       return SemIR::LocIdAndInst::NoLoc(namespace_inst);
+    case SemIR::LocId::Kind::ImportIRInstId:
     case SemIR::LocId::Kind::InstId:
       CARBON_FATAL("Unexpected LocId kind");
   }
@@ -133,7 +139,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
   AddImportNamespaceResult result = {
       .name_scope_id = SemIR::NameScopeId::None,
       .inst_id = AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc)};
-  context.import_ref_ids().push_back(result.inst_id);
+  context.imports().push_back(result.inst_id);
   namespace_inst.name_scope_id =
       context.name_scopes().Add(result.inst_id, name_id, parent_scope_id);
   result.name_scope_id = namespace_inst.name_scope_id;
@@ -146,13 +152,13 @@ auto AddImportNamespaceToScope(
     SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
     llvm::function_ref<SemIR::InstId()> make_import_id)
     -> AddImportNamespaceToScopeResult {
-  auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
-  auto [inserted, entry_id] = parent_scope->LookupOrAdd(
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
+  auto [inserted, entry_id] = parent_scope.LookupOrAdd(
       name_id,
       // This InstId is temporary and would be overridden if used.
       SemIR::InstId::None, SemIR::AccessKind::Public);
   if (!inserted) {
-    const auto& prev_entry = parent_scope->GetEntry(entry_id);
+    const auto& prev_entry = parent_scope.GetEntry(entry_id);
     if (!prev_entry.result.is_poisoned()) {
       auto prev_inst_id = prev_entry.result.target_inst_id();
       if (auto namespace_inst =
@@ -180,14 +186,11 @@ auto AddImportNamespaceToScope(
                                        parent_scope_id, import_id),
       .is_duplicate_of_namespace_in_current_package = false};
 
-  // Note we have to get the parent scope freshly, creating the imported
-  // namespace may invalidate the pointer above.
-  parent_scope = &context.name_scopes().Get(parent_scope_id);
   // Diagnose if there's a name conflict, but still produce the namespace to
   // supersede the name conflict in order to avoid repeat diagnostics. Names
   // are poisoned optimistically by name lookup before checking for imports,
   // so we may be overwriting a poisoned entry here.
-  auto& lookup_result = parent_scope->GetEntry(entry_id).result;
+  auto& lookup_result = parent_scope.GetEntry(entry_id).result;
   if (!lookup_result.is_poisoned() && !inserted) {
     // TODO: Pass the import namespace name location instead of the namespace
     // id to get more accurate location.
@@ -233,7 +236,7 @@ static auto CopySingleNameScopeFromImportIR(
                      {.type_id = namespace_type_id,
                       .import_ir_inst_id = import_ir_inst_id,
                       .entity_name_id = entity_name_id}));
-    context.import_ref_ids().push_back(inst_id);
+    context.imports().push_back(inst_id);
     return inst_id;
   };
   AddImportNamespaceToScopeResult result = AddImportNamespaceToScope(

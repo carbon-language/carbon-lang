@@ -31,9 +31,6 @@ class ToolchainFileTest : public FileTestBase {
   explicit ToolchainFileTest(llvm::StringRef exe_path,
                              llvm::StringRef test_name);
 
-  // Adds a replacement for `core_package_dir`.
-  auto GetArgReplacements() const -> llvm::StringMap<std::string> override;
-
   // Loads files into the VFS and runs the driver.
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
@@ -63,11 +60,6 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
-  // Controls whether `Run()` includes the prelude.
-  auto is_no_prelude() const -> bool {
-    return test_name().find("/no_prelude/") != llvm::StringRef::npos;
-  }
-
   // The toolchain component subdirectory, such as `lex` or `language_server`.
   const llvm::StringRef component_;
   // The toolchain install information.
@@ -95,11 +87,6 @@ ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
       component_(GetComponent(test_name)),
       installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
 
-auto ToolchainFileTest::GetArgReplacements() const
-    -> llvm::StringMap<std::string> {
-  return {{"core_package_dir", installation_.core_package()}};
-}
-
 // Adds a file to the fs.
 static auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
     -> ErrorOr<Success> {
@@ -120,9 +107,12 @@ auto ToolchainFileTest::Run(
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) const -> ErrorOr<RunResult> {
-  CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
-  if (!is_no_prelude()) {
-    for (const auto& file : prelude) {
+  llvm::SmallVector<std::string> prelude_files;
+  // Lex and parse shouldn't ever access the prelude.
+  if (component_ != "lex" && component_ != "parse") {
+    // TODO: Try providing the prelude as an overlay.
+    CARBON_ASSIGN_OR_RETURN(prelude_files, installation_.ReadPreludeManifest());
+    for (const auto& file : prelude_files) {
       CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
     }
   }
@@ -147,7 +137,7 @@ auto ToolchainFileTest::Run(
                  [&](std::pair<llvm::StringRef, bool> entry) {
                    return entry.first == "." || entry.first == "-" ||
                           entry.first.starts_with("not_file") ||
-                          llvm::is_contained(prelude, entry.first);
+                          llvm::is_contained(prelude_files, entry.first);
                  });
 
   if (component_ == "language_server") {
@@ -170,30 +160,30 @@ auto ToolchainFileTest::GetDefaultArgs() const
     return args;
   }
 
-  args.insert(args.end(), {"compile", "--phase=" + component_.str()});
+  args.insert(args.end(),
+              {
+                  "compile",
+                  "--phase=" + component_.str(),
+                  // Use the install path to exclude prelude files.
+                  "--exclude-dump-file-prefix=" + installation_.core_package(),
+              });
 
   if (component_ == "lex") {
-    args.insert(args.end(), {"--dump-tokens", "--omit-file-boundary-tokens"});
+    args.insert(args.end(), {"--no-prelude-import", "--dump-tokens",
+                             "--omit-file-boundary-tokens"});
   } else if (component_ == "parse") {
-    args.push_back("--dump-parse-tree");
+    args.insert(args.end(), {"--no-prelude-import", "--dump-parse-tree"});
   } else if (component_ == "check") {
-    args.push_back("--dump-sem-ir");
+    args.insert(args.end(), {"--dump-sem-ir", "--dump-sem-ir-ranges=only"});
   } else if (component_ == "lower") {
-    args.push_back("--dump-llvm-ir");
+    args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
+  } else if (component_ == "codegen") {
+    // codegen tests specify flags as needed.
   } else {
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
   }
 
-  // For `lex` and `parse`, we don't need to import the prelude; exclude it to
-  // focus errors. In other phases we only do this for explicit "no_prelude"
-  // tests.
-  if (component_ == "lex" || component_ == "parse" || is_no_prelude()) {
-    args.push_back("--no-prelude-import");
-  }
-
-  args.insert(
-      args.end(),
-      {"--exclude-dump-file-prefix=" + installation_.core_package(), "%s"});
+  args.push_back("%s");
   return args;
 }
 

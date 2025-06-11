@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/deduce.carbon
@@ -382,8 +385,6 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.c0a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%i32
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.235
@@ -410,8 +411,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.86d
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.6ad
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamWithGenericArg.%struct_type.a.loc10_62.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_explicit_non_constant.carbon
 // CHECK:STDOUT:
@@ -526,13 +525,9 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallExplicitGenericParamConst(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_34.2 => constants.%T
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamConst.%T.loc6_34.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_vs_deduced.carbon
 // CHECK:STDOUT:
@@ -664,8 +659,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc6_38 => constants.%require_complete.4ae
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.41d
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(%T.loc6_27.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%A) {
 // CHECK:STDOUT:   %T.loc6_27.2 => constants.%A
@@ -804,8 +797,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc4_36 => constants.%require_complete.4ae
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.fc1
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitGenericParam(%T.loc4_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitGenericParam(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%i32
@@ -1773,10 +1764,6 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @DD(@impl.266.%E.loc9_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.266(%E.loc9_14.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%D) {
 // CHECK:STDOUT:   %D.loc11_10.2 => constants.%D
 // CHECK:STDOUT: }
@@ -1793,12 +1780,6 @@ fn F() {
 // CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.23e
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.b58
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @DD(@impl.497.%E.loc12_14.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CC(@impl.497.%Z.facet.loc12_32.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.497(%E.loc12_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DD(constants.%EE) {
 // CHECK:STDOUT:   %E.loc8_10.2 => constants.%EE
@@ -2046,10 +2027,6 @@ fn F() {
 // CHECK:STDOUT:   %CC.loc19_29.2 => constants.%CC.d02
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.741
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CC(@impl.562.%Y.facet.loc19_29.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.562(%E.loc19_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Y.facet.268) {
 // CHECK:STDOUT:   %D.loc12_10.2 => constants.%Y.facet.268
