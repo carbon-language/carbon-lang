@@ -293,7 +293,8 @@ struct BindValue {
   InstId value_id;
 };
 
-// Represents a non-symbolic binding pattern.
+// Represents a non-symbolic binding pattern. See `AnyBindingPattern` for member
+// documentation.
 struct BindingPattern {
   static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
       {.ir_name = "binding_pattern",
@@ -882,7 +883,8 @@ struct ImportDecl {
   NameId package_id;
 };
 
-// An imported entity that is not yet been loaded.
+// An imported entity that is not yet been loaded. See `AnyImportRef` for
+// member documentation.
 struct ImportRefUnloaded {
   static constexpr auto Kind =
       InstKind::ImportRefUnloaded.Define<Parse::NodeId>(
@@ -892,7 +894,8 @@ struct ImportRefUnloaded {
   EntityNameId entity_name_id;
 };
 
-// A imported entity that is loaded, and may be used.
+// A imported entity that is loaded, and may be used. See `AnyImportRef` for
+// member documentation.
 struct ImportRefLoaded {
   static constexpr auto Kind = InstKind::ImportRefLoaded.Define<Parse::NodeId>(
       {.ir_name = "import_ref", .is_lowered = false});
@@ -1110,7 +1113,8 @@ struct OutParam {
   NameId pretty_name_id;
 };
 
-// A pattern that represents an output `Call` parameter.
+// A pattern that represents an output `Call` parameter. See `AnyParamPattern`
+// for member documentation.
 struct OutParamPattern {
   static constexpr auto Kind =
       InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
@@ -1174,7 +1178,8 @@ struct RefParam {
   NameId pretty_name_id;
 };
 
-// A pattern that represents a by-reference `Call` parameter.
+// A pattern that represents a by-reference `Call` parameter. See
+// `AnyParamPattern` for member documentation.
 struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
@@ -1497,7 +1502,8 @@ struct StructValue {
   InstBlockId elements_id;
 };
 
-// Represents a symbolic binding pattern.
+// Represents a symbolic binding pattern. See `AnyBindingPattern` for member
+// documentation.
 struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
@@ -1697,7 +1703,8 @@ struct ValueParam {
   NameId pretty_name_id;
 };
 
-// A pattern that represents a by-value `Call` parameter.
+// A pattern that represents a by-value `Call` parameter. See `AnyParamPattern`
+// for member documentation.
 struct ValueParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
