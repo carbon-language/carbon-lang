@@ -60,12 +60,8 @@ struct FunctionFields {
   // implicit_param_patterns_id from EntityWithParamsBase.
   InstId self_param_id = InstId::None;
 
-  // Data that is specific to the special function kind. This is:
-  //
-  //  - A `BuiltinFunctionKind builtin_function_kind;` for a builtin function.
-  //  - An `InstId thunk_decl_id;` for a thunk.
-  //
-  // Use `builtin_function_kind()` or `thunk_decl_id()` to access this.
+  // Data that is specific to the special function kind. Use
+  // `builtin_function_kind()` or `thunk_decl_id()` to access this.
   AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
   // The following members are accumulated throughout the function definition.
